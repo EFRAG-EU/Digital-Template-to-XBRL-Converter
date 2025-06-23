@@ -5,6 +5,7 @@ import rich.traceback
 from rich.logging import RichHandler
 
 import mireport
+import mireport.taxonomy
 from mireport.arelle.report_info import (
     ARELLE_VERSION_INFORMATION,
     ArelleReportProcessor,
@@ -73,6 +74,9 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, ExcelProc
     ) as pc:
         pc.mark("Loading taxonomy metadata")
         mireport.loadMetaData()
+        pc.addDevInfoMessage(
+            f"Taxonomies available: {', '.join(mireport.taxonomy.listTaxonomies())}"
+        )
         pc.mark(
             "Extracting data from Excel",
             additionalInfo=f"Using file: {args.excel_file}",

@@ -1,7 +1,7 @@
 import json
 import logging
 from dataclasses import dataclass
-from typing import Any, MutableMapping, NamedTuple, Optional
+from typing import Any, MutableMapping, NamedTuple, Optional, Self
 
 from arelle.logging.handlers.LogToXmlHandler import LogToXmlHandler
 from arelle.ModelValue import QName
@@ -37,6 +37,13 @@ class ArelleVersionHolder:
 
 
 class ArelleProcessingResult:
+    """Holds the results of processing an XBRL file with Arelle."""
+
+    _INTERESTING_LOG_MESSAGES = (
+        "validated in",
+        "loaded in",
+    )
+
     def __init__(self, jsonMessages: str, textLogLines: list[str]):
         self._validationMessages: list[Message] = []
         self._textLogLines: list[str] = textLogLines
@@ -46,8 +53,7 @@ class ArelleProcessingResult:
 
     def __importArelleMessages(self, json_str: str) -> None:
         wantDebug = L.isEnabledFor(logging.DEBUG)
-        interesting_info = ("validated in", "loaded in")
-        records = json.loads(json_str)["log"]
+        records: list[dict] = json.loads(json_str)["log"]
         for r in records:
             code: str = r.get("code", "")
             level: str = r.get("level", "")
@@ -64,7 +70,10 @@ class ArelleProcessingResult:
 
             match code:
                 case "info" | "":
-                    if "" == code or any(a in text for a in interesting_info):
+                    if "" == code or any(
+                        a in text
+                        for a in ArelleProcessingResult._INTERESTING_LOG_MESSAGES
+                    ):
                         self._validationMessages.append(
                             Message(
                                 messageText=text,
@@ -84,9 +93,7 @@ class ArelleProcessingResult:
                     )
 
     @classmethod
-    def fromLogToXmlHandler(
-        cls, logHandler: LogToXmlHandler
-    ) -> "ArelleProcessingResult":
+    def fromLogToXmlHandler(cls, logHandler: LogToXmlHandler) -> Self:
         json = logHandler.getJson(clearLogBuffer=False)
         logLines = logHandler.getLines(clearLogBuffer=False)
         logHandler.clearLogBuffer()

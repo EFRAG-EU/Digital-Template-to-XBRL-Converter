@@ -4,7 +4,7 @@ from enum import StrEnum
 from functools import cache
 from time import perf_counter_ns
 from types import TracebackType
-from typing import Optional, Type
+from typing import Optional, Self, Type
 
 from mireport.exceptions import EarlyAbortException
 from mireport.taxonomy import Concept
@@ -43,7 +43,7 @@ class Severity(StrEnum):
 
     @classmethod
     @cache
-    def fromLogLevelString(cls, level: str) -> "Severity":
+    def fromLogLevelString(cls, level: str) -> Self:
         lower_lookup = {k.lower(): v for k, v in cls.__members__.items()}
         if (attempt1 := lower_lookup.get(level.lower())) is not None:
             return attempt1
@@ -64,7 +64,6 @@ class MessageType(StrEnum):
     @classmethod
     def allExcept(cls, *mtypes: "MessageType") -> set["MessageType"]:
         wanted = cls.all()
-        wanted.remove(cls.DevInfo)
         wanted.difference_update(mtypes)
         return wanted
 
@@ -103,7 +102,7 @@ class Message:
         return " ".join(bits)
 
     @classmethod
-    def fromDict(cls, stuff: dict) -> "Message":
+    def fromDict(cls, stuff: dict) -> Self:
         m = stuff["m"]
         s = Severity[stuff["s"]]
         mt = MessageType[stuff["mt"]]
@@ -138,7 +137,7 @@ class ConversionResults:
         self._conversionSuccessful: bool = conversionSuccessful
 
     @classmethod
-    def fromDict(cls, stuff: dict) -> "ConversionResults":
+    def fromDict(cls, stuff: dict) -> Self:
         id = stuff["id"]
         m = [Message.fromDict(m) for m in stuff["m"]]
         q = stuff["q"]
@@ -297,8 +296,8 @@ class ConversionResultsBuilder(ConversionResults):
 
 
 class ProcessingContext:
-    def __init__(self, resultsBuilder: "ConversionResultsBuilder", name: str) -> None:
-        self._resultsBuilder: "ConversionResultsBuilder" = resultsBuilder
+    def __init__(self, resultsBuilder: ConversionResultsBuilder, name: str) -> None:
+        self._resultsBuilder: ConversionResultsBuilder = resultsBuilder
         self.name: str = name
         self.succeeded: bool = False
         self.start_time: int
@@ -306,9 +305,9 @@ class ProcessingContext:
         self.current_section_name: Optional[str] = None
         self.console = self._resultsBuilder.consoleOutput
 
-    def __enter__(self) -> "ProcessingContext":
+    def __enter__(self) -> Self:
         self.start_time = self.current_section_start_time = perf_counter_ns()
-        self.doMessage(f'Starting: "{self.name}".')
+        self._logProgress(f'Starting: "{self.name}".')
         return self
 
     def __exit__(
@@ -323,28 +322,31 @@ class ProcessingContext:
         swallow_exception: bool = False
         if exc_type is None:
             self.succeeded = True
-            self.doMessage(
+            self._logProgress(
                 f'Finished: "{self.name}" in {format_time_ns(execution_time_ns)}.'
             )
         elif exc_type is not None and issubclass(exc_type, EarlyAbortException):
             self.succeeded = False
-            self.doMessage(
+            self._logProgress(
                 f'Processing of "{self.name}" aborted after {format_time_ns(execution_time_ns)}.',
             )
             swallow_exception = True
         else:
             # add message / log exc_value?
             self.succeeded = False
-            self.doMessage(
+            self._logProgress(
                 f'Processing of "{self.name}" finished abnormally after {format_time_ns(execution_time_ns)}.',
                 Severity.ERROR,
             )
         return swallow_exception
 
-    def doMessage(self, message: str, severity: Severity = Severity.INFO) -> None:
+    def _logProgress(self, message: str, severity: Severity = Severity.INFO) -> None:
         self._resultsBuilder.addMessage(message, severity, MessageType.Progress)
         if self.console:
             print(message)
+
+    def addDevInfoMessage(self, message: str) -> None:
+        self._resultsBuilder.addMessage(message, Severity.INFO, MessageType.DevInfo)
 
     def mark(
         self, newSectionName: Optional[str] = None, additionalInfo: str = ""
@@ -352,12 +354,14 @@ class ProcessingContext:
         now = perf_counter_ns()
         if self.current_section_name is not None:
             execution_time_ns = now - self.current_section_start_time
-            self.doMessage(
+            self._logProgress(
                 f"Finished: [{self.current_section_name}] in {format_time_ns(execution_time_ns)}."
             )
 
         if newSectionName is not None:
             self.current_section_name = newSectionName
             self.current_section_start_time = now
-            self.doMessage(f"Starting: [{self.current_section_name}]. {additionalInfo}")
+            self._logProgress(
+                f"Starting: [{self.current_section_name}]. {additionalInfo}"
+            )
         return

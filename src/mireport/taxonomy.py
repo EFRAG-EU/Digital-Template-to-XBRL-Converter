@@ -15,7 +15,7 @@ from mireport.exceptions import (
     TaxonomyException,
     UnknownTaxonomyException,
 )
-from mireport.json import loadJsonPackageResource
+from mireport.json import getObject, getResource
 from mireport.utr import UTR
 from mireport.xml import (
     ENUM2_NS,
@@ -86,8 +86,26 @@ class Concept:
     Represents a concept in an XBRL taxonomy.
     """
 
-    def __init__(self, qnameMaker: QNameMaker, qname: QName, details: dict):
-        self.qname = qname
+    __slots__ = (
+        "qname",
+        "periodType",
+        "dataType",
+        "baseDataType",
+        "typedElement",
+        "_labels",
+        "_isAbstract",
+        "_isDimension",
+        "_isHypercube",
+        "_isNillable",
+        "_isNumeric",
+        "_eeDomainMembers",
+        "_eeDomainMemberStrings",
+        "_qnameMaker",
+        "_taxonomy",
+    )
+
+    def __init__(self, qnameMaker: QNameMaker, s_qname: str, details: dict):
+        self.qname: QName = qnameMaker.fromString(s_qname)
         self._qnameMaker = qnameMaker
 
         self._labels: dict[str, dict[str, str]] = details["labels"]
@@ -99,11 +117,7 @@ class Concept:
         self._taxonomy: Taxonomy
 
         if (period_type := details.get("periodType")) is not None:
-            self.periodType = (
-                PeriodType.Duration
-                if period_type == PeriodType.Duration.value
-                else PeriodType.Instant
-            )
+            self.periodType = PeriodType(period_type)
         else:
             raise TaxonomyException(
                 f"Concept {self.qname} does not specify a period type."
@@ -146,6 +160,8 @@ class Concept:
         return NotImplemented
 
     def __eq__(self, other: object) -> bool:
+        if self is other:
+            return True
         if isinstance(other, Concept):
             return self.qname == other.qname
         return NotImplemented
@@ -377,7 +393,7 @@ class BaseSet(NamedTuple):
 class Taxonomy:
     def __init__(
         self,
-        concepts: dict[QName, Concept],
+        concepts: dict[str, Concept],
         entryPoint: str,
         presentation: dict[str, dict[str, Any]],
         dimensions: dict[str, dict],
@@ -396,7 +412,7 @@ class Taxonomy:
         # <xbrli:scenario> should be used for all dimensions."
         self._dimensionContainer = DimensionContainerType.Scenario
 
-        self._concepts = concepts
+        self._concepts = {concept.qname: concept for concept in concepts.values()}
         for concept in concepts.values():
             concept._reifyUsingTaxonomy(self)
 
@@ -446,31 +462,28 @@ class Taxonomy:
         open_hcs: list[Concept] = []
         domainByDimension: dict[Concept, list[Concept]] = defaultdict(list)
         for role, cubes in dimensions.items():
-            cubeConcepts = frozenset(self.getConcept(c) for c in cubes.keys())
+            cubeConcepts = frozenset(concepts[c] for c in cubes.keys())
             baseSet = BaseSet(role, cubeConcepts)
             for cubeQname, cubeDetails in cubes.items():
-                d = {}
+                d: dict[str, Any] = {}
                 closed = cubeDetails.pop("xbrldt:closed")
-                d["xbrldt:closed"] = closed
+                d["xbrldt:closed"] = bool(closed)
                 if not closed:
                     open_hcs.append(cubeQname)
-                container = (
-                    DimensionContainerType.Scenario
-                    if cubeDetails.pop("xbrldt:contextElement")
-                    == DimensionContainerType.Scenario.value
-                    else DimensionContainerType.Segment
+                container = DimensionContainerType(
+                    cubeDetails.pop("xbrldt:contextElement")
                 )
                 desired_containers.add(container)
                 d["xbrldt:contextElement"] = container
                 d["primaryItems"] = [
-                    Relationship(role, depth, self.getConcept(qname))
+                    Relationship(role, depth, concepts[qname])
                     for depth, qname in cubeDetails.pop("primaryItems", [])
                 ]
                 for r in d["primaryItems"]:
                     self._lookupBaseSetByPrimaryItem[r.concept].append(baseSet)
                 d["explicitDimensions"] = {
-                    self.getConcept(dimQname): frozenset(
-                        [self.getConcept(member) for member in memberQnameList]
+                    concepts[dimQname]: frozenset(
+                        concepts[member] for member in memberQnameList
                     )
                     for dimQname, memberQnameList in cubeDetails.pop(
                         "explicitDimensions", {}
@@ -479,38 +492,41 @@ class Taxonomy:
                 for dimension, memberList in d["explicitDimensions"].items():
                     domainByDimension[dimension].extend(memberList)
                 d["typedDimensions"] = [
-                    self.getConcept(dimQname)
+                    concepts[dimQname]
                     for dimQname in cubeDetails.pop("typedDimensions", [])
                 ]
-                self._lookupBaseSetByCube[self.getConcept(cubeQname)].append(baseSet)
+                self._lookupBaseSetByCube[concepts[cubeQname]].append(baseSet)
                 self._baseSets[baseSet].append(d)
         self._lookupDomainByDimension: dict[Concept, frozenset[Concept]] = {
             dimension: frozenset(domainlist)
             for dimension, domainlist in domainByDimension.items()
         }
         self._hypercubes = frozenset(
-            [c for x in self._baseSets.keys() for c in x.hyperCubes]
+            c for x in self._baseSets.keys() for c in x.hyperCubes
         )
+
         if open_hcs:
-            # Not supported by mireport
+            # Not supported by mireport (aoix doesn't care)
             raise TaxonomyException(
                 f"Taxonomy contains open hypercubes {open_hcs}. Not currently supported"
             )
-        if len(desired_containers) != 1:
-            # Not supported by mireport or aoix
-            raise TaxonomyException(
-                f"Multiple dimension containers specified {desired_containers}. Not currently supported"
-            )
-        else:
-            self._dimensionContainer = desired_containers.pop()
 
-    @cache
+        match len(desired_containers):
+            case 0:
+                pass
+            case 1:
+                self._dimensionContainer = desired_containers.pop()
+            case _:
+                # Not supported by mireport or aoix
+                raise TaxonomyException(
+                    f"Multiple dimension containers specified {desired_containers}. Not currently supported"
+                )
+
     def getConcept(self, qname: QName | str) -> Concept:
         if isinstance(qname, str):
             qname = self._qnameMaker.fromString(qname)
         return self._concepts[qname]
 
-    @cache
     def getConceptForName(self, name: str) -> Concept | None:
         possible = self._lookupConceptsByName.get(name, [])
         match len(possible):
@@ -761,13 +777,11 @@ def _loadTaxonomyFromFile(bits: dict) -> None:
         )
     for prefix, namespace in bits["namespaces"].items():
         qnameMaker.addNamespacePrefix(prefix, namespace)
-    concepts = {
-        qname: Concept(qnameMaker, qname, jconcept)
-        for jqname, jconcept in bits["concepts"].items()
-        if (qname := qnameMaker.fromString(jqname))
+
+    concepts: dict[str, Concept] = {
+        str_qname: Concept(qnameMaker, str_qname, jconcept)
+        for str_qname, jconcept in bits["concepts"].items()
     }
-    with loadJsonPackageResource(data, "utr.json") as payload:
-        utr = UTR.fromDict(payload, qnameMaker=qnameMaker)
 
     _TAXONOMIES[entryPoint] = Taxonomy(
         concepts,
@@ -775,5 +789,7 @@ def _loadTaxonomyFromFile(bits: dict) -> None:
         presentation=bits["presentation"],
         dimensions=bits["dimensions"],
         qnameMaker=qnameMaker,
-        utr=utr,
+        utr=UTR.fromDict(
+            getObject(getResource(data, "utr.json")), qnameMaker=qnameMaker
+        ),
     )

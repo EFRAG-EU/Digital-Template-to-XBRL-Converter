@@ -295,7 +295,7 @@ def getOrCreateReportPackage(reportPackage: Path) -> FilelikeAndFileName:
     elif reportPackage.suffix in {".xhtml", ".html", ".htm"}:
         with BytesIO() as write_bio:
             with zipfile.ZipFile(write_bio, "w") as z:
-                z.write(reportPackage, "a/reports/" + reportPackage.name)
+                z.write(reportPackage, f"a/reports/{reportPackage.name}")
                 z.writestr(
                     zinfo_or_arcname="a/META-INF/reportPackage.json",
                     data=UNCONSTRAINED_REPORT_PACKAGE_JSON,

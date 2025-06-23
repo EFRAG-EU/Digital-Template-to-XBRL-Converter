@@ -51,7 +51,7 @@ class NamespaceManager:
 
     def _validate(self, prefix: str, namespace: str) -> _NSPrefixTuple:
         """Validates the namespace and prefix and intern()s them."""
-        if not (namespace and namespace.startswith(("https:", "http:"))):
+        if not (namespace and namespace.startswith(("https://", "http://"))):
             # TODO: use a proper URI / URN validator.
             raise BrokenNamespacePrefixException(
                 f"Namespace does not look valid: {namespace}"
@@ -76,7 +76,7 @@ class NamespaceManager:
             return prefix
         elif old_ns is not namespace:
             raise BrokenNamespacePrefixException(
-                f"Namespace prefix clash. Prefix {prefix}, existing namespace {old_ns}, attempted namespace {namespace}."
+                f"Unable to add namespace prefix binding for '{prefix}': existing namespace: '{old_ns}'; attempted namespace '{namespace}'."
             )
         self._prefixToNamespaces[prefix] = namespace
         return prefix
@@ -169,9 +169,8 @@ class QNameMaker:
 
     def isValidQName(self, /, qname: str) -> bool:
         try:
-            if (q := self._getAndValidateParts(qname)) is None:
-                return False
-            return self.nsManager.prefixIsKnown(q.prefix)
+            self._getAndValidateParts(qname)
+            return True
         except (KeyError, BrokenQNameException):
             return False
 

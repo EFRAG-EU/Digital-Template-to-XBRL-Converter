@@ -1,13 +1,20 @@
-from contextlib import contextmanager
+from importlib.abc import Traversable
 from importlib.resources import Package, files
-from json import load
-from typing import Generator
+from json import loads
+from typing import Any, Generator
 
-__all__ = ["loadJsonPackageResource"]
+__all__ = ["getResource", "getObject", "getJsonFiles"]
 
 
-@contextmanager
-def loadJsonPackageResource(module: Package, filename: str) -> Generator:
-    source = files(module).joinpath(filename)
-    with source.open("rb") as jf:
-        yield load(jf)
+def getResource(module: Package, filename: str) -> Traversable:
+    return files(module).joinpath(filename)
+
+
+def getObject(source: Traversable) -> Any:
+    return loads(source.read_bytes())
+
+
+def getJsonFiles(module: Package) -> Generator[Traversable, None, None]:
+    for f in files(module).iterdir():
+        if f.is_file() and f.name.endswith(".json"):
+            yield f

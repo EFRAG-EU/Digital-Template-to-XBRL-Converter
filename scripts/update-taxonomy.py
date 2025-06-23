@@ -27,6 +27,12 @@ def parser() -> argparse.ArgumentParser:
         default=None,
         help="Path to the UTR JSON file to be used.",
     )
+    parser.add_argument(
+        "--entry-point",
+        type=str,
+        default=VSME_ENTRY_POINT,
+        help=f"Entry point to the taxonomy. Default: {VSME_ENTRY_POINT}",
+    )
     return parser
 
 
@@ -36,6 +42,7 @@ def main() -> None:
     taxonomy_json_path = args.taxonomy_json_path
     taxonomy_zips = args.taxonomy_zips
     utr_json_path = args.utr_output
+    entry_point = args.entry_point
 
     taxonomy_zips = validateTaxonomyPackages(taxonomy_zips, cli)
 
@@ -43,7 +50,7 @@ def main() -> None:
 
     print("Calling into Arelle")
     results = callArelleForTaxonomyInfo(
-        VSME_ENTRY_POINT, taxonomy_zips, taxonomy_json_path, utr_json_path
+        entry_point, taxonomy_zips, taxonomy_json_path, utr_json_path
     )
     if results.logLines:
         print("\t", end="")

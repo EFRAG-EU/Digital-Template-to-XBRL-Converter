@@ -64,7 +64,17 @@ document.addEventListener("DOMContentLoaded", () => {
                     }
 
                     if (response.status >= 400) {
-                        throw new Error(`Server error ${response.status}`);
+                        let errorBody;
+                        const fallBackResponse = response.clone();
+                        try {
+                            const jsonResponse = await response.json();
+                            errorBody = jsonResponse.error ? jsonResponse.error : JSON.stringify(jsonResponse, null, 2);
+                        } catch (e) {
+                            const fallbackText = await fallBackResponse.text();
+                            errorBody = `Failed to parse JSON: ${e.message}. Response body: ${fallbackText}`;
+                        }
+
+                        throw new Error(`Server error ${response.status}: ${errorBody}`);
                     }
 
                     await new Promise(resolve => setTimeout(resolve, pollingInterval));

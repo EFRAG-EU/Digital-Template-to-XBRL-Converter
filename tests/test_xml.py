@@ -52,7 +52,7 @@ def test_generate_prefix(namespaces: NamespaceManager) -> None:
     assert p1 != p2
 
 
-def test_valid_qname(qmaker: QNameMaker) -> None:
+def test_qname_fromString(qmaker: QNameMaker) -> None:
     qmaker.fromString("xbrli:pure")
     qmaker.fromString("utr:badger")
 
@@ -70,3 +70,53 @@ def test_add_namespace(xbrli_and_utr: NamespaceManager) -> None:
     pG = p.getOrGeneratePrefixForNamespace(ns)
     assert p1 == pG
     assert p1 is pG, "String interning has been broken."
+
+
+@pytest.fixture
+def ns_manager() -> NamespaceManager:
+    ns = NamespaceManager()
+    ns.add("foo", "http://example.com/foo")
+    ns.add("bar", "http://example.org/bar")
+    ns.add("test", "http://test.net/ns")
+    ns.add("data", "http://data.local/ns")
+    return ns
+
+
+@pytest.fixture
+def qname_maker(ns_manager: NamespaceManager) -> QNameMaker:
+    qm = QNameMaker(ns_manager)
+    return qm
+
+
+def test_valid_qname(qname_maker: QNameMaker) -> None:
+    assert qname_maker.isValidQName("foo:Element")
+
+
+def test_valid_qname_with_punctuation(qname_maker: QNameMaker) -> None:
+    assert qname_maker.isValidQName("bar:foo-bar_123.baz")
+
+
+def test_invalid_qname_missing_colon(qname_maker: QNameMaker) -> None:
+    assert not qname_maker.isValidQName("testElement")
+
+
+def test_invalid_qname_empty_string(qname_maker: QNameMaker) -> None:
+    assert not qname_maker.isValidQName("")
+
+
+def test_invalid_qname_unknown_prefix(qname_maker: QNameMaker) -> None:
+    assert not qname_maker.isValidQName("unknown:Thing")
+
+
+def test_invalid_qname_bad_prefix_format(qname_maker: QNameMaker) -> None:
+    assert not qname_maker.isValidQName("1foo:Element")
+
+
+def test_invalid_qname_bad_local_name_format(qname_maker: QNameMaker) -> None:
+    assert not qname_maker.isValidQName("foo:!badname")
+
+
+def test_valid_qname_all_test_ns(qname_maker: QNameMaker) -> None:
+    assert qname_maker.isValidQName("test:ValidName")
+    assert qname_maker.isValidQName("data:another_one")
+    assert qname_maker.isValidQName("data:another_one.two")

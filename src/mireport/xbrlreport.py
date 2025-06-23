@@ -11,8 +11,9 @@ from enum import Enum, StrEnum, auto
 from io import BytesIO
 from itertools import count
 from pathlib import Path
-from typing import NamedTuple, Optional, cast
+from typing import NamedTuple, Optional, Self, cast
 from unicodedata import name as unicode_name
+from xml.sax.saxutils import escape as xml_escape
 
 import ixbrltemplates
 from jinja2 import Environment, PackageLoader
@@ -179,6 +180,8 @@ class Fact:
         return (self.concept.qname, self.value, aspects_flattened)
 
     def __eq__(self, other: object) -> bool:
+        if self is other:
+            return True
         if isinstance(other, Fact):
             return self.__key() == other.__key()
         return NotImplemented
@@ -335,21 +338,39 @@ class FactBuilder:
         bits = (self._concept, self._aspects, self._value)
         return f"FactBuilder{bits}"
 
-    def addAspect(self, name: str | QName, value: str | QName) -> "FactBuilder":
-        if not isinstance(name, (str, QName)):
-            raise InlineReportException("name must be (str, QName)")
-        if not isinstance(value, (str, QName)):
-            raise InlineReportException("value must be (str, QName)")
-        self._aspects[name] = value
+    def setExplicitDimension(
+        self, explicitDimension: Concept, explicitDimensionValue: Concept
+    ) -> Self:
+        assert explicitDimension.isExplicitDimension, (
+            f"Concept {explicitDimension=} is not an explicit dimension."
+        )
+        self._aspects[explicitDimension.qname] = explicitDimensionValue.qname
         return self
 
-    def setValue(self, value: _FactValue) -> "FactBuilder":
+    def setTypedDimension(
+        self, typedDimension: Concept, typedDimensionValue: _FactValue
+    ) -> Self:
+        assert typedDimension.isTypedDimension, (
+            f"Concept {typedDimension=} is not a typed dimension."
+        )
+        assert typedDimension.typedElement is not None, (
+            f"Typed dimension {typedDimension=} has no wrapper element defined."
+        )
+        if isinstance(typedDimensionValue, bool):
+            s_value = str(typedDimensionValue).lower()
+        else:
+            s_value = str(typedDimensionValue)
+        value = f'"<{typedDimension.typedElement}>{xml_escape(s_value)}</{typedDimension.typedElement}>"'
+        self._aspects[typedDimension.qname] = value
+        return self
+
+    def setValue(self, value: _FactValue) -> Self:
         self._value = value
         return self
 
-    def setPercentage(
+    def setPercentageValue(
         self, value: int | float, decimals: int, *, inputIsDecimalForm: bool = True
-    ) -> "FactBuilder":
+    ) -> Self:
         """Use instead of setValue() when you don't want to think about what to
         do with percentage values.
 
@@ -369,15 +390,15 @@ class FactBuilder:
             self.setDecimals(decimals)
         return self
 
-    def setDecimals(self, decimals: int) -> "FactBuilder":
+    def setDecimals(self, decimals: int) -> Self:
         self._aspects["decimals"] = f'"{decimals}"'
         return self
 
-    def setScale(self, scale: int) -> "FactBuilder":
+    def setScale(self, scale: int) -> Self:
         self._aspects["numeric-scale"] = f'"{scale}"'
         return self
 
-    def setNamedPeriod(self, periodName: str) -> "FactBuilder":
+    def setNamedPeriod(self, periodName: str) -> Self:
         """
         Sets the period for the fact to a named period in the InlineReport.
         """
@@ -388,13 +409,13 @@ class FactBuilder:
         self._aspects["period"] = periodName
         return self
 
-    def setHiddenValue(self, value: str) -> "FactBuilder":
+    def setHiddenValue(self, value: str) -> Self:
         if not value.startswith('"') and not value.endswith('"'):
             value = f'"{value}"'
         self._aspects["hidden-value"] = value
         return self
 
-    def setConcept(self, concept: Concept) -> "FactBuilder":
+    def setConcept(self, concept: Concept) -> Self:
         self._concept = concept
         if not concept.isReportable:
             raise InlineReportException(
@@ -402,11 +423,11 @@ class FactBuilder:
             )
         return self
 
-    def setSimpleUnit(self, measure: QName) -> "FactBuilder":
+    def setSimpleUnit(self, measure: QName) -> Self:
         self._aspects["units"] = measure
         return self
 
-    def setCurrency(self, code: QName | str) -> "FactBuilder":
+    def setCurrency(self, code: QName | str) -> Self:
         if not self._report.taxonomy.UTR.validCurrency(code):
             raise InlineReportException(
                 f"Currency '{code}' does not look like a valid currency code."
@@ -418,7 +439,7 @@ class FactBuilder:
         self,
         numerator: QName | Collection[QName],
         denominator: QName | Collection[QName],
-    ) -> "FactBuilder":
+    ) -> Self:
         if isinstance(numerator, QName):
             numerator = [numerator]
         if isinstance(denominator, QName):
@@ -453,20 +474,26 @@ class FactBuilder:
     def validateBoolean(self) -> None:
         if (value := self._value) is None:
             raise InlineReportException(f"Facts must have values {value=}")
-        s_value = str(value).strip().lower()
+
         b_value: bool | None = None
-        if s_value in ("true", "1", "yes"):
-            b_value = True
-        elif s_value in ("false", "0", "no"):
-            b_value = False
+        if isinstance(value, bool):
+            b_value = value
+        else:
+            s_value = str(value).strip().lower()
+            if s_value in {"true", "1", "yes"}:
+                b_value = True
+            elif s_value in {"false", "0", "no"}:
+                b_value = False
+
         if b_value is None:
             raise InlineReportException(
                 f"Unable to determine boolean value for string value {s_value=}"
             )
+
         if b_value is True:
-            self.addAspect("transform", "fixed-true")
+            self._aspects["transform"] = "fixed-true"
         else:
-            self.addAspect("transform", "fixed-false")
+            self._aspects["transform"] = "fixed-false"
 
     def validateNumeric(self) -> None:
         if self._concept is None:
@@ -736,13 +763,15 @@ class InlineReport:
             lines.append(f'{{{{ schema-ref "{url}" }}}}')
         return "\n".join(lines)
 
-    def getDocumentInformation(self) -> list[dict[str, str | tuple]]:
-        bits: list[dict[str, str | tuple]] = []
+    def getDocumentInformation(self) -> list[dict[str, str | PeriodHolder | Symbol]]:
+        bits: list[dict[str, str | PeriodHolder | Symbol]] = []
 
         def addDict(
-            key: str, value: str | tuple, format_macro: Optional[str] = None
+            key: str,
+            value: str | PeriodHolder | Symbol,
+            format_macro: Optional[str] = None,
         ) -> None:
-            d: dict[str, str | tuple] = {"key": key, "value": value}
+            d: dict[str, str | PeriodHolder | Symbol] = {"key": key, "value": value}
             if format_macro is not None:
                 d["format_macro"] = format_macro
             bits.append(d)
@@ -856,7 +885,7 @@ class InlineReport:
                     data=UNCONSTRAINED_REPORT_PACKAGE_JSON,
                 )
                 z.writestr(
-                    zinfo_or_arcname=f"{topLevel}/reports/" + report.filename,
+                    zinfo_or_arcname=f"{topLevel}/reports/{report.filename}",
                     data=report.fileContent,
                 )
             rpBytes = write_bio.getvalue()
@@ -869,12 +898,6 @@ class InlineReport:
         return FilelikeAndFileName(
             fileContent=self._getInlineReport().encode("UTF-8"), filename=filename
         )
-
-
-# get a list of sections
-# attach facts to the sections
-# output sections in label of section order
-#  - for each section, output facts in order defined in section
 
 
 class ReportLayoutOrganiser:

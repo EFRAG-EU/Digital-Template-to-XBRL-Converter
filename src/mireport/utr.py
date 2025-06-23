@@ -1,6 +1,6 @@
 from collections import defaultdict
 from functools import cache
-from typing import Optional
+from typing import Optional, Self
 
 from mireport.exceptions import UnitException
 from mireport.xml import ISO4217_NS, XBRLI_NS, QName, QNameMaker
@@ -22,7 +22,7 @@ class UTR:
         self._qnameMaker: QNameMaker = qnameMaker
 
     @classmethod
-    def fromDict(cls, utr: dict, *, qnameMaker: QNameMaker) -> "UTR":
+    def fromDict(cls, utr: dict, *, qnameMaker: QNameMaker) -> Self:
         """Load the UTR from a file."""
         unitToNamespaces: dict[str, list[str]] = {}
         dataTypeToUnit: dict[str | QName, list[str]] = defaultdict(list)

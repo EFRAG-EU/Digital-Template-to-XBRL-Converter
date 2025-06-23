@@ -56,8 +56,7 @@ dev = [
 ]
 
 redis = [
-    "flask-rq>=0.3.2",
-    "RQ==2.3.2",
+    "flask-rq>=0.3.3",
     "flask-session[redis]",
 ]
 
