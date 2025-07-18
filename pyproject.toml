@@ -16,7 +16,7 @@ dependencies = [
     "flask-session",
     "python-dateutil",
     "msgpack",
-    "rich",
+    "rich>=14.0.0",
     "arelle-release",
     "ixbrl-viewer",
     "waitress"
