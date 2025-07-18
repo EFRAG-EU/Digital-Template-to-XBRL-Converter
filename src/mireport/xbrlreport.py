@@ -32,7 +32,7 @@ from mireport.taxonomy import (
 
 L = logging.getLogger(__name__)
 
-_FactValue = int | float | bool | str
+_FactValue = int | float | bool | str | date | datetime
 
 UNCONSTRAINED_REPORT_PACKAGE_JSON = """{
     "documentInfo": {
@@ -364,7 +364,13 @@ class FactBuilder:
         self._aspects[typedDimension.qname] = value
         return self
 
-    def setValue(self, value: _FactValue) -> Self:
+    def setValue(self, value: object) -> Self:
+        if value is None:
+            raise InlineReportException("Fact value cannot be None.")
+
+        if not isinstance(value, _FactValue):
+            value = str(value)
+
         self._value = value
         return self
 
