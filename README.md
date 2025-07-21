@@ -5,7 +5,7 @@ This Excel-to-XBRL converter has been developed by EFRAG to support the SME ecos
 The tool enables users to convert data from structured Excel templates into XBRL (eXtensible Business Reporting Language) format by leveraging Excel named ranges. Each named range in the Excel file must correspond exactly to the local name of the relevant element in the VSME XBRL taxonomy. This ensures accurate and standards-compliant digital tagging of sustainability disclosures.
 
 > [!WARNING]  
-> The Digital Template has been developed and tested with the Microsoft Excel desktop application. It might not work fully correct in other applications. When reporting issues, please indicate which application has been used to fill the Digital Template.
+> The Digital Template has been developed and tested with the Microsoft Excel 365 desktop application. It might not work fully correct in other applications or older versions of MS Excel. When reporting issues, please indicate which application has been used to fill the Digital Template.
 
 A free instance of this tool is running on the [EFRAG XBRL site](https://xbrl.efrag.org/convert/)
 
