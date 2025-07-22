@@ -1291,7 +1291,19 @@ class ExcelProcessor:
                     self._definedNameToXBRLMap.pop(dn)
                     continue
 
-            fb.setConcept(concept).setValue(value)
+            fb.setConcept(concept)
+            if isinstance(value, _FactValue):
+                fb.setValue(value)
+            else:
+                self._results.addMessage(
+                        f"Rich object '{value}' {type(value).__name__} encountered as fact value for {concept}. Converting to string.",
+                        Severity.WARNING,
+                        MessageType.ExcelParsing,
+                        taxonomy_concept=concept,
+                        excel_reference=excelCellRef(stuff.worksheet, cell),
+                )
+                fb.setValue(str(value))
+
             if concept.isNumeric:
                 self.processNumeric(stuff, cell, fb, value)
             if concept.isNumeric and not concept.isMonetary:
