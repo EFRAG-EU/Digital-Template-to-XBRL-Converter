@@ -1296,11 +1296,11 @@ class ExcelProcessor:
                 fb.setValue(value)
             else:
                 self._results.addMessage(
-                        f"Rich object '{value}' {type(value).__name__} encountered as fact value for {concept}. Converting to string.",
-                        Severity.WARNING,
-                        MessageType.ExcelParsing,
-                        taxonomy_concept=concept,
-                        excel_reference=excelCellRef(stuff.worksheet, cell),
+                    f"Rich object '{value}' {type(value).__name__} encountered as fact value for {concept}. Converting to string.",
+                    Severity.WARNING,
+                    MessageType.ExcelParsing,
+                    taxonomy_concept=concept,
+                    excel_reference=excelCellRef(stuff.worksheet, cell),
                 )
                 fb.setValue(str(value))
 
