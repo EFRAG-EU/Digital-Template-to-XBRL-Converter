@@ -1,4 +1,4 @@
-name: Test and Lint
+name: Checks to run on "main" branch
 
 on:
   pull_request:
@@ -25,7 +25,7 @@ jobs:
           args: format --check .
 
   test:
-    name: Run Tests Sequentially
+    name: Unit and Integration Tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
