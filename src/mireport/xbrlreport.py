@@ -19,6 +19,7 @@ import ixbrltemplates
 from jinja2 import Environment, PackageLoader
 from markupsafe import Markup, escape
 
+import mireport
 from mireport.exceptions import InlineReportException
 from mireport.filesupport import FilelikeAndFileName, zipSafeString
 from mireport.taxonomy import (
@@ -672,6 +673,14 @@ class InlineReport:
         self._generatedReport: Optional[str] = None
         self._defaultPeriodName: str = ""
         self._schemaRefs: set[str] = set()
+        self._reportTitle: str = ""
+        self._reportSubtitle: str = ""
+
+    def setReportTitle(self, title: str) -> None:
+        self._reportTitle = title
+
+    def setReportSubtitle(self, subtitle: str) -> None:
+        self._reportSubtitle = subtitle
 
     @property
     def taxonomy(self) -> Taxonomy:
@@ -841,10 +850,22 @@ class InlineReport:
                 "schema_ref": self.getSchemaRefForAoix(),
                 "namespaces": self.getNamespacesForAoix(),
             },
+            reportInfo={
+                "entityName": self._entityName,
+                "defaultPeriod": self.defaultPeriod,
+                "factCount": self.factCount,
+                "title": self._reportTitle,
+                "subtitle": self._reportSubtitle,
+            },
+            software={
+                "version": mireport.__version__,
+                "name": "EFRAG Digital Template to XBRL Converter",
+            },
             report_period=self.defaultPeriod,
             entityName=self._entityName,
             sections=sections,
             facts=list(self._facts),
+            uniqueFactCount=len(frozenset(self._facts)),
             documentInfo=self.getDocumentInformation(),
         )
 

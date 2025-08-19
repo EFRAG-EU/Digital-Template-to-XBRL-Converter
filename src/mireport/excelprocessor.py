@@ -342,17 +342,43 @@ class ExcelProcessor:
                     self._report.setDefaultPeriodName(name)
 
         if "report" in defaults:
-            entityName_namedRange = defaults["report"]["entity-name"]
-            if entityName_namedRange in self._workbook.defined_names:
-                self._report.setEntityName(
-                    self.getSingleStringValue(entityName_namedRange)
-                )
-            else:
-                self._results.addMessage(
-                    f"Excel report must have a value for named range {entityName_namedRange}.",
-                    Severity.ERROR,
-                    MessageType.ExcelParsing,
-                )
+            report_defaults = defaults["report"]
+            self.setReportMetadata(
+                report_defaults, "entity-name", self._report.setEntityName
+            )
+            self.setReportMetadata(
+                report_defaults, "report-title", self._report.setReportTitle
+            )
+            self.setReportMetadata(
+                report_defaults, "report-subtitle", self._report.setReportSubtitle
+            )
+
+    def setReportMetadata(
+        self, report_defaults: dict, key: str, method: Callable[[str], None]
+    ) -> None:
+        config = report_defaults.get(key)
+        if not isinstance(config, dict) or "named-range" not in config:
+            self._results.addMessage(
+                f"Missing or invalid named range for report metadata key '{key}'.",
+                Severity.ERROR,
+                MessageType.ExcelParsing,
+            )
+            return
+
+        named_range = config["named-range"]
+        fallback = config.get("fallback")
+
+        if named_range in self._workbook.defined_names:
+            value = self.getSingleStringValue(named_range)
+            method(value)
+        elif fallback is not None:
+            method(fallback)
+        else:
+            self._results.addMessage(
+                f"Excel report must have a value for named range '{named_range}'.",
+                Severity.ERROR,
+                MessageType.ExcelParsing,
+            )
 
     def abortEarlyIfErrors(self) -> None:
         if self._results.hasErrors():
