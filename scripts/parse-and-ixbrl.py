@@ -26,9 +26,14 @@ def createArgParser() -> argparse.ArgumentParser:
     )
     parser.add_argument("excel_file", type=Path, help="Path to the Excel file")
     parser.add_argument(
-        "output_dir",
+        "output_path",
         type=Path,
-        help="Directory to save the generated HTML file to. Overwrites existing files.",
+        help="Path to save the output. Can be a directory or a file. Automatically creates directories and warns before overwriting files.",
+    )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Suppress overwrite warnings and force file replacement.",
     )
     parser.add_argument(
         "--devinfo",
@@ -72,6 +77,27 @@ def parseArgs(parser: argparse.ArgumentParser) -> argparse.Namespace:
     return args
 
 
+def prepare_output_path(path: Path, force: bool) -> tuple[Path, bool]:
+    if path.exists():
+        if path.is_dir():
+            path.mkdir(parents=True, exist_ok=True)
+            return path, True
+        else:
+            if not force:
+                print(f"⚠️ Warning: Overwriting existing file: {path}")
+            path.parent.mkdir(parents=True, exist_ok=True)
+            return path, False
+    else:
+        if path.suffix:
+            # Treat as file
+            path.parent.mkdir(parents=True, exist_ok=True)
+            return path, False
+        else:
+            # Treat as directory
+            path.mkdir(parents=True, exist_ok=True)
+            return path, True
+
+
 def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, ExcelProcessor]:
     resultsBuilder = ConversionResultsBuilder(consoleOutput=True)
     with resultsBuilder.processingContext(
@@ -88,15 +114,22 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, ExcelProc
         )
         excel = ExcelProcessor(args.excel_file, resultsBuilder, VSME_DEFAULTS)
         report = excel.populateReport()
-        pc.mark(
-            "Generating Inline Report",
-            additionalInfo=f"Writing files to {args.output_dir} ({report.factCount} facts to include)",
-        )
+        pc.mark("Generating Inline Report")
         reportFile = report.getInlineReport()
         reportPackage = report.getInlineReportPackage()
 
-        reportFile.saveToDirectory(args.output_dir)
-        reportPackage.saveToDirectory(args.output_dir)
+        output_path, dir_specified = prepare_output_path(args.output_path, args.force)
+        if dir_specified:
+            pc.addDevInfoMessage(
+                f"Writing various files to {output_path} ({report.factCount} facts to include)"
+            )
+            reportFile.saveToDirectory(output_path)
+            reportPackage.saveToDirectory(output_path)
+        else:
+            pc.addDevInfoMessage(
+                f"Writing to {output_path} ({report.factCount} facts to include)"
+            )
+            reportFile.saveToFilepath(output_path)
 
         if not args.skip_validation:
             pc.mark(
