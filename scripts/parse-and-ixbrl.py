@@ -25,7 +25,11 @@ def createArgParser() -> argparse.ArgumentParser:
         description="Extract facts from Excel and generate HTML."
     )
     parser.add_argument("excel_file", type=Path, help="Path to the Excel file")
-    parser.add_argument("output_dir", type=Path, help="Directory to save the generated HTML file to. Overwrites existing files.")
+    parser.add_argument(
+        "output_dir",
+        type=Path,
+        help="Directory to save the generated HTML file to. Overwrites existing files.",
+    )
     parser.add_argument(
         "--devinfo",
         action=argparse.BooleanOptionalAction,
