@@ -1,5 +1,6 @@
 import argparse
 import logging
+from pathlib import Path
 
 import rich.traceback
 from rich.logging import RichHandler
@@ -23,8 +24,8 @@ def createArgParser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Extract facts from Excel and generate HTML."
     )
-    parser.add_argument("excel_file", help="Path to the Excel file")
-    parser.add_argument("output_file", help="Path to save the generated HTML file")
+    parser.add_argument("excel_file", type=Path, help="Path to the Excel file")
+    parser.add_argument("output_dir", type=Path, help="Directory to save the generated HTML file to. Overwrites existing files.")
     parser.add_argument(
         "--devinfo",
         action=argparse.BooleanOptionalAction,
@@ -85,19 +86,25 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, ExcelProc
         report = excel.populateReport()
         pc.mark(
             "Generating Inline Report",
-            additionalInfo=f"Writing to {args.output_file} ({report.factCount} facts to include)",
+            additionalInfo=f"Writing files to {args.output_dir} ({report.factCount} facts to include)",
         )
-        report.saveInlineReport(args.output_file)
+        reportFile = report.getInlineReport()
+        reportPackage = report.getInlineReportPackage()
+
+        reportFile.saveToDirectory(args.output_dir)
+        reportPackage.saveToDirectory(args.output_dir)
+
         if not args.skip_validation:
             pc.mark(
                 "Validating using Arelle",
                 additionalInfo=f"({ARELLE_VERSION_INFORMATION})",
             )
+            pc.addDevInfoMessage(f"Created Inline Report package: {reportPackage}")
             arelleResults: ArelleProcessingResult = ArelleReportProcessor(
                 taxonomyPackages=args.taxonomy_packages,
                 workOffline=args.offline,
             ).validateReportPackage(
-                report.getInlineReportPackage(),
+                reportPackage,
             )
             resultsBuilder.addMessages(arelleResults.messages)
     return resultsBuilder.build(), excel
@@ -146,7 +153,7 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    rich.traceback.install()
+    rich.traceback.install(show_locals=True)
     logging.basicConfig(
         format="%(message)s",
         datefmt="[%Y-%m-%d %H:%M:%S]",

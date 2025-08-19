@@ -1,6 +1,5 @@
 import argparse
 import glob
-import shutil
 import time
 from pathlib import Path
 
@@ -18,7 +17,7 @@ def parse_args() -> argparse.Namespace:
         help="Path to the report package to be checked.",
     )
     argparser.add_argument(
-        "--taxonomy_packages",
+        "--taxonomy-packages",
         type=str,
         nargs="+",
         default=[],
@@ -85,24 +84,20 @@ def main() -> None:
 
     start = time.perf_counter_ns()
     print("Calling into Arelle")
-    a = ArelleReportProcessor(
+    arp = ArelleReportProcessor(
         taxonomyPackages=taxonomy_packages, workOffline=workOffline
     )
     source = getOrCreateReportPackage(report_path)
 
     if not viewer_path:
-        arelle_result = a.validateReportPackage(
+        arelle_result = arp.validateReportPackage(
             source, disableCalculationValidation=args.ignore_calculation_warnings
         )
     else:
         if viewer_path.is_file():
             print(f"Overwriting {viewer_path}.")
-        arelle_result = a.generateInlineViewer(source)
-        with open(viewer_path, "wb") as out:
-            shutil.copyfileobj(arelle_result.viewer.fileLike(), out)
-    if arelle_result.logLines:
-        print("\t", end="")
-        print(*arelle_result.logLines, sep="\n\t")
+        arelle_result = arp.generateInlineViewer(source)
+        arelle_result.viewer.saveToFilepath(viewer_path)
     elapsed = (time.perf_counter_ns() - start) / 1_000_000_000
     print(f"Finished querying Arelle ({elapsed:,.2f} seconds elapsed).")
 
