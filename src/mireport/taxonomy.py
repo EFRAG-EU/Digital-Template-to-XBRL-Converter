@@ -183,14 +183,55 @@ class Concept:
             self._eeDomainMemberStrings = None
 
     def _getLabelForRole(
-        self, roleUri: str, lang: str = "en", fallbackIfMissing: Optional[str] = None
+        self,
+        roleUri: str,
+        requestedLanguage: str = "en",
+        fallbackLabel: Optional[str] = None,
+        fallbackAnyLang: bool = False,
+        removeSuffix: bool = False,
     ) -> Optional[str]:
-        labels_for_lang = self._labels[lang]
-        return labels_for_lang.get(roleUri, fallbackIfMissing)
+        requestedLanguage = requestedLanguage.lower()
+        labels_for_lang: dict[str, str] = {}
+        desired_label = None
+
+        if requestedLanguage in self._labels:
+            labels_for_lang = self._labels[requestedLanguage]
+            desired_label = labels_for_lang.get(roleUri)
+        else:
+            label_langs = self._labels.keys()
+            wanted_lang = requestedLanguage.partition("-")[0]
+            for p in label_langs:
+                if p.partition("-")[0] == wanted_lang:
+                    labels_for_lang = self._labels[p]
+                    desired_label = labels_for_lang.get(roleUri)
+                    if desired_label:
+                        break
+
+        if not desired_label and fallbackAnyLang:
+            for d in self._labels.values():
+                for role, label in d.items():
+                    if role == roleUri:
+                        labels_for_lang[role] = label
+                        desired_label = labels_for_lang.get(roleUri)
+                        if desired_label:
+                            break
+
+        if desired_label is None and fallbackLabel is not None:
+            desired_label = fallbackLabel
+
+        if not desired_label or not removeSuffix:
+            return desired_label
+
+        return LABEL_SUFFIX_PATTERN.sub("", desired_label)
 
     @overload
     def getStandardLabel(
-        self, lang: str = "en", *, fallbackIfMissing: str, removeSuffix: bool = ...
+        self,
+        lang: str = "en",
+        *,
+        fallbackIfMissing: str,
+        removeSuffix: bool = ...,
+        fallbackAnyLang: bool = ...,
     ) -> str: ...
 
     @overload
@@ -200,6 +241,7 @@ class Concept:
         *,
         fallbackIfMissing: None = None,
         removeSuffix: bool = ...,
+        fallbackAnyLang: bool = ...,
     ) -> Optional[str]: ...
 
     def getStandardLabel(
@@ -208,21 +250,23 @@ class Concept:
         *,
         fallbackIfMissing: Optional[str] = None,
         removeSuffix: bool = False,
+        fallbackAnyLang: bool = False,
     ) -> Optional[str]:
-        label = self._getLabelForRole(
-            STANDARD_LABEL_ROLE, lang=lang, fallbackIfMissing=fallbackIfMissing
+        return self._getLabelForRole(
+            STANDARD_LABEL_ROLE,
+            requestedLanguage=lang,
+            fallbackLabel=fallbackIfMissing,
+            fallbackAnyLang=fallbackAnyLang,
+            removeSuffix=removeSuffix,
         )
-
-        if not label or not removeSuffix:
-            return label
-
-        return LABEL_SUFFIX_PATTERN.sub("", label)
 
     def getDocumentationLabel(
         self, lang: str = "en", fallbackIfMissing: Optional[str] = None
     ) -> Optional[str]:
         return self._getLabelForRole(
-            DOCUMENTATION_LABEL_ROLE, lang=lang, fallbackIfMissing=fallbackIfMissing
+            DOCUMENTATION_LABEL_ROLE,
+            requestedLanguage=lang,
+            fallbackLabel=fallbackIfMissing,
         )
 
     def getMeasurementGuidanceLabel(
@@ -230,8 +274,8 @@ class Concept:
     ) -> Optional[str]:
         return self._getLabelForRole(
             MEASUREMENT_GUIDANCE_LABEL_ROLE,
-            lang=lang,
-            fallbackIfMissing=fallbackIfMissing,
+            requestedLanguage=lang,
+            fallbackLabel=fallbackIfMissing,
         )
 
     @cache
