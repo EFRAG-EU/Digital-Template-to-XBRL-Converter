@@ -45,6 +45,14 @@ def main() -> None:
     entry_point = args.entry_point
 
     taxonomy_zips = validateTaxonomyPackages(taxonomy_zips, cli)
+    print(
+        "Using:",
+        f"Taxonomy entry point: {entry_point}",
+        f"Taxonomy JSON path: {taxonomy_json_path}",
+        f"Taxonomy packages:\n\t\t{' '.join(taxonomy_zips)}",
+        f"UTR JSON path: {utr_json_path}" if utr_json_path else "No UTR processing requested",
+        sep="\n\t"
+    )
 
     start = time.perf_counter_ns()
 
