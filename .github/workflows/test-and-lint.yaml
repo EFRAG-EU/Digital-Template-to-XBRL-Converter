@@ -1,4 +1,4 @@
-name: Checks to run on "main" branch
+name: Pull / push to main checks
 
 on:
   pull_request:
