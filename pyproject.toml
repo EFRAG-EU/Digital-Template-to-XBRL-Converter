@@ -17,7 +17,7 @@ dependencies = [
     "python-dateutil",
     "msgpack",
     "rich>=14.0.0",
-    "arelle-release",
+    "arelle-release>=2.37.37",
     "ixbrl-viewer",
     "waitress"
 ]
