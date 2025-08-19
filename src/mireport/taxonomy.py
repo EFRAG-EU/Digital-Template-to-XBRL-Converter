@@ -376,6 +376,7 @@ class Relationship(NamedTuple):
     roleUri: str
     depth: int
     concept: Concept
+    preferredLabel: Optional[str] = None
 
 
 class PresentationGroup(NamedTuple):
@@ -419,10 +420,15 @@ class Taxonomy:
         self._relationships: dict[str, list[Relationship]] = defaultdict(list)
         for roleUri, bits in presentation.items():
             self._groupLabels[roleUri] = bits["labels"]
-            for indent, concept_qname in bits["rows"]:
+            for row in bits["rows"]:
+                if len(row) == 2:
+                    indent, concept_qname = row
+                    preferredLabel = None
+                else:
+                    indent, concept_qname, preferredLabel = row
                 concept = self.getConcept(concept_qname)
                 self._relationships[roleUri].append(
-                    Relationship(roleUri, indent, concept)
+                    Relationship(roleUri, indent, concept, preferredLabel)
                 )
 
         self._lookupConceptsByName = defaultdict(list)
