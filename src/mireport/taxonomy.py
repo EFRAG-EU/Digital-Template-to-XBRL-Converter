@@ -792,12 +792,13 @@ def listTaxonomies() -> list[str]:
 
 
 def _loadTaxonomyFromFile(bits: dict) -> None:
-    qnameMaker = getBootsrapQNameMaker()
     entryPoint = bits["entryPoint"]
     if _TAXONOMIES.get(entryPoint) is not None:
         raise TaxonomyException(
             f"Already loaded taxonomy. Taxonomies loaded: {' '.join(_TAXONOMIES.keys())}"
         )
+
+    qnameMaker = getBootsrapQNameMaker()
     for prefix, namespace in bits["namespaces"].items():
         qnameMaker.addNamespacePrefix(prefix, namespace)
 
