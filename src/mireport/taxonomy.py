@@ -4,6 +4,7 @@ concept details and presentation networks.
 """
 
 import re
+import warnings
 from collections import defaultdict
 from enum import Enum, StrEnum, auto
 from functools import cache, cached_property
@@ -580,11 +581,11 @@ class Taxonomy:
             oc_str = "\n".join(
                 f"{role}\n\t{c.qname}"
                 for role, c in sorted(
-                    ((role, c) for role, _, c in open_hcs),
+                    ((x.roleUri, x.concept) for x in open_hcs),
                 )
             )
             te.add_note(f"Open hypercubes:\n{oc_str}")
-            raise te
+            warnings.warn(UserWarning(te))
 
         match len(desired_containers):
             case 0:
