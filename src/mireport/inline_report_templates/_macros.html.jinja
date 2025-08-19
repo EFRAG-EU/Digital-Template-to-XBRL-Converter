@@ -1,6 +1,6 @@
 {% macro render_fact_value(fact, unitAlreadyDisplayed) -%}
     {%- if fact.concept.isMonetary -%}
-        {{- fact.unitSymbol }} {{ fact.as_aoix() -}}
+        {% if not unitAlreadyDisplayed %}{{- fact.unitSymbol }}{% endif %} {{ fact.as_aoix() -}}
     {%- elif fact.concept.isNumeric -%}
         {{- fact.as_aoix() }} {% if not unitAlreadyDisplayed %}{{ fact.unitSymbol -}}{% endif %}
     {%- else -%}
