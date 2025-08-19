@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from datetime import date, datetime
 from itertools import combinations
 from pathlib import Path
-from typing import BinaryIO, NamedTuple, Optional, Self
+from typing import BinaryIO, Callable, NamedTuple, Optional, Self
 
 from dateutil.parser import parse as parse_datetime
 from dateutil.relativedelta import relativedelta

@@ -63,7 +63,7 @@ def test_zipSafeString_custom_fallback() -> None:
     assert zipSafeString("CON", fallback="default") == "default"
 
 
-def test_FilelikeAndFileName_creation():
+def test_FilelikeAndFileName_creation() -> None:
     """Test basic creation and properties."""
     content = b"Hello, World!"
     filename = "test.txt"
@@ -73,7 +73,7 @@ def test_FilelikeAndFileName_creation():
     assert file_obj.filename == filename
 
 
-def test_FilelikeAndFileName_fileLike():
+def test_FilelikeAndFileName_fileLike() -> None:
     """Test fileLike() method returns proper BytesIO."""
     content = b"Test content for BytesIO"
     file_obj = FilelikeAndFileName(content, "test.txt")
@@ -88,7 +88,7 @@ def test_FilelikeAndFileName_fileLike():
     assert bio is not bio2  # Different instances
 
 
-def test_FilelikeAndFileName_str():
+def test_FilelikeAndFileName_str() -> None:
     """Test string representation."""
     content = b"Some test data"
     filename = "example.doc"
@@ -98,20 +98,20 @@ def test_FilelikeAndFileName_str():
     assert str(file_obj) == expected
 
 
-def test_FilelikeAndFileName_str_empty_content():
+def test_FilelikeAndFileName_str_empty_content() -> None:
     """Test string representation with empty content."""
     file_obj = FilelikeAndFileName(b"", "empty.txt")
     assert str(file_obj) == "empty.txt [0 bytes]"
 
 
-def test_FilelikeAndFileName_str_large_content():
+def test_FilelikeAndFileName_str_large_content() -> None:
     """Test string representation with large content."""
     content = b"x" * 1024
     file_obj = FilelikeAndFileName(content, "large.bin")
     assert str(file_obj) == "large.bin [1024 bytes]"
 
 
-def test_saveToFilepath_creates_file():
+def test_saveToFilepath_creates_file() -> None:
     """Test saveToFilepath creates file with correct content."""
     content = b"Test file content"
     filename = "test_save.txt"
@@ -125,7 +125,7 @@ def test_saveToFilepath_creates_file():
         assert file_path.read_bytes() == content
 
 
-def test_saveToFilepath_overwrites_existing():
+def test_saveToFilepath_overwrites_existing() -> None:
     """Test saveToFilepath overwrites existing files."""
     original_content = b"Original content"
     new_content = b"New content"
@@ -143,7 +143,7 @@ def test_saveToFilepath_overwrites_existing():
         assert file_path.read_bytes() == new_content
 
 
-def test_saveToFilepath_parent_file_error():
+def test_saveToFilepath_parent_file_error() -> None:
     """Test saveToFilepath when parent path is an existing file."""
     content = b"Parent file test"
     file_obj = FilelikeAndFileName(content, "output.txt")
@@ -160,24 +160,7 @@ def test_saveToFilepath_parent_file_error():
             file_obj.saveToFilepath(bad_path)
 
 
-def test_saveToFilepath_parent_file_error():
-    """Test saveToFilepath when parent path is an existing file."""
-    content = b"Parent file test"
-    file_obj = FilelikeAndFileName(content, "output.txt")
-
-    with tempfile.TemporaryDirectory() as temp_dir:
-        # Create a file that we'll try to use as a parent directory
-        blocking_file = Path(temp_dir) / "blocking_file.txt"
-        blocking_file.write_text("I'm blocking the path!")
-
-        # Try to save to a path where the parent is a file
-        bad_path = blocking_file / "output.txt"
-
-        with pytest.raises(ValueError, match="is an existing file, not a directory"):
-            file_obj.saveToFilepath(bad_path)
-
-
-def test_saveToFilepath_parent_does_not_exist():
+def test_saveToFilepath_parent_does_not_exist() -> None:
     """Test saveToFilepath when parent directory doesn't exist."""
     content = b"Missing parent test"
     file_obj = FilelikeAndFileName(content, "output.txt")
@@ -190,7 +173,7 @@ def test_saveToFilepath_parent_does_not_exist():
             file_obj.saveToFilepath(missing_path)
 
 
-def test_saveToFilepath_binary_content():
+def test_saveToFilepath_binary_content() -> None:
     """Test saveToFilepath handles binary content correctly."""
     # Test with binary data including null bytes
     content = bytes(range(256))
@@ -203,7 +186,7 @@ def test_saveToFilepath_binary_content():
         assert file_path.read_bytes() == content
 
 
-def test_saveToDirectory_creates_file():
+def test_saveToDirectory_creates_file() -> None:
     """Test saveToDirectory creates file in directory."""
     content = b"Directory save test"
     filename = "dir_test.txt"
@@ -218,7 +201,7 @@ def test_saveToDirectory_creates_file():
         assert expected_path.read_bytes() == content
 
 
-def test_saveToDirectory_creates_nested_directories():
+def test_saveToDirectory_creates_nested_directories() -> None:
     """Test saveToDirectory creates nested directories."""
     content = b"Nested directory test"
     filename = "nested_test.txt"
@@ -234,7 +217,7 @@ def test_saveToDirectory_creates_nested_directories():
         assert expected_path.read_bytes() == content
 
 
-def test_saveToDirectory_existing_directory():
+def test_saveToDirectory_existing_directory() -> None:
     """Test saveToDirectory works with existing directory."""
     content = b"Existing dir test"
     filename = "existing_dir_test.txt"
@@ -249,7 +232,7 @@ def test_saveToDirectory_existing_directory():
         assert expected_path.read_bytes() == content
 
 
-def test_saveToDirectory_empty_content():
+def test_saveToDirectory_empty_content() -> None:
     """Test saveToDirectory handles empty content."""
     file_obj = FilelikeAndFileName(b"", "empty.txt")
 
@@ -262,7 +245,7 @@ def test_saveToDirectory_empty_content():
         assert expected_path.read_bytes() == b""
 
 
-def test_saveToDirectory_special_filename():
+def test_saveToDirectory_special_filename() -> None:
     """Test saveToDirectory with filename containing dots and underscores."""
     content = b"Special filename test"
     filename = "my_file.name.with.dots.txt"
@@ -277,7 +260,7 @@ def test_saveToDirectory_special_filename():
         assert expected_path.read_bytes() == content
 
 
-def test_saveToDirectory_existing_file_path_error():
+def test_saveToDirectory_existing_file_path_error() -> None:
     """Test saveToDirectory behavior when passed an existing file path."""
     content = b"File path test"
     filename = "output.txt"
@@ -293,7 +276,7 @@ def test_saveToDirectory_existing_file_path_error():
             file_obj.saveToDirectory(existing_file)
 
 
-def test_saveToDirectory_file_extension_in_path():
+def test_saveToDirectory_file_extension_in_path() -> None:
     """Test saveToDirectory when path looks like a file (has extension)."""
     content = b"Extension test"
     filename = "result.txt"
@@ -312,7 +295,7 @@ def test_saveToDirectory_file_extension_in_path():
         assert expected_file.read_bytes() == content
 
 
-def test_namedtuple_behavior():
+def test_namedtuple_behavior() -> None:
     """Test that FilelikeAndFileName behaves as a NamedTuple."""
     content = b"NamedTuple test"
     filename = "tuple_test.txt"
@@ -331,7 +314,7 @@ def test_namedtuple_behavior():
     assert file_obj._fields == ("fileContent", "filename")
 
 
-def test_immutability():
+def test_immutability() -> None:
     """Test that FilelikeAndFileName is immutable (NamedTuple behavior)."""
     content = b"Immutable test"
     filename = "immutable.txt"

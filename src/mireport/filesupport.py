@@ -57,15 +57,17 @@ class FilelikeAndFileName(NamedTuple):
     def saveToFilepath(self, path: Path) -> None:
         """Saves the file content to the specified path."""
         parent = path.parent
-        
+
         # Check if parent directory exists and is actually a file
         if parent.exists() and parent.is_file():
-            raise ValueError(f"Parent path {parent} is an existing file, not a directory")
-        
+            raise ValueError(
+                f"Parent path {parent} is an existing file, not a directory"
+            )
+
         # Check if parent directory exists
         if not parent.exists():
             raise ValueError(f"Parent directory {parent} does not exist")
-        
+
         with open(path, "wb") as f:
             f.write(self.fileContent)
             f.flush()
@@ -76,7 +78,7 @@ class FilelikeAndFileName(NamedTuple):
         """Saves the file content to the specified directory using @self.filename."""
         if directory.exists() and directory.is_file():
             raise ValueError(f"Path {directory} is an existing file, not a directory")
-        
+
         if not directory.exists():
             directory.mkdir(parents=True, exist_ok=True)
         self.saveToFilepath(directory / self.filename)
