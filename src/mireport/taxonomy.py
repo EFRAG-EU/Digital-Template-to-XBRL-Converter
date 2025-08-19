@@ -422,6 +422,14 @@ class Relationship(NamedTuple):
     concept: Concept
     preferredLabel: Optional[str] = None
 
+    def getLabel(self, lang: str = "en", removeSuffix: bool = True) -> Optional[str]:
+        """Get the label for this relationship's concept."""
+        if self.preferredLabel is None:
+            return self.concept.getStandardLabel(lang, removeSuffix=removeSuffix)
+        return self.concept._getLabelForRole(
+            self.preferredLabel, lang, removeSuffix=removeSuffix
+        )
+
 
 class PresentationGroup(NamedTuple):
     roleUri: str
