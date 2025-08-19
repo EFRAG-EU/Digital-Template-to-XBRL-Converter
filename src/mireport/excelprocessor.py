@@ -12,7 +12,6 @@ from typing import BinaryIO, Callable, NamedTuple, Optional, Self
 from dateutil.parser import parse as parse_datetime
 from dateutil.relativedelta import relativedelta
 from openpyxl import Workbook
-from openpyxl.cell.cell import Cell
 from openpyxl.workbook.defined_name import DefinedName
 from openpyxl.worksheet.cell_range import CellRange
 from openpyxl.worksheet.worksheet import Worksheet
@@ -621,7 +620,17 @@ class ExcelProcessor:
                 return None
 
     def _processNamedRanges(self) -> None:
-        for dn in sorted(self._unusedDefinedNames, key=lambda d: d.name):
+        for dn in self._unusedDefinedNames.copy():
+            if dn.name is None:
+                self._results.addMessage(
+                    "Named range has no name. Skipping.",
+                    Severity.ERROR,
+                    MessageType.DevInfo,
+                    excel_reference=excelDefinedNameRef(dn),
+                )
+                self._unusedDefinedNames.remove(dn)
+                continue
+
             concept = self.taxonomy.getConceptForName(dn.name)
 
             # TODO FIXME Temporary fix for the VSME taxonomy
@@ -864,7 +873,7 @@ class ExcelProcessor:
         ]
         for periodHolder in periodHolders:
             dimValueDN = periodHolder.definedName
-            namedPeriod = dimValueDN.name
+            namedPeriod = dimValueDN.name or ""
             year = self.getSingleValue(dimValueDN)
             if year is None or year in EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE:
                 self._definedNameToXBRLMap.pop(dimValueDN)
@@ -925,8 +934,7 @@ class ExcelProcessor:
                     cells = [cell for cell in row if cell.value is not None]
                     match len(cells):
                         case 0:
-                            cell = None
-                            value = None
+                            continue
                         case 1:
                             cell = cells[0]
                             value = cell.value
@@ -1040,13 +1048,15 @@ class ExcelProcessor:
                                 broken = True
                                 continue
 
-                            memberConcept = self.taxonomy.getConceptForLabel(edValue)
+                            memberConcept = self.taxonomy.getConceptForLabel(
+                                str(edValue)
+                            )
                             if (
                                 memberConcept is None
                                 and (
                                     fake_value
                                     := self._configCellValuesToTaxonomyLabels.get(
-                                        edValue
+                                        str(edValue)
                                     )
                                 )
                                 is not None
@@ -1073,7 +1083,7 @@ class ExcelProcessor:
                         if concept.isEnumerationSingle:
                             if (
                                 eeValue := self._report.taxonomy.getConceptForLabel(
-                                    value
+                                    str(value)
                                 )
                             ) is not None:
                                 factBuilder.setHiddenValue(eeValue.expandedName)
@@ -1083,8 +1093,8 @@ class ExcelProcessor:
                                     f"Unable to find EE concept for cell value '{value}'",
                                     Severity.ERROR,
                                     MessageType.Conversion,
-                                    excel_reference=excelCellRef(
-                                        priItem.worksheet, cell
+                                    excel_reference=excelCellOrCellRangeRef(
+                                        priItem.worksheet, priItem.cellRange, cell
                                     ),
                                 )
                         elif concept.isEnumerationSet:
@@ -1092,7 +1102,7 @@ class ExcelProcessor:
                             for v in values:
                                 if (
                                     eeValue := self._report.taxonomy.getConceptForLabel(
-                                        v
+                                        str(v)
                                     )
                                 ) is not None:
                                     eeValues.append(eeValue)
@@ -1293,6 +1303,7 @@ class ExcelProcessor:
             if cell is None:
                 self._definedNameToXBRLMap.pop(dn)
                 continue
+
             value = cell.value
             if value is None or value is False:
                 # No value in the cell, so not reportable
@@ -1332,6 +1343,7 @@ class ExcelProcessor:
 
             if concept.isNumeric:
                 self.processNumeric(stuff, cell, fb, value)
+
             if concept.isNumeric and not concept.isMonetary:
                 self.setUnitForName(stuff, fb)
             elif concept.isMonetary:
@@ -1419,8 +1431,8 @@ class ExcelProcessor:
             if v is None or v is False:
                 continue
             if v is True:
-                rindex = rnum - stuff.cellRange.min_row
-                cindex = cnum - stuff.cellRange.min_col
+                rindex = rnum - int(stuff.cellRange.min_row or 0)
+                cindex = cnum - int(stuff.cellRange.min_col or 0)
                 if 1 == stuff.effectiveHeight:
                     index = cindex
                 elif 1 == stuff.effectiveWidth:
@@ -1570,12 +1582,35 @@ class ExcelProcessor:
     def processNumeric(
         self,
         stuff: CellAndXBRLMetadataHolder,
-        cell: Cell,
+        cell: _CellType,
         fb: FactBuilder,
-        value: Optional[int] = None,
+        value: Optional[object] = None,
     ) -> None:
         if value is None:
-            value = cell.value
+            if cell.value is None:
+                self._results.addMessage(
+                    f"Cell value is None for {stuff.definedName.name}. Unable to process numeric value.",
+                    Severity.ERROR,
+                    MessageType.DevInfo,
+                    excel_reference=excelCellOrCellRangeRef(
+                        stuff.worksheet, stuff.cellRange, cell
+                    ),
+                )
+                return
+            else:
+                value = cell.value
+
+        if isinstance(value, bool) or not isinstance(value, int | float):
+            self._results.addMessage(
+                f"Cell value {value=} {type(value)} is not numeric for {stuff.definedName.name}. Unable to process numeric value.",
+                Severity.ERROR,
+                MessageType.DevInfo,
+                excel_reference=excelCellOrCellRangeRef(
+                    stuff.worksheet, stuff.cellRange, cell
+                ),
+            )
+            return
+
         decimals = get_decimal_places(cell)
 
         cell_is_percentage = "%" in cell.number_format
