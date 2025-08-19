@@ -383,8 +383,11 @@ class TaxonomyInfoExtractor:
                 jconcept["labels"][lang] = {}
             if role in jconcept["labels"][lang]:
                 label0 = jconcept["labels"][lang][role]
-                raise ArelleRelatedException(f"Multiple labels with the same role defined in taxonomy. {label0=} {label=} {lang=} {role=}", jconcept)
-            jconcept["labels"][lang][role] = label                
+                raise ArelleRelatedException(
+                    f"Multiple labels with the same role defined in taxonomy. {label0=} {label=} {lang=} {role=}",
+                    jconcept,
+                )
+            jconcept["labels"][lang][role] = label
 
     def extractConceptsAndMetadata(self) -> None:
         self.cntlr.addToLog("Processing concepts (including labels and references)")
