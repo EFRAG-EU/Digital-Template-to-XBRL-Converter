@@ -22,7 +22,6 @@ from mireport.arelle.support import (
     ArelleProcessingResult,
     ArelleRelatedException,
 )
-from mireport.taxonomy import MEASUREMENT_GUIDANCE_LABEL_ROLE
 
 PLUGIN_NAME = "Taxonomy Information Extractor"
 T = TypeVar("T")
@@ -185,7 +184,7 @@ class TaxonomyInfoExtractor:
             utrExtractor = UTRInfoExtractor(self.cntlr, self.modelXbrl, pdata)
             utrExtractor.extract()
 
-    def walkChildren(
+    def walkDefinitionChildren(
         self,
         parent_concept: ModelConcept,
         relSet: ModelRelationshipSet,
@@ -205,9 +204,26 @@ class TaxonomyInfoExtractor:
                 )
             else:
                 childRelSet = relSet
-            self.walkChildren(
+            self.walkDefinitionChildren(
                 child_concept, childRelSet, rows, indent + 1, includeUsable
             )
+
+    def walkPresentationChildren(
+        self,
+        parent_concept: ModelConcept,
+        relSet: ModelRelationshipSet,
+        rows: list[tuple[int, QName, str] | tuple[int, QName]],
+        indent: int,
+    ) -> None:
+        for rel in relSet.fromModelObject(parent_concept):
+            child_concept = rel.toModelObject
+            row: tuple[int, QName, str] | tuple[int, QName]
+            if (preferredLabel := rel.preferredLabel) is None:
+                row = (indent, child_concept.qname)
+            else:
+                row = (indent, child_concept.qname, preferredLabel)
+            rows.append(row)
+            self.walkPresentationChildren(child_concept, relSet, rows, indent + 1)
 
     def getPrimaryItems(
         self, elrUri: str, root_concept: ModelConcept
@@ -225,7 +241,7 @@ class TaxonomyInfoExtractor:
         assert root_concept in relSet.rootConcepts, (
             f"{elrUri} {root_concept} should be in [{', '.join(str(r.qname) for r in relSet.rootConcepts)}]"
         )
-        self.walkChildren(root_concept, relSet, rows, 1)
+        self.walkDefinitionChildren(root_concept, relSet, rows, 1)
         return [(i, qname) for i, qname, _ in rows]
 
     def getDimensions(
@@ -291,7 +307,7 @@ class TaxonomyInfoExtractor:
         rows: list[tuple[int, QName, bool | None]] = []
         for domainConcept, usable, domainMemberRelSet in domainRoots:
             rows.append((0, domainConcept.qname, usable))
-            self.walkChildren(
+            self.walkDefinitionChildren(
                 domainConcept, domainMemberRelSet, rows, 1, includeUsable=True
             )
         return unique_list(q for _, q, usable in rows if usable)
@@ -304,7 +320,7 @@ class TaxonomyInfoExtractor:
             XbrlConst.domainMember, elrUri
         )
         rows: list[tuple[int, QName, bool | None]] = []
-        self.walkChildren(
+        self.walkDefinitionChildren(
             domainConcept, domainMemberRelSet, rows, 1, includeUsable=True
         )
         if headUsable:
@@ -348,6 +364,28 @@ class TaxonomyInfoExtractor:
             if (value := getattr(concept, concept_property)) is True:
                 jconcept[json_key] = value
 
+    def addLabels(
+        self,
+        concept: ModelConcept,
+        jconcept: dict,
+    ) -> None:
+        """Add labels to the concept JSON."""
+        jconcept["labels"] = {}
+        for r in self.modelXbrl.relationshipSet(XbrlConst.conceptLabel).fromModelObject(
+            concept
+        ):
+            label_resource = r.toModelObject
+            # BCP47 says that xml:lang is case insensitive
+            lang = label_resource.xmlLang.lower()
+            role = label_resource.role
+            label = label_resource.text
+            if lang not in jconcept["labels"]:
+                jconcept["labels"][lang] = {}
+            if role in jconcept["labels"][lang]:
+                label0 = jconcept["labels"][lang][role]
+                raise ArelleRelatedException(f"Multiple labels with the same role defined in taxonomy. {label0=} {label=} {lang=} {role=}", jconcept)
+            jconcept["labels"][lang][role] = label                
+
     def extractConceptsAndMetadata(self) -> None:
         self.cntlr.addToLog("Processing concepts (including labels and references)")
         for qname, concept in sorted(self.modelXbrl.qnameConcepts.items()):
@@ -367,42 +405,9 @@ class TaxonomyInfoExtractor:
                     "dataType": concept.type.qname,
                     "baseDataType": concept.baseXbrliTypeQname,
                     "periodType": concept.periodType,
-                    "labels": {
-                        "en": {
-                            XbrlConst.standardLabel: concept.label(
-                                fallbackToQname=False,
-                                preferredLabel=XbrlConst.standardLabel,
-                                lang="en",
-                                strip=True,
-                            ),
-                        }
-                    },
                 }
                 self.addConceptMetadata(concept, jconcept)
-
-                if (
-                    measurement := concept.label(
-                        fallbackToQname=False,
-                        preferredLabel=MEASUREMENT_GUIDANCE_LABEL_ROLE,
-                        lang="en",
-                        strip=True,
-                    )
-                ) is not None:
-                    jconcept["labels"]["en"][MEASUREMENT_GUIDANCE_LABEL_ROLE] = (
-                        measurement
-                    )
-
-                if (
-                    documentation := concept.label(
-                        fallbackToQname=False,
-                        preferredLabel=XbrlConst.documentationLabel,
-                        lang="en",
-                        strip=True,
-                    )
-                ) is not None:
-                    jconcept["labels"]["en"][XbrlConst.documentationLabel] = (
-                        documentation
-                    )
+                self.addLabels(concept, jconcept)
 
                 if concept.isEnumeration and not concept.isEnumeration2Item:
                     self.cntlr.addToLog(
@@ -502,13 +507,11 @@ class TaxonomyInfoExtractor:
                             f"WARNING: {elrUri} has multiple ({len(roots)}) roots. Presentation order will be arbitrary. Roots: [{', '.join(str(root.qname) for root in roots)}]",
                             level=logging.WARNING,
                         )
-                rows: list[tuple[int, QName, bool | None]] = []
+                rows: list[tuple[int, QName, str] | tuple[int, QName]] = []
                 for root in roots:
-                    rows.append((0, root.qname, None))
-                    self.walkChildren(root, relSet, rows, 1)
-                self.taxonomyJson["presentation"][elrUri]["rows"] = [
-                    (i, qname) for i, qname, _ in rows
-                ]
+                    rows.append((0, root.qname))
+                    self.walkPresentationChildren(root, relSet, rows, 1)
+                self.taxonomyJson["presentation"][elrUri]["rows"] = rows
 
 
 def runTaxonomyInfo(
