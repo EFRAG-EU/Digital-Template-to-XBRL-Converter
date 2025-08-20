@@ -62,9 +62,7 @@ def get_locale_list(code_list: Iterable[str]) -> list[dict[str, str]]:
                 continue
 
             display_code = code.ljust(max_code_length)
-            label = (
-                f"{language} ({territory}) [{display_code}]"
-            )
+            label = f"{language} ({territory}) [{display_code}]"
 
             locales.append({"code": normalized_code, "label": label})
         except Exception:
@@ -72,4 +70,3 @@ def get_locale_list(code_list: Iterable[str]) -> list[dict[str, str]]:
             continue
     locales.sort(key=lambda x: x["label"].casefold())
     return locales
-

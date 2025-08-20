@@ -253,7 +253,9 @@ def generate_csrf_token() -> None:
 
 @convert_bp.after_app_request
 def add_deployment_header(response: Response) -> Response:
-    response.headers["X-Deployment-Datetime"] = DEPLOYMENT_DATETIME.isoformat(timespec="seconds")
+    response.headers["X-Deployment-Datetime"] = DEPLOYMENT_DATETIME.isoformat(
+        timespec="seconds"
+    )
     return response
 
 
