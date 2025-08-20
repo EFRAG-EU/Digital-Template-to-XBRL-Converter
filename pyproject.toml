@@ -20,7 +20,7 @@ dependencies = [
     "arelle-release>=2.37.37",
     "ixbrl-viewer",
     "waitress",
-    "babel>=2.12.1"
+    "babel>=2.17.0"
 ]
 requires-python = ">=3.11"
 readme = "README.md"
