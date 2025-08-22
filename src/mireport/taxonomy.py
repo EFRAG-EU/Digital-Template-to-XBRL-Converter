@@ -17,6 +17,7 @@ from mireport.exceptions import (
     UnknownTaxonomyException,
 )
 from mireport.json import getObject, getResource
+from mireport.stringutil import unicodeDashNormalization
 from mireport.utr import UTR
 from mireport.xml import (
     ENUM2_NS,
@@ -32,20 +33,6 @@ VSME_ENTRY_POINT = "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/vsme-all.xsd
 MEASUREMENT_GUIDANCE_LABEL_ROLE = "http://www.xbrl.org/2003/role/measurementGuidance"
 STANDARD_LABEL_ROLE = "http://www.xbrl.org/2003/role/label"
 DOCUMENTATION_LABEL_ROLE = "http://www.xbrl.org/2003/role/documentation"
-
-_DASH_TRANSLATION = str.maketrans(
-    {
-        "\N{EM DASH}": "\N{HYPHEN-MINUS}",
-        "\N{EN DASH}": "\N{HYPHEN-MINUS}",
-    }
-)
-
-
-def _cleanLabel(label: str) -> str:
-    """Clean up a label by replacing dashes with hyphens and removing all
-    leading and trailing whitespace (as defined by Unicode)."""
-    return label.translate(_DASH_TRANSLATION).strip()
-
 
 LABEL_SUFFIX_PATTERN = re.compile(r"\s*\[[a-z ]+\]\s*$")
 
@@ -493,7 +480,7 @@ class Taxonomy:
         for concept in concepts.values():
             if (label := concept.getStandardLabel()) is not None:
                 cByStdLbl[label].append(concept)
-                stripped = _cleanLabel(label)
+                stripped = unicodeDashNormalization(label)
                 cByPretend[stripped].append(concept)
                 label_no_suffix, _, _ = stripped.rpartition("[")
                 label_no_suffix = label_no_suffix.strip()
@@ -620,7 +607,7 @@ class Taxonomy:
             label, frozenset()
         )
         if not possible:
-            label = _cleanLabel(label)
+            label = unicodeDashNormalization(label)
             possible = self._lookupConceptsByPretendLabel.get(label, frozenset())
         if not possible:
             label = label.lower()

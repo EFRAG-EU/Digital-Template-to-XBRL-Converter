@@ -7,23 +7,9 @@ from types import TracebackType
 from typing import Optional, Self, Type
 
 from mireport.exceptions import EarlyAbortException
+from mireport.stringutil import format_time_ns
 from mireport.taxonomy import Concept
 from mireport.xml import QName
-
-
-def format_time_ns(ns: int) -> str:
-    """Formats nanoseconds into microseconds, milliseconds, or seconds."""
-    match ns:
-        case ns if ns < 1_000:  # Less than a microsecond
-            return f"{ns} ns"
-        case ns if ns < 1_000_000:  # Less than a millisecond
-            return f"{ns // 1_000} µs"
-        case ns if ns < 1_000_000_000:  # Less than a second
-            return f"{ns // 1_000_000} ms"
-        case _:  # One second or more
-            # Switch to floating point division as people care a bit more about
-            # the decimals at this granularity.
-            return f"{ns / 1_000_000_000:.1f} s"
 
 
 class Severity(StrEnum):
