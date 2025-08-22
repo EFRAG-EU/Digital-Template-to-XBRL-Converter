@@ -42,13 +42,13 @@ UNCONSTRAINED_REPORT_PACKAGE_JSON = """{
     "documentInfo": {
         "documentType": "https://xbrl.org/report-package/2023"
     }
-}"""
+}""".encode("UTF-8")
 
 INLINE_REPORT_PACKAGE_JSON = """{
     "documentInfo": {
         "documentType": "https://xbrl.org/report-package/2023/xbri"
     }
-}"""
+}""".encode("UTF-8")
 
 TD_VALUE_RE = re.compile(r">(.*?)</")
 
@@ -933,27 +933,24 @@ class InlineReport:
         return safeName
 
     def getInlineReportPackage(self) -> FilelikeAndFileName:
-        # TODO: switch to INLINE_REPORT_PACKAGE_JSON and .xbri once Arelle is
-        # updated to pass through the correct filename to its report package
-        # validator.
-        topLevel = f"{self._getSafeEntityName()}_{self.defaultPeriod.end.year}"
+        top_level = f"{self._getSafeEntityName()}_{self.defaultPeriod.end.year}"
         report = self.getInlineReport()
-        with BytesIO() as write_bio:
-            with zipfile.ZipFile(
-                write_bio, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=6
-            ) as z:
-                # writestr defaults to encoding strings as UTF-8 so we don't need to bother
-                z.writestr(
-                    zinfo_or_arcname=f"{topLevel}/META-INF/reportPackage.json",
-                    data=UNCONSTRAINED_REPORT_PACKAGE_JSON,
-                )
-                z.writestr(
-                    zinfo_or_arcname=f"{topLevel}/reports/{report.filename}",
-                    data=report.fileContent,
-                )
-            rpBytes = write_bio.getvalue()
-        packageFilename = f"{topLevel}_XBRL_Report.zip"
-        return FilelikeAndFileName(fileContent=rpBytes, filename=packageFilename)
+        content = BytesIO()
+        with zipfile.ZipFile(
+            content, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=6
+        ) as zf:
+            zf.writestr(
+                zinfo_or_arcname=f"{top_level}/META-INF/reportPackage.json",
+                data=UNCONSTRAINED_REPORT_PACKAGE_JSON,
+            )
+            zf.writestr(
+                zinfo_or_arcname=f"{top_level}/reports/{report.filename}",
+                data=report.fileContent,
+            )
+        package_filename = f"{top_level}_XBRL_Report.zip"
+        return FilelikeAndFileName(
+            fileContent=content.getvalue(), filename=package_filename
+        )
 
     def getInlineReport(self) -> FilelikeAndFileName:
         yearEnd = self.defaultPeriod.end.year
