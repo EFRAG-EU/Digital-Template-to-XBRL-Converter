@@ -38,7 +38,7 @@ from mireport.excelprocessor import (
     ExcelProcessor,
 )
 from mireport.filesupport import FilelikeAndFileName
-from mireport.localise import EU_LOCALES, get_locale_list
+from mireport.localise import EU_LOCALES, get_locale_from_str, get_locale_list
 
 ENABLE_CAPTCHA = False
 MAX_FILE_SIZE = 16 * 2**20  # 16 MiB
@@ -318,10 +318,10 @@ def upload() -> Response:
             flash(message="Invalid CSRF token. Please try again.", category="error")
             return make_response(redirect(url_for("basic.index")))
 
-    blobs = request.files.getlist("file")
-    if len(blobs) > 1:
+    xlsx_blobs = request.files.getlist("file")
+    if len(xlsx_blobs) > 1:
         return make_response({"error": "Too many files"}, 400)
-    blob = blobs[0]
+    blob = xlsx_blobs[0]
     if blob.filename == "":
         return make_response(
             {
@@ -344,6 +344,7 @@ def upload() -> Response:
     conversion["excel"] = FilelikeAndFileName(
         fileContent=blob.stream.read(), filename=blob.filename
     )
+    conversion["locale_str"] = request.form.get("locale", type=str, default="").strip()
     return make_response(
         redirect(url_for("basic.convert", id=result.conversionId), code=303)
     )
@@ -407,7 +408,12 @@ def doConversion(conversion: dict, id: str) -> ConversionResults:
                 "Extracting data from Excel",
                 additionalInfo=f"Using file: {upload.filename}",
             )
-            excel = ExcelProcessor(upload.fileLike(), resultBuilder, VSME_DEFAULTS)
+            excel = ExcelProcessor(
+                upload.fileLike(),
+                resultBuilder,
+                VSME_DEFAULTS,
+                outputLocale=get_locale_from_str(conversion.get("locale_str", "")),
+            )
             report = excel.populateReport()
             if not report.hasFacts:
                 resultBuilder.addMessage(

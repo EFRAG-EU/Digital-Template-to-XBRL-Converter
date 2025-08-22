@@ -9,6 +9,7 @@ from itertools import combinations
 from pathlib import Path
 from typing import BinaryIO, Callable, NamedTuple, Optional, Self
 
+from babel import Locale
 from dateutil.parser import parse as parse_datetime
 from dateutil.relativedelta import relativedelta
 from openpyxl import Workbook
@@ -131,6 +132,7 @@ class ExcelProcessor:
         results: ConversionResultsBuilder,
         defaults: dict,
         /,
+        outputLocale: Optional[Locale] = None,
     ):
         self._results = results
         self._defaults = defaults
@@ -151,6 +153,10 @@ class ExcelProcessor:
             CellAndXBRLMetadataHolder, dict[Concept, Concept]
         ] = defaultdict(dict)
         self._tableRelatedNames: dict[CellAndXBRLMetadataHolder, TableXBRLContents] = {}
+
+        # For passing through to inline report
+        self._outputLocale: Optional[Locale] = outputLocale
+        self._coverImage: Optional[bytes] = None
 
         # Not yet initialised. Need setting early
         self._workbook: Workbook
@@ -246,7 +252,7 @@ class ExcelProcessor:
 
         self.abortEarlyIfErrors()
         taxonomy = getTaxonomy(entryPoint)
-        self._report = InlineReport(taxonomy)
+        self._report = InlineReport(taxonomy, self._outputLocale)
         self._report.addSchemaRef(entryPoint)
 
     def getAndValidateRequiredMetadata(self) -> None:

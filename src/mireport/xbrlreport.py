@@ -16,12 +16,15 @@ from unicodedata import name as unicode_name
 from xml.sax.saxutils import escape as xml_escape
 
 import ixbrltemplates
+from babel import Locale
 from jinja2 import Environment, PackageLoader
 from markupsafe import Markup, escape
 
 import mireport
 from mireport.exceptions import InlineReportException
 from mireport.filesupport import FilelikeAndFileName, zipSafeString
+from mireport.localise import decimal_symbol, localise_and_format_number
+from mireport.stringutil import unicodeSpaceNormalize
 from mireport.taxonomy import (
     Concept,
     PresentationGroup,
@@ -191,26 +194,40 @@ class Fact:
         return hash(self.__key())
 
     def format_value(self) -> str:
+        """Return the value formatted for HTML with locale-aware numeric formatting."""
         if not self.concept.isNumeric:
+            # Non-numeric values: escape and replace newlines with <br />
             v = str(self.value)
             if "\n" in v:
-                parts = v.split("\n")
-                v = "<br />".join([escape(p) for p in parts])
+                output = "<br />".join(escape(p) for p in v.split("\n"))
             else:
-                v = escape(v)
-            m = Markup(v)
-            return m
-
-        match self.value:
-            case str():
-                return escape(self.value)
-            case float() | int():
-                decimal_places = int(str(self.aspects["decimals"])[1:-1])
-                return escape(f"{self.value:,.{decimal_places}f}")
-            case _:
+                output = escape(v)
+        else:
+            locale = self._report._outputLocale
+            decimal_places = int(str(self.aspects["decimals"])[1:-1])
+            try:
+                match self.value:
+                    case bool():
+                        raise TypeError(
+                            f"Boolean cannot be formatted numerically: {self.value}"
+                        )
+                    case int() | float() | str():
+                        number = self.value
+                    case _:
+                        raise TypeError(
+                            f"Unsupported type for numeric formatting: {type(self.value).__name__}"
+                        )
+                output = localise_and_format_number(number, decimal_places, locale)
+            except (ValueError, TypeError) as e:
                 raise InlineReportException(
-                    f"Unexpected fact value type {self.value=} for numeric concept {self.concept=}."
-                )
+                    f"Unexpected fact value {self.value=} for numeric concept {self.concept=}."
+                ) from e
+
+            # inline xbrl transforms don't support space characters (e.g.
+            # non-break space) other than space.
+            output = unicodeSpaceNormalize(output)
+            output = escape(output)
+        return Markup(output)
 
     def as_aoix(self) -> str:
         """
@@ -387,13 +404,19 @@ class FactBuilder:
         if inputIsDecimalForm:
             # HTML needs the display value for humans
             human_value = value * 10**2
-            self.setValue(f"{human_value:.{decimals}f}")
+            self.setValue(
+                localise_and_format_number(
+                    human_value, decimals, self._report._outputLocale
+                )
+            )
             # XBRL stores same way as Excel (100% stored as "1.0")
             self.setScale(-2)
             decimals += 2
             self.setDecimals(decimals)
         else:
-            self.setValue(f"{value:.{decimals}f}")
+            self.setValue(
+                localise_and_format_number(value, decimals, self._report._outputLocale)
+            )
             self.setDecimals(decimals)
         return self
 
@@ -661,13 +684,9 @@ class FactBuilder:
 
 
 class InlineReport:
-    def __init__(self, taxonomy: Taxonomy):
+    def __init__(self, taxonomy: Taxonomy, outputLocale: Optional[Locale] = None):
         self._facts: list[Fact] = []
         self._taxonomy: Taxonomy = taxonomy
-        self._defaultAspects: dict[str, str] = {
-            "numeric-transform": "num-dot-decimal",
-            "decimals": '"0"',
-        }
         self._periods: dict[str, DurationPeriodHolder] = {}
         self._entityName: str = "Sample"
         self._generatedReport: Optional[str] = None
@@ -675,6 +694,23 @@ class InlineReport:
         self._schemaRefs: set[str] = set()
         self._reportTitle: str = ""
         self._reportSubtitle: str = ""
+        self._outputLocale = outputLocale
+
+        decimal_separator = decimal_symbol(self._outputLocale)
+        match decimal_separator:
+            case ".":
+                numeric_transform = "num-dot-decimal"
+            case ",":
+                numeric_transform = "num-comma-decimal"
+            case _:
+                raise InlineReportException(
+                    f"Unsupported decimal separator '{decimal_separator}' in locale {self._outputLocale}."
+                )
+
+        self._defaultAspects: dict[str, str] = {
+            "numeric-transform": numeric_transform,
+            "decimals": '"0"',
+        }
 
     def setReportTitle(self, title: str) -> None:
         self._reportTitle = title

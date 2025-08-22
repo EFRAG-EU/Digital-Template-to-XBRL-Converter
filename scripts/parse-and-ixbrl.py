@@ -18,6 +18,7 @@ from mireport.excelprocessor import (
     VSME_DEFAULTS,
     ExcelProcessor,
 )
+from mireport.localise import EU_LOCALES, argparse_locale
 
 
 def createArgParser() -> argparse.ArgumentParser:
@@ -29,6 +30,12 @@ def createArgParser() -> argparse.ArgumentParser:
         "output_path",
         type=Path,
         help="Path to save the output. Can be a directory or a file. Automatically creates directories and warns before overwriting files.",
+    )
+    parser.add_argument(
+        "--output-locale",
+        type=argparse_locale,
+        default=None,
+        help=f"Locale to use when formatting the output XBRL report (default: None). Examples:\n{sorted(EU_LOCALES)}",
     )
     parser.add_argument(
         "--force",
@@ -112,7 +119,12 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, ExcelProc
             "Extracting data from Excel",
             additionalInfo=f"Using file: {args.excel_file}",
         )
-        excel = ExcelProcessor(args.excel_file, resultsBuilder, VSME_DEFAULTS)
+        excel = ExcelProcessor(
+            args.excel_file,
+            resultsBuilder,
+            VSME_DEFAULTS,
+            outputLocale=args.output_locale,
+        )
         report = excel.populateReport()
         pc.mark("Generating Inline Report")
         reportFile = report.getInlineReport()
@@ -127,7 +139,7 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, ExcelProc
             reportPackage.saveToDirectory(output_path)
         else:
             pc.addDevInfoMessage(
-                f"Writing to {output_path} ({report.factCount} facts to include)"
+                f"Writing {reportFile} to {output_path} ({report.factCount} facts to include)"
             )
             reportFile.saveToFilepath(output_path)
 
@@ -136,7 +148,7 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, ExcelProc
                 "Validating using Arelle",
                 additionalInfo=f"({ARELLE_VERSION_INFORMATION})",
             )
-            pc.addDevInfoMessage(f"Created Inline Report package: {reportPackage}")
+            pc.addDevInfoMessage(f"Using Inline Report package: {reportPackage}")
             arelleResults: ArelleProcessingResult = ArelleReportProcessor(
                 taxonomyPackages=args.taxonomy_packages,
                 workOffline=args.offline,
@@ -190,7 +202,7 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    rich.traceback.install(show_locals=True)
+    rich.traceback.install(show_locals=False)
     logging.basicConfig(
         format="%(message)s",
         datefmt="[%Y-%m-%d %H:%M:%S]",
