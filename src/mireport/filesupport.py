@@ -3,6 +3,8 @@ from io import BytesIO
 from pathlib import Path
 from typing import NamedTuple
 
+from mireport.stringutil import format_bytes
+
 ZIP_UNWANTED_RE = re.compile(r"[^\w.]+")  # \w includes '_'
 FILE_UNWANTED_RE = re.compile(r'[<>:"/\\|?*]')
 
@@ -52,7 +54,7 @@ class FilelikeAndFileName(NamedTuple):
         return BytesIO(self.fileContent)
 
     def __str__(self) -> str:
-        return f"{self.filename} [{len(self.fileContent)} bytes]"
+        return f"{self.filename} [{format_bytes(len(self.fileContent))}]"
 
     def saveToFilepath(self, path: Path) -> None:
         """Saves the file content to the specified path."""
