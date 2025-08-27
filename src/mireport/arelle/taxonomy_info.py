@@ -9,7 +9,7 @@ from arelle import XbrlConst
 from arelle.api.Session import Session
 from arelle.Cntlr import Cntlr
 from arelle.logging.handlers.LogToXmlHandler import LogToXmlHandler
-from arelle.ModelDtsObject import ModelConcept
+from arelle.ModelDtsObject import ModelConcept, ModelResource
 from arelle.ModelRelationshipSet import ModelRelationshipSet
 from arelle.ModelValue import QName
 from arelle.ModelXbrl import ModelXbrl
@@ -370,24 +370,27 @@ class TaxonomyInfoExtractor:
         jconcept: dict,
     ) -> None:
         """Add labels to the concept JSON."""
-        jconcept["labels"] = {}
-        for r in self.modelXbrl.relationshipSet(XbrlConst.conceptLabel).fromModelObject(
-            concept
-        ):
-            label_resource = r.toModelObject
-            # BCP47 says that xml:lang is case insensitive
-            lang = label_resource.xmlLang.lower()
-            role = label_resource.role
-            label = label_resource.text
-            if lang not in jconcept["labels"]:
-                jconcept["labels"][lang] = {}
-            if role in jconcept["labels"][lang]:
-                label0 = jconcept["labels"][lang][role]
-                raise ArelleRelatedException(
-                    f"Multiple labels with the same role defined in taxonomy. {label0=} {label=} {lang=} {role=}",
-                    jconcept,
+        jconcept["labels"] = defaultdict(dict)
+        relSet = self.modelXbrl.relationshipSet(XbrlConst.conceptLabel)
+        for r in relSet.fromModelObject(concept):
+            label_resource: ModelResource = r.toModelObject
+            role: str = str(label_resource.role) or XbrlConst.standardLabel
+            if lang := label_resource.xmlLang:
+                # BCP47 says that xml:lang is case insensitive
+                lang = lang.lower()
+                label = label_resource.stringValue.strip()
+                if role in jconcept["labels"][lang]:
+                    label0 = jconcept["labels"][lang][role]
+                    self.cntlr.addToLog(
+                        f"Duplicate labels found in taxonomy: {label0=} {label=} {lang=} {role=}",
+                        level=logging.WARNING,
+                    )
+                jconcept["labels"][lang][role] = label
+            else:
+                self.cntlr.addToLog(
+                    f"WARNING: Label for {concept.qname} ({role=}) has no xml:lang so is being ignored.",
+                    level=logging.WARNING,
                 )
-            jconcept["labels"][lang][role] = label
 
     def extractConceptsAndMetadata(self) -> None:
         self.cntlr.addToLog("Processing concepts (including labels and references)")
