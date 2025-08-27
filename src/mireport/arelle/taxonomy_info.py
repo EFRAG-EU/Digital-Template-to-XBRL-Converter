@@ -354,15 +354,15 @@ class TaxonomyInfoExtractor:
 
     def addConceptMetadata(self, concept: ModelConcept, jconcept: dict) -> None:
         meta = {
-            "abstract": "isAbstract",
-            "dimension": "isDimensionItem",
-            "hypercube": "isHypercubeItem",
-            "nillable": "isNillable",
-            "numeric": "isNumeric",
+            "abstract": concept.isAbstract,
+            "dimension": concept.isDimensionItem,
+            "hypercube": concept.isHypercubeItem,
+            "nillable": concept.isNillable,
+            "numeric": concept.isNumeric,
         }
         for json_key, concept_property in meta.items():
-            if (value := getattr(concept, concept_property)) is True:
-                jconcept[json_key] = value
+            if concept_property is True:
+                jconcept[json_key] = concept_property
 
     def addLabels(
         self,
