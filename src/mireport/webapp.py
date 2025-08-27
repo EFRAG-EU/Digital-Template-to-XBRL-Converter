@@ -10,6 +10,8 @@ from flask import (
     Flask,
     Response,
     current_app,
+    flash,
+    jsonify,
     make_response,
     redirect,
     render_template,
@@ -36,11 +38,14 @@ from mireport.excelprocessor import (
     ExcelProcessor,
 )
 from mireport.filesupport import FilelikeAndFileName
+from mireport.localise import EU_LOCALES, get_locale_from_str, get_locale_list
 
 ENABLE_CAPTCHA = False
 MAX_FILE_SIZE = 16 * 2**20  # 16 MiB
-DEPLOYMENT_DATETIME = datetime.now(timezone.utc).isoformat(timespec="seconds")
+DEPLOYMENT_DATETIME = datetime.now(timezone.utc)
+DEPLOYMENT_DATETIME_FOR_URL = DEPLOYMENT_DATETIME.strftime("%Y%m%dT%H%M%SZ")
 L = logging.getLogger(__name__)
+LOCALES_CACHE = get_locale_list(EU_LOCALES)
 
 convert_bp = Blueprint(
     "basic", __name__, template_folder="templates", static_folder="static"
@@ -233,7 +238,9 @@ def generate_captcha() -> dict:
     """Generate a simple math captcha and store the answer in the session."""
     num1 = randint(1, 10)
     num2 = randint(1, 10)
+    session.pop("captcha_answer", None)
     session["captcha_answer"] = num1 + num2
+    session.modified = True
     return {"question": f"What is {num1} + {num2}?"}
 
 
@@ -244,8 +251,54 @@ def generate_csrf_token() -> None:
         session["csrf_token"] = token_hex(16)
 
 
+@convert_bp.after_app_request
+def add_deployment_header(response: Response) -> Response:
+    response.headers["X-Deployment-Datetime"] = DEPLOYMENT_DATETIME.isoformat(
+        timespec="seconds"
+    )
+    return response
+
+
+@convert_bp.route(f"/locales/available_{DEPLOYMENT_DATETIME_FOR_URL}")
+def available_locales() -> Response:
+    resp = make_response(jsonify(LOCALES_CACHE))
+    resp.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+    return resp
+
+
+@convert_bp.route("/debug_session")
+def debug_session() -> Response:
+    session.modified = True  # Ensure session is saved
+    interesting: dict[str, Any] = {
+        "session_id": request.cookies.get("session"),
+        "session_lifetime": str(current_app.config.get("PERMANENT_SESSION_LIFETIME")),
+        "session_modified": session.modified,
+    }
+
+    def dumpSessionRecursive(obj: Any, depth: int = 0) -> Any:
+        if depth > 20:
+            return "..."
+        if isinstance(obj, dict):
+            result = {}
+            for k, v in obj.items():
+                # Ensure key is a string for JSON
+                key = str(k) if not isinstance(k, str) else k
+                result[key] = dumpSessionRecursive(v, depth + 1)
+            return result
+        elif isinstance(obj, list):
+            return [dumpSessionRecursive(item, depth + 1) for item in obj]
+        elif isinstance(obj, (str, int, float, bool)) or obj is None:
+            return obj
+        else:
+            # Fallback for non-JSON-serializable types
+            return repr(obj[:10]) + "(truncated)" if len(obj) > 10 else repr(obj)
+
+    interesting["session_data"] = dumpSessionRecursive(session)
+    return jsonify(interesting)
+
+
 @convert_bp.route("/upload", methods=["POST"])
-def upload() -> Response | Response:
+def upload() -> Response:
     if "file" not in request.files:
         return make_response({"error": "No file part"}, 400)
 
@@ -254,30 +307,21 @@ def upload() -> Response | Response:
         captcha_input = request.form.get("captcha", type=int)
         captcha_answer = session.pop("captcha_answer", None)
         if not captcha_answer or captcha_input != captcha_answer:
-            return Response(
-                render_template(
-                    "excel-to-xbrl-converter.html.jinja",
-                    existing_conversions=hasConversions(),
-                    error_message="Invalid captcha. Please confirm you are human by calculating the correct result and try again.",
-                    ENABLE_CAPTCHA=ENABLE_CAPTCHA,
-                )
+            flash(
+                message="Invalid captcha. Please confirm you are human by calculating the correct result and try again.",
+                category="error",
             )
+            return make_response(redirect(url_for("basic.index")))
         # Validate CSRF token
         csrf_token = request.form.get("csrf_token")
         if not csrf_token or csrf_token != session.get("csrf_token"):
-            return Response(
-                render_template(
-                    "excel-to-xbrl-converter.html.jinja",
-                    existing_conversions=hasConversions(),
-                    error_message="Invalid CSRF token. Please try again.",
-                    ENABLE_CAPTCHA=ENABLE_CAPTCHA,
-                )
-            )
+            flash(message="Invalid CSRF token. Please try again.", category="error")
+            return make_response(redirect(url_for("basic.index")))
 
-    blobs = request.files.getlist("file")
-    if len(blobs) > 1:
+    xlsx_blobs = request.files.getlist("file")
+    if len(xlsx_blobs) > 1:
         return make_response({"error": "Too many files"}, 400)
-    blob = blobs[0]
+    blob = xlsx_blobs[0]
     if blob.filename == "":
         return make_response(
             {
@@ -300,6 +344,7 @@ def upload() -> Response | Response:
     conversion["excel"] = FilelikeAndFileName(
         fileContent=blob.stream.read(), filename=blob.filename
     )
+    conversion["locale_str"] = request.form.get("locale", type=str, default="").strip()
     return make_response(
         redirect(url_for("basic.convert", id=result.conversionId), code=303)
     )
@@ -363,7 +408,12 @@ def doConversion(conversion: dict, id: str) -> ConversionResults:
                 "Extracting data from Excel",
                 additionalInfo=f"Using file: {upload.filename}",
             )
-            excel = ExcelProcessor(upload.fileLike(), resultBuilder, VSME_DEFAULTS)
+            excel = ExcelProcessor(
+                upload.fileLike(),
+                resultBuilder,
+                VSME_DEFAULTS,
+                outputLocale=get_locale_from_str(conversion.get("locale_str", "")),
+            )
             report = excel.populateReport()
             if not report.hasFacts:
                 resultBuilder.addMessage(

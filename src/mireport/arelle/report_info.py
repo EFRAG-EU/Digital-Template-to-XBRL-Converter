@@ -16,6 +16,7 @@ from mireport.arelle.support import (
     ArelleRelatedException,
     ArelleVersionHolder,
     VersionInformationTuple,
+    fileLikeToArelleFileSource,
 )
 from mireport.filesupport import FilelikeAndFileName
 from mireport.xbrlreport import UNCONSTRAINED_REPORT_PACKAGE_JSON
@@ -92,7 +93,7 @@ class ArelleReportProcessor:
                 except Exception:
                     pass
                 with Session() as session:
-                    with reportPackage.fileLike() as requestZipStream:
+                    with fileLikeToArelleFileSource(reportPackage) as requestZipStream:
                         logHandler = LogToXmlHandler()
                         session.run(
                             options,
@@ -108,7 +109,7 @@ class ArelleReportProcessor:
             except Exception as arelle_exception:
                 L.exception(arelle_exception)
                 raise ArelleRelatedException(
-                    "Exception encountered while validating report."
+                    "Exception encountered while calling Arelle for report."
                 ) from arelle_exception
 
     def validateReportPackage(
@@ -139,6 +140,7 @@ class ArelleReportProcessor:
             utrValidate=True,
             # Warn if inconsistent duplicate facts encountered
             validateDuplicateFacts="inconsistent",
+            showOptions=False,
         )
         return self._run(source, validationOptions)
 
@@ -162,7 +164,7 @@ class ArelleReportProcessor:
             utrValidate=True,
             # Warn if inconsistent duplicate facts encountered
             validateDuplicateFacts="inconsistent",
-            showOptions=True,
+            showOptions=False,
         )
         with BytesIO() as fobj:
             result = self._run(source, jsonOptions, fobj)
@@ -181,7 +183,7 @@ class ArelleReportProcessor:
         self, source: FilelikeAndFileName
     ) -> ArelleProcessingResult:
         viewerFileLike = BytesIO()
-        viewer_options = {
+        viewer_plugin_options = {
             "saveViewerDest": viewerFileLike,
             "viewer_feature_review": True,
             "validationMessages": True,
@@ -197,7 +199,7 @@ class ArelleReportProcessor:
             logFormat="%(asctime)s [%(messageCode)s] %(message)s - %(file)s",
             logPropagate=False,
             packages=[str(t) for t in self.taxonomyPackages],
-            pluginOptions=viewer_options,
+            pluginOptions=viewer_plugin_options,
             plugins="ixbrl-viewer",
             # Turn validation on
             validate=True,
@@ -207,7 +209,7 @@ class ArelleReportProcessor:
             utrValidate=True,
             # Warn if inconsistent duplicate facts encountered
             validateDuplicateFacts="inconsistent",
-            showOptions=True,
+            showOptions=False,
         )
         result = self._run(source, viewerOptions)
         viewerFileLike.seek(0)

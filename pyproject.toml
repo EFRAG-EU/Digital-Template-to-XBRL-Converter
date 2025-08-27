@@ -17,9 +17,10 @@ dependencies = [
     "python-dateutil",
     "msgpack",
     "rich>=14.0.0",
-    "arelle-release",
+    "arelle-release>=2.37.37",
     "ixbrl-viewer",
-    "waitress"
+    "waitress",
+    "babel>=2.17.0"
 ]
 requires-python = ">=3.11"
 readme = "README.md"

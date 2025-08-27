@@ -1,7 +1,12 @@
 /*
     Input CSS file. Used to generate ../static/style.css via tailwind-cli
-    If you modify this, you need to have npm installed and then run:
-    npx @tailwindcss/cli -i .\src\mireport\templates\source.css -o .\src\mireport\static\style.css --minify
+    If you modify this, you need to have npm installed, and tailwindcss cli installed::after
+    > npm install tailwindcss @tailwindcss/cli
+    and then run:
+    > npx @tailwindcss/cli -i .\src\mireport\templates\source.css -o .\src\mireport\static\style.css --minify
     See https://tailwindcss.com/docs/installation/tailwind-cli for further information
 */
-@import "tailwindcss";
+@import "tailwindcss" source(none);
+@source "../static/**/*.js";
+@source "../templates/**/*.html.jinja";
+

@@ -13,7 +13,18 @@
         }
     ],
     "report": {
-        "entity-name": "template_reporting_entity_name"
+        "entity-name": {
+            "named-range": "template_reporting_entity_name",
+            "fallback": "Sample Entity Name"
+        },
+        "report-title": {
+            "named-range": "template_reporting_title",
+            "fallback": "Sustainability Report"
+        },
+        "report-subtitle": {
+            "named-range": "template_reporting_subtitle",
+            "fallback": "Prepared in accordance with the EFRAG Voluntary Sustainability Reporting Standard for Non-Listed SMEs (VSME), released on 17 December 2024"
+        }
     },
     "entityIdentifierLabelsToSchemes": {
         "lei": "http://standards.iso.org/iso/17442",

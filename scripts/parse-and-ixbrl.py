@@ -1,5 +1,6 @@
 import argparse
 import logging
+from pathlib import Path
 
 import rich.traceback
 from rich.logging import RichHandler
@@ -17,14 +18,30 @@ from mireport.excelprocessor import (
     VSME_DEFAULTS,
     ExcelProcessor,
 )
+from mireport.localise import EU_LOCALES, argparse_locale
 
 
 def createArgParser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Extract facts from Excel and generate HTML."
     )
-    parser.add_argument("excel_file", help="Path to the Excel file")
-    parser.add_argument("output_file", help="Path to save the generated HTML file")
+    parser.add_argument("excel_file", type=Path, help="Path to the Excel file")
+    parser.add_argument(
+        "output_path",
+        type=Path,
+        help="Path to save the output. Can be a directory or a file. Automatically creates directories and warns before overwriting files.",
+    )
+    parser.add_argument(
+        "--output-locale",
+        type=argparse_locale,
+        default=None,
+        help=f"Locale to use when formatting the output XBRL report (default: None). Examples:\n{sorted(EU_LOCALES)}",
+    )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Suppress overwrite warnings and force file replacement.",
+    )
     parser.add_argument(
         "--devinfo",
         action=argparse.BooleanOptionalAction,
@@ -67,6 +84,27 @@ def parseArgs(parser: argparse.ArgumentParser) -> argparse.Namespace:
     return args
 
 
+def prepare_output_path(path: Path, force: bool) -> tuple[Path, bool]:
+    if path.exists():
+        if path.is_dir():
+            path.mkdir(parents=True, exist_ok=True)
+            return path, True
+        else:
+            if not force:
+                print(f"⚠️ Warning: Overwriting existing file: {path}")
+            path.parent.mkdir(parents=True, exist_ok=True)
+            return path, False
+    else:
+        if path.suffix:
+            # Treat as file
+            path.parent.mkdir(parents=True, exist_ok=True)
+            return path, False
+        else:
+            # Treat as directory
+            path.mkdir(parents=True, exist_ok=True)
+            return path, True
+
+
 def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, ExcelProcessor]:
     resultsBuilder = ConversionResultsBuilder(consoleOutput=True)
     with resultsBuilder.processingContext(
@@ -81,23 +119,41 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, ExcelProc
             "Extracting data from Excel",
             additionalInfo=f"Using file: {args.excel_file}",
         )
-        excel = ExcelProcessor(args.excel_file, resultsBuilder, VSME_DEFAULTS)
-        report = excel.populateReport()
-        pc.mark(
-            "Generating Inline Report",
-            additionalInfo=f"Writing to {args.output_file} ({report.factCount} facts to include)",
+        excel = ExcelProcessor(
+            args.excel_file,
+            resultsBuilder,
+            VSME_DEFAULTS,
+            outputLocale=args.output_locale,
         )
-        report.saveInlineReport(args.output_file)
+        report = excel.populateReport()
+        pc.mark("Generating Inline Report")
+        reportFile = report.getInlineReport()
+        reportPackage = report.getInlineReportPackage()
+
+        output_path, dir_specified = prepare_output_path(args.output_path, args.force)
+        if dir_specified:
+            pc.addDevInfoMessage(
+                f"Writing various files to {output_path} ({report.factCount} facts to include)"
+            )
+            reportFile.saveToDirectory(output_path)
+            reportPackage.saveToDirectory(output_path)
+        else:
+            pc.addDevInfoMessage(
+                f"Writing {reportFile} to {output_path} ({report.factCount} facts to include)"
+            )
+            reportFile.saveToFilepath(output_path)
+
         if not args.skip_validation:
             pc.mark(
                 "Validating using Arelle",
                 additionalInfo=f"({ARELLE_VERSION_INFORMATION})",
             )
+            pc.addDevInfoMessage(f"Using Inline Report package: {reportPackage}")
             arelleResults: ArelleProcessingResult = ArelleReportProcessor(
                 taxonomyPackages=args.taxonomy_packages,
                 workOffline=args.offline,
             ).validateReportPackage(
-                report.getInlineReportPackage(),
+                reportPackage,
             )
             resultsBuilder.addMessages(arelleResults.messages)
     return resultsBuilder.build(), excel
@@ -146,7 +202,7 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    rich.traceback.install()
+    rich.traceback.install(show_locals=False)
     logging.basicConfig(
         format="%(message)s",
         datefmt="[%Y-%m-%d %H:%M:%S]",

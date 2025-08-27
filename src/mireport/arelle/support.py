@@ -3,6 +3,7 @@ import logging
 from dataclasses import dataclass
 from typing import Any, MutableMapping, NamedTuple, Optional, Self
 
+from arelle.FileSource import FileNamedBytesIO
 from arelle.logging.handlers.LogToXmlHandler import LogToXmlHandler
 from arelle.ModelValue import QName
 
@@ -11,6 +12,15 @@ from mireport.exceptions import MIReportException
 from mireport.filesupport import FilelikeAndFileName
 
 L = logging.getLogger(__name__)
+
+
+def fileLikeToArelleFileSource(
+    fileLike: FilelikeAndFileName,
+) -> FileNamedBytesIO:
+    """Convert a FilelikeAndFileName to an Arelle FileNamedBytesIO."""
+    return FileNamedBytesIO(
+        fileName=fileLike.filename, initial_bytes=fileLike.fileContent
+    )
 
 
 class ArelleRelatedException(MIReportException):

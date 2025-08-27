@@ -1,29 +1,15 @@
 import uuid
 from collections.abc import Iterable
 from enum import StrEnum
-from functools import cache
+from functools import cache, lru_cache
 from time import perf_counter_ns
 from types import TracebackType
 from typing import Optional, Self, Type
 
 from mireport.exceptions import EarlyAbortException
+from mireport.stringutil import format_time_ns
 from mireport.taxonomy import Concept
 from mireport.xml import QName
-
-
-def format_time_ns(ns: int) -> str:
-    """Formats nanoseconds into microseconds, milliseconds, or seconds."""
-    match ns:
-        case ns if ns < 1_000:  # Less than a microsecond
-            return f"{ns} ns"
-        case ns if ns < 1_000_000:  # Less than a millisecond
-            return f"{ns // 1_000} µs"
-        case ns if ns < 1_000_000_000:  # Less than a second
-            return f"{ns // 1_000_000} ms"
-        case _:  # One second or more
-            # Switch to floating point division as people care a bit more about
-            # the decimals at this granularity.
-            return f"{ns / 1_000_000_000:.1f} s"
 
 
 class Severity(StrEnum):
@@ -32,22 +18,22 @@ class Severity(StrEnum):
     INFO = "Info"
 
     @classmethod
-    def all(cls) -> set["Severity"]:
+    def all(cls) -> set[Self]:
         return set(cls.__members__.values())
 
     @classmethod
+    @lru_cache(1)
     def maxValueWidth(cls) -> int:
-        all = cls.all()
-        widths = [len(v.value) for v in all]
-        return max(widths)
+        return max(len(s.value) for s in cls.__members__.values())
 
     @classmethod
     @cache
     def fromLogLevelString(cls, level: str) -> Self:
+        # return cls.__members__.get(level.title(), cls(cls.WARNING.value))
         lower_lookup = {k.lower(): v for k, v in cls.__members__.items()}
         if (attempt1 := lower_lookup.get(level.lower())) is not None:
-            return attempt1
-        return cls.WARNING
+            return cls(attempt1.value)
+        return cls(cls.WARNING.value)
 
 
 class MessageType(StrEnum):
@@ -58,20 +44,19 @@ class MessageType(StrEnum):
     Progress = "Progress Status"
 
     @classmethod
-    def all(cls) -> set["MessageType"]:
+    def all(cls) -> set[Self]:
         return set(cls.__members__.values())
 
     @classmethod
-    def allExcept(cls, *mtypes: "MessageType") -> set["MessageType"]:
+    def allExcept(cls, *mtypes: Self) -> set[Self]:
         wanted = cls.all()
         wanted.difference_update(mtypes)
         return wanted
 
     @classmethod
+    @lru_cache(1)
     def maxValueWidth(cls) -> int:
-        all = cls.all()
-        widths = [len(v.value) for v in all]
-        return max(widths)
+        return max(len(s.value) for s in cls.__members__.values())
 
 
 class Message:
@@ -91,7 +76,7 @@ class Message:
 
     def __str__(self) -> str:
         bits = [
-            f"{self.severity.value:{Severity.maxValueWidth()}s}: {self.messageType.value:{MessageType.maxValueWidth()}s}"
+            f"{self.severity.value:{Severity.maxValueWidth()}s} : {self.messageType.value:{MessageType.maxValueWidth()}s} :"
         ]
         bits.append(self.messageText)
         if self.excelReference is not None:

@@ -4,6 +4,7 @@ concept details and presentation networks.
 """
 
 import re
+import warnings
 from collections import defaultdict
 from enum import Enum, StrEnum, auto
 from functools import cache, cached_property
@@ -16,6 +17,7 @@ from mireport.exceptions import (
     UnknownTaxonomyException,
 )
 from mireport.json import getObject, getResource
+from mireport.stringutil import unicodeDashNormalization
 from mireport.utr import UTR
 from mireport.xml import (
     ENUM2_NS,
@@ -31,20 +33,6 @@ VSME_ENTRY_POINT = "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/vsme-all.xsd
 MEASUREMENT_GUIDANCE_LABEL_ROLE = "http://www.xbrl.org/2003/role/measurementGuidance"
 STANDARD_LABEL_ROLE = "http://www.xbrl.org/2003/role/label"
 DOCUMENTATION_LABEL_ROLE = "http://www.xbrl.org/2003/role/documentation"
-
-_DASH_TRANSLATION = str.maketrans(
-    {
-        "\N{EM DASH}": "\N{HYPHEN-MINUS}",
-        "\N{EN DASH}": "\N{HYPHEN-MINUS}",
-    }
-)
-
-
-def _cleanLabel(label: str) -> str:
-    """Clean up a label by replacing dashes with hyphens and removing all
-    leading and trailing whitespace (as defined by Unicode)."""
-    return label.translate(_DASH_TRANSLATION).strip()
-
 
 LABEL_SUFFIX_PATTERN = re.compile(r"\s*\[[a-z ]+\]\s*$")
 
@@ -183,14 +171,55 @@ class Concept:
             self._eeDomainMemberStrings = None
 
     def _getLabelForRole(
-        self, roleUri: str, lang: str = "en", fallbackIfMissing: Optional[str] = None
+        self,
+        roleUri: str,
+        requestedLanguage: str = "en",
+        fallbackLabel: Optional[str] = None,
+        fallbackAnyLang: bool = False,
+        removeSuffix: bool = False,
     ) -> Optional[str]:
-        labels_for_lang = self._labels[lang]
-        return labels_for_lang.get(roleUri, fallbackIfMissing)
+        requestedLanguage = requestedLanguage.lower()
+        labels_for_lang: dict[str, str] = {}
+        desired_label = None
+
+        if requestedLanguage in self._labels:
+            labels_for_lang = self._labels[requestedLanguage]
+            desired_label = labels_for_lang.get(roleUri)
+        else:
+            label_langs = self._labels.keys()
+            wanted_lang = requestedLanguage.partition("-")[0]
+            for p in label_langs:
+                if p.partition("-")[0] == wanted_lang:
+                    labels_for_lang = self._labels[p]
+                    desired_label = labels_for_lang.get(roleUri)
+                    if desired_label:
+                        break
+
+        if not desired_label and fallbackAnyLang:
+            for d in self._labels.values():
+                for role, label in d.items():
+                    if role == roleUri:
+                        labels_for_lang[role] = label
+                        desired_label = labels_for_lang.get(roleUri)
+                        if desired_label:
+                            break
+
+        if desired_label is None and fallbackLabel is not None:
+            desired_label = fallbackLabel
+
+        if not desired_label or not removeSuffix:
+            return desired_label
+
+        return LABEL_SUFFIX_PATTERN.sub("", desired_label)
 
     @overload
     def getStandardLabel(
-        self, lang: str = "en", *, fallbackIfMissing: str, removeSuffix: bool = ...
+        self,
+        lang: str = "en",
+        *,
+        fallbackIfMissing: str,
+        removeSuffix: bool = ...,
+        fallbackAnyLang: bool = ...,
     ) -> str: ...
 
     @overload
@@ -200,6 +229,7 @@ class Concept:
         *,
         fallbackIfMissing: None = None,
         removeSuffix: bool = ...,
+        fallbackAnyLang: bool = ...,
     ) -> Optional[str]: ...
 
     def getStandardLabel(
@@ -208,21 +238,23 @@ class Concept:
         *,
         fallbackIfMissing: Optional[str] = None,
         removeSuffix: bool = False,
+        fallbackAnyLang: bool = False,
     ) -> Optional[str]:
-        label = self._getLabelForRole(
-            STANDARD_LABEL_ROLE, lang=lang, fallbackIfMissing=fallbackIfMissing
+        return self._getLabelForRole(
+            STANDARD_LABEL_ROLE,
+            requestedLanguage=lang,
+            fallbackLabel=fallbackIfMissing,
+            fallbackAnyLang=fallbackAnyLang,
+            removeSuffix=removeSuffix,
         )
-
-        if not label or not removeSuffix:
-            return label
-
-        return LABEL_SUFFIX_PATTERN.sub("", label)
 
     def getDocumentationLabel(
         self, lang: str = "en", fallbackIfMissing: Optional[str] = None
     ) -> Optional[str]:
         return self._getLabelForRole(
-            DOCUMENTATION_LABEL_ROLE, lang=lang, fallbackIfMissing=fallbackIfMissing
+            DOCUMENTATION_LABEL_ROLE,
+            requestedLanguage=lang,
+            fallbackLabel=fallbackIfMissing,
         )
 
     def getMeasurementGuidanceLabel(
@@ -230,8 +262,8 @@ class Concept:
     ) -> Optional[str]:
         return self._getLabelForRole(
             MEASUREMENT_GUIDANCE_LABEL_ROLE,
-            lang=lang,
-            fallbackIfMissing=fallbackIfMissing,
+            requestedLanguage=lang,
+            fallbackLabel=fallbackIfMissing,
         )
 
     @cache
@@ -376,6 +408,15 @@ class Relationship(NamedTuple):
     roleUri: str
     depth: int
     concept: Concept
+    preferredLabel: Optional[str] = None
+
+    def getLabel(self, lang: str = "en", removeSuffix: bool = True) -> Optional[str]:
+        """Get the label for this relationship's concept."""
+        if self.preferredLabel is None:
+            return self.concept.getStandardLabel(lang, removeSuffix=removeSuffix)
+        return self.concept._getLabelForRole(
+            self.preferredLabel, lang, removeSuffix=removeSuffix
+        )
 
 
 class PresentationGroup(NamedTuple):
@@ -419,10 +460,15 @@ class Taxonomy:
         self._relationships: dict[str, list[Relationship]] = defaultdict(list)
         for roleUri, bits in presentation.items():
             self._groupLabels[roleUri] = bits["labels"]
-            for indent, concept_qname in bits["rows"]:
+            for row in bits["rows"]:
+                if len(row) == 2:
+                    indent, concept_qname = row
+                    preferredLabel = None
+                else:
+                    indent, concept_qname, preferredLabel = row
                 concept = self.getConcept(concept_qname)
                 self._relationships[roleUri].append(
-                    Relationship(roleUri, indent, concept)
+                    Relationship(roleUri, indent, concept, preferredLabel)
                 )
 
         self._lookupConceptsByName = defaultdict(list)
@@ -434,7 +480,7 @@ class Taxonomy:
         for concept in concepts.values():
             if (label := concept.getStandardLabel()) is not None:
                 cByStdLbl[label].append(concept)
-                stripped = _cleanLabel(label)
+                stripped = unicodeDashNormalization(label)
                 cByPretend[stripped].append(concept)
                 label_no_suffix, _, _ = stripped.rpartition("[")
                 label_no_suffix = label_no_suffix.strip()
@@ -522,11 +568,11 @@ class Taxonomy:
             oc_str = "\n".join(
                 f"{role}\n\t{c.qname}"
                 for role, c in sorted(
-                    ((role, c) for role, _, c in open_hcs),
+                    ((x.roleUri, x.concept) for x in open_hcs),
                 )
             )
             te.add_note(f"Open hypercubes:\n{oc_str}")
-            raise te
+            warnings.warn(UserWarning(te))
 
         match len(desired_containers):
             case 0:
@@ -561,7 +607,7 @@ class Taxonomy:
             label, frozenset()
         )
         if not possible:
-            label = _cleanLabel(label)
+            label = unicodeDashNormalization(label)
             possible = self._lookupConceptsByPretendLabel.get(label, frozenset())
         if not possible:
             label = label.lower()
@@ -786,12 +832,13 @@ def listTaxonomies() -> list[str]:
 
 
 def _loadTaxonomyFromFile(bits: dict) -> None:
-    qnameMaker = getBootsrapQNameMaker()
     entryPoint = bits["entryPoint"]
     if _TAXONOMIES.get(entryPoint) is not None:
         raise TaxonomyException(
             f"Already loaded taxonomy. Taxonomies loaded: {' '.join(_TAXONOMIES.keys())}"
         )
+
+    qnameMaker = getBootsrapQNameMaker()
     for prefix, namespace in bits["namespaces"].items():
         qnameMaker.addNamespacePrefix(prefix, namespace)
 

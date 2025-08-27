@@ -7,12 +7,12 @@ from dataclasses import dataclass
 from datetime import date, datetime
 from itertools import combinations
 from pathlib import Path
-from typing import BinaryIO, NamedTuple, Optional, Self
+from typing import BinaryIO, Callable, NamedTuple, Optional, Self
 
+from babel import Locale
 from dateutil.parser import parse as parse_datetime
 from dateutil.relativedelta import relativedelta
 from openpyxl import Workbook
-from openpyxl.cell.cell import Cell
 from openpyxl.workbook.defined_name import DefinedName
 from openpyxl.worksheet.cell_range import CellRange
 from openpyxl.worksheet.worksheet import Worksheet
@@ -132,6 +132,7 @@ class ExcelProcessor:
         results: ConversionResultsBuilder,
         defaults: dict,
         /,
+        outputLocale: Optional[Locale] = None,
     ):
         self._results = results
         self._defaults = defaults
@@ -152,6 +153,10 @@ class ExcelProcessor:
             CellAndXBRLMetadataHolder, dict[Concept, Concept]
         ] = defaultdict(dict)
         self._tableRelatedNames: dict[CellAndXBRLMetadataHolder, TableXBRLContents] = {}
+
+        # For passing through to inline report
+        self._outputLocale: Optional[Locale] = outputLocale
+        self._coverImage: Optional[bytes] = None
 
         # Not yet initialised. Need setting early
         self._workbook: Workbook
@@ -247,7 +252,7 @@ class ExcelProcessor:
 
         self.abortEarlyIfErrors()
         taxonomy = getTaxonomy(entryPoint)
-        self._report = InlineReport(taxonomy)
+        self._report = InlineReport(taxonomy, self._outputLocale)
         self._report.addSchemaRef(entryPoint)
 
     def getAndValidateRequiredMetadata(self) -> None:
@@ -342,17 +347,43 @@ class ExcelProcessor:
                     self._report.setDefaultPeriodName(name)
 
         if "report" in defaults:
-            entityName_namedRange = defaults["report"]["entity-name"]
-            if entityName_namedRange in self._workbook.defined_names:
-                self._report.setEntityName(
-                    self.getSingleStringValue(entityName_namedRange)
-                )
-            else:
-                self._results.addMessage(
-                    f"Excel report must have a value for named range {entityName_namedRange}.",
-                    Severity.ERROR,
-                    MessageType.ExcelParsing,
-                )
+            report_defaults = defaults["report"]
+            self.setReportMetadata(
+                report_defaults, "entity-name", self._report.setEntityName
+            )
+            self.setReportMetadata(
+                report_defaults, "report-title", self._report.setReportTitle
+            )
+            self.setReportMetadata(
+                report_defaults, "report-subtitle", self._report.setReportSubtitle
+            )
+
+    def setReportMetadata(
+        self, report_defaults: dict, key: str, method: Callable[[str], None]
+    ) -> None:
+        config = report_defaults.get(key)
+        if not isinstance(config, dict) or "named-range" not in config:
+            self._results.addMessage(
+                f"Missing or invalid named range for report metadata key '{key}'.",
+                Severity.ERROR,
+                MessageType.ExcelParsing,
+            )
+            return
+
+        named_range = config["named-range"]
+        fallback = config.get("fallback")
+
+        if named_range in self._workbook.defined_names:
+            value = self.getSingleStringValue(named_range)
+            method(value)
+        elif fallback is not None:
+            method(fallback)
+        else:
+            self._results.addMessage(
+                f"Excel report must have a value for named range '{named_range}'.",
+                Severity.ERROR,
+                MessageType.ExcelParsing,
+            )
 
     def abortEarlyIfErrors(self) -> None:
         if self._results.hasErrors():
@@ -595,7 +626,17 @@ class ExcelProcessor:
                 return None
 
     def _processNamedRanges(self) -> None:
-        for dn in sorted(self._unusedDefinedNames, key=lambda d: d.name):
+        for dn in self._unusedDefinedNames.copy():
+            if dn.name is None:
+                self._results.addMessage(
+                    "Named range has no name. Skipping.",
+                    Severity.ERROR,
+                    MessageType.DevInfo,
+                    excel_reference=excelDefinedNameRef(dn),
+                )
+                self._unusedDefinedNames.remove(dn)
+                continue
+
             concept = self.taxonomy.getConceptForName(dn.name)
 
             # TODO FIXME Temporary fix for the VSME taxonomy
@@ -838,7 +879,7 @@ class ExcelProcessor:
         ]
         for periodHolder in periodHolders:
             dimValueDN = periodHolder.definedName
-            namedPeriod = dimValueDN.name
+            namedPeriod = dimValueDN.name or ""
             year = self.getSingleValue(dimValueDN)
             if year is None or year in EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE:
                 self._definedNameToXBRLMap.pop(dimValueDN)
@@ -899,8 +940,7 @@ class ExcelProcessor:
                     cells = [cell for cell in row if cell.value is not None]
                     match len(cells):
                         case 0:
-                            cell = None
-                            value = None
+                            continue
                         case 1:
                             cell = cells[0]
                             value = cell.value
@@ -1014,13 +1054,15 @@ class ExcelProcessor:
                                 broken = True
                                 continue
 
-                            memberConcept = self.taxonomy.getConceptForLabel(edValue)
+                            memberConcept = self.taxonomy.getConceptForLabel(
+                                str(edValue)
+                            )
                             if (
                                 memberConcept is None
                                 and (
                                     fake_value
                                     := self._configCellValuesToTaxonomyLabels.get(
-                                        edValue
+                                        str(edValue)
                                     )
                                 )
                                 is not None
@@ -1047,7 +1089,7 @@ class ExcelProcessor:
                         if concept.isEnumerationSingle:
                             if (
                                 eeValue := self._report.taxonomy.getConceptForLabel(
-                                    value
+                                    str(value)
                                 )
                             ) is not None:
                                 factBuilder.setHiddenValue(eeValue.expandedName)
@@ -1057,8 +1099,8 @@ class ExcelProcessor:
                                     f"Unable to find EE concept for cell value '{value}'",
                                     Severity.ERROR,
                                     MessageType.Conversion,
-                                    excel_reference=excelCellRef(
-                                        priItem.worksheet, cell
+                                    excel_reference=excelCellOrCellRangeRef(
+                                        priItem.worksheet, priItem.cellRange, cell
                                     ),
                                 )
                         elif concept.isEnumerationSet:
@@ -1066,7 +1108,7 @@ class ExcelProcessor:
                             for v in values:
                                 if (
                                     eeValue := self._report.taxonomy.getConceptForLabel(
-                                        v
+                                        str(v)
                                     )
                                 ) is not None:
                                     eeValues.append(eeValue)
@@ -1267,6 +1309,7 @@ class ExcelProcessor:
             if cell is None:
                 self._definedNameToXBRLMap.pop(dn)
                 continue
+
             value = cell.value
             if value is None or value is False:
                 # No value in the cell, so not reportable
@@ -1306,6 +1349,7 @@ class ExcelProcessor:
 
             if concept.isNumeric:
                 self.processNumeric(stuff, cell, fb, value)
+
             if concept.isNumeric and not concept.isMonetary:
                 self.setUnitForName(stuff, fb)
             elif concept.isMonetary:
@@ -1393,8 +1437,8 @@ class ExcelProcessor:
             if v is None or v is False:
                 continue
             if v is True:
-                rindex = rnum - stuff.cellRange.min_row
-                cindex = cnum - stuff.cellRange.min_col
+                rindex = rnum - int(stuff.cellRange.min_row or 0)
+                cindex = cnum - int(stuff.cellRange.min_col or 0)
                 if 1 == stuff.effectiveHeight:
                     index = cindex
                 elif 1 == stuff.effectiveWidth:
@@ -1544,12 +1588,35 @@ class ExcelProcessor:
     def processNumeric(
         self,
         stuff: CellAndXBRLMetadataHolder,
-        cell: Cell,
+        cell: _CellType,
         fb: FactBuilder,
-        value: Optional[int] = None,
+        value: Optional[object] = None,
     ) -> None:
         if value is None:
-            value = cell.value
+            if cell.value is None:
+                self._results.addMessage(
+                    f"Cell value is None for {stuff.definedName.name}. Unable to process numeric value.",
+                    Severity.ERROR,
+                    MessageType.DevInfo,
+                    excel_reference=excelCellOrCellRangeRef(
+                        stuff.worksheet, stuff.cellRange, cell
+                    ),
+                )
+                return
+            else:
+                value = cell.value
+
+        if isinstance(value, bool) or not isinstance(value, int | float):
+            self._results.addMessage(
+                f"Cell value {value=} {type(value)} is not numeric for {stuff.definedName.name}. Unable to process numeric value.",
+                Severity.ERROR,
+                MessageType.DevInfo,
+                excel_reference=excelCellOrCellRangeRef(
+                    stuff.worksheet, stuff.cellRange, cell
+                ),
+            )
+            return
+
         decimals = get_decimal_places(cell)
 
         cell_is_percentage = "%" in cell.number_format

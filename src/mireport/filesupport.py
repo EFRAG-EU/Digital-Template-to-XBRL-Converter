@@ -1,6 +1,9 @@
 import re
 from io import BytesIO
+from pathlib import Path
 from typing import NamedTuple
+
+from mireport.stringutil import format_bytes
 
 ZIP_UNWANTED_RE = re.compile(r"[^\w.]+")  # \w includes '_'
 FILE_UNWANTED_RE = re.compile(r'[<>:"/\\|?*]')
@@ -49,3 +52,36 @@ class FilelikeAndFileName(NamedTuple):
 
     def fileLike(self) -> BytesIO:
         return BytesIO(self.fileContent)
+
+    def __str__(self) -> str:
+        return f"{self.filename} [{format_bytes(len(self.fileContent))}]"
+
+    def saveToFilepath(self, path: Path) -> None:
+        """Saves the file content to the specified path."""
+        parent = path.parent
+
+        # Check if parent directory exists and is actually a file
+        if parent.exists() and parent.is_file():
+            raise ValueError(
+                f"Parent path {parent} is an existing file, not a directory"
+            )
+
+        # Check if parent directory exists
+        if not parent.exists():
+            raise ValueError(f"Parent directory {parent} does not exist")
+
+        with open(path, "wb") as f:
+            f.write(self.fileContent)
+            f.flush()
+        assert f.closed, "File should be closed after writing"
+        return
+
+    def saveToDirectory(self, directory: Path) -> None:
+        """Saves the file content to the specified directory using @self.filename."""
+        if directory.exists() and directory.is_file():
+            raise ValueError(f"Path {directory} is an existing file, not a directory")
+
+        if not directory.exists():
+            directory.mkdir(parents=True, exist_ok=True)
+        self.saveToFilepath(directory / self.filename)
+        return

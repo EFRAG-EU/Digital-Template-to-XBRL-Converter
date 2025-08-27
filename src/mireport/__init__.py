@@ -1,4 +1,5 @@
 import logging
+from importlib.metadata import PackageNotFoundError, version
 
 from mireport.data import excel_templates, taxonomies
 from mireport.excelprocessor import _loadVsmeDefaults
@@ -8,6 +9,11 @@ from mireport.taxonomy import _loadTaxonomyFromFile
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 __all__ = ["loadMetaData"]
+
+try:
+    __version__ = version("mireport")
+except PackageNotFoundError:
+    __version__ = "(unknown version)"
 
 
 def loadMetaData() -> None:

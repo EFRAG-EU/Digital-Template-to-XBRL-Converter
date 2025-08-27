@@ -17,12 +17,19 @@
   </ol>
 </div>
 
-<!-- Error Message -->
-{% if error_message %}
-<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-  <span class="block sm:inline">{{ error_message }}</span>
-</div>
-{% endif %}
+<!-- Flash Error Messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      {% if category == 'error' %}
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+          <span class="block sm:inline">{{ message }}</span>
+        </div>
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
 
 <!-- Loading Spinner -->
 <div id="loadingSpinner" class="flex fixed inset-0 bg-black/80 items-center justify-center z-50 hidden">
@@ -38,8 +45,9 @@
 
 
 <!-- Upload Form -->
-<form action="{{ url_for('basic.upload')}}" method="post" enctype="multipart/form-data" class="space-y-4" onsubmit="showSpinner()">
+<form action="{{ url_for('basic.upload') }}" method="post" enctype="multipart/form-data" class="space-y-4" onsubmit="showSpinner()">
 
+  <!-- Digital Template File -->
   <div>
     <label for="file" class="block text-sm font-medium text-gray-700 mb-1">Choose the XLSX Digital Template file</label>
     <input type="file" id="file" name="file" accept=".xlsx"
@@ -47,18 +55,38 @@
       required />
   </div>
 
-  {% if ENABLE_CAPTCHA %}
-  <!-- CSRF Token -->
-  <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
+  <!-- Optional Corporate Logo -->
+  <div>
+    <label for="logo" class="block text-sm font-medium text-gray-700 mb-1">Upload a corporate logo (optional)</label>
+    <input type="file" id="logo" name="logo" accept="image/*"
+      class="block w-full text-sm text-gray-700 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+    <div id="logoPreview" class="mt-2 hidden">
+      <p class="text-sm text-gray-500">Preview:</p>
+      <img id="logoImage" src="#" alt="Logo Preview" class="max-h-24 mt-1 rounded shadow" />
+    </div>
+  </div>
 
-  <!-- Captcha -->
+  <!-- Language / Country Formatting -->
+  <div>
+    <label for="locale" class="block text-sm font-medium text-gray-700 mb-1">
+      Choose XBRL report language and formatting style
+    </label>
+    <select id="locale" name="locale"
+      class="block w-full text-sm font-mono text-gray-800 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+      <!-- Dynamically populated -->
+    </select>
+  </div>
+
+  {% if ENABLE_CAPTCHA %}
+  <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
   <div>
     <label id="captchaLabel" for="captcha" class="block text-sm font-medium text-gray-700 mb-1"></label>
-    <input type="text" id="captcha" name="captcha" title="Please calculate the sum of the two numbers in order to check that you are human."
+    <input type="text" id="captcha" name="captcha"
+      title="Please calculate the sum of the two numbers in order to check that you are human."
       class="block w-full text-sm text-gray-700 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
       required />
   </div>
-{% endif %}
+  {% endif %}
 
   <!-- Terms and Conditions -->
   <div class="flex items-center space-x-2">
@@ -66,7 +94,7 @@
       class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
     <label for="terms" class="text-sm text-gray-600">
       I agree to the
-      <button type="button" onclick="openModal()" class="text-blue-600 underline">terms and conditions</button>.
+      <button type="button" id="termsButton" class="text-blue-600 underline">terms and conditions</button>.
     </label>
   </div>
 
@@ -75,27 +103,80 @@
     class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition">
     Upload & Convert Digital Template
   </button>
+
   {% if existing_conversions %}
-  <!-- Existing users -->
-  <a href="{{url_for('basic.conversions')}}" class="w-full text-center inline-block px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition">
+  <a href="{{ url_for('basic.conversions') }}" class="w-full text-center inline-block px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition">
     Access My Previous Conversions
   </a>
   {% endif %}
 </form>
 
-
-
- {% if ENABLE_CAPTCHA %}
-<!-- Captcha Script -->
+{% if ENABLE_CAPTCHA %}
 <script>
   async function fetchCaptcha() {
-    const response = await fetch("{{ url_for('basic.generate_captcha') }}");
+    const response = await fetch("{{ url_for('basic.generate_captcha') }}", {credentials: "include"});
     const data = await response.json();
     document.getElementById('captchaLabel').textContent = data.question;
   }
-
-  // Fetch captcha on page load
   document.addEventListener('DOMContentLoaded', fetchCaptcha);
 </script>
 {% endif %}
+
+<script>
+  // Load locale options using Babel backend
+  async function loadLocaleOptions() {
+    const res = await fetch("{{ url_for('basic.available_locales') }}");
+    const locales = await res.json();
+    const select = document.getElementById("locale");
+
+    locales.forEach(locale => {
+      const option = document.createElement("option");
+      option.value = locale.code;
+      option.textContent = locale.label;
+      select.appendChild(option);
+    });
+
+    const browserLocale = navigator.language || navigator.userLanguage;
+    const match = locales.find(loc => loc.code === browserLocale);
+    select.value = match ? match.code : "en-GB";
+  }
+
+  // Logo preview with max dimension check (e.g., 500x500)
+  function previewLogo(event) {
+    const file = event.target.files[0];
+    const maxWidth = 500;
+    const maxHeight = 500;
+
+    if (file) {
+      if (!file.type.startsWith("image/")) {
+        alert("Please select a valid image file.");
+        event.target.value = ""; // reset input
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const img = new Image();
+        img.onload = function () {
+          if (img.width > maxWidth || img.height > maxHeight) {
+            alert(`Image dimensions should be at most ${maxWidth}px × ${maxHeight}px. Your image is ${img.width}px × ${img.height}px.`);
+            event.target.value = ""; // reset input
+            document.getElementById("logoPreview").classList.add("hidden");
+            return;
+          }
+          // If dimensions OK, show preview
+          document.getElementById("logoImage").src = e.target.result;
+          document.getElementById("logoPreview").classList.remove("hidden");
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    loadLocaleOptions();
+    document.getElementById("logo").addEventListener("change", previewLogo);
+  });
+</script>
 {% endblock %}
