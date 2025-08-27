@@ -532,7 +532,10 @@ class ExcelProcessor:
         if (
             cell := self.getSingleCell(definedName, row=row, column=column)
         ) is not None:
-            return cell.value
+            value = cell.value
+            if not isinstance(value, _CellValue):
+                value = str(value)
+            return value
         return None
 
     def getSingleStringValue(
@@ -908,7 +911,7 @@ class ExcelProcessor:
                             values = [c.value for c in cells]
                             cell = cells[0]
                             if concept.isEnumerationSet:
-                                value = " ".join(values)
+                                value = " ".join(str(v) for v in values)
                             else:
                                 self._results.addMessage(
                                     f"Primary item {priItem.definedName.name} spans multiple columns and has multiple values ({values}). Skipping.",
@@ -1288,7 +1291,19 @@ class ExcelProcessor:
                     self._definedNameToXBRLMap.pop(dn)
                     continue
 
-            fb.setConcept(concept).setValue(value)
+            fb.setConcept(concept)
+            if isinstance(value, _FactValue):
+                fb.setValue(value)
+            else:
+                self._results.addMessage(
+                    f"Rich object '{value}' {type(value).__name__} encountered as fact value for {concept}. Converting to string.",
+                    Severity.WARNING,
+                    MessageType.ExcelParsing,
+                    taxonomy_concept=concept,
+                    excel_reference=excelCellRef(stuff.worksheet, cell),
+                )
+                fb.setValue(str(value))
+
             if concept.isNumeric:
                 self.processNumeric(stuff, cell, fb, value)
             if concept.isNumeric and not concept.isMonetary:
@@ -1601,7 +1616,7 @@ class ExcelProcessor:
         value = self.getSingleValue(definedName)
         return self.getDateFromValue(value)
 
-    def getDateFromValue(self, value: _CellValue) -> date:
+    def getDateFromValue(self, value: object) -> date:
         if isinstance(value, datetime):
             return value.date()
         elif isinstance(value, date):
