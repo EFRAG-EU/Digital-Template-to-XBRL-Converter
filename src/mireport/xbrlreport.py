@@ -22,7 +22,11 @@ from markupsafe import Markup, escape
 
 import mireport
 from mireport.exceptions import InlineReportException
-from mireport.filesupport import FilelikeAndFileName, zipSafeString
+from mireport.filesupport import (
+    FilelikeAndFileName,
+    ImageFileLikeAndFileName,
+    zipSafeString,
+)
 from mireport.localise import decimal_symbol, localise_and_format_number
 from mireport.stringutil import unicodeSpaceNormalize
 from mireport.taxonomy import (
@@ -694,7 +698,8 @@ class InlineReport:
         self._schemaRefs: set[str] = set()
         self._reportTitle: str = ""
         self._reportSubtitle: str = ""
-        self._outputLocale = outputLocale
+        self._outputLocale: Optional[Locale] = outputLocale
+        self._logo: Optional[FilelikeAndFileName] = None
 
         decimal_separator = decimal_symbol(self._outputLocale)
         match decimal_separator:
@@ -744,6 +749,9 @@ class InlineReport:
 
     def setEntityName(self, name: str) -> None:
         self._entityName = name
+
+    def setEntityLogo(self, logo: ImageFileLikeAndFileName) -> None:
+        self._logo = logo
 
     def setDefaultPeriodName(self, name: str) -> None:
         if name not in self._periods:
@@ -892,6 +900,7 @@ class InlineReport:
                 "factCount": self.factCount,
                 "title": self._reportTitle,
                 "subtitle": self._reportSubtitle,
+                "optionalLogo": self._logo,
             },
             software={
                 "version": mireport.__version__,

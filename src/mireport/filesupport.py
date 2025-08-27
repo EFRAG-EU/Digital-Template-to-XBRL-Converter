@@ -1,7 +1,11 @@
+import base64
 import re
 from io import BytesIO
 from pathlib import Path
-from typing import NamedTuple
+from typing import NamedTuple, Optional
+
+from PIL import Image
+from PIL.Image import Resampling
 
 from mireport.stringutil import format_bytes
 
@@ -85,3 +89,37 @@ class FilelikeAndFileName(NamedTuple):
             directory.mkdir(parents=True, exist_ok=True)
         self.saveToFilepath(directory / self.filename)
         return
+
+
+class ImageFileLikeAndFileName(FilelikeAndFileName):
+    def as_data_url(
+        self,
+        max_width: Optional[int] = None,
+        max_height: Optional[int] = None,
+    ) -> str:
+        """
+        Resize and convert a logo image to a base64 data URL suitable for XHTML embedding.
+        Always outputs PNG for maximum compatibility.
+
+        :param logo_data: FilelikeAndFileName containing the image data.
+        :param max_width: Maximum width in pixels.
+        :param max_height: Maximum height in pixels.
+        :return: A data URL string (image/png).
+        """
+        # Always output PNG
+        output_mime_type = "image/png"
+
+        with Image.open(self.fileLike()) as img:
+            # Fill in missing dimensions
+            orig_width, orig_height = img.size
+            target_width = orig_width if max_width is None else max_width
+            target_height = orig_height if max_height is None else max_height
+
+            img = img.convert("RGBA")  # Preserve transparency and unify mode
+            img.thumbnail((target_width, target_height), Resampling.LANCZOS)
+
+            bio = BytesIO()
+            img.save(bio, format="PNG")
+            base64_data = base64.b64encode(bio.getbuffer()).decode("ascii")
+
+        return f"data:{output_mime_type};base64,{base64_data}"
