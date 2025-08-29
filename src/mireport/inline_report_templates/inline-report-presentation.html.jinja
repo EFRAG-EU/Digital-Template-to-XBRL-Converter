@@ -24,6 +24,11 @@
         </div>
         <!-- Cover Page -->
         <div class="page portrait-page cover-page">
+            {% if reportInfo.optionalLogo %}
+            <div class="company-logo">
+                <img src="{{ reportInfo.optionalLogo.as_data_url(max_width=400) }}" alt="{{ reportInfo.entityName | e }} logo" />
+            </div>
+            {% endif %}
             <div class="entity-name"><h2>{{ reportInfo.entityName | e }}</h2></div>
             <div class="report-title"><h1>{{ reportInfo.title | e }}</h1></div>
             <div class="report-period"><h1>{{ macros.render_duration_period_endyear(report_period) }}</h1></div>

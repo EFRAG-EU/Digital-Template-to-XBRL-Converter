@@ -78,17 +78,18 @@ python .\scripts\parse-and-dump.py example.xlsx
 
 ## List of dependencies
 
-- **[pydantic](https://pypi.org/project/pydantic/)**: Data validation and settings management using Python type annotations.
-- **[python-dotenv](https://pypi.org/project/python-dotenv/)**: Read key-value pairs from `.env` files and set them as environment variables.
-- **[openpyxl](https://pypi.org/project/openpyxl/)**: Read/write Excel 2010 xlsx/xlsm/xltx/xltm files.
-- **[Flask](https://pypi.org/project/Flask/)**: A lightweight WSGI web application framework.
 - **[aoix](https://code.blinkace.com/xbrl/aoix.git)**: Custom fork for XBRL integration (feature-typed-dimensions branch).
-- **[Flask-Session](https://pypi.org/project/Flask-Session/)**: Adds server-side session support to Flask applications.
-- **[python-dateutil](https://pypi.org/project/python-dateutil/)**: Extensions to the standard Python datetime module.
-- **[msgpack](https://pypi.org/project/msgpack/)**: MessagePack (de)serializer.
-- **[rich](https://pypi.org/project/rich/)**: Rich text and beautiful formatting in the terminal.
 - **[arelle-release](https://pypi.org/project/arelle-release/)**: Arelle XBRL software release.
+- **[Flask-Session](https://pypi.org/project/Flask-Session/)**: Adds server-side session support to Flask applications.
+- **[Flask](https://pypi.org/project/Flask/)**: A lightweight WSGI web application framework.
 - **[ixbrl-viewer](https://pypi.org/project/ixbrl-viewer/)**: Inline XBRL viewer.
+- **[msgpack](https://pypi.org/project/msgpack/)**: MessagePack (de)serializer.
+- **[openpyxl](https://pypi.org/project/openpyxl/)**: Read/write Excel 2010 xlsx/xlsm/xltx/xltm files.
+- **[pillow](https://python-pillow.github.io/)**: Image (PNG, JPEG) inspection and processing.
+- **[pydantic](https://pypi.org/project/pydantic/)**: Data validation and settings management using Python type annotations.
+- **[python-dateutil](https://pypi.org/project/python-dateutil/)**: Extensions to the standard Python datetime module.
+- **[python-dotenv](https://pypi.org/project/python-dotenv/)**: Read key-value pairs from `.env` files and set them as environment variables.
+- **[rich](https://pypi.org/project/rich/)**: Rich text and beautiful formatting in the terminal.
 - **[waitress](https://pypi.org/project/waitress/)**: WSGI server for Python.
 
 ## Funding

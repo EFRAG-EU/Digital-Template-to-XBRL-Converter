@@ -8,19 +8,20 @@ authors = [
 ]
 
 dependencies = [
-    "pydantic>=2.10.0",
-    "python-dotenv>=1.0.1",
-    "openpyxl",
-    "flask",
     "aoix@git+https://code.blinkace.com/xbrl/aoix.git@feature-typed-dimensions",
-    "flask-session",
-    "python-dateutil",
-    "msgpack",
-    "rich>=14.0.0",
     "arelle-release>=2.37.37",
+    "babel>=2.17.0",
+    "flask-session",
+    "flask",
     "ixbrl-viewer",
+    "msgpack",
+    "openpyxl",
+    "pillow>=11.3.0",
+    "pydantic>=2.10.0",
+    "python-dateutil",
+    "python-dotenv>=1.0.1",
+    "rich>=14.0.0",
     "waitress",
-    "babel>=2.17.0"
 ]
 requires-python = ">=3.11"
 readme = "README.md"
@@ -42,18 +43,18 @@ packages = ["src/mireport"]
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=7.0.0",
-    "pytest-cov>=4.0.0",
+    "bandit>=1.8.0",
     "black>=23.0.0",
     "isort>=5.13.2",
     "mypy>=1.16.1",
-    "ruff>=0.12.2",
     "pre-commit>=3.5.0",
-    "bandit>=1.8.0",
+    "pytest-cov>=4.0.0",
+    "pytest>=7.0.0",
+    "ruff>=0.12.2",
     "safety>=3.2.9",
-    "types-Werkzeug",
+    "types-openpyxl",
     "types-python-dateutil",
-    "types-openpyxl"
+    "types-Werkzeug",
 ]
 
 redis = [

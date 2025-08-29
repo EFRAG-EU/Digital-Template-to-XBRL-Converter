@@ -37,7 +37,7 @@ from mireport.excelprocessor import (
     VSME_DEFAULTS,
     ExcelProcessor,
 )
-from mireport.filesupport import FilelikeAndFileName
+from mireport.filesupport import FilelikeAndFileName, ImageFileLikeAndFileName
 from mireport.localise import EU_LOCALES, get_locale_from_str, get_locale_list
 
 ENABLE_CAPTCHA = False
@@ -345,6 +345,15 @@ def upload() -> Response:
         fileContent=blob.stream.read(), filename=blob.filename
     )
     conversion["locale_str"] = request.form.get("locale", type=str, default="").strip()
+    if "logo" in request.files:
+        logo_file = request.files.getlist("logo")
+        if 1 != len(logo_file):
+            return make_response({"error": "Too many logo files"}, 400)
+        logo_file = logo_file[0]
+        if logo_file and logo_file.filename != "":
+            conversion["logo"] = FilelikeAndFileName(
+                fileContent=logo_file.stream.read(), filename=logo_file.filename
+            )
     return make_response(
         redirect(url_for("basic.convert", id=result.conversionId), code=303)
     )
@@ -422,6 +431,11 @@ def doConversion(conversion: dict, id: str) -> ConversionResults:
                     MessageType.Conversion,
                 )
                 return resultBuilder.build()
+
+            if "logo" in conversion:
+                logo = ImageFileLikeAndFileName(*conversion["logo"])
+                pc.addDevInfoMessage(f"Adding logo to report {logo}")
+                report.setEntityLogo(logo)
 
             pc.mark(
                 "Generating Inline Report",
