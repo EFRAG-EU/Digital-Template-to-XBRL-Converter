@@ -57,7 +57,9 @@
 
   <!-- Optional Corporate Logo -->
   <div>
-    <label for="logo" class="block text-sm font-medium text-gray-700 mb-1">Upload a corporate logo (optional)</label>
+    <label for="logo" class="block text-sm font-medium text-gray-700 mb-1">
+      Choose logo <span class="text-gray-500 font-normal">(optional)</span>
+    </label>
     <input type="file" id="logo" name="logo" accept="image/*"
       class="block w-full text-sm text-gray-700 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
     <div id="logoPreview" class="mt-2 hidden">
@@ -68,14 +70,33 @@
 
   <!-- Language / Country Formatting -->
   <div>
-    <label for="locale" class="block text-sm font-medium text-gray-700 mb-1">
-      Choose XBRL report language and formatting style
+    <label class="block text-sm font-medium text-gray-700 mb-2">
+      Report output language
     </label>
-    <select id="locale" name="locale"
-      class="block w-full text-sm font-mono text-gray-800 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-      <!-- Dynamically populated -->
-    </select>
+
+    <div class="space-y-2">
+      <!-- Option 1: Detect -->
+      <label class="flex items-center space-x-2">
+        <input type="radio" name="localeOption" value="detect" checked
+          class="text-blue-600 focus:ring-blue-500 border-gray-300" />
+        <span class="text-sm text-gray-700">Detect from template</span>
+      </label>
+
+      <!-- Option 2: Manual -->
+      <label class="flex items-center space-x-2">
+        <input type="radio" name="localeOption" value="manual"
+          class="text-blue-600 focus:ring-blue-500 border-gray-300" />
+        <span class="text-sm text-gray-700">Specify manually</span>
+      </label>
+
+      <!-- Manual select dropdown -->
+      <select id="locale" name="locale"
+        class="mt-1 block w-full text-sm font-mono text-gray-800 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hidden">
+        <!-- Dynamically populated -->
+      </select>
+    </div>
   </div>
+
 
   {% if ENABLE_CAPTCHA %}
   <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />
@@ -111,72 +132,129 @@
   {% endif %}
 </form>
 
-{% if ENABLE_CAPTCHA %}
 <script>
+document.addEventListener("DOMContentLoaded", () => {
+  // -----------------------------
+  // CAPTCHA fetch logic (only if enabled)
+  // -----------------------------
+  {% if ENABLE_CAPTCHA %}
   async function fetchCaptcha() {
-    const response = await fetch("{{ url_for('basic.generate_captcha') }}", {credentials: "include"});
+    const response = await fetch("{{ url_for('basic.generate_captcha') }}", { credentials: "include" });
     const data = await response.json();
-    document.getElementById('captchaLabel').textContent = data.question;
+    const label = document.getElementById('captchaLabel');
+    if (label && data.question) {
+      label.textContent = data.question;
+    }
   }
-  document.addEventListener('DOMContentLoaded', fetchCaptcha);
-</script>
-{% endif %}
 
-<script>
-  // Load locale options using Babel backend
+  const captchaLabelExists = document.getElementById('captchaLabel');
+  if (captchaLabelExists) {
+    fetchCaptcha();
+  }
+  {% endif %}
+
+  // -----------------------------
+  // Locale selection logic
+  // -----------------------------
+  const select = document.getElementById("locale");
+  const radios = document.querySelectorAll('input[name="localeOption"]');
+  let normalizedLocales = [];
+
   async function loadLocaleOptions() {
     const res = await fetch("{{ url_for('basic.available_locales') }}");
     const locales = await res.json();
-    const select = document.getElementById("locale");
 
-    locales.forEach(locale => {
+    normalizedLocales = locales.map(loc => ({
+      code: loc.code,
+      codeNormalized: loc.code.toLowerCase().replace(/_/g, "-"),
+      label: loc.label
+    }));
+
+    select.innerHTML = "";
+
+    normalizedLocales.forEach(locale => {
       const option = document.createElement("option");
       option.value = locale.code;
       option.textContent = locale.label;
       select.appendChild(option);
     });
-
-    const browserLocale = navigator.language || navigator.userLanguage;
-    const match = locales.find(loc => loc.code === browserLocale);
-    select.value = match ? match.code : "en-GB";
   }
 
-  // Logo preview with max dimension check (e.g., 500x500)
+  function detectBestMatch() {
+    const browserLocale = (navigator.language || navigator.userLanguage || "")
+                          .toLowerCase()
+                          .replace(/_/g, "-");
+
+    let match = normalizedLocales.find(loc => loc.codeNormalized === browserLocale);
+
+    if (!match && browserLocale.includes("-")) {
+      const baseLang = browserLocale.split("-")[0];
+      match = normalizedLocales.find(loc => loc.codeNormalized === baseLang);
+      if (!match) {
+        match = normalizedLocales.find(loc => loc.codeNormalized.startsWith(baseLang + "-"));
+      }
+    }
+
+    if (match) {
+      select.value = match.code;
+    } else {
+      select.selectedIndex = -1;
+    }
+  }
+
+  loadLocaleOptions().then(detectBestMatch);
+
+  radios.forEach(radio => {
+    radio.addEventListener("change", () => {
+      if (radio.value === "manual" && radio.checked) {
+        select.classList.remove("hidden");
+        detectBestMatch();
+      } else if (radio.value === "detect" && radio.checked) {
+        select.classList.add("hidden");
+        select.selectedIndex = -1;
+      }
+    });
+  });
+
+  // -----------------------------
+  // Logo preview logic
+  // -----------------------------
+  const logoInput = document.getElementById("logo");
+  const logoPreview = document.getElementById("logoPreview");
+  const logoImage = document.getElementById("logoImage");
+
   function previewLogo(event) {
     const file = event.target.files[0];
     const maxWidth = 5000;
     const maxHeight = 5000;
 
-    if (file) {
-      if (!file.type.startsWith("image/")) {
-        alert("Please select a valid image file.");
-        event.target.value = ""; // reset input
-        return;
-      }
+    if (!file) return;
 
-      const reader = new FileReader();
-      reader.onload = function (e) {
-        const img = new Image();
-        img.onload = function () {
-          if (img.width > maxWidth || img.height > maxHeight) {
-            alert(`Image dimensions should be at most ${maxWidth}px × ${maxHeight}px. Your image is ${img.width}px × ${img.height}px.`);
-            event.target.value = ""; // reset input
-            document.getElementById("logoPreview").classList.add("hidden");
-            return;
-          }
-          // If dimensions OK, show preview
-          document.getElementById("logoImage").src = e.target.result;
-          document.getElementById("logoPreview").classList.remove("hidden");
-        };
-        img.src = e.target.result;
-      };
-      reader.readAsDataURL(file);
+    if (!file.type.startsWith("image/")) {
+      alert("Please select a valid image file.");
+      event.target.value = "";
+      return;
     }
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const img = new Image();
+      img.onload = function() {
+        if (img.width > maxWidth || img.height > maxHeight) {
+          alert(`Image dimensions should be at most ${maxWidth}px × ${maxHeight}px. Your image is ${img.width}px × ${img.height}px.`);
+          event.target.value = "";
+          logoPreview.classList.add("hidden");
+          return;
+        }
+        logoImage.src = e.target.result;
+        logoPreview.classList.remove("hidden");
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
   }
 
-  document.addEventListener("DOMContentLoaded", () => {
-    loadLocaleOptions();
-    document.getElementById("logo").addEventListener("change", previewLogo);
-  });
+  logoInput.addEventListener("change", previewLogo);
+});
 </script>
 {% endblock %}

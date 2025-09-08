@@ -8,7 +8,7 @@ import warnings
 from collections import defaultdict
 from enum import Enum, StrEnum, auto
 from functools import cache, cached_property
-from typing import Any, NamedTuple, Optional, overload
+from typing import Any, Mapping, NamedTuple, Optional, overload
 
 from mireport import data
 from mireport.exceptions import (
@@ -803,8 +803,8 @@ class Taxonomy:
         return self._entryPoint
 
     @property
-    def namespacePrefixesMap(self) -> dict[str, str]:
-        return self._qnameMaker.nsManager._prefixToNamespaces.copy()
+    def namespacePrefixesMap(self) -> Mapping[str, str]:
+        return self._qnameMaker.namespacePrefixesMap
 
     @property
     def UTR(self) -> UTR:
