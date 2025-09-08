@@ -134,6 +134,22 @@
             </tbody>
         </table>
     </div>
+    {% if conversion_result.conversionSuccessful %}
+    <!-- Feedback / Request Message Card -->
+    <div class="mt-6 flex items-start gap-3 p-4 bg-blue-50 border border-blue-300 rounded-lg shadow-sm">
+        <!-- Icon -->
+        <div class="text-blue-400 text-2xl leading-none">
+            &#8505;
+        </div>
+
+        <!-- Text -->
+        <p class="text-sm text-blue-800">
+            The EFRAG Secretariat is interested in your experience using this tool and in real VSME disclosures for internal analytical purposes
+            (any reports received by EFRAG will not be shared or published). Please feel free to send your VSME report to
+            <a href="mailto:vsme@efrag.org" class="underline font-medium hover:text-blue-600">vsme@efrag.org</a> – Thank you!
+        </p>
+    </div>
+    {% endif %}
 </div>
 
 <script>
