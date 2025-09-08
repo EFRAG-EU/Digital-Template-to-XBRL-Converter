@@ -2,7 +2,8 @@ import json
 import logging
 import time
 from collections import defaultdict
-from collections.abc import Iterable
+from collections.abc import Iterable, MutableMapping
+from contextlib import closing
 from typing import Any, Optional, TypeVar
 
 from arelle import XbrlConst
@@ -20,6 +21,7 @@ from arelle.ValidateUtr import UtrEntry
 from mireport.arelle.support import (
     ArelleObjectJSONEncoder,
     ArelleProcessingResult,
+    ArelleQNameCanonicaliser,
     ArelleRelatedException,
 )
 
@@ -58,8 +60,7 @@ def callArelleForTaxonomyInfo(
         validate=True,
         utrValidate=utrValidation,
     )
-    with Session() as session:
-        log_handler = LogToXmlHandler()
+    with Session() as session, closing(LogToXmlHandler()) as log_handler:
         session.run(
             options,
             logHandler=log_handler,
@@ -163,9 +164,13 @@ class TaxonomyInfoExtractor:
         self.cntlr: Cntlr = cntlr
         self.options: RuntimeOptions = options
         self.modelXbrl: ModelXbrl = modelXbrl
-        self.taxonomyJson: dict[str, dict] = defaultdict(dict)
+        self.taxonomyJson: dict[str, MutableMapping] = defaultdict(dict)
+        self.qnameConverter: ArelleQNameCanonicaliser = (
+            ArelleQNameCanonicaliser.bootstrap(modelXbrl)
+        )
 
     def extract(self) -> None:
+        self.verifyConceptQNamesHavePrefixes()
         self.taxonomyJson["entryPoint"] = self.options.entrypointFile
 
         self.extractPresentation()
@@ -173,7 +178,8 @@ class TaxonomyInfoExtractor:
         self.extractConceptsAndMetadata()
 
         self.cntlr.addToLog("Processing namespaces and namespace prefixes")
-        self.taxonomyJson["namespaces"] = self.modelXbrl.prefixedNamespaces
+        self.taxonomyJson = self.qnameConverter.convert_recursive(self.taxonomyJson)
+        self.taxonomyJson["namespaces"] = self.qnameConverter.getNamespacePrefixMap()
         pdata = pluginData(self.cntlr)
         pdata.Taxonomy.update(self.taxonomyJson)
 
@@ -183,6 +189,41 @@ class TaxonomyInfoExtractor:
             )
             utrExtractor = UTRInfoExtractor(self.cntlr, self.modelXbrl, pdata)
             utrExtractor.extract()
+
+    def verifyConceptQNamesHavePrefixes(self) -> None:
+        self.cntlr.addToLog("Verifying all concepts have QNames with prefixes defined")
+        namespacesWithoutPrefix: set[str] = set()
+        undesiredQNames: set[QName] = set()
+
+        def verify_qname(qname: QName) -> None:
+            """Get the QName as a string with prefix if possible."""
+            if qname.prefix is None:
+                undesiredQNames.add(qname)
+                if qname.namespaceURI not in namespacesWithoutPrefix:
+                    namespacesWithoutPrefix.add(qname.namespaceURI)
+                    self.cntlr.addToLog(
+                        f"WARNING: Found concept with namespace with no prefix defined. Namespace: '{qname.namespaceURI}' (first localName found with this namespace: '{qname.localName}')",
+                        level=logging.WARNING,
+                    )
+
+        for qname, concept in sorted(self.modelXbrl.qnameConcepts.items()):
+            if concept.isItem:
+                if concept.qname.namespaceURI in {XbrlConst.xbrli, XbrlConst.xbrldt}:
+                    continue
+                verify_qname(qname)
+                verify_qname(concept.type.qname)
+                verify_qname(concept.baseXbrliTypeQname)
+
+        if not namespacesWithoutPrefix and not undesiredQNames:
+            self.cntlr.addToLog(
+                f"... All {len(self.modelXbrl.qnameConcepts):,} concepts (and their data-types) have QNames with prefixes defined"
+            )
+        else:
+            ns_str = "\n".join(sorted(namespacesWithoutPrefix))
+            self.cntlr.addToLog(
+                f"{len(namespacesWithoutPrefix):,} namespaces (affecting {len(undesiredQNames):,} QNames) with no prefix defined.\n{ns_str}",
+                level=logging.WARNING,
+            )
 
     def walkDefinitionChildren(
         self,
@@ -381,10 +422,12 @@ class TaxonomyInfoExtractor:
                 label = label_resource.stringValue.strip()
                 if role in jconcept["labels"][lang]:
                     label0 = jconcept["labels"][lang][role]
-                    self.cntlr.addToLog(
-                        f"Duplicate labels found in taxonomy: {label0=} {label=} {lang=} {role=}",
-                        level=logging.WARNING,
-                    )
+                    if label0 != label:
+                        self.cntlr.addToLog(
+                            f"Inconsistent duplicate labels found for [{concept.qname}]: {label0=} {label=} {lang=} {role=}",
+                            level=logging.WARNING,
+                        )
+                        label = max(label0, label)
                 jconcept["labels"][lang][role] = label
             else:
                 self.cntlr.addToLog(
@@ -417,14 +460,10 @@ class TaxonomyInfoExtractor:
 
                 if concept.isEnumeration and not concept.isEnumeration2Item:
                     self.cntlr.addToLog(
-                        f"Warning extensible enumerations other than 2.0 are not supported. {concept.qname}",
+                        f"WARNING: Extensible enumerations other than 2.0 are not supported. {concept.qname}",
                         level=logging.WARN,
                     )
                 if concept.isEnumeration2Item:
-                    # is this even needed? We can lookup the labels, get the concept
-                    # names and bung them in without using this. If this had a list
-                    # of the valid qnames for the domain, this would act as a check
-                    # that the chosen name is valid for the domain.
                     headUsable = concept.isEnumDomainUsable
                     linkrole = concept.enumLinkrole
                     jconcept.setdefault("other", {})["ee20DomainMembers"] = (

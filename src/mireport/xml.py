@@ -1,6 +1,8 @@
 import itertools
 import re
 import sys
+from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any, NamedTuple
 
 from mireport.exceptions import BrokenNamespacePrefixException, BrokenQNameException
@@ -186,6 +188,11 @@ class QNameMaker:
 
     def addNamespacePrefix(self, prefix: str, namespace: str) -> None:
         self.nsManager.add(prefix, namespace)
+
+    @property
+    def namespacePrefixesMap(self) -> Mapping[str, str]:
+        """Get a mapping of prefix to namespace for all known prefixes."""
+        return MappingProxyType(self.nsManager._prefixToNamespaces)
 
 
 def getBootsrapQNameMaker() -> QNameMaker:

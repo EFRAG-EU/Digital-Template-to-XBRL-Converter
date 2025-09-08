@@ -3,7 +3,6 @@ import time
 
 from mireport.arelle.taxonomy_info import callArelleForTaxonomyInfo
 from mireport.cli import validateTaxonomyPackages
-from mireport.taxonomy import VSME_ENTRY_POINT
 
 
 def parser() -> argparse.ArgumentParser:
@@ -30,8 +29,8 @@ def parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--entry-point",
         type=str,
-        default=VSME_ENTRY_POINT,
-        help=f"Entry point to the taxonomy. Default: {VSME_ENTRY_POINT}",
+        required=True,
+        help="Entry point to the taxonomy.",
     )
     return parser
 

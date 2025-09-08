@@ -1,15 +1,19 @@
 import json
 import logging
+from collections.abc import Mapping, MutableMapping
 from dataclasses import dataclass
-from typing import Any, MutableMapping, NamedTuple, Optional, Self
+from typing import Any, NamedTuple, Optional, Self
 
 from arelle.FileSource import FileNamedBytesIO
 from arelle.logging.handlers.LogToXmlHandler import LogToXmlHandler
 from arelle.ModelValue import QName
+from arelle.ModelXbrl import ModelXbrl
 
 from mireport.conversionresults import Message, MessageType, Severity
 from mireport.exceptions import MIReportException
 from mireport.filesupport import FilelikeAndFileName
+from mireport.xml import QName as MireportQName
+from mireport.xml import QNameMaker, getBootsrapQNameMaker
 
 L = logging.getLogger(__name__)
 
@@ -153,3 +157,68 @@ class ArelleObjectJSONEncoder(json.JSONEncoder):
             for item in obj:
                 ArelleObjectJSONEncoder.tidyKeys(item)
         return obj
+
+
+class ArelleQNameCanonicaliser:
+    """
+    Convert Arelle QNames to mireport.xml.QNames. This is needed as Arelle QNames
+    have the same prefix linked to multiple namespace URIs (prefixes are per XML source document).
+    mireport.xml.QNames have a unique prefix for each namespace URI (prefixes are unique per taxonomy).
+    """
+
+    def __init__(self, qnameMaker: QNameMaker) -> None:
+        self.qnameMaker = qnameMaker
+
+    @classmethod
+    def bootstrap(cls, arelle_model: ModelXbrl) -> Self:
+        qnameMaker = getBootsrapQNameMaker()
+        for prefix, namespace in arelle_model.prefixedNamespaces.items():
+            if "dtr-types" == prefix:
+                match namespace:
+                    case "http://www.xbrl.org/dtr/type/2022-03-31":
+                        prefix = "dtr-types-2022"
+                    case _:
+                        continue
+            qnameMaker.addNamespacePrefix(prefix, namespace)
+        return cls(qnameMaker)
+
+    def convert(self, qname: QName) -> MireportQName:
+        correct_prefix = (
+            qname.prefix is not None
+            and self.qnameMaker.nsManager.prefixIsKnown(qname.prefix)
+            and self.qnameMaker.nsManager.getNamespaceForPrefix(qname.prefix)
+            == qname.namespaceURI
+        )
+
+        if correct_prefix:
+            return self.qnameMaker.fromString(str(qname))
+        else:
+            wanted_prefix = qname.prefix
+            if (
+                wanted_prefix is not None
+                and not self.qnameMaker.nsManager.prefixIsKnown(wanted_prefix)
+            ):
+                self.qnameMaker.addNamespacePrefix(wanted_prefix, qname.namespaceURI)
+
+            return self.qnameMaker.fromNamespaceAndLocalName(
+                qname.namespaceURI, qname.localName
+            )
+
+    def getNamespacePrefixMap(self) -> MutableMapping[str, str]:
+        """Get a mapping of namespace URI to prefix."""
+        # needs to be mutable so JSON encoder can work with it
+        return dict(self.qnameMaker.namespacePrefixesMap)
+
+    def convert_recursive(self, obj: Any) -> Any:
+        """Recursively convert all QNames in a data structure to MireportQNames."""
+        if isinstance(obj, QName):
+            return str(self.convert(obj))
+        elif isinstance(obj, Mapping):
+            return {
+                self.convert_recursive(k): self.convert_recursive(v)
+                for k, v in obj.items()
+            }
+        elif isinstance(obj, (list, tuple)):
+            return type(obj)(self.convert_recursive(item) for item in obj)
+        else:
+            return obj
