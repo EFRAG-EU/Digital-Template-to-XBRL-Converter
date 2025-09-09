@@ -170,7 +170,7 @@ class Fact:
                     dimvalue = self._aspects.pop(key)
                     self._aspects[f"typed {keyConcept.qname}"] = dimvalue
 
-        self._decimals : Optional[DecimalPlaces]
+        self._decimals: Optional[DecimalPlaces]
         if aspect_value := str(self._aspects.get("decimals", "")):
             if aspect_value == "INF":
                 self._decimals = "INF"
@@ -216,10 +216,7 @@ class Fact:
             else:
                 output = escape(v)
         else:
-            decimal_places: DecimalPlaces = (
-                self._decimals
-                or "INF"
-            )
+            decimal_places: DecimalPlaces = self._decimals or "INF"
             locale = self._report._outputLocale
             try:
                 match self.value:
@@ -442,7 +439,7 @@ class FactBuilder:
         return self
 
     def setDecimals(self, decimals: DecimalPlaces) -> Self:
-        self._aspects["decimals"] = f'{decimals}'
+        self._aspects["decimals"] = f"{decimals}"
         return self
 
     def setScale(self, scale: int) -> Self:
@@ -731,7 +728,7 @@ class InlineReport:
 
         self._defaultAspects: dict[str, str] = {
             "numeric-transform": numeric_transform,
-            "decimals": 'INF',
+            "decimals": "INF",
         }
 
     def setReportTitle(self, title: str) -> None:
