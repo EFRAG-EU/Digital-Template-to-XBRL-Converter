@@ -443,7 +443,7 @@ def doConversion(conversion: dict, id: str) -> ConversionResults:
             )
             report_package = report.getInlineReportPackage()
             resultBuilder.addMessage(
-                f'Inline XBRL report "{report_package.filename}" created (containing {report.factCount} facts)',
+                f"Inline XBRL report {report_package} created (containing {report.factCount} facts)",
                 Severity.INFO,
                 MessageType.Conversion,
             )
