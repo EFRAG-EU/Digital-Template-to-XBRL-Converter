@@ -169,10 +169,13 @@ def getBestSupportedLanguage(
     supportedLanguages: frozenset[str],
     defaultLanguage: str | None,
 ) -> str | None:
-    """Return the best supported language included with the taxonomy for the given requested language.
+    """
+    Return the best supported language included with the taxonomy for the given requested language.
 
     @requestedLanguage: Should be as specified in BCP 47. For example, "fr-CH", "en-us", "de".
-    @supportedLanguages"""
+    @supportedLanguages: set of supported languages to choose from
+    @defaultLanguage: Language to pick from supported languages if no close match to requested language can be found, or None if there is no default.
+    """
     if defaultLanguage is not None and defaultLanguage not in supportedLanguages:
         raise ValueError(
             f"Default language must either be None or one of the supported languages {supportedLanguages=}"
