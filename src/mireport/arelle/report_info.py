@@ -1,6 +1,7 @@
 import logging
 import threading
 import zipfile
+from contextlib import closing
 from importlib.metadata import PackageNotFoundError, metadata, version
 from io import BytesIO
 from pathlib import Path, PurePath
@@ -92,18 +93,19 @@ class ArelleReportProcessor:
                     PluginManager.close()
                 except Exception:
                     pass
-                with Session() as session:
-                    with fileLikeToArelleFileSource(reportPackage) as requestZipStream:
-                        logHandler = LogToXmlHandler()
-                        session.run(
-                            options,
-                            sourceZipStream=requestZipStream,
-                            responseZipStream=responseZipStream,
-                            logHandler=logHandler,
-                            logFilters=[],
-                        )
-                        logHandler.close()
-                        result = ArelleProcessingResult.fromLogToXmlHandler(logHandler)
+                with (
+                    Session() as session,
+                    closing(LogToXmlHandler()) as logHandler,
+                    fileLikeToArelleFileSource(reportPackage) as requestZipStream,
+                ):
+                    session.run(
+                        options,
+                        sourceZipStream=requestZipStream,
+                        responseZipStream=responseZipStream,
+                        logHandler=logHandler,
+                        logFilters=[],
+                    )
+                    result = ArelleProcessingResult.fromLogToXmlHandler(logHandler)
                 assert requestZipStream.closed, "Forgot to close the stream."
                 return result
             except Exception as arelle_exception:
