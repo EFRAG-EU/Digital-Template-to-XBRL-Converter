@@ -997,7 +997,7 @@ class ReportLayoutOrganiser:
     def organise(self) -> list["ReportSection"]:
         self.createReportSections()
         self.createReportTables()
-        self.reportSections.sort(key=lambda x: x.presentation.label)
+        self.reportSections.sort(key=lambda x: x.presentation)
         self.checkAllFactsUsed()
         return self.reportSections
 

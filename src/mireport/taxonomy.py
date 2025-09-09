@@ -424,9 +424,34 @@ class Relationship(NamedTuple):
 
 class PresentationGroup(NamedTuple):
     roleUri: str
-    label: str
+    definition: str
     relationships: list[Relationship]
     style: PresentationStyle
+    taxonomy: Taxonomy
+    labels: Mapping[str, str]
+
+    def getLabel(self, language: str) -> str:
+        return (
+            self.labels.get(language)
+            or (
+                self.labels.get(self.taxonomy.defaultLanguage)
+                if self.taxonomy.defaultLanguage
+                else None
+            )
+            or self.definition
+        )
+    
+    def __lt__(self, other: object) -> bool:
+        if isinstance(other, PresentationGroup):
+            return (self.definition, self.roleUri) < (other.definition, other.roleUri)
+        return NotImplemented
+
+    def __eq__(self, other: object) -> bool:
+        if self is other:
+            return True
+        if isinstance(other, PresentationGroup):
+            return self.roleUri == other.roleUri
+        return NotImplemented
 
 
 class BaseSet(NamedTuple):
@@ -631,12 +656,17 @@ class Taxonomy:
         for role in self._groups:
             rels = self._relationships[role]
             style = self._identifyPresentationStyle(rels)
+            labels = {
+                lang: definition for lang, definition in self._groupLabels[role].items()
+            }
             groups.append(
                 PresentationGroup(
                     roleUri=role,
-                    label=self._groupLabels[role]["en"],
+                    definition=self._groupLabels[role]["en"],
                     relationships=rels,
                     style=style,
+                    taxonomy=self,
+                    labels=MappingProxyType(labels),
                 )
             )
         return groups
