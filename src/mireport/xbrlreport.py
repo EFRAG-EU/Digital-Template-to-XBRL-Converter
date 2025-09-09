@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import re
 import shutil
@@ -154,7 +156,7 @@ class Fact:
         self,
         concept: Concept,
         value: FactValue,
-        report: "InlineReport",
+        report: InlineReport,
         aspects: dict[str | QName, str | QName] | None = None,
     ):
         self.concept: Concept = concept
@@ -185,7 +187,7 @@ class Fact:
             f"Fact(concept={self.concept}, value={self.value}, aspects={self._aspects})"
         )
 
-    def __lt__(self, other: "Fact") -> bool:
+    def __lt__(self, other: Fact) -> bool:
         if self.concept is None or other.concept is None:
             return False
         return self.__key() < other.__key()
@@ -358,7 +360,7 @@ class FactBuilder:
     Represents a builder for Fact objects: an easy way to build and add facts to an InlineReport.
     """
 
-    def __init__(self, report: "InlineReport"):
+    def __init__(self, report: InlineReport):
         self._report: InlineReport = report
         self._concept: Optional[Concept] = None
         self._aspects: dict[str | QName, str | QName] = {}

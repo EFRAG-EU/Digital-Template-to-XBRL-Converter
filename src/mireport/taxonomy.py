@@ -3,6 +3,8 @@ This module provides a simple API for querying an XBRL taxonomy including
 concept details and presentation networks.
 """
 
+from __future__ import annotations
+
 import re
 import warnings
 from collections import Counter, defaultdict
@@ -159,7 +161,7 @@ class Concept:
     def __hash__(self) -> int:
         return hash(self.qname)
 
-    def _reifyUsingTaxonomy(self, taxonomy: "Taxonomy") -> None:
+    def _reifyUsingTaxonomy(self, taxonomy: Taxonomy) -> None:
         """Reify any bits of the concept that need the rest of the taxonomy."""
         if getattr(self, "_taxonomy", None) is not None:
             raise TaxonomyException(
