@@ -20,9 +20,10 @@ from openpyxl.worksheet.cell_range import CellRange
 from openpyxl.worksheet.worksheet import Worksheet
 
 from mireport.exceptions import OpenPyXlRelatedException
+from mireport.typealiases import DecimalPlaces
 
-_CellType: TypeAlias = ReadOnlyCell | MergedCell | Cell
-_CellValue: TypeAlias = bool | float | int | str | datetime | date | time | None
+CellType: TypeAlias = ReadOnlyCell | MergedCell | Cell
+CellValueType: TypeAlias = bool | float | int | str | datetime | date | time | None
 
 EXCEL_PLACEHOLDER_VALUE = "#VALUE!"
 
@@ -41,7 +42,7 @@ def loadExcelFromPathOrFileLike(pathOrFile: Path | BinaryIO) -> Workbook:
     return wb
 
 
-def excelCellRef(worksheet: Worksheet, cell: _CellType) -> str:
+def excelCellRef(worksheet: Worksheet, cell: CellType) -> str:
     """Make an Excel cell reference such as 'Example sheet'!$A$5"""
     ref = f"{quote_sheetname(worksheet.title)}!{absolute_coordinate(cell.coordinate)}"
     return ref
@@ -54,7 +55,7 @@ def excelCellRangeRef(worksheet: Worksheet, cellRange: CellRange) -> str:
 
 
 def excelCellOrCellRangeRef(
-    worksheet: Worksheet, cellRange: CellRange, cell: _CellType | None
+    worksheet: Worksheet, cellRange: CellRange, cell: CellType | None
 ) -> str:
     """Make an Excel cell reference such as 'Example sheet'!$A$5"""
     if cell is not None:
@@ -66,7 +67,7 @@ def excelCellOrCellRangeRef(
 
 
 def excelDefinedNameRef(
-    definedName: Optional[DefinedName], cell: Optional[_CellType] = None
+    definedName: Optional[DefinedName], cell: Optional[CellType] = None
 ) -> Optional[str]:
     """Make an Excel cell reference such as 'Example sheet'!$A$5"""
     if definedName is None:
@@ -116,10 +117,13 @@ def getNamedRanges(wb: Workbook) -> dict:
     return data
 
 
-def get_decimal_places(cell: _CellType) -> int:
+def get_decimal_places(cell: CellType) -> DecimalPlaces:
     """
-    Returns the number of decimal places in the cell's number format.
-    For example, a format of '0.00' would return 2.
+    Returns the number of decimal places in the cell's number format. For
+    example, a format of '0.00' would return 2.
+
+    If no decimal places are specified, return Literal['INF'], meaning infinite
+    precision, include all digits in display.
     """
     number_format = cell.number_format
 
@@ -138,7 +142,7 @@ def get_decimal_places(cell: _CellType) -> int:
     if match_sci:
         return len(match_sci.group(1))
 
-    return 0  # No decimal part found
+    return "INF"
 
 
 @overload
@@ -148,7 +152,7 @@ def getCellRangeIterator(
     row_start: Optional[int] = None,
     col_start: Optional[int] = None,
     group_by_row: Literal[False] = False,
-) -> Iterator[tuple[int, int, _CellType]]: ...
+) -> Iterator[tuple[int, int, CellType]]: ...
 
 
 @overload
@@ -158,7 +162,7 @@ def getCellRangeIterator(
     row_start: Optional[int] = None,
     col_start: Optional[int] = None,
     group_by_row: Literal[True] = True,
-) -> Iterator[tuple[int, tuple[_CellType, ...]]]: ...
+) -> Iterator[tuple[int, tuple[CellType, ...]]]: ...
 
 
 def getCellRangeIterator(
@@ -167,7 +171,7 @@ def getCellRangeIterator(
     row_start: Optional[int] = None,
     col_start: Optional[int] = None,
     group_by_row: bool = False,
-) -> Iterator[Union[tuple[int, int, _CellType], tuple[int, tuple[_CellType, ...]]]]:
+) -> Iterator[Union[tuple[int, int, CellType], tuple[int, tuple[CellType, ...]]]]:
     """Iterates over cells in the given range, supporting both standard and row-grouped modes."""
 
     if cr.min_row is None or cr.min_col is None:

@@ -37,10 +37,9 @@ from mireport.taxonomy import (
     Relationship,
     Taxonomy,
 )
+from mireport.typealiases import DecimalPlaces, FactValue
 
 L = logging.getLogger(__name__)
-
-_FactValue = int | float | bool | str | date | datetime
 
 UNCONSTRAINED_REPORT_PACKAGE_JSON = """{
     "documentInfo": {
@@ -154,12 +153,12 @@ class Fact:
     def __init__(
         self,
         concept: Concept,
-        value: _FactValue,
+        value: FactValue,
         report: "InlineReport",
         aspects: dict[str | QName, str | QName] | None = None,
     ):
         self.concept: Concept = concept
-        self.value: _FactValue = value
+        self.value: FactValue = value
         self._report = report
         self._aspects: dict[str | QName, str | QName] = {}
         if aspects is not None:
@@ -170,6 +169,16 @@ class Fact:
                 if keyConcept.isTypedDimension:
                     dimvalue = self._aspects.pop(key)
                     self._aspects[f"typed {keyConcept.qname}"] = dimvalue
+
+        self._decimals: Optional[DecimalPlaces]
+        if aspect_value := str(self._aspects.get("decimals", "")):
+            if aspect_value == "INF":
+                self._decimals = "INF"
+            else:
+                self._decimals = int(aspect_value)
+            self._aspects["decimals"] = f'"{aspect_value}"'
+        else:
+            self._decimals = None
 
     def __repr__(self) -> str:
         return (
@@ -183,7 +192,7 @@ class Fact:
 
     def __key(
         self,
-    ) -> tuple[QName, _FactValue, frozenset[tuple[str | QName, str | QName]]]:
+    ) -> tuple[QName, FactValue, frozenset[tuple[str | QName, str | QName]]]:
         aspects_flattened = frozenset((k, v) for k, v in self.aspects.items())
         return (self.concept.qname, self.value, aspects_flattened)
 
@@ -207,8 +216,8 @@ class Fact:
             else:
                 output = escape(v)
         else:
+            decimal_places: DecimalPlaces = self._decimals or "INF"
             locale = self._report._outputLocale
-            decimal_places = int(str(self.aspects["decimals"])[1:-1])
             try:
                 match self.value:
                     case bool():
@@ -353,7 +362,7 @@ class FactBuilder:
         self._report: InlineReport = report
         self._concept: Optional[Concept] = None
         self._aspects: dict[str | QName, str | QName] = {}
-        self._value: Optional[_FactValue] = None
+        self._value: Optional[FactValue] = None
         self._percentage = False
 
     def __repr__(self) -> str:
@@ -370,7 +379,7 @@ class FactBuilder:
         return self
 
     def setTypedDimension(
-        self, typedDimension: Concept, typedDimensionValue: _FactValue
+        self, typedDimension: Concept, typedDimensionValue: FactValue
     ) -> Self:
         assert typedDimension.isTypedDimension, (
             f"Concept {typedDimension=} is not a typed dimension."
@@ -390,14 +399,18 @@ class FactBuilder:
         if value is None:
             raise InlineReportException("Fact value cannot be None.")
 
-        if not isinstance(value, _FactValue):
+        if not isinstance(value, FactValue):
             value = str(value)
 
         self._value = value
         return self
 
     def setPercentageValue(
-        self, value: int | float, decimals: int, *, inputIsDecimalForm: bool = True
+        self,
+        value: int | float,
+        decimals: DecimalPlaces,
+        *,
+        inputIsDecimalForm: bool = True,
     ) -> Self:
         """Use instead of setValue() when you don't want to think about what to
         do with percentage values.
@@ -415,7 +428,8 @@ class FactBuilder:
             )
             # XBRL stores same way as Excel (100% stored as "1.0")
             self.setScale(-2)
-            decimals += 2
+            if decimals != "INF":
+                decimals += 2
             self.setDecimals(decimals)
         else:
             self.setValue(
@@ -424,8 +438,8 @@ class FactBuilder:
             self.setDecimals(decimals)
         return self
 
-    def setDecimals(self, decimals: int) -> Self:
-        self._aspects["decimals"] = f'"{decimals}"'
+    def setDecimals(self, decimals: DecimalPlaces) -> Self:
+        self._aspects["decimals"] = f"{decimals}"
         return self
 
     def setScale(self, scale: int) -> Self:
@@ -714,7 +728,7 @@ class InlineReport:
 
         self._defaultAspects: dict[str, str] = {
             "numeric-transform": numeric_transform,
-            "decimals": '"0"',
+            "decimals": "INF",
         }
 
     def setReportTitle(self, title: str) -> None:
@@ -739,7 +753,7 @@ class InlineReport:
                 raise InlineReportException(
                     f"Default aspects not configured correctly. Specifically: '{key=}' '{value=}'"
                 )
-            if key in {"entity-identifier", "entity-scheme"}:
+            if key in {"entity-identifier", "entity-scheme", "decimals"}:
                 value = f'"{value}"'
             aoix.append(f"{{{{ default {key} = {value} }}}}")
         return "\n".join(aoix)
