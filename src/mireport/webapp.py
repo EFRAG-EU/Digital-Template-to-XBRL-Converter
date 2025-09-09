@@ -22,7 +22,7 @@ from flask import (
 )
 from flask_session import Session  # type: ignore
 
-from mireport import loadMetaData
+from mireport import loadTaxonomyJSON
 from mireport.arelle.report_info import (
     ARELLE_VERSION_INFORMATION,
     ArelleReportProcessor,
@@ -66,7 +66,7 @@ def create_app() -> Flask:
     logging.captureWarnings(True)
 
     # Get taxonomy related objects loaded
-    loadMetaData()
+    loadTaxonomyJSON()
 
     app = Flask(__name__, static_folder=None)
     app.config["MAX_CONTENT_LENGTH"] = MAX_FILE_SIZE

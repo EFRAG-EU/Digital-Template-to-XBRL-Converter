@@ -22,6 +22,7 @@ from mireport.conversionresults import (
     MessageType,
     Severity,
 )
+from mireport.data import excel_templates
 from mireport.excelutil import (
     EXCEL_PLACEHOLDER_VALUE,
     CellType,
@@ -36,6 +37,7 @@ from mireport.excelutil import (
     loadExcelFromPathOrFileLike,
 )
 from mireport.exceptions import EarlyAbortException, InlineReportException
+from mireport.json import getObject, getResource
 from mireport.taxonomy import (
     Concept,
     QName,
@@ -47,16 +49,11 @@ from mireport.xbrlreport import FactBuilder, FactValue, InlineReport
 
 L = logging.getLogger(__name__)
 
-
-def _loadVsmeDefaults(bits: dict) -> None:
-    VSME_DEFAULTS.update(bits)
-
-
 EE_SET_DESIRED_EMPTY_PLACEHOLDER_VALUE = "None"
 
 EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE = ("-", EXCEL_PLACEHOLDER_VALUE)
 
-VSME_DEFAULTS: dict = dict()
+VSME_DEFAULTS: dict = getObject(getResource(excel_templates, "vsme.json"))
 
 
 def cleanUnitTextFromExcel(unitTest: str, replacements: dict[str, str]) -> str:

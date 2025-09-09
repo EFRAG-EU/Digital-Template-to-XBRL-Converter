@@ -1,15 +1,17 @@
 import mireport
-from mireport.taxonomy import VSME_ENTRY_POINT, getTaxonomy, listTaxonomies
+from mireport.excelprocessor import VSME_DEFAULTS
+from mireport.taxonomy import getTaxonomy, listTaxonomies
 
 
 def main() -> None:
-    mireport.loadMetaData()
+    mireport.loadTaxonomyJSON()
+    entry_point = VSME_DEFAULTS["taxonomyEntryPoints"]["supportedEntryPoint"]
     print("Available taxonomies:", *listTaxonomies(), sep="\n\t")
-    print(f"Ready to show {VSME_ENTRY_POINT} ")
+    print(f"Ready to show {entry_point} ")
     input("Press Enter to continue...")
-    vsme = getTaxonomy(VSME_ENTRY_POINT)
+    vsme = getTaxonomy(entry_point)
     for group in vsme.presentation:
-        print(f"{group.label} [{group.roleUri}]")
+        print(f"{group.definition} [{group.roleUri}]")
         for relationship in group.relationships:
             concept = relationship.concept
             print(

@@ -111,7 +111,7 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, ExcelProc
         "mireport Excel to validated Inline Report"
     ) as pc:
         pc.mark("Loading taxonomy metadata")
-        mireport.loadMetaData()
+        mireport.loadTaxonomyJSON()
         pc.addDevInfoMessage(
             f"Taxonomies available: {', '.join(mireport.taxonomy.listTaxonomies())}"
         )
