@@ -435,11 +435,24 @@ class Relationship(NamedTuple):
     concept: Concept
     preferredLabel: Optional[str] = None
 
-    def getLabel(self, lang: str = "en", removeSuffix: bool = True) -> Optional[str]:
+    def getLabel(
+        self,
+        lang: Optional[str] = None,
+        *,
+        removeSuffix: bool = True,
+        fallbackLabel: Optional[str] = None,
+        fallbackToAnyLang: bool = False,
+        fallbackToQName: bool = False,
+    ) -> Optional[str]:
         """Get the label for this relationship's concept."""
-        if self.preferredLabel is None:
-            return self.concept.getStandardLabel(lang, removeSuffix=removeSuffix)
+        labelRole = self.preferredLabel or STANDARD_LABEL_ROLE
         return self.concept._getLabelForRole(
+            labelRole,
+            lang,
+            removeSuffix=removeSuffix,
+            fallbackLabel=fallbackLabel,
+            fallbackToAnyLang=fallbackToAnyLang,
+            fallbackToQName=fallbackToQName,
             self.preferredLabel, lang, removeSuffix=removeSuffix
         )
 
