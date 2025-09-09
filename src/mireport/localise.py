@@ -1,6 +1,7 @@
 import argparse
 import logging
-from typing import Iterable, Optional
+from decimal import Decimal
+from typing import Iterable, Literal, Optional
 
 from babel import Locale, UnknownLocaleError
 from babel.numbers import format_decimal, get_decimal_symbol
@@ -44,6 +45,8 @@ EU_LOCALES = {
     "el-CY",  # Greek (Cyprus)
     "de-AT",  # German (Austria)
 }
+
+DecimalPlaces = int | Literal["INF"]
 
 
 def argparse_locale(s: str) -> Locale:
@@ -92,33 +95,64 @@ def get_locale_list(code_list: Iterable[str]) -> list[dict[str, str]]:
 
 
 def localise_and_format_number(
-    number: float | int | str,
-    decimal_places: int,
+    number: float | int | str | Decimal,
+    decimal_places: DecimalPlaces,
     locale: Optional[Locale] = None,
 ) -> str:
-    """Format a number with optional locale, enforcing decimal places."""
+    """
+    Format a number with optional locale, supporting 'INF' for unlimited precision.
 
+    In the 'INF' case, the output preserves the exact decimal representation
+    (no rounding or truncation, including trailing zeros) and applies locale-aware
+    grouping and decimal point symbols if a locale is provided. For finite decimal
+    places, applies locale-aware formatting with specified precision.
+
+    Args:
+        number: The number to format (float, int, str, or Decimal).
+        decimal_places: Number of decimal places or 'INF' for unlimited precision.
+        locale: Optional locale (string or babel.core.Locale) for formatting.
+
+    Returns:
+        Formatted string representation of the number.
+
+    Raises:
+        TypeError: If the number type is unsupported.
+        ValueError: If the string input cannot be converted to Decimal.
+    """
+    # Normalize number to Decimal for safe formatting (avoids float artifacts)
+    try:
+        match number:
+            case Decimal():
+                value = number
+            case int() | float():
+                value = Decimal(str(number))  # Preserves .0 for floats like -1200.0
+            case str():
+                value = Decimal(number.replace(",", "").replace(" ", ""))
+            case _:
+                raise TypeError(
+                    f"Unsupported type {type(number).__name__} for numeric formatting"
+                )
+    except ValueError as e:
+        raise ValueError(f"Invalid numeric string: {number}") from e
+
+    if decimal_places == "INF":
+        if locale:
+            return format_decimal(value, locale=locale, decimal_quantization=False)
+        # No locale: use standard thousands separator, preserve full precision
+        return f"{value:,}"
+
+    # Handle negative decimal places (fallback to 0)
     if decimal_places < 0:
-        # Scaling to nearest 10, 100, etc. is not supported (fallback to 0)
         decimal_places = 0
 
-    # Normalise number to float for formatting
-    match number:
-        case float() | int():
-            value = float(number)
-        case str():
-            value = float(number.replace(",", ""))
-        case _:
-            raise TypeError(
-                f"Unsupported type {type(number).__name__} for numeric formatting"
-            )
-
+    # Normal finite case
     if locale:
         pattern = "#,##0." + "0" * decimal_places if decimal_places > 0 else "#,##0"
         return format_decimal(
             value, format=pattern, locale=locale, decimal_quantization=True
         )
     else:
+        # Use standard Python formatting without locale
         return f"{value:,.{decimal_places}f}"
 
 
@@ -128,3 +162,55 @@ def decimal_symbol(locale: Optional[Locale] = None) -> str:
         return get_decimal_symbol(locale)
     else:
         return "."
+
+
+def getBestSupportedLanguage(
+    requestedLanguage: str,
+    supportedLanguages: frozenset[str],
+    defaultLanguage: str | None,
+) -> str | None:
+    """Return the best supported language included with the taxonomy for the given requested language.
+
+    @requestedLanguage: Should be as specified in BCP 47. For example, "fr-CH", "en-us", "de".
+    @supportedLanguages"""
+    if defaultLanguage is not None and defaultLanguage not in supportedLanguages:
+        raise ValueError(
+            f"Default language must either be None or one of the supported languages {supportedLanguages=}"
+        )
+
+    if not requestedLanguage:
+        return defaultLanguage
+
+    requestedLanguage = requestedLanguage.strip().lower().replace("_", "-")
+
+    # Perfect:
+    # e.g. we want en-gb and the taxonomy supports [en-gb, fr], so we return en-gb
+    # e.g. we want fr and the taxonomy supports fr, so we return fr
+    if requestedLanguage in supportedLanguages:
+        return requestedLanguage
+
+    # Good:
+    # e.g. we want en-gb and the taxonomy supports [en, fr], so we return en
+    base_requested_lang = requestedLanguage.partition("-")[0]
+    if base_requested_lang in supportedLanguages:
+        return base_requested_lang
+
+    # Fuzzy:
+    # e.g. we want en-gb and the taxonomy supports [en-us, fr], so we return
+    # en-us
+    #
+    # e.g. we want en and the taxonomy supports [en-us, fr], so we return
+    # en-us
+    for supported_lang in sorted(supportedLanguages, reverse=True):
+        base_supported_lang, sep, _ = supported_lang.partition("-")
+        if not sep:
+            # No hyphen, so no base language
+            continue
+        if (
+            base_supported_lang == base_requested_lang
+            or base_supported_lang == requestedLanguage
+        ):
+            return supported_lang
+
+    # No perfect, good or fuzzy match, default it is.
+    return defaultLanguage

@@ -44,7 +44,7 @@ from mireport.taxonomy import (
     getTaxonomy,
     listTaxonomies,
 )
-from mireport.xbrlreport import FactBuilder, InlineReport, _FactValue
+from mireport.xbrlreport import FactBuilder, FactValue, InlineReport
 
 L = logging.getLogger(__name__)
 
@@ -1335,7 +1335,7 @@ class ExcelProcessor:
                     continue
 
             fb.setConcept(concept)
-            if isinstance(value, _FactValue):
+            if isinstance(value, FactValue):
                 fb.setValue(value)
             else:
                 self._results.addMessage(

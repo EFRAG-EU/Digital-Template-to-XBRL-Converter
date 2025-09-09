@@ -116,10 +116,13 @@ def getNamedRanges(wb: Workbook) -> dict:
     return data
 
 
-def get_decimal_places(cell: _CellType) -> int:
+def get_decimal_places(cell: CellType) -> DecimalPlaces:
     """
-    Returns the number of decimal places in the cell's number format.
-    For example, a format of '0.00' would return 2.
+    Returns the number of decimal places in the cell's number format. For
+    example, a format of '0.00' would return 2.
+
+    If no decimal places are specified, return Literal['INF'], meaning infinite
+    precision, include all digits in display.
     """
     number_format = cell.number_format
 
@@ -138,7 +141,7 @@ def get_decimal_places(cell: _CellType) -> int:
     if match_sci:
         return len(match_sci.group(1))
 
-    return 0  # No decimal part found
+    return "INF"
 
 
 @overload
