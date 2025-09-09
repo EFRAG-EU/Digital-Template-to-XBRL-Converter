@@ -10,7 +10,7 @@
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>{{ entityName | e}} Sustainability Statement</title>
+        <title>{{ reportInfo.entityName | e}} Sustainability Statement</title>
     </head>
     <body>
         <div style="display:none">
@@ -18,7 +18,7 @@
         </div>
         <!-- Cover Page -->
         <div class="page cover-page">
-            <div class="entity-name"><h1>{{ entityName | e}}</h1></div>
+            <div class="entity-name"><h1>{{ reportInfo.entityName | e}}</h1></div>
             <div class="report-title"><h1>Sustainability Statements in compliance with the EFRAG Voluntary Sustainability Reporting Standard for non-listed SMEs (VSME)</h1></div>
             <div class="report-date">Issued {{ now().date() }}</div>
         </div>
@@ -29,7 +29,7 @@
                         <th>Concept</th>
                         <th>Fact
                         <br/>
-                        <small>(Reporting period: {{ macros.render_duration_period(report_period) }})</small></th>
+                        <small>(Reporting period: {{ macros.render_duration_period(reportInfo.defaultPeriod) }})</small></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -48,7 +48,7 @@
         <div class="page footer-page">
             <p>This report contains {{ ns.fact_count }} XBRL facts ({{ facts | count }} unique facts).</p>
             <div class="copyright">
-            &#169; 2025 {{ entityName | e }}.
+            &#169; 2025 {{ reportInfo.entityName | e }}.
             </div>
         </div>
     </body>
