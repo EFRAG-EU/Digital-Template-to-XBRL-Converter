@@ -11,7 +11,6 @@ from mireport.arelle.report_info import (
     ARELLE_VERSION_INFORMATION,
     ArelleReportProcessor,
 )
-from mireport.arelle.support import ArelleProcessingResult
 from mireport.cli import validateTaxonomyPackages
 from mireport.conversionresults import ConversionResults, ConversionResultsBuilder
 from mireport.excelprocessor import (
