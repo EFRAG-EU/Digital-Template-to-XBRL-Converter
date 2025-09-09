@@ -19,6 +19,7 @@ from mireport.exceptions import (
     UnknownTaxonomyException,
 )
 from mireport.json import getObject, getResource
+from mireport.localise import getBestSupportedLanguage
 from mireport.stringutil import unicodeDashNormalization
 from mireport.utr import UTR
 from mireport.xml import (
@@ -807,6 +808,44 @@ class Taxonomy:
     @property
     def namespacePrefixesMap(self) -> Mapping[str, str]:
         return self._qnameMaker.namespacePrefixesMap
+
+    @cached_property
+    def _labelLanguageCounter(self) -> Counter[str]:
+        """Generate a Counter for languages used in the taxonomy.
+
+        The values are based on the total number of labels in the taxonomy for
+        each language."""
+        counts = Counter(
+            lang.lower() for group in self._groupLabels.values() for lang in group
+        )
+        counts.update(
+            lang.lower()
+            for concept in self._concepts.values()
+            for lang in concept._labels.keys()
+        )
+        return counts
+
+    @cached_property
+    def defaultLanguage(self) -> str | None:
+        """Return the most used language in the taxonomy."""
+        counts = self._labelLanguageCounter
+        if not counts:
+            # no labels at all
+            return None
+        return counts.most_common(1)[0][0]
+
+    @property
+    def supportedLanguages(self) -> frozenset[str]:
+        """Return a frozenset of all languages that are used in the taxonomy."""
+        return frozenset(self._labelLanguageCounter)
+
+    def getBestSupportedLanguage(self, requestedLanguage: str) -> str | None:
+        """Return the best supported language included with the taxonomy for the given requested language.
+
+        @requestedLanguage: Should be as specified in BCP 47. For example, "fr-CH", "en-us", "de"."""
+        return getBestSupportedLanguage(
+            requestedLanguage, self.supportedLanguages, self.defaultLanguage
+        )
 
     @property
     def UTR(self) -> UTR:
