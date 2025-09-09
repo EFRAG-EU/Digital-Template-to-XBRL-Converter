@@ -176,13 +176,20 @@ class Concept:
     def _getLabelForRole(
         self,
         roleUri: str,
-        requestedLanguage: str = "en",
+        requestedLanguage: Optional[str] = None,
         fallbackLabel: Optional[str] = None,
-        fallbackAnyLang: bool = False,
+        fallbackToAnyLang: bool = False,
+        fallbackToQName: bool = False,
         removeSuffix: bool = False,
     ) -> Optional[str]:
+        if (defaultLanguage := self._taxonomy.defaultLanguage) is None:
+            return None
+
+        if not requestedLanguage:
+            requestedLanguage = defaultLanguage
+
         requestedLanguage = requestedLanguage.lower()
-        labels_for_lang: dict[str, str] = {}
+        labels_for_lang: dict[str, str]
         desired_label = None
 
         if requestedLanguage in self._labels:
@@ -198,17 +205,25 @@ class Concept:
                     if desired_label:
                         break
 
-        if not desired_label and fallbackAnyLang:
-            for d in self._labels.values():
-                for role, label in d.items():
-                    if role == roleUri:
-                        labels_for_lang[role] = label
-                        desired_label = labels_for_lang.get(roleUri)
-                        if desired_label:
-                            break
+        if not desired_label and fallbackToAnyLang:
+            langBuckets = list(self._labels.values())
+            if (
+                requestedLanguage != defaultLanguage
+                and (defaultBucket := self._labels.get(defaultLanguage)) is not None
+            ):
+                # prioritise default language
+                langBuckets.insert(0, defaultBucket)
+            # first hit wins
+            for d in langBuckets:
+                if wrongLangRightRole := d.get(roleUri):
+                    desired_label = wrongLangRightRole
+                    break
 
         if desired_label is None and fallbackLabel is not None:
             desired_label = fallbackLabel
+
+        if desired_label is None and fallbackToQName:
+            desired_label = str(self.qname)
 
         if not desired_label or not removeSuffix:
             return desired_label
@@ -218,55 +233,59 @@ class Concept:
     @overload
     def getStandardLabel(
         self,
-        lang: str = "en",
+        lang: Optional[str] = None,
         *,
         fallbackIfMissing: str,
         removeSuffix: bool = ...,
-        fallbackAnyLang: bool = ...,
+        fallbackToAnyLang: bool = ...,
+        fallbackToQName: bool = ...,
     ) -> str: ...
 
     @overload
     def getStandardLabel(
         self,
-        lang: str = "en",
+        lang: Optional[str] = None,
         *,
         fallbackIfMissing: None = None,
         removeSuffix: bool = ...,
-        fallbackAnyLang: bool = ...,
+        fallbackToAnyLang: bool = ...,
+        fallbackToQName: bool = ...,
     ) -> Optional[str]: ...
 
     def getStandardLabel(
         self,
-        lang: str = "en",
+        lang: Optional[str] = None,
         *,
         fallbackIfMissing: Optional[str] = None,
         removeSuffix: bool = False,
-        fallbackAnyLang: bool = False,
+        fallbackToAnyLang: bool = False,
+        fallbackToQName: bool = False,
     ) -> Optional[str]:
         return self._getLabelForRole(
             STANDARD_LABEL_ROLE,
             requestedLanguage=lang,
             fallbackLabel=fallbackIfMissing,
-            fallbackAnyLang=fallbackAnyLang,
+            fallbackToAnyLang=fallbackToAnyLang,
             removeSuffix=removeSuffix,
+            fallbackToQName=fallbackToQName,
         )
 
     def getDocumentationLabel(
-        self, lang: str = "en", fallbackIfMissing: Optional[str] = None
+        self,
+        lang: Optional[str] = None,
+        *,
+        fallbackIfMissing: Optional[str] = None,
+        removeSuffix: bool = False,
+        fallbackToAnyLang: bool = False,
+        fallbackToQName: bool = False,
     ) -> Optional[str]:
         return self._getLabelForRole(
             DOCUMENTATION_LABEL_ROLE,
             requestedLanguage=lang,
             fallbackLabel=fallbackIfMissing,
-        )
-
-    def getMeasurementGuidanceLabel(
-        self, lang: str = "en", fallbackIfMissing: Optional[str] = None
-    ) -> Optional[str]:
-        return self._getLabelForRole(
-            MEASUREMENT_GUIDANCE_LABEL_ROLE,
-            requestedLanguage=lang,
-            fallbackLabel=fallbackIfMissing,
+            removeSuffix=removeSuffix,
+            fallbackToAnyLang=fallbackToAnyLang,
+            fallbackToQName=fallbackToQName,
         )
 
     @cache
@@ -278,7 +297,10 @@ class Concept:
         if not self.isNumeric:
             return None
 
-        measurementLabel = self.getMeasurementGuidanceLabel()
+        measurementLabel = self._getLabelForRole(
+            MEASUREMENT_GUIDANCE_LABEL_ROLE,
+            fallbackToAnyLang=True,
+        )
         if not measurementLabel:
             # N.B. Deals with None or empty string
             return None
