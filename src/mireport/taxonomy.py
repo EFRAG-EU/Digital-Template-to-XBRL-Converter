@@ -453,7 +453,27 @@ class Relationship(NamedTuple):
             fallbackLabel=fallbackLabel,
             fallbackToAnyLang=fallbackToAnyLang,
             fallbackToQName=fallbackToQName,
-            self.preferredLabel, lang, removeSuffix=removeSuffix
+        )
+
+    @property
+    def isPeriodStart(self) -> bool:
+        return self.preferredLabel is not None and "periodStart" in self.preferredLabel
+
+    @property
+    def isPeriodEnd(self) -> bool:
+        return (
+            self.preferredLabel is not None
+            and "periodEnd" in self.preferredLabel
+            and self.concept.isNumeric
+        )
+
+    @property
+    def isNegated(self) -> bool:
+        return (
+            self.concept.isNumeric
+            and self.preferredLabel is not None
+            and "negated" in self.preferredLabel
+            and self.concept.isNumeric
         )
 
 
@@ -475,7 +495,7 @@ class PresentationGroup(NamedTuple):
             )
             or self.definition
         )
-    
+
     def __lt__(self, other: object) -> bool:
         if isinstance(other, PresentationGroup):
             return (self.definition, self.roleUri) < (other.definition, other.roleUri)
