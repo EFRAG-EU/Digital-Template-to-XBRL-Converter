@@ -24,8 +24,8 @@ from mireport.conversionresults import (
 )
 from mireport.excelutil import (
     EXCEL_PLACEHOLDER_VALUE,
-    _CellType,
-    _CellValue,
+    CellType,
+    CellValueType,
     excelCellOrCellRangeRef,
     excelCellRangeRef,
     excelCellRef,
@@ -435,7 +435,7 @@ class ExcelProcessor:
         *,
         row: int = -1,
         column: int = -1,
-    ) -> Optional[_CellType]:
+    ) -> Optional[CellType]:
         if isinstance(definedName, str):
             definedName = self._workbook.defined_names.get(definedName)
             if definedName is None:
@@ -559,12 +559,12 @@ class ExcelProcessor:
         *,
         row: int = -1,
         column: int = -1,
-    ) -> _CellValue:
+    ) -> CellValueType:
         if (
             cell := self.getSingleCell(definedName, row=row, column=column)
         ) is not None:
             value = cell.value
-            if not isinstance(value, _CellValue):
+            if not isinstance(value, CellValueType):
                 value = str(value)
             return value
         return None
@@ -580,7 +580,7 @@ class ExcelProcessor:
         return str(value) if value is not None else ""
 
     def getSimpleUnit(
-        self, unitHolder: CellAndXBRLMetadataHolder, cell: _CellType
+        self, unitHolder: CellAndXBRLMetadataHolder, cell: CellType
     ) -> Optional[QName]:
         if not cell.value:
             return None
@@ -1016,7 +1016,7 @@ class ExcelProcessor:
                             else:
                                 L.info(f"{td.cellRange.bounds=}, {rnum=}")
                             if tdValue is not None:
-                                if not isinstance(tdValue, _FactValue):
+                                if not isinstance(tdValue, FactValue):
                                     tdValue = str(tdValue)
                                 factBuilder.setTypedDimension(tdConcept, tdValue)
                             else:
@@ -1588,7 +1588,7 @@ class ExcelProcessor:
     def processNumeric(
         self,
         stuff: CellAndXBRLMetadataHolder,
-        cell: _CellType,
+        cell: CellType,
         fb: FactBuilder,
         value: Optional[object] = None,
     ) -> None:
