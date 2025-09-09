@@ -37,7 +37,6 @@ from mireport.excelutil import (
 )
 from mireport.exceptions import EarlyAbortException, InlineReportException
 from mireport.taxonomy import (
-    VSME_ENTRY_POINT,
     Concept,
     QName,
     Taxonomy,
@@ -235,9 +234,9 @@ class ExcelProcessor:
         name = self._defaults.get("entryPoint", "")
         entryPoint = self.getSingleStringValue(name)
         validEntryPoints = set(listTaxonomies())
-        if not entryPoint and VSME_ENTRY_POINT in validEntryPoints:
+        if not entryPoint:
             self._results.addMessage(
-                "Excel template does not specify taxonomy entry point. Please use an official template.",
+                "Excel template does not specify taxonomy entry point. Please use a supported template.",
                 Severity.ERROR,
                 MessageType.ExcelParsing,
                 excel_reference=excelDefinedNameRef(self.getDefinedNameForString(name)),
