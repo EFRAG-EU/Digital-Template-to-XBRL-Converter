@@ -5,10 +5,12 @@ concept details and presentation networks.
 
 import re
 import warnings
-from collections import defaultdict
+from collections import Counter, defaultdict
+from collections.abc import Mapping
 from enum import Enum, StrEnum, auto
 from functools import cache, cached_property
-from typing import Any, Mapping, NamedTuple, Optional, overload
+from types import MappingProxyType
+from typing import Any, NamedTuple, Optional, overload
 
 from mireport import data
 from mireport.exceptions import (
@@ -96,7 +98,7 @@ class Concept:
         self.qname: QName = qnameMaker.fromString(s_qname)
         self._qnameMaker = qnameMaker
 
-        self._labels: dict[str, dict[str, str]] = details["labels"]
+        self._labels: Mapping[str, dict[str, str]] = MappingProxyType(details["labels"])
         self._isAbstract: bool = details.get("abstract", False)
         self._isDimension: bool = details.get("dimension", False)
         self._isHypercube: bool = details.get("hypercube", False)
