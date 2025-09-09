@@ -1,10 +1,12 @@
 import argparse
 import logging
 from decimal import Decimal
-from typing import Iterable, Literal, Optional
+from typing import Iterable, Optional
 
 from babel import Locale, UnknownLocaleError
 from babel.numbers import format_decimal, get_decimal_symbol
+
+from mireport.typealiases import DecimalPlaces
 
 L = logging.getLogger(__name__)
 
@@ -45,8 +47,6 @@ EU_LOCALES = {
     "el-CY",  # Greek (Cyprus)
     "de-AT",  # German (Austria)
 }
-
-DecimalPlaces = int | Literal["INF"]
 
 
 def argparse_locale(s: str) -> Locale:
