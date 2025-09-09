@@ -29,7 +29,11 @@ from mireport.filesupport import (
     ImageFileLikeAndFileName,
     zipSafeString,
 )
-from mireport.localise import decimal_symbol, localise_and_format_number
+from mireport.localise import (
+    decimal_symbol,
+    get_locale_from_str,
+    localise_and_format_number,
+)
 from mireport.stringutil import unicodeSpaceNormalize
 from mireport.taxonomy import (
     Concept,
@@ -114,7 +118,7 @@ class InstantPeriodHolder(PeriodHolder):
 
 
 _Period = InstantPeriodHolder | DurationPeriodHolder
-_TableHeadingValue = Concept | _Period | str | None
+_TableHeadingValue = Concept | Relationship | _Period | str | None
 
 
 class TableHeadingCell(NamedTuple):
@@ -139,11 +143,16 @@ class TableHeadingCell(NamedTuple):
     def isConcept(self) -> bool:
         return isinstance(self.value, Concept)
 
+    @property
+    def isRelationship(self) -> bool:
+        return isinstance(self.value, Relationship)
+
 
 class TableStyle(Enum):
     SingleTypedDimensionColumn = auto()
     SingleExplicitDimensionColumn = auto()
     SingleExplicitDimensionRow = auto()
+    NoTaxonomyDefinedDimensions = auto()
     Other = auto()
 
 
@@ -714,8 +723,12 @@ class InlineReport:
         self._schemaRefs: set[str] = set()
         self._reportTitle: str = ""
         self._reportSubtitle: str = ""
-        self._outputLocale: Optional[Locale] = outputLocale
         self._logo: Optional[FilelikeAndFileName] = None
+        if not outputLocale:
+            outputLocale = (
+                get_locale_from_str(taxonomy.defaultLanguage or "") or Locale.default()
+            )
+        self._outputLocale: Locale = outputLocale
 
         decimal_separator = decimal_symbol(self._outputLocale)
         match decimal_separator:
@@ -886,6 +899,11 @@ class InlineReport:
 
         rl = ReportLayoutOrganiser(self._taxonomy, self)
         sections = rl.organise()
+
+        label_language = self._taxonomy.getBestSupportedLanguage(
+            self._outputLocale.language
+        )
+
         env = Environment(
             loader=PackageLoader(__package__, "inline_report_templates"),
             keep_trailing_newline=True,
@@ -895,6 +913,8 @@ class InlineReport:
                 PresentationStyle.__name__: PresentationStyle,
                 TableStyle.__name__: TableStyle,
                 "now_utc": lambda: datetime.now(timezone.utc),
+                "labelLanguage": label_language,
+                "labelQNameFallback": label_language is None,
             }
         )
         env.filters.update(
@@ -922,12 +942,10 @@ class InlineReport:
                 "version": mireport.__version__,
                 "name": "EFRAG Digital Template to XBRL Converter",
             },
-            report_period=self.defaultPeriod,
-            entityName=self._entityName,
-            sections=sections,
-            facts=list(self._facts),
-            uniqueFactCount=len(frozenset(self._facts)),
             documentInfo=self.getDocumentInformation(),
+            facts=list(self._facts),
+            sections=sections,
+            uniqueFactCount=len(frozenset(self._facts)),
         )
 
         try:
@@ -1107,7 +1125,7 @@ class ReportLayoutOrganiser:
             ]
 
             tableStyle = TableStyle.Other
-            rowHeadings: list[Concept | str | None] = []
+            rowHeadings: list[Concept | Relationship | str | None] = []
             columnHeadings: list[Concept | None] = []
             data: list[list[Fact | None]] = []
             explicitDim = None
@@ -1233,6 +1251,12 @@ class ReportLayoutOrganiser:
                     columnHeadings.insert(0, explicitDim)
                     columnHeadings.extend(reportable)
 
+            if not data:
+                L.warning(
+                    f"No facts for section {section.presentation.roleUri}. Skipping."
+                )
+                continue
+
             tableUnit = self.getTableUnit(data)
             columnUnits = self.getColumnUnits(data)
             tablePeriod = self.getTablePeriod(data)
@@ -1250,25 +1274,29 @@ class ReportLayoutOrganiser:
 
             newColumnHeadings: list[list[TableHeadingCell]] = []
             max_cols = max(1, len(columnHeadings) - 1)
-            rows: dict[int, list[TableHeadingCell]] = defaultdict(list)
+            headerRows: dict[int, list[TableHeadingCell]] = defaultdict(list)
             rowCounter = count()
             if tablePeriod:
-                rows[next(rowCounter)].append(
+                headerRows[next(rowCounter)].append(
                     TableHeadingCell(tablePeriod, colspan=max_cols, rowspan=1)
                 )
             if tableUnit:
-                rows[next(rowCounter)].append(
+                headerRows[next(rowCounter)].append(
                     TableHeadingCell(
                         tableUnit, colspan=max_cols, rowspan=1, numeric=True
                     )
                 )
             rowNum = next(rowCounter)
-            colZero = columnHeadings.pop(0)
+
+            colZeroLabel: _TableHeadingValue = ""
+            if columnHeadings:
+                colZeroLabel = columnHeadings.pop(0)
+
             for cnum, col in enumerate(columnHeadings):
                 thisNumeric = all_numeric
                 if col_numeric[cnum] is True:
                     thisNumeric = True
-                rows[rowNum].append(
+                headerRows[rowNum].append(
                     TableHeadingCell(col, colspan=1, rowspan=1, numeric=thisNumeric)
                 )
             if not tablePeriod and columnPeriods:
@@ -1277,7 +1305,7 @@ class ReportLayoutOrganiser:
                     thisNumeric = all_numeric
                     if col_numeric[cnum] is True:
                         thisNumeric = True
-                    rows[rowNum].append(
+                    headerRows[rowNum].append(
                         TableHeadingCell(cp, colspan=1, rowspan=1, numeric=thisNumeric)
                     )
             if not tableUnit and columnUnits:
@@ -1286,21 +1314,28 @@ class ReportLayoutOrganiser:
                     thisNumeric = all_numeric
                     if col_numeric[cnum] is True:
                         thisNumeric = True
-                    rows[rowNum].append(
+                    headerRows[rowNum].append(
                         TableHeadingCell(cu, colspan=1, rowspan=1, numeric=thisNumeric)
                     )
-            if rows:
-                rows[0].insert(
-                    0, TableHeadingCell(colZero, colspan=1, rowspan=len(rows))
+            if headerRows:
+                headerRows[0].insert(
+                    0,
+                    TableHeadingCell(colZeroLabel, colspan=1, rowspan=len(headerRows)),
                 )
 
-            for hrow in rows.values():
-                newColumnHeadings.append(hrow)
+            for hrow in headerRows.values():
+                empty_row = all([c.value is None for c in hrow])
+                if not empty_row:
+                    newColumnHeadings.append(hrow)
+
+            newRowHeadings: list[TableHeadingCell] = [
+                TableHeadingCell(rh) for rh in rowHeadings
+            ]
 
             table_sections[section.presentation.roleUri] = TabularReportSection(
                 relationshipToFact=section.relationshipToFact,
                 presentation=section.presentation,
-                rowHeadings=rowHeadings,
+                rowHeadings=newRowHeadings,
                 dataColumns=columnHeadings,
                 tableStyle=tableStyle,
                 data=data,
@@ -1403,9 +1438,8 @@ class ReportSection:
     relationshipToFact: dict[Relationship, list[Fact]]
     presentation: PresentationGroup
 
-    @property
-    def title(self) -> str:
-        return self.presentation.label
+    def getLabel(self, language: str) -> str:
+        return self.presentation.getLabel(language)
 
     @property
     def style(self) -> PresentationStyle:
@@ -1426,7 +1460,7 @@ class ReportSection:
 class TabularReportSection(ReportSection):
     tableStyle: TableStyle
     dataColumns: list[Concept | None]
-    rowHeadings: list[Concept | str | None]
+    rowHeadings: list[TableHeadingCell]
     data: list[list[Fact | None]]
     columnUnits: list[str | None]
     newColumnHeadings: list[list[TableHeadingCell]]
