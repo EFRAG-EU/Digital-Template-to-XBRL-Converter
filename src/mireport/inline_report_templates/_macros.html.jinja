@@ -30,7 +30,7 @@
 
 {% macro create_h2_title(section, loop) -%}
             <h2 id="section-class{{loop.index}}">
-            {{ section.title | e }}
+            {{ section_label(section) | e }}
             <a href="#table-of-contents" class="toc-back-link no-print">⮌</a>
             </h2>
 {%- endmacro %}
@@ -46,3 +46,16 @@
         {{- dt.strftime("%Y-%m-%d %H:%M:%S %z") -}}
     {%- endif -%}
 {%- endmacro %}
+
+{% macro concept_label(concept) -%}
+    {{- concept.getStandardLabel(labelLanguage, fallbackToAnyLang = false, fallbackToQName = labelQNameFallback, removeSuffix = true) -}}
+{%- endmacro %}
+
+{% macro relationship_label(rel) -%}
+    {{- rel.getLabel(labelLanguage, fallbackToAnyLang = false, fallbackToQName = labelQNameFallback, removeSuffix = true) -}}
+{%- endmacro %}
+
+{% macro section_label(section) -%}
+    {{- section.getLabel(labelLanguage) -}}
+{%- endmacro %}
+

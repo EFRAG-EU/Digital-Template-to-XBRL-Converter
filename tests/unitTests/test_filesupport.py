@@ -94,21 +94,21 @@ def test_FilelikeAndFileName_str() -> None:
     filename = "example.doc"
     file_obj = FilelikeAndFileName(content, filename)
 
-    expected = f"{filename} [{len(content)} B]"
+    expected = f'"{filename}" [{len(content)} B]'
     assert str(file_obj) == expected
 
 
 def test_FilelikeAndFileName_str_empty_content() -> None:
     """Test string representation with empty content."""
     file_obj = FilelikeAndFileName(b"", "empty.txt")
-    assert str(file_obj) == "empty.txt [0 B]"
+    assert str(file_obj) == '"empty.txt" [0 B]'
 
 
 def test_FilelikeAndFileName_str_large_content() -> None:
     """Test string representation with large content."""
     content = b"x" * 1024
     file_obj = FilelikeAndFileName(content, "large.bin")
-    assert str(file_obj) == "large.bin [1 KiB]"
+    assert str(file_obj) == '"large.bin" [1 KiB]'
 
 
 def test_saveToFilepath_creates_file() -> None:

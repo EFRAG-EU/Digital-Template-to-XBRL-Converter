@@ -58,11 +58,14 @@ class FilelikeAndFileName(NamedTuple):
         return BytesIO(self.fileContent)
 
     def __str__(self) -> str:
-        return f"{self.filename} [{format_bytes(len(self.fileContent))}]"
+        return f'"{self.filename}" [{format_bytes(len(self.fileContent))}]'
 
     def saveToFilepath(self, path: Path) -> None:
         """Saves the file content to the specified path."""
         parent = path.parent
+
+        if not is_valid_filename(path.name):
+            raise ValueError(f"Filename {path.name} is not valid")
 
         # Check if parent directory exists and is actually a file
         if parent.exists() and parent.is_file():

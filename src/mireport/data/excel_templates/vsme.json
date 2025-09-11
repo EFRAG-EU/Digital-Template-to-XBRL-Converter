@@ -1,4 +1,10 @@
 {
+    "taxonomyEntryPoints": {
+        "oldEntryPoints": [
+            "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/vsme-entry-point.xsd"
+        ],
+        "supportedEntryPoint": "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/vsme-all.xsd"
+    },
     "aoix": {
         "monetary-units": "template_currency",
         "entity-identifier": "template_reporting_entity_identifier",

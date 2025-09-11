@@ -11,7 +11,6 @@ from mireport.arelle.report_info import (
     ARELLE_VERSION_INFORMATION,
     ArelleReportProcessor,
 )
-from mireport.arelle.support import ArelleProcessingResult
 from mireport.cli import validateTaxonomyPackages
 from mireport.conversionresults import ConversionResults, ConversionResultsBuilder
 from mireport.excelprocessor import (
@@ -66,6 +65,12 @@ def createArgParser() -> argparse.ArgumentParser:
         default=False,
         help="Disables XBRL validation. Useful during development only.",
     )
+    parser.add_argument(
+        "--viewer",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Generate a viewer as well.",
+    )
 
     return parser
 
@@ -111,7 +116,7 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, ExcelProc
         "mireport Excel to validated Inline Report"
     ) as pc:
         pc.mark("Loading taxonomy metadata")
-        mireport.loadMetaData()
+        mireport.loadTaxonomyJSON()
         pc.addDevInfoMessage(
             f"Taxonomies available: {', '.join(mireport.taxonomy.listTaxonomies())}"
         )
@@ -149,12 +154,20 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, ExcelProc
                 additionalInfo=f"({ARELLE_VERSION_INFORMATION})",
             )
             pc.addDevInfoMessage(f"Using Inline Report package: {reportPackage}")
-            arelleResults: ArelleProcessingResult = ArelleReportProcessor(
+            arp = ArelleReportProcessor(
                 taxonomyPackages=args.taxonomy_packages,
                 workOffline=args.offline,
-            ).validateReportPackage(
-                reportPackage,
             )
+            if args.viewer:
+                arelleResults = arp.generateInlineViewer(reportPackage)
+                viewer = arelleResults.viewer
+                if not dir_specified:
+                    viewer.saveToFilepath(output_path)
+                else:
+                    viewer.saveToDirectory(output_path)
+            else:
+                arelleResults = arp.validateReportPackage(reportPackage)
+
             resultsBuilder.addMessages(arelleResults.messages)
     return resultsBuilder.build(), excel
 
