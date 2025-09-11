@@ -172,7 +172,9 @@ class ArelleQNameCanonicaliser:
     @classmethod
     def bootstrap(cls, arelle_model: ModelXbrl) -> Self:
         qnameMaker = getBootsrapQNameMaker()
-        qnameMaker.addNamespacePrefix("dtr-types", "http://www.xbrl.org/dtr/type/2024-01-31")
+        qnameMaker.addNamespacePrefix(
+            "dtr-types", "http://www.xbrl.org/dtr/type/2024-01-31"
+        )
         for prefix, namespace in arelle_model.prefixedNamespaces.items():
             if namespace.startswith("http://www.xbrl.org/dtr/"):
                 match namespace:
