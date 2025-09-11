@@ -8,11 +8,11 @@ from __future__ import annotations
 import re
 import warnings
 from collections import Counter, defaultdict
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 from enum import Enum, StrEnum, auto
 from functools import cache, cached_property
 from types import MappingProxyType
-from typing import Any, NamedTuple, Optional, overload
+from typing import Any, NamedTuple, Optional, Self, overload
 
 from mireport import data
 from mireport.exceptions import (
@@ -438,7 +438,7 @@ class Relationship(NamedTuple):
 
     def getLabel(
         self,
-        lang: Optional[str] = None,
+        requestedLanguage: Optional[str] = None,
         *,
         removeSuffix: bool = True,
         fallbackLabel: Optional[str] = None,
@@ -449,7 +449,7 @@ class Relationship(NamedTuple):
         labelRole = self.preferredLabel or STANDARD_LABEL_ROLE
         return self.concept._getLabelForRole(
             labelRole,
-            lang,
+            requestedLanguage,
             removeSuffix=removeSuffix,
             fallbackLabel=fallbackLabel,
             fallbackToAnyLang=fallbackToAnyLang,
@@ -479,16 +479,28 @@ class Relationship(NamedTuple):
 
 
 class PresentationGroup(NamedTuple):
+    taxonomy: Taxonomy
+    style: PresentationStyle
     roleUri: str
     definition: str
-    relationships: list[Relationship]
-    style: PresentationStyle
-    taxonomy: Taxonomy
     labels: Mapping[str, str]
+    relationships: tuple[Relationship, ...]
 
-    def getLabel(self, language: str) -> str:
+    def __eq__(self, other: object) -> bool:
+        if self is other:
+            return True
+        if isinstance(other, PresentationGroup):
+            return self.roleUri == other.roleUri
+        return NotImplemented
+
+    def __lt__(self, other: object) -> bool:
+        if isinstance(other, PresentationGroup):
+            return (self.definition, self.roleUri) < (other.definition, other.roleUri)
+        return NotImplemented
+
+    def getLabel(self, requestedLanguage: Optional[str] = None) -> str:
         return (
-            self.labels.get(language)
+            (self.labels.get(requestedLanguage) if requestedLanguage else None)
             or (
                 self.labels.get(self.taxonomy.defaultLanguage)
                 if self.taxonomy.defaultLanguage
@@ -497,17 +509,67 @@ class PresentationGroup(NamedTuple):
             or self.definition
         )
 
-    def __lt__(self, other: object) -> bool:
-        if isinstance(other, PresentationGroup):
-            return (self.definition, self.roleUri) < (other.definition, other.roleUri)
-        return NotImplemented
+    @classmethod
+    def fromJSON(cls, taxonomy: Taxonomy, roleUri: str, metaData: Mapping) -> Self:
+        relationships: list[Relationship] = []
+        for row in metaData["rows"]:
+            if len(row) == 2:
+                indent, concept_qname = row
+                preferredLabel = None
+            else:
+                indent, concept_qname, preferredLabel = row
+            relationships.append(
+                Relationship(
+                    roleUri, indent, taxonomy.getConcept(concept_qname), preferredLabel
+                )
+            )
+        return cls(
+            taxonomy,
+            cls._identifyPresentationStyle(relationships),
+            roleUri,
+            str(metaData.get("definition", "")).strip(),
+            metaData.get("labels", {}),
+            tuple(relationships),
+        )
 
-    def __eq__(self, other: object) -> bool:
-        if self is other:
-            return True
-        if isinstance(other, PresentationGroup):
-            return self.roleUri == other.roleUri
-        return NotImplemented
+    @classmethod
+    def _identifyPresentationStyle(
+        cls, rels: Iterable[Relationship]
+    ) -> PresentationStyle:
+        hasHypercubes = any(rel for rel in rels if rel.concept.isHypercube)
+        hasReportable = any(rel for rel in rels if rel.concept.isReportable)
+        if not hasReportable:
+            return PresentationStyle.Empty
+        if hasReportable and not hasHypercubes:
+            return PresentationStyle.List
+
+        listStyle = False
+        tableStyle = False
+
+        inHypercube = [False]
+        hypercubeDepth = [0]
+        for rel in rels:
+            if inHypercube[-1] and (0 == rel.depth or rel.depth < hypercubeDepth[-1]):
+                hypercubeDepth.pop()
+                inHypercube.pop()
+            if rel.concept.isHypercube:
+                inHypercube.append(True)
+                hypercubeDepth.append(rel.depth)
+            if rel.concept.isReportable:
+                if inHypercube[-1] and rel.depth >= hypercubeDepth[-1]:
+                    tableStyle = True
+                else:
+                    listStyle = True
+
+        match (tableStyle, listStyle):
+            case (True, True):
+                return PresentationStyle.Hybrid
+            case (True, False):
+                return PresentationStyle.Table
+            case (False, True):
+                return PresentationStyle.List
+            case (False, False) | _:
+                return PresentationStyle.Empty
 
 
 class BaseSet(NamedTuple):
@@ -529,8 +591,6 @@ class Taxonomy:
         self._dimensions = dimensions
         self._qnameMaker = qnameMaker
         self._utr = utr
-        self._groups = list(presentation.keys())
-        self._groupLabels: dict[str, dict[str, str]] = {}
         # https://www.xbrl.org/Specification/xbrl-xml/REC-2021-10-13/xbrl-xml-REC-2021-10-13.html#sec-dimensions
         # "If the report's DTS does not contain any hypercubes, or if
         # dimensional validity can be achieved using either container,
@@ -541,19 +601,10 @@ class Taxonomy:
         for concept in concepts.values():
             concept._reifyUsingTaxonomy(self)
 
-        self._relationships: dict[str, list[Relationship]] = defaultdict(list)
-        for roleUri, bits in presentation.items():
-            self._groupLabels[roleUri] = bits["labels"]
-            for row in bits["rows"]:
-                if len(row) == 2:
-                    indent, concept_qname = row
-                    preferredLabel = None
-                else:
-                    indent, concept_qname, preferredLabel = row
-                concept = self.getConcept(concept_qname)
-                self._relationships[roleUri].append(
-                    Relationship(roleUri, indent, concept, preferredLabel)
-                )
+        self._groups: tuple[PresentationGroup, ...] = tuple(
+            PresentationGroup.fromJSON(self, roleUri, bits)
+            for roleUri, bits in presentation.items()
+        )
 
         self._lookupConceptsByName = defaultdict(list)
         for concept in concepts.values():
@@ -706,62 +757,9 @@ class Taxonomy:
                     f"Ambiguous label specified. Candidate concepts: {', '.join(str(concept.qname) for concept in sorted(possible))}"
                 )
 
-    @cached_property
-    def presentation(self) -> list[PresentationGroup]:
-        groups = []
-        for role in self._groups:
-            rels = self._relationships[role]
-            style = self._identifyPresentationStyle(rels)
-            labels = {
-                lang: definition for lang, definition in self._groupLabels[role].items()
-            }
-            groups.append(
-                PresentationGroup(
-                    roleUri=role,
-                    definition=self._groupLabels[role]["en"],
-                    relationships=rels,
-                    style=style,
-                    taxonomy=self,
-                    labels=MappingProxyType(labels),
-                )
-            )
-        return groups
-
-    def _identifyPresentationStyle(self, rels: list[Relationship]) -> PresentationStyle:
-        hasHypercubes = any(rel for rel in rels if rel.concept.isHypercube)
-        hasReportable = any(rel for rel in rels if rel.concept.isReportable)
-        if not hasReportable:
-            return PresentationStyle.Empty
-        if hasReportable and not hasHypercubes:
-            return PresentationStyle.List
-
-        listStyle = False
-        tableStyle = False
-
-        inHypercube = [False]
-        hypercubeDepth = [0]
-        for rel in rels:
-            if inHypercube[-1] and (0 == rel.depth or rel.depth < hypercubeDepth[-1]):
-                hypercubeDepth.pop()
-                inHypercube.pop()
-            if rel.concept.isHypercube:
-                inHypercube.append(True)
-                hypercubeDepth.append(rel.depth)
-            if rel.concept.isReportable:
-                if inHypercube[-1] and rel.depth >= hypercubeDepth[-1]:
-                    tableStyle = True
-                else:
-                    listStyle = True
-
-        match (tableStyle, listStyle):
-            case (True, True):
-                return PresentationStyle.Hybrid
-            case (True, False):
-                return PresentationStyle.Table
-            case (False, True):
-                return PresentationStyle.List
-            case (False, False) | _:
-                return PresentationStyle.Empty
+    @property
+    def presentation(self) -> tuple[PresentationGroup, ...]:
+        return self._groups
 
     @property
     def hypercubes(self) -> frozenset[Concept]:
@@ -902,7 +900,7 @@ class Taxonomy:
         The values are based on the total number of labels in the taxonomy for
         each language."""
         counts = Counter(
-            lang.lower() for group in self._groupLabels.values() for lang in group
+            lang.lower() for group in self._groups for lang in group.labels
         )
         counts.update(
             lang.lower()
