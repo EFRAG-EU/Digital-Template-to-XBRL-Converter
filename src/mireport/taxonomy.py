@@ -11,7 +11,6 @@ from collections import Counter, defaultdict
 from collections.abc import Iterable, Mapping
 from enum import Enum, StrEnum, auto
 from functools import cache, cached_property
-from types import MappingProxyType
 from typing import Any, NamedTuple, Optional, Self, overload
 
 from mireport import data
@@ -100,7 +99,7 @@ class Concept:
         self.qname: QName = qnameMaker.fromString(s_qname)
         self._qnameMaker = qnameMaker
 
-        self._labels: Mapping[str, dict[str, str]] = MappingProxyType(details["labels"])
+        self._labels: Mapping[str, Mapping[str, str]] = details["labels"]
         self._isAbstract: bool = details.get("abstract", False)
         self._isDimension: bool = details.get("dimension", False)
         self._isHypercube: bool = details.get("hypercube", False)
@@ -190,7 +189,7 @@ class Concept:
             requestedLanguage = defaultLanguage
 
         requestedLanguage = requestedLanguage.lower()
-        labels_for_lang: dict[str, str]
+        labels_for_lang: Mapping[str, str]
         desired_label = None
 
         if requestedLanguage in self._labels:
@@ -426,8 +425,8 @@ class Concept:
     def expandedName(self) -> str:
         return f"{self.qname.namespace}#{self.qname.localName}"
 
-    def getEEDomain(self) -> list["Concept"]:
-        return list(self._eeDomainMembers) if self._eeDomainMembers is not None else []
+    def getEEDomain(self) -> tuple[Concept, ...]:
+        return tuple(self._eeDomainMembers) if self._eeDomainMembers is not None else ()
 
 
 class Relationship(NamedTuple):
@@ -628,10 +627,9 @@ class Taxonomy:
             (k, frozenset(v)) for k, v in cByPretend.items()
         )
 
-        dimensionDefaults: dict[str, str] = dimensions.pop("_defaults", {})
-        self._dimensionDefaults: dict[Concept, Concept] = dict(
+        self._dimensionDefaults: Mapping[Concept, Concept] = dict(
             (self.getConcept(dimension), self.getConcept(domainMember))
-            for dimension, domainMember in dimensionDefaults.items()
+            for dimension, domainMember in dimensions.pop("_defaults", {}).items()
         )
 
         self._baseSets: dict[BaseSet, list[dict]] = defaultdict(list)
@@ -649,7 +647,6 @@ class Taxonomy:
             for cubeQname, cubeDetails in cubes.items():
                 hc_concept = concepts[cubeQname]
                 d: dict[str, Any] = {}
-
                 closed = bool(cubeDetails.pop("xbrldt:closed"))
                 d["xbrldt:closed"] = closed
                 if not closed:
@@ -687,7 +684,7 @@ class Taxonomy:
                 self._lookupBaseSetByCube[hc_concept].append(baseSet)
                 self._baseSets[baseSet].append(d)
 
-        self._lookupDomainByDimension: dict[Concept, frozenset[Concept]] = {
+        self._lookupDomainByDimension: Mapping[Concept, frozenset[Concept]] = {
             dimension: frozenset(domainlist)
             for dimension, domainlist in domainByDimension.items()
         }
@@ -952,8 +949,8 @@ def getTaxonomy(entryPoint: str) -> Taxonomy:
     return taxonomy
 
 
-def listTaxonomies() -> list[str]:
-    return sorted(_TAXONOMIES.keys())
+def listTaxonomies() -> tuple[str, ...]:
+    return tuple(_TAXONOMIES.keys())
 
 
 def _loadTaxonomyFromFile(bits: dict) -> None:
