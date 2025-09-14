@@ -166,46 +166,64 @@ class ArelleQNameCanonicaliser:
     mireport.xml.QNames have a unique prefix for each namespace URI (prefixes are unique per taxonomy).
     """
 
+    VANITY_NAMESPACE_PREFIX_MAP: Mapping[str, str] = {
+        "http://www.xbrl.org/dtr/type/2024-01-31": "dtr-types",
+        "http://www.xbrl.org/dtr/type/2022-03-31": "dtr-types-2022",
+        "http://www.xbrl.org/dtr/type/2020-01-21": "dtr-types-2020",
+    }
+
     def __init__(self, qnameMaker: QNameMaker) -> None:
         self.qnameMaker = qnameMaker
 
     @classmethod
     def bootstrap(cls, arelle_model: ModelXbrl) -> Self:
         qnameMaker = getBootsrapQNameMaker()
-        qnameMaker.addNamespacePrefix(
-            "dtr-types", "http://www.xbrl.org/dtr/type/2024-01-31"
+
+        # Bootstrap using Arelle's existing prefix list, but strip out any
+        # ambiguous prefixes. That is those prefixes which are bound to more
+        # than one namespace (allowed because the bindings appear in different
+        # XML documents). This is not necessary (we fall back to generating new
+        # prefixes rather than using an incorrect one) but lets us lazily work
+        # out which prefix wins in the event of a clash based on the
+        # concepts/types we're actually using later in convert().
+        expected: dict[str, str] = dict(arelle_model.prefixedNamespaces)
+        potentially_inconsistent: frozenset[tuple[str, str]] = frozenset(
+            (prefix, qname.namespaceURI)
+            for qname in arelle_model.qnameConcepts.keys()
+            | arelle_model.qnameTypes.keys()
+            if (prefix := qname.prefix)
         )
-        for prefix, namespace in arelle_model.prefixedNamespaces.items():
-            if namespace.startswith("http://www.xbrl.org/dtr/"):
-                match namespace:
-                    case "http://www.xbrl.org/dtr/type/2022-03-31":
-                        prefix = "dtr-types-2022"
-                    case "http://www.xbrl.org/dtr/type/2020-01-21":
-                        prefix = "dtr-types-2020"
+        for prefix, namespace in potentially_inconsistent:
+            if (expectedNS := expected.get(prefix)) and expectedNS != namespace:
+                del expected[prefix]
+
+        for prefix, namespace in expected.items():
             qnameMaker.addNamespacePrefix(prefix, namespace)
         return cls(qnameMaker)
 
     def convert(self, qname: QName) -> MireportQName:
-        correct_prefix = (
-            qname.prefix is not None
-            and self.qnameMaker.nsManager.prefixIsKnown(qname.prefix)
-            and self.qnameMaker.nsManager.getNamespaceForPrefix(qname.prefix)
-            == qname.namespaceURI
-        )
+        wanted_prefix = qname.prefix
+        namespace = qname.namespaceURI
 
-        if correct_prefix:
-            return self.qnameMaker.fromString(str(qname))
-        else:
-            wanted_prefix = qname.prefix
-            if (
-                wanted_prefix is not None
-                and not self.qnameMaker.nsManager.prefixIsKnown(wanted_prefix)
-            ):
-                self.qnameMaker.addNamespacePrefix(wanted_prefix, qname.namespaceURI)
+        # Use our own vanity prefixes in preference to the taxonomy defined
+        # prefixes.
+        #
+        # For example, various editions of the DTR can end up used in different
+        # xml documents with a prefix of "dtr-types". Rather than have an
+        # arbitrary one be "dtr-types" and the others being ns0, ns1 etc., make
+        # sure the latest edition we know about of the dtr gets the "dtr-types"
+        # prefix and the others get sensible variants of that.
+        #
+        # Anything we don't know about in VANITY_NAMESPACE_PREFIX_MAP will
+        # either have its taxonomy defined prefix or get a generated ns0, ns1
+        # prefix
+        wanted_prefix = self.VANITY_NAMESPACE_PREFIX_MAP.get(namespace) or wanted_prefix
 
-            return self.qnameMaker.fromNamespaceAndLocalName(
-                qname.namespaceURI, qname.localName
-            )
+        # If the wanted prefix has not yet been used, add it so that it can be used
+        if wanted_prefix and not self.qnameMaker.nsManager.prefixIsKnown(wanted_prefix):
+            self.qnameMaker.addNamespacePrefix(wanted_prefix, namespace)
+
+        return self.qnameMaker.fromNamespaceAndLocalName(namespace, qname.localName)
 
     def getNamespacePrefixMap(self) -> MutableMapping[str, str]:
         """Get a mapping of namespace URI to prefix."""
