@@ -81,7 +81,16 @@
                     {% set documentation = rel.concept.getDocumentationLabel() %}
                     <dl class="fact fact-depth-{{ rel.depth if rel.depth <= 4 else 4 }} fact-depth-{{ rel.depth if rel.depth <= 4 else 4 }}-{{ shade }}">
                         <dt class="fact-value {% if fact.concept.isTextblock %}fact-textblock{% endif %}" title="{{ rel.concept.qname }}">{{ macros.render_fact_value(fact) }}{% set ns.fact_count = ns.fact_count + 1 %}</dt>
-                        <dd class="fact-label"><span {% if documentation != none %}class="hover-box"{% endif %}>{{ macros.relationship_label(rel) | e }}{% if documentation != none %}<span class="tooltip">{{ documentation | e }}</span>{% endif %}</span></dd>
+                        <dd class="fact-label">
+                            <span {% if documentation != none %}class="hover-box"{% endif %}>
+                                {{ macros.relationship_label(rel) | e }}
+                                {% if documentation != none %}
+                                <span class="tooltip">
+                                    {{ documentation | e }}
+                                </span>
+                                {% endif %}
+                            </span>
+                        </dd>
                         {% if fact.hasNonDefaultPeriod %}
                         <dd class="fact-period">Reporting period: {{ macros.render_period(fact) }}</dd>
                         {% endif %}
