@@ -134,7 +134,7 @@ class Concept:
         if (tElem := other.get("typedElement")) is not None:
             self.typedElement = self._qnameMaker.fromString(tElem)
 
-        self._eeDomainMembers: Optional[list["Concept"]] = None
+        self._eeDomainMembers: Optional[tuple[Concept, ...]] = None
         self._eeDomainMemberStrings: Optional[list[str]] = None
         if (eeDom := other.get("ee20DomainMembers")) is not None:
             self._eeDomainMemberStrings = eeDom
@@ -168,9 +168,9 @@ class Concept:
             )
         self._taxonomy = taxonomy
         if self._eeDomainMemberStrings is not None:
-            self._eeDomainMembers = [
+            self._eeDomainMembers = tuple(
                 taxonomy.getConcept(member) for member in self._eeDomainMemberStrings
-            ]
+            )
             self._eeDomainMemberStrings = None
 
     def _getLabelForRole(
