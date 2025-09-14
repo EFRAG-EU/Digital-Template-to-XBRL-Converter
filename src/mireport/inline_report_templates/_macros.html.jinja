@@ -48,11 +48,11 @@
 {%- endmacro %}
 
 {% macro concept_label(concept) -%}
-    {{- concept.getStandardLabel(labelLanguage, fallbackToAnyLang = false, fallbackToQName = labelQNameFallback, removeSuffix = true) -}}
+    {{- concept.getStandardLabel(labelLanguage, fallbackToAnyLang = true, fallbackToQName = labelQNameFallback, removeSuffix = true) -}}
 {%- endmacro %}
 
 {% macro relationship_label(rel) -%}
-    {{- rel.getLabel(labelLanguage, fallbackToAnyLang = false, fallbackToQName = labelQNameFallback, removeSuffix = true) -}}
+    {{- rel.getLabel(labelLanguage, fallbackToAnyLang = true, fallbackToQName = labelQNameFallback, removeSuffix = true) -}}
 {%- endmacro %}
 
 {% macro section_label(section) -%}
