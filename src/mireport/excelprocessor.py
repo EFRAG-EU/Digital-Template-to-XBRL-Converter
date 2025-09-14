@@ -235,12 +235,16 @@ class ExcelProcessor:
         excelOutputLanguage = self.getSingleStringValue(
             "template_reporting_language"
         ).strip()
-        languageCellReference = excelDefinedNameRef(self.getDefinedNameForString("template_reporting_language"))
+        languageCellReference = excelDefinedNameRef(
+            self.getDefinedNameForString("template_reporting_language")
+        )
         if not excelOutputLanguage:
             excelOutputLanguage = self.getSingleStringValue(
                 "template_selected_display_language"
             ).strip()
-            languageCellReference = excelDefinedNameRef(self.getDefinedNameForString("template_selected_display_language"))
+            languageCellReference = excelDefinedNameRef(
+                self.getDefinedNameForString("template_selected_display_language")
+            )
         if not excelOutputLanguage:
             return
 
@@ -253,7 +257,7 @@ class ExcelProcessor:
                 f"Unable to determine desired report output language from value '{excelOutputLanguage}'",
                 Severity.ERROR,
                 MessageType.ExcelParsing,
-                excel_reference=languageCellReference
+                excel_reference=languageCellReference,
             )
             return
 
@@ -266,14 +270,14 @@ class ExcelProcessor:
                 f"Excel language specified as '{excelOutputLocale}'. Using closest match supported by the taxonomy, '{bestOutputLocale}'",
                 Severity.INFO,
                 MessageType.Conversion,
-                excel_reference=languageCellReference
+                excel_reference=languageCellReference,
             )
         else:
             self._results.addMessage(
                 f"Using output language specified in Excel and supported by the taxonomy: '{bestOutputLocale}'",
                 Severity.INFO,
                 MessageType.DevInfo,
-                excel_reference=languageCellReference
+                excel_reference=languageCellReference,
             )
 
         newOutputLocale = get_locale_from_str(bestOutputLocale)
@@ -286,7 +290,7 @@ class ExcelProcessor:
                 f"Excel requested output locale resolved to '{newOutputLocale}'. Ignoring as already configured to use output locale: '{self._outputLocale}'",
                 Severity.INFO,
                 MessageType.Conversion,
-                excel_reference=languageCellReference
+                excel_reference=languageCellReference,
             )
         else:
             self._outputLocale = newOutputLocale
