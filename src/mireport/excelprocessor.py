@@ -38,6 +38,7 @@ from mireport.excelutil import (
 )
 from mireport.exceptions import EarlyAbortException, InlineReportException
 from mireport.json import getObject, getResource
+from mireport.localise import get_locale_from_str
 from mireport.taxonomy import (
     Concept,
     QName,
@@ -227,6 +228,55 @@ class ExcelProcessor:
             return self._workbook.defined_names[name]
         return None
 
+    def _determineOutputLocale(self, taxonomy: Taxonomy) -> None:
+        if not taxonomy.defaultLanguage:
+            return
+
+        excelOutputLanguage = self.getSingleStringValue(
+            "template_reporting_language"
+        ).strip()
+        if not excelOutputLanguage:
+            excelOutputLanguage = self.getSingleStringValue(
+                "template_selected_display_language"
+            ).strip()
+        if codeMatch := re.search(
+            r"\[([a-zA-Z]+(?:-[a-zA-Z])*?)\]$", excelOutputLanguage
+        ):
+            excelOutputLocale = codeMatch.group(1)
+        else:
+            return
+
+        bestOutputLocale = (
+            taxonomy.getBestSupportedLanguage(excelOutputLocale)
+            or taxonomy.defaultLanguage
+        )
+        if excelOutputLocale != bestOutputLocale:
+            self._results.addMessage(
+                f"Excel requested output language detected as '{excelOutputLocale}'. Using closest match supported by the taxonomy, '{bestOutputLocale}'",
+                Severity.WARNING,
+                MessageType.Conversion,
+            )
+        else:
+            self._results.addMessage(
+                f"Using output language specified in Excel and supported by the taxonomy: '{bestOutputLocale}'",
+                Severity.INFO,
+                MessageType.DevInfo,
+            )
+
+        newOutputLocale = get_locale_from_str(bestOutputLocale)
+        if (
+            self._outputLocale
+            and newOutputLocale
+            and self._outputLocale != newOutputLocale
+        ):
+            self._results.addMessage(
+                f"Excel requested output locale resolved to '{newOutputLocale}'. Ignoring as already configured to use output locale: '{self._outputLocale}'",
+                Severity.WARNING,
+                MessageType.Conversion,
+            )
+        else:
+            self._outputLocale = newOutputLocale
+
     def _verifyEntryPoint(self) -> None:
         name = self._defaults.get("entryPoint", "")
         entryPoint = self.getSingleStringValue(name)
@@ -248,6 +298,7 @@ class ExcelProcessor:
 
         self.abortEarlyIfErrors()
         taxonomy = getTaxonomy(entryPoint)
+        self._determineOutputLocale(taxonomy)
         self._report = InlineReport(taxonomy, self._outputLocale)
         self._report.addSchemaRef(entryPoint)
 

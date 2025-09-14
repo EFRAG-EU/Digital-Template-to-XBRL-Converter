@@ -344,7 +344,15 @@ def upload() -> Response:
     conversion["excel"] = FilelikeAndFileName(
         fileContent=blob.stream.read(), filename=blob.filename
     )
-    conversion["locale_str"] = request.form.get("locale", type=str, default="").strip()
+
+    manualLocale = (
+        request.form.get("localeOption", type=str, default="detect").strip() == "manual"
+    )
+    if manualLocale:
+        conversion["locale_str"] = request.form.get(
+            "locale", type=str, default=""
+        ).strip()
+
     if "logo" in request.files:
         logo_file = request.files.getlist("logo")
         if 1 != len(logo_file):
@@ -417,12 +425,18 @@ def doConversion(conversion: dict, id: str) -> ConversionResults:
                 "Extracting data from Excel",
                 additionalInfo=f"Using file: {upload.filename}",
             )
+            if locale_str := conversion.get("locale_str"):
+                requestedOutputLocale = get_locale_from_str(locale_str)
+            else:
+                requestedOutputLocale = None
+
             excel = ExcelProcessor(
                 upload.fileLike(),
                 resultBuilder,
                 VSME_DEFAULTS,
-                outputLocale=get_locale_from_str(conversion.get("locale_str", "")),
+                outputLocale=requestedOutputLocale,
             )
+
             report = excel.populateReport()
             if not report.hasFacts:
                 resultBuilder.addMessage(
