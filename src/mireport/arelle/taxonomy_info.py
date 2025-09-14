@@ -430,7 +430,7 @@ class TaxonomyInfoExtractor:
                             f"Inconsistent duplicate labels found for [{concept.qname}]: {label0=} {label=} {lang=} {role=}",
                             level=logging.WARNING,
                         )
-                        label = max(label0, label)
+                        label = max(label0, label, key=len)
                 jconcept["labels"][lang][role] = label
             else:
                 self.cntlr.addToLog(
