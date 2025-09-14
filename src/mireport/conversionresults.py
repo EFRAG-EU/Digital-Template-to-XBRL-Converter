@@ -264,7 +264,7 @@ class ConversionResultsBuilder(ConversionResults):
     def conversionSuccessful(self) -> bool:
         bad = bool(
             self.getMessages(
-                wantedMessageSeverities={Severity.ERROR},
+                wantedMessageSeverities={Severity.ERROR, Severity.WARNING},
                 wantedMessageTypes={MessageType.Conversion, MessageType.ExcelParsing},
             )
         )
