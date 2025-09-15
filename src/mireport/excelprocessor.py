@@ -985,7 +985,7 @@ class ExcelProcessor:
             primary_items = table_contents.primaryItems
             explicit_dimensions = table_contents.explicitDimensions
             typed_dimensions = table_contents.typedDimensions
-            if 0 == len(primary_items):
+            if not primary_items:
                 self._results.addMessage(
                     f"Table {tableDn.name} has no primary items defined. Skipping.",
                     Severity.ERROR,
