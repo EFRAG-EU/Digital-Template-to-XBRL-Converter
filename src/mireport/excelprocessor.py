@@ -1223,7 +1223,6 @@ class ExcelProcessor:
                 factBuilder.setExplicitDimension(edConcept, memberConcept)
                 success.append(True)
             else:
-                missing = True
                 self._results.addMessage(
                     f"Required explicit dimension {edConcept.qname} not set. Cell value '{edValue}'",
                     Severity.ERROR,
