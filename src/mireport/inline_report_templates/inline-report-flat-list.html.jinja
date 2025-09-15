@@ -46,10 +46,7 @@
         </div>
         <!-- Final Page -->
         <div class="page footer-page">
-            <p>This report contains {{ ns.fact_count }} XBRL facts ({{ facts | count }} unique facts).</p>
-            <div class="copyright">
-            &#169; 2025 {{ reportInfo.entityName | e }}.
-            </div>
+            <p>This report contains {{ ns.fact_count }} XBRL facts (generated from {{ uniqueFactCount }} unique input facts).</p>
         </div>
     </body>
 </html>
