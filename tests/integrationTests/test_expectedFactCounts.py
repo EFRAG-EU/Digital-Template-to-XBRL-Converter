@@ -28,8 +28,8 @@ skip_if_not_main_unless_forced = pytest.mark.skipif(
 IX_NAMESPACE = "http://www.xbrl.org/2013/inlineXBRL"
 
 TEST_CASES = [
-    ("tests/data/VSME-Digital-Template-Sample-1.0.0.xlsx", 139),
-    ("tests/data/VSME-Digital-Template-Sample-1.0.1.xlsx", 139),
+    ("tests/data/VSME-Digital-Template-Sample-1.0.0.xlsx", 142),
+    ("tests/data/VSME-Digital-Template-Sample-1.0.1.xlsx", 142),
     ("tests/data/vsme-unit-test-v1.0.0.xlsx", 159),
 ]
 
