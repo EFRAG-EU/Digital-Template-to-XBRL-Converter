@@ -2,20 +2,26 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+from typing import Any, Generator
 
 import pytest
 from lxml import etree
 
 
-def is_main_or_pr_to_main():
+def is_main_or_pr_to_main() -> bool:
     github_ref = os.environ.get("GITHUB_REF", "")
     github_base_ref = os.environ.get("GITHUB_BASE_REF", "")
 
     return github_ref.endswith("/main") or github_base_ref == "main"
 
 
-skip_if_not_main = pytest.mark.skipif(
-    not is_main_or_pr_to_main(),
+def force_run() -> bool:
+    value = os.environ.get("FORCE_RUN", "").strip().lower()
+    return value in {"1", "true", "yes", "on"}
+
+
+skip_if_not_main_unless_forced = pytest.mark.skipif(
+    not (force_run() or is_main_or_pr_to_main()),
     reason="Validation tests are slow and only run on main branch or PRs targeting main",
 )
 
@@ -33,7 +39,9 @@ def format_subprocess_output(result: subprocess.CompletedProcess) -> str:
 
 
 @pytest.fixture(scope="module")
-def parsed_reports(tmp_path_factory):
+def parsed_reports(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> Generator[dict, None, None]:
     """Run parse-and-ixbrl.py on all test cases once, yield dict of input_file -> output_file."""
     outputs = {}
     base_tmp = tmp_path_factory.mktemp("parsed_reports")
@@ -68,7 +76,9 @@ def parsed_reports(tmp_path_factory):
 
 
 @pytest.mark.parametrize("input_file,expected_fact_count", TEST_CASES)
-def test_fact_count(parsed_reports, input_file, expected_fact_count):
+def test_fact_count(
+    parsed_reports: dict[str, Path], input_file: str, expected_fact_count: int
+) -> None:
     output_file = parsed_reports[input_file]
 
     parser = etree.XMLParser()
@@ -76,7 +86,9 @@ def test_fact_count(parsed_reports, input_file, expected_fact_count):
     root = tree.getroot()
 
     ns = {"ix": IX_NAMESPACE}
-    fact_elements = root.xpath("//ix:nonNumeric | //ix:nonFraction", namespaces=ns)
+    fact_elements: Any = root.xpath("//ix:nonNumeric | //ix:nonFraction", namespaces=ns)
+    if not isinstance(fact_elements, list):
+        fact_elements = list(fact_elements) if fact_elements is not None else []
     actual_fact_count = len(fact_elements)
 
     assert actual_fact_count == expected_fact_count, (
@@ -84,9 +96,9 @@ def test_fact_count(parsed_reports, input_file, expected_fact_count):
     )
 
 
-@skip_if_not_main
+@skip_if_not_main_unless_forced
 @pytest.mark.parametrize("input_file,_", TEST_CASES)
-def test_validation(parsed_reports, input_file, _):
+def test_validation(parsed_reports: dict[str, Path], input_file: str, _: int) -> None:
     output_file = parsed_reports[input_file]
 
     validate_result = subprocess.run(
