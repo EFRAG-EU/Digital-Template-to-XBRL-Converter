@@ -3,12 +3,15 @@ This module provides a simple API for querying an XBRL taxonomy including
 concept details and presentation networks.
 """
 
+from __future__ import annotations
+
 import re
 import warnings
-from collections import defaultdict
+from collections import Counter, defaultdict
+from collections.abc import Iterable, Mapping
 from enum import Enum, StrEnum, auto
 from functools import cache, cached_property
-from typing import Any, Mapping, NamedTuple, Optional, overload
+from typing import Any, NamedTuple, Optional, Self, overload
 
 from mireport import data
 from mireport.exceptions import (
@@ -17,6 +20,7 @@ from mireport.exceptions import (
     UnknownTaxonomyException,
 )
 from mireport.json import getObject, getResource
+from mireport.localise import getBestSupportedLanguage
 from mireport.stringutil import unicodeDashNormalization
 from mireport.utr import UTR
 from mireport.xml import (
@@ -29,7 +33,6 @@ from mireport.xml import (
     getBootsrapQNameMaker,
 )
 
-VSME_ENTRY_POINT = "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/vsme-all.xsd"
 MEASUREMENT_GUIDANCE_LABEL_ROLE = "http://www.xbrl.org/2003/role/measurementGuidance"
 STANDARD_LABEL_ROLE = "http://www.xbrl.org/2003/role/label"
 DOCUMENTATION_LABEL_ROLE = "http://www.xbrl.org/2003/role/documentation"
@@ -96,7 +99,7 @@ class Concept:
         self.qname: QName = qnameMaker.fromString(s_qname)
         self._qnameMaker = qnameMaker
 
-        self._labels: dict[str, dict[str, str]] = details["labels"]
+        self._labels: Mapping[str, Mapping[str, str]] = details["labels"]
         self._isAbstract: bool = details.get("abstract", False)
         self._isDimension: bool = details.get("dimension", False)
         self._isHypercube: bool = details.get("hypercube", False)
@@ -131,7 +134,7 @@ class Concept:
         if (tElem := other.get("typedElement")) is not None:
             self.typedElement = self._qnameMaker.fromString(tElem)
 
-        self._eeDomainMembers: Optional[list["Concept"]] = None
+        self._eeDomainMembers: Optional[tuple[Concept, ...]] = None
         self._eeDomainMemberStrings: Optional[list[str]] = None
         if (eeDom := other.get("ee20DomainMembers")) is not None:
             self._eeDomainMemberStrings = eeDom
@@ -157,7 +160,7 @@ class Concept:
     def __hash__(self) -> int:
         return hash(self.qname)
 
-    def _reifyUsingTaxonomy(self, taxonomy: "Taxonomy") -> None:
+    def _reifyUsingTaxonomy(self, taxonomy: Taxonomy) -> None:
         """Reify any bits of the concept that need the rest of the taxonomy."""
         if getattr(self, "_taxonomy", None) is not None:
             raise TaxonomyException(
@@ -165,21 +168,28 @@ class Concept:
             )
         self._taxonomy = taxonomy
         if self._eeDomainMemberStrings is not None:
-            self._eeDomainMembers = [
+            self._eeDomainMembers = tuple(
                 taxonomy.getConcept(member) for member in self._eeDomainMemberStrings
-            ]
+            )
             self._eeDomainMemberStrings = None
 
     def _getLabelForRole(
         self,
         roleUri: str,
-        requestedLanguage: str = "en",
+        requestedLanguage: Optional[str] = None,
         fallbackLabel: Optional[str] = None,
-        fallbackAnyLang: bool = False,
+        fallbackToAnyLang: bool = False,
+        fallbackToQName: bool = False,
         removeSuffix: bool = False,
     ) -> Optional[str]:
+        if (defaultLanguage := self._taxonomy.defaultLanguage) is None:
+            return None
+
+        if not requestedLanguage:
+            requestedLanguage = defaultLanguage
+
         requestedLanguage = requestedLanguage.lower()
-        labels_for_lang: dict[str, str] = {}
+        labels_for_lang: Mapping[str, str]
         desired_label = None
 
         if requestedLanguage in self._labels:
@@ -195,17 +205,25 @@ class Concept:
                     if desired_label:
                         break
 
-        if not desired_label and fallbackAnyLang:
-            for d in self._labels.values():
-                for role, label in d.items():
-                    if role == roleUri:
-                        labels_for_lang[role] = label
-                        desired_label = labels_for_lang.get(roleUri)
-                        if desired_label:
-                            break
+        if not desired_label and fallbackToAnyLang:
+            langBuckets = list(self._labels.values())
+            if (
+                requestedLanguage != defaultLanguage
+                and (defaultBucket := self._labels.get(defaultLanguage)) is not None
+            ):
+                # prioritise default language
+                langBuckets.insert(0, defaultBucket)
+            # first hit wins
+            for d in langBuckets:
+                if wrongLangRightRole := d.get(roleUri):
+                    desired_label = wrongLangRightRole
+                    break
 
         if desired_label is None and fallbackLabel is not None:
             desired_label = fallbackLabel
+
+        if desired_label is None and fallbackToQName:
+            desired_label = str(self.qname)
 
         if not desired_label or not removeSuffix:
             return desired_label
@@ -215,55 +233,59 @@ class Concept:
     @overload
     def getStandardLabel(
         self,
-        lang: str = "en",
+        lang: Optional[str] = None,
         *,
         fallbackIfMissing: str,
         removeSuffix: bool = ...,
-        fallbackAnyLang: bool = ...,
+        fallbackToAnyLang: bool = ...,
+        fallbackToQName: bool = ...,
     ) -> str: ...
 
     @overload
     def getStandardLabel(
         self,
-        lang: str = "en",
+        lang: Optional[str] = None,
         *,
         fallbackIfMissing: None = None,
         removeSuffix: bool = ...,
-        fallbackAnyLang: bool = ...,
+        fallbackToAnyLang: bool = ...,
+        fallbackToQName: bool = ...,
     ) -> Optional[str]: ...
 
     def getStandardLabel(
         self,
-        lang: str = "en",
+        lang: Optional[str] = None,
         *,
         fallbackIfMissing: Optional[str] = None,
         removeSuffix: bool = False,
-        fallbackAnyLang: bool = False,
+        fallbackToAnyLang: bool = False,
+        fallbackToQName: bool = False,
     ) -> Optional[str]:
         return self._getLabelForRole(
             STANDARD_LABEL_ROLE,
             requestedLanguage=lang,
             fallbackLabel=fallbackIfMissing,
-            fallbackAnyLang=fallbackAnyLang,
+            fallbackToAnyLang=fallbackToAnyLang,
             removeSuffix=removeSuffix,
+            fallbackToQName=fallbackToQName,
         )
 
     def getDocumentationLabel(
-        self, lang: str = "en", fallbackIfMissing: Optional[str] = None
+        self,
+        lang: Optional[str] = None,
+        *,
+        fallbackIfMissing: Optional[str] = None,
+        removeSuffix: bool = False,
+        fallbackToAnyLang: bool = False,
+        fallbackToQName: bool = False,
     ) -> Optional[str]:
         return self._getLabelForRole(
             DOCUMENTATION_LABEL_ROLE,
             requestedLanguage=lang,
             fallbackLabel=fallbackIfMissing,
-        )
-
-    def getMeasurementGuidanceLabel(
-        self, lang: str = "en", fallbackIfMissing: Optional[str] = None
-    ) -> Optional[str]:
-        return self._getLabelForRole(
-            MEASUREMENT_GUIDANCE_LABEL_ROLE,
-            requestedLanguage=lang,
-            fallbackLabel=fallbackIfMissing,
+            removeSuffix=removeSuffix,
+            fallbackToAnyLang=fallbackToAnyLang,
+            fallbackToQName=fallbackToQName,
         )
 
     @cache
@@ -275,7 +297,10 @@ class Concept:
         if not self.isNumeric:
             return None
 
-        measurementLabel = self.getMeasurementGuidanceLabel()
+        measurementLabel = self._getLabelForRole(
+            MEASUREMENT_GUIDANCE_LABEL_ROLE,
+            fallbackToAnyLang=True,
+        )
         if not measurementLabel:
             # N.B. Deals with None or empty string
             return None
@@ -400,8 +425,8 @@ class Concept:
     def expandedName(self) -> str:
         return f"{self.qname.namespace}#{self.qname.localName}"
 
-    def getEEDomain(self) -> list["Concept"]:
-        return list(self._eeDomainMembers) if self._eeDomainMembers is not None else []
+    def getEEDomain(self) -> tuple[Concept, ...]:
+        return tuple(self._eeDomainMembers) if self._eeDomainMembers is not None else ()
 
 
 class Relationship(NamedTuple):
@@ -410,20 +435,140 @@ class Relationship(NamedTuple):
     concept: Concept
     preferredLabel: Optional[str] = None
 
-    def getLabel(self, lang: str = "en", removeSuffix: bool = True) -> Optional[str]:
+    def getLabel(
+        self,
+        requestedLanguage: Optional[str] = None,
+        *,
+        removeSuffix: bool = True,
+        fallbackLabel: Optional[str] = None,
+        fallbackToAnyLang: bool = False,
+        fallbackToQName: bool = False,
+    ) -> Optional[str]:
         """Get the label for this relationship's concept."""
-        if self.preferredLabel is None:
-            return self.concept.getStandardLabel(lang, removeSuffix=removeSuffix)
+        labelRole = self.preferredLabel or STANDARD_LABEL_ROLE
         return self.concept._getLabelForRole(
-            self.preferredLabel, lang, removeSuffix=removeSuffix
+            labelRole,
+            requestedLanguage,
+            removeSuffix=removeSuffix,
+            fallbackLabel=fallbackLabel,
+            fallbackToAnyLang=fallbackToAnyLang,
+            fallbackToQName=fallbackToQName,
+        )
+
+    @property
+    def isPeriodStart(self) -> bool:
+        return self.preferredLabel is not None and "periodStart" in self.preferredLabel
+
+    @property
+    def isPeriodEnd(self) -> bool:
+        return (
+            self.preferredLabel is not None
+            and "periodEnd" in self.preferredLabel
+            and self.concept.isNumeric
+        )
+
+    @property
+    def isNegated(self) -> bool:
+        return (
+            self.concept.isNumeric
+            and self.preferredLabel is not None
+            and "negated" in self.preferredLabel
+            and self.concept.isNumeric
         )
 
 
 class PresentationGroup(NamedTuple):
-    roleUri: str
-    label: str
-    relationships: list[Relationship]
+    taxonomy: Taxonomy
     style: PresentationStyle
+    roleUri: str
+    definition: str
+    labels: Mapping[str, str]
+    relationships: tuple[Relationship, ...]
+
+    def __eq__(self, other: object) -> bool:
+        if self is other:
+            return True
+        if isinstance(other, PresentationGroup):
+            return self.roleUri == other.roleUri
+        return NotImplemented
+
+    def __lt__(self, other: object) -> bool:
+        if isinstance(other, PresentationGroup):
+            return (self.definition, self.roleUri) < (other.definition, other.roleUri)
+        return NotImplemented
+
+    def getLabel(self, requestedLanguage: Optional[str] = None) -> str:
+        return (
+            (self.labels.get(requestedLanguage) if requestedLanguage else None)
+            or (
+                self.labels.get(self.taxonomy.defaultLanguage)
+                if self.taxonomy.defaultLanguage
+                else None
+            )
+            or self.definition
+        )
+
+    @classmethod
+    def fromJSON(cls, taxonomy: Taxonomy, roleUri: str, metaData: Mapping) -> Self:
+        relationships: list[Relationship] = []
+        for row in metaData["rows"]:
+            if len(row) == 2:
+                indent, concept_qname = row
+                preferredLabel = None
+            else:
+                indent, concept_qname, preferredLabel = row
+            relationships.append(
+                Relationship(
+                    roleUri, indent, taxonomy.getConcept(concept_qname), preferredLabel
+                )
+            )
+        return cls(
+            taxonomy,
+            cls._identifyPresentationStyle(relationships),
+            roleUri,
+            str(metaData.get("definition", "")).strip(),
+            metaData.get("labels", {}),
+            tuple(relationships),
+        )
+
+    @classmethod
+    def _identifyPresentationStyle(
+        cls, rels: Iterable[Relationship]
+    ) -> PresentationStyle:
+        hasHypercubes = any(rel for rel in rels if rel.concept.isHypercube)
+        hasReportable = any(rel for rel in rels if rel.concept.isReportable)
+        if not hasReportable:
+            return PresentationStyle.Empty
+        if hasReportable and not hasHypercubes:
+            return PresentationStyle.List
+
+        listStyle = False
+        tableStyle = False
+
+        inHypercube = [False]
+        hypercubeDepth = [0]
+        for rel in rels:
+            if inHypercube[-1] and (0 == rel.depth or rel.depth < hypercubeDepth[-1]):
+                hypercubeDepth.pop()
+                inHypercube.pop()
+            if rel.concept.isHypercube:
+                inHypercube.append(True)
+                hypercubeDepth.append(rel.depth)
+            if rel.concept.isReportable:
+                if inHypercube[-1] and rel.depth >= hypercubeDepth[-1]:
+                    tableStyle = True
+                else:
+                    listStyle = True
+
+        match (tableStyle, listStyle):
+            case (True, True):
+                return PresentationStyle.Hybrid
+            case (True, False):
+                return PresentationStyle.Table
+            case (False, True):
+                return PresentationStyle.List
+            case (False, False) | _:
+                return PresentationStyle.Empty
 
 
 class BaseSet(NamedTuple):
@@ -445,8 +590,6 @@ class Taxonomy:
         self._dimensions = dimensions
         self._qnameMaker = qnameMaker
         self._utr = utr
-        self._groups = list(presentation.keys())
-        self._groupLabels: dict[str, dict[str, str]] = {}
         # https://www.xbrl.org/Specification/xbrl-xml/REC-2021-10-13/xbrl-xml-REC-2021-10-13.html#sec-dimensions
         # "If the report's DTS does not contain any hypercubes, or if
         # dimensional validity can be achieved using either container,
@@ -457,19 +600,10 @@ class Taxonomy:
         for concept in concepts.values():
             concept._reifyUsingTaxonomy(self)
 
-        self._relationships: dict[str, list[Relationship]] = defaultdict(list)
-        for roleUri, bits in presentation.items():
-            self._groupLabels[roleUri] = bits["labels"]
-            for row in bits["rows"]:
-                if len(row) == 2:
-                    indent, concept_qname = row
-                    preferredLabel = None
-                else:
-                    indent, concept_qname, preferredLabel = row
-                concept = self.getConcept(concept_qname)
-                self._relationships[roleUri].append(
-                    Relationship(roleUri, indent, concept, preferredLabel)
-                )
+        self._groups: tuple[PresentationGroup, ...] = tuple(
+            PresentationGroup.fromJSON(self, roleUri, bits)
+            for roleUri, bits in presentation.items()
+        )
 
         self._lookupConceptsByName = defaultdict(list)
         for concept in concepts.values():
@@ -493,10 +627,9 @@ class Taxonomy:
             (k, frozenset(v)) for k, v in cByPretend.items()
         )
 
-        dimensionDefaults: dict[str, str] = dimensions.pop("_defaults", {})
-        self._dimensionDefaults: dict[Concept, Concept] = dict(
+        self._dimensionDefaults: Mapping[Concept, Concept] = dict(
             (self.getConcept(dimension), self.getConcept(domainMember))
-            for dimension, domainMember in dimensionDefaults.items()
+            for dimension, domainMember in dimensions.pop("_defaults", {}).items()
         )
 
         self._baseSets: dict[BaseSet, list[dict]] = defaultdict(list)
@@ -514,7 +647,6 @@ class Taxonomy:
             for cubeQname, cubeDetails in cubes.items():
                 hc_concept = concepts[cubeQname]
                 d: dict[str, Any] = {}
-
                 closed = bool(cubeDetails.pop("xbrldt:closed"))
                 d["xbrldt:closed"] = closed
                 if not closed:
@@ -552,7 +684,7 @@ class Taxonomy:
                 self._lookupBaseSetByCube[hc_concept].append(baseSet)
                 self._baseSets[baseSet].append(d)
 
-        self._lookupDomainByDimension: dict[Concept, frozenset[Concept]] = {
+        self._lookupDomainByDimension: Mapping[Concept, frozenset[Concept]] = {
             dimension: frozenset(domainlist)
             for dimension, domainlist in domainByDimension.items()
         }
@@ -622,57 +754,9 @@ class Taxonomy:
                     f"Ambiguous label specified. Candidate concepts: {', '.join(str(concept.qname) for concept in sorted(possible))}"
                 )
 
-    @cached_property
-    def presentation(self) -> list[PresentationGroup]:
-        groups = []
-        for role in self._groups:
-            rels = self._relationships[role]
-            style = self._identifyPresentationStyle(rels)
-            groups.append(
-                PresentationGroup(
-                    roleUri=role,
-                    label=self._groupLabels[role]["en"],
-                    relationships=rels,
-                    style=style,
-                )
-            )
-        return groups
-
-    def _identifyPresentationStyle(self, rels: list[Relationship]) -> PresentationStyle:
-        hasHypercubes = any(rel for rel in rels if rel.concept.isHypercube)
-        hasReportable = any(rel for rel in rels if rel.concept.isReportable)
-        if not hasReportable:
-            return PresentationStyle.Empty
-        if hasReportable and not hasHypercubes:
-            return PresentationStyle.List
-
-        listStyle = False
-        tableStyle = False
-
-        inHypercube = [False]
-        hypercubeDepth = [0]
-        for rel in rels:
-            if inHypercube[-1] and (0 == rel.depth or rel.depth < hypercubeDepth[-1]):
-                hypercubeDepth.pop()
-                inHypercube.pop()
-            if rel.concept.isHypercube:
-                inHypercube.append(True)
-                hypercubeDepth.append(rel.depth)
-            if rel.concept.isReportable:
-                if inHypercube[-1] and rel.depth >= hypercubeDepth[-1]:
-                    tableStyle = True
-                else:
-                    listStyle = True
-
-        match (tableStyle, listStyle):
-            case (True, True):
-                return PresentationStyle.Hybrid
-            case (True, False):
-                return PresentationStyle.Table
-            case (False, True):
-                return PresentationStyle.List
-            case (False, False) | _:
-                return PresentationStyle.Empty
+    @property
+    def presentation(self) -> tuple[PresentationGroup, ...]:
+        return self._groups
 
     @property
     def hypercubes(self) -> frozenset[Concept]:
@@ -806,6 +890,44 @@ class Taxonomy:
     def namespacePrefixesMap(self) -> Mapping[str, str]:
         return self._qnameMaker.namespacePrefixesMap
 
+    @cached_property
+    def _labelLanguageCounter(self) -> Counter[str]:
+        """Generate a Counter for languages used in the taxonomy.
+
+        The values are based on the total number of labels in the taxonomy for
+        each language."""
+        counts = Counter(
+            lang.lower() for group in self._groups for lang in group.labels
+        )
+        counts.update(
+            lang.lower()
+            for concept in self._concepts.values()
+            for lang in concept._labels.keys()
+        )
+        return counts
+
+    @cached_property
+    def defaultLanguage(self) -> str | None:
+        """Return the most used language in the taxonomy."""
+        counts = self._labelLanguageCounter
+        if not counts:
+            # no labels at all
+            return None
+        return counts.most_common(1)[0][0]
+
+    @property
+    def supportedLanguages(self) -> frozenset[str]:
+        """Return a frozenset of all languages that are used in the taxonomy."""
+        return frozenset(self._labelLanguageCounter)
+
+    def getBestSupportedLanguage(self, requestedLanguage: str) -> str | None:
+        """Return the best supported language included with the taxonomy for the given requested language.
+
+        @requestedLanguage: Should be as specified in BCP 47. For example, "fr-CH", "en-us", "de"."""
+        return getBestSupportedLanguage(
+            requestedLanguage, self.supportedLanguages, self.defaultLanguage
+        )
+
     @property
     def UTR(self) -> UTR:
         return self._utr
@@ -827,8 +949,8 @@ def getTaxonomy(entryPoint: str) -> Taxonomy:
     return taxonomy
 
 
-def listTaxonomies() -> list[str]:
-    return sorted(_TAXONOMIES.keys())
+def listTaxonomies() -> tuple[str, ...]:
+    return tuple(_TAXONOMIES.keys())
 
 
 def _loadTaxonomyFromFile(bits: dict) -> None:

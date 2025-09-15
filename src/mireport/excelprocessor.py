@@ -22,6 +22,7 @@ from mireport.conversionresults import (
     MessageType,
     Severity,
 )
+from mireport.data import excel_templates
 from mireport.excelutil import (
     EXCEL_PLACEHOLDER_VALUE,
     CellType,
@@ -36,8 +37,9 @@ from mireport.excelutil import (
     loadExcelFromPathOrFileLike,
 )
 from mireport.exceptions import EarlyAbortException, InlineReportException
+from mireport.json import getObject, getResource
+from mireport.localise import get_locale_from_str
 from mireport.taxonomy import (
-    VSME_ENTRY_POINT,
     Concept,
     QName,
     Taxonomy,
@@ -48,16 +50,11 @@ from mireport.xbrlreport import FactBuilder, FactValue, InlineReport
 
 L = logging.getLogger(__name__)
 
-
-def _loadVsmeDefaults(bits: dict) -> None:
-    VSME_DEFAULTS.update(bits)
-
-
 EE_SET_DESIRED_EMPTY_PLACEHOLDER_VALUE = "None"
 
 EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE = ("-", EXCEL_PLACEHOLDER_VALUE)
 
-VSME_DEFAULTS: dict = dict()
+VSME_DEFAULTS: dict = getObject(getResource(excel_templates, "vsme.json"))
 
 
 def cleanUnitTextFromExcel(unitTest: str, replacements: dict[str, str]) -> str:
@@ -231,13 +228,80 @@ class ExcelProcessor:
             return self._workbook.defined_names[name]
         return None
 
+    def _determineOutputLocale(self, taxonomy: Taxonomy) -> None:
+        if not taxonomy.defaultLanguage:
+            return
+
+        excelOutputLanguage = self.getSingleStringValue(
+            "template_reporting_language"
+        ).strip()
+        languageCellReference = excelDefinedNameRef(
+            self.getDefinedNameForString("template_reporting_language")
+        )
+        if not excelOutputLanguage:
+            excelOutputLanguage = self.getSingleStringValue(
+                "template_selected_display_language"
+            ).strip()
+            languageCellReference = excelDefinedNameRef(
+                self.getDefinedNameForString("template_selected_display_language")
+            )
+        if not excelOutputLanguage:
+            return
+
+        if codeMatch := re.search(
+            r"\[([a-zA-Z]+(?:-[a-zA-Z])*?)\]$", excelOutputLanguage
+        ):
+            excelOutputLocale = codeMatch.group(1)
+        else:
+            self._results.addMessage(
+                f"Unable to determine desired report output language from value '{excelOutputLanguage}'",
+                Severity.ERROR,
+                MessageType.ExcelParsing,
+                excel_reference=languageCellReference,
+            )
+            return
+
+        bestOutputLocale = (
+            taxonomy.getBestSupportedLanguage(excelOutputLocale)
+            or taxonomy.defaultLanguage
+        )
+        if excelOutputLocale != bestOutputLocale:
+            self._results.addMessage(
+                f"Excel language specified as '{excelOutputLocale}'. Using closest match supported by the taxonomy, '{bestOutputLocale}'",
+                Severity.INFO,
+                MessageType.Conversion,
+                excel_reference=languageCellReference,
+            )
+        else:
+            self._results.addMessage(
+                f"Using output language specified in Excel and supported by the taxonomy: '{bestOutputLocale}'",
+                Severity.INFO,
+                MessageType.DevInfo,
+                excel_reference=languageCellReference,
+            )
+
+        newOutputLocale = get_locale_from_str(bestOutputLocale)
+        if (
+            self._outputLocale
+            and newOutputLocale
+            and self._outputLocale != newOutputLocale
+        ):
+            self._results.addMessage(
+                f"Excel requested output locale resolved to '{newOutputLocale}'. Ignoring as already configured to use output locale: '{self._outputLocale}'",
+                Severity.INFO,
+                MessageType.Conversion,
+                excel_reference=languageCellReference,
+            )
+        else:
+            self._outputLocale = newOutputLocale
+
     def _verifyEntryPoint(self) -> None:
         name = self._defaults.get("entryPoint", "")
         entryPoint = self.getSingleStringValue(name)
         validEntryPoints = set(listTaxonomies())
-        if not entryPoint and VSME_ENTRY_POINT in validEntryPoints:
+        if not entryPoint:
             self._results.addMessage(
-                "Excel template does not specify taxonomy entry point. Please use an official template.",
+                "Excel template does not specify taxonomy entry point. Please use a supported template.",
                 Severity.ERROR,
                 MessageType.ExcelParsing,
                 excel_reference=excelDefinedNameRef(self.getDefinedNameForString(name)),
@@ -252,6 +316,7 @@ class ExcelProcessor:
 
         self.abortEarlyIfErrors()
         taxonomy = getTaxonomy(entryPoint)
+        self._determineOutputLocale(taxonomy)
         self._report = InlineReport(taxonomy, self._outputLocale)
         self._report.addSchemaRef(entryPoint)
 

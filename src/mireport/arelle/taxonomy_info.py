@@ -10,7 +10,7 @@ from arelle import XbrlConst
 from arelle.api.Session import Session
 from arelle.Cntlr import Cntlr
 from arelle.logging.handlers.LogToXmlHandler import LogToXmlHandler
-from arelle.ModelDtsObject import ModelConcept, ModelResource
+from arelle.ModelDtsObject import ModelConcept, ModelResource, ModelRoleType
 from arelle.ModelRelationshipSet import ModelRelationshipSet
 from arelle.ModelValue import QName
 from arelle.ModelXbrl import ModelXbrl
@@ -289,7 +289,7 @@ class TaxonomyInfoExtractor:
         self, elrUri: str, hypercube: ModelConcept, hypercubeIsClosed: bool
     ) -> list[tuple[ModelConcept, str]]:
         relSet = self.modelXbrl.relationshipSet(XbrlConst.hypercubeDimension, elrUri)
-        roots = relSet.rootConcepts
+        roots = frozenset(relSet.rootConcepts)
 
         if not roots:
             if hypercubeIsClosed:
@@ -298,11 +298,14 @@ class TaxonomyInfoExtractor:
                     level=logging.WARNING,
                 )
             return []
-        assert hypercube in roots, f"{hypercube} should be in {roots}"
-        assert len(roots) == 1, (
-            f"{elrUri} has {len(roots)} hypercubes [{relSet.rootConcepts}]. How exciting!"
-        )
 
+        if len(roots) > 1:
+            self.cntlr.addToLog(
+                f"INFO: {elrUri} has {len(roots)} hypercubes [{sorted(str(root.qname) for root in roots)}]. How exciting!",
+                level=logging.INFO,
+            )
+
+        assert hypercube in roots, f"{hypercube} should be in {roots}"
         return [
             (rel.toModelObject, rel.consecutiveLinkrole)
             for rel in relSet.fromModelObject(hypercube)
@@ -427,7 +430,7 @@ class TaxonomyInfoExtractor:
                             f"Inconsistent duplicate labels found for [{concept.qname}]: {label0=} {label=} {lang=} {role=}",
                             level=logging.WARNING,
                         )
-                        label = max(label0, label)
+                        label = max(label0, label, key=len)
                 jconcept["labels"][lang][role] = label
             else:
                 self.cntlr.addToLog(
@@ -524,6 +527,26 @@ class TaxonomyInfoExtractor:
         self.cntlr.addToLog("Processing dimension defaults")
         self.taxonomyJson["dimensions"]["_defaults"] = self.getDimensionDefaults()
 
+    def getLabelsForRoleType(self, roleType: ModelRoleType) -> dict[str, str]:
+        relSet = self.modelXbrl.relationshipSet(XbrlConst.elementLabel)
+        labels: dict[str, str] = {}
+        for r in relSet.fromModelObject(roleType):
+            label_resource: ModelResource = r.toModelObject
+            if lang := label_resource.xmlLang:
+                # BCP47 says that xml:lang is case insensitive
+                lang = lang.lower()
+                label = label_resource.stringValue.strip()
+                labels[lang] = label
+        return labels
+
+    def getRoleType(self, roleUri: str) -> ModelRoleType:
+        matching = self.modelXbrl.roleTypes.get(roleUri, [])
+        if (num := len(matching)) != 1:
+            raise ArelleRelatedException(
+                f"Wrong number {num} of role type objects found for {roleUri=} (expected 1)"
+            )
+        return matching[0]
+
     def extractPresentation(self) -> None:
         self.cntlr.addToLog("Processing presentation network")
         for arcroleUri, elrUri, linkqname, arcqname in self.modelXbrl.baseSets.keys():
@@ -532,11 +555,12 @@ class TaxonomyInfoExtractor:
                 continue
             if arcroleUri == XbrlConst.parentChild and elrUri is not None:
                 self.cntlr.addToLog(f"Processing {elrUri}")
+                roleType = self.getRoleType(elrUri)
                 self.taxonomyJson["presentation"][elrUri] = {
-                    "labels": {
-                        "en": self.modelXbrl.roleTypeDefinition(elrUri, lang="en")
-                    },
+                    "definition": roleType.definition,
                 }
+                if labels := self.getLabelsForRoleType(roleType):
+                    self.taxonomyJson["presentation"][elrUri]["labels"] = labels
                 relSet = self.modelXbrl.relationshipSet(XbrlConst.parentChild, elrUri)
                 roots = relSet.rootConcepts
                 match len(roots):

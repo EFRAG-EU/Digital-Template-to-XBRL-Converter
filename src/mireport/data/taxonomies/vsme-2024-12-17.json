@@ -3,7 +3,7 @@
     "country:AD": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Andorra",
@@ -19,7 +19,7 @@
     "country:AE": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "United Arab Emirates",
@@ -35,7 +35,7 @@
     "country:AF": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Afghanistan",
@@ -51,7 +51,7 @@
     "country:AG": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Antigua and Barbuda",
@@ -66,7 +66,7 @@
     "country:AI": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Anguilla",
@@ -81,7 +81,7 @@
     "country:AL": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Albania",
@@ -97,7 +97,7 @@
     "country:AM": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Armenia",
@@ -113,7 +113,7 @@
     "country:AN": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Netherlands Antilles (before 2010-12-15)",
@@ -128,7 +128,7 @@
     "country:AO": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Angola",
@@ -144,7 +144,7 @@
     "country:AQ": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Antarctica",
@@ -159,7 +159,7 @@
     "country:AR": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Argentina",
@@ -175,7 +175,7 @@
     "country:AS": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "American Samoa",
@@ -190,7 +190,7 @@
     "country:AT": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Austria",
@@ -206,7 +206,7 @@
     "country:AU": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Australia",
@@ -221,7 +221,7 @@
     "country:AW": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Aruba",
@@ -236,7 +236,7 @@
     "country:AX": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "\u00c5land Islands",
@@ -251,7 +251,7 @@
     "country:AZ": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Azerbaijan",
@@ -267,7 +267,7 @@
     "country:BA": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Bosnia and Herzegovina",
@@ -282,7 +282,7 @@
     "country:BB": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Barbados",
@@ -297,7 +297,7 @@
     "country:BD": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Bangladesh",
@@ -313,7 +313,7 @@
     "country:BE": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Belgium",
@@ -329,7 +329,7 @@
     "country:BF": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Burkina Faso",
@@ -344,7 +344,7 @@
     "country:BG": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Bulgaria",
@@ -360,7 +360,7 @@
     "country:BH": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Bahrain",
@@ -376,7 +376,7 @@
     "country:BI": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Burundi",
@@ -392,7 +392,7 @@
     "country:BJ": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Benin",
@@ -408,7 +408,7 @@
     "country:BL": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Saint Barth\u00e9lemy",
@@ -423,7 +423,7 @@
     "country:BM": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Bermuda",
@@ -438,7 +438,7 @@
     "country:BN": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Brunei Darussalam",
@@ -453,7 +453,7 @@
     "country:BO": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Bolivia (Plurinational State of)",
@@ -469,7 +469,7 @@
     "country:BQ": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Bonaire, Sint Eustatius and Saba",
@@ -484,7 +484,7 @@
     "country:BR": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Brazil",
@@ -500,7 +500,7 @@
     "country:BS": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Bahamas",
@@ -516,7 +516,7 @@
     "country:BT": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Bhutan",
@@ -532,7 +532,7 @@
     "country:BU": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Burma (before 1989-12-15)",
@@ -547,7 +547,7 @@
     "country:BV": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Bouvet Island",
@@ -562,7 +562,7 @@
     "country:BW": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Botswana",
@@ -578,7 +578,7 @@
     "country:BY": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Belarus",
@@ -594,7 +594,7 @@
     "country:BZ": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Belize",
@@ -609,7 +609,7 @@
     "country:CA": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Canada",
@@ -624,7 +624,7 @@
     "country:CC": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Cocos (Keeling) Islands",
@@ -639,7 +639,7 @@
     "country:CD": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Congo (the Democratic Republic of the)",
@@ -655,7 +655,7 @@
     "country:CF": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Central African Republic",
@@ -671,7 +671,7 @@
     "country:CG": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Congo",
@@ -687,7 +687,7 @@
     "country:CH": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Switzerland",
@@ -703,7 +703,7 @@
     "country:CI": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "C\u00f4te d'Ivoire",
@@ -719,7 +719,7 @@
     "country:CK": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Cook Islands",
@@ -734,7 +734,7 @@
     "country:CL": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Chile",
@@ -750,7 +750,7 @@
     "country:CM": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Cameroon",
@@ -766,7 +766,7 @@
     "country:CN": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "China",
@@ -782,7 +782,7 @@
     "country:CO": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Colombia",
@@ -798,7 +798,7 @@
     "country:CR": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Costa Rica",
@@ -814,7 +814,7 @@
     "country:CS": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Serbia and Montenegro (before 2006-09-26)",
@@ -829,7 +829,7 @@
     "country:CU": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Cuba",
@@ -845,7 +845,7 @@
     "country:CV": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Cabo Verde",
@@ -861,7 +861,7 @@
     "country:CW": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Cura\u00e7ao",
@@ -876,7 +876,7 @@
     "country:CX": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Christmas Island",
@@ -891,7 +891,7 @@
     "country:CY": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Cyprus",
@@ -907,7 +907,7 @@
     "country:CZ": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Czechia",
@@ -923,7 +923,7 @@
     "country:CountryDomain": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Country [Domain]"
@@ -935,7 +935,7 @@
     "country:DE": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Germany",
@@ -951,7 +951,7 @@
     "country:DJ": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Djibouti",
@@ -967,7 +967,7 @@
     "country:DK": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Denmark",
@@ -983,7 +983,7 @@
     "country:DM": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Dominica",
@@ -999,7 +999,7 @@
     "country:DO": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Dominican Republic",
@@ -1015,7 +1015,7 @@
     "country:DZ": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Algeria",
@@ -1031,7 +1031,7 @@
     "country:EC": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Ecuador",
@@ -1047,7 +1047,7 @@
     "country:EE": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Estonia",
@@ -1063,7 +1063,7 @@
     "country:EG": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Egypt",
@@ -1079,7 +1079,7 @@
     "country:EH": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Western Sahara*",
@@ -1094,7 +1094,7 @@
     "country:ER": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Eritrea",
@@ -1110,7 +1110,7 @@
     "country:ES": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Spain",
@@ -1126,7 +1126,7 @@
     "country:ET": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Ethiopia",
@@ -1142,7 +1142,7 @@
     "country:FI": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Finland",
@@ -1158,7 +1158,7 @@
     "country:FJ": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Fiji",
@@ -1174,7 +1174,7 @@
     "country:FK": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Falkland Islands (the) [Malvinas]",
@@ -1189,7 +1189,7 @@
     "country:FM": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Micronesia (Federated States of)",
@@ -1205,7 +1205,7 @@
     "country:FO": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Faroe Islands",
@@ -1220,7 +1220,7 @@
     "country:FR": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "France",
@@ -1236,7 +1236,7 @@
     "country:GA": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Gabon",
@@ -1252,7 +1252,7 @@
     "country:GB": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "United Kingdom of Great Britain and Northern Ireland",
@@ -1268,7 +1268,7 @@
     "country:GD": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Grenada",
@@ -1283,7 +1283,7 @@
     "country:GE": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Georgia",
@@ -1298,7 +1298,7 @@
     "country:GF": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "French Guiana",
@@ -1313,7 +1313,7 @@
     "country:GG": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Guernsey",
@@ -1328,7 +1328,7 @@
     "country:GH": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Ghana",
@@ -1344,7 +1344,7 @@
     "country:GI": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Gibraltar",
@@ -1359,7 +1359,7 @@
     "country:GL": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Greenland",
@@ -1374,7 +1374,7 @@
     "country:GM": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Gambia",
@@ -1390,7 +1390,7 @@
     "country:GN": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Guinea",
@@ -1406,7 +1406,7 @@
     "country:GP": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Guadeloupe",
@@ -1421,7 +1421,7 @@
     "country:GQ": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Equatorial Guinea",
@@ -1437,7 +1437,7 @@
     "country:GR": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Greece",
@@ -1453,7 +1453,7 @@
     "country:GS": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "South Georgia and the South Sandwich Islands",
@@ -1468,7 +1468,7 @@
     "country:GT": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Guatemala",
@@ -1484,7 +1484,7 @@
     "country:GU": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Guam",
@@ -1499,7 +1499,7 @@
     "country:GW": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Guinea-Bissau",
@@ -1515,7 +1515,7 @@
     "country:GY": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Guyana",
@@ -1531,7 +1531,7 @@
     "country:HK": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Hong Kong",
@@ -1547,7 +1547,7 @@
     "country:HM": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Heard Island and McDonald Islands",
@@ -1562,7 +1562,7 @@
     "country:HN": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Honduras",
@@ -1578,7 +1578,7 @@
     "country:HR": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Croatia",
@@ -1594,7 +1594,7 @@
     "country:HT": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Haiti",
@@ -1610,7 +1610,7 @@
     "country:HU": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Hungary",
@@ -1625,7 +1625,7 @@
     "country:ID": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Indonesia",
@@ -1641,7 +1641,7 @@
     "country:IE": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Ireland",
@@ -1656,7 +1656,7 @@
     "country:IL": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Israel",
@@ -1672,7 +1672,7 @@
     "country:IM": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Isle of Man",
@@ -1687,7 +1687,7 @@
     "country:IN": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "India",
@@ -1703,7 +1703,7 @@
     "country:IO": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "British Indian Ocean Territory",
@@ -1718,7 +1718,7 @@
     "country:IQ": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Iraq",
@@ -1734,7 +1734,7 @@
     "country:IR": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Iran (Islamic Republic of)",
@@ -1750,7 +1750,7 @@
     "country:IS": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Iceland",
@@ -1765,7 +1765,7 @@
     "country:IT": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Italy",
@@ -1781,7 +1781,7 @@
     "country:JE": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Jersey",
@@ -1796,7 +1796,7 @@
     "country:JM": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Jamaica",
@@ -1811,7 +1811,7 @@
     "country:JO": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Jordan",
@@ -1827,7 +1827,7 @@
     "country:JP": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Japan",
@@ -1842,7 +1842,7 @@
     "country:KE": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Kenya",
@@ -1858,7 +1858,7 @@
     "country:KG": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Kyrgyzstan",
@@ -1874,7 +1874,7 @@
     "country:KH": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Cambodia",
@@ -1890,7 +1890,7 @@
     "country:KI": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Kiribati",
@@ -1906,7 +1906,7 @@
     "country:KM": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Comoros",
@@ -1922,7 +1922,7 @@
     "country:KN": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Saint Kitts and Nevis",
@@ -1937,7 +1937,7 @@
     "country:KP": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Korea (the Democratic People's Republic of)",
@@ -1953,7 +1953,7 @@
     "country:KR": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Korea (the Republic of)",
@@ -1969,7 +1969,7 @@
     "country:KW": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Kuwait",
@@ -1985,7 +1985,7 @@
     "country:KY": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Cayman Islands",
@@ -2000,7 +2000,7 @@
     "country:KZ": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Kazakhstan",
@@ -2016,7 +2016,7 @@
     "country:LA": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Lao People's Democratic Republic",
@@ -2032,7 +2032,7 @@
     "country:LB": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Lebanon",
@@ -2048,7 +2048,7 @@
     "country:LC": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Saint Lucia",
@@ -2063,7 +2063,7 @@
     "country:LI": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Liechtenstein",
@@ -2079,7 +2079,7 @@
     "country:LK": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Sri Lanka",
@@ -2095,7 +2095,7 @@
     "country:LR": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Liberia",
@@ -2111,7 +2111,7 @@
     "country:LS": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Lesotho",
@@ -2127,7 +2127,7 @@
     "country:LT": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Lithuania",
@@ -2143,7 +2143,7 @@
     "country:LU": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Luxembourg",
@@ -2159,7 +2159,7 @@
     "country:LV": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Latvia",
@@ -2175,7 +2175,7 @@
     "country:LY": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Libya",
@@ -2191,7 +2191,7 @@
     "country:MA": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Morocco",
@@ -2207,7 +2207,7 @@
     "country:MC": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Monaco",
@@ -2223,7 +2223,7 @@
     "country:MD": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Moldova (the Republic of)",
@@ -2239,7 +2239,7 @@
     "country:ME": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Montenegro",
@@ -2254,7 +2254,7 @@
     "country:MF": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Saint Martin (French part)",
@@ -2269,7 +2269,7 @@
     "country:MG": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Madagascar",
@@ -2285,7 +2285,7 @@
     "country:MH": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Marshall Islands",
@@ -2301,7 +2301,7 @@
     "country:MK": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "North Macedonia",
@@ -2317,7 +2317,7 @@
     "country:ML": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Mali",
@@ -2333,7 +2333,7 @@
     "country:MM": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Myanmar",
@@ -2349,7 +2349,7 @@
     "country:MN": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Mongolia",
@@ -2364,7 +2364,7 @@
     "country:MO": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Macao",
@@ -2380,7 +2380,7 @@
     "country:MP": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Northern Mariana Islands",
@@ -2396,7 +2396,7 @@
     "country:MQ": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Martinique",
@@ -2411,7 +2411,7 @@
     "country:MR": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Mauritania",
@@ -2427,7 +2427,7 @@
     "country:MS": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Montserrat",
@@ -2442,7 +2442,7 @@
     "country:MT": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Malta",
@@ -2458,7 +2458,7 @@
     "country:MU": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Mauritius",
@@ -2474,7 +2474,7 @@
     "country:MV": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Maldives",
@@ -2490,7 +2490,7 @@
     "country:MW": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Malawi",
@@ -2506,7 +2506,7 @@
     "country:MX": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Mexico",
@@ -2522,7 +2522,7 @@
     "country:MY": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Malaysia",
@@ -2537,7 +2537,7 @@
     "country:MZ": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Mozambique",
@@ -2553,7 +2553,7 @@
     "country:NA": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Namibia",
@@ -2569,7 +2569,7 @@
     "country:NC": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "New Caledonia",
@@ -2584,7 +2584,7 @@
     "country:NE": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Niger",
@@ -2600,7 +2600,7 @@
     "country:NF": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Norfolk Island",
@@ -2615,7 +2615,7 @@
     "country:NG": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Nigeria",
@@ -2631,7 +2631,7 @@
     "country:NI": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Nicaragua",
@@ -2647,7 +2647,7 @@
     "country:NL": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Netherlands (Kingdom of the)",
@@ -2663,7 +2663,7 @@
     "country:NO": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Norway",
@@ -2679,7 +2679,7 @@
     "country:NP": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Nepal",
@@ -2694,7 +2694,7 @@
     "country:NR": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Nauru",
@@ -2710,7 +2710,7 @@
     "country:NT": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Neutral Zone (before 1993-07-12)",
@@ -2725,7 +2725,7 @@
     "country:NU": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Niue",
@@ -2740,7 +2740,7 @@
     "country:NZ": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "New Zealand",
@@ -2755,7 +2755,7 @@
     "country:OM": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Oman",
@@ -2771,7 +2771,7 @@
     "country:PA": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Panama",
@@ -2787,7 +2787,7 @@
     "country:PE": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Peru",
@@ -2803,7 +2803,7 @@
     "country:PF": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "French Polynesia",
@@ -2818,7 +2818,7 @@
     "country:PG": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Papua New Guinea",
@@ -2834,7 +2834,7 @@
     "country:PH": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Philippines",
@@ -2850,7 +2850,7 @@
     "country:PK": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Pakistan",
@@ -2866,7 +2866,7 @@
     "country:PL": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Poland",
@@ -2882,7 +2882,7 @@
     "country:PM": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Saint Pierre and Miquelon",
@@ -2897,7 +2897,7 @@
     "country:PN": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Pitcairn",
@@ -2912,7 +2912,7 @@
     "country:PR": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Puerto Rico",
@@ -2927,7 +2927,7 @@
     "country:PS": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Palestine, State of",
@@ -2943,7 +2943,7 @@
     "country:PT": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Portugal",
@@ -2959,7 +2959,7 @@
     "country:PW": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Palau",
@@ -2975,7 +2975,7 @@
     "country:PY": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Paraguay",
@@ -2991,7 +2991,7 @@
     "country:QA": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Qatar",
@@ -3007,7 +3007,7 @@
     "country:RE": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "R\u00e9union",
@@ -3022,7 +3022,7 @@
     "country:RO": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Romania",
@@ -3037,7 +3037,7 @@
     "country:RS": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Serbia",
@@ -3053,7 +3053,7 @@
     "country:RU": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Russian Federation",
@@ -3069,7 +3069,7 @@
     "country:RW": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Rwanda",
@@ -3085,7 +3085,7 @@
     "country:SA": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Saudi Arabia",
@@ -3101,7 +3101,7 @@
     "country:SB": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Solomon Islands",
@@ -3116,7 +3116,7 @@
     "country:SC": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Seychelles",
@@ -3132,7 +3132,7 @@
     "country:SD": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Sudan",
@@ -3148,7 +3148,7 @@
     "country:SE": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Sweden",
@@ -3164,7 +3164,7 @@
     "country:SG": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Singapore",
@@ -3180,7 +3180,7 @@
     "country:SH": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Saint Helena, Ascension and Tristan da Cunha",
@@ -3195,7 +3195,7 @@
     "country:SI": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Slovenia",
@@ -3211,7 +3211,7 @@
     "country:SJ": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Svalbard and Jan Mayen",
@@ -3226,7 +3226,7 @@
     "country:SK": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Slovakia",
@@ -3242,7 +3242,7 @@
     "country:SL": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Sierra Leone",
@@ -3258,7 +3258,7 @@
     "country:SM": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "San Marino",
@@ -3274,7 +3274,7 @@
     "country:SN": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Senegal",
@@ -3290,7 +3290,7 @@
     "country:SO": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Somalia",
@@ -3306,7 +3306,7 @@
     "country:SR": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Suriname",
@@ -3322,7 +3322,7 @@
     "country:SS": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "South Sudan",
@@ -3338,7 +3338,7 @@
     "country:ST": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Sao Tome and Principe",
@@ -3354,7 +3354,7 @@
     "country:SV": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "El Salvador",
@@ -3370,7 +3370,7 @@
     "country:SX": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Sint Maarten (Dutch part)",
@@ -3385,7 +3385,7 @@
     "country:SY": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Syrian Arab Republic",
@@ -3401,7 +3401,7 @@
     "country:SZ": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Eswatini",
@@ -3417,7 +3417,7 @@
     "country:TC": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Turks and Caicos Islands",
@@ -3432,7 +3432,7 @@
     "country:TD": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Chad",
@@ -3448,7 +3448,7 @@
     "country:TF": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "French Southern Territories",
@@ -3463,7 +3463,7 @@
     "country:TG": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Togo",
@@ -3479,7 +3479,7 @@
     "country:TH": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Thailand",
@@ -3495,7 +3495,7 @@
     "country:TJ": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Tajikistan",
@@ -3511,7 +3511,7 @@
     "country:TK": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Tokelau",
@@ -3526,7 +3526,7 @@
     "country:TL": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Timor-Leste",
@@ -3542,7 +3542,7 @@
     "country:TM": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Turkmenistan",
@@ -3557,7 +3557,7 @@
     "country:TN": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Tunisia",
@@ -3573,7 +3573,7 @@
     "country:TO": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Tonga",
@@ -3589,7 +3589,7 @@
     "country:TP": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "East Timor (before 2002-05-20)",
@@ -3604,7 +3604,7 @@
     "country:TR": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "T\u00fcrkiye",
@@ -3620,7 +3620,7 @@
     "country:TT": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Trinidad and Tobago",
@@ -3636,7 +3636,7 @@
     "country:TV": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Tuvalu",
@@ -3651,7 +3651,7 @@
     "country:TW": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Taiwan (Province of China)",
@@ -3666,7 +3666,7 @@
     "country:TZ": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Tanzania, the United Republic of",
@@ -3682,7 +3682,7 @@
     "country:UA": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Ukraine",
@@ -3697,7 +3697,7 @@
     "country:UG": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Uganda",
@@ -3713,7 +3713,7 @@
     "country:UM": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "United States Minor Outlying Islands",
@@ -3728,7 +3728,7 @@
     "country:US": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "United States of America",
@@ -3744,7 +3744,7 @@
     "country:UY": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Uruguay",
@@ -3760,7 +3760,7 @@
     "country:UZ": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Uzbekistan",
@@ -3776,7 +3776,7 @@
     "country:VA": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Holy See",
@@ -3791,7 +3791,7 @@
     "country:VC": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Saint Vincent and the Grenadines",
@@ -3806,7 +3806,7 @@
     "country:VE": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Venezuela (Bolivarian Republic of)",
@@ -3822,7 +3822,7 @@
     "country:VG": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Virgin Islands (British)",
@@ -3838,7 +3838,7 @@
     "country:VI": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Virgin Islands (U.S.)",
@@ -3854,7 +3854,7 @@
     "country:VN": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Viet Nam",
@@ -3870,7 +3870,7 @@
     "country:VU": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Vanuatu",
@@ -3886,7 +3886,7 @@
     "country:WF": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Wallis and Futuna",
@@ -3902,7 +3902,7 @@
     "country:WS": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Samoa",
@@ -3918,7 +3918,7 @@
     "country:YE": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Yemen",
@@ -3934,7 +3934,7 @@
     "country:YT": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Mayotte",
@@ -3949,7 +3949,7 @@
     "country:YU": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Yugoslavia (before 2003-07-23)",
@@ -3964,7 +3964,7 @@
     "country:ZA": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "South Africa",
@@ -3980,7 +3980,7 @@
     "country:ZM": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Zambia",
@@ -3996,7 +3996,7 @@
     "country:ZR": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Zaire (before 1997-07-14)",
@@ -4011,7 +4011,7 @@
     "country:ZW": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2022:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Zimbabwe",
@@ -17115,7 +17115,7 @@
     "vsme:BasicModuleAndComprehensiveModuleMember": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2020:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Basic Module and Comprehensive Module [member]"
@@ -17127,7 +17127,7 @@
     "vsme:BasicModuleOnlyMember": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2020:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Basic Module (only) [member]"
@@ -18340,7 +18340,7 @@
     },
     "vsme:DescriptionOfATargetRelatedToAPolicy": {
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:textBlockItemType",
+      "dataType": "dtr-types-2022:textBlockItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Description of the target of practices, policies or future initiatives"
@@ -18385,7 +18385,7 @@
     },
     "vsme:DescriptionOfClimateRelatedHazardsAndClimateRelatedTransitionEvents": {
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:textBlockItemType",
+      "dataType": "dtr-types-2022:textBlockItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Description of climate-related hazards and climate-related transition events"
@@ -18396,7 +18396,7 @@
     },
     "vsme:DescriptionOfHowCircularEconomyPrinciplesAreApplied": {
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:textBlockItemType",
+      "dataType": "dtr-types-2022:textBlockItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Description of how circular economy principles are applied"
@@ -18602,7 +18602,7 @@
     },
     "vsme:DisclosureOfHowItHasAssessedTheExposureAndSensitivityOfItsAssetsActivitiesAndValueChainToTheseHazardsAndTransitionEvents": {
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:textBlockItemType",
+      "dataType": "dtr-types-2022:textBlockItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Disclosure of how it has assessed the exposure and sensitivity of its assets, activities and value chain to these hazards and transition events"
@@ -18970,7 +18970,7 @@
     "vsme:FutureInitiativesMember": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2020:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Future initiative [member]"
@@ -19582,7 +19582,7 @@
     },
     "vsme:MostSeniorLevelAccountableForImplementationOfPracticesPoliciesAndOrFutureInitiatives": {
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:textBlockItemType",
+      "dataType": "dtr-types-2022:textBlockItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Most senior level accountable for implementation of practices, policies and/or future initiatives"
@@ -21184,7 +21184,7 @@
     "vsme:PolicyMember": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2020:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Policy [member]"
@@ -21254,7 +21254,7 @@
     },
     "vsme:PotentialAdverseEffectsOfClimateRisksThatMayAffectItsFinancialPerformanceOrBusinessOperationsInTheShortMediumOrLongTermIndicatingWhetherItAssessesTheRisksToBeHighMediumOrLow": {
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:textBlockItemType",
+      "dataType": "dtr-types-2022:textBlockItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Potential adverse effects of climate risks that may affect its financial performance or business operations in the short-, medium- or long-term, indicating whether it assesses the risks to be high, medium or low"
@@ -21266,7 +21266,7 @@
     "vsme:PracticeMember": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
+      "dataType": "dtr-types-2020:domainItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Practice [member]"
@@ -21780,7 +21780,7 @@
     },
     "vsme:TimeHorizonsOfAnyClimateRelatedHazardsAndTransitionEventsIdentified": {
       "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:textBlockItemType",
+      "dataType": "dtr-types-2022:textBlockItemType",
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Time horizons of any climate-related hazards and transition events identified"
@@ -33411,14 +33411,18 @@
   "entryPoint": "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/vsme-all.xsd",
   "namespaces": {
     "country": "https://xbrl.org/2024/iso3166",
-    "dtr-types": "http://www.xbrl.org/dtr/type/2022-03-31",
+    "dtr-types": "http://www.xbrl.org/dtr/type/2024-01-31",
+    "dtr-types-2020": "http://www.xbrl.org/dtr/type/2020-01-21",
+    "dtr-types-2022": "http://www.xbrl.org/dtr/type/2022-03-31",
     "enum2": "http://xbrl.org/2020/extensible-enumerations-2.0",
+    "iso4217": "http://www.xbrl.org/2003/iso4217",
     "label-code": "https://xbrl.org/taxonomy/int/codelist-common/2024/role-label-code",
     "link": "http://www.xbrl.org/2003/linkbase",
     "nace": "https://xbrl.efrag.org/taxonomy/nace/2025-01-01",
     "net": "http://www.xbrl.org/2009/role/net",
     "property-part": "https://xbrl.org/taxonomy/int/codelist-common/2024/property-part",
     "ref": "http://www.xbrl.org/2006/ref",
+    "utr": "http://www.xbrl.org/2009/utr",
     "vsme": "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/vsme",
     "waste": "https://xbrl.efrag.org/taxonomy/waste/2023-12-06/waste",
     "xbrldt": "http://xbrl.org/2005/xbrldt",
@@ -33428,9 +33432,7 @@
   },
   "presentation": {
     "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b01000": {
-      "labels": {
-        "en": "[B01.000] - General information - Basis for Preparation"
-      },
+      "definition": "[B01.000] - General information - Basis for Preparation",
       "rows": [
         [
           0,
@@ -33504,9 +33506,7 @@
       ]
     },
     "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b01100": {
-      "labels": {
-        "en": "[B01.100] - General information - List of subsidiaries"
-      },
+      "definition": "[B01.100] - General information - List of subsidiaries",
       "rows": [
         [
           0,
@@ -33535,9 +33535,7 @@
       ]
     },
     "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b01200": {
-      "labels": {
-        "en": "[B01.200] - General information - List of sites"
-      },
+      "definition": "[B01.200] - General information - List of sites",
       "rows": [
         [
           0,
@@ -33578,9 +33576,7 @@
       ]
     },
     "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b02000": {
-      "labels": {
-        "en": "[B02.000] - General information - Practices, policies and/or future initiatives for transitioning towards a more sustainable economy"
-      },
+      "definition": "[B02.000] - General information - Practices, policies and/or future initiatives for transitioning towards a more sustainable economy",
       "rows": [
         [
           0,
@@ -33601,9 +33597,7 @@
       ]
     },
     "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b02100": {
-      "labels": {
-        "en": "[B02.100] - General information - Cooperative specific disclosures"
-      },
+      "definition": "[B02.100] - General information - Cooperative specific disclosures",
       "rows": [
         [
           0,
@@ -33624,9 +33618,7 @@
       ]
     },
     "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b03000": {
-      "labels": {
-        "en": "[B03.000] - Environment - Total Energy Consumption"
-      },
+      "definition": "[B03.000] - Environment - Total Energy Consumption",
       "rows": [
         [
           0,
@@ -33639,9 +33631,7 @@
       ]
     },
     "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b03100": {
-      "labels": {
-        "en": "[B03.100] - Environment - Breakdown of energy consumption"
-      },
+      "definition": "[B03.100] - Environment - Breakdown of energy consumption",
       "rows": [
         [
           0,
@@ -33686,9 +33676,7 @@
       ]
     },
     "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b03200": {
-      "labels": {
-        "en": "[B03.200] - Environment - Estimated Greenhouse Gas Emissions"
-      },
+      "definition": "[B03.200] - Environment - Estimated Greenhouse Gas Emissions",
       "rows": [
         [
           0,
@@ -33749,9 +33737,7 @@
       ]
     },
     "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b03300": {
-      "labels": {
-        "en": "[B03.300] - Environment - Greenhouse Gas Emissions intensity"
-      },
+      "definition": "[B03.300] - Environment - Greenhouse Gas Emissions intensity",
       "rows": [
         [
           0,
@@ -33776,9 +33762,7 @@
       ]
     },
     "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b04000": {
-      "labels": {
-        "en": "[B04.000] - Environment - Pollution of air, water and soil: availability of public disclosure"
-      },
+      "definition": "[B04.000] - Environment - Pollution of air, water and soil: availability of public disclosure",
       "rows": [
         [
           0,
@@ -33795,9 +33779,7 @@
       ]
     },
     "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b04100": {
-      "labels": {
-        "en": "[B04.100] - Environment - Pollution of air, water and soil: amount of emissions"
-      },
+      "definition": "[B04.100] - Environment - Pollution of air, water and soil: amount of emissions",
       "rows": [
         [
           0,
@@ -34210,9 +34192,7 @@
       ]
     },
     "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b05000": {
-      "labels": {
-        "en": "[B05.000] - Environment - Sites in biodiversity sensitive areas"
-      },
+      "definition": "[B05.000] - Environment - Sites in biodiversity sensitive areas",
       "rows": [
         [
           0,
@@ -34245,9 +34225,7 @@
       ]
     },
     "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b05100": {
-      "labels": {
-        "en": "[B05.100] - Environment - Biodiversity - on Land-use"
-      },
+      "definition": "[B05.100] - Environment - Biodiversity - on Land-use",
       "rows": [
         [
           0,
@@ -34272,9 +34250,7 @@
       ]
     },
     "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b06000": {
-      "labels": {
-        "en": "[B06.000] - Environment - Water Withdrawal"
-      },
+      "definition": "[B06.000] - Environment - Water Withdrawal",
       "rows": [
         [
           0,
@@ -34291,9 +34267,7 @@
       ]
     },
     "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b06100": {
-      "labels": {
-        "en": "[B06.100] - Environment - Water Consumption"
-      },
+      "definition": "[B06.100] - Environment - Water Consumption",
       "rows": [
         [
           0,
@@ -34310,9 +34284,7 @@
       ]
     },
     "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b07000": {
-      "labels": {
-        "en": "[B07.000] - Environment - Description of circular economy principles"
-      },
+      "definition": "[B07.000] - Environment - Description of circular economy principles",
       "rows": [
         [
           0,
@@ -34329,9 +34301,7 @@
       ]
     },
     "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b07100": {
-      "labels": {
-        "en": "[B07.100] - Environment - Breakdown of waste by type"
-      },
+      "definition": "[B07.100] - Environment - Breakdown of waste by type",
       "rows": [
         [
           0,
@@ -37656,9 +37626,7 @@
       ]
     },
     "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b07200": {
-      "labels": {
-        "en": "[B07.200] - Environment - Total Hazardous and Non-Hazardous waste"
-      },
+      "definition": "[B07.200] - Environment - Total Hazardous and Non-Hazardous waste",
       "rows": [
         [
           0,
@@ -37691,9 +37659,7 @@
       ]
     },
     "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b07300": {
-      "labels": {
-        "en": "[B07.300] - Environment - Breakdown of annual mass-flow of relevant materials used by the undertaking"
-      },
+      "definition": "[B07.300] - Environment - Breakdown of annual mass-flow of relevant materials used by the undertaking",
       "rows": [
         [
           0,
@@ -37726,9 +37692,7 @@
       ]
     },
     "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b07400": {
-      "labels": {
-        "en": "[B07.400] - Environment - Total annual mass-flow of materials used by the undertaking"
-      },
+      "definition": "[B07.400] - Environment - Total annual mass-flow of materials used by the undertaking",
       "rows": [
         [
           0,
@@ -37745,9 +37709,7 @@
       ]
     },
     "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b08000": {
-      "labels": {
-        "en": "[B08.000] - Social - Workforce - General characteristics: type of contract"
-      },
+      "definition": "[B08.000] - Social - Workforce - General characteristics: type of contract",
       "rows": [
         [
           0,
@@ -37764,9 +37726,7 @@
       ]
     },
     "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b08100": {
-      "labels": {
-        "en": "[B08.100] - Social - Workforce - General characteristics: gender"
-      },
+      "definition": "[B08.100] - Social - Workforce - General characteristics: gender",
       "rows": [
         [
           0,
@@ -37791,9 +37751,7 @@
       ]
     },
     "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b08200": {
-      "labels": {
-        "en": "[B08.200] - Social - Workforce - General characteristics: country of employment"
-      },
+      "definition": "[B08.200] - Social - Workforce - General characteristics: country of employment",
       "rows": [
         [
           0,
@@ -38846,9 +38804,7 @@
       ]
     },
     "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b08300": {
-      "labels": {
-        "en": "[B08.300] - Social - Workforce - General characteristics: turnover rate"
-      },
+      "definition": "[B08.300] - Social - Workforce - General characteristics: turnover rate",
       "rows": [
         [
           0,
@@ -38861,9 +38817,7 @@
       ]
     },
     "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b09000": {
-      "labels": {
-        "en": "[B09.000] - Social - Workforce - Health and safety"
-      },
+      "definition": "[B09.000] - Social - Workforce - Health and safety",
       "rows": [
         [
           0,
@@ -38884,9 +38838,7 @@
       ]
     },
     "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b10000": {
-      "labels": {
-        "en": "[B10.000] - Social - Workforce - Remuneration, collective bargaining and training"
-      },
+      "definition": "[B10.000] - Social - Workforce - Remuneration, collective bargaining and training",
       "rows": [
         [
           0,
@@ -38931,9 +38883,7 @@
       ]
     },
     "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b11000": {
-      "labels": {
-        "en": "[B11.000] - Governance - Convictions and fines for corruption and bribery"
-      },
+      "definition": "[B11.000] - Governance - Convictions and fines for corruption and bribery",
       "rows": [
         [
           0,
@@ -38950,9 +38900,7 @@
       ]
     },
     "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-c01000": {
-      "labels": {
-        "en": "[C01.000] - General information - Strategy: Business Model and Sustainability \u2013 Related Initiatives"
-      },
+      "definition": "[C01.000] - General information - Strategy: Business Model and Sustainability \u2013 Related Initiatives",
       "rows": [
         [
           0,
@@ -38977,9 +38925,7 @@
       ]
     },
     "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-c02000": {
-      "labels": {
-        "en": "[C02.000] - General information - Description of practices, policies and/or future initiatives for transitioning towards a more sustainable economy"
-      },
+      "definition": "[C02.000] - General information - Description of practices, policies and/or future initiatives for transitioning towards a more sustainable economy",
       "rows": [
         [
           0,
@@ -39000,9 +38946,7 @@
       ]
     },
     "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-c03000": {
-      "labels": {
-        "en": "[C03.000] - Environment - Greenhouse Gas Emissions Reduction Baseline and Target Year"
-      },
+      "definition": "[C03.000] - Environment - Greenhouse Gas Emissions Reduction Baseline and Target Year",
       "rows": [
         [
           0,
@@ -39019,9 +38963,7 @@
       ]
     },
     "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-c03100": {
-      "labels": {
-        "en": "[C03.100] - Environment - Greenhouse Gas Emission Reduction Targets"
-      },
+      "definition": "[C03.100] - Environment - Greenhouse Gas Emission Reduction Targets",
       "rows": [
         [
           0,
@@ -39086,9 +39028,7 @@
       ]
     },
     "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-c03200": {
-      "labels": {
-        "en": "[C03.200] - Environment - Disclosure of list of main actions the entity seeks to achieve its targets"
-      },
+      "definition": "[C03.200] - Environment - Disclosure of list of main actions the entity seeks to achieve its targets",
       "rows": [
         [
           0,
@@ -39101,9 +39041,7 @@
       ]
     },
     "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-c03300": {
-      "labels": {
-        "en": "[C03.300] - Environment - Transition plan for undertakings operating in high climate impact sectors"
-      },
+      "definition": "[C03.300] - Environment - Transition plan for undertakings operating in high climate impact sectors",
       "rows": [
         [
           0,
@@ -39120,9 +39058,7 @@
       ]
     },
     "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-c04000": {
-      "labels": {
-        "en": "[C04.000] - Environment - Climate risks"
-      },
+      "definition": "[C04.000] - Environment - Climate risks",
       "rows": [
         [
           0,
@@ -39151,9 +39087,7 @@
       ]
     },
     "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-c05000": {
-      "labels": {
-        "en": "[C05.000] - Social - Additional (general) workforce characteristics"
-      },
+      "definition": "[C05.000] - Social - Additional (general) workforce characteristics",
       "rows": [
         [
           0,
@@ -39174,9 +39108,7 @@
       ]
     },
     "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-c06000": {
-      "labels": {
-        "en": "[C06.000] - Social - Additional own workforce information - Human rights policies and processes"
-      },
+      "definition": "[C06.000] - Social - Additional own workforce information - Human rights policies and processes",
       "rows": [
         [
           0,
@@ -39201,9 +39133,7 @@
       ]
     },
     "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-c07000": {
-      "labels": {
-        "en": "[C07.000] - Social - Severe negative human rights incidents"
-      },
+      "definition": "[C07.000] - Social - Severe negative human rights incidents",
       "rows": [
         [
           0,
@@ -39236,9 +39166,7 @@
       ]
     },
     "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-c08000": {
-      "labels": {
-        "en": "[C08.000] - Governance - Revenues derived from activies"
-      },
+      "definition": "[C08.000] - Governance - Revenues derived from activies",
       "rows": [
         [
           0,
@@ -39275,9 +39203,7 @@
       ]
     },
     "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-c08100": {
-      "labels": {
-        "en": "[C08.100] - Governance - Exclusion from EU benchmarks"
-      },
+      "definition": "[C08.100] - Governance - Exclusion from EU benchmarks",
       "rows": [
         [
           0,
@@ -39290,9 +39216,7 @@
       ]
     },
     "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-c09000": {
-      "labels": {
-        "en": "[C09.000] - Governance - Gender diversity ratio in the governance body"
-      },
+      "definition": "[C09.000] - Governance - Gender diversity ratio in the governance body",
       "rows": [
         [
           0,
@@ -39305,9 +39229,7 @@
       ]
     },
     "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-other": {
-      "labels": {
-        "en": "[D99.000] - Other and/or entity specific information"
-      },
+      "definition": "[D99.000] - Other and/or entity specific information",
       "rows": [
         [
           0,
