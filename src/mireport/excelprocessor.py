@@ -1032,7 +1032,6 @@ class ExcelProcessor:
 
                     if (
                         value is None
-                        or value is False
                         or value in EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE
                     ):
                         continue
@@ -1406,12 +1405,8 @@ class ExcelProcessor:
                 continue
 
             value = cell.value
-            if value is None or value is False:
+            if value is None or value in EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE:
                 # No value in the cell, so not reportable
-                self._definedNameToXBRLMap.pop(dn)
-                continue
-            if value in EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE:
-                # Placeholder values are not reportable
                 self._definedNameToXBRLMap.pop(dn)
                 continue
 
