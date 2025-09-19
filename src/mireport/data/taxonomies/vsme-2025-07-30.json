@@ -16600,18 +16600,6 @@
       "nillable": true,
       "periodType": "duration"
     },
-    "nace:SEC1AllESRSSec1SectorsNA": {
-      "abstract": true,
-      "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
-      "labels": {
-        "en": {
-          "http://www.xbrl.org/2003/role/label": "All ESRS SEC 1 Sectors / NA"
-        }
-      },
-      "nillable": true,
-      "periodType": "duration"
-    },
     "vsme:AccidentPreventionMember": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
@@ -19442,7 +19430,7 @@
       "nillable": true,
       "periodType": "instant"
     },
-    "vsme:ChloridestotalClMember": {
+    "vsme:ChloridesTotalClMember": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
       "dataType": "dtr-types:domainItemType",
@@ -19738,7 +19726,7 @@
       "nillable": true,
       "periodType": "instant"
     },
-    "vsme:ConsumersAndEndusersMember": {
+    "vsme:ConsumersAndEndUsersMember": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
       "dataType": "dtr-types:domainItemType",
@@ -19756,7 +19744,7 @@
           "http://www.xbrl.org/2003/role/label": "\u039a\u03b1\u03c4\u03b1\u03bd\u03b1\u03bb\u03c9\u03c4\u03ad\u03c2 \u03ba\u03b1\u03b9 \u03c4\u03b5\u03bb\u03b9\u03ba\u03bf\u03af \u03c7\u03c1\u03ae\u03c3\u03c4\u03b5\u03c2 [member]"
         },
         "en": {
-          "http://www.xbrl.org/2003/role/label": "Consumers and endusers [member]"
+          "http://www.xbrl.org/2003/role/label": "Consumers and end users [member]"
         },
         "et": {
           "http://www.xbrl.org/2003/role/label": "Tarbijad ja l\u00f5pptarbijad [member]"
@@ -21303,7 +21291,7 @@
       "nillable": true,
       "periodType": "duration"
     },
-    "vsme:DescriptionOfTheEffectiveParticipationOfWorkersUsersOrOtherinterestedPartiesOrCommunitiesInGovernance": {
+    "vsme:DescriptionOfTheEffectiveParticipationOfWorkersUsersOrOtherInterestedPartiesOrCommunitiesInGovernance": {
       "baseDataType": "xbrli:stringItemType",
       "dataType": "dtr-types:textBlockItemType",
       "labels": {
@@ -22414,8 +22402,8 @@
       "periodType": "instant"
     },
     "vsme:FemaleToMaleRatioAtManagementLevelForTheReportingPeriod": {
-      "baseDataType": "xbrli:pureItemType",
-      "dataType": "dtr-types:percentItemType",
+      "baseDataType": "xbrli:decimalItemType",
+      "dataType": "xbrli:decimalItemType",
       "labels": {
         "bg": {
           "http://www.xbrl.org/2003/role/label": "\u0421\u044a\u043e\u0442\u043d\u043e\u0448\u0435\u043d\u0438\u0435 \u0436\u0435\u043d\u0438 \u043a\u044a\u043c \u043c\u044a\u0436\u0435 \u043d\u0430 \u0440\u044a\u043a\u043e\u0432\u043e\u0434\u043d\u043e \u0440\u0430\u0432\u043d\u0438\u0449\u0435 \u0437\u0430 \u043e\u0442\u0447\u0435\u0442\u043d\u0438\u044f \u043f\u0435\u0440\u0438\u043e\u0434"
@@ -26413,18 +26401,6 @@
       "nillable": true,
       "periodType": "instant"
     },
-    "vsme:OtherSustainabilityIssueMember": {
-      "abstract": true,
-      "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
-      "labels": {
-        "en": {
-          "http://www.xbrl.org/2003/role/label": "Other sustainability issue [member]"
-        }
-      },
-      "nillable": true,
-      "periodType": "instant"
-    },
     "vsme:OtherUndertakingsLegalForm": {
       "baseDataType": "xbrli:stringItemType",
       "dataType": "xbrli:stringItemType",
@@ -28590,7 +28566,7 @@
           "vsme:OwnWorkforceMember",
           "vsme:WorkersInTheValueChainMember",
           "vsme:AffectedCommunitiesMember",
-          "vsme:ConsumersAndEndusersMember",
+          "vsme:ConsumersAndEndUsersMember",
           "vsme:BusinessConductMember"
         ]
       },
@@ -42842,7 +42818,7 @@
             "vsme:ChlordaneMember",
             "vsme:ChlordeconeMember",
             "vsme:ChlorfenvinphosMember",
-            "vsme:ChloridestotalClMember",
+            "vsme:ChloridesTotalClMember",
             "vsme:ChlorineAndInorganicCompoundsHClMember",
             "vsme:ChloroAlkanesC10C13Member",
             "vsme:ChlorofluorocarbonsCFCsMember",
@@ -44560,7 +44536,7 @@
         ],
         [
           1,
-          "vsme:DescriptionOfTheEffectiveParticipationOfWorkersUsersOrOtherinterestedPartiesOrCommunitiesInGovernance"
+          "vsme:DescriptionOfTheEffectiveParticipationOfWorkersUsersOrOtherInterestedPartiesOrCommunitiesInGovernance"
         ],
         [
           1,
@@ -44818,7 +44794,7 @@
         ],
         [
           4,
-          "vsme:ChloridestotalClMember"
+          "vsme:ChloridesTotalClMember"
         ],
         [
           4,
@@ -50737,7 +50713,7 @@
       ]
     },
     "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-c08000": {
-      "definition": "[C08.000] - Governance - Revenues derived from activies",
+      "definition": "[C08.000] - Governance - Revenues derived from activities",
       "rows": [
         [
           0,
