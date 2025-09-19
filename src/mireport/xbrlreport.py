@@ -1253,9 +1253,6 @@ class ReportLayoutOrganiser:
                     columnHeadings.extend(reportable)
 
             if not data:
-                L.warning(
-                    f"No facts for section {section.presentation.roleUri}. Skipping."
-                )
                 continue
 
             tableUnit = self.getTableUnit(data)
@@ -1351,8 +1348,12 @@ class ReportLayoutOrganiser:
         merged_sections: list[ReportSection] = []
         for section in self.reportSections:
             roleUri = section.presentation.roleUri
-            if roleUri in table_sections:
-                merged_sections.append(table_sections[roleUri])
+            if section.style is PresentationStyle.Table:
+                if new_section := table_sections.get(roleUri):
+                    merged_sections.append(new_section)
+                else:
+                    # table without data, drop the section.
+                    continue
             else:
                 merged_sections.append(section)
         self.reportSections = merged_sections
