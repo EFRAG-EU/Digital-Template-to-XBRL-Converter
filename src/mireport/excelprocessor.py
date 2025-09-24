@@ -985,7 +985,7 @@ class ExcelProcessor:
             primary_items = table_contents.primaryItems
             explicit_dimensions = table_contents.explicitDimensions
             typed_dimensions = table_contents.typedDimensions
-            if 0 == len(primary_items):
+            if not primary_items:
                 self._results.addMessage(
                     f"Table {tableDn.name} has no primary items defined. Skipping.",
                     Severity.ERROR,
@@ -1022,188 +1022,216 @@ class ExcelProcessor:
                                     f"Primary item {priItem.definedName.name} spans multiple columns and has multiple values ({values}). Skipping.",
                                     Severity.ERROR,
                                     MessageType.ExcelParsing,
+                                    taxonomy_concept=priItem.concept,
                                     excel_reference=excelCellOrCellRangeRef(
                                         priItem.worksheet, priItem.cellRange, cell
                                     ),
                                 )
                                 broken = True
                                 break
+
                     if (
-                        value is not None
-                        and value is not False
-                        and value not in EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE
+                        value is None
+                        or value in EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE
                     ):
-                        factBuilder = self._report.getFactBuilder()
-                        factBuilder.setValue(value).setConcept(concept)
+                        continue
 
-                        if (
-                            presetDimensions := self._presetDimensions.get(priItem)
-                        ) is not None:
-                            for dim, dimValue in presetDimensions.items():
-                                if (
-                                    defaultValue := self.taxonomy.getDimensionDefault(
-                                        dim
-                                    )
-                                ) is not None and dimValue != defaultValue:
-                                    factBuilder.setExplicitDimension(dim, dimValue)
+                    factBuilder = self._report.getFactBuilder()
+                    factBuilder.setValue(value).setConcept(concept)
 
-                        if concept.isNumeric:
-                            unitHolder = None
-                            sharedRange = False
-                            for candidate in table_contents.units:
-                                if candidate.concept == concept:
-                                    unitHolder = candidate
-                                    break
-
-                            if unitHolder:
-                                others = list(table_contents.units)
-                                others.remove(unitHolder)
-                                for candidate in others:
-                                    if unitHolder.cellRange == candidate.cellRange:
-                                        sharedRange = True
-
-                            self.processNumeric(priItem, cell, factBuilder, value)
-                            if not self.setUnitForName(
-                                priItem,
-                                factBuilder,
-                                row=rnum,
-                                specifiedUnitHolder=unitHolder,
-                                sharedRange=sharedRange,
-                            ):
-                                continue
-
-                        for td in typed_dimensions:
-                            tdConcept = td.concept
-                            tdCell = self.getSingleCell(td, row=rnum)
-                            tdValue = None
-                            if tdCell:
-                                tdValue = tdCell.value
-                            else:
-                                L.info(f"{td.cellRange.bounds=}, {rnum=}")
-                            if tdValue is not None:
-                                if not isinstance(tdValue, FactValue):
-                                    tdValue = str(tdValue)
-                                factBuilder.setTypedDimension(tdConcept, tdValue)
-                            else:
-                                broken = True
-                                self._results.addMessage(
-                                    f"Required typed dimension {tdConcept.qname} not set",
-                                    Severity.ERROR,
-                                    MessageType.Conversion,
-                                    excel_reference=excelCellOrCellRangeRef(
-                                        td.worksheet, td.cellRange, tdCell
-                                    ),
-                                )
-
-                        for ed in explicit_dimensions:
-                            edConcept = ed.concept
-                            edCell = self.getSingleCell(ed, row=rnum)
-                            edValue = None
-                            if edCell:
-                                edValue = edCell.value
-                            else:
-                                L.warning(
-                                    f"Trying to access cell in named range {ed.definedName.name} {ed.cellRange.bounds=}, {rnum=}"
-                                )
-                                continue
-
-                            if edValue is None:
-                                self._results.addMessage(
-                                    f"Required explicit dimension {edConcept.qname} not set. Cell value '{edValue}'",
-                                    Severity.ERROR,
-                                    MessageType.Conversion,
-                                    excel_reference=excelCellOrCellRangeRef(
-                                        ed.worksheet, ed.cellRange, edCell
-                                    ),
-                                )
-                                broken = True
-                                continue
-
-                            memberConcept = self.taxonomy.getConceptForLabel(
-                                str(edValue)
-                            )
+                    if (
+                        presetDimensions := self._presetDimensions.get(priItem)
+                    ) is not None:
+                        for dim, dimValue in presetDimensions.items():
                             if (
-                                memberConcept is None
-                                and (
-                                    fake_value
-                                    := self._configCellValuesToTaxonomyLabels.get(
-                                        str(edValue)
-                                    )
-                                )
-                                is not None
-                            ):
-                                memberConcept = (
-                                    self._report.taxonomy.getConceptForLabel(fake_value)
-                                )
+                                defaultValue := self.taxonomy.getDimensionDefault(dim)
+                            ) is not None and dimValue != defaultValue:
+                                factBuilder.setExplicitDimension(dim, dimValue)
 
-                            if memberConcept is not None:
-                                factBuilder.setExplicitDimension(
-                                    edConcept, memberConcept
-                                )
-                            else:
-                                broken = True
-                                self._results.addMessage(
-                                    f"Required explicit dimension {edConcept.qname} not set. Cell value '{edValue}'",
-                                    Severity.ERROR,
-                                    MessageType.Conversion,
-                                    excel_reference=excelCellOrCellRangeRef(
-                                        ed.worksheet, ed.cellRange, edCell
-                                    ),
-                                )
+                    all_dims_set = True
+                    all_dims_set &= self.addTableFactTypedDimensions(
+                        typed_dimensions, rnum, factBuilder
+                    )
+                    all_dims_set &= self.addTableFactExplicitDimensions(
+                        explicit_dimensions, rnum, factBuilder
+                    )
+                    if not all_dims_set:
+                        if value:
+                            self._results.addMessage(
+                                f"Unable to add fact with value '{value}' due to missing dimension values.",
+                                Severity.WARNING,
+                                MessageType.Conversion,
+                                taxonomy_concept=priItem.concept,
+                                excel_reference=excelCellOrCellRangeRef(
+                                    priItem.worksheet, priItem.cellRange, cell
+                                ),
+                            )
+                        continue
 
-                        if concept.isEnumerationSingle:
+                    if concept.isNumeric:
+                        unitHolder = None
+                        sharedRange = False
+                        for candidate in table_contents.units:
+                            if candidate.concept == concept:
+                                unitHolder = candidate
+                                break
+
+                        if unitHolder:
+                            others = list(table_contents.units)
+                            others.remove(unitHolder)
+                            for candidate in others:
+                                if unitHolder.cellRange == candidate.cellRange:
+                                    sharedRange = True
+
+                        self.processNumeric(priItem, cell, factBuilder, value)
+                        if not self.setUnitForName(
+                            priItem,
+                            factBuilder,
+                            row=rnum,
+                            specifiedUnitHolder=unitHolder,
+                            sharedRange=sharedRange,
+                        ):
+                            continue
+
+                    if concept.isEnumerationSingle:
+                        if (
+                            eeValue := self._report.taxonomy.getConceptForLabel(
+                                str(value)
+                            )
+                        ) is not None:
+                            factBuilder.setHiddenValue(eeValue.expandedName)
+                        else:
+                            broken = True
+                            self._results.addMessage(
+                                f"Unable to find EE concept for cell value '{value}'",
+                                Severity.ERROR,
+                                MessageType.Conversion,
+                                taxonomy_concept=priItem.concept,
+                                excel_reference=excelCellOrCellRangeRef(
+                                    priItem.worksheet, priItem.cellRange, cell
+                                ),
+                            )
+                    elif concept.isEnumerationSet:
+                        eeValues = []
+                        for v in values:
                             if (
                                 eeValue := self._report.taxonomy.getConceptForLabel(
-                                    str(value)
+                                    str(v)
                                 )
                             ) is not None:
-                                factBuilder.setHiddenValue(eeValue.expandedName)
+                                eeValues.append(eeValue)
                             else:
                                 broken = True
                                 self._results.addMessage(
                                     f"Unable to find EE concept for cell value '{value}'",
                                     Severity.ERROR,
                                     MessageType.Conversion,
+                                    taxonomy_concept=priItem.concept,
                                     excel_reference=excelCellOrCellRangeRef(
                                         priItem.worksheet, priItem.cellRange, cell
                                     ),
                                 )
-                        elif concept.isEnumerationSet:
-                            eeValues = []
-                            for v in values:
-                                if (
-                                    eeValue := self._report.taxonomy.getConceptForLabel(
-                                        str(v)
-                                    )
-                                ) is not None:
-                                    eeValues.append(eeValue)
-                                else:
-                                    broken = True
-                                    self._results.addMessage(
-                                        f"Unable to find EE concept for cell value '{value}'",
-                                        Severity.ERROR,
-                                        MessageType.Conversion,
-                                    )
-                            factBuilder.setHiddenValue(
-                                " ".join(sorted(set(e.expandedName for e in eeValues)))
-                            )
-                        if broken:
-                            if cell is not None:
-                                ref = excelCellRef(priItem.worksheet, cell)
-                            else:
-                                ref = excelCellRangeRef(
-                                    priItem.worksheet, priItem.cellRange
-                                )
+                        factBuilder.setHiddenValue(
+                            " ".join(sorted(set(e.expandedName for e in eeValues)))
+                        )
 
-                            self._results.addMessage(
-                                f"Unable to add fact with value '{value}'",
-                                Severity.WARNING,
-                                MessageType.Conversion,
-                                excel_reference=ref,
-                            )
-                            continue
-                        else:
-                            self.addFactToReport(factBuilder, priItem)
+                    if broken:
+                        self._results.addMessage(
+                            f"Unable to add fact with value '{value}'",
+                            Severity.WARNING,
+                            MessageType.Conversion,
+                            taxonomy_concept=priItem.concept,
+                            excel_reference=excelCellOrCellRangeRef(
+                                priItem.worksheet, priItem.cellRange, cell
+                            ),
+                        )
+                        continue
+                    else:
+                        self.addFactToReport(factBuilder, priItem)
+
+    def addTableFactTypedDimensions(
+        self,
+        typed_dimensions: list[CellAndXBRLMetadataHolder],
+        rnum: int,
+        factBuilder: FactBuilder,
+    ) -> bool:
+        if not typed_dimensions:
+            return True
+
+        success: list[bool] = []
+        for td in typed_dimensions:
+            tdConcept = td.concept
+            tdCell = self.getSingleCell(td, row=rnum)
+            if not tdCell:
+                continue
+            elif (tdValue := tdCell.value) is not None:
+                success.append(True)
+                if not isinstance(tdValue, FactValue):
+                    tdValue = str(tdValue)
+                factBuilder.setTypedDimension(tdConcept, tdValue)
+            else:
+                self._results.addMessage(
+                    f"Required typed dimension {tdConcept.qname} not set",
+                    Severity.ERROR,
+                    MessageType.Conversion,
+                    excel_reference=excelCellOrCellRangeRef(
+                        td.worksheet, td.cellRange, tdCell
+                    ),
+                )
+        return all(success) and len(success) == len(typed_dimensions)
+
+    def addTableFactExplicitDimensions(
+        self,
+        explicit_dimensions: list[CellAndXBRLMetadataHolder],
+        rnum: int,
+        factBuilder: FactBuilder,
+    ) -> bool:
+        if not explicit_dimensions:
+            return True
+
+        success: list[bool] = []
+        for ed in explicit_dimensions:
+            edConcept = ed.concept
+            edCell = self.getSingleCell(ed, row=rnum)
+
+            if not edCell:
+                continue
+            elif (edValue := edCell.value) is None:
+                self._results.addMessage(
+                    f"Required explicit dimension {edConcept.qname} not set. Cell value '{edValue}'",
+                    Severity.ERROR,
+                    MessageType.Conversion,
+                    excel_reference=excelCellOrCellRangeRef(
+                        ed.worksheet, ed.cellRange, edCell
+                    ),
+                )
+                continue
+
+            memberConcept = self.taxonomy.getConceptForLabel(str(edValue))
+            if (
+                memberConcept is None
+                and (
+                    fake_value := self._configCellValuesToTaxonomyLabels.get(
+                        str(edValue)
+                    )
+                )
+                is not None
+            ):
+                memberConcept = self._report.taxonomy.getConceptForLabel(fake_value)
+
+            if memberConcept is not None:
+                factBuilder.setExplicitDimension(edConcept, memberConcept)
+                success.append(True)
+            else:
+                self._results.addMessage(
+                    f"Required explicit dimension {edConcept.qname} not set. Cell value '{edValue}'",
+                    Severity.ERROR,
+                    MessageType.Conversion,
+                    excel_reference=excelCellOrCellRangeRef(
+                        ed.worksheet, ed.cellRange, edCell
+                    ),
+                )
+        return all(success) and len(success) == len(explicit_dimensions)
 
     def addFactToReport(
         self, factBuilder: FactBuilder, holder: CellAndXBRLMetadataHolder
@@ -1376,12 +1404,8 @@ class ExcelProcessor:
                 continue
 
             value = cell.value
-            if value is None or value is False:
+            if value is None or value in EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE:
                 # No value in the cell, so not reportable
-                self._definedNameToXBRLMap.pop(dn)
-                continue
-            if value in EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE:
-                # Placeholder values are not reportable
                 self._definedNameToXBRLMap.pop(dn)
                 continue
 
