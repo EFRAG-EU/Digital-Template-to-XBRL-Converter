@@ -191,6 +191,11 @@ class Fact:
         else:
             self._decimals = None
 
+        self._numeric_scale: Optional[int] = None
+        if aspect_value := str(self._aspects.get("numeric-scale", "")):
+            self._numeric_scale = int(aspect_value)
+            self._aspects["numeric-scale"] = f'"{aspect_value}"'
+
     def __repr__(self) -> str:
         return (
             f"Fact(concept={self.concept}, value={self.value}, aspects={self._aspects})"
@@ -227,7 +232,12 @@ class Fact:
             else:
                 output = escape(v)
         else:
-            decimal_places: DecimalPlaces = self._decimals or "INF"
+            decimal_places: DecimalPlaces
+            if self._decimals and self._decimals != "INF" and self._numeric_scale:
+                decimal_places = self._decimals + self._numeric_scale
+            else:
+                decimal_places = self._decimals or "INF"
+
             locale = self._report._outputLocale
             try:
                 match self.value:
@@ -374,7 +384,6 @@ class FactBuilder:
         self._concept: Optional[Concept] = None
         self._aspects: dict[str | QName, str | QName] = {}
         self._value: Optional[FactValue] = None
-        self._percentage = False
 
     def __repr__(self) -> str:
         bits = (self._concept, self._aspects, self._value)
@@ -428,25 +437,19 @@ class FactBuilder:
 
         If @inputIsDecimalForm is set to false then
         input is assumed to be whole-number form."""
-        self._percentage = True
         if inputIsDecimalForm:
-            # HTML needs the display value for humans
+            # HTML needs the display value for humans (100% stored as "100")
             human_value = value * 10**2
-            self.setValue(
-                localise_and_format_number(
-                    human_value, decimals, self._report._outputLocale
-                )
-            )
-            # XBRL stores same way as Excel (100% stored as "1.0")
-            self.setScale(-2)
+            # And use ix:scale attribute to reduce it down again as XBRL stores
+            # same way as Excel (100% stored as "1.0")
+            self.setValue(human_value).setScale(-2)
+
             if decimals != "INF":
+                # Add on the scale amount
                 decimals += 2
-            self.setDecimals(decimals)
         else:
-            self.setValue(
-                localise_and_format_number(value, decimals, self._report._outputLocale)
-            )
-            self.setDecimals(decimals)
+            self.setValue(value)
+        self.setDecimals(decimals)
         return self
 
     def setDecimals(self, decimals: DecimalPlaces) -> Self:
@@ -454,7 +457,7 @@ class FactBuilder:
         return self
 
     def setScale(self, scale: int) -> Self:
-        self._aspects["numeric-scale"] = f'"{scale}"'
+        self._aspects["numeric-scale"] = f"{scale}"
         return self
 
     def setNamedPeriod(self, periodName: str) -> Self:
@@ -559,8 +562,6 @@ class FactBuilder:
             raise InlineReportException(
                 "Concept must be set before validating a FactBuilder.", self
             )
-        if self._percentage:
-            return
         value = self._value
         if isinstance(value, bool) or not isinstance(value, (int, float)):
             # N.B. bool extends int
