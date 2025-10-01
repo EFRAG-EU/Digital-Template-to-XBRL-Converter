@@ -37,7 +37,7 @@ MEASUREMENT_GUIDANCE_LABEL_ROLE = "http://www.xbrl.org/2003/role/measurementGuid
 STANDARD_LABEL_ROLE = "http://www.xbrl.org/2003/role/label"
 DOCUMENTATION_LABEL_ROLE = "http://www.xbrl.org/2003/role/documentation"
 
-LABEL_SUFFIX_PATTERN = re.compile(r"\s*\[[a-z ]+\]\s*$")
+LABEL_SUFFIX_PATTERN = re.compile(r"\s*\[[A-Z]?[a-z ]+\]\s*$")
 
 
 class PeriodType(StrEnum):
