@@ -4,7 +4,7 @@ from decimal import Decimal
 from typing import Iterable, Optional
 
 from babel import Locale, UnknownLocaleError
-from babel.numbers import format_decimal, get_decimal_symbol
+from babel.numbers import format_decimal, get_decimal_symbol, get_group_symbol
 
 from mireport.typealiases import DecimalPlaces
 
@@ -162,6 +162,14 @@ def decimal_symbol(locale: Optional[Locale] = None) -> str:
         return get_decimal_symbol(locale)
     else:
         return "."
+
+
+def group_symbol(locale: Optional[Locale] = None) -> str:
+    """Return the decimal symbol for the given locale."""
+    if locale:
+        return get_group_symbol(locale)
+    else:
+        return ","
 
 
 def getBestSupportedLanguage(
