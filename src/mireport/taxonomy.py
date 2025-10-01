@@ -37,7 +37,7 @@ MEASUREMENT_GUIDANCE_LABEL_ROLE = "http://www.xbrl.org/2003/role/measurementGuid
 STANDARD_LABEL_ROLE = "http://www.xbrl.org/2003/role/label"
 DOCUMENTATION_LABEL_ROLE = "http://www.xbrl.org/2003/role/documentation"
 
-LABEL_SUFFIX_PATTERN = re.compile(r"\s*\[[a-z ]+\]\s*$")
+LABEL_SUFFIX_PATTERN = re.compile(r"\s*\[[A-Z]?[a-z ]+\]\s*$")
 
 
 class PeriodType(StrEnum):
@@ -498,15 +498,16 @@ class PresentationGroup(NamedTuple):
         return NotImplemented
 
     def getLabel(self, requestedLanguage: Optional[str] = None) -> str:
-        return (
-            (self.labels.get(requestedLanguage) if requestedLanguage else None)
-            or (
+        label: Optional[str] = None
+        if self.labels:
+            label = (
+                self.labels.get(requestedLanguage) if requestedLanguage else None
+            ) or (
                 self.labels.get(self.taxonomy.defaultLanguage)
                 if self.taxonomy.defaultLanguage
                 else None
             )
-            or self.definition
-        )
+        return label or self.definition
 
     @classmethod
     def fromJSON(cls, taxonomy: Taxonomy, roleUri: str, metaData: Mapping) -> Self:
@@ -695,7 +696,7 @@ class Taxonomy:
         if open_hcs:
             # Not supported by mireport (aoix doesn't care)
             te = TaxonomyException(
-                f"Unsupported taxonomy: contains ({len(open_hcs)}) open hypercubes."
+                f"Unsupported taxonomy [{entryPoint}] contains ({len(open_hcs)}) open hypercubes."
             )
             oc_str = "\n".join(
                 f"{role}\n\t{c.qname}"

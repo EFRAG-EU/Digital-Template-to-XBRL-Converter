@@ -45,6 +45,9 @@ def unicodeSpaceNormalize(text: str) -> str:
     return text.translate(_unicodeSpaceNormalize_Translation_Table)
 
 
+NumberGroupingApostrophes = frozenset("'`´’′")
+
+
 def format_time_ns(ns: int) -> str:
     """Formats nanoseconds into human-readable units from ns up to days."""
     US = 10**3  # microseconds

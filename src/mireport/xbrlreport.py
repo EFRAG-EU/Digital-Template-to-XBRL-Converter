@@ -32,9 +32,10 @@ from mireport.filesupport import (
 from mireport.localise import (
     decimal_symbol,
     get_locale_from_str,
+    group_symbol,
     localise_and_format_number,
 )
-from mireport.stringutil import unicodeSpaceNormalize
+from mireport.stringutil import NumberGroupingApostrophes, unicodeSpaceNormalize
 from mireport.taxonomy import (
     Concept,
     PresentationGroup,
@@ -732,10 +733,16 @@ class InlineReport:
         self._outputLocale: Locale = outputLocale
 
         decimal_separator = decimal_symbol(self._outputLocale)
-        match decimal_separator:
-            case ".":
+        group_is_apos = group_symbol(self._outputLocale) in NumberGroupingApostrophes
+
+        match (decimal_separator, group_is_apos):
+            case (".", True):
+                numeric_transform = "num-dot-decimal-apos"
+            case (".", False):
                 numeric_transform = "num-dot-decimal"
-            case ",":
+            case (",", True):
+                numeric_transform = "num-comma-decimal-apos"
+            case (",", False):
                 numeric_transform = "num-comma-decimal"
             case _:
                 raise InlineReportException(
@@ -874,13 +881,8 @@ class InlineReport:
         for k, v in meta.items():
             addDict(k, v)
         addDict("Report period", self.defaultPeriod, "render_duration_period")
-        match self._defaultAspects.get("numeric-transform"):
-            case "num-dot-decimal":
-                separator = "."
-            case "num-comma-decimal":
-                separator = ","
-            case _:
-                separator = "unknown"
+
+        separator = decimal_symbol(self._outputLocale)
         bits.append(
             {
                 "key": "Decimal separator",
@@ -901,9 +903,16 @@ class InlineReport:
         rl = ReportLayoutOrganiser(self._taxonomy, self)
         sections = rl.organise()
 
-        label_language = self._taxonomy.getBestSupportedLanguage(
-            self._outputLocale.language
-        )
+        xml_lang = f"{self._outputLocale.language}"
+        if self._outputLocale.territory:
+            xml_lang += f"-{self._outputLocale.territory}"
+        xml_lang = xml_lang.lower()
+
+        label_language = self._taxonomy.getBestSupportedLanguage(xml_lang)
+        if label_language != xml_lang:
+            L.warning(
+                f"Unexpected locale issue: {label_language=}, {self._outputLocale} {xml_lang=}"
+            )
 
         env = Environment(
             loader=PackageLoader(__package__, "inline_report_templates"),

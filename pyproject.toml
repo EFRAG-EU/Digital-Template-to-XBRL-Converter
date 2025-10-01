@@ -17,7 +17,6 @@ dependencies = [
     "msgpack",
     "openpyxl",
     "pillow>=11.3.0",
-    "pydantic>=2.10.0",
     "python-dateutil",
     "python-dotenv>=1.0.1",
     "rich>=14.0.0",
@@ -44,10 +43,8 @@ packages = ["src/mireport"]
 [project.optional-dependencies]
 dev = [
     "bandit>=1.8.0",
-    "black>=23.0.0",
-    "isort>=5.13.2",
     "lxml-stubs",
-    "mypy>=1.16.1",
+    "mypy>=1.18.1",
     "pre-commit>=3.5.0",
     "pytest-cov>=4.0.0",
     "pytest>=7.0.0",

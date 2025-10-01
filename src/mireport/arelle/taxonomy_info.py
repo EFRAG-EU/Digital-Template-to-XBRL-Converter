@@ -423,14 +423,12 @@ class TaxonomyInfoExtractor:
                 # BCP47 says that xml:lang is case insensitive
                 lang = lang.lower()
                 label = label_resource.stringValue.strip()
-                if role in jconcept["labels"][lang]:
-                    label0 = jconcept["labels"][lang][role]
-                    if label0 != label:
-                        self.cntlr.addToLog(
-                            f"Inconsistent duplicate labels found for [{concept.qname}]: {label0=} {label=} {lang=} {role=}",
-                            level=logging.WARNING,
-                        )
-                        label = max(label0, label, key=len)
+                if (label0 := jconcept["labels"][lang].get(role)) and label0 != label:
+                    self.cntlr.addToLog(
+                        f"Inconsistent duplicate labels found for [{concept.qname}]: {label0=} {label=} {lang=} {role=}",
+                        level=logging.WARNING,
+                    )
+                    label = max(label0, label, key=len)
                 jconcept["labels"][lang][role] = label
             else:
                 self.cntlr.addToLog(
@@ -536,6 +534,12 @@ class TaxonomyInfoExtractor:
                 # BCP47 says that xml:lang is case insensitive
                 lang = lang.lower()
                 label = label_resource.stringValue.strip()
+                if (label0 := labels.get(lang)) and label0 != label:
+                    self.cntlr.addToLog(
+                        f"Inconsistent duplicate labels found for roleType [{roleType.roleURI}]: {label0=} {label=} {lang=} {roleType.definition=}",
+                        level=logging.WARNING,
+                    )
+                    label = max(label0, label, key=len)
                 labels[lang] = label
         return labels
 

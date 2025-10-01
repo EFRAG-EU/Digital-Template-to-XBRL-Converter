@@ -28,12 +28,27 @@ class Severity(StrEnum):
 
     @classmethod
     @cache
-    def fromLogLevelString(cls, level: str) -> Self:
+    def fromLogLevelString(cls, level: str, *, default: Optional[Self] = None) -> Self:
         # return cls.__members__.get(level.title(), cls(cls.WARNING.value))
         lower_lookup = {k.lower(): v for k, v in cls.__members__.items()}
         if (attempt1 := lower_lookup.get(level.lower())) is not None:
             return cls(attempt1.value)
-        return cls(cls.WARNING.value)
+        return default or cls(cls.WARNING.value)
+
+    @property
+    def rank(self) -> int:
+        match self:
+            case Severity.INFO:
+                return 0
+            case Severity.WARNING:
+                return 1
+            case Severity.ERROR:
+                return 2
+        raise ValueError("Unknown Severity: no rank available.")
+
+    @classmethod
+    def key(cls, severity: Self) -> int:
+        return severity.rank
 
 
 class MessageType(StrEnum):
