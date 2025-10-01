@@ -109,10 +109,9 @@ class ArelleReportProcessor:
                 assert requestZipStream.closed, "Forgot to close the stream."
                 return result
             except Exception as arelle_exception:
-                L.exception(arelle_exception)
-                raise ArelleRelatedException(
-                    "Exception encountered while calling Arelle for report."
-                ) from arelle_exception
+                message = "Exception encountered while calling Arelle for report."
+                L.exception(message, exc_info=arelle_exception)
+                raise ArelleRelatedException(message) from arelle_exception
 
     def validateReportPackage(
         self, source: FilelikeAndFileName, *, disableCalculationValidation: bool = False
@@ -215,16 +214,19 @@ class ArelleReportProcessor:
         )
         result = self._run(source, viewerOptions)
         viewerFileLike.seek(0)
-        with zipfile.ZipFile(viewerFileLike, "r") as zf:
-            a = zf.infolist()
-            assert len(a) == 1, (
-                f"Arelle & inline-viewer has gone wrong. Zip contents: {zf.namelist()}"
+        try:
+            with zipfile.ZipFile(viewerFileLike, "r") as zf:
+                a = zf.infolist()
+                assert len(a) == 1, (
+                    f"Arelle & inline-viewer has gone wrong. Zip contents: {zf.namelist()}"
+                )
+                viewer = zf.read(a[0])
+            viewerFilename = f"{PurePath(source.filename).stem}_viewer.html"
+            result._viewer = FilelikeAndFileName(
+                fileContent=viewer, filename=viewerFilename
             )
-            viewer = zf.read(a[0])
-        viewerFilename = f"{PurePath(source.filename).stem}_viewer.html"
-        result._viewer = FilelikeAndFileName(
-            fileContent=viewer, filename=viewerFilename
-        )
+        except zipfile.BadZipFile:
+            pass
         return result
 
     @staticmethod

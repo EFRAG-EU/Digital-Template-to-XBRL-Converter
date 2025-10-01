@@ -1,7 +1,11 @@
 import argparse
 import glob
+import logging
 import time
 from pathlib import Path
+
+import rich
+from rich.logging import RichHandler
 
 from mireport.arelle.report_info import ArelleReportProcessor, getOrCreateReportPackage
 from mireport.conversionresults import ConversionResultsBuilder
@@ -94,10 +98,13 @@ def main() -> None:
             source, disableCalculationValidation=args.ignore_calculation_warnings
         )
     else:
-        if viewer_path.is_file():
-            print(f"Overwriting {viewer_path}.")
         arelle_result = arp.generateInlineViewer(source)
-        arelle_result.viewer.saveToFilepath(viewer_path)
+        if arelle_result.has_viewer:
+            if viewer_path.is_file():
+                print(f"Overwriting {viewer_path}.")
+            arelle_result.viewer.saveToFilepath(viewer_path)
+        else:
+            print("Failed to create inline viewer.")
     elapsed = (time.perf_counter_ns() - start) / 1_000_000_000
     print(f"Finished querying Arelle ({elapsed:,.2f} seconds elapsed).")
 
@@ -116,9 +123,20 @@ def main() -> None:
         )
     else:
         print("The report package is valid and has no errors or warnings.")
-        if viewer_path:
+        if viewer_path and arelle_result.has_viewer:
             print(f"Viewer written to {viewer_path}.")
+        else:
+            print("Arelle's messages:")
+            for message in results.userMessages:
+                print(f"\t{message}")
 
 
 if __name__ == "__main__":
+    rich.traceback.install(show_locals=False, locals_max_length=4)
+    logging.basicConfig(
+        format="%(message)s",
+        datefmt="[%Y-%m-%d %H:%M:%S]",
+        handlers=[RichHandler(rich_tracebacks=True)],
+    )
+    logging.captureWarnings(True)
     main()

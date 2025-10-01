@@ -97,10 +97,17 @@ class ArelleProcessingResult:
                         )
                 case _:
                     messageText = f"[{code}] {text}"
+                    level_severity = Severity.fromLogLevelString(
+                        level, default=Severity.WARNING
+                    )
+                    code_severity = Severity.fromLogLevelString(
+                        code, default=Severity.INFO
+                    )
+                    severity = max(level_severity, code_severity, key=Severity.key)
                     self._validationMessages.append(
                         Message(
                             messageText=messageText,
-                            severity=Severity.fromLogLevelString(level),
+                            severity=severity,
                             messageType=MessageType.XbrlValidation,
                             conceptQName=fact,
                         )
@@ -118,6 +125,10 @@ class ArelleProcessingResult:
         if self._viewer is not None:
             return self._viewer
         raise ArelleRelatedException("No viewer stored/retrieved.")
+
+    @property
+    def has_viewer(self) -> bool:
+        return self._viewer is not None
 
     @property
     def xBRL_JSON(self) -> FilelikeAndFileName:
