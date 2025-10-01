@@ -696,7 +696,7 @@ class Taxonomy:
         if open_hcs:
             # Not supported by mireport (aoix doesn't care)
             te = TaxonomyException(
-                f"Unsupported taxonomy: contains ({len(open_hcs)}) open hypercubes."
+                f"Unsupported taxonomy [{entryPoint}] contains ({len(open_hcs)}) open hypercubes."
             )
             oc_str = "\n".join(
                 f"{role}\n\t{c.qname}"
