@@ -1355,9 +1355,16 @@ class ExcelProcessor:
         for c in candidateUnitIds:
             complex_unit = self._configUnitIdsToMeasures.get(c)
             if complex_unit is not None:
-                factBuilder.setComplexUnit(
-                    complex_unit.numerator, complex_unit.denominator
-                )
+                denominator: list[QName]
+                if c.endswith("_per_Monetary") and (
+                    currency := self.taxonomy.UTR.getQNameForUnitId(
+                        self._report.defaultAspects.get("monetary-units")
+                    )
+                ):
+                    denominator = [currency]
+                else:
+                    denominator = complex_unit.denominator
+                factBuilder.setComplexUnit(complex_unit.numerator, denominator)
                 return True
 
         return self.setFallbackUnitForName(
