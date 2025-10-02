@@ -36931,7 +36931,7 @@
       "vsme:ReportingScopesAxis": "vsme:CurrentlyStatedMember",
       "vsme:TypeOfPollutantAxis": "vsme:TypeOfPollutantMember"
     },
-    "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b01100": {
+    "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/role-b01100": {
       "vsme:ListOfSubsidiaryTable": {
         "primaryItems": [
           [
@@ -36958,7 +36958,7 @@
         "xbrldt:contextElement": "scenario"
       }
     },
-    "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b01200": {
+    "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/role-b01200": {
       "vsme:ListOfSitesTable": {
         "primaryItems": [
           [
@@ -36997,7 +36997,7 @@
         "xbrldt:contextElement": "scenario"
       }
     },
-    "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b03100": {
+    "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/role-b03100": {
       "vsme:BreakdownOfEnergyConsumptionTable": {
         "explicitDimensions": {
           "vsme:BreakdownOfEnergyConsumptionAxis": [
@@ -37032,7 +37032,7 @@
         "xbrldt:contextElement": "scenario"
       }
     },
-    "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b03200": {
+    "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/role-b03200": {
       "vsme:EstimatedGreenhouseGasEmissionsTable": {
         "explicitDimensions": {
           "vsme:ReportingScopesAxis": [
@@ -37085,7 +37085,7 @@
         "xbrldt:contextElement": "scenario"
       }
     },
-    "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b04100": {
+    "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/role-b04100": {
       "vsme:AmountOfEmissionsTable": {
         "explicitDimensions": {
           "vsme:TypeOfPollutantAxis": [
@@ -37212,7 +37212,7 @@
         "xbrldt:contextElement": "scenario"
       }
     },
-    "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b05000": {
+    "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/role-b05000": {
       "vsme:SitesInBiodiversitySensitiveAreasTable": {
         "primaryItems": [
           [
@@ -37243,7 +37243,7 @@
         "xbrldt:contextElement": "scenario"
       }
     },
-    "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b07100": {
+    "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/role-b07100": {
       "vsme:WasteGeneratedTable": {
         "explicitDimensions": {
           "vsme:TypeOfWasteAxis": [
@@ -38261,7 +38261,7 @@
         "xbrldt:contextElement": "scenario"
       }
     },
-    "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b07300": {
+    "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/role-b07300": {
       "vsme:BreakdownOfAnnualMassFlowOfRelevantMaterialsUsedByTheUndertakingHypercube": {
         "primaryItems": [
           [
@@ -38292,7 +38292,7 @@
         "xbrldt:contextElement": "scenario"
       }
     },
-    "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b08200": {
+    "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/role-b08200": {
       "vsme:NumberOfEmployeesForCountryOfEmploymentContractTable": {
         "explicitDimensions": {
           "vsme:CountryOfEmploymentContractAxis": [
@@ -38573,7 +38573,7 @@
         "xbrldt:contextElement": "scenario"
       }
     },
-    "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-c03100": {
+    "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/role-c03100": {
       "vsme:EstimatedGreenhouseGasEmissionsTable": {
         "explicitDimensions": {
           "vsme:ReportingScopesAxis": [
@@ -38652,7 +38652,7 @@
     "xlink": "http://www.w3.org/1999/xlink"
   },
   "presentation": {
-    "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b01000": {
+    "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/role-b01000": {
       "definition": "[B01.000] - General information - Basis for Preparation",
       "labels": {
         "es": "[B01.000] - Informaci\u00f3n general - Base para la elaboraci\u00f3n",
@@ -38732,7 +38732,7 @@
         ]
       ]
     },
-    "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b01100": {
+    "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/role-b01100": {
       "definition": "[B01.100] - General information - List of subsidiaries",
       "labels": {
         "es": "[B01.100] - Informaci\u00f3n general - Lista de filiales",
@@ -38767,7 +38767,7 @@
         ]
       ]
     },
-    "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b01200": {
+    "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/role-b01200": {
       "definition": "[B01.200] - General information - List of sites",
       "labels": {
         "es": "[B01.200] - Informaci\u00f3n general - Lista de emplazamientos",
@@ -38814,7 +38814,7 @@
         ]
       ]
     },
-    "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b02000": {
+    "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/role-b02000": {
       "definition": "[B02.000] - General information - Practices, policies and/or future initiatives for transitioning towards a more sustainable economy",
       "labels": {
         "es": "[B02.000] - Informaci\u00f3n general - Pr\u00e1cticas, pol\u00edticas o iniciativas futuras para la transici\u00f3n hacia una econom\u00eda m\u00e1s sostenible",
@@ -38841,7 +38841,7 @@
         ]
       ]
     },
-    "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b02100": {
+    "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/role-b02100": {
       "definition": "[B02.100] - General information - Cooperative specific disclosures",
       "labels": {
         "es": "[B02.100] - Informaci\u00f3n general - Divulgaciones espec\u00edficas de cooperativas",
@@ -38868,7 +38868,7 @@
         ]
       ]
     },
-    "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b03000": {
+    "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/role-b03000": {
       "definition": "[B03.000] - Environment - Total Energy Consumption",
       "labels": {
         "es": "[B03.000] - Medio ambiente - Consumo total de energ\u00eda",
@@ -38887,7 +38887,7 @@
         ]
       ]
     },
-    "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b03100": {
+    "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/role-b03100": {
       "definition": "[B03.100] - Environment - Breakdown of energy consumption",
       "labels": {
         "es": "[B03.100] - Medio ambiente - Desglose del consumo de energ\u00eda",
@@ -38938,7 +38938,7 @@
         ]
       ]
     },
-    "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b03200": {
+    "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/role-b03200": {
       "definition": "[B03.200] - Environment - Estimated Greenhouse Gas Emissions",
       "labels": {
         "es": "[B03.200] - Medio ambiente - Emisiones brutas estimadas de gases de efecto invernadero",
@@ -39005,7 +39005,7 @@
         ]
       ]
     },
-    "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b03300": {
+    "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/role-b03300": {
       "definition": "[B03.300] - Environment - Greenhouse Gas Emissions intensity",
       "labels": {
         "es": "[B03.300] - Medio ambiente - Intensidad de emisiones de gases de efecto invernadero",
@@ -39036,7 +39036,7 @@
         ]
       ]
     },
-    "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b04000": {
+    "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/role-b04000": {
       "definition": "[B04.000] - Environment - Pollution of air, water and soil: availability of public disclosure",
       "labels": {
         "es": "[B04.000] - Medio ambiente - Contaminaci\u00f3n del aire, agua y suelo: disponibilidad de divulgaci\u00f3n p\u00fablica",
@@ -39059,7 +39059,7 @@
         ]
       ]
     },
-    "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b04100": {
+    "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/role-b04100": {
       "definition": "[B04.100] - Environment - Pollution of air, water and soil: amount of emissions",
       "labels": {
         "es": "[B04.100] - Medio ambiente - Contaminaci\u00f3n del aire, agua y suelo: cantidad de emisiones",
@@ -39478,7 +39478,7 @@
         ]
       ]
     },
-    "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b05000": {
+    "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/role-b05000": {
       "definition": "[B05.000] - Environment - Sites in biodiversity sensitive areas",
       "labels": {
         "es": "[B05.000] - Medio ambiente - Emplazamientos en \u00e1reas sensibles para la biodiversidad",
@@ -39517,7 +39517,7 @@
         ]
       ]
     },
-    "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b05100": {
+    "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/role-b05100": {
       "definition": "[B05.100] - Environment - Biodiversity - on Land-use",
       "labels": {
         "es": "[B05.100] - Medio Ambiente - Biodiversidad - en uso de la tierra",
@@ -39548,7 +39548,7 @@
         ]
       ]
     },
-    "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b06000": {
+    "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/role-b06000": {
       "definition": "[B06.000] - Environment - Water Withdrawal",
       "labels": {
         "es": "[B06.000] - Medio Ambiente - Extracci\u00f3n de Agua",
@@ -39571,7 +39571,7 @@
         ]
       ]
     },
-    "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b06100": {
+    "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/role-b06100": {
       "definition": "[B06.100] - Environment - Water Consumption",
       "labels": {
         "es": "[B06.100] - Medio ambiente - Consumo de agua",
@@ -39594,7 +39594,7 @@
         ]
       ]
     },
-    "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b07000": {
+    "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/role-b07000": {
       "definition": "[B07.000] - Environment - Description of circular economy principles",
       "labels": {
         "es": "[B07.000] - Medio ambiente - Descripci\u00f3n de los principios de la econom\u00eda circular",
@@ -39617,7 +39617,7 @@
         ]
       ]
     },
-    "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b07100": {
+    "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/role-b07100": {
       "definition": "[B07.100] - Environment - Breakdown of waste by type",
       "labels": {
         "es": "[B07.100] - Medio ambiente - Desglose de residuos por tipo",
@@ -43564,7 +43564,7 @@
         ]
       ]
     },
-    "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b07200": {
+    "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/role-b07200": {
       "definition": "[B07.200] - Environment - Total Hazardous and Non-Hazardous waste",
       "labels": {
         "es": "[B07.200]-  Medio ambiente - Residuos totales peligrosos y no peligrosos",
@@ -43603,7 +43603,7 @@
         ]
       ]
     },
-    "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b07300": {
+    "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/role-b07300": {
       "definition": "[B07.300] - Environment - Breakdown of annual mass-flow of relevant materials used by the undertaking",
       "labels": {
         "es": "[B07.300] - Medio Ambiente - Desglose del flujo de masa anual de materiales relevantes utilizados por la empresa",
@@ -43642,7 +43642,7 @@
         ]
       ]
     },
-    "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b07400": {
+    "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/role-b07400": {
       "definition": "[B07.400] - Environment - Total annual mass-flow of materials used by the undertaking",
       "labels": {
         "es": "[B07.400] - Medio ambiente - Flujo de masa anual total de materiales usados por la empresa",
@@ -43665,7 +43665,7 @@
         ]
       ]
     },
-    "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b08000": {
+    "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/role-b08000": {
       "definition": "[B08.000] - Social - Workforce - General characteristics: type of contract",
       "labels": {
         "es": "[B08.000] - Social - Trabajadores - Caracter\u00edsticas generales: tipo de contrato",
@@ -43688,7 +43688,7 @@
         ]
       ]
     },
-    "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b08100": {
+    "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/role-b08100": {
       "definition": "[B08.100] - Social - Workforce - General characteristics: gender",
       "labels": {
         "es": "[B08.100] - Social - Trabajadores - Caracter\u00edsticas generales: g\u00e9nero",
@@ -43719,7 +43719,7 @@
         ]
       ]
     },
-    "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b08200": {
+    "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/role-b08200": {
       "definition": "[B08.200] - Social - Workforce - General characteristics: country of employment",
       "labels": {
         "es": "[B08.200] - Social - Trabajadores- Caracter\u00edsticas generales: pa\u00eds de empleo",
@@ -44778,7 +44778,7 @@
         ]
       ]
     },
-    "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b08300": {
+    "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/role-b08300": {
       "definition": "[B08.300] - Social - Workforce - General characteristics: turnover rate",
       "labels": {
         "es": "[B08.300] - Social - Trabajadores - Caracter\u00edsticas generales: tasa de rotaci\u00f3n",
@@ -44797,7 +44797,7 @@
         ]
       ]
     },
-    "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b09000": {
+    "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/role-b09000": {
       "definition": "[B09.000] - Social - Workforce - Health and safety",
       "labels": {
         "es": "[B09.000] - Social - Trabajadores- Salud y seguridad",
@@ -44824,7 +44824,7 @@
         ]
       ]
     },
-    "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b10000": {
+    "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/role-b10000": {
       "definition": "[B10.000] - Social - Workforce - Remuneration, collective bargaining and training",
       "labels": {
         "es": "[B10.000] - Social - Trabajadores\u2013 Retribuci\u00f3n, negociaci\u00f3n colectiva y formaci\u00f3n",
@@ -44875,7 +44875,7 @@
         ]
       ]
     },
-    "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-b11000": {
+    "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/role-b11000": {
       "definition": "[B11.000] - Governance - Convictions and fines for corruption and bribery",
       "labels": {
         "es": "[B11.000] Gobernanza - Condenas y multas por corrupci\u00f3n y soborno",
@@ -44898,7 +44898,7 @@
         ]
       ]
     },
-    "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-c01000": {
+    "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/role-c01000": {
       "definition": "[C01.000] - General information - Strategy: Business Model and Sustainability \u2013 Related Initiatives",
       "labels": {
         "es": "[C01.000] - Informaci\u00f3n general - Estrategia: Modelo de negocio y sostenibilidad \u2013 Iniciativas relacionadas",
@@ -44929,7 +44929,7 @@
         ]
       ]
     },
-    "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-c02000": {
+    "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/role-c02000": {
       "definition": "[C02.000] - General information - Description of practices, policies and/or future initiatives for transitioning towards a more sustainable economy",
       "labels": {
         "es": "[C02.000] - Informaci\u00f3n general - Descripci\u00f3n de pr\u00e1cticas, pol\u00edticas y/o iniciativas futuras para la transici\u00f3n hacia una econom\u00eda m\u00e1s sostenible",
@@ -44956,7 +44956,7 @@
         ]
       ]
     },
-    "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-c03000": {
+    "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/role-c03000": {
       "definition": "[C03.000] - Environment - Greenhouse Gas Emissions Reduction Baseline and Target Year",
       "labels": {
         "es": "[C03.000] - Medio ambiente - A\u00f1o base y a\u00f1o objetivo de reducci\u00f3n de emisiones de gases de efecto invernadero",
@@ -44979,7 +44979,7 @@
         ]
       ]
     },
-    "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-c03100": {
+    "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/role-c03100": {
       "definition": "[C03.100] - Environment - Greenhouse Gas Emission Reduction Targets",
       "labels": {
         "es": "[C03.100] - Medio ambiente - Objetivos de reducci\u00f3n de emisiones de gases de efecto invernadero",
@@ -45050,7 +45050,7 @@
         ]
       ]
     },
-    "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-c03200": {
+    "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/role-c03200": {
       "definition": "[C03.200] - Environment - Disclosure of list of main actions the entity seeks to achieve its targets",
       "labels": {
         "es": "[C03.200] - Medio ambiente - Divulgaci\u00f3n de la lista de las acciones principales que la entidad busca llevar a cabo para alcanzar sus objetivos",
@@ -45069,7 +45069,7 @@
         ]
       ]
     },
-    "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-c03300": {
+    "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/role-c03300": {
       "definition": "[C03.300] - Environment - Transition plan for undertakings operating in high climate impact sectors",
       "labels": {
         "es": "[C03.300] - Medio ambiente - Plan de transici\u00f3n para empresas que operan en sectores de alto impacto clim\u00e1tico",
@@ -45092,7 +45092,7 @@
         ]
       ]
     },
-    "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-c04000": {
+    "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/role-c04000": {
       "definition": "[C04.000] - Environment - Climate risks",
       "labels": {
         "es": "[C04.000] - Medio ambiente - Riesgos clim\u00e1ticos",
@@ -45127,7 +45127,7 @@
         ]
       ]
     },
-    "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-c05000": {
+    "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/role-c05000": {
       "definition": "[C05.000] - Social - Additional (general) workforce characteristics",
       "labels": {
         "es": "[C05.000] - Social - Caracter\u00edsticas adicionales (generales) de los trabajadores",
@@ -45154,7 +45154,7 @@
         ]
       ]
     },
-    "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-c06000": {
+    "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/role-c06000": {
       "definition": "[C06.000] - Social - Additional own workforce information - Human rights policies and processes",
       "labels": {
         "es": "[C06.000] - Social - Informaci\u00f3n adicional sobre el personal propio - Pol\u00edticas y procesos en materia de derechos humanos",
@@ -45185,7 +45185,7 @@
         ]
       ]
     },
-    "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-c07000": {
+    "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/role-c07000": {
       "definition": "[C07.000] - Social - Severe negative human rights incidents",
       "labels": {
         "es": "[C07.000] - Social - Incidentes graves negativos de derechos humanos",
@@ -45224,7 +45224,7 @@
         ]
       ]
     },
-    "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-c08000": {
+    "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/role-c08000": {
       "definition": "[C08.000] - Governance - Revenues derived from activities",
       "labels": {
         "es": "[C08.000] - Gobernanza - Ingresos derivados de actividades",
@@ -45267,7 +45267,7 @@
         ]
       ]
     },
-    "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-c08100": {
+    "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/role-c08100": {
       "definition": "[C08.100] - Governance - Exclusion from EU benchmarks",
       "labels": {
         "es": "[C08.100] - Gobernanza - Exclusi\u00f3n de los \u00edndices de referencia de la UE",
@@ -45286,7 +45286,7 @@
         ]
       ]
     },
-    "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-c09000": {
+    "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/role-c09000": {
       "definition": "[C09.000] - Governance - Gender diversity ratio in the governance body",
       "labels": {
         "es": "[C09.000] - Gobernanza - Ratio de diversidad de g\u00e9nero en el \u00f3rgano de gobernanza",
@@ -45305,7 +45305,7 @@
         ]
       ]
     },
-    "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/role-other": {
+    "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/role-other": {
       "definition": "[D99.000] - Other and/or entity specific information",
       "labels": {
         "es": "[ D99.000] - Otra y/o informaci\u00f3n espec\u00edfica de la entidad",
