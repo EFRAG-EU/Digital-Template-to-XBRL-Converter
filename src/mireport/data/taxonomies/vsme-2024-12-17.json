@@ -16600,18 +16600,6 @@
       "nillable": true,
       "periodType": "duration"
     },
-    "nace:SEC1AllESRSSec1SectorsNA": {
-      "abstract": true,
-      "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
-      "labels": {
-        "en": {
-          "http://www.xbrl.org/2003/role/label": "All ESRS SEC 1 Sectors / NA"
-        }
-      },
-      "nillable": true,
-      "periodType": "duration"
-    },
     "vsme:AccidentPreventionMember": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
