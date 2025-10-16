@@ -5,41 +5,58 @@ import time
 from pathlib import Path
 
 import rich
+from rich import print as rich_print
 from rich.logging import RichHandler
 
 from mireport.arelle.report_info import ArelleReportProcessor, getOrCreateReportPackage
-from mireport.conversionresults import ConversionResultsBuilder
+from mireport.conversionresults import (
+    ConversionResults,
+    ConversionResultsBuilder,
+    Severity,
+)
 
 
 def parse_args() -> argparse.Namespace:
-    argparser = argparse.ArgumentParser(
+    parser = argparse.ArgumentParser(
         description="Check a report package is valid and create a viewer for it including any validation messages."
     )
-    argparser.add_argument(
+    parser.add_argument(
         "report_path",
         type=Path,
         help="Path to the report package to be checked.",
     )
-    argparser.add_argument(
+    parser.add_argument(
         "--taxonomy-packages",
         type=str,
         nargs="+",
         default=[],
         help="Paths to the taxonomy packages to be used (globs, *.zip, are permitted).",
     )
-    argparser.add_argument(
+    parser.add_argument(
         "--viewer-path",
         type=Path,
         default=None,
         help="The path of the viewer to be created.",
     )
-    argparser.add_argument(
+    parser.add_argument(
         "--ignore-calculation-warnings",
         action=argparse.BooleanOptionalAction,
         default=False,
         help="Ignore calculation warnings when validating the report package.",
     )
-    args = argparser.parse_args()
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Toggle verbose output (default no-verbose).",
+    )
+    parser.add_argument(
+        "--devinfo",
+        action=argparse.BooleanOptionalAction,
+        help="Enable display of developer information issues (not normally visible to users)",
+    )
+    args = parser.parse_args()
     return args
 
 
@@ -110,25 +127,51 @@ def main() -> None:
 
     results = ConversionResultsBuilder()
     results.addMessages(arelle_result.messages)
-    if results.hasErrorsOrWarnings():
+
+    if viewer_path and arelle_result.has_viewer:
+        print(f"Viewer written to {viewer_path}.")
+
+    if (args.verbose and results.userMessages) or results.hasErrorsOrWarnings():
+        print()
         if results.hasErrors():
-            print("The report package has errors.")
+            print("The report package has errors:")
+        elif results.hasWarnings():
+            print("The report package has warnings:")
         else:
-            print("The report package has warnings.")
-        print("Issues:")
+            print("Messages:")
+
         for message in results.userMessages:
             print(f"\t{message}")
-        raise SystemExit(
-            "The report package has errors or warnings. Please check the output above."
-        )
-    else:
-        print("The report package is valid and has no errors or warnings.")
-        if viewer_path and arelle_result.has_viewer:
-            print(f"Viewer written to {viewer_path}.")
-        else:
-            print("Arelle's messages:")
-            for message in results.userMessages:
-                print(f"\t{message}")
+
+    if args.devinfo and results.developerMessages:
+        print()
+        print("All messages (including developer messages):")
+        for message in results.developerMessages:
+            print(f"\t{message}")
+
+    final_word_and_exit(results.build())
+
+
+def final_word_and_exit(results: ConversionResults) -> None:
+    print()
+    match results.getOverallSeverity():
+        case Severity.ERROR:
+            exitCode = 1
+            rich_print(
+                "[bold red]➡️ The XBRL report package is INVALID (has errors). Please check the output above.❌ "
+            )
+        case Severity.WARNING:
+            exitCode = 0
+            rich_print(
+                "[bold dark_orange]➡️ The XBRL report package is VALID but there are WARNINGS.⚠️ "
+            )
+        case Severity.INFO:
+            exitCode = 0
+            rich_print(
+                "[bold green]➡️ The XBRL report package is VALID and has no errors or warnings.✅ "
+            )
+    print()
+    raise SystemExit(exitCode)
 
 
 if __name__ == "__main__":
