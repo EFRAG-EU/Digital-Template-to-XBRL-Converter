@@ -1,6 +1,7 @@
 {
   "dependencies": {
-    "@tailwindcss/cli": "^4.1.12",
-    "tailwindcss": "^4.1.12"
+    "@tailwindcss/cli": "^4.1.14",
+    "brotli-cli": "^2.1.1",
+    "tailwindcss": "^4.1.14"
   }
 }

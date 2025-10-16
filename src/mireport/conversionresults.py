@@ -166,6 +166,32 @@ class ConversionResults:
             m.severity in {Severity.ERROR, Severity.WARNING} for m in self.userMessages
         )
 
+    def getRAG(
+        self, *, withoutXBRLValidation: bool = False, justXBRLValidation: bool = False
+    ) -> dict[str, bool]:
+        if withoutXBRLValidation and justXBRLValidation:
+            raise ValueError(
+                "Invalid argument combination: 'withoutXBRLValidation' and 'justXBRLValidation' cannot both be True."
+            )
+
+        if justXBRLValidation:
+            wanted_mt = {MessageType.XbrlValidation}
+        else:
+            wanted_mt = MessageType.allExcept(MessageType.DevInfo, MessageType.Progress)
+            if withoutXBRLValidation:
+                wanted_mt.discard(MessageType.XbrlValidation)
+
+        candidates = self.getMessages(wantedMessageTypes=wanted_mt)
+
+        red = any(m.severity is Severity.ERROR for m in candidates)
+        amber = not red and any(m.severity is Severity.WARNING for m in candidates)
+        green = not (red or amber)
+        return {
+            "red": red,
+            "amber": amber,
+            "green": green,
+        }
+
     def hasMessages(self, userOnly: bool = False) -> bool:
         if userOnly:
             return bool(self.userMessages)
@@ -279,7 +305,7 @@ class ConversionResultsBuilder(ConversionResults):
     def conversionSuccessful(self) -> bool:
         bad = bool(
             self.getMessages(
-                wantedMessageSeverities={Severity.ERROR, Severity.WARNING},
+                wantedMessageSeverities={Severity.ERROR},
                 wantedMessageTypes={MessageType.Conversion, MessageType.ExcelParsing},
             )
         )
