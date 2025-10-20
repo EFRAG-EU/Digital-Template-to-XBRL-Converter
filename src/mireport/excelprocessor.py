@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import difflib
 import logging
 import re
@@ -17,6 +19,7 @@ from openpyxl.workbook.defined_name import DefinedName
 from openpyxl.worksheet.cell_range import CellRange
 from openpyxl.worksheet.worksheet import Worksheet
 
+import mireport
 from mireport.conversionresults import (
     ConversionResultsBuilder,
     MessageType,
@@ -74,6 +77,35 @@ def eeDomainAsText(concept: Concept) -> str:
 
 def conceptsToText(concepts: Iterable[Concept]) -> str:
     return ", ".join(sorted(str(c.qname) for c in concepts))
+
+
+class VersionHolder(NamedTuple):
+    major: int
+    minor: int
+    micro: int
+    suffix: str
+
+    def __str__(self) -> str:
+        return f"{self.major}.{self.minor}.{self.micro}{self.suffix}"
+
+    @classmethod
+    def parse(cls, version_str: str) -> VersionHolder:
+        version_str = version_str.strip()
+        match = re.match(r"^(\d+)\.(\d+)\.(\d+)(.*)?$", version_str)
+        if not match:
+            raise ValueError(f"Invalid version format: {version_str}")
+        major, minor, micro, suffix = match.groups()
+        return cls(int(major), int(minor), int(micro), suffix or "")
+
+    @classmethod
+    def parse_safe(cls, version_str: str) -> VersionHolder | None:
+        try:
+            return cls.parse(version_str)
+        except ValueError:
+            return None
+
+
+OUR_VERSION_HOLDER = VersionHolder.parse(mireport.__version__)
 
 
 class ComplexUnit(NamedTuple):
@@ -181,6 +213,7 @@ class ExcelProcessor:
             assert self._report
 
             self.getAndValidateRequiredMetadata()
+            self.checkTemplate()
             self._processConfiguration()
             self.abortEarlyIfErrors()
 
@@ -449,6 +482,76 @@ class ExcelProcessor:
                 Severity.ERROR,
                 MessageType.ExcelParsing,
             )
+
+    def checkTemplate(self) -> None:
+        # warn if template thinks it is incomplete
+        template_validation_name = "template_overall_validation_status"
+        template_validation_fail_name = "template_label_incomplete"
+        validation_failed_expected_value = self.getSingleStringValue(
+            template_validation_fail_name
+        )
+        validation_status = self.getSingleStringValue(template_validation_name)
+        if (
+            validation_failed_expected_value
+            and validation_status
+            and validation_status == validation_failed_expected_value
+        ):
+            self._results.addMessage(
+                "The Digital Template reports that it is incomplete (missing mandatory items).",
+                Severity.WARNING,
+                MessageType.ExcelParsing,
+                excel_reference=excelDefinedNameRef(
+                    self.getDefinedNameForString(template_validation_name)
+                ),
+            )
+
+        # warn if template version is not the current version
+        template_version_name = "template_reporting_template_version"
+        template_version_string = self.getSingleStringValue(template_version_name)
+        excel_version = VersionHolder.parse_safe(template_version_string)
+        converter_version = OUR_VERSION_HOLDER
+
+        if not template_version_string.strip():
+            self._results.addMessage(
+                "The Digital Template has no version recorded. Please use a supported template (the latest version is {converter_version}).",
+                Severity.ERROR,
+                MessageType.ExcelParsing,
+                excel_reference=excelDefinedNameRef(
+                    self.getDefinedNameForString(template_version_name)
+                ),
+            )
+        elif not excel_version:
+            self._results.addMessage(
+                f"The Digital Template does not have a valid version identifier: '{template_version_string}'. Please use a supported template (the latest version is {converter_version}).",
+                Severity.ERROR,
+                MessageType.ExcelParsing,
+                excel_reference=excelDefinedNameRef(
+                    self.getDefinedNameForString(template_version_name)
+                ),
+            )
+        elif excel_version != converter_version:
+            major_minor_same = (
+                excel_version.major == converter_version.major
+                and excel_version.minor == converter_version.minor
+            )
+            if major_minor_same:
+                self._results.addMessage(
+                    f"The Digital Template is based on version {excel_version}. The latest version available is {converter_version}, consider updating the template to the latest version.",
+                    Severity.INFO,
+                    MessageType.ExcelParsing,
+                    excel_reference=excelDefinedNameRef(
+                        self.getDefinedNameForString(template_version_name)
+                    ),
+                )
+            else:
+                self._results.addMessage(
+                    f"The Digital Template is based on version {excel_version}. The latest version available is {converter_version}, please update/migrate to the latest version of the Digital Template, in order to avoid any error message and data loss.",
+                    Severity.WARNING,
+                    MessageType.ExcelParsing,
+                    excel_reference=excelDefinedNameRef(
+                        self.getDefinedNameForString(template_version_name)
+                    ),
+                )
 
     def abortEarlyIfErrors(self) -> None:
         if self._results.hasErrors():

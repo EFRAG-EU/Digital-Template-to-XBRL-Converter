@@ -25,28 +25,44 @@
     </div>
     {% else %}
         {% include "_svg.html.jinja" %}
+        {% set conv_rag = conversion_result.getRAG(withoutXBRLValidation=true) %}
     <!-- Title -->
     <h2 class="text-3xl font-bold text-center text-gray-800">Conversion Results</h2>
     <!-- Conversion Status -->
-    <div class="p-4 rounded-lg shadow-md {% if conversion_result.conversionSuccessful %}bg-green-100 border border-green-400 text-green-800{% else %}bg-red-100 border border-red-400 text-red-800{% endif %}">
-        {% if conversion_result.conversionSuccessful %}
-            <p class="text-center font-semibold">Technical conversion of the Digital Template to XBRL was successful!</p>
-        {% else %}
-            <p class="text-center font-semibold">Technical conversion to XBRL failed! Review the messages below and ensure the official template is used and correctly filled.</p>
+    <div class="p-4 rounded-lg shadow-md 
+        {% if conv_rag.green %}bg-green-100 border border-green-400 text-green-800
+        {% elif conv_rag.red %}bg-red-100 border border-red-400 text-red-800
+        {% elif conv_rag.amber %}bg-amber-100 border border-amber-400 text-amber-800
+        {% endif %}">
+        <p class="text-center font-semibold">
+        {% if conv_rag.red %}
+            Technical conversion failed with ERRORS, please review the messages and the Digital Template
+        {% elif conv_rag.amber %}
+            Technical conversion successful with WARNINGs, please review the messages and the Digital Template
+        {% elif conv_rag.green %}
+            Technical conversion of the Digital Template to XBRL was successful!
         {% endif %}
+        </p>
     </div>
 
     <!-- XBRL Validation Status -->
-    <div class="p-4 rounded-lg shadow-md {% if conversion_result.isXbrlValid %}bg-green-100 border border-green-400 text-green-800{% else %}bg-red-100 border border-red-400 text-red-800{% endif %}">
-        {% if conversion_result.isXbrlValid %}
-            <p class="text-center font-semibold">The generated XBRL report is valid according to the technical XBRL specifications!</p>
-        {% else %}
-            {% if not conversion_result.conversionSuccessful %}
-            <p class="text-center font-semibold">XBRL Report not validated due to conversion failure.</p>
-            {% else %}
-            <p class="text-center font-semibold">XBRL Report contains errors. Please check the messages!</p>
-            {% endif %}
+    {% set val_rag = conversion_result.getRAG(justXBRLValidation=true) %}
+    <div class="p-4 rounded-lg shadow-md 
+        {% if not conversion_result.conversionSuccessful or val_rag.red %}bg-red-100 border border-red-400 text-red-800
+        {% elif val_rag.amber %}bg-amber-100 border border-amber-400 text-amber-800
+        {% elif val_rag.green %}bg-green-100 border border-green-400 text-green-800
+        {% endif %}">
+        <p class="text-center font-semibold">
+        {% if not conversion_result.conversionSuccessful %}
+            XBRL Report not validated due to earlier conversion failure
+        {% elif val_rag.red %}
+            The generated XBRL report has validation ERRORS, please review the messages and the Digital Template
+        {% elif val_rag.amber %}
+            The generated XBRL report has validation WARNINGs, please review the messages and the Digital Template
+        {% elif val_rag.green %}
+            The generated XBRL report is valid according to the technical XBRL specifications!
         {% endif %}
+        </p>
     </div>
 
     <!-- Download Links -->
@@ -118,8 +134,8 @@
                 {% for message in messages %}
                     <tr class="hover:bg-gray-50">
                         <td class="border border-gray-300 px-4 py-2">{{ message.messageType.value }}</td>
-                        <td class="border border-gray-300 px-4 py-2">
-                            <span class="px-2 py-1 rounded text-white {% if message.severity is sameas Severity.INFO %}bg-blue-500{% elif message.severity is sameas Severity.WARNING %}bg-yellow-500{% elif message.severity is sameas Severity.ERROR %}bg-red-500{% endif %}">
+                        <td class="border border-gray-300 px-4 py-2 text-center">
+                            <span class="px-2 py-1 rounded text-white {% if message.severity is sameas Severity.INFO %}bg-blue-500{% elif message.severity is sameas Severity.WARNING %}bg-amber-500{% elif message.severity is sameas Severity.ERROR %}bg-red-500{% endif %}">
                                 {{ message.severity.value }}
                             </span>
                         </td>
