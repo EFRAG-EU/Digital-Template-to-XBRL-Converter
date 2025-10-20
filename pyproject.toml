@@ -1,6 +1,6 @@
 [project]
 name = "mireport"
-version = "1.1.0.dev0"
+version = "1.1.0"
 description = "Converts a filled-in Excel template into an Inline XBRL Report"
 authors = [
     {name = "Stuart Rowan", email = "stuart.rowan@efrag.org"},
