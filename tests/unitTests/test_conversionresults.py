@@ -115,41 +115,52 @@ def test_conversion_success_failure_logic(severity, message_type):
     builder = ConversionResultsBuilder()
     builder.addMessage(f"Msg: {severity}, {message_type}", severity, message_type)
 
-    if severity in {Severity.ERROR, Severity.WARNING}:
+    if severity is Severity.ERROR:
         assert not builder.conversionSuccessful
     else:
         assert builder.conversionSuccessful
 
 
-def test_conversion_success_ignores_non_user_types():
-    builder = ConversionResultsBuilder()
+def test_conversion_success_ignores_non_user_types(builder):
     builder.addMessage("Dev Info", Severity.ERROR, MessageType.DevInfo)
     builder.addMessage("Progress", Severity.WARNING, MessageType.Progress)
     assert builder.conversionSuccessful  # should be True
 
 
-def test_conversion_success_mixed_relevant_and_irrelevant():
-    builder = ConversionResultsBuilder()
+def test_conversion_success_mixed_relevant_and_irrelevant(builder):
     builder.addMessage("Dev Info", Severity.ERROR, MessageType.DevInfo)
     builder.addMessage("Conversion", Severity.WARNING, MessageType.Conversion)
+    assert builder.conversionSuccessful
+
+
+def test_conversion_failure_mixed_relevant_and_irrelevant(builder):
+    builder.addMessage("Dev Info", Severity.ERROR, MessageType.DevInfo)
+    builder.addMessage("Conversion", Severity.ERROR, MessageType.Conversion)
     assert not builder.conversionSuccessful
 
 
-def test_conversion_success_empty():
-    builder = ConversionResultsBuilder()
+def test_conversion_success_empty(builder):
     assert builder.conversionSuccessful  # Nothing added, should be successful
 
 
-def test_conversion_success_with_only_info():
-    builder = ConversionResultsBuilder()
+def test_conversion_success_with_only_info(builder):
     builder.addMessage("Conversion Info", Severity.INFO, MessageType.Conversion)
     builder.addMessage("Parsing Info", Severity.INFO, MessageType.ExcelParsing)
     assert builder.conversionSuccessful
 
 
-def test_conversion_failure_due_to_parsing_warning():
-    builder = ConversionResultsBuilder()
+def test_conversion_success_with_xbrl_error(builder):
+    builder.addMessage("XBRL error", Severity.ERROR, MessageType.XbrlValidation)
+    assert builder.conversionSuccessful
+
+
+def test_conversion_success_with_parsing_warning(builder):
     builder.addMessage("Parsing warning", Severity.WARNING, MessageType.ExcelParsing)
+    assert builder.conversionSuccessful
+
+
+def test_conversion_failure_with_parsing_error(builder):
+    builder.addMessage("Parsing error", Severity.ERROR, MessageType.ExcelParsing)
     assert not builder.conversionSuccessful
 
 
@@ -175,8 +186,7 @@ def test_message_from_dict_invalid_enum():
         Message.fromDict(bad_data)
 
 
-def test_add_message_with_qname_and_excel_reference():
-    builder = ConversionResultsBuilder()
+def test_add_message_with_qname_and_excel_reference(builder):
     builder.addMessage(
         "Info message",
         Severity.INFO,
