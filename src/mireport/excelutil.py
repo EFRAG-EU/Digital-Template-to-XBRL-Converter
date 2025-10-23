@@ -1,4 +1,5 @@
 import re
+import warnings
 from datetime import date, datetime, time
 from pathlib import Path
 from typing import (
@@ -36,9 +37,18 @@ def checkExcelFilePath(path: Path) -> None:
 
 
 def loadExcelFromPathOrFileLike(pathOrFile: Path | BinaryIO) -> Workbook:
-    wb = load_workbook(
-        filename=pathOrFile, read_only=False, data_only=True, rich_text=True
-    )
+    # We can safely suppress these warnings as our use-case is **just**
+    # extracting data from the Excel file.
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            message=".*? extension is not supported and will be removed",
+            category=UserWarning,
+            module=r"openpyxl\.worksheet\._reader",
+        )
+        wb = load_workbook(
+            filename=pathOrFile, read_only=False, data_only=True, rich_text=True
+        )
     return wb
 
 
