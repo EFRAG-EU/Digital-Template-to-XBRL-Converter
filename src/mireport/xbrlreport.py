@@ -15,7 +15,6 @@ from itertools import count
 from pathlib import Path
 from typing import NamedTuple, Optional, Self, cast
 from unicodedata import name as unicode_name
-from xml.sax.saxutils import escape as xml_escape
 
 import ixbrltemplates
 from babel import Locale
@@ -35,7 +34,11 @@ from mireport.localise import (
     group_symbol,
     localise_and_format_number,
 )
-from mireport.stringutil import NumberGroupingApostrophes, unicodeSpaceNormalize
+from mireport.stringutil import (
+    NumberGroupingApostrophes,
+    unicodeSpaceNormalize,
+    xml_clean,
+)
 from mireport.taxonomy import (
     Concept,
     PresentationGroup,
@@ -412,7 +415,7 @@ class FactBuilder:
             s_value = str(typedDimensionValue).lower()
         else:
             s_value = str(typedDimensionValue)
-        value = f'"<{typedDimension.typedElement}>{xml_escape(s_value)}</{typedDimension.typedElement}>"'
+        value = f'"<{typedDimension.typedElement}>{xml_clean(s_value)}</{typedDimension.typedElement}>"'
         self._aspects[typedDimension.qname] = value
         return self
 
