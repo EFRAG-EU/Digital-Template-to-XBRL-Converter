@@ -164,6 +164,63 @@ def test_conversion_failure_with_parsing_error(builder):
     assert not builder.conversionSuccessful
 
 
+def test_getOverallSeverity_just_xbrl_and_without_xbrl_behavior():
+    b = ConversionResultsBuilder()
+    b.addMessage("XBRL error", Severity.ERROR, MessageType.XbrlValidation)
+    b.addMessage("Conversion warning", Severity.WARNING, MessageType.Conversion)
+    result = b.build()
+
+    # justXBRLValidation should reflect only the XBRL validation message(s)
+    assert result.getOverallSeverity(justXBRLValidation=True) is Severity.ERROR
+    assert result.getRAG(justXBRLValidation=True) == {
+        "green": False,
+        "amber": False,
+        "red": True,
+    }
+
+    # withoutXBRLValidation should ignore XBRL validation messages and pick the conversion warning
+    assert result.getOverallSeverity(withoutXBRLValidation=True) is Severity.WARNING
+    assert result.getRAG(withoutXBRLValidation=True) == {
+        "green": False,
+        "amber": True,
+        "red": False,
+    }
+
+    # default behaviour considers all relevant message types -> error wins
+    assert result.getOverallSeverity() is Severity.ERROR
+    assert result.getRAG() == {"green": False, "amber": False, "red": True}
+
+
+def test_getOverallSeverity_empty_defaults_to_info_and_rag_mapping():
+    b = ConversionResultsBuilder()
+    r = b.build()
+    assert r.getOverallSeverity() is Severity.INFO
+
+    rag = r.getRAG()
+    assert rag["green"] is True and rag["amber"] is False and rag["red"] is False
+
+
+def test_getOverallSeverity_raises_on_conflicting_flags():
+    b = ConversionResultsBuilder()
+    r = b.build()
+    with pytest.raises(ValueError):
+        r.getOverallSeverity(withoutXBRLValidation=True, justXBRLValidation=True)
+
+
+def test_getRAG_not_modifiaed_by_caller():
+    b = ConversionResultsBuilder()
+    r = b.build()
+    rag = r.getRAG()
+
+    with pytest.raises(TypeError):
+        rag["red"] = True  # modify the returned dict (should raise)
+
+    rag2 = r.getRAG()  # get it again
+    assert (
+        rag2["red"] is False
+    )  # should not be affected by previous (attempted) modification
+
+
 def test_empty_message_list_serialization():
     builder = ConversionResultsBuilder(conversionId="empty")
     result = builder.build()
@@ -242,3 +299,44 @@ def test_processing_context_unexpected_exception(builder_with_console):
     messages = builder_with_console.getMessages()
     assert any(m.severity == Severity.ERROR for m in messages)
     assert not ctx.succeeded
+
+
+def test_isXbrlValid_no_xbrl_messages(builder):
+    builder.addMessage("Conversion message", Severity.INFO, MessageType.Conversion)
+    result = builder.build()
+    assert not result.isXbrlValid
+
+
+def test_isXbrlValid_with_info_xbrl_message(builder):
+    builder = ConversionResultsBuilder()
+    builder.addMessage("XBRL info", Severity.INFO, MessageType.XbrlValidation)
+    result = builder.build()
+    assert result.isXbrlValid
+
+
+def test_isXbrlValid_with_warning_xbrl_message(builder):
+    builder.addMessage("XBRL warning", Severity.WARNING, MessageType.XbrlValidation)
+    result = builder.build()
+    assert result.isXbrlValid
+
+
+def test_isXbrlValid_with_error_xbrl_message(builder):
+    builder.addMessage("XBRL error", Severity.ERROR, MessageType.XbrlValidation)
+    result = builder.build()
+    assert not result.isXbrlValid
+
+
+def test_isXbrlValid_mixed_severities(builder):
+    builder.addMessage("XBRL info", Severity.INFO, MessageType.XbrlValidation)
+    builder.addMessage("XBRL warning", Severity.WARNING, MessageType.XbrlValidation)
+    builder.addMessage("XBRL error", Severity.ERROR, MessageType.XbrlValidation)
+    result = builder.build()
+    assert not result.isXbrlValid
+
+
+def test_isXbrlValid_mixed_message_types(builder):
+    builder.addMessage("XBRL warning", Severity.WARNING, MessageType.XbrlValidation)
+    builder.addMessage("Conversion error", Severity.ERROR, MessageType.Conversion)
+    result = builder.build()
+    # Only XBRL validation errors matter for isXbrlValid
+    assert result.isXbrlValid
