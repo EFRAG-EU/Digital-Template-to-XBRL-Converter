@@ -89,3 +89,25 @@ def format_bytes(num_bytes: int) -> str:
             return f"{n // MB} MiB"
         case n:
             return f"{n / GB:.1f} GiB"
+
+
+_xmlCarefulHandling_Translation_Table = str.maketrans(
+    {
+        "&": "&amp;",
+        ">": "&gt;",
+        "<": "&lt;",
+        "'": "&apos;",
+        '"': "&quot;",
+        "\v": None,
+        "\t": None,
+        "\f": None,
+        "\r": None,
+        "\n": None,
+    }
+)
+
+
+def xml_clean(data: str) -> str:
+    """Cleans a string for inclusion in XML content by escaping special characters
+    and removing vertical tabs, tabs, form-feeds, carriage returns, and newlines."""
+    return data.translate(_xmlCarefulHandling_Translation_Table)

@@ -1,4 +1,5 @@
 import re
+import warnings
 from datetime import date, datetime, time
 from pathlib import Path
 from typing import (
@@ -28,6 +29,23 @@ CellValueType: TypeAlias = bool | float | int | str | datetime | date | time | N
 EXCEL_PLACEHOLDER_VALUE = "#VALUE!"
 
 
+class NamedRangeException(OpenPyXlRelatedException):
+    """Exception raised when a named range is broken in the workbook."""
+
+    def __init__(self, message: str, defined_name: DefinedName) -> None:
+        self.message = message
+        self.defined_name = defined_name
+        super().__init__(message, str(defined_name))
+
+    def __str__(self) -> str:
+        details = (
+            f"Details:\n"
+            f"  Name: {self.defined_name.name}\n"
+            f"  Refers to: {self.defined_name.attr_text}\n"
+        )
+        return f"{self.message} {details}"
+
+
 def checkExcelFilePath(path: Path) -> None:
     if not path.is_file():
         raise FileNotFoundError(f'"{path}" is not a file.')
@@ -36,9 +54,18 @@ def checkExcelFilePath(path: Path) -> None:
 
 
 def loadExcelFromPathOrFileLike(pathOrFile: Path | BinaryIO) -> Workbook:
-    wb = load_workbook(
-        filename=pathOrFile, read_only=False, data_only=True, rich_text=True
-    )
+    # We can safely suppress these warnings as our use-case is **just**
+    # extracting data from the Excel file.
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            message=".*? extension is not supported and will be removed",
+            category=UserWarning,
+            module=r"openpyxl\.worksheet\._reader",
+        )
+        wb = load_workbook(
+            filename=pathOrFile, read_only=False, data_only=True, rich_text=True
+        )
     return wb
 
 
@@ -87,34 +114,79 @@ def excelDefinedNameRef(
             return None
 
 
-def getNamedRanges(wb: Workbook) -> dict:
+def getNamedRanges(
+    wb: Workbook,
+) -> tuple[dict[str, list[CellValueType]], list[NamedRangeException]]:
     data = {}
+    errors = []
     for dn in list(wb.defined_names.values()):
-        sheet_name, cell_range = list(dn.destinations)[0]
-        if not cell_range:
+        if not dn.name:
+            errors.append(
+                NamedRangeException("Named range exists but has no name.", dn)
+            )
             continue
+
+        if not dn.destinations:
+            errors.append(
+                NamedRangeException("Named range has no destination specified.", dn)
+            )
+            continue
+
+        sheet_name, cell_range = list(dn.destinations)[0]
+
+        if sheet_name not in wb:
+            errors.append(
+                NamedRangeException(
+                    "Named range refers to a worksheet that is not in the workbook.", dn
+                )
+            )
+            continue
+
+        ws = wb[sheet_name]
+
+        if not cell_range:
+            errors.append(
+                NamedRangeException("Named range has no cell range specified.", dn)
+            )
+            continue
+
         cr = CellRange(cell_range)
+
         if (
             cr.min_col is None
             or cr.min_row is None
             or cr.max_col is None
             or cr.max_row is None
         ):
-            raise OpenPyXlRelatedException(
-                f"Cell range bounds expected to be int but actually None {cr=}"
+            errors.append(
+                NamedRangeException(
+                    f"Named range cell range bounds expected to be int but actually None {cr=}.",
+                    dn,
+                )
             )
+            continue
+
         width: int = cr.max_col - cr.min_col
         height: int = cr.max_row - cr.min_row
-        ws = wb[sheet_name]
+        if width < 0 or height < 0:
+            errors.append(
+                NamedRangeException(
+                    f"Named range has negative cell range {width=} {height=}.", dn
+                )
+            )
+            continue
+
         if not width and not height:
+            # a single (width=0, height=0) cell range ... so the OpenPyXL API returns it directly.
             cell = ws[cell_range]
-            cells = [cell.value]
+            values = [cell.value]
         else:
-            cells = []
+            values = []
             for row in ws[cell_range]:
-                cells.extend([c.value for c in row])
-        data[dn.name] = cells
-    return data
+                values.extend([c.value for c in row])
+        data[dn.name] = values
+
+    return data, errors
 
 
 def get_decimal_places(cell: CellType) -> DecimalPlaces:
