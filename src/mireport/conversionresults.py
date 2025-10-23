@@ -3,8 +3,8 @@ from collections.abc import Iterable
 from enum import StrEnum
 from functools import cache, lru_cache
 from time import perf_counter_ns
-from types import TracebackType
-from typing import Optional, Self, Type
+from types import MappingProxyType, TracebackType
+from typing import Mapping, Optional, Self, Type
 
 from mireport.exceptions import EarlyAbortException
 from mireport.stringutil import format_time_ns
@@ -190,16 +190,18 @@ class ConversionResults:
 
     def getRAG(
         self, *, withoutXBRLValidation: bool = False, justXBRLValidation: bool = False
-    ) -> dict[str, bool]:
+    ) -> Mapping[str, bool]:
         overallSeverity = self.getOverallSeverity(
             withoutXBRLValidation=withoutXBRLValidation,
             justXBRLValidation=justXBRLValidation,
         )
-        return {
-            "red": overallSeverity is Severity.ERROR,
-            "amber": overallSeverity is Severity.WARNING,
-            "green": overallSeverity is Severity.INFO,
-        }
+        return MappingProxyType(
+            {
+                "red": overallSeverity is Severity.ERROR,
+                "amber": overallSeverity is Severity.WARNING,
+                "green": overallSeverity is Severity.INFO,
+            }
+        )
 
     def hasMessages(self, userOnly: bool = False) -> bool:
         if userOnly:
@@ -247,9 +249,12 @@ class ConversionResults:
 
     @property
     def isXbrlValid(self) -> bool:
-        return self.conversionSuccessful and not any(
-            m.severity is Severity.ERROR and m.messageType is MessageType.XbrlValidation
-            for m in self.messages
+        has_xbrl_messages = bool(
+            self.getMessages(wantedMessageTypes={MessageType.XbrlValidation})
+        )
+        return (
+            has_xbrl_messages
+            and self.getOverallSeverity(justXBRLValidation=True) is not Severity.ERROR
         )
 
 
@@ -312,13 +317,7 @@ class ConversionResultsBuilder(ConversionResults):
 
     @property
     def conversionSuccessful(self) -> bool:
-        bad = bool(
-            self.getMessages(
-                wantedMessageSeverities={Severity.ERROR},
-                wantedMessageTypes={MessageType.Conversion, MessageType.ExcelParsing},
-            )
-        )
-        return not bad
+        return self.getOverallSeverity(withoutXBRLValidation=True) is not Severity.ERROR
 
     def build(self) -> ConversionResults:
         return ConversionResults(
