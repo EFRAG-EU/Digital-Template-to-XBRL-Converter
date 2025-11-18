@@ -107,8 +107,8 @@
     }
     </style>
     <div class="flex justify-between items-center gap-4">
-        <div><span class="font-bold text-gray-600">Timestamp:</span> {{conversion_date}} </div>
-        <div><span class="font-bold text-gray-600">Original filename:</span> {{upload_filename}}</div>
+        <div><span class="font-bold text-gray-600">Timestamp:</span> {{ conversion_date | e }}</div>
+        <div><span class="font-bold text-gray-600">Original filename:</span> {{ upload_filename | e}}</div>
     </div>
     <!-- Messages Table -->
     <div class="overflow-x-auto">
@@ -133,15 +133,15 @@
                 {% set messages = conversion_result.userMessages if not dev else conversion_result.developerMessages %}
                 {% for message in messages %}
                     <tr class="hover:bg-gray-50">
-                        <td class="border border-gray-300 px-4 py-2">{{ message.messageType.value }}</td>
+                        <td class="border border-gray-300 px-4 py-2">{{ message.messageType.value | e }}</td>
                         <td class="border border-gray-300 px-4 py-2 text-center">
                             <span class="px-2 py-1 rounded text-white {% if message.severity is sameas Severity.INFO %}bg-blue-500{% elif message.severity is sameas Severity.WARNING %}bg-amber-500{% elif message.severity is sameas Severity.ERROR %}bg-red-500{% endif %}">
-                                {{ message.severity.value }}
+                                {{ message.severity.value | e }}
                             </span>
                         </td>
-                        <td class="border border-gray-300 px-4 py-2">{{ message.messageText }}</td>
+                        <td class="border border-gray-300 px-4 py-2">{{ message.messageText | e }}</td>
                         {% if message.excelReference is not none %}
-                        <td class="border border-gray-300 px-4 py-2">{{ message.excelReference }}</td>
+                        <td class="border border-gray-300 px-4 py-2">{{ message.excelReference | e }}</td>
                         {% else %}
                         <td class="border border-gray-300 px-4 py-2"></td>
                         {% endif %}
