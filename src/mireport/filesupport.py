@@ -1,11 +1,13 @@
 import base64
 import re
-from io import BytesIO
+from collections.abc import Iterable
+from io import BytesIO, UnsupportedOperation
 from pathlib import Path
-from typing import NamedTuple, Optional
+from typing import BinaryIO, NamedTuple, Optional
 
 from PIL import Image, UnidentifiedImageError
 from PIL.Image import Resampling
+from typing_extensions import Buffer
 
 from mireport.stringutil import format_bytes
 
@@ -50,15 +52,87 @@ def zipSafeString(original: str, fallback: str = "fallback") -> str:
     return new
 
 
+class NamedBytesIO(BytesIO):
+    """
+    An in-memory binary stream with a required name attribute.
+    Compatible with file-like consumers expecting BinaryIO or BytesIO.
+    """
+
+    name: str
+
+    def __init__(self, content: bytes, *, name: str) -> None:
+        super().__init__(content)
+        self.name = name
+
+    def __repr__(self) -> str:
+        payload = self.getbuffer()
+        size = len(payload)
+        peek = bytes(payload[: 2**4])
+        return (
+            f"{self.__class__.__name__}(name={self.name!r}, size={size}, peek={peek!r})"
+        )
+
+    def __str__(self) -> str:
+        return f'"{self.name}" [{format_bytes(len(self.getbuffer()))}]'
+
+
+class ReadOnlyNamedBytesIO(NamedBytesIO):
+    """
+    A read-only in-memory binary stream with a required name attribute.
+    Prevents mutation via write, truncate, or buffer access.
+    Compatible with file-like consumers expecting .name and .read().
+    """
+
+    def getbuffer(self) -> memoryview:
+        """Get a read-only view over the contents of the BytesIO object."""
+        return super().getbuffer().toreadonly()
+
+    def truncate(self, _: Optional[int] = None) -> int:
+        raise UnsupportedOperation("This BytesIO is read-only")
+
+    def writable(self) -> bool:
+        return False
+
+    def write(self, _: bytes | Buffer) -> int:
+        raise UnsupportedOperation("This BytesIO is read-only")
+
+    def writelines(self, _: Iterable[bytes | Buffer]) -> None:
+        raise UnsupportedOperation("This BytesIO is read-only")
+
+
 class FilelikeAndFileName(NamedTuple):
+    """
+    Immutable, in-memory holder of file data and file metadata (just the
+    filename at present).
+
+    Contains various convenience methods that arrange the file data and metadata
+    as required either for other libraries or for export.
+
+    Serialises well and without special methods due to underlying tuple
+    structure.
+    """
+
     fileContent: bytes
     filename: str
 
-    def fileLike(self) -> BytesIO:
-        return BytesIO(self.fileContent)
-
     def __str__(self) -> str:
         return f'"{self.filename}" [{format_bytes(len(self.fileContent))}]'
+
+    def fileLike(self, writable: bool = False) -> BinaryIO:
+        """
+        Returns a Python file-like object for use with APIs that expect a
+        file-like object (read() and .name in particular).
+
+        :param writable: If True, returns a mutable file-like object. If False,
+        returns a read-only file-like object.
+
+        The file-like object may or may not be mutable but any changes made to
+        it have no affect on the original FilelikeAndFileName.
+        """
+        if writable:
+            return NamedBytesIO(self.fileContent, name=self.filename)
+        else:
+            return ReadOnlyNamedBytesIO(self.fileContent, name=self.filename)
 
     def saveToFilepath(self, path: Path) -> None:
         """Saves the file content to the specified path."""

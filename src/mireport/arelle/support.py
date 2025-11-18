@@ -4,7 +4,6 @@ from collections.abc import Mapping, MutableMapping
 from dataclasses import dataclass
 from typing import Any, NamedTuple, Optional, Self
 
-from arelle.FileSource import FileNamedBytesIO
 from arelle.logging.handlers.LogToXmlHandler import LogToXmlHandler
 from arelle.ModelValue import QName
 from arelle.ModelXbrl import ModelXbrl
@@ -16,15 +15,6 @@ from mireport.xml import QName as MireportQName
 from mireport.xml import QNameMaker, getBootsrapQNameMaker
 
 L = logging.getLogger(__name__)
-
-
-def fileLikeToArelleFileSource(
-    fileLike: FilelikeAndFileName,
-) -> FileNamedBytesIO:
-    """Convert a FilelikeAndFileName to an Arelle FileNamedBytesIO."""
-    return FileNamedBytesIO(
-        fileName=fileLike.filename, initial_bytes=fileLike.fileContent
-    )
 
 
 class ArelleRelatedException(MIReportException):

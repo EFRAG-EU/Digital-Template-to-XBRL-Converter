@@ -1,9 +1,16 @@
 import tempfile
+from io import UnsupportedOperation
 from pathlib import Path
 
 import pytest
 
-from mireport.filesupport import FilelikeAndFileName, is_valid_filename, zipSafeString
+from mireport.filesupport import (
+    FilelikeAndFileName,
+    NamedBytesIO,
+    ReadOnlyNamedBytesIO,
+    is_valid_filename,
+    zipSafeString,
+)
 
 
 def test_is_valid_filename_valid_cases() -> None:
@@ -332,3 +339,196 @@ def test_immutability() -> None:
         assert False, "Should not be able to modify filename"
     except AttributeError:
         pass  # Expected
+
+
+def test_FilelikeAndFileName_fileLike_returns_ReadOnlyNamedBytesIO() -> None:
+    """Test fileLike() returns a ReadOnlyNamedBytesIO with correct properties."""
+    content = b"ReadOnlyNamedBytesIO content"
+    filename = "readonly.bin"
+    file_obj = FilelikeAndFileName(content, filename)
+
+    bio = file_obj.fileLike()
+    assert isinstance(bio, ReadOnlyNamedBytesIO)
+    assert bio.read() == content
+    assert bio.name == filename
+    assert not bio.writable()
+    bio.seek(0)
+    assert bio.read(5) == content[:5]
+
+
+def test_FilelikeAndFileName_fileLike_is_read_only() -> None:
+    """Test fileLike() returns a truly read-only BytesIO."""
+    file_obj = FilelikeAndFileName(b"abc", "file.txt")
+    bio = file_obj.fileLike()
+    with pytest.raises(UnsupportedOperation, match="read-only"):
+        bio.write(b"def")
+    with pytest.raises(UnsupportedOperation, match="read-only"):
+        bio.truncate()
+    mv = bio.getbuffer()
+    assert isinstance(mv, memoryview)
+    assert mv.readonly
+    assert bytes(mv) == b"abc"
+
+
+def test_FilelikeAndFileName_fileLike_independent_instances() -> None:
+    """Test fileLike() returns new ReadOnlyNamedBytesIO instances each call."""
+    content = b"independent"
+    file_obj = FilelikeAndFileName(content, "indep.txt")
+    bio1 = file_obj.fileLike()
+    bio2 = file_obj.fileLike()
+    assert bio1 is not bio2
+    assert bio1.read() == content
+    assert bio2.read() == content
+    bio1.seek(0)
+    assert bio1.read(3) == content[:3]
+    bio2.seek(0)
+    assert bio2.read(3) == content[:3]
+
+
+def test_FilelikeAndFileName_fileLike_closed_behavior() -> None:
+    """Test ReadOnlyNamedBytesIO returned by fileLike() handles close correctly."""
+    file_obj = FilelikeAndFileName(b"123", "closed.txt")
+    bio = file_obj.fileLike()
+    bio.close()
+    assert bio.closed
+    with pytest.raises(ValueError):
+        bio.read()
+
+
+def test_ReadOnlyNamedBytesIO_name_and_content() -> None:
+    """Test that ReadOnlyNamedBytesIO exposes .name and correct content."""
+    content = b"sample data"
+    name = "sample.txt"
+    bio = ReadOnlyNamedBytesIO(content, name=name)
+    assert bio.name == name
+    assert bio.read() == content
+
+
+def test_ReadOnlyNamedBytesIO_seek_and_tell() -> None:
+    """Test seek and tell work as expected."""
+    content = b"abcdef"
+    bio = ReadOnlyNamedBytesIO(content, name="abc.txt")
+    assert bio.tell() == 0
+    bio.seek(3)
+    assert bio.tell() == 3
+    assert bio.read() == b"def"
+    bio.seek(0)
+    assert bio.read(2) == b"ab"
+
+
+def test_ReadOnlyNamedBytesIO_writable_and_write_raises() -> None:
+    """Test writable() returns False and write raises."""
+    bio = ReadOnlyNamedBytesIO(b"123", name="file.bin")
+    assert not bio.writable()
+    with pytest.raises(UnsupportedOperation, match="read-only"):
+        bio.write(b"456")
+
+
+def test_ReadOnlyNamedBytesIO_truncate_raises() -> None:
+    """Test truncate raises UnsupportedOperation."""
+    bio = ReadOnlyNamedBytesIO(b"abc", name="file.txt")
+    with pytest.raises(UnsupportedOperation, match="read-only"):
+        bio.truncate()
+
+
+def test_ReadOnlyNamedBytesIO_getbuffer_readonly() -> None:
+    """Test getbuffer returns a readonly buffer with correct content."""
+    bio = ReadOnlyNamedBytesIO(b"abc", name="file.txt")
+    mv = bio.getbuffer()
+    assert isinstance(mv, memoryview)
+    assert mv.readonly
+    assert bytes(mv) == b"abc"
+
+
+def test_ReadOnlyNamedBytesIO_closed_behavior() -> None:
+    """Test closed property and reading after close."""
+    bio = ReadOnlyNamedBytesIO(b"xyz", name="file.txt")
+    assert not bio.closed
+    bio.close()
+    assert bio.closed
+    with pytest.raises(ValueError):
+        bio.read()
+
+
+def test_ReadOnlyNamedBytesIO_multiple_instances_independent() -> None:
+    """Test multiple ReadOnlyNamedBytesIO instances are independent."""
+    content = b"hello"
+    name = "file.txt"
+    bio1 = ReadOnlyNamedBytesIO(content, name=name)
+    bio2 = ReadOnlyNamedBytesIO(content, name=name)
+    assert bio1 is not bio2
+    assert bio1.read() == content
+    bio2.seek(0)
+    assert bio2.read(2) == b"he"
+
+
+def test_ReadOnlyNamedBytesIO_repr_and_str() -> None:
+    """Test __repr__ and __str__ for debugging."""
+    bio = ReadOnlyNamedBytesIO(b"abc", name="file.txt")
+    repr_str = repr(bio)
+    # __repr__ should contain class name, name, size, and peek
+    assert "ReadOnlyNamedBytesIO" in repr_str
+    assert "name='file.txt'" in repr_str
+    assert "size=3" in repr_str
+    assert "peek=" in repr_str
+    # __str__ is inherited from NamedBytesIO
+    str_str = str(bio)
+    assert "file.txt" in str_str
+    assert "3 B" in str_str
+
+
+# NamedBytesIO tests
+def test_NamedBytesIO_name_content_and_mutability() -> None:
+    """NamedBytesIO should expose .name, allow mutation and reflect changes."""
+    content = b"abcdef"
+    name = "mutable.bin"
+    bio = NamedBytesIO(content, name=name)
+
+    assert bio.name == name
+    # writable should be True for NamedBytesIO
+    assert bio.writable()
+    # write at end should append
+    bio.seek(0, 2)
+    bio.write(b"XYZ")
+    bio.seek(0)
+    assert bio.read() == content + b"XYZ"
+
+    # truncate should work
+    bio.truncate(4)
+    bio.seek(0)
+    assert bio.read() == b"abcd"
+
+    # getbuffer should return a memoryview reflecting current content
+    mv = bio.getbuffer()
+    assert isinstance(mv, memoryview)
+    assert not mv.readonly
+    assert bytes(mv) == b"abcd"
+
+
+def test_FilelikeAndFileName_fileLike_writable_returns_NamedBytesIO_and_is_independent() -> (
+    None
+):
+    """fileLike(writable=True) should return a NamedBytesIO that does not mutate the source tuple."""
+    original = b"origin"
+    filename = "file.txt"
+    file_obj = FilelikeAndFileName(original, filename)
+
+    bio = file_obj.fileLike(writable=True)
+    assert isinstance(bio, NamedBytesIO)
+    # append some data
+    bio.seek(0, 2)
+    bio.write(b"_appended")
+    bio.seek(0)
+    assert bio.read().endswith(b"_appended")
+
+    # original FilelikeAndFileName must remain unchanged
+    assert file_obj.fileContent == original
+
+
+def test_NamedBytesIO_str_contains_name_and_size() -> None:
+    content = b"x" * 150
+    name = "big.bin"
+    bio = NamedBytesIO(content, name=name)
+    s = str(bio)
+    assert name in s
+    assert "150 B" in s or "KiB" in s  # depends on format_bytes output

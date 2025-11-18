@@ -17,7 +17,6 @@ from mireport.arelle.support import (
     ArelleRelatedException,
     ArelleVersionHolder,
     VersionInformationTuple,
-    fileLikeToArelleFileSource,
 )
 from mireport.filesupport import FilelikeAndFileName
 from mireport.xbrlreport import UNCONSTRAINED_REPORT_PACKAGE_JSON
@@ -96,7 +95,7 @@ class ArelleReportProcessor:
                 with (
                     Session() as session,
                     closing(LogToXmlHandler()) as logHandler,
-                    fileLikeToArelleFileSource(reportPackage) as requestZipStream,
+                    reportPackage.fileLike() as requestZipStream,
                 ):
                     session.run(
                         options,
