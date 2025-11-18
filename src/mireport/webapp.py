@@ -448,8 +448,15 @@ def doConversion(conversion: dict, id: str) -> ConversionResults:
 
             if "logo" in conversion:
                 logo = ImageFileLikeAndFileName(*conversion["logo"])
-                pc.addDevInfoMessage(f"Adding logo to report {logo}")
-                report.setEntityLogo(logo)
+                if logo.can_open_image():
+                    pc.addDevInfoMessage(f"Adding logo to report {logo}")
+                    report.setEntityLogo(logo)
+                else:
+                    resultBuilder.addMessage(
+                        f"Unable to use supplied image file {logo}. Please try a different format.",
+                        Severity.WARNING,
+                        MessageType.Conversion,
+                    )
 
             pc.mark(
                 "Generating Inline Report",
@@ -474,7 +481,7 @@ def doConversion(conversion: dict, id: str) -> ConversionResults:
     except Exception as e:
         message = next(iter(e.args), "")
         resultBuilder.addMessage(
-            f"Exception encountered during processing. {message=}",
+            f"Exception encountered during processing. {message}",
             Severity.ERROR,
             MessageType.Conversion,
         )

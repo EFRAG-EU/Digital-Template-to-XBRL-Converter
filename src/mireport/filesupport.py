@@ -4,7 +4,7 @@ from io import BytesIO
 from pathlib import Path
 from typing import NamedTuple, Optional
 
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 from PIL.Image import Resampling
 
 from mireport.stringutil import format_bytes
@@ -95,6 +95,25 @@ class FilelikeAndFileName(NamedTuple):
 
 
 class ImageFileLikeAndFileName(FilelikeAndFileName):
+    """
+    Variant of FilelikeAndFileName that has additional methods related to image
+    support.
+    """
+
+    def can_open_image(self) -> bool:
+        """
+        Checks if the file content is a valid image that can be converted to a
+        data URL.
+
+        :return: True if the file content is an image we support, False otherwise.
+        """
+        try:
+            with Image.open(self.fileLike()):
+                pass
+            return True
+        except UnidentifiedImageError:
+            return False
+
     def as_data_url(
         self,
         max_width: Optional[int] = None,
@@ -110,19 +129,24 @@ class ImageFileLikeAndFileName(FilelikeAndFileName):
         :return: A data URL string (image/png).
         """
         # Always output PNG
-        output_mime_type = "image/png"
+        output_mime_type, output_format = "image/png", "PNG"
 
-        with Image.open(self.fileLike()) as img:
-            # Fill in missing dimensions
-            orig_width, orig_height = img.size
-            target_width = orig_width if max_width is None else max_width
-            target_height = orig_height if max_height is None else max_height
+        fio = self.fileLike()
+        try:
+            with Image.open(fio) as img:
+                # Fill in missing dimensions
+                orig_width, orig_height = img.size
+                target_width = orig_width if max_width is None else max_width
+                target_height = orig_height if max_height is None else max_height
 
-            img = img.convert("RGBA")  # Preserve transparency and unify mode
-            img.thumbnail((target_width, target_height), Resampling.LANCZOS)
+                img = img.convert("RGBA")  # Preserve transparency and unify mode
+                img.thumbnail((target_width, target_height), Resampling.LANCZOS)
 
-            bio = BytesIO()
-            img.save(bio, format="PNG")
-            base64_data = base64.b64encode(bio.getbuffer()).decode("ascii")
-
-        return f"data:{output_mime_type};base64,{base64_data}"
+                bio = BytesIO()
+                img.save(bio, format=output_format)
+                base64_data = base64.b64encode(bio.getbuffer()).decode("ascii")
+                return f"data:{output_mime_type};base64,{base64_data}"
+        except UnidentifiedImageError as e:
+            raise ValueError(
+                f"Cannot convert file {fio} to data URL: not a supported/valid image"
+            ) from e
