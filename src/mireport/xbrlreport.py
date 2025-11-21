@@ -906,16 +906,9 @@ class InlineReport:
         rl = ReportLayoutOrganiser(self._taxonomy, self)
         sections = rl.organise()
 
-        xml_lang = f"{self._outputLocale.language}"
-        if self._outputLocale.territory:
-            xml_lang += f"-{self._outputLocale.territory}"
-        xml_lang = xml_lang.lower()
-
-        label_language = self._taxonomy.getBestSupportedLanguage(xml_lang)
-        if label_language != xml_lang:
-            L.warning(
-                f"Unexpected locale issue: {label_language=}, {self._outputLocale} {xml_lang=}"
-            )
+        label_language = self._taxonomy.getBestSupportedLanguage(
+            as_xmllang(self._outputLocale)
+        )
 
         env = Environment(
             loader=PackageLoader(__package__, "inline_report_templates"),

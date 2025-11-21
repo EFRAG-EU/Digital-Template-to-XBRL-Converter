@@ -204,6 +204,13 @@ def group_symbol(locale: Optional[Locale] = None) -> str:
         return ","
 
 
+def as_xmllang(locale: Locale) -> str:
+    xml_lang_parts = [locale.language]
+    if locale.territory:
+        xml_lang_parts.append(locale.territory)
+    return "-".join(xml_lang_parts)
+
+
 def getBestSupportedLanguage(
     requestedLanguage: str,
     supportedLanguages: frozenset[str],

@@ -41,7 +41,7 @@ from mireport.excelutil import (
 )
 from mireport.exceptions import EarlyAbortException, InlineReportException
 from mireport.json import getObject, getResource
-from mireport.localise import get_locale_from_str
+from mireport.localise import as_xmllang, get_locale_from_str
 from mireport.taxonomy import (
     Concept,
     QName,
@@ -265,6 +265,16 @@ class ExcelProcessor:
         if not taxonomy.defaultLanguage:
             return
 
+        if self._outputLocale:
+            self._results.addMessage(
+                f"Chosen output locale: '{as_xmllang(self._outputLocale)}'. Ignoring any language specified in Excel.",
+                Severity.INFO,
+                MessageType.Conversion,
+            )
+            return
+
+        # No one specified a locale ... let's see if Excel has one.
+
         excelOutputLanguage = self.getSingleStringValue(
             "template_reporting_language"
         ).strip()
@@ -298,6 +308,7 @@ class ExcelProcessor:
             taxonomy.getBestSupportedLanguage(excelOutputLocale)
             or taxonomy.defaultLanguage
         )
+
         if excelOutputLocale != bestOutputLocale:
             self._results.addMessage(
                 f"Excel language specified as '{excelOutputLocale}'. Using closest match supported by the taxonomy, '{bestOutputLocale}'",
@@ -313,20 +324,7 @@ class ExcelProcessor:
                 excel_reference=languageCellReference,
             )
 
-        newOutputLocale = get_locale_from_str(bestOutputLocale)
-        if (
-            self._outputLocale
-            and newOutputLocale
-            and self._outputLocale != newOutputLocale
-        ):
-            self._results.addMessage(
-                f"Excel requested output locale resolved to '{newOutputLocale}'. Ignoring as already configured to use output locale: '{self._outputLocale}'",
-                Severity.INFO,
-                MessageType.Conversion,
-                excel_reference=languageCellReference,
-            )
-        else:
-            self._outputLocale = newOutputLocale
+        self._outputLocale = get_locale_from_str(bestOutputLocale)
 
     def _verifyEntryPoint(self) -> None:
         name = self._defaults.get("entryPoint", "")
