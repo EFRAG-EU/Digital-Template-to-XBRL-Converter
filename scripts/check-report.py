@@ -18,12 +18,12 @@ from mireport.conversionresults import (
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Check a report package is valid and create a viewer for it including any validation messages."
+        description="Check an XBRL report is valid and, optionally, and create a viewer for it including any validation messages."
     )
     parser.add_argument(
         "report_path",
         type=Path,
-        help="Path to the report package to be checked.",
+        help="Path to the report (bare XHTML file or XBRL report package) to be checked.",
     )
     parser.add_argument(
         "--taxonomy-packages",
@@ -42,7 +42,7 @@ def parse_args() -> argparse.Namespace:
         "--ignore-calculation-warnings",
         action=argparse.BooleanOptionalAction,
         default=False,
-        help="Ignore calculation warnings when validating the report package.",
+        help="Ignore calculation warnings when validating the XBRL report.",
     )
     parser.add_argument(
         "-v",
@@ -134,9 +134,9 @@ def main() -> None:
     if (args.verbose and results.userMessages) or results.hasErrorsOrWarnings():
         print()
         if results.hasErrors():
-            print("The report package has errors:")
+            print("The report has errors:")
         elif results.hasWarnings():
-            print("The report package has warnings:")
+            print("The report has warnings:")
         else:
             print("Messages:")
 
@@ -158,17 +158,17 @@ def final_word_and_exit(results: ConversionResults) -> None:
         case Severity.ERROR:
             exitCode = 1
             rich_print(
-                "[bold red]➡️ The XBRL report package is INVALID (has errors). Please check the output above.❌ "
+                "[bold red]➡️ The XBRL report is INVALID (has errors). Please check the output above.❌ "
             )
         case Severity.WARNING:
             exitCode = 0
             rich_print(
-                "[bold dark_orange]➡️ The XBRL report package is VALID but there are WARNINGS.⚠️ "
+                "[bold dark_orange]➡️ The XBRL report is VALID but there are WARNINGS.⚠️ "
             )
         case Severity.INFO:
             exitCode = 0
             rich_print(
-                "[bold green]➡️ The XBRL report package is VALID and has no errors or warnings.✅ "
+                "[bold green]➡️ The XBRL report is VALID and has no errors or warnings.✅ "
             )
     print()
     raise SystemExit(exitCode)

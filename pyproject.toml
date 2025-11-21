@@ -9,7 +9,7 @@ authors = [
 
 dependencies = [
     "aoix@git+https://code.blinkace.com/xbrl/aoix.git@feature-typed-dimensions",
-    "arelle-release>=2.37.37",
+    "arelle-release>=2.37.63",
     "babel>=2.17.0",
     "flask-session",
     "flask",
@@ -50,6 +50,7 @@ dev = [
     "pytest>=7.0.0",
     "ruff>=0.12.2",
     "safety>=3.2.9",
+    "types-lxml",
     "types-openpyxl",
     "types-python-dateutil",
     "types-Werkzeug",
