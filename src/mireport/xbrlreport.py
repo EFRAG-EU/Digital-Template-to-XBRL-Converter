@@ -29,6 +29,7 @@ from mireport.filesupport import (
     zipSafeString,
 )
 from mireport.localise import (
+    as_xmllang,
     decimal_symbol,
     get_locale_from_str,
     group_symbol,
