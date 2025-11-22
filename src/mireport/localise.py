@@ -1,5 +1,6 @@
 import argparse
 import logging
+from collections.abc import Set
 from decimal import Decimal
 from typing import Iterable, Optional
 
@@ -49,6 +50,23 @@ EU_LOCALES = {
 }
 
 
+def xmlLang_to_babelIdentifier(xmlLang: str) -> str:
+    """Convert an xml:lang value to a Babel locale identifier."""
+    return xmlLang.replace("-", "_")
+
+
+def babelIdentifier_to_xmlLang(babelId: str) -> str:
+    """Convert a Babel locale identifier to an xml:lang value."""
+    return babelId.replace("_", "-")
+
+
+def split_base_territory(locale_str: str) -> tuple[str, Optional[str]]:
+    """Split a locale string into base language and territory components."""
+    locale_str = babelIdentifier_to_xmlLang(locale_str)
+    baseLang, _, territory = locale_str.partition("-")
+    return baseLang, territory
+
+
 def argparse_locale(s: str) -> Locale:
     try:
         s = s.replace("-", "_")
@@ -66,16 +84,30 @@ def get_locale_from_str(s: str) -> Optional[Locale]:
         return None
 
 
-def get_locale_list(code_list: Iterable[str]) -> list[dict[str, str]]:
+def extract_base_languages(languages: Iterable) -> frozenset[str]:
+    """Extract base languages from a list of locale strings."""
+    base_languages = []
+    for lang in set(languages):
+        base_lang, _, _ = lang.partition("-")
+        base_languages.append(base_lang)
+    return frozenset(base_languages)
+
+
+def get_locale_list(
+    code_list: Iterable[str], supportedLanguages: Optional[Set[str]] = None
+) -> list[dict[str, str]]:
     locales: list[dict[str, str]] = []
     code_list = frozenset(code_list)
 
     max_code_length = max(len(code) for code in code_list)
     for code in code_list:
+        # Normalize to Babel's preferred format
+        normalized_code = xmlLang_to_babelIdentifier(code)
         try:
-            # Normalize to Babel's preferred format
-            normalized_code = code.replace("-", "_")
             loc = Locale.parse(normalized_code)
+
+            if supportedLanguages and loc.language not in supportedLanguages:
+                continue
 
             language = loc.get_language_name(loc)
             territory = loc.get_territory_name(loc)
@@ -170,6 +202,13 @@ def group_symbol(locale: Optional[Locale] = None) -> str:
         return get_group_symbol(locale)
     else:
         return ","
+
+
+def as_xmllang(locale: Locale) -> str:
+    xml_lang_parts = [locale.language]
+    if locale.territory:
+        xml_lang_parts.append(locale.territory)
+    return "-".join(xml_lang_parts)
 
 
 def getBestSupportedLanguage(
