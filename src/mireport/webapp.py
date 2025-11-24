@@ -22,6 +22,7 @@ from flask import (
 )
 from flask_session import Session  # type: ignore
 
+import mireport
 from mireport import loadTaxonomyJSON
 from mireport.arelle.report_info import (
     ARELLE_VERSION_INFORMATION,
@@ -38,14 +39,19 @@ from mireport.excelprocessor import (
     ExcelProcessor,
 )
 from mireport.filesupport import FilelikeAndFileName, ImageFileLikeAndFileName
-from mireport.localise import EU_LOCALES, get_locale_from_str, get_locale_list
+from mireport.localise import (
+    EU_LOCALES,
+    extract_base_languages,
+    get_locale_from_str,
+    get_locale_list,
+)
+from mireport.taxonomy import getTaxonomy, listTaxonomies
 
 ENABLE_CAPTCHA = False
 MAX_FILE_SIZE = 16 * 2**20  # 16 MiB
 DEPLOYMENT_DATETIME = datetime.now(timezone.utc)
-DEPLOYMENT_DATETIME_FOR_URL = DEPLOYMENT_DATETIME.strftime("%Y%m%dT%H%M%SZ")
+
 L = logging.getLogger(__name__)
-LOCALES_CACHE = get_locale_list(EU_LOCALES)
 
 convert_bp = Blueprint(
     "basic", __name__, template_folder="templates", static_folder="static"
@@ -142,7 +148,7 @@ def create_app() -> Flask:
     )
     if offline:
         L.info(
-            f"Configured to use Arelle offline with {len(taxonomyPackageList)} taxonomy packages: [{', '.join(repr(a) for a in sorted(taxonomyPackageList))}]"
+            f"Configured to use Arelle offline with {len(taxonomyPackageList)} taxonomy packages: [{', '.join(str(a) for a in sorted(taxonomyPackageList))}]"
         )
 
     # Install enumeration classes for use in templates
@@ -259,10 +265,17 @@ def add_deployment_header(response: Response) -> Response:
     return response
 
 
-@convert_bp.route(f"/locales/available_{DEPLOYMENT_DATETIME_FOR_URL}")
+@convert_bp.route(f"/locales/available_{mireport.__version__}")
 def available_locales() -> Response:
-    resp = make_response(jsonify(LOCALES_CACHE))
-    resp.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+    allPossibleTaxonomyLanguages: set[str] = {
+        lang for ep in listTaxonomies() for lang in getTaxonomy(ep).supportedLanguages
+    }
+    localeMetadata = get_locale_list(
+        EU_LOCALES,
+        supportedLanguages=extract_base_languages(allPossibleTaxonomyLanguages),
+    )
+    resp = make_response(jsonify(localeMetadata))
+    resp.headers["Cache-Control"] = "public, max-age=86400"
     return resp
 
 
