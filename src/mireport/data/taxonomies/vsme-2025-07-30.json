@@ -16620,6 +16620,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Pr\u00e9vention des accidents [member]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Prevenzione degli infortuni [member]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Nelaiming\u0173 atsitikim\u0173 prevencija [member]"
         },
@@ -16653,6 +16656,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Informations suppl\u00e9mentaires sur le personnel \u2013 Politiques et processus en mati\u00e8re de droits de l\u2019homme [abstract]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Altre informazioni sulla forza lavoro propria \u2013 Politiche e procedure in materia di diritti umani [abstract]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Papildoma su savo darbuotojais susijusi informacija \u2013 \u017emogaus teisi\u0173 politikos ir procesai [abstract]"
         },
@@ -16685,6 +16691,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Informations suppl\u00e9mentaires sur le personnel \u2013 Sant\u00e9 et s\u00e9curit\u00e9 [abstract]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Ulteriore salute e sicurezza (forza lavoro) [abstract]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Papildom\u0173 darbuotoj\u0173 sveikata ir sauga [abstract]"
@@ -16723,6 +16732,10 @@
           "http://www.xbrl.org/2003/role/documentation": "Nom, rue, num\u00e9ro de maison, num\u00e9ro de b\u00e2timent",
           "http://www.xbrl.org/2003/role/label": "Adresse du site"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/documentation": "Nome, via, numero civico, numero edificio",
+          "http://www.xbrl.org/2003/role/label": "Indirizzo del sito"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/documentation": "Objekto pavadinimas, gatv\u0117, namo numeris, pastato numeris",
           "http://www.xbrl.org/2003/role/label": "Objekto adresas"
@@ -16758,6 +16771,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Communaut\u00e9s affect\u00e9es [member]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Comunit\u00e0 interessate [member]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Paveikiamos bendruomen\u0117s [member]"
@@ -16816,6 +16832,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Tous les pays / NI [member]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Tutti i paesi / ND [member]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Visos \u0161alys / N/A (netaikoma) [member]"
         },
@@ -16861,6 +16880,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Quantit\u00e9 de rejets [abstract]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Quantit\u00e0 di emissione [abstract]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "I could not find a direct translation of the exact phrase \"Amount of emission\" as a label in the Lithuanian context file provided. However, based on the context of emissions and environmental terminology in Lithuanian from the files, a usual translation for \"Amount of emission\" would be:\n\n\"I\u0161metam\u0173j\u0173 ter\u0161al\u0173 kiekis\"\n\nThis phrase preserves the meaning, using commonly understood terms for \"amount\" (kiekis) and \"emission\" (i\u0161metamieji ter\u0161alai/ter\u0161alai). [abstract]"
         },
@@ -16894,6 +16916,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Quantit\u00e9 de rejets [line items]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Quantit\u00e0 di emissione [line items]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "I found the Lithuanian translation relevant to \"Amount of emission\" in the Lithuanian context file. The phrase is translated as \"I\u0161metam\u0173j\u0173 ter\u0161al\u0173 kiekis\" which corresponds to the English meaning of the amount or quantity of emissions.\n\nTranslation: I\u0161metam\u0173j\u0173 ter\u0161al\u0173 kiekis [line items]"
         },
@@ -16926,6 +16951,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Quantit\u00e9 de rejets dans l'air"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Quantit\u00e0 di emissioni nell'aria"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "I\u0161lak\u0173 kiekis"
@@ -16961,6 +16989,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Quantit\u00e9 de rejets dans les sols"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Quantit\u00e0 di emissioni nel suolo"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "I\u0161metam\u0173j\u0173 ter\u0161al\u0173 kiekis \u012f dirvo\u017eem\u012f"
         },
@@ -16994,6 +17025,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Quantit\u00e9 de rejets dans l'eau"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Quantit\u00e0 di emissioni nell'acqua"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "I\u0161metam\u0173j\u0173 ter\u0161al\u0173 kiekis \u012f vanden\u012f"
@@ -17030,6 +17064,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Quantit\u00e9 de rejets [table]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Quantit\u00e0 di emissioni [table]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "I found the phrase \"Amount of emissions\" in the Lithuanian translation file ( ) matching the English context. According to the content and typical corporate environmental reporting terminology in Lithuanian, the best suitable translation for \"Amount of emissions\" is:\n\n\"I\u0161metam\u0173 ter\u0161al\u0173 kiekis\" [table]"
         },
@@ -17062,6 +17099,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Quantit\u00e9 d\u2019eau pr\u00e9lev\u00e9e sur les sites qui se situent dans des zones expos\u00e9es \u00e0 un stress hydrique \u00e9lev\u00e9"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Quantit\u00e0 di acqua prelevata presso siti ubicati in aree ad elevato stress idrico"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Imamo vandens kiekis vietose, esan\u010diose didelio vandens stygiaus zonose"
@@ -17096,6 +17136,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Flux massique annuel des mati\u00e8res utilis\u00e9es par l'entreprise [abstract]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Flusso di massa annuo dei materiali utilizzati dall'impresa [abstract]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "\u012emon\u0117s naudojam\u0173 med\u017eiag\u0173 metinis mas\u0117s srautas [abstract]"
@@ -17141,6 +17184,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Surface du site situ\u00e9 dans une zone sensible pour la biodiversit\u00e9"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Superficie del sito all'interno di un'area sensibile sotto il profilo della biodiversit\u00e0"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Objekto plotas biologinei \u012fvairovei jautrioje teritorijoje"
@@ -17209,6 +17255,11 @@
           "http://www.xbrl.org/2003/role/totalLabel": "Total des actifs",
           "http://www.xbrl.org/2003/role/verboseLabel": "Total du bilan (total des actifs)"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Attivit\u00e0",
+          "http://www.xbrl.org/2003/role/totalLabel": "Totale attivo",
+          "http://www.xbrl.org/2003/role/verboseLabel": "Entit\u00e0 dello stato patrimoniale (totale degli attivi)"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Turtas",
           "http://www.xbrl.org/2003/role/totalLabel": "Bendrasis turtas",
@@ -17248,6 +17299,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "\u00c0 la fin de la p\u00e9riode de reporting [member]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Alla fine del periodo di rendicontazione [member]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Ataskaitinio laikotarpio pabaigoje [member]"
@@ -17294,6 +17348,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Moyenne pendant la p\u00e9riode de reporting [member]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Media durante il periodo di riferimento [member]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Vidurkis ataskaitiniame laikotarpyje [member]"
         },
@@ -17325,6 +17382,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Nombre moyen d\u2019heures annuelles de formation par salari\u00e9 femme"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Numero medio annuo di ore di formazione per dipendente di sesso femminile"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Vidutinis metinis mokym\u0173 valand\u0173 skai\u010dius vienam darbuotojui (moteriai)"
@@ -17359,6 +17419,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Nombre moyen d\u2019heures annuelles de formation par salari\u00e9 homme"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Numero medio annuo di ore di formazione per dipendente di sesso maschile"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Vidutinis metinis mokym\u0173 valand\u0173 skai\u010dius vienam darbuotojui (vyrui)"
         },
@@ -17392,6 +17455,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Nombre moyen d\u2019heures annuelles de formation par salari\u00e9 dont le genre n'est pas communiqu\u00e9"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Numero medio annuo di ore di formazione per dipendente di genere non comunicato"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Vidutinis metinis mokym\u0173 valand\u0173 skai\u010dius vienam neatskleistos lyties darbuotojui"
         },
@@ -17424,6 +17490,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Nombre moyen d\u2019heures annuelles de formation par salari\u00e9 d\u2019un autre genre"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Numero medio annuo di ore di formazione per dipendente di altro genere"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Vidutinis metinis mokym\u0173 valand\u0173 skai\u010dius vienam kitos lyties darbuotojui"
@@ -17459,6 +17528,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "B1 \u2013 Base de pr\u00e9paration [member]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "B1 \u2013 Criteri per la redazione [member]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "B1. Ataskaitos rengimo pagrindas [member]"
         },
@@ -17491,6 +17563,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "B10 \u2013 Personnel \u2013 R\u00e9mun\u00e9ration, n\u00e9gociation collective et formation [member]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "B10 - Forza lavoro - Retribuzione, contrattazione collettiva e formazione [member]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "B10 - Sava darbo j\u0117ga - Atlyginimas, kolektyvin\u0117s derybos ir mokymai [member]"
@@ -17525,6 +17600,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "B11 - Condamnations et amendes pour corruption et pots-de-vin [member]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "B11 - Condanne e ammende per corruzione attiva e passiva [member]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "B11 \u2013 Nuosprend\u017eiai ir baudos u\u017e korupcij\u0105 ir ky\u0161ininkavim\u0105 [member]"
         },
@@ -17557,6 +17635,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "B2 \u2013 Pratiques, politiques et initiatives futures en vue de la transition vers une \u00e9conomie plus durable [member]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "B2 \u2013 Pratiche, politiche e iniziative future per la transizione verso un'economia pi\u00f9 sostenibile [member]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "B2 \u2013 Praktikos, politikos ir b\u016bsimieji iniciatyvos pereinant prie tvaresn\u0117s ekonomikos [member]"
@@ -17591,6 +17672,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "B3 \u2013 \u00c9nergie et \u00e9missions de gaz \u00e0 effet de serre [member]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "B3 \u2013 Energia ed emissioni di gas a effetto serra [member]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "B3 \u2013 Energija ir \u0161iltnamio efekt\u0105 sukelian\u010di\u0173 duj\u0173 kiekis [member]"
         },
@@ -17623,6 +17707,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "B4 \u2013 Pollution de l\u2019air, de l\u2019eau et des sols [member]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "B4 \u2013 Inquinamento di aria, acqua e suolo [member]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "B4 - Oro, vandens ir dirvo\u017eemio tar\u0161a [member]"
@@ -17657,6 +17744,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "B5 \u2013 Biodiversit\u00e9 [member]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "B5 \u2013 Biodiversit\u00e0 [member]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "B5 \u2013 Biologin\u0117 \u012fvairov\u0117 [member]"
         },
@@ -17689,6 +17779,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "B6 \u2013 Eau [member]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "B6 \u2013 Acque [member]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "B6. Vanduo [member]"
@@ -17723,6 +17816,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "B7 \u2013 Utilisation des ressources, \u00e9conomie circulaire et gestion des d\u00e9chets [member]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "B7 \u2013 Uso delle risorse, economia circolare e gestione dei rifiuti [member]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "B7 - I\u0161tekli\u0173 naudojimas, \u017eiedin\u0117 ekonomika ir atliek\u0173 tvarkymas [member]"
         },
@@ -17755,6 +17851,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "B8 \u2013 Personnel \u2013 Caract\u00e9ristiques g\u00e9n\u00e9rales [member]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Forza lavoro \u2013 Caratteristiche generali [member]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "B8 - Sava darbo j\u0117ga - Bendrieji rodikliai [member]"
@@ -17789,6 +17888,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "B9 \u2013 Personnel \u2013 Sant\u00e9 et s\u00e9curit\u00e9 [member]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "B9 \u2013 Forza lavoro \u2013 Salute e sicurezza [member]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "B9 - Sava darbo j\u0117ga - Sveikata ir sauga [member]"
         },
@@ -17822,6 +17924,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Ann\u00e9e de r\u00e9f\u00e9rence [member]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Anno base [member]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Baziniai metai [member]"
         },
@@ -17853,6 +17958,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Base de pr\u00e9paration (Module de base uniquement ou Module de base et module complet)"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Criteri per la redazione (solo modulo base o modulo base e modulo onnicomprensivo)"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Pagrindas parengimui (tik bazinis modulis arba bazinis ir i\u0161samusis modulis)"
@@ -17893,6 +18001,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Base de pr\u00e9paration [abstract]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Criteri per la redazione [abstract]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Ataskaitos rengimo pagrindas [abstract]"
         },
@@ -17926,6 +18037,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Base de pr\u00e9paration [member]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Criteri per la redazione [member]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Ataskaitos rengimo pagrindas [member]"
         },
@@ -17957,6 +18071,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Base de pr\u00e9sentation (consolid\u00e9e ou individuelle)"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Base per la redazione (su base consolidata o individuale)"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Atskaitomyb\u0117s pagrindas (konsoliduota ar individuali)"
@@ -17996,6 +18113,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Base de pr\u00e9paration [member]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Base per la redazione [member]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Ataskaitos rengimo pagrindas [member]"
@@ -18054,6 +18174,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Biodiversit\u00e9 et \u00e9cosyst\u00e8mes [member]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Biodiversit\u00e0 ed ecosistemi [member]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Biologin\u0117 \u012fvairov\u0117 ir ekosistemos [member]"
         },
@@ -18086,6 +18209,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Biodiversit\u00e9 \u2013 Indicateurs relatifs \u00e0 l\u2019utilisation des terres [abstract]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Biodiversit\u00e0 - Metriche sull'uso del suolo [abstract]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Bio\u012fvairov\u0117 \u2013 \u017dem\u0117s naudojimo rodikliai [abstract]"
@@ -18121,6 +18247,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Ventilation du flux massique annuel des mati\u00e8res utilis\u00e9es par l'entreprise [table]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Ripartizione del flusso di massa annuo dei materiali utilizzati dall'impresa [table]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "\u012emon\u0117s naudojam\u0173 med\u017eiag\u0173 metinio mas\u0117s srauto suskirstymas [table]"
         },
@@ -18154,6 +18283,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Ventilation du flux massique annuel des mati\u00e8res utilis\u00e9es par l'entreprise [line items]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Ripartizione del flusso di massa annuo dei materiali utilizzati dall'impresa [line items]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "\u012emon\u0117s naudojam\u0173 med\u017eiag\u0173 metinio mas\u0117s srauto suskirstymas [line items]"
         },
@@ -18186,6 +18318,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Ventilation de la consommation d\u2019\u00e9nergie [abstract]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Ripartizione del consumo di energia [abstract]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Suvartotos energijos paskirstymas [abstract]"
@@ -18221,6 +18356,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Ventilation de la consommation d\u2019\u00e9nergie [axis]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Ripartizione del consumo di energia [axis]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Energijos vartojimo paskirstymas [axis]"
         },
@@ -18253,6 +18391,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Ventilation de la consommation d\u2019\u00e9nergie [line items]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Ripartizione del consumo di energia [line items]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Suvartotos energijos paskirstymas [line items]"
@@ -18287,6 +18428,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Ventilation de la consommation d\u2019\u00e9nergie [table]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Ripartizione del consumo di energia [table]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Suvartotos energijos paskirstymas [table]"
@@ -18333,6 +18477,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Conduite des affaires [member]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Condotta delle imprese [member]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Verslo etika [member]"
         },
@@ -18365,6 +18512,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "C1 \u2013 Strat\u00e9gie : mod\u00e8le \u00e9conomique et durabilit\u00e9 \u2013 initiatives associ\u00e9es [member]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "C1 - Strategia: modello aziendale e iniziative connesse alla sostenibilit\u00e0 [member]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "C1 \u2013 Strategija: verslo modelis ir su tvarumu susijusios iniciatyvos [member]"
@@ -18399,6 +18549,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "C2 \u2013 Description des pratiques, politiques et initiatives futures en vue de la transition vers une \u00e9conomie plus durable [member]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "C2 \u2013 Descrizione delle pratiche, delle politiche e delle iniziative future per la transizione verso un'economia pi\u00f9 sostenibile [member]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "C2 - Per\u0117jimo prie tvaresn\u0117s ekonomikos praktikos, politikos ir b\u016bsim\u0173 iniciatyv\u0173 apra\u0161ymas [member]"
         },
@@ -18431,6 +18584,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "C3 \u2013 Cibles de r\u00e9duction des \u00e9missions de GES et transition climatique [member]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "C3 \u2013 Obiettivi di riduzione delle emissioni di gas a effetto serra e transizione climatica [member]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "C3 \u2013 \u0160ESD emisij\u0173 ma\u017einimo tikslai ir klimato per\u0117jimo planas [member]"
@@ -18465,6 +18621,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "C4 \u2013 Risques climatiques [member]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "C4 \u2013 Rischi climatici [member]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "C4 \u2013 Klimato rizikos [member]"
         },
@@ -18497,6 +18656,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "C5 \u2013 Caract\u00e9ristiques suppl\u00e9mentaires (g\u00e9n\u00e9rales) du personnel [member]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "C5 \u2013 Altre caratteristiche (generali) della forza lavoro [member]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "C5.\u00a0\u00a0\u00a0Papildomi (bendrieji) savo darbo j\u0117gos rodikliai [member]"
@@ -18531,6 +18693,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "C6 \u2013 Informations suppl\u00e9mentaires sur le personnel \u2013 Politiques et proc\u00e9dures en mati\u00e8re de droits de l\u2019homme [member]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "C6 \u2013 Altre informazioni sulla forza lavoro propria \u2013 Politiche e procedure in materia di diritti umani [member]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "C6 - Papildoma su darbuotojais susijusi informacija. \u017dmogaus teisi\u0173 politika ir procesai [member]"
         },
@@ -18563,6 +18728,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "C7 \u2013 Incidents graves en mati\u00e8re de droits de l\u2019homme [member]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "C7 \u2013 Incidenti gravi in materia di diritti umani [member]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "C7 - Dideli neigiami incidentai \u017emogaus teisi\u0173 srityje [member]"
@@ -18597,6 +18765,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "C8 \u2013 Chiffre d\u2019affaires de certains secteurs et exclusion des indices de r\u00e9f\u00e9rence de l\u2019Union europ\u00e9enne [member]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "C8 \u2013 Ricavi da determinate attivit\u00e0 ed esclusione dagli indici di riferimento dell'UE [member]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "C8 \u2013 Pajamos i\u0161 tam tikr\u0173 sektori\u0173 ir ne\u012ftraukimas \u012f ES lyginamuosius etalonus [member]"
         },
@@ -18629,6 +18800,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "C9 \u2013 Ratio de mixit\u00e9 au sein de l\u2019organe de gouvernance [member]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "C9 \u2013 Diversit\u00e0 di genere nell'organo di governance [member]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "C9 - Ly\u010di\u0173 \u012fvairov\u0117s rodiklis valdymo organe [member]"
@@ -18698,6 +18872,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Travail des enfants [member]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Lavoro minorile [member]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Vaik\u0173 darbas [member]"
@@ -18840,6 +19017,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "\u00c9conomie circulaire [member]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Economia circolare [member]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "\u017diedin\u0117 ekonomika [member]"
         },
@@ -18871,6 +19051,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Ville du site"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Citt\u00e0 del sito"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Objekto miestas"
@@ -18905,6 +19088,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Changement climatique [member]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Cambiamenti climatici [member]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Klimato kaita [member]"
         },
@@ -18937,6 +19123,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Risques climatiques [abstract]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Rischi climatici [abstract]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Klimato rizikos [abstract]"
@@ -18971,6 +19160,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Consolid\u00e9 [member]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Consolidato [member]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Konsoliduotas [member]"
         },
@@ -19003,6 +19195,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Consommateurs et utilisateurs finaux [member]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Consumatori e utilizzatori finali [member]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Vartotojai ir galutiniai naudotojai [member]"
@@ -19037,6 +19232,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Condamnations et amendes pour corruption et versement de pots-de-vin [abstract]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Condanne e ammende per corruzione attiva e passiva [abstract]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Nuosprend\u017eiai ir baudos d\u0117l korupcijos ir ky\u0161ininkavimo [abstract]"
         },
@@ -19070,6 +19268,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Coop\u00e9rative [member]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Cooperativa [member]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Kooperatyvas [member]"
         },
@@ -19102,6 +19303,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Informations sp\u00e9cifiques aux coop\u00e9ratives [abstract]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "\"Comunicazioni specifiche delle cooperative\" [abstract]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Kooperatyvui taikomi atskleidimai [abstract]"
@@ -19149,6 +19353,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Pays du contrat de travail [axis]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Paese del contratto di lavoro [axis]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "\u0160alis, kurioje sudaryta darbo sutartis [axis]"
         },
@@ -19180,6 +19387,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Pays o\u00f9 sont exerc\u00e9es les activit\u00e9s principales et localisation des actifs pr\u00e9sentant un int\u00e9r\u00eat significatif"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Paese delle operazioni primarie e ubicazione degli attivi significativi"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Pagrindini\u0173 veikl\u0173 \u0161alis ir reik\u0161mingo turto buvimo vieta"
@@ -19472,6 +19682,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Pays du site"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Paese del sito"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Objekto \u0161alis"
@@ -19766,6 +19979,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Actuellement indiqu\u00e9 [member]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Attualmente dichiarato [member]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "\u0160iuo metu nurodyta [member]"
         },
@@ -19822,6 +20038,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Date d\u2019adoption du plan de transition pour l\u2019entreprise n\u2019ayant pas encore adopt\u00e9 de plan de transition"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Data di adozione del piano di transizione per l\u2019impresa che non ha ancora adottato un piano di transizione"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Planuojama per\u0117jimo plano patvirtinimo data, jei dar nepatvirtinta"
         },
@@ -19853,6 +20072,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Description des cibles des pratiques, politiques ou initiatives futures"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Descrizione dell'obiettivo delle pratiche, politiche o iniziative future"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Per\u0117jimo prie tvaresn\u0117s ekonomikos praktik\u0173, politikos ar b\u016bsim\u0173 iniciatyv\u0173 tiksl\u0173 apra\u0161ymas"
@@ -19886,6 +20108,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Description d\u2019un plan de transition pour l\u2019att\u00e9nuation du changement climatique comprenant une explication de la mani\u00e8re dont il contribue \u00e0 r\u00e9duire les \u00e9missions de gaz \u00e0 effet de serre (GES)"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Descrizione di un piano di transizione per la mitigazione dei cambiamenti climatici, compresa una spiegazione del modo in cui il piano sta contribuendo a ridurre le emissioni di gas a effetto serra"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Per\u0117jimo plano klimato kaitos \u0161velninimui apra\u0161ymas, \u012fskaitant paai\u0161kinim\u0105, kaip jis prisideda prie \u0160ESD emisij\u0173 ma\u017einimo."
         },
@@ -19917,6 +20142,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Description des actions mises en \u0153uvre pour g\u00e9rer les incidents confirm\u00e9s"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Descrizione delle azioni intraprese in risposta agli incidenti confermati"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Apra\u0161ymai, koki\u0173 veiksm\u0173 imtasi patvirtintiems incidentams spr\u0119sti"
@@ -19951,6 +20179,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Description des principes de l\u2019\u00e9conomie circulaire [abstract]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Descrizione del principio di economia circolare [abstract]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "\u017diedin\u0117s ekonomikos principo apra\u0161ymas [abstract]"
         },
@@ -19982,6 +20213,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Description des al\u00e9as li\u00e9s au changement climatique et \u00e9v\u00e9nements li\u00e9s \u00e0 la transition climatique"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Descrizione dei pericoli ed eventi di transizione legati al clima"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Su klimatu susijusi\u0173 ir pereinamojo laikotarpio rizik\u0173 apra\u0161ymas"
@@ -20015,6 +20249,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Description de la mani\u00e8re dont les principes de l\u2019\u00e9conomie circulaire sont appliqu\u00e9s"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Descrizione di come sono applicati i principi dell'economia circolare"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Apra\u0161ymas, kaip taikomi \u017eiedin\u0117s ekonomikos principai"
         },
@@ -20047,6 +20284,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Description des principaux \u00e9l\u00e9ments de la strat\u00e9gie qui se rattachent \u00e0 des enjeux de durabilit\u00e9 ou qui les influencent"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Descrizione degli elementi chiave della strategia che riguardano o hanno ripercussioni su questioni attinenti alla sostenibilit\u00e0"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Strategijos pagrindini\u0173 element\u0173, susijusi\u0173 su tvarumo klausimais arba juos veikian\u010di\u0173, apra\u0161ymas"
         },
@@ -20078,6 +20318,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Description des limites \u00e0 la distribution des b\u00e9n\u00e9fices li\u00e9es \u00e0 la nature mutualiste ou \u00e0 la nature des activit\u00e9s consistant en des services d\u2019int\u00e9r\u00eat \u00e9conomique g\u00e9n\u00e9ral (SIEG)"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Descrizione dei limiti alla distribuzione degli utili connessi alla natura mutualistica o alla natura delle attivit\u00e0 che consistono in servizi di interesse economico generale (SIEG)"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Pelno paskirstymo apribojim\u0173, susijusi\u0173 su vie\u0161uoju interesu arba su veikla, kuri sudaro bendrojo ekonominio intereso paslaug\u0105 (SGEI), apra\u0161ymas"
@@ -20112,6 +20355,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Description des principales relations d\u2019affaires (par ex. principaux fournisseurs, clients, canaux de distribution)"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Descrizione dei principali rapporti commerciali (ad esempio fornitori, clienti, canali di distribuzione chiave)"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Apra\u0161ymas apie pagrindinius verslo santykius (pvz., pagrindiniai tiek\u0117jai, klientai, platinimo kanalai)"
         },
@@ -20145,6 +20391,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Description des pratiques, politiques et initiatives futures en vue de la transition vers une \u00e9conomie plus durable [abstract]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Descrizione delle pratiche, delle politiche e delle iniziative future per la transizione verso un'economia pi\u00f9 sostenibile [abstract]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Per\u0117jimo prie tvaresn\u0117s ekonomikos praktik\u0173, politikos ir b\u016bsim\u0173 iniciatyv\u0173 apra\u0161ymas [abstract]"
         },
@@ -20177,6 +20426,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Description des pratiques, politiques et/ou initiatives futures"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Descrizione di pratiche, politiche e/o iniziative future"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Per\u0117jimo prie tvaresn\u0117s ekonomikos praktikos, politikos ir (arba) b\u016bsim\u0173 iniciatyv\u0173 apra\u0161ymas"
         },
@@ -20208,6 +20460,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Description des grands groupes de produits et/ou services propos\u00e9s"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Descrizione dei gruppi significativi di prodotti e/o servizi offerti"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Apra\u0161ymas apie reik\u0161mingus si\u016blomus produktus ir (arba) paslaug\u0173 grupes"
@@ -20242,6 +20497,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Description du ou des grands march\u00e9s sur lesquels l'entreprise exerce ses activit\u00e9s"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Descrizione del/i mercato/i significativo/i in cui l'impresa opera"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Apra\u0161ymas apie reik\u0161mingas rinkas (-\u0173), kuriose veikia \u012fmon\u0117"
         },
@@ -20275,6 +20533,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Description br\u00e8ve de la ou des certification(s) ou label(s) li\u00e9s \u00e0 la durabilit\u00e9"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Descrizione della/e certificazione/i o marchio/i di sostenibilit\u00e0"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Tvarumo sertifikato(-\u0173) arba \u017eenklo(-\u0173) apra\u0161ymas"
         },
@@ -20306,6 +20567,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Description de la participation effective des travailleurs, des utilisateurs ou d'autres parties ou communaut\u00e9s int\u00e9ress\u00e9es \u00e0 la gouvernance"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Descrizione della partecipazione effettiva alla governancedei lavoratori, degli utilizzatori e altre parti o comunit\u00e0 interessate"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Darbuotoj\u0173, naudotoj\u0173 ar kit\u0173 suinteresuot\u0173j\u0173 \u0161ali\u0173 / bendruomeni\u0173 dalyvavimo valdymo procesuose apra\u0161ymas."
@@ -20387,6 +20651,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Publication de toute autre information environnementale et/ ou sp\u00e9cifique \u00e0 l'entit\u00e9"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Comunicazione di qualsiasi altra informativa ambientale e/o specifica per soggetto"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Bet kokios kitos aplinkosaugos ir/ar \u012fmon\u0117s specifin\u0117s aplinkosaugos informacijos atskleidimas"
         },
@@ -20418,6 +20685,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Publication de toute autre information g\u00e9n\u00e9rale et/ou sp\u00e9cifique \u00e0 l\u2019entit\u00e9"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Comunicazione di qualsiasi altra informazione generale e/o specifica per soggetto"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Kita bendroji / \u012fmonei specifin\u0117 informacija"
@@ -20451,6 +20721,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Publication de toute autre information de gouvernance et/ ou sp\u00e9cifique \u00e0 l'entit\u00e9"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Comunicazione di qualsiasi altra informativa sulla governance e/o specifica per soggetto"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Bet kokios kitos valdysenos ir/ar \u012fmon\u0117s specifin\u0117s valdysenos informacijos atskleidimas"
         },
@@ -20482,6 +20755,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Publication de toute autre information sociale et/ ou sp\u00e9cifique \u00e0 l'entit\u00e9"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Comunicazione di qualsiasi altra informativa sociale e/o specifica per soggetto"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Bet kokios kitos socialin\u0117s ir/ar \u012fmon\u0117s specifin\u0117s socialin\u0117s informacijos atskleidimas"
@@ -20515,6 +20791,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Information sur comment elle a \u00e9valu\u00e9 l\u2019exposition et la sensibilit\u00e9 de ses actifs, de ses activit\u00e9s et de sa cha\u00eene de valeur \u00e0 ces al\u00e9as et \u00e0 ces \u00e9v\u00e9nements li\u00e9s \u00e0 la transition"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Comunicazione del modo in cui ha valutato l'esposizione e la sensibilit\u00e0 dei suoi attivi, delle sue attivit\u00e0 e della sua catena del valore a tali pericoli ed eventi di transizione"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Atskleidimas, kaip \u012fvertintas turto, veiklos ir vert\u0117s grandin\u0117s poveikio mastas ir jautrumas klimato ir pereinamojo laikotarpio rizikoms."
         },
@@ -20546,6 +20825,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Publication de la liste des principales actions que l'entreprise entend mettre en \u0153uvre pour atteindre ses cibles"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Elenco delle principali azioni che l'impresa intende attuare per conseguire i propri obiettivi"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Pagrindini\u0173 veiksm\u0173, kuriuos \u012fmon\u0117 numato/ketina vykdyti savo tikslams pasiekti, s\u0105ra\u0161o atskleidimas"
@@ -20580,6 +20862,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Publication de la liste des principales actions que l'entreprise entend mettre en \u0153uvre pour atteindre ses cibles [abstract]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Elenco delle principali azioni che l'impresa intende attuare per conseguire i propri obiettivi [abstract]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Pagrindini\u0173 veiksm\u0173, kuriuos \u012fmon\u0117 numato/ketina vykdyti savo tikslams pasiekti, s\u0105ra\u0161o atskleidimas [abstract]"
         },
@@ -20611,6 +20896,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Indication si elle a entrepris des actions d\u2019adaptation au changement climatique pour les al\u00e9as li\u00e9s au changement climatique et les \u00e9v\u00e9nements li\u00e9s \u00e0 la transition climatique"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Comunicazione se ha intrapreso azioni di adattamento ai cambiamenti climatici per eventuali pericoli ed eventi di transizione legati al clima"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Atskleidimas, ar \u012fmon\u0117 \u0117m\u0117si veiksm\u0173 prisitaikyti prie klimato kaitos d\u0117l bet koki\u0173 su klimatu susijusi\u0173 ir pereinamojo laikotarpio rizik\u0173."
@@ -20644,6 +20932,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Discrimination [member]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Discriminazione [member]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Diskriminacija [member]"
@@ -20701,6 +20992,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "M\u00e9thodologie de comptage des effectifs"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Metodologia di conteggio dei dipendenti"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Darbuotoj\u0173 skai\u010diavimo metodika"
         },
@@ -20740,6 +21034,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "M\u00e9thodologie de comptage des salari\u00e9s [member]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Metodologia di conteggio dei dipendenti [member]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Darbuotoj\u0173 skai\u010diavimo metodika [member]"
         },
@@ -20772,6 +21069,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Taux de rotation du personnel"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Tasso di avvicendamento dei dipendenti"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Darbuotoj\u0173 kaitos rodiklis"
@@ -20806,6 +21106,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Les salari\u00e9s per\u00e7oivent une r\u00e9mun\u00e9ration \u00e9gale ou sup\u00e9rieure au salaire minimum d\u00e9termin\u00e9 par la l\u00e9gislation nationale ou par une convention collective"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "I dipendenti percepiscono una retribuzione pari o superiore al salario minimo determinato dal diritto nazionale o mediante contrattazione collettiva"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Darbuotojai gauna u\u017emokest\u012f, kuris yra lygus arba auk\u0161tesnis u\u017e \u0161alyje nustatyt\u0105 minimal\u0173j\u012f darbo u\u017emokest\u012f pagal nacionalin\u012f \u012fstatym\u0105 arba kolektyvin\u0119 sutart\u012f."
         },
@@ -20838,6 +21141,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Taux de rotation du personnel [abstract]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Tasso di avvicendamento dei dipendenti [abstract]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Darbuotoj\u0173 kaitos rodiklis [abstract]"
@@ -20901,6 +21207,10 @@
           "http://www.xbrl.org/2003/role/documentation": "\u00c9lectricit\u00e9 (telle qu\u2019indiqu\u00e9e sur les factures de consommation courante)",
           "http://www.xbrl.org/2003/role/label": "Consommation d'\u00e9nergie provenant de l'\u00e9lectricit\u00e9"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/documentation": "Energia elettrica (secondo quanto risulta dalle bollette)",
+          "http://www.xbrl.org/2003/role/label": "Consumo di energia elettrica"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/documentation": "Kaip atsispindi komunalini\u0173 paslaug\u0173 s\u0105skaitose",
           "http://www.xbrl.org/2003/role/label": "Elektros energijos suvartojimas"
@@ -20937,6 +21247,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Consommation d'\u00e9nergie provenant des combustibles"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Consumo di energia da combustibili"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Energijos suvartojimas i\u0161 degal\u0173"
         },
@@ -20969,6 +21282,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Consommation d'\u00e9nergie provenant de l'\u00e9lectricit\u00e9 auto-produite"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Consumo di energia da energia elettrica autoprodotta"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Energijos suvartojimas i\u0161 savos gamybos elektros energijos"
@@ -21004,6 +21320,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Estimation des \u00e9missions de gaz \u00e0 effet de serre (GES) [abstract]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Emissioni stimate di gas a effetto serra [abstract]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Apskai\u010diuotos \u0161iltnamio efekt\u0105 sukelian\u010di\u0173 duj\u0173 kiekis [abstract]"
         },
@@ -21036,6 +21355,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Estimation des \u00e9missions de gaz \u00e0 effet de serre [line items]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Emissioni stimate di gas a effetto serra [line items]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Apskai\u010diuotas \u0161iltnamio efekt\u0105 sukelian\u010di\u0173 duj\u0173 (\u0160ESD) kiekis [line items]"
@@ -21070,6 +21392,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Estimation des \u00e9missions de gaz \u00e0 effet de serre (GES) [table]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Emissioni stimate di gas a effetto serra [table]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Apskai\u010diuotos \u0161iltnamio efekt\u0105 sukelian\u010di\u0173 duj\u0173 kiekis [table]"
@@ -21128,6 +21453,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Exclusion des indices de r\u00e9f\u00e9rence de l'UE [abstract]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Esclusione dagli indici di riferimento dell'UE [abstract]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "I\u0161braukimas i\u0161 ES lyginam\u0173j\u0173 etalon\u0173 [abstract]"
         },
@@ -21160,6 +21488,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Ratio de femmes par rapport aux hommes au niveau de l\u2019encadrement pour la p\u00e9riode de reporting"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Rapporto tra donne e uomini a livello dirigenziale per il periodo di riferimento"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Vadov\u0173 lygmens moter\u0173 ir vyr\u0173 santykis ataskaitiniu laikotarpiu"
@@ -21194,6 +21525,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Investissements financiers dans le capital ou les actifs des entit\u00e9s de l\u2019\u00e9conomie sociale"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "L'investimento finanziario nel capitale o negli attivi dei soggetti dell'economia sociale"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Finansin\u0117s investicijos \u012f socialin\u0117s ekonomikos subjekt\u0173 kapital\u0105 ar turt\u0105"
@@ -21265,6 +21599,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Travail forc\u00e9 [member]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Lavoro forzato [member]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Priverstinis darbas [member]"
         },
@@ -21297,6 +21634,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "\u00c9quivalent temps plein (ETP) [member]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Equivalenti a tempo pieno (ETP) [member]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Pilno etato ekvivalentas (FTE) [member]"
@@ -21331,6 +21671,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Initiative future [member]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Iniziativa futura [member]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "B\u016bsima iniciatyva [member]"
         },
@@ -21362,6 +21705,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Localisation GPS du site"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Coordinate (geolocalizzazione) del sito"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Objekto koordinat\u0117s"
@@ -21395,6 +21741,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Ratio de mixit\u00e9 au sein de l'organe de gouvernance"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Diversit\u00e0 di genere nell'organo di governance"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Ly\u010di\u0173 \u012fvairov\u0117s rodiklis valdymo organe"
@@ -21430,6 +21779,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Ratio de mixit\u00e9 au sein de l'organe de gouvernance [abstract]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Diversit\u00e0 di genere nell'organo di governance [abstract]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Ly\u010di\u0173 \u012fvairov\u0117s rodiklis valdymo organe [abstract]"
         },
@@ -21462,6 +21814,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Ann\u00e9e de r\u00e9f\u00e9rence de la cible de r\u00e9duction des \u00e9missions de gaz \u00e0 effet de serre"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Anno base per l'obiettivo di riduzione delle emissioni di gas a effetto serra"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "\u0160iltnamio efekt\u0105 sukelian\u010di\u0173 duj\u0173 i\u0161metimo ma\u017einimo tikslo baziniai metai"
         },
@@ -21493,6 +21848,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Ann\u00e9e cible de la cible de r\u00e9duction des \u00e9missions de gaz \u00e0 effet de serre"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Anno-obiettivo di riduzione delle emissioni di gas a effetto serra"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "\u0160ESD emisij\u0173 ma\u017einimo tiksliniai metai"
@@ -21527,6 +21885,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Cibles de r\u00e9duction des \u00e9missions de gaz \u00e0 effet de serre [abstract]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Obiettivi di riduzione delle emissioni di gas a effetto serra [abstract]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "\u0160iltnamio efekt\u0105 sukelian\u010di\u0173 duj\u0173 emisij\u0173 ma\u017einimo tikslai [abstract]"
         },
@@ -21560,6 +21921,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Intensit\u00e9 des \u00e9missions de gaz \u00e0 effet de serre [abstract]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Intensit\u00e0 delle emissioni di gas a effetto serra [abstract]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "\u0160ESD emisij\u0173 intensyvumas [abstract]"
         },
@@ -21592,6 +21956,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "\u00c9missions brutes des \u00e9missions de gaz \u00e0 effet de serre du scope 2 bas\u00e9es sur la localisation"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Emissioni lorde di gas a effetto serra di ambito 2 (basate sulla posizione)"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Bendros vietos metodu apskai\u010diuotos antros apimties  \u0161iltnamio efekt\u0105 sukelian\u010di\u0173 duj\u0173 emisijos"
@@ -21627,6 +21994,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "\u00c9missions brutes des \u00e9missions de gaz \u00e0 effet de serre du scope 2 bas\u00e9es sur le march\u00e9"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Emissioni lorde di gas a effetto serra di ambito 2 (basate sul mercato)"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Bendros rinkos metodu apskai\u010diuotos antros apimties  \u0161iltnamio efekt\u0105 sukelian\u010di\u0173 duj\u0173 emisijos"
         },
@@ -21661,6 +22031,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "\u00c9missions brutes des \u00e9missions de gaz \u00e0 effet de serre du scope 1"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Emissioni lorde di gas a effetto serra di ambito 1"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Bendros pirmos apimties \u0161iltnamio efekt\u0105 sukelian\u010di\u0173 duj\u0173 emisijos"
         },
@@ -21694,6 +22067,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "\u00c9missions brutes de gaz \u00e0 effet de serre du scope 3"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Emissioni lorde di gas a effetto serra di ambito 3"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Bendros tre\u010dios apimties \u0161iltnamio efekt\u0105 sukelian\u010di\u0173 duj\u0173 emisijos"
@@ -21764,6 +22140,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Effectif [member]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Effettivi [member]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Darbuotoj\u0173 skai\u010dius [member]"
@@ -21846,6 +22225,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Traite des \u00eatres humains [member]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Tratta di esseri umani [member]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Prekyba \u017emon\u0117mis [member]"
         },
@@ -21916,6 +22298,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Identifiant de la mati\u00e8re [typed axis]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Identificatore del materiale [typed axis]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Med\u017eiagos identifikatorius [typed axis]"
         },
@@ -21952,6 +22337,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Identifiant du site [typed axis]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Identificatore del sito [typed axis]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Vietov\u0117s identifikatorius [typed axis]"
@@ -21990,6 +22378,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Identifiant de la filiale [typed axis]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Identificatore della impresa figlia [typed axis]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Dukterin\u0117s \u012fmon\u0117s identifikatorius [typed axis]"
         },
@@ -22025,6 +22416,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Individuel [member]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Individuale [member]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Individuali [member]"
@@ -22106,6 +22500,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Lien vers le rapport pr\u00e9c\u00e9dent contenant des informations inchang\u00e9es"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Collegamento alla relazione precedente contenente le informative che rimangono invariate"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Nuoroda \u012f ankstesn\u012f ataskait\u0105, kurios atskleidimai liko nepakit\u0119"
         },
@@ -22137,6 +22534,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Liste des informations pour lesquelles aucun changement n\u2019est signal\u00e9 par rapport \u00e0 la d\u00e9claration de la p\u00e9riode pr\u00e9c\u00e9dente"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Elenco delle informative per le quali non sono segnalate modifiche rispetto al periodo di riferimento precedente"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Atskleidim\u0173, kuriems nepasikeit\u0117 duomenys palyginti su ankstesnio laikotarpio ataskaita, s\u0105ra\u0161as"
@@ -22195,6 +22595,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Liste des informations \u00e0 publier [member]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Elenco delle informative [member]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Atskleidim\u0173 s\u0105ra\u0161as [member]"
         },
@@ -22226,6 +22629,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Liste des informations omises jug\u00e9es comme informations classifi\u00e9es ou sensibles"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Elenco delle informative omesse ritenute informazioni classificate o sensibili"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Nepateikt\u0173 atskleidim\u0173, laikom\u0173 konfidencialia ar jautria informacija, s\u0105ra\u0161as"
@@ -22284,6 +22690,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Liste des sites [abstract]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Elenco dei siti [abstract]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Objekt\u0173 s\u0105ra\u0161as [abstract]"
         },
@@ -22316,6 +22725,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Liste des sites [line items]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Elenco dei siti [line items]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Objekt\u0173 s\u0105ra\u0161as [line items]"
@@ -22351,6 +22763,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Liste des sites [table]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Elenco dei siti [table]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Objekt\u0173 s\u0105ra\u0161as [table]"
         },
@@ -22384,6 +22799,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Liste des filiales [abstract]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Elenco delle imprese figlie [abstract]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Dukterini\u0173 \u012fmoni\u0173 s\u0105ra\u0161as [abstract]"
         },
@@ -22416,6 +22834,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Liste des filiales [line items]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Elenco delle imprese figlie [line items]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Dukterini\u0173 \u012fmoni\u0173 s\u0105ra\u0161as [line items]"
@@ -22451,6 +22872,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Liste des filiales [table]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Elenco della impresa figlia [table]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Filial\u0173 s\u0105ra\u0161as [table]"
         },
@@ -22483,6 +22907,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Liste des formes juridiques des entreprises [member]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Elenco delle forme giuridiche delle imprese [member]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "\u012emoni\u0173 teisin\u0117s formos s\u0105ra\u0161as [member]"
@@ -22552,6 +22979,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Niveau hi\u00e9rarchique le plus \u00e9lev\u00e9 parmi les salari\u00e9s qui est responsable des politiques"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Il livello gerarchico pi\u00f9 elevato tra i suoi dipendenti cui spetta la responsabilit\u00e0 delle politiche"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Auk\u0161\u010diausias darbuotoj\u0173 hierarchijos lygmuo, atsakingas u\u017e politik\u0173 \u012fgyvendinim\u0105"
         },
@@ -22583,6 +23013,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Code(s) de la nomenclature sectorielle NACE"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Codici di classificazione settoriale NACE"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "NACE sektori\u0173 klasifikacijos kodai"
@@ -23667,6 +24100,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Nom de la mati\u00e8re utilis\u00e9e"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Nome del materiale utilizzato"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Naudojamos med\u017eiagos pavadinimas"
         },
@@ -23698,6 +24134,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Nom de la filiale"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Nome della impresa figlia"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Dukterin\u0117s \u012fmon\u0117s pavadinimas"
@@ -23792,6 +24231,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "\u00c9nergie non renouvelable [member]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Energia non rinnovabile [member]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Neatsinaujinanti energija [member]"
         },
@@ -23837,6 +24279,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Nombre d\u2019heures annuelles de formation par salari\u00e9 [abstract]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Numero medio annuo di ore di formazione per dipendente [abstract]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Metinis mokymo valand\u0173 skai\u010dius vienam darbuotojui [abstract]"
         },
@@ -23868,6 +24313,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Nombre de salari\u00e9s"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Numero di dipendenti"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Darbuotoj\u0173 skai\u010dius"
@@ -23903,6 +24351,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Nombre de salari\u00e9s par sexe [abstract]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Numero di dipendenti per genere [abstract]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Darbuotoj\u0173 skai\u010dius pagal lyt\u012f [abstract]"
         },
@@ -23934,6 +24385,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Nombre de salari\u00e9s pour le pays du contrat de travail"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Numero di dipendenti per paese del contratto di lavoro"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Darbuotoj\u0173 skai\u010dius pagal darbo sutarties \u0161al\u012f"
@@ -23969,6 +24423,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Nombre de salari\u00e9s pour le pays du contrat de travail [abstract]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Numero di dipendenti per paese del contratto di lavoro [abstract]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Darbuotoj\u0173 skai\u010dius pagal \u012fdarbinimo \u0161al\u012f [abstract]"
         },
@@ -24001,6 +24458,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Nombre de salari\u00e9s pour le pays du contrat de travail [line items]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Numero di dipendenti per paese del contratto di lavoro [line items]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Darbuotoj\u0173 skai\u010dius pagal darbo sutarties \u0161al\u012f [line items]"
@@ -24036,6 +24496,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Nombre de salari\u00e9s pour le pays du contrat de travail [table]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Numero di dipendenti per paese del contratto di lavoro [table]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Darbuotoj\u0173 skai\u010dius pagal \u012fdarbinimo \u0161al\u012f [table]"
         },
@@ -24069,6 +24532,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Nombre de salari\u00e9s par type de contrat [abstract]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Numero di dipendenti per tipo di contratto [abstract]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Darbuotoj\u0173 skai\u010dius pagal sutarties r\u016b\u0161\u012f [abstract]"
         },
@@ -24100,6 +24566,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Nombre de d\u00e9c\u00e8s dus \u00e0 des accidents du travail ou \u00e0 des probl\u00e8mes de sant\u00e9 li\u00e9s au travail"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Numero di decessi dovuti a lesioni e malattie connesse al lavoro"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Mir\u010di\u0173 d\u0117l su darbu susijusi\u0173 su\u017ealojim\u0173 ir su darbu susijusi\u0173 sveikatos sutrikim\u0173 skai\u010dius"
@@ -24134,6 +24603,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Nombre de salari\u00e9s femmes"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Numero di dipendenti donne"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Moter\u0173 darbuotoj\u0173 skai\u010dius"
         },
@@ -24166,6 +24638,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Nombre de salari\u00e9s hommes"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Numero di dipendenti uomini"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Vyr\u0173 darbuotoj\u0173 skai\u010dius"
@@ -24200,6 +24675,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Nombre d'employ\u00e9s dont le genre n'est pas communiqu\u00e9"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Numero di dipendenti di genere non comunicato"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Nenurodytos lyties darbuotoj\u0173 skai\u010dius"
         },
@@ -24232,6 +24710,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Nombre de salari\u00e9s d'autres genres"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Numero di dipendenti altro genere"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Kitos lyties darbuotoj\u0173 skai\u010dius"
@@ -24266,6 +24747,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Nombre de salari\u00e9s en contrat de travail \u00e0 dur\u00e9e ind\u00e9termin\u00e9e"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Numero di dipendenti con contratto permanente"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Darbuotoj\u0173, turin\u010di\u0173 neterminuot\u0105 sutart\u012f, skai\u010dius"
         },
@@ -24299,6 +24783,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Nombre d'accidents du travail comptabilisables pendant la p\u00e9riode de reporting"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Numero di infortuni registrabili connessi al lavoro nel periodo di riferimento"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Registruojam\u0173 su darbu susijusi\u0173 \u012fvyki\u0173, kuriuose \u012fvyko nelaiming\u0173 atsitikim\u0173 skai\u010dius ataskaitiniu laikotarpiu"
         },
@@ -24331,6 +24818,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Nombre de salari\u00e9s en contrat de travail \u00e0 dur\u00e9e d\u00e9termin\u00e9e"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Numero di dipendenti con contratto temporaneo"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Darbuotoj\u0173, turin\u010di\u0173 terminuot\u0105 sutart\u012f, skai\u010dius"
@@ -24378,6 +24868,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "OPTION A : module de base (uniquement) [member]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Opzione A (modulo base unicamente) [member]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Variantas A  (tik bazinis modulis) [member]"
         },
@@ -24410,6 +24903,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "OPTION B\u00a0: module de base et module complet [member]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Opzione B (Modulo Base e Modulo Onnicomprensivo) [member]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Variantas B  (bazinis ir i\u0161samusis moduliai) [member]"
@@ -24456,6 +24952,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Toute information autre et/ou sp\u00e9cifique \u00e0 l\u2019entit\u00e9 [abstract]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Altre informazioni e/o informazioni specifiche per soggetto [abstract]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Kita ir/ar \u012fmon\u0117s specifin\u0117 informacija [abstract]"
         },
@@ -24489,6 +24988,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Autre contenu [member]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Altro contenuto [member]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Kita informacija [member]"
         },
@@ -24520,6 +25022,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Autre sp\u00e9cification sur la forme juridique de entreprise"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Altra forma giuridica dell'impresa"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Kitos \u012fmon\u0117s teisin\u0117 forma"
@@ -24554,6 +25059,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Autre forme juridique des entreprises [member]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Altra forma giuridica dell\u2019impresa [member]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Kita \u012fmon\u0117s teisin\u0117 forma [member]"
         },
@@ -24586,6 +25094,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Personnel de l'entreprise [member]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Forza lavoro propria [member]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Sava darbo j\u0117ga [member]"
@@ -24644,6 +25155,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Partenariat [member]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Societ\u00e0 di persone [member]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Partneryst\u0117 [member]"
         },
@@ -24701,6 +25215,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "\u00c9cart de r\u00e9mun\u00e9ration en pourcentage entre les salari\u00e9s femmes et hommes"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Percentuale del divario retributivo tra dipendenti di sesso femminile e dipendenti di sesso maschile"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Darbuotoj\u0173 moter\u0173 ir vyr\u0173 u\u017emokes\u010dio skirtumas procentais"
         },
@@ -24734,6 +25251,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Pourcentage des salari\u00e9s couverts par des conventions collectives"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Percentuale di dipendenti coperti da contratti collettivi"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Darbuotoj\u0173, kuriems taikomos kolektyvin\u0117s sutartys, procentin\u0117 dalis"
@@ -24817,6 +25337,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Politique [member]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Politica [member]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Politika [member]"
         },
@@ -24850,6 +25373,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Pollution [member]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Inquinamento [member]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Tar\u0161a [member]"
         },
@@ -24882,6 +25408,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Pollution de l\u2019air, de l\u2019eau et des sols [abstract]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Inquinamento di aria, acqua e suolo [abstract]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Oro, vandens ir dirvo\u017eemio tar\u0161a [abstract]"
@@ -24939,6 +25468,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Code postal du site"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Codice postale del sito"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Objekto pa\u0161to kodas"
         },
@@ -24970,6 +25502,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Effets potentiels n\u00e9gatifs des risques climatiques susceptibles d\u2019affecter ses performances financi\u00e8res ou ses activit\u00e9s \u00e0 court, moyen ou long terme, en indiquant si elle estime que les risques sont \u00e9lev\u00e9s, moyens ou faibles"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "L'impresa pu\u00f2 segnalare i potenziali effetti negativi dei rischi climatici che potrebbero incidere sui suoi risultati finanziari o sulle sue operazioni aziendali a breve, medio o lungo termine, precisando se reputa che i rischi siano elevati, medi o bassi."
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Galimas neigiamas klimato rizik\u0173 poveikis, galintis paveikti \u012fmon\u0117s finansinius rezultatus ar veikl\u0105 trumpuoju, vidutiniu ar ilguoju laikotarpiu, nurodant, ar rizikos vertinamos kaip didel\u0117s, vidutin\u0117s ar ma\u017eos."
@@ -25004,6 +25539,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Pratique [member]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Pratica [member]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Praktika [member]"
         },
@@ -25035,6 +25573,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "La pratique, la politique et/ou l'initiative future sont accessibles au public"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "La pratica, la politica e/o l'iniziativa futura sono disponibili al pubblico"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Praktika, politika ir (arba) b\u016bsimos iniciatyvos yra vie\u0161ai prieinamos"
@@ -25069,6 +25610,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Pratiques, politiques et initiatives futures en vue de la transition vers une \u00e9conomie plus durable [abstract]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Pratiche, politiche e/o iniziative future per la transizione verso un'economia pi\u00f9 sostenibile [abstract]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Per\u0117jimo prie tvaresn\u0117s ekonomikos praktika, politika ir (arba) b\u016bsimos iniciatyvos [abstract]"
         },
@@ -25102,6 +25646,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Entreprise priv\u00e9e \u00e0 responsabilit\u00e9 limit\u00e9e [member]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Societ\u00e0 privata a responsabilit\u00e0 limitata [member]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Privati akcin\u0117 bendrov\u0117 [member]"
         },
@@ -25133,6 +25680,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Information accessible au public"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Informativa disponibile al pubblico"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Vie\u0161ai prieinamas atskleidimas"
@@ -25167,6 +25717,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Taux d\u2019accidents du travail comptabilisables pendant la p\u00e9riode de reporting"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Tasso di infortuni registrabili connessi al lavoro nel periodo di riferimento"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Registruotin\u0173 su darbu susijusi\u0173 nelaiming\u0173 atsitikim\u0173 da\u017enis ataskaitiniu laikotarpiu"
         },
@@ -25199,6 +25752,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Adresse enregistr\u00e9e de la filiale"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Sede legale della impresa figlia"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Dukterin\u0117s \u012fmon\u0117s registruotos buvein\u0117s adresas"
@@ -25233,6 +25789,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "R\u00e9mun\u00e9ration et n\u00e9gociation collective [abstract]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Retribuzione e contrattazione collettiva [abstract]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Darbo u\u017emokestis ir kolektyvin\u0117s derybos [abstract]"
         },
@@ -25265,6 +25824,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "R\u00e9mun\u00e9ration, n\u00e9gociation collective et formation [abstract]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Retribuzione, contrattazione collettiva e formazione [abstract]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Darbo u\u017emokestis, kolektyvin\u0117s derybos ir mokymai [abstract]"
@@ -25299,6 +25861,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "\u00c9nergie renouvelable [member]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Energia rinnovabile [member]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Atsinaujinanti energija [member]"
         },
@@ -25330,6 +25895,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Ce rapport contient des informations de la p\u00e9riode de reporting pr\u00e9c\u00e9dente qui restent inchang\u00e9es."
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "La Relazione contiene le informative del periodo di riferimento precedente che rimangono invariate"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Atskleidim\u0173, d\u0117l kuri\u0173 nepateikta pakeitim\u0173, palyginti su ankstesnio laikotarpio ataskaita, s\u0105ra\u0161as"
@@ -25363,6 +25931,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "P\u00e9rim\u00e8tre de reporting [domain]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Ambito di rendicontazione [domain]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Ataskaitos taikymo sritis [domain]"
@@ -25398,6 +25969,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "P\u00e9rim\u00e8tres de reporting [axis]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Ambiti di rendicontazione [axis]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Ataskait\u0173 rengimo apimtys [axis]"
         },
@@ -25429,6 +26003,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Chiffre d'affaires r\u00e9alis\u00e9 \u00e0 partir de la production de produits chimiques"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Ricavi derivanti dalla produzione di sostanze chimiche"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Pajamos, gautos i\u0161 chemini\u0173 med\u017eiag\u0173 gamybos"
@@ -25463,6 +26040,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Chiffre d'affaires r\u00e9alis\u00e9 \u00e0 partir du charbon"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Ricavi derivanti dal carbone"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Pajamos, gautos i\u0161 angli\u0173"
         },
@@ -25495,6 +26075,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Chiffre d'affaires r\u00e9alis\u00e9 \u00e0 partir des armes controvers\u00e9es (mines antipersonnel, armes \u00e0 sous-munitions, armes chimiques et armes biologiques)"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Ricavi derivanti da armi controverse (mine antiuomo, munizioni a grappolo, armi chimiche e armi biologiche)"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Pajamos, gautos i\u0161 prie\u0161taringai vertinam\u0173 ginkl\u0173 (p\u0117stinink\u0173 min\u0173, kasetini\u0173 \u0161audmen\u0173, chemini\u0173 ir biologini\u0173 ginkl\u0173)."
@@ -25529,6 +26112,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Chiffre d'affaires r\u00e9alis\u00e9 \u00e0 partir de la culture et la production de tabac"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Ricavi derivanti dalla coltivazione e produzione del tabacco"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Pajamos i\u0161 tabako auginimo ir gamybos"
         },
@@ -25561,6 +26147,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Chiffre d'affaires r\u00e9alis\u00e9 \u00e0 partir du gaz"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Ricavi derivanti dal gas"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Pajamos, gautos i\u0161 duj\u0173"
@@ -25595,6 +26184,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Chiffre d'affaires r\u00e9alis\u00e9 \u00e0 partir du p\u00e9trole"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Ricavi derivanti dal petrolio"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Pajamos, gautos i\u0161 naftos"
         },
@@ -25628,6 +26220,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Chiffre d\u2019affaires r\u00e9alis\u00e9 \u00e0 partir des activit\u00e9s [abstract]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Ricavi derivanti da attivit\u00e0 [abstract]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Veiklos pajamos [abstract]"
@@ -25666,6 +26261,10 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Intensit\u00e9 des \u00e9missions de gaz \u00e0 effet de serre des scopes 1 et 2 bas\u00e9es sur la localisation",
           "http://www.xbrl.org/2003/role/measurementGuidance": "Le num\u00e9rateur devrait \u00eatre en \u00ab tCO2e [utr:tCO\u2082e] \u00bb et le d\u00e9nominateur dans une devise d'une unit\u00e9 provenant de ISO 4217, par exemple [iso4217:EUR]."
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Intensit\u00e0 delle emissioni di gas a effetto serra di ambito 1 e ambito 2 basate sulla posizione",
+          "http://www.xbrl.org/2003/role/measurementGuidance": "Il numeratore dovrebbe essere \"tCO2e [utr:tCO2e]\" e il denominatore una valuta con un'unit\u00e0 dall'insieme di valute iso4217, per esempio [iso4217:EUR]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "1 ir 2 apim\u010di\u0173 (vietos metodu) bendras \u0160ESD emisij\u0173 intensyvumas",
@@ -25709,6 +26308,10 @@
           "http://www.xbrl.org/2003/role/label": "Intensit\u00e9 des \u00e9missions de gaz \u00e0 effet de serre des scopes 1 et 2 bas\u00e9es sur le march\u00e9",
           "http://www.xbrl.org/2003/role/measurementGuidance": "Le num\u00e9rateur devrait \u00eatre en \u00ab tCO2e [utr:tCO\u2082e] \u00bb et le d\u00e9nominateur dans une devise d'une unit\u00e9 provenant de ISO 4217, par exemple [iso4217:EUR]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Intensit\u00e0 delle emissioni di gas a effetto serra di ambito 1 e ambito 2 basate sul mercato",
+          "http://www.xbrl.org/2003/role/measurementGuidance": "Il numeratore dovrebbe essere \"tCO2e [utr:tCO2e]\" e il denominatore una valuta con un'unit\u00e0 dall'insieme di valute iso4217, per esempio [iso4217:EUR]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "1 ir 2 apim\u010di\u0173 (rinkos metodu) bendras \u0160ESD emisij\u0173 intensyvumas",
           "http://www.xbrl.org/2003/role/measurementGuidance": "Skaitiklis tur\u0117t\u0173 b\u016bti \u201etCO2e [utr:tCO2e]\u201c, o vardiklis \u2013 valiuta i\u0161 ISO 4217 valiut\u0173 rinkinio, pvz., [iso4217:EUR]."
@@ -25745,6 +26348,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Incidents graves en mati\u00e8re de droits de l\u2019homme [abstract]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Incidenti gravi in materia di diritti umani [abstract]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Dideli neigiami incidentai \u017emogaus teisi\u0173 srityje [abstract]"
@@ -25790,6 +26396,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Site situ\u00e9 dans une zone sensible sur le plan de la biodiversit\u00e9"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Sito ubicato all'interno di un'area sensibile sotto il profilo della biodiversit\u00e0"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Objektas yra biologinei \u012fvairovei jautrioje teritorijoje"
         },
@@ -25821,6 +26430,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Site situ\u00e9 \u00e0 proximit\u00e9 d'une zone sensible sur le plan de la biodiversit\u00e9"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Sito ubicato in prossimit\u00e0 di un'area sensibile sotto il profilo della biodiversit\u00e0"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Objektas, esantis netoli biologinei \u012fvairovei jautrioje teritorijoje"
@@ -25855,6 +26467,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Sites situ\u00e9s dans des zones sensibles sur le plan de la biodiversit\u00e9 [abstract]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Siti all'interno di aree sensibili sotto il profilo della biodiversit\u00e0 [abstract]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Objektai biologinei \u012fvairovei jautriose teritorijose [abstract]"
         },
@@ -25887,6 +26502,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Sites situ\u00e9s dans des zones sensibles sur le plan de la biodiversit\u00e9 [line items]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Siti all'interno di aree sensibili sotto il profilo della biodiversit\u00e0 [line items]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Objektai biologinei \u012fvairovei jautriose teritorijose [line items]"
@@ -25922,6 +26540,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Sites situ\u00e9s dans des zones sensibles sur le plan de la biodiversit\u00e9 [table]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Siti all'interno di aree sensibili sotto il profilo della biodiversit\u00e0 [table]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Objektai biologinei \u012fvairovei jautriose teritorijose [table]"
         },
@@ -25955,6 +26576,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Entreprise individuelle [member]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Impresa individuale [member]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Individuali veikla [member]"
         },
@@ -25986,6 +26610,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Sp\u00e9cification de tout incident confirm\u00e9 impliquant des travailleurs dans la cha\u00eene de valeur, des communaut\u00e9s affect\u00e9es, des consommateurs et des utilisateurs finaux"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Specificazione di qualsiasi incidente confermato che coinvolge i lavoratori nella catena del valore, le comunit\u00e0 interessate, i consumatori e gli utilizzatori finali."
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Bet kurio patvirtinto incidento, susijusio su vert\u0117s grandin\u0117s darbuotojais, paveiktomis bendruomen\u0117mis, vartotojais ir galutiniais naudotojais, apra\u0161ymas"
@@ -26019,6 +26646,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Sp\u00e9cification des autres droits humains auxquels se rattache l'incident confirm\u00e9"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Specificazione di altri diritti umani relativi all'incidente confermato"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Kitos \u017emogaus teis\u0117s, susijusios su patvirtintu incidentu (nurodyti ir detalizuoti)"
         },
@@ -26050,6 +26680,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Sp\u00e9cification des autres types de contenu couverts par le code de conduite ou la politique en mati\u00e8re de droits de l\u2019homme"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Specifica altri tipi di contenuto coperti dal codice di condotta o dalla politica in materia di diritti umani"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Nurodykite papildom\u0105 turin\u012f, kur\u012f apima elgesio kodeksas / \u017emogaus teisi\u0173 politika"
@@ -26083,6 +26716,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Strat\u00e9gie : mod\u00e8le \u00e9conomique et durabilit\u00e9 \u2013 initiatives associ\u00e9es [abstract]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Strategia: modello aziendale e iniziative connesse alla sostenibilit\u00e0 [abstract]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Strategija: verslo modelis ir su tvarumu susijusios iniciatyvos [abstract]"
@@ -26140,6 +26776,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Enjeux de durabilit\u00e9 trait\u00e9s par la pratique, la politique et/ou l'initiative future"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Questioni attinenti alla sostenibilit\u00e0 affrontate da pratiche, politiche e/o iniziative future"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Tvarumo klausimai, sprend\u017eiami praktika, politika ir (arba) b\u016bsimomis iniciatyvomis"
         },
@@ -26187,6 +26826,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Enjeux de durabilit\u00e9 trait\u00e9s [member]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Questioni attinenti alla sostenibilit\u00e0 affrontate [member]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Nagrin\u0117jami tvarumo klausimai [member]"
         },
@@ -26219,6 +26861,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Ann\u00e9e cible [member]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Anno-obiettivo [member]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Tiksliniai metai [member]"
@@ -26288,6 +26933,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Horizons temporels des al\u00e9as li\u00e9s au changement climatique et des \u00e9v\u00e9nements li\u00e9s \u00e0 la transition climatique recens\u00e9s"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Indica gli orizzonti temporali di eventuali pericoli ed eventi di transizione legati al clima individuati"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Nustatyt\u0173 su klimatu susijusi\u0173 ir pereinamojo laikotarpio laiko horizontai."
         },
@@ -26332,6 +26980,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Montant total des amendes pour infraction \u00e0 la l\u00e9gislation sur la lutte contre la corruption et les actes de corruption"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Importo complessivo delle ammende per violazione delle leggi in materia di lotta alla corruzione passiva e attiva"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Bendras baud\u0173 u\u017e korupcijos ir ky\u0161ininkavimo \u012fstatym\u0173 pa\u017eeidimus dydis"
         },
@@ -26365,6 +27016,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Quantit\u00e9 totale d'eau pr\u00e9lev\u00e9e sur tous les sites"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Quantit\u00e0 totale di acqua prelevata da tutti i siti"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Bendras vandens kiekis, paimtas i\u0161 vis\u0173 vietovi\u0173"
@@ -26400,6 +27054,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Consommation totale d'\u00e9nergie"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Totale consumo di energia"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Bendras energijos suvartojimas"
         },
@@ -26433,6 +27090,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Consommation totale d'\u00e9nergie [abstract]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Totale consumo di energia [abstract]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Bendras energijos suvartojimas [abstract]"
@@ -26472,6 +27132,10 @@
           "http://www.xbrl.org/2003/role/documentation": "Calcul : \u00e9missions de GES du scope 1 + scope 2 + scope 3 (approche bas\u00e9e sur la localisation)",
           "http://www.xbrl.org/2003/role/label": "\u00c9missions totales (brutes) de GES bas\u00e9es sur la localisation"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/documentation": "Calcolo: emissioni di gas a effetto serra di ambito 1 + ambito 2 + ambito 3 (basate sulla posizione)",
+          "http://www.xbrl.org/2003/role/label": "Emissioni totali (lorde) di gas a effetto serra basate sulla posizione"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/documentation": "Apskai\u010diavimas: 1 apimties + 2 apimties (vietos metodu) + 3 apimties \u0161iltnamio efekt\u0105 sukelian\u010di\u0173 duj\u0173 (\u0160ESD) emisijos",
           "http://www.xbrl.org/2003/role/label": "I\u0161 viso (bendros) vietos metodu apskai\u010diuotos \u0160ESD emisijos"
@@ -26508,6 +27172,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "\u00c9missions totales (brutes) de GES des scopes 1 et 2 bas\u00e9es sur la localisation"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Emissioni totali (lorde) di gas a effetto serra di ambito 1 e ambito 2 (basate sulla posizione)"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Bendros pirmos apimties ir antros apimties vietos metodu apskai\u010diuotos \u0161iltnamio efekt\u0105 sukelian\u010di\u0173 duj\u0173 emisijos"
@@ -26548,6 +27215,10 @@
           "http://www.xbrl.org/2003/role/documentation": "Calcul : \u00e9missions de GES du scope 1 + scope 2 + scope 3 (approche bas\u00e9e sur le march\u00e9)",
           "http://www.xbrl.org/2003/role/label": "\u00c9missions totales (brutes) de gaz \u00e0 GES bas\u00e9es sur le march\u00e9"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/documentation": "Calcolo: emissioni di gas a effetto serra di ambito 1 + ambito 2 + ambito 3 (basate sul mercato)",
+          "http://www.xbrl.org/2003/role/label": "Emissioni totali (lorde) di gas a effetto serra basate sul mercato"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/documentation": "Apskai\u010diavimas: 1 apimties + 2 apimties (rinkos metodu) + 3 apimties \u0161iltnamio efekt\u0105 sukelian\u010di\u0173 duj\u0173 (\u0160ESD) emisijos",
           "http://www.xbrl.org/2003/role/label": "I\u0161 viso (bendros) rinkos metodu apskai\u010diuotos \u0160ESD emisijos"
@@ -26585,6 +27256,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "\u00c9missions totales (brutes) de GES des scopes 1 et 2 bas\u00e9es sur le march\u00e9"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Emissioni totali (lorde) di gas a effetto serra di ambito 1 e ambito 2 (basate sul mercato)"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Bendros pirmos apimties ir antros apimties rinkos metodu apskai\u010diuotos \u0161iltnamio efekt\u0105 sukelian\u010di\u0173 duj\u0173 emisijos"
         },
@@ -26619,6 +27293,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Total des d\u00e9chets dangereux et non dangereux [abstract]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Totale rifiuti pericolosi e non pericolosi [abstract]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Bendras pavojing\u0173 ir nepavojing\u0173 atliek\u0173 kiekis [abstract]"
         },
@@ -26651,6 +27328,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Total des d\u00e9chets dangereux produits (en masse)"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Totale rifiuti pericolosi generati (massa)"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Bendras pavojing\u0173 atliek\u0173 kiekis (mas\u0117)"
@@ -26685,6 +27365,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Total des d\u00e9chets dangereux produits (en volume)"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Totale rifiuti pericolosi generati (volume)"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Bendras susidariusi\u0173 pavojing\u0173j\u0173 atliek\u0173 kiekis (t\u016bris)"
@@ -26724,6 +27407,10 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Intensit\u00e9 des \u00e9missions de gaz \u00e0 effet de serre totales bas\u00e9es sur la localisation",
           "http://www.xbrl.org/2003/role/measurementGuidance": "Le num\u00e9rateur devrait \u00eatre en \u00ab tCO2e [utr:tCO\u2082e] \u00bb et le d\u00e9nominateur dans une devise d'une unit\u00e9 provenant de ISO 4217, par exemple [iso4217:EUR]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Intensit\u00e0 delle emissioni totali di gas a effetto serra basate sulla posizione",
+          "http://www.xbrl.org/2003/role/measurementGuidance": "Il numeratore dovrebbe essere \"tCO2e [utr:tCO2e]\" e il denominatore una valuta con un'unit\u00e0 dall'insieme di valute iso4217, per esempio [iso4217:EUR]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Bendras vietos metodu \u0160ESD emisij\u0173 intensyvumas",
@@ -26767,6 +27454,10 @@
           "http://www.xbrl.org/2003/role/label": "Intensit\u00e9 des \u00e9missions de gaz \u00e0 effet de serre totales bas\u00e9es sur le march\u00e9",
           "http://www.xbrl.org/2003/role/measurementGuidance": "Le num\u00e9rateur devrait \u00eatre en \u00ab tCO2e [utr:tCO\u2082e] \u00bb et le d\u00e9nominateur dans une devise d'une unit\u00e9 provenant de ISO 4217, par exemple [iso4217:EUR]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Intensit\u00e0 delle emissioni totali di gas a effetto serra basate sul mercato",
+          "http://www.xbrl.org/2003/role/measurementGuidance": "Il numeratore dovrebbe essere \"tCO2e [utr:tCO2e]\" e il denominatore una valuta con un'unit\u00e0 dall'insieme di valute iso4217, per esempio [iso4217:EUR]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Bendras rinkos metodu \u0160ESD emisij\u0173 intensyvumas",
           "http://www.xbrl.org/2003/role/measurementGuidance": "Skaitiklis tur\u0117t\u0173 b\u016bti \u201etCO2e [utr:tCO2e]\u201c, o vardiklis \u2013 valiuta i\u0161 ISO 4217 valiut\u0173 rinkinio, pvz., [iso4217:EUR]."
@@ -26804,6 +27495,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Poids total de la mati\u00e8re utilis\u00e9e"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Peso totale del materiale utilizzato"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Vis\u0173 naudot\u0173 med\u017eiag\u0173 mas\u0117"
         },
@@ -26838,6 +27532,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Surface totale respectueuse de la nature hors site"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Superficie totale orientata alla natura fuori dal sito"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Bendras gamtai palanki\u0173 teritorij\u0173 plotas ne objekto teritorijoje"
         },
@@ -26871,6 +27568,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Surface totale respectueuse de la nature sur le site"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Superficie totale orientata alla natura nel sito"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Bendras gamtai palanki\u0173 teritorij\u0173 plotas objekto teritorijoje"
@@ -26918,6 +27618,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Total des d\u00e9chets non dangereux produits (en masse)"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Totale rifiuti non pericolosi generati (massa)"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Bendras nepavojing\u0173 atliek\u0173 kiekis (mas\u0117)"
         },
@@ -26952,6 +27655,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Total des d\u00e9chets non dangereux produits (en volume)"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Totale rifiuti non pericolosi generati (volume)"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Bendras susidariusi nepavojing\u0173j\u0173 atliek\u0173 kiekis (t\u016bris)"
         },
@@ -26984,6 +27690,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Nombre total de condamnations pour infraction \u00e0 la l\u00e9gislation sur la lutte contre la corruption et les actes de corruption"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Numero totale di condanne per violazione delle leggi in materia di lotta alla corruzione passiva e attiva"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Bendras apkaltinam\u0173j\u0173 nuosprend\u017ei\u0173 skai\u010dius u\u017e kovos su korupcija ir ky\u0161ininkavimu \u012fstatym\u0173 pa\u017eeidimus"
@@ -27018,6 +27727,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Nombre total des travailleurs ind\u00e9pendants sans personnel qui travaillent exclusivement pour l\u2019entreprise"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Numero totale di lavoratori autonomi senza personale che lavorano esclusivamente per l'impresa"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "I\u0161 viso savaranki\u0161kai dirban\u010di\u0173 (ne darbuotoj\u0173), dirban\u010di\u0173 tik \u0161iai \u012fmonei, skai\u010dius"
         },
@@ -27050,6 +27762,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Nombre total de travailleurs temporaires mis \u00e0 disposition par des entreprises exer\u00e7ant principalement des activit\u00e9s li\u00e9es \u00e0 l\u2019emploi"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Numero totale di lavoratori temporanei messi a disposizione da imprese che esercitano principalmente attivit\u00e0 di ricerca, selezione e fornitura di personale"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "I\u0161 viso darbuotoj\u0173, dirban\u010di\u0173 per laikinojo \u012fdarbinimo agent\u016bras, skai\u010dius"
@@ -27109,6 +27824,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Consommation totale d\u2019\u00e9nergie renouvelable et non renouvelable [member]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Totale energia rinnovabile e non rinnovabile [member]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Bendra atsinaujinanti ir neatsinaujinanti energija [member]"
         },
@@ -27140,6 +27858,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Chiffre d'affaire total r\u00e9alis\u00e9 \u00e0 partir du secteur des combustibles fossiles (charbon, p\u00e9trole et gaz)"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Ricavi totali derivanti dal settore dei combustibili fossili (carbone, petrolio e gas)"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Bendros pajamos, gautos i\u0161 i\u0161kastinio kuro (naftos, anglies ir duj\u0173) sektoriaus"
@@ -27175,6 +27896,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Surface totale imperm\u00e9abilis\u00e9e"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Superficie totale impermeabilizzata"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Bendras nepralaid\u017eios dangos plotas"
         },
@@ -27209,6 +27933,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Utilisation totale des terres"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Uso totale del suolo"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Bendras \u017eem\u0117s naudojimas"
         },
@@ -27242,6 +27969,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Volume total de la mati\u00e8re utilis\u00e9e"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Volume totale del materiale utilizzato"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Vis\u0173 naudot\u0173 med\u017eiag\u0173 t\u016bris"
@@ -27278,6 +28008,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Total des d\u00e9chets produits (en masse)"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Totale rifiuti generati (massa)"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Bendras susidariusi\u0173 atliek\u0173 kiekis (mas\u0117)"
         },
@@ -27312,6 +28045,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Total des d\u00e9chets produits (en volume)"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Totale rifiuti generati (volume)"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Bendras susidariusi\u0173 atliek\u0173 kiekis (t\u016bris)"
@@ -27351,6 +28087,10 @@
         "fr": {
           "http://www.xbrl.org/2003/role/documentation": "D\u00e9chets destin\u00e9s \u00e0 \u00eatre recycl\u00e9s ou r\u00e9utilis\u00e9s + d\u00e9chets destin\u00e9s \u00e0 \u00eatre \u00e9limin\u00e9s (en masse)",
           "http://www.xbrl.org/2003/role/label": "Total des d\u00e9chets recycl\u00e9s, r\u00e9utilis\u00e9s et destin\u00e9s \u00e0 \u00eatre \u00e9limin\u00e9s (en masse)"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/documentation": "Calcolo: rifiuti reindirizzati al riciclaggio o al riutilizzo + rifiuti destinati allo smaltimento (massa)",
+          "http://www.xbrl.org/2003/role/label": "Totale rifiuti riciclati, riutilizzati e destinati allo smaltimento (volume)"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/documentation": "Apskai\u010diavimas: perdirbimui arba pakartotiniam naudojimui nukreipt\u0173 atliek\u0173 kiekis + i\u0161metimui nukreipt\u0173 atliek\u0173 kiekis (mas\u0117)",
@@ -27394,6 +28134,10 @@
           "http://www.xbrl.org/2003/role/documentation": "D\u00e9chets destin\u00e9s \u00e0 \u00eatre recycl\u00e9s ou r\u00e9utilis\u00e9s + d\u00e9chets destin\u00e9s \u00e0 \u00eatre \u00e9limin\u00e9s (en volume)",
           "http://www.xbrl.org/2003/role/label": "Total des d\u00e9chets recycl\u00e9s, r\u00e9utilis\u00e9s et destin\u00e9s \u00e0 \u00eatre \u00e9limin\u00e9s (en volume)"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/documentation": "Calcolo: rifiuti reindirizzati al riciclaggio o al riutilizzo + rifiuti destinati allo smaltimento (volume)",
+          "http://www.xbrl.org/2003/role/label": "Totale rifiuti riciclati, riutilizzati e destinati allo smaltimento (volume)"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/documentation": "Apskai\u010diavimas: perdirbimui arba pakartotiniam naudojimui nukreipt\u0173 atliek\u0173 kiekis + i\u0161metimui nukreipt\u0173 atliek\u0173 kiekis (t\u016bris)",
           "http://www.xbrl.org/2003/role/label": "Bendras atliek\u0173 kiekis, kuris buvo perdirbtas, pakartotinai panaudotas ir nukreiptas \u0161alinimui (t\u016bris)"
@@ -27430,6 +28174,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Consommation totale d\u2019eau"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Consumo idrico totale"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Bendras vandens suvartojimas"
@@ -27476,6 +28223,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Plan de transition pour les entreprises op\u00e9rant dans des secteurs \u00e0 fort impact climatique [abstract]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Piano di transizione per le imprese che operano in settori ad alto impatto climatico [abstract]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Pereinamojo laikotarpio planas \u012fmon\u0117ms, veikian\u010dioms didelio klimato poveikio sektoriuose [abstract]"
@@ -27593,6 +28343,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Chiffre d'affaires"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Ricavi delle vendite e delle prestazioni"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Apyvarta"
         },
@@ -27625,6 +28378,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Type de contenu couvert par le code de conduite ou la politique en mati\u00e8re de droits de l\u2019homme pour son personnel"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Tipologia di contenuti coperti dal codice di condotta o dalla politica in materia di diritti umani per la forza lavoro propria"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Koks turinys  apimamas elgesio kodekso ar \u017emogaus teisi\u0173 politikos darbuotojams"
@@ -27669,6 +28425,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Type de contenu couvert par le code de conduite ou la politique en mati\u00e8re de droits de l\u2019homme pour son personnel [member]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Tipo di contenuto coperto dal codice di condotta o dalla politica in materia di diritti umani per la forza lavoro propria [member]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Koks turinys  apimamas elgesio kodekso ar \u017emogaus teisi\u0173 politikos darbuotojams [member]"
         },
@@ -27700,6 +28459,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Type de droit de l'homme auquel se rattache l'incident confirm\u00e9"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Tipo di diritto umano relativo all\u2019incidente confermato"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "\u017dmogaus teisi\u0173 sritis, kuriai priskiriamas patvirtintas incidentas"
@@ -27743,6 +28505,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Type de nombre de salari\u00e9s"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Tipo di numero di dipendenti"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Darbuotoj\u0173 skai\u010diaus r\u016b\u0161is"
         },
@@ -27782,6 +28547,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Type de calcul du nombre d'employ\u00e9s [member]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Tipo di numero di dipendenti [member]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Darbuotoj\u0173 skai\u010diaus tipas [member]"
         },
@@ -27816,6 +28584,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Type de polluant [axis]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Tipo di inquinante [axis]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Ter\u0161alo r\u016b\u0161is [axis]"
         },
@@ -27849,6 +28620,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Type de polluant [member]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Tipo di inquinante [member]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Ter\u0161alo r\u016b\u0161is [member]"
         },
@@ -27881,6 +28655,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Type de pratique, de politique et d\u2019initiative future [member]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Tipo di pratica, politica e iniziativa futura [member]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Praktikos, politikos ir b\u016bsim\u0173 iniciatyv\u0173 tipas [member]"
@@ -27916,6 +28693,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Type de d\u00e9chet [axis]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Tipo di rifiutio [axis]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Atliek\u0173 r\u016b\u0161is [axis]"
         },
@@ -27947,6 +28727,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "URL ou lien vers l'information accessible au public"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "URL o collegamento all'informativa disponibile al pubblico"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Vie\u0161ai prieinamo atskleidimo URL arba nuoroda"
@@ -27980,6 +28763,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "L\u2019entreprise applique les principes de l\u2019\u00e9conomie circulaire"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "L'impresa applica i principi dell'economia circolare"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "\u012emon\u0117 taiko \u017eiedin\u0117s ekonomikos principus"
         },
@@ -28011,6 +28797,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "L\u2019entreprise dispose d\u2019un code de conduite ou d\u2019une politique en mati\u00e8re de droits de l\u2019homme pour son personnel"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "L'impresa dispone di un codice di condotta o di una politica in materia di diritti umani per la forza lavoro propria?"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "\u012emon\u0117 turi elgesio kodeks\u0105 arba \u017emogaus teisi\u0173 politik\u0105 savo darbuotojams"
@@ -28044,6 +28833,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "L\u2019entreprise dispose d\u2019un m\u00e9canisme de traitement des plaintes pour son personnel"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "L'impresa dispone di un meccanismo di trattamento delle denunce per la forza lavoro propria?"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "\u012emon\u0117je veikia skund\u0173 nagrin\u0117jimo mechanizmas jos darbuotojams"
         },
@@ -28075,6 +28867,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "L\u2019entreprise a confirm\u00e9 des incidents en mati\u00e8re de droits de l\u2019homme au sein de son personnel"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "L'impresa ha confermato incidenti in seno alla forza lavoro propria relativi a violazioni dei diritti umani."
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Patvirtinti \u017emogaus teisi\u0173 pa\u017eeidim\u0173 incidentai \u012fmon\u0117s darbuotoj\u0173 tarpe"
@@ -28108,6 +28903,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "L'entreprise a fix\u00e9 une cible qui est li\u00e9e \u00e0 une politique"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "L'impresa ha fissato un obiettivo correlato a una politica."
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "\u012emon\u0117 nustat\u0117 tiksl\u0105, kuris susij\u0119s su politika."
         },
@@ -28139,6 +28937,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "L\u2019entreprise a connaissance d\u2019incidents confirm\u00e9s impliquant des travailleurs de la cha\u00eene de valeur, des communaut\u00e9s affect\u00e9es, des consommateurs et des utilisateurs finaux"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "L'impresa \u00e8 a conoscenza di incidenti confermati che coinvolgono lavoratori nella catena del valore, comunit\u00e0 interessate, consumatori e utilizzatori finali"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "\u012emon\u0117, kuri \u017eino apie bet kokius patvirtintus incidentus, susijusius su vert\u0117s grandin\u0117s darbuotojais, paveiktais bendruomen\u0117mis, vartotojais ir galutiniais naudotojais"
@@ -28172,6 +28973,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Exclusion des indices de r\u00e9f\u00e9rence  \u00ab accord de Paris \u00bb de l'Union europ\u00e9enne"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Le imprese sono escluse dagli indici di riferimento UE allineati con l'accordo di Parigi."
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "\u012emon\u0117s yra pa\u0161alintos i\u0161 bet koki\u0173 ES lyginam\u0173j\u0173 etalon\u0173, suderint\u0173 su Pary\u017eiaus susitarimu"
         },
@@ -28203,6 +29007,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Forme juridique des entreprises"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Forma giuridica dell'impresa"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "\u012emon\u0117s teisin\u0117 forma"
@@ -28258,6 +29065,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Volume de la mati\u00e8re utilis\u00e9e"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Volume del materiale utilizzato"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Naudotos med\u017eiagos t\u016bris"
         },
@@ -28291,6 +29101,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "D\u00e9chets destin\u00e9s \u00e0 \u00eatre \u00e9limin\u00e9s (en masse)"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Rifiuti destinati allo smaltimento (massa)"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Atliekos, nukreiptos \u0161alinimui (mas\u0117)"
@@ -28326,6 +29139,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "D\u00e9chets destin\u00e9s \u00e0 \u00eatre \u00e9limin\u00e9s (en volume)"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Rifiuti destinati allo smaltimento (volume)"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Atliekos, nukreiptos \u0161alinimui (t\u016bris)"
         },
@@ -28359,6 +29175,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "D\u00e9chets destin\u00e9s \u00e0 \u00eatre recycl\u00e9s ou r\u00e9utilis\u00e9s (en masse)"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Rifiuti reindirizzati al riciclaggio o riutilizzo (massa)"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Atliekos, nukreiptos perdirbti arba pakartotinai naudoti (mas\u0117)"
@@ -28394,6 +29213,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "D\u00e9chets destin\u00e9s \u00e0 \u00eatre recycl\u00e9s ou r\u00e9utilis\u00e9s (en volume)"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Rifiuti reindirizzati al riciclaggio o riutilizzo (volume)"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Atliekos, nukreiptos perdirbti arba pakartotinai naudoti (t\u016bris)"
         },
@@ -28428,6 +29250,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "D\u00e9chets produits [abstract]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Rifiuti generati [abstract]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Susidariusios atliekos [abstract]"
         },
@@ -28460,6 +29285,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "D\u00e9chets produits [line items]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Rifiuti generati [line items]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Susidariusios atliekos [line items]"
@@ -28495,6 +29323,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "D\u00e9chets produits [table]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Rifiuti generati [table]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Susidariusios atliekos [table]"
         },
@@ -28527,6 +29358,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Ressources hydriques et marines [member]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Acqua e risorse marine [member]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Vandens ir j\u016br\u0173 i\u0161tekliai [member]"
@@ -28561,6 +29395,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Consommation d\u2019eau [abstract]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Consumo idrico [abstract]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Vandens suvartojimas [abstract]"
         },
@@ -28593,6 +29430,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Rejets d\u2019eau provenant des processus de production de l\u2019entreprise"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Scarico di acque risultante dai processi di produzione dell'impresa"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Vandens i\u0161leidimas i\u0161 \u012fmon\u0117s gamybos proces\u0173"
@@ -28628,6 +29468,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Pr\u00e9l\u00e8vements d\u2019eau [abstract]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Prelievo idrico [abstract]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Vandens i\u0161gavimas [abstract]"
         },
@@ -28660,6 +29503,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Poids de la mati\u00e8re utilis\u00e9e"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Peso del materiale utilizzato"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Naudotos med\u017eiagos mas\u0117"
@@ -28695,6 +29541,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Travailleurs de la cha\u00eene de valeur [member]"
         },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Lavoratori nella catena del valore [member]"
+        },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Vert\u0117s grandin\u0117s darbuotojai [member]"
         },
@@ -28727,6 +29576,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Personnel - Sant\u00e9 et s\u00e9curit\u00e9 [abstract]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Forza lavoro \u2013 Salute e sicurezza [abstract]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Darbuotojai. Sveikata ir sauga [abstract]"
@@ -41215,6 +42067,7 @@
         "de": "[B01.000] - Allgemeine Informationen - Grundlagen f\u00fcr die Erstellung",
         "es": "[B01.000] - Informaci\u00f3n general - Base para la elaboraci\u00f3n",
         "fr": "[B01.000] - Informations g\u00e9n\u00e9rales - Base de pr\u00e9paration",
+        "it": "[B01.000] - Informazioni generali - Criteri per la redazione",
         "lt": "[B01.000] \u2013 Bendroji informacija \u2013 Parengimo pagrindas",
         "pl": "[B01.000] - Informacje og\u00f3lne - Podstawa sporz\u0105dzenia",
         "pt": "[B01.000] - Informa\u00e7\u00e3o geral - Base para Prepara\u00e7\u00e3o"
@@ -41298,6 +42151,7 @@
         "de": "[B01.100] - Allgemeine Informationen - Liste der Tochterunternehmen",
         "es": "[B01.100] - Informaci\u00f3n general - Lista de filiales",
         "fr": "[B01.100] - Informations g\u00e9n\u00e9rales - Liste des filiales",
+        "it": "[B01.100] - Informazioni generali - Elenco delle imprese figlie",
         "lt": "[B01.100] \u2013 Bendroji informacija \u2013 Dukterini\u0173 \u012fmoni\u0173 s\u0105ra\u0161as",
         "pl": "[B01.100] - Informacje og\u00f3lne - Wykaz jednostek zale\u017cnych",
         "pt": "[B01.100] - Informa\u00e7\u00e3o geral - Lista de subsidi\u00e1rias"
@@ -41336,6 +42190,7 @@
         "de": "[B01.200] - Allgemeine Informationen - Liste der Standorte",
         "es": "[B01.200] - Informaci\u00f3n general - Lista de emplazamientos",
         "fr": "[B01.200] - Informations g\u00e9n\u00e9rales - Liste des sites",
+        "it": "[B01.200] - Informazioni generali - Elenco dei siti",
         "lt": "[B01.200] - Bendroji informacija - Objekt\u0173 s\u0105ra\u0161as",
         "pl": "B01.200] - Informacje og\u00f3lne - Lista lokalizacji",
         "pt": "[B01.200] - Informa\u00e7\u00f5es gerais - Lista de locais"
@@ -41386,6 +42241,7 @@
         "de": "[B02.000] - Allgemeine Informationen - Verfahrensweisen, Richtlinien und/oder k\u00fcnftige Initiativen f\u00fcr den \u00dcbergang zu einer nachhaltigeren Wirtschaft",
         "es": "[B02.000] - Informaci\u00f3n general - Pr\u00e1cticas, pol\u00edticas o iniciativas futuras para la transici\u00f3n hacia una econom\u00eda m\u00e1s sostenible",
         "fr": "[B02.000] - Informations g\u00e9n\u00e9rales - Pratiques, politiques et/ou initiatives futures en vue de la transition vers une \u00e9conomie plus durable",
+        "it": "[B02.000] - Informazioni generali - Pratiche, politiche e/o iniziative future per la transizione verso un'economia pi\u00f9 sostenibile",
         "lt": "[B02.000] - Bendroji informacija - Praktikos, politikos ir (arba) b\u016bsimos iniciatyvos, skirtos pereiti prie tvaresn\u0117s ekonomikos",
         "pl": "[B02.000] - Informacje og\u00f3lne - Praktyki, polityki i/lub przysz\u0142e inicjatywy na rzecz przej\u015bcia na bardziej zr\u00f3wnowa\u017con\u0105 gospodark\u0119",
         "pt": "[B02.000] - Informa\u00e7\u00f5es gerais - Pr\u00e1ticas, pol\u00edticas e/ou iniciativas futuras de transi\u00e7\u00e3o para uma economia mais sustent\u00e1vel"
@@ -41416,6 +42272,7 @@
         "de": "[B02.100] - Allgemeine Informationen - Genossenschaftsspezifische Angaben",
         "es": "[B02.100] - Informaci\u00f3n general - Divulgaciones espec\u00edficas de cooperativas",
         "fr": "[B02.100] - Informations g\u00e9n\u00e9rales - Informations sp\u00e9cifiques aux coop\u00e9ratives",
+        "it": "[B02.100] - Informazioni generali - Informative specifiche per le cooperative",
         "lt": "[B02.100] \u2013 Bendroji informacija \u2013 Kooperatyvams b\u016bdingi atskleidimai",
         "pl": "[B02.100] - Informacje og\u00f3lne - Szczeg\u00f3lne ujawnienia dotycz\u0105ce sp\u00f3\u0142dzielni",
         "pt": "[B02.100] - Informa\u00e7\u00f5es gerais - Divulga\u00e7\u00f5es espec\u00edficas para cooperativas"
@@ -41446,6 +42303,7 @@
         "de": "[B03.000] - Umwelt - Gesamtenergieverbrauch",
         "es": "[B03.000] - Medio ambiente - Consumo total de energ\u00eda",
         "fr": "[B03.000] - Environnement - Consommation d'\u00e9nergie totale",
+        "it": "[B03.000] - Ambiente - Totale Consumo di Energia",
         "lt": "[B03.000] - Aplinkos sritis - Bendras energijos suvartojimas",
         "pl": "[B03.000] - \u015arodowisko - Ca\u0142kowite zu\u017cycie energii",
         "pt": "[B03.000] - Ambiente - Consumo Total de Energia"
@@ -41468,6 +42326,7 @@
         "de": "[B03.100] - Umwelt - Aufschl\u00fcsselung des Energieverbrauchs",
         "es": "[B03.100] - Medio ambiente - Desglose del consumo de energ\u00eda",
         "fr": "[B03.100] - Environnement - Ventilation de la consommation d'\u00e9nergie",
+        "it": "[B03.100] - Ambiente - Ripartizione del consumo di energia",
         "lt": "[B03.100] - Aplinkos sritis - Energijos suvartojimo suskirstymas",
         "pl": "[B03.100] - \u015arodowisko - Podzia\u0142 zu\u017cycia energii",
         "pt": "[B03.100] - Ambiente - Discrimina\u00e7\u00e3o do consumo de energia"
@@ -41522,6 +42381,7 @@
         "de": "[B03.200] - Umwelt - Gesch\u00e4tzte Treibhausgasemissionen",
         "es": "[B03.200] - Medio ambiente - Emisiones brutas estimadas de gases de efecto invernadero",
         "fr": "[B03.200] - Environnement - Estimation des \u00e9missions de gaz \u00e0 effet de serre",
+        "it": "[B03.200] - Ambiente - Emissioni stimate di gas a effetto serra",
         "lt": "[B03.200] - Aplinkos sritis - Apskai\u010diuotas i\u0161metam\u0173 \u0161iltnamio efekt\u0105 sukelian\u010di\u0173 duj\u0173 kiekis",
         "pl": "[B03.200] - \u015arodowisko - Szacunkowa emisja gaz\u00f3w cieplarnianych",
         "pt": "\"[B03.200] - Ambiente - Emiss\u00f5es estimadas de Gases de Efeito de Estufa\""
@@ -41592,6 +42452,7 @@
         "de": "[B03.300] - Umwelt - Treibhausgas-Emissionsintensit\u00e4t",
         "es": "[B03.300] - Medio ambiente - Intensidad de emisiones de gases de efecto invernadero",
         "fr": "[B03.300] - Environnement - Intensit\u00e9 des \u00e9missions de gaz \u00e0 effet de serre",
+        "it": "[B03.300] - Ambiente - Intensit\u00e0 delle emissioni di gas a effetto serra",
         "lt": "[B03.300] \u2013 Aplinkos sritis \u2013 \u0161iltnamio efekt\u0105 sukelian\u010di\u0173 duj\u0173 intensyvumas",
         "pl": "[B03.300] - \u015arodowisko - Intensywno\u015b\u0107 emisji gaz\u00f3w cieplarnianych",
         "pt": "[B03.300] - Ambiente - Intensidade das Emiss\u00f5es de Gases com Efeito de Estufa"
@@ -41626,6 +42487,7 @@
         "de": "[B04.000] - Umwelt - Luft-, Wasser- und Bodenverschmutzung; Verf\u00fcgbarkeit von \u00f6ffentlichen Angaben",
         "es": "[B04.000] - Medio ambiente - Contaminaci\u00f3n del aire, agua y suelo: disponibilidad de divulgaci\u00f3n p\u00fablica",
         "fr": "[B04.000] - Environnement - Pollution de l\u2019air, de l\u2019eau et des sols : disponibilit\u00e9 de la divulgation publique",
+        "it": "[B04.000] - Ambiente - Inquinamento di aria, acqua e suolo: informativa disponibile al pubblico",
         "lt": "[B04.000] - Aplinkos sritis - Oro, vandens ir dirvo\u017eemio tar\u0161a: vie\u0161o atskleidimo prieinamumas",
         "pl": "[B04.000] \u2013 \u015arodowisko \u2013 Zanieczyszczenie powietrza, wody i gleby: dost\u0119pno\u015b\u0107 publicznego ujawnienia informacji",
         "pt": "[B04.000] - Ambiente - Polui\u00e7\u00e3o do ar, \u00e1gua e solo: disponibilidade de divulga\u00e7\u00f5es p\u00fablicas"
@@ -41652,6 +42514,7 @@
         "de": "[B04.100] - Umwelt - Luft-, Wasser- und Bodenverschmutzung; Emissionsmenge",
         "es": "[B04.100] - Medio ambiente - Contaminaci\u00f3n del aire, agua y suelo: cantidad de emisiones",
         "fr": "[B04.100] - Environnement - Pollution de l\u2019air, de l\u2019eau et des sols : quantit\u00e9 des \u00e9missions",
+        "it": "[B04.100] - Ambiente - Inquinamento di aria, acqua e suolo: quantit\u00e0 delle emissioni",
         "lt": "[B04.100] - Aplinkos sritis - Oro, vandens ir dirvo\u017eemio tar\u0161a: i\u0161metam\u0173 ter\u0161al\u0173 kiekis",
         "pl": "[B04.100] - \u015arodowisko - Zanieczyszczenie powietrza, wody i gleby: ilo\u015b\u0107 emisji",
         "pt": "[B04.100] - Ambiente - Polui\u00e7\u00e3o do ar, \u00e1gua e solo: quantidade de emiss\u00f5es"
@@ -42074,6 +42937,7 @@
         "de": "[B05.000] - Umwelt - Standorte in Gebieten mit schutzbed\u00fcrftiger Biodiversit\u00e4t",
         "es": "[B05.000] - Medio ambiente - Emplazamientos en \u00e1reas sensibles para la biodiversidad",
         "fr": "[B05.000] - Environnement - Sites situ\u00e9s dans des zones sensibles sur le plan de la biodiversit\u00e9",
+        "it": "[B05.000] - Ambiente - Siti ubicati all'interno di un'area sensibile sotto il profilo della biodiversit\u00e0",
         "lt": "[B05.000] \u2013 Aplinkos sritis \u2013 objektai biologinei \u012fvairovei jautriose teritorijose",
         "pl": "[B05.000] - \u015arodowisko - Lokalizacje na obszarach wra\u017cliwych pod wzgl\u0119dem bior\u00f3\u017cnorodno\u015bci",
         "pt": "[B05.000] - Ambiente - Locais em \u00e1reas sens\u00edveis \u00e0 biodiversidade"
@@ -42116,6 +42980,7 @@
         "de": "[B05.100] - Umwelt - Biodiversit\u00e4t - Fl\u00e4chennutzung",
         "es": "[B05.100] - Medio Ambiente - Biodiversidad - en uso de la tierra",
         "fr": "[B05.100] - Environnement - Biodiversit\u00e9 - Utilisation des terres",
+        "it": "[B05.100] - Ambiente - Biodiversit\u00e0 - sull'uso del suolo",
         "lt": "[B05.100] - Aplinkos sritis - \u012evairov\u0117 - \u017eem\u0117s naudojimas",
         "pl": "[B05.100] - \u015arodowisko - Bior\u00f3\u017cnorodno\u015b\u0107 - zwi\u0105zana z u\u017cytkowaniem grunt\u00f3w",
         "pt": "Ambiente \u2013 Biodiversidade \u2013 sobre Utiliza\u00e7\u00e3o do Solo"
@@ -42150,6 +43015,7 @@
         "de": "[B06.000] - Umwelt - Wasserentnahme",
         "es": "[B06.000] - Medio Ambiente - Extracci\u00f3n de Agua",
         "fr": "[B06.000] - Environnement - Pr\u00e9l\u00e8vements d'eau",
+        "it": "[B06.000] - Ambiente - Prelievo idrico",
         "lt": "[B06.000] -  Aplinkos sritis - Vandens i\u0161gavimas",
         "pl": "[B06.000] - \u015arodowisko - Pob\u00f3r wody",
         "pt": "[B06.000] - Ambiente - Capta\u00e7\u00e3o de \u00c1gua"
@@ -42176,6 +43042,7 @@
         "de": "[B06.100] - Umwelt - Wasserverbrauch",
         "es": "[B06.100] - Medio ambiente - Consumo de agua",
         "fr": "[B06.100] - Environnement - Consommation d\u2019eau",
+        "it": "[B06.100] - Ambiente - Consumo idrico",
         "lt": "[B06.100] \u2013 Aplinkos sritis \u2013 Vandens suvartojimas",
         "pl": "[B06.100] - \u015arodowisko - Zu\u017cycie wody",
         "pt": "[B06.100] - Ambiente - Consumo de \u00c1gua"
@@ -42202,6 +43069,7 @@
         "de": "[B07.000] - Umwelt - Beschreibung der Grunds\u00e4tze der Kreislaufwirtschaft",
         "es": "[B07.000] - Medio ambiente - Descripci\u00f3n de los principios de la econom\u00eda circular",
         "fr": "[B07.000] - Environnement - Description des principes de l'\u00e9conomie circulaire",
+        "it": "[B07.000] - Ambiente - Descrizione dei principi dell'economia circolare",
         "lt": "[B07.000] \u2013 Aplinkos sritis \u2013 Apra\u0161ymas apie \u017eiedin\u0117s ekonomikos principus",
         "pl": "[B07.000] - \u015arodowisko - Opis zasad gospodarki o obiegu zamkni\u0119tym",
         "pt": "[B07.000] - Ambiente - Descri\u00e7\u00e3o dos princ\u00edpios da economia circular"
@@ -42228,6 +43096,7 @@
         "de": "[B07.100] - Umwelt - Aufschl\u00fcsselung nach Art des Abfalls",
         "es": "[B07.100] - Medio ambiente - Desglose de residuos por tipo",
         "fr": "[B07.100] - Environnement - Ventilation des d\u00e9chets par type",
+        "it": "[B07.100] - Ambiente - Ripartizione dei rifiuti per tipo",
         "lt": "[B07.100] - Aplinkos sritis - Atliek\u0173 suskirstymas pagal tip\u0105",
         "pl": "[B07.100] - \u015arodowisko - Podzia\u0142 odpad\u00f3w wed\u0142ug rodzaju",
         "pt": "[B07.100] - Ambiente - Discrimina\u00e7\u00e3o dos res\u00edduos por tipo"
@@ -46178,6 +47047,7 @@
         "de": "[B07.200] - Umwelt - Gesamtaufkommen gef\u00e4hrlicher Abf\u00e4lle",
         "es": "[B07.200]-  Medio ambiente - Residuos totales peligrosos y no peligrosos",
         "fr": "[B07.200] - Environnement - Total des d\u00e9chets dangereux et non dangereux",
+        "it": "[B07.200] - Ambiente - Totale rifiuti pericolosi e non pericolosi",
         "lt": "[B07.200] - Aplinkos sritis - Bendras pavojing\u0173 ir nepavojing\u0173 atliek\u0173 kiekis",
         "pl": "[B07.200] - \u015arodowisko - Ca\u0142kowita ilo\u015b\u0107 odpad\u00f3w niebezpiecznych i odpad\u00f3w innych ni\u017c niebezpieczne",
         "pt": "[B07.200] - Ambiente - Total de Res\u00edduos Perigosos e N\u00e3o Perigosos"
@@ -46220,6 +47090,7 @@
         "de": "[B07.300] - Umwelt - Aufschl\u00fcsselung des j\u00e4hrlichen Massenstroms der vom Unternehmen verwendeten relevanten Materialien",
         "es": "[B07.300] - Medio Ambiente - Desglose del flujo de masa anual de materiales relevantes utilizados por la empresa",
         "fr": "[B07.300] \u2013 Environnement \u2013 Ventilation annuelle du flux massique des mati\u00e8res pertinentes utilis\u00e9es par l\u2019entreprise",
+        "it": "[B07.300] - Ambiente - Ripartizione del flusso di massa annuo dei materiali pertinenti utilizzati dall'impresa",
         "lt": "[B07.300] \u2013 Aplinkos sritis \u2013 Metinio reik\u0161ming\u0173 med\u017eiag\u0173, kurias naudoja \u012fmon\u0117, mas\u0117s srauto pasiskirstymas",
         "pl": "[B07.300] - \u015arodowisko - Podzia\u0142 rocznego przep\u0142ywu masy istotnych materia\u0142\u00f3w wykorzystywanych przez jednostk\u0119",
         "pt": "[B07.300] - Ambiente \u2013 Desagrega\u00e7\u00e3o do fluxo anual de massa dos materiais relevantes utilizados pela empresa"
@@ -46262,6 +47133,7 @@
         "de": "[B07.400] - Umwelt - Gesamter j\u00e4hrlicher Massenstrom der vom Unternehmen verwendeten Materialien",
         "es": "[B07.400] - Medio ambiente - Flujo de masa anual total de materiales usados por la empresa",
         "fr": "[B07.400] - Environnement - Flux massique annuel total des mati\u00e8res utilis\u00e9es par l'entreprise",
+        "it": "[B07.400] - Ambiente - Totale flusso di massa annuo dei materiali utilizzati dall'impresa",
         "lt": "[B07.400] - Aplinkos sritis - Metinis visos \u012fmon\u0117s naudojam\u0173 med\u017eiag\u0173 mas\u0117s srautas",
         "pl": "[B07.400] - \u015arodowisko - Ca\u0142kowity roczny przep\u0142yw masowy materia\u0142\u00f3w u\u017cywanych przez jednostk\u0119",
         "pt": "[B07.400] - Ambiente \u2013 Fluxo anual total de massa dos materiais utilizados pela empresa"
@@ -46288,6 +47160,7 @@
         "de": "[B08.000] - Sozial - Arbeitskr\u00e4fte - Allgemeine Merkmale: Art des Vertrags",
         "es": "[B08.000] - Social - Trabajadores - Caracter\u00edsticas generales: tipo de contrato",
         "fr": "[B08.000] - Social - Personnel - Caract\u00e9ristiques g\u00e9n\u00e9rales : type de contrat",
+        "it": "[B08.000] - Sociale - Forza lavoro - Caratteristiche generali: tipo di contratto",
         "lt": "[B08.000] - Socialin\u0117 sritis - Darbuotojai - Bendrieji rodikliai: sutarties r\u016b\u0161is",
         "pl": "[B08.000] - Kwestie spo\u0142eczne - Zasoby pracownicze - Charakterystyka og\u00f3lna: rodzaj umowy",
         "pt": "[B08.000] - Social - For\u00e7a de trabalho - Caracter\u00edsticas gerais: tipo de contrato"
@@ -46314,6 +47187,7 @@
         "de": "[B08.100] \u2013 Sozial \u2013 Arbeitskr\u00e4fte \u2013 Allgemeine Merkmale: Geschlecht",
         "es": "[B08.100] - Social - Trabajadores - Caracter\u00edsticas generales: g\u00e9nero",
         "fr": "[B08.100] - Social - Personnel - Caract\u00e9ristiques g\u00e9n\u00e9rales : genre",
+        "it": "[B08.100] - Sociale - Forza lavoro - Caratteristiche generali: genere",
         "lt": "[B08.100] - Socialin\u0117 sritis - Darbuotojai - Bendrieji rodikliai: lytis",
         "pl": "[B08.100] - Kwestie spo\u0142eczne - Zasoby pracownicze \u2013 og\u00f3lna charakterystyka: p\u0142e\u0107",
         "pt": "[B08.100] - Social - M\u00e3o-de-obra - Caracter\u00edsticas gerais: g\u00e9nero"
@@ -46348,6 +47222,7 @@
         "de": "[B08.200] - Sozial - Arbeitskr\u00e4fte - Allgemeine Merkmale: Land des Arbeitsvertrags",
         "es": "[B08.200] - Social - Trabajadores- Caracter\u00edsticas generales: pa\u00eds de empleo",
         "fr": "[B08.200] - Social - Personnel - Caract\u00e9ristiques g\u00e9n\u00e9rales : pays du contrat de travail",
+        "it": "[B08.200] - Sociale - Forza lavoro - Caratteristiche generali: paese del contratto di lavoro",
         "lt": "[B08.200] \u2013 Socialin\u0117 sritis \u2013 Darbuotojai \u2013 Bendrieji rodikliai: darbo sutarties \u0161alis",
         "pl": "[B08.200] \u2013 Kwestie spo\u0142eczne \u2013 Zasoby pracownicze \u2013 Charakterystyka og\u00f3lna: kraj zatrudnienia",
         "pt": "\"[B08.200] - Social - M\u00e3o-de-obra - Caracter\u00edsticas gerais: pa\u00eds do contrato de trabalho\""
@@ -47410,6 +48285,7 @@
         "de": "[B08.300] - Sozial - Arbeitskr\u00e4fte - Allgemeine Merkmale: Fluktuationsrate",
         "es": "[B08.300] - Social - Trabajadores - Caracter\u00edsticas generales: tasa de rotaci\u00f3n",
         "fr": "[B08.300] - Social - Personnel - Caract\u00e9ristiques g\u00e9n\u00e9rales : taux de rotation",
+        "it": "[B08.300] - Sociale - Forza lavoro - Caratteristiche generali: tasso di avvicendamento",
         "lt": "[B08.300] - Socialin\u0117 sritis - Darbuotojai - Bendrieji rodikliai: darbuotoj\u0173 kaitos rodiklis",
         "pl": "[B08.300] - Kwestie spo\u0142eczne - Zasoby pracownicze - Og\u00f3lna charakterystyka: wska\u017anik rotacji pracownik\u00f3w",
         "pt": "[B08.300] \u2013 Social \u2013 For\u00e7a de trabalho \u2013 Caracter\u00edsticas gerais: taxa de rotatividade"
@@ -47432,6 +48308,7 @@
         "de": "[B09.000] - Sozial - Arbeitskr\u00e4fte - Gesundheitsschutz und Sicherheit",
         "es": "[B09.000] - Social - Trabajadores- Salud y seguridad",
         "fr": "[B09.000] - Social - Personnel - Sant\u00e9 et s\u00e9curit\u00e9",
+        "it": "[B09.000] - Sociale - Forza lavoro - Salute e sicurezza",
         "lt": "[B09.000] - Socialin\u0117 sritis - Darbuotojai - Sveikata ir sauga",
         "pl": "[B09.000] - Kwestie spo\u0142eczne - Zasoby pracownicze - Bezpiecze\u0144stwo i higiena pracy",
         "pt": "[B09.000] - Social - M\u00e3o-de-obra - Sa\u00fade e seguran\u00e7a"
@@ -47462,6 +48339,7 @@
         "de": "[B10.000] - Sozial - Arbeitskr\u00e4fte - Verg\u00fctung, Tarifverhandlungen und Schulung",
         "es": "[B10.000] - Social - Trabajadores\u2013 Retribuci\u00f3n, negociaci\u00f3n colectiva y formaci\u00f3n",
         "fr": "[B10.000] - Social - Personnel - R\u00e9mun\u00e9ration, n\u00e9gociation collective et formation",
+        "it": "[B10.000] - Sociale - Forza lavoro - Retribuzione, contrattazione collettiva e formazione",
         "lt": "[B10.000] \u2013 Socialin\u0117 sritis \u2013 Darbuotojai \u2013 Atlyginimas, kolektyvin\u0117s derybos ir mokymai",
         "pl": "[B10.000] - Kwestie spo\u0142eczne - Zasoby pracownicze - Wynagrodzenie, rokowania zbiorowe i szkolenia",
         "pt": "[B10.000] - Social - M\u00e3o-de-obra - Remunera\u00e7\u00e3o, negocia\u00e7\u00e3o coletiva e forma\u00e7\u00e3o"
@@ -47516,6 +48394,7 @@
         "de": "[B11.000] - Governance - Verurteilungen und Geldstrafen wegen Korruption und Bestechung",
         "es": "[B11.000] Gobernanza - Condenas y multas por corrupci\u00f3n y soborno",
         "fr": "[B11.000] \u2013 Gouvernance \u2013 Condamnations et amendes pour corruption et versement de pots-de-vin",
+        "it": "[B11] \u2013 Condanne e ammende per corruzione attiva e passiva",
         "lt": "[B11.000] \u2013 Valdymo sritis \u2013 Nuteisimai ir baudos u\u017e korupcij\u0105 ir ky\u0161ininkavim\u0105",
         "pl": "[B11.000] - \u0141ad korporacyjny - Wyroki skazuj\u0105ce i grzywny za naruszenie przepis\u00f3w antykorupcyjnych i przepis\u00f3w w sprawie zwalczania przekupstwa",
         "pt": "[B11.000] - Governa\u00e7\u00e3o - Condena\u00e7\u00f5es e coimas por corrup\u00e7\u00e3o e suborno"
@@ -47542,6 +48421,7 @@
         "de": "[C01.000] - Allgemeine Informationen - Strategie: Gesch\u00e4ftsmodell und Nachhaltigkeit \u2013 zugeh\u00f6rige Initiativen",
         "es": "[C01.000] - Informaci\u00f3n general - Estrategia: Modelo de negocio y sostenibilidad \u2013 Iniciativas relacionadas",
         "fr": "[C01.000] - C1 \u2013 Strat\u00e9gie : mod\u00e8le \u00e9conomique et durabilit\u00e9 \u2013 initiatives associ\u00e9es",
+        "it": "[C01.000] - Informazioni generali - Strategia: Modello aziendale e iniziative connesse alla sostenibilit\u00e0",
         "lt": "[C01.000] \u2013 Bendroji informacija \u2013 Strategija: Verslo modelis ir su tvarumu susijusios iniciatyvos",
         "pl": "[C01.000] - Informacje og\u00f3lne - Strategia: model biznesowy i zr\u00f3wnowa\u017cony rozw\u00f3j \u2013 powi\u0105zane inicjatywy",
         "pt": "[C01.000] - Informa\u00e7\u00f5es gerais - Estrat\u00e9gia: Modelo de neg\u00f3cio e Sustentabilidade \u2013 Iniciativas conexas"
@@ -47576,6 +48456,7 @@
         "de": "[C02.000] \u2013 Allgemeine Informationen \u2013 Beschreibung von Verfahrensweisen, Richtlinien und/oder k\u00fcnftigen Initiativen f\u00fcr den \u00dcbergang zu einer nachhaltigeren Wirtschaft",
         "es": "[C02.000] - Informaci\u00f3n general - Descripci\u00f3n de pr\u00e1cticas, pol\u00edticas y/o iniciativas futuras para la transici\u00f3n hacia una econom\u00eda m\u00e1s sostenible",
         "fr": "[C02.000] - Informations g\u00e9n\u00e9rales - Description des pratiques, politiques et/ou initiatives futures pour la transition vers une \u00e9conomie plus durable",
+        "it": "[C02.000] - Informazioni generali - Descrizione delle pratiche, delle politiche e/o delle iniziative future per la transizione verso un'economia pi\u00f9 sostenibile",
         "lt": "[C02.000] - Bendroji informacija - Praktik\u0173, politik\u0173 ir (arba) b\u016bsim\u0173 iniciatyv\u0173, skirt\u0173 pereiti prie tvaresn\u0117s ekonomikos, apra\u0161ymas",
         "pl": "[B02.000] - Informacje og\u00f3lne - Opis praktyk, polityk i/lub przysz\u0142ych inicjatyw na rzecz przej\u015bcia na bardziej zr\u00f3wnowa\u017con\u0105 gospodark\u0119",
         "pt": "[C02.000] - Informa\u00e7\u00f5es gerais - Descri\u00e7\u00e3o das pr\u00e1ticas, pol\u00edticas e/ou iniciativas futuras de transi\u00e7\u00e3o para uma economia mais sustent\u00e1vel"
@@ -47606,6 +48487,7 @@
         "de": "[C03.000] - Umwelt - Basisjahr und Zieljahr der Treibhausgas-Reduktionsziele",
         "es": "[C03.000] - Medio ambiente - A\u00f1o base y a\u00f1o objetivo de reducci\u00f3n de emisiones de gases de efecto invernadero",
         "fr": "[C03.000] - Environnement - Ann\u00e9e de r\u00e9f\u00e9rence et ann\u00e9e cible pour la r\u00e9duction des \u00e9missions de gaz \u00e0 effet de serre",
+        "it": "[C03.000] - Ambiente - Base e anno-obiettivo per la riduzione delle emissioni di gas a effetto serra",
         "lt": "[C03.000] \u2013 Aplinkos sritis \u2013 \u0161iltnamio efekt\u0105 sukelian\u010di\u0173 duj\u0173 emisij\u0173 ma\u017einimo baziniai ir tiksliniai metai",
         "pl": "[C03.000] - \u015arodowisko - Rok bazowy i docelowy redukcji emisji gaz\u00f3w cieplarnianych",
         "pt": "[C03.000] - Ambiente \u2013 Ano base e ano alvo para redu\u00e7\u00e3o das emiss\u00f5es de gases com efeito de estufa"
@@ -47632,6 +48514,7 @@
         "de": "[C03.100] - Umwelt - Treibhausgas-Reduktionsziele",
         "es": "[C03.100] - Medio ambiente - Objetivos de reducci\u00f3n de emisiones de gases de efecto invernadero",
         "fr": "[C03.100] - Environnement - Cibles de r\u00e9duction des \u00e9missions de gaz \u00e0 effet de serre",
+        "it": "[C03.100] - Ambiente - Obiettivi di riduzione delle emissioni di gas a effetto serra",
         "lt": "[C03.100] \u2013 Aplinkos sritis \u2013 \u0160iltnamio efekt\u0105 sukelian\u010di\u0173 duj\u0173 emisij\u0173 ma\u017einimo tikslai",
         "pl": "[C03.100] - \u015arodowisko - Cele redukcji emisji gaz\u00f3w cieplarnianych",
         "pt": "[C03.100] - Ambiente - Metas de redu\u00e7\u00e3o das emiss\u00f5es de gases com efeito de estufa"
@@ -47706,6 +48589,7 @@
         "de": "[C03.200] \u2013 Umwelt \u2013 Angabe der wesentlichen Ma\u00dfnahmen, die das Unternehmen zur Erreichung seiner Ziele durchzuf\u00fchren beabsichtigt",
         "es": "[C03.200] - Medio ambiente - Divulgaci\u00f3n de la lista de las acciones principales que la entidad busca llevar a cabo para alcanzar sus objetivos",
         "fr": "[C03.200] - Environnement - Publication de la liste des principales actions que l'entreprise entend mettre en \u0153uvre pour atteindre ses cibles",
+        "it": "[C03.200] - Ambiente - Comunicazione dell'elenco delle principali azioni che l'impresa intende attuare per conseguire i propri obiettivi",
         "lt": "[C03.200] \u2013 Aplinkos sritis \u2013 Ataskaitoje atskleid\u017eiamas pagrindini\u0173 veiksm\u0173, kuri\u0173 organizacija siekia pasiekti savo tikslus, s\u0105ra\u0161as",
         "pl": "[C03.200] - \u015arodowisko - Ujawnienie wykazu g\u0142\u00f3wnych dzia\u0142a\u0144, kt\u00f3re jednostka zamierza wdro\u017cy\u0107, aby osi\u0105gn\u0105\u0107 swoje cele",
         "pt": "[C03.200] - Ambiente - Divulga\u00e7\u00e3o da lista das principais a\u00e7\u00f5es que a entidade procura executar para alcan\u00e7ar as suas metas"
@@ -47728,6 +48612,7 @@
         "de": "[C03.300] - Umwelt - \u00dcbergangsplan f\u00fcr Unternehmen, die in klimaintensiven Sektoren t\u00e4tig sind",
         "es": "[C03.300] - Medio ambiente - Plan de transici\u00f3n para empresas que operan en sectores de alto impacto clim\u00e1tico",
         "fr": "[C03.300] - Environnement - Plan de transition pour les entreprises op\u00e9rant dans des secteurs \u00e0 fort impact climatique",
+        "it": "[C03.300] - Ambiente - Piano di transizione per le imprese che operano in settori ad alto impatto climatico",
         "lt": "[C03.300] \u2013 Aplinkos sritis \u2013 Per\u0117jimo planas \u012fmon\u0117ms, veikian\u010dioms sektoriuose, kuri\u0173 poveikis klimatui yra didelis",
         "pl": "[C03.300] \u2013 \u015arodowisko \u2013 Plan transformacji dla jednostek prowadz\u0105cych dzia\u0142alno\u015b\u0107 w sektorach o znacznym oddzia\u0142ywaniu na klimat",
         "pt": "[C03.300] - Ambiente - Plano de transi\u00e7\u00e3o para empresas que operam em setores com elevado impacto clim\u00e1tico"
@@ -47754,6 +48639,7 @@
         "de": "[C04.000] - Umwelt - Klimabedingte Risiken",
         "es": "[C04.000] - Medio ambiente - Riesgos clim\u00e1ticos",
         "fr": "[C04.000] - Environnement - Risques climatiques",
+        "it": "[C04.000] - Ambiente - Rischi climatici",
         "lt": "[C04.000] \u2013 Aplinkos sritis \u2013 Klimato rizikos",
         "pl": "[C04.000] - \u015arodowisko - Ryzyka klimatyczne",
         "pt": "[C04.000] - Ambiente - Riscos clim\u00e1ticos"
@@ -47792,6 +48678,7 @@
         "de": "[C05.000] \u2013 Sozial \u2013 Zus\u00e4tzliche (allgemeine) Merkmale der Arbeitskr\u00e4fte",
         "es": "[C05.000] - Social - Caracter\u00edsticas adicionales (generales) de los trabajadores",
         "fr": "[C05.000] - Social - Caract\u00e9ristiques suppl\u00e9mentaires (g\u00e9n\u00e9rales) du personnel",
+        "it": "[C05.000] \u2013 Sociale \u2013 Altre caratteristiche (generali) della forza lavoro",
         "lt": "[C05.000] \u2013 Socialin\u0117 sritis \u2013 Papildomi (bendrieji) darbuotoj\u0173 rodikliai",
         "pl": "[C05.000] - Kwestie spo\u0142eczne - Dodatkowe (og\u00f3lne) cechy zasob\u00f3w pracowniczych",
         "pt": "C05.000 \u2013 Social \u2013 Caracter\u00edsticas adicionais (gerais) da for\u00e7a de trabalho"
@@ -47822,6 +48709,7 @@
         "de": "[C06.000] \u2013 Sozial \u2013 Zus\u00e4tzliche Informationen zur eigenen Belegschaft \u2013 Richtlinien f\u00fcr die Achtung der Menschenrechte und diesbez\u00fcgliche Prozesse",
         "es": "[C06.000] - Social - Informaci\u00f3n adicional sobre el personal propio - Pol\u00edticas y procesos en materia de derechos humanos",
         "fr": "[C06.000] - Social - Informations suppl\u00e9mentaires sur le personnel - Politiques et proc\u00e9dures en mati\u00e8re de droits de l\u2019homme",
+        "it": "[C06.000] \u2013 Sociale - Altre informazioni sulla forza lavoro propria \u2013 Politiche e procedure in materia di diritti umani",
         "lt": "[C06.000] - Socialin\u0117 sritis - Papildoma darbuotoj\u0173 informacija - \u017dmogaus teisi\u0173 politika ir procesai",
         "pl": "[C06.000] - Kwestie spo\u0142eczne - Dodatkowe informacje o w\u0142asnych zasobach pracowniczych - Polityki i procesy dotycz\u0105ce praw cz\u0142owieka",
         "pt": "[C06.000] - Social - Informa\u00e7\u00f5es adicionais sobre a pr\u00f3pria m\u00e3o-de-obra - Pol\u00edticas e processos em mat\u00e9ria de direitos humanos"
@@ -47856,6 +48744,7 @@
         "de": "[C07.000] \u2013 Sozial \u2013 Schwerwiegende Vorf\u00e4lle im Zusammenhang mit Menschenrechten",
         "es": "[C07.000] - Social - Incidentes graves negativos de derechos humanos",
         "fr": "[C07.000] - Social  \u2013 Incidents graves en mati\u00e8re de droits de l\u2019homme",
+        "it": "[C07.000] - Sociale - Incidenti gravi in materia di diritti umani",
         "lt": "[C07.000] - Socialin\u0117 sritis - Svarb\u016bs neigiami \u017emogaus teisi\u0173 pa\u017eeidimai",
         "pl": "[C07.000] \u2013 Kwestie spo\u0142eczne \u2013 Powa\u017cne negatywne incydenty dotycz\u0105ce praw cz\u0142owieka",
         "pt": "[C07.000] - Social - Incidentes graves negativos em mat\u00e9ria de direitos humanos"
@@ -47898,6 +48787,7 @@
         "de": "[C08.000] \u2013 Governance \u2013 Umsatzerl\u00f6se aus bestimmten T\u00e4tigkeiten und Ausnahme von EU-Referenzwerten",
         "es": "[C08.000] - Gobernanza - Ingresos derivados de actividades",
         "fr": "[C08.000] - Gouvernance - Chiffre d'affaires r\u00e9alis\u00e9 \u00e0 partir des activit\u00e9s",
+        "it": "[C08.000] - Governance - Ricavi derivanti da attivit\u00e0",
         "lt": "[C08.000] - Valdymo sritis - Pajamos, gautos i\u0161 veikl\u0173",
         "pl": "[C08.000] - \u0141ad korporacyjny - Przychody z dzia\u0142alno\u015bci",
         "pt": "[C08.000] - Governa\u00e7\u00e3o - R\u00e9ditos provenientes de atividades"
@@ -47944,6 +48834,7 @@
         "de": "[C08.100] \u2013 Governance \u2013 Ausnahme von EU-Referenzwerten",
         "es": "[C08.100] - Gobernanza - Exclusi\u00f3n de los \u00edndices de referencia de la UE",
         "fr": "[C08.100] - Gouvernance - Exclusion des indices de r\u00e9f\u00e9rence de l\u2019Union europ\u00e9enne",
+        "it": "[C08.100] - Governance - Esclusione dagli indici di riferimento dell'UE",
         "lt": "[G11.100] - Valdymo sritis - Pa\u0161alinimas i\u0161 ES lyginam\u0173j\u0173 etalon\u0173",
         "pl": "[C08.100] - \u0141ad korporacyjny - wykluczenie z unijnych wska\u017anik\u00f3w referencyjnych",
         "pt": "[C08.100] - Governa\u00e7\u00e3o - Exclus\u00e3o dos \u00edndices de refer\u00eancia da UE"
@@ -47966,6 +48857,7 @@
         "de": "[C09.000] \u2013 Governance \u2013 Geschlechtervielfalt im Leitungsorgan",
         "es": "[C09.000] - Gobernanza - Ratio de diversidad de g\u00e9nero en el \u00f3rgano de gobernanza",
         "fr": "[C09.000] - Gouvernance - Ratio de mixit\u00e9 au sein de l\u2019organe de gouvernance",
+        "it": "[C09.000] - Governance - Diversit\u00e0 di genere nell'organo di governance",
         "lt": "[C09.000] \u2013 Valdymo sritis \u2013 Ly\u010di\u0173 \u012fvairov\u0117s rodiklis valdymo organe",
         "pl": "[C09.000] - \u0141ad korporacyjny - Wska\u017anik zr\u00f3\u017cnicowania organu zarz\u0105dzaj\u0105cego pod wzgl\u0119dem p\u0142ci",
         "pt": "[C09.000] - Governa\u00e7\u00e3o - R\u00e1cio de diversidade de g\u00e9nero no \u00f3rg\u00e3o de governa\u00e7\u00e3o"
@@ -47988,6 +48880,7 @@
         "de": "[D99.000] \u2013 Governance \u2013 Weitere und/oder unternehmensspezifische Informationen",
         "es": "[ D99.000] - Otra y/o informaci\u00f3n espec\u00edfica de la entidad",
         "fr": "[D99.000] - Autres informations et/ou informations sp\u00e9cifiques \u00e0 l\u2019entit\u00e9",
+        "it": "[D99.000] - Altre informazioni e/o specifiche per soggetto",
         "lt": "[D99.000] - Kita ir (arba) \u012fmonei specifin\u0117 informacija",
         "pl": "[D99.000] - Inne i/lub informacje specyficzne dla jednostki",
         "pt": "[D99.000] - Outra informa\u00e7\u00e3o e/ou informa\u00e7\u00e3o espec\u00edfica da empresa"
