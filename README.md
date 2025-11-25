@@ -11,6 +11,8 @@ A free instance of this tool is running on the [EFRAG XBRL site](https://xbrl.ef
 
 More information on the project, including an [Explanatory Note (PDF)](https://xbrl.efrag.org/downloads/vsme/VSME-Digital-Template-and-XBRL-Taxonomy-Explanatory-Note-May-2025.pdf) is provided on [EFRAG's website](https://www.efrag.org/en/vsme-digital-template-and-xbrl-taxonomy).
 
+Please see the [Frequently Asked Questions (FAQ)](/digital-templates/FAQ.md) for help working with the digital template files.
+
 ## Key Features
 
 - Streamlines digital sustainability reporting.
