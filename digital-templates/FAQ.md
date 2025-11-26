@@ -13,7 +13,7 @@ To complete the VSME Digital Template, preparers need to fill in the datapoints 
 
 4. Governance Disclosures sheet which contains the governance metrics from both the Basic and Comprehensive Modules.
 
-Be aware that this is a Technical FAQ on how the VSME Digital Template and the Converter.
+Please note that this FAQ covers **only the technical aspects and functions** of the VSME Digital Template and Converter. This FAQ does not cover any content related questions regarding the VSME.
 
 ## **1. How could I unlock the template? Could I modify the structure of the template?**
 
