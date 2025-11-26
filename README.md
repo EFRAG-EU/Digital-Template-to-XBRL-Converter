@@ -9,7 +9,7 @@ The tool enables users to convert data from structured Excel templates into XBRL
 
 A free instance of this tool is running on the [EFRAG XBRL site](https://xbrl.efrag.org/convert/)
 
-More information on the project, including an [Explanatory Note (PDF)](https://xbrl.efrag.org/downloads/vsme/VSME-Digital-Template-and-XBRL-Taxonomy-Explanatory-Note-May-2025.pdf) is provided on [EFRAG's website](https://www.efrag.org/en/vsme-digital-template-and-xbrl-taxonomy).
+More information on the project, including an [Explanatory Note (PDF)](https://xbrl.efrag.org/downloads/vsme/VSME-Digital-Template-and-XBRL-Taxonomy-Explanatory-Note-October-2025.pdf) is provided on [EFRAG's website](https://www.efrag.org/en/vsme-digital-template-and-xbrl-taxonomy).
 
 ## Key Features
 
