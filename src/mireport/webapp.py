@@ -74,6 +74,9 @@ def create_app() -> Flask:
     # Get taxonomy related objects loaded
     loadTaxonomyJSON()
 
+    global LOCALE_JSON
+    LOCALE_JSON = make_locale_json()
+
     app = Flask(__name__, static_folder=None)
     app.config["MAX_CONTENT_LENGTH"] = MAX_FILE_SIZE
     app.config.from_prefixed_env()
@@ -265,8 +268,7 @@ def add_deployment_header(response: Response) -> Response:
     return response
 
 
-@convert_bp.route(f"/locales/available_{mireport.__version__}")
-def available_locales() -> Response:
+def make_locale_json() -> list[dict[str, str]]:
     allPossibleTaxonomyLanguages: set[str] = {
         lang for ep in listTaxonomies() for lang in getTaxonomy(ep).supportedLanguages
     }
@@ -274,9 +276,12 @@ def available_locales() -> Response:
         EU_LOCALES,
         supportedLanguages=extract_base_languages(allPossibleTaxonomyLanguages),
     )
-    resp = make_response(jsonify(localeMetadata))
-    resp.headers["Cache-Control"] = "public, max-age=86400"
-    return resp
+    return localeMetadata
+
+
+@convert_bp.route(f"/locales/available_{mireport.__version__}.json")
+def available_locales() -> Response:
+    return jsonify(LOCALE_JSON)
 
 
 @convert_bp.route("/debug_session")

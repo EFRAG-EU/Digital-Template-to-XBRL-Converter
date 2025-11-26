@@ -94,13 +94,14 @@ def extract_base_languages(languages: Iterable) -> frozenset[str]:
 
 
 def get_locale_list(
-    code_list: Iterable[str], supportedLanguages: Optional[Set[str]] = None
+    requestedCodes: Iterable[str], supportedLanguages: Optional[Set[str]] = None
 ) -> list[dict[str, str]]:
     locales: list[dict[str, str]] = []
-    code_list = frozenset(code_list)
 
-    max_code_length = max(len(code) for code in code_list)
-    for code in code_list:
+    codes = set(requestedCodes)
+    max_code_length = max(len(code) for code in codes)
+
+    for code in codes:
         # Normalize to Babel's preferred format
         normalized_code = xmlLang_to_babelIdentifier(code)
         try:
