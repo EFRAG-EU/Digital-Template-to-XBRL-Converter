@@ -143,6 +143,18 @@ class ArelleProcessingResult:
     def logLines(self) -> list[str]:
         return list(self._textLogLines)
 
+    def addException(self, exception: Exception, message: Optional[str] = None) -> None:
+        text = f"{exception.__class__.__name__}: {exception}"
+        if message:
+            text = f"{message}. {text}"
+        self._validationMessages.append(
+            Message(
+                messageText=text,
+                severity=Severity.ERROR,
+                messageType=MessageType.XbrlValidation,
+            )
+        )
+
 
 class ArelleObjectJSONEncoder(json.JSONEncoder):
     def default(self, o: Any) -> Any:
