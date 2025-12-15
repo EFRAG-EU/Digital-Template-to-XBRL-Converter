@@ -43,9 +43,15 @@ class ArelleVersionHolder:
 class ArelleProcessingResult:
     """Holds the results of processing an XBRL file with Arelle."""
 
-    _INTERESTING_LOG_MESSAGES = (
+    _INTERESTING_LOG_MESSAGE_FRAGMENTS = (
         "validated in",
         "loaded in",
+    )
+
+    _UNINTERESTING_LOG_MESSAGE_PREFIXES = (
+        "Activation of package",
+        "Activation of plug-in",
+        "Option ",
     )
 
     def __init__(self, jsonMessages: str, textLogLines: list[str]):
@@ -67,16 +73,10 @@ class ArelleProcessingResult:
             if wantDebug:
                 L.debug(f"{code=} {level=} {text=} {fact=}")
 
-            if code == "info" and text.startswith("Option "):
-                # this is a debug message about an option being set
-                # we don't want to show these in the report
-                continue
-
             match code:
                 case "info" | "":
                     if "" == code or any(
-                        a in text
-                        for a in ArelleProcessingResult._INTERESTING_LOG_MESSAGES
+                        a in text for a in self._INTERESTING_LOG_MESSAGE_FRAGMENTS
                     ):
                         self._validationMessages.append(
                             Message(
@@ -84,6 +84,15 @@ class ArelleProcessingResult:
                                 severity=Severity.INFO,
                                 messageType=MessageType.DevInfo,
                             )
+                        )
+                    elif text.startswith(self._UNINTERESTING_LOG_MESSAGE_PREFIXES):
+                        if wantDebug:
+                            L.debug(
+                                f"Ignoring uninteresting Arelle log message: {code=} {level=} {text=} {fact=}"
+                            )
+                    else:
+                        L.warning(
+                            f"Unexpected Arelle log message: {code=} {level=} {text=} {fact=}"
                         )
                 case _:
                     messageText = f"[{code}] {text}"
