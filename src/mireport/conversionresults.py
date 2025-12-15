@@ -288,11 +288,13 @@ class ConversionResultsBuilder(ConversionResults):
         self.cellsPopulatedBuilder: set[tuple[str, int, int]] = set()
         self.consoleOutput = consoleOutput
 
-    def addCellQueries(self, delta: Iterable[tuple[str, int, int]]) -> None:
+    def addCellQueries(self, delta: Iterable[tuple[str, int, int]]) -> Self:
         self.cellsQueriedBuilder.update(delta)
+        return self
 
-    def addCellsWithData(self, delta: Iterable[tuple[str, int, int]]) -> None:
+    def addCellsWithData(self, delta: Iterable[tuple[str, int, int]]) -> Self:
         self.cellsPopulatedBuilder.update(delta)
+        return self
 
     @property
     def numCellQueries(self) -> int:
@@ -310,7 +312,7 @@ class ConversionResultsBuilder(ConversionResults):
         *,
         taxonomy_concept: Optional[QName | Concept] = None,
         excel_reference: Optional[str] = None,
-    ) -> None:
+    ) -> Self:
         concept_str_or_none: Optional[str]
         if taxonomy_concept is None:
             concept_str_or_none = taxonomy_concept
@@ -325,12 +327,14 @@ class ConversionResultsBuilder(ConversionResults):
                 excel_reference,
             )
         )
+        return self
 
     def processingContext(self, name: str) -> "ProcessingContext":
         return ProcessingContext(self, name)
 
-    def addMessages(self, messages: Iterable[Message]) -> None:
+    def addMessages(self, messages: Iterable[Message]) -> Self:
         self.messages.extend(messages)
+        return self
 
     @property
     def conversionSuccessful(self) -> bool:
