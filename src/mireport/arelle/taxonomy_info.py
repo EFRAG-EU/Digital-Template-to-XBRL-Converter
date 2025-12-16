@@ -289,22 +289,22 @@ class TaxonomyInfoExtractor:
             self.walkPresentationChildren(child_concept, relSet, rows, indent + 1)
 
     def getPrimaryItems(
-        self, elrUri: str, domain_head_concept: ModelConcept
+        self, elrUri: str, domainHeadConcept: ModelConcept
     ) -> list[tuple[int, QName]]:
         relSet = self.modelXbrl.relationshipSet(XbrlConst.domainMember, elrUri)
         rows: list[tuple[int, QName, bool | None]] = []
-        rows.append((0, domain_head_concept.qname, None))
+        rows.append((0, domainHeadConcept.qname, None))
 
-        # N.B. domain_head concept does not have to be a root concept
+        # N.B. domainHeadConcept does not have to be a root concept
 
-        if not relSet.fromModelObject(domain_head_concept):
+        if not relSet.fromModelObject(domainHeadConcept):
             self.cntlr.addToLog(
-                f"WARNING: {elrUri} has no primary items attached to hypercube beyond {domain_head_concept.qname} (no outgoing domain-member relationships).",
+                f"WARNING: {elrUri} has no primary items attached to hypercube beyond {domainHeadConcept.qname} (no outgoing domain-member relationships).",
                 level=logging.WARNING,
             )
-            return [(0, domain_head_concept.qname)]
+            return [(0, domainHeadConcept.qname)]
 
-        self.walkDefinitionChildren(domain_head_concept, relSet, rows, 1)
+        self.walkDefinitionChildren(domainHeadConcept, relSet, rows, 1)
         return [(i, qname) for i, qname, _ in rows]
 
     def getDimensions(
@@ -382,7 +382,7 @@ class TaxonomyInfoExtractor:
         return unique_list(q for _, q, usable in rows if usable)
 
     def getDomainMembersForEE(
-        self, elrUri: str, headUsable: bool, domainConcept: ModelConcept
+        self, elrUri: str, headUsable: bool, domainHeadConcept: ModelConcept
     ) -> list[QName]:
         """Deliberately over simplified for now."""
         domainMemberRelSet = self.modelXbrl.relationshipSet(
@@ -390,10 +390,10 @@ class TaxonomyInfoExtractor:
         )
         rows: list[tuple[int, QName, bool | None]] = []
         self.walkDefinitionChildren(
-            domainConcept, domainMemberRelSet, rows, 1, includeUsable=True
+            domainHeadConcept, domainMemberRelSet, rows, 1, includeUsable=True
         )
         if headUsable:
-            rows.insert(0, (0, domainConcept.qname, headUsable))
+            rows.insert(0, (0, domainHeadConcept.qname, headUsable))
         return unique_list(q for _, q, usable in rows if usable)
 
     def extractDimensionDefaults(self) -> None:
