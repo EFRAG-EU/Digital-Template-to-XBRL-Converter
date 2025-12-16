@@ -34,6 +34,25 @@ def unique_list(i: Iterable[T]) -> list[T]:
     return list(dict.fromkeys(i))
 
 
+def concepts_to_qnames(
+    concept_list: Iterable[ModelConcept], sorted: bool = True
+) -> list[QName]:
+    """
+    Convert an iterable of ModelConcept objects to a list of their qualified names.
+
+    Args:
+        concept_list: An iterable of ModelConcept objects to convert.
+        sorted: If True, sorts the qualified names alphabetically before joining. Defaults to True.
+
+    Returns:
+        A list of qualified names (QNames).
+    """
+    qname_list = [concept.qname for concept in concept_list]
+    if sorted:
+        qname_list.sort()
+    return qname_list
+
+
 def callArelleForTaxonomyInfo(
     entry_point: str,
     taxonomy_zips: list[str],
@@ -323,7 +342,7 @@ class TaxonomyInfoExtractor:
         )
 
         assert explicitDimension in dimensionDomainRelSet.rootConcepts, (
-            f"Dimension {explicitDimension.qname} should be in {dimensionDomainRelSet.rootConcepts}"
+            f"Dimension {explicitDimension.qname} should be in {concepts_to_qnames(dimensionDomainRelSet.rootConcepts)}"
         )
         domainRoots: list[tuple[ModelConcept, bool, ModelRelationshipSet]] = [
             (
@@ -396,7 +415,7 @@ class TaxonomyInfoExtractor:
                     for rel in dimensionDefaultRelSet.fromModelObject(d)
                 ]
                 assert len(members) == 1, (
-                    f"More than one default for dimension {d.qname} in {elrUri}, {unique_list(m.qname for m in members)}."
+                    f"More than one default for dimension {d.qname} in {elrUri}, {concepts_to_qnames(members)}."
                 )
                 m = members[0]
                 if (m0 := self.dimensionDefaults.get(d)) is not None:
@@ -597,7 +616,7 @@ class TaxonomyInfoExtractor:
                         pass
                     case _:
                         self.cntlr.addToLog(
-                            f"WARNING: {elrUri} has multiple ({len(roots)}) roots. Presentation order will be arbitrary. Roots: [{', '.join(str(root.qname) for root in roots)}]",
+                            f"WARNING: {elrUri} has multiple ({len(roots)}) roots. Presentation order will be arbitrary. Roots: {concepts_to_qnames(roots, sorted=False)}",
                             level=logging.WARNING,
                         )
                 rows: list[tuple[int, QName, str] | tuple[int, QName]] = []
