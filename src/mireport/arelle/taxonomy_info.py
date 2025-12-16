@@ -465,7 +465,7 @@ class TaxonomyInfoExtractor:
                 label = label_resource.stringValue.strip()
                 if (label0 := jconcept["labels"][lang].get(role)) and label0 != label:
                     self.cntlr.addToLog(
-                        f"Inconsistent duplicate labels found for [{concept.qname}]: {label0=} {label=} {lang=} {role=}",
+                        f"WARNING: Inconsistent duplicate labels found for [{concept.qname}]: {label0=} {label=} {lang=} {role=}",
                         level=logging.WARNING,
                     )
                     label = max(label0, label, key=len)
@@ -628,6 +628,7 @@ class TaxonomyInfoExtractor:
                     rows.append((0, root.qname))
                     self.walkPresentationChildren(root, relSet, rows, 1)
                 self.taxonomyJson["presentation"][elrUri]["rows"] = rows
+        self.cntlr.addToLog("Processing presentation network [completed]")
 
 
 def runTaxonomyInfo(
