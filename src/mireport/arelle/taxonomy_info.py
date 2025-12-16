@@ -168,12 +168,14 @@ class TaxonomyInfoExtractor:
         self.qnameConverter: ArelleQNameCanonicaliser = (
             ArelleQNameCanonicaliser.bootstrap(modelXbrl)
         )
+        self.dimensionDefaults: dict[ModelConcept, ModelConcept] = {}
 
     def extract(self) -> None:
         self.verifyConceptQNamesHavePrefixes()
         self.taxonomyJson["entryPoint"] = self.options.entrypointFile
 
         self.extractPresentation()
+        self.extractDimensionDefaults()
         self.extractDimensionDefinitions()
         self.extractConceptsAndMetadata()
 
@@ -371,30 +373,45 @@ class TaxonomyInfoExtractor:
             rows.insert(0, (0, domainConcept.qname, headUsable))
         return unique_list(q for _, q, usable in rows if usable)
 
-    def getDimensionDefaults(self) -> dict[QName, QName]:
-        defaults: dict[QName, QName] = {}
+    def extractDimensionDefaults(self) -> None:
         elrsWithDefaults = set()
         for arcroleUri, elrUri, linkqname, arcqname in self.modelXbrl.baseSets.keys():
             if arcroleUri == XbrlConst.dimensionDefault and elrUri is not None:
                 elrsWithDefaults.add(elrUri)
+
+        dimToElrMap: dict[ModelConcept, list[str]] = defaultdict(list)
+
         for elrUri in elrsWithDefaults:
             dimensionDefaultRelSet = self.modelXbrl.relationshipSet(
                 XbrlConst.dimensionDefault, elrUri
             )
+
             dimensions: list[ModelConcept] = dimensionDefaultRelSet.rootConcepts
+
             for d in dimensions:
+                dimToElrMap[d].append(elrUri)
+
                 members: list[ModelConcept] = [
                     rel.toModelObject
                     for rel in dimensionDefaultRelSet.fromModelObject(d)
                 ]
                 assert len(members) == 1, (
-                    f"More than one default for dimension {d} in {elrUri}, {members}."
+                    f"More than one default for dimension {d.qname} in {elrUri}, {unique_list(m.qname for m in members)}."
                 )
-                assert d not in defaults, (
-                    f"Default defined more than once for {d}. Last seen in {elrUri}."
-                )
-                defaults[d.qname] = members[0].qname
-        return defaults
+                m = members[0]
+                if (m0 := self.dimensionDefaults.get(d)) is not None:
+                    otherElrs = dimToElrMap[d][:-1]
+                    if m0 != m:
+                        self.cntlr.addToLog(
+                            f"WARNING: Inconsistent duplicate definition of dimension default for dimension {d.qname}, member {m.qname=} {m0.qname=} in {elrUri=}. {otherElrs=}",
+                            level=logging.WARNING,
+                        )
+                    else:
+                        self.cntlr.addToLog(
+                            f"INFO: Consistent duplicate definition of dimension default for dimension {d.qname}, member {m.qname} in {elrUri}. {otherElrs=}",
+                            level=logging.INFO,
+                        )
+                self.dimensionDefaults[d] = m
 
     def addConceptMetadata(self, concept: ModelConcept, jconcept: dict) -> None:
         meta = {
@@ -523,7 +540,10 @@ class TaxonomyInfoExtractor:
                             )
 
         self.cntlr.addToLog("Processing dimension defaults")
-        self.taxonomyJson["dimensions"]["_defaults"] = self.getDimensionDefaults()
+        if self.dimensionDefaults:
+            self.taxonomyJson["dimensions"]["_defaults"] = {
+                d.qname: m.qname for d, m in self.dimensionDefaults.items()
+            }
 
     def getLabelsForRoleType(self, roleType: ModelRoleType) -> dict[str, str]:
         relSet = self.modelXbrl.relationshipSet(XbrlConst.elementLabel)
