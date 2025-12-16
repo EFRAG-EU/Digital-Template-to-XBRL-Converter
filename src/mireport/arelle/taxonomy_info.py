@@ -269,22 +269,22 @@ class TaxonomyInfoExtractor:
             self.walkPresentationChildren(child_concept, relSet, rows, indent + 1)
 
     def getPrimaryItems(
-        self, elrUri: str, root_concept: ModelConcept
+        self, elrUri: str, domain_head_concept: ModelConcept
     ) -> list[tuple[int, QName]]:
         relSet = self.modelXbrl.relationshipSet(XbrlConst.domainMember, elrUri)
         rows: list[tuple[int, QName, bool | None]] = []
-        rows.append((0, root_concept.qname, None))
-        if root_concept not in relSet.rootConcepts:
+        rows.append((0, domain_head_concept.qname, None))
+
+        # N.B. domain_head concept does not have to be a root concept
+
+        if not relSet.fromModelObject(domain_head_concept):
             self.cntlr.addToLog(
-                f"WARNING: {elrUri} has no primary items attached to hypercube beyond {root_concept.qname} (no outgoing domain-member relationships).",
+                f"WARNING: {elrUri} has no primary items attached to hypercube beyond {domain_head_concept.qname} (no outgoing domain-member relationships).",
                 level=logging.WARNING,
             )
-            return [(0, root_concept.qname)]
+            return [(0, domain_head_concept.qname)]
 
-        assert root_concept in relSet.rootConcepts, (
-            f"{elrUri} {root_concept} should be in [{', '.join(str(r.qname) for r in relSet.rootConcepts)}]"
-        )
-        self.walkDefinitionChildren(root_concept, relSet, rows, 1)
+        self.walkDefinitionChildren(domain_head_concept, relSet, rows, 1)
         return [(i, qname) for i, qname, _ in rows]
 
     def getDimensions(
