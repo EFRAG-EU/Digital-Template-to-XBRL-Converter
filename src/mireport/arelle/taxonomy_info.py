@@ -188,6 +188,7 @@ class TaxonomyInfoExtractor:
             ArelleQNameCanonicaliser.bootstrap(modelXbrl)
         )
         self.dimensionDefaults: dict[ModelConcept, ModelConcept] = {}
+        self.elr_hypercube_dimension_seen: set[str] = set()
 
     def extract(self) -> None:
         self.verifyConceptQNamesHavePrefixes()
@@ -310,7 +311,7 @@ class TaxonomyInfoExtractor:
         self, elrUri: str, hypercube: ModelConcept, hypercubeIsClosed: bool
     ) -> list[tuple[ModelConcept, str]]:
         relSet = self.modelXbrl.relationshipSet(XbrlConst.hypercubeDimension, elrUri)
-        roots = frozenset(relSet.rootConcepts)
+        roots: frozenset[ModelConcept] = frozenset(relSet.rootConcepts)
 
         if not roots:
             if hypercubeIsClosed:
@@ -320,13 +321,16 @@ class TaxonomyInfoExtractor:
                 )
             return []
 
-        if len(roots) > 1:
+        if len(roots) > 1 and elrUri not in self.elr_hypercube_dimension_seen:
+            self.elr_hypercube_dimension_seen.add(elrUri)
             self.cntlr.addToLog(
-                f"INFO: {elrUri} has {len(roots)} hypercubes [{sorted(str(root.qname) for root in roots)}]. How exciting!",
+                f"INFO: {elrUri} has {len(roots)} hypercubes: {concepts_to_qnames(roots)}.",
                 level=logging.INFO,
             )
 
-        assert hypercube in roots, f"{hypercube} should be in {roots}"
+        assert hypercube in roots, (
+            f"{hypercube.qname} should be in {concepts_to_qnames(roots)}"
+        )
         return [
             (rel.toModelObject, rel.consecutiveLinkrole)
             for rel in relSet.fromModelObject(hypercube)
