@@ -348,7 +348,7 @@ class TaxonomyInfoExtractor:
         assert explicitDimension in dimensionDomainRelSet.rootConcepts, (
             f"Dimension {explicitDimension.qname} should be in {concepts_to_qnames(dimensionDomainRelSet.rootConcepts)}"
         )
-        domainRoots: list[tuple[ModelConcept, bool, ModelRelationshipSet]] = [
+        domainMemberTrees: list[tuple[ModelConcept, bool, ModelRelationshipSet]] = [
             (
                 rel.toModelObject,
                 rel.isUsable,
@@ -361,7 +361,7 @@ class TaxonomyInfoExtractor:
 
         hasDefaultedDomainMember = explicitDimension in self.dimensionDefaults
 
-        if not domainRoots:
+        if not domainMemberTrees:
             if hasDefaultedDomainMember:
                 self.cntlr.addToLog(
                     f"WARNING: {elrUri} Dimension {explicitDimension.qname} has a defaulted domain member {self.dimensionDefaults[explicitDimension].qname} but no domain relationships",
@@ -379,18 +379,18 @@ class TaxonomyInfoExtractor:
         )
 
         rows: list[tuple[int, QName, bool | None]] = []
-        for domainConcept, usable, domainMemberRelSet in domainRoots:
+        for domainHeadConcept, usable, domainMemberRelSet in domainMemberTrees:
             self.verifyDomainMemberTree(
                 explicitDimension,
                 hasDefaultedDomainMember,
                 dimensionHasMultipleDimensionDomainRelationships,
-                domainConcept,
+                domainHeadConcept,
                 domainMemberRelSet,
             )
 
-            rows.append((0, domainConcept.qname, usable))
+            rows.append((0, domainHeadConcept.qname, usable))
             self.walkDefinitionChildren(
-                domainConcept, domainMemberRelSet, rows, 1, includeUsable=True
+                domainHeadConcept, domainMemberRelSet, rows, 1, includeUsable=True
             )
         return unique_list(q for _, q, usable in rows if usable)
 
