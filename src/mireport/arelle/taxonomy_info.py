@@ -359,27 +359,78 @@ class TaxonomyInfoExtractor:
             for rel in dimensionDomainRelSet.fromModelObject(explicitDimension)
         ]
 
-        for domainConcept, _, domainMemberRelSet in domainRoots:
-            outgoing = domainMemberRelSet.fromModelObject(domainConcept)
-            incoming = domainMemberRelSet.toModelObject(domainConcept)
-            if 0 == len(outgoing):
+        hasDefaultedDomainMember = explicitDimension in self.dimensionDefaults
+
+        if not domainRoots:
+            if hasDefaultedDomainMember:
                 self.cntlr.addToLog(
-                    f"WARNING: {elrUri} Dimension {explicitDimension.qname} has domain head {domainConcept.qname} with no outgoing domain-member relationships",
+                    f"WARNING: {elrUri} Dimension {explicitDimension.qname} has a defaulted domain member {self.dimensionDefaults[explicitDimension].qname} but no domain relationships",
                     level=logging.WARNING,
                 )
-            if 0 != len(incoming):
+            else:
                 self.cntlr.addToLog(
-                    f"WARNING: {elrUri} Dimension {explicitDimension.qname} has domain head {domainConcept.qname} with incoming domain-member relationships. How exciting!",
+                    f"WARNING: {elrUri} Dimension {explicitDimension.qname} has no domain relationships",
                     level=logging.WARNING,
                 )
+            return []
+
+        dimensionHasMultipleDimensionDomainRelationships = 1 < len(
+            dimensionDomainRelSet.fromModelObject(explicitDimension)
+        )
 
         rows: list[tuple[int, QName, bool | None]] = []
         for domainConcept, usable, domainMemberRelSet in domainRoots:
+            self.verifyDomainMemberTree(
+                explicitDimension,
+                hasDefaultedDomainMember,
+                dimensionHasMultipleDimensionDomainRelationships,
+                domainConcept,
+                domainMemberRelSet,
+            )
+
             rows.append((0, domainConcept.qname, usable))
             self.walkDefinitionChildren(
                 domainConcept, domainMemberRelSet, rows, 1, includeUsable=True
             )
         return unique_list(q for _, q, usable in rows if usable)
+
+    def verifyDomainMemberTree(
+        self,
+        explicitDimension,
+        hasDefaultedDomainMember,
+        dimensionHasMultipleDimensionDomainRelationships,
+        domainHeadConcept,
+        domainMemberRelSet,
+    ) -> None:
+        outgoing = domainMemberRelSet.fromModelObject(domainHeadConcept)
+        incoming = domainMemberRelSet.toModelObject(domainHeadConcept)
+        elrUri = domainMemberRelSet.linkrole
+
+        if not outgoing:
+            if (
+                hasDefaultedDomainMember
+                and domainHeadConcept == self.dimensionDefaults[explicitDimension]
+            ):
+                # Dimension pointing at domain head with no members that's
+                # also the default is the standard pattern for a domain that
+                # is expected to be extended by the reporting entity.
+                pass
+            elif dimensionHasMultipleDimensionDomainRelationships:
+                # Multiple dimension-domain relationships instead of one
+                # dimension-domain followed by domain-member(s) is not great
+                # modelling but technically OK.
+                pass
+            else:
+                self.cntlr.addToLog(
+                    f"WARNING: {elrUri} Dimension {explicitDimension.qname} has domain head {domainHeadConcept.qname} with no outgoing domain-member relationships",
+                    level=logging.WARNING,
+                )
+
+        if incoming:
+            self.cntlr.addToLog(
+                f"WARNING: {elrUri} Dimension {explicitDimension.qname} has domain head {domainHeadConcept.qname} with incoming domain-member relationships. How exciting!",
+                level=logging.WARNING,
+            )
 
     def getDomainMembersForEE(
         self, elrUri: str, headUsable: bool, domainHeadConcept: ModelConcept
