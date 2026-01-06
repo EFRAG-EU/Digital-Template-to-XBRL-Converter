@@ -1,0 +1,203 @@
+{% extends "base.html.jinja" %}
+
+{% block title %}VSME Digital Template Migration Tool{% endblock %}
+
+{% block content %}
+
+<!-- Info Section -->
+<div class="text-sm text-gray-700 space-y-2">
+    <p class="font-medium">Your VSME Template is of an older version. Please use this tool to migrate your data to the
+        newest Template version. This step will help the conversion into your digital report.</p>
+</div>
+
+<!-- Version Boxes -->
+<div class="flex justify-center my-8" style="gap: 6rem;">
+    <!-- Your Version Box -->
+    <div class="bg-gray-50 rounded-xl p-8 text-center" style="min-width: 300px;">
+        <p class="text-3xl font-bold text-gray-800">Your Version: {{ your_version | default("X.X.X") }}</p>
+    </div>
+
+    <!-- Newest Version Box -->
+    <div class="bg-blue-50 rounded-xl p-8 text-center" style="min-width: 300px;">
+        <p class="text-3xl font-bold text-blue-800">Newest Version: {{ newest_version | default("X.X.X") }}</p>
+    </div>
+</div>
+
+<!-- New Features Section -->
+<div class="bg-green-50 border-2 border-green-400 rounded-xl p-8" style="margin: -0.5rem 0 0.5rem 0;">
+    <h3 class="text-2xl font-bold text-green-800 mb-4">✨ <strong>New Functionalities</strong> of Newest Version</h3>
+    <ul class="space-y-3">
+        <li class="flex items-start text-green-800">
+            <span class="text-green-600 font-bold mr-3">✓</span>
+            <span><strong>8 new languages available</strong> (Danish, French, German, Italian, Lithuanian, Polish,
+                Portuguese, Spanish)</span>
+        </li>
+        <li class="flex items-start text-green-800">
+            <span class="text-green-600 font-bold mr-3">✓</span>
+            <span><strong>New version of the Fuel Converter</strong></span>
+        </li>
+        <li class="flex items-start text-green-800">
+            <span class="text-green-600 font-bold mr-3">✓</span>
+            <span><strong>More flexibility</strong> in expanding additional rows</span>
+        </li>
+        <li class="flex items-start text-green-800">
+            <span class="text-green-600 font-bold mr-3">✓</span>
+            <span><strong>Waste categories updated</strong> to new EU Regulation</span>
+        </li>
+    </ul>
+</div>
+
+<!-- Flash Error Messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+{% for category, message in messages %}
+{% if category == 'error' %}
+<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+    <span class="block sm:inline">{{ message }}</span>
+</div>
+{% elif category == 'success' %}
+<div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
+    <span class="block sm:inline">{{ message }}</span>
+</div>
+{% endif %}
+{% endfor %}
+{% endif %}
+{% endwith %}
+
+<!-- Loading Spinner -->
+<!-- To restore dark backdrop, add bg-black/80 to the outer loadingSpinner div -->
+<div id="loadingSpinner" class="flex fixed inset-0 items-center justify-center z-50 hidden">
+    <div class="flex items-center text-white text-lg font-bold border-4 border-white p-4 rounded-lg bg-black">
+        <svg class="mr-3 h-5 w-5 animate-spin text-white" viewBox="0 0 24 24" fill="none"
+            xmlns="http://www.w3.org/2000/svg">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 008 8V4a8 8 0 00-8 8z"></path>
+        </svg>
+        Migrating... Please wait.
+    </div>
+</div>
+
+<!-- Upload Form -->
+<form id="migrateForm" action="{{ url_for('basic.migrate') }}" method="post" enctype="multipart/form-data"
+    class="space-y-4">
+
+    <!-- Old Template File -->
+    <div>
+        <label for="file" class="block text-sm font-medium text-gray-700 mb-1">Choose your old VSME Digital Template
+            file (.xlsx)</label>
+        <input type="file" id="file" name="file" accept=".xlsx"
+            class="block w-full text-sm text-gray-700 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            required />
+    </div>
+
+    <!-- Submit Button -->
+    <div class="flex justify-center">
+        <button type="submit" class="bg-amber-500 text-white font-medium py-2 px-4 rounded-lg transition"
+            style="min-width: 200px;" onmouseover="this.style.backgroundColor='#b45309'"
+            onmouseout="this.style.backgroundColor='#f59e0b'">
+            Migrate Template
+        </button>
+    </div>
+</form>
+
+<!-- Migration Results (if available) -->
+{% if elapsed is defined %}
+{# checks if the variable 'elapsed' is defined in the template context. #}
+<div class="mt-6 space-y-4">
+    <div class="bg-blue-50 border border-blue-300 rounded-lg p-4">
+        <h3 class="font-semibold text-blue-900 mb-2">Migration Completed!</h3>
+        <p class="text-sm text-blue-800">Time elapsed: <strong>{{ "%.2f"|format(elapsed) }} seconds</strong></p>
+    </div>
+
+    {% if migration_issues %}
+    <div class="bg-yellow-50 border border-yellow-300 rounded-lg p-4">
+        <h3 class="font-semibold text-yellow-900 mb-2">Migration Issues:</h3>
+        <ul class="list-disc list-inside text-sm text-yellow-800 space-y-1">
+            {% for issue in migration_issues %}
+            <li>{{ issue }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% else %}
+    <div class="bg-green-50 border border-green-300 rounded-lg p-4">
+        <p class="text-sm text-green-800">No migration issues detected. ✓</p>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+<script>
+    function showSpinner() {
+        document.getElementById('loadingSpinner').classList.remove('hidden');
+        document.getElementById('loadingSpinner').classList.add('flex');
+    }
+
+    function hideSpinner() {
+        document.getElementById('loadingSpinner').classList.add('hidden');
+        document.getElementById('loadingSpinner').classList.remove('flex');
+    }
+
+    async function handleMigrateSubmit(e) {
+        e.preventDefault(); // STEP 1: Stop the form from submitting normally
+
+        console.log("Form submitted - starting migration...");
+        showSpinner(); // STEP 2: Show the loading spinner immediately
+
+        try {
+            const formData = new FormData(document.getElementById('migrateForm'));
+            const response = await fetch('{{ url_for("basic.migrate") }}', { // STEP 3: Send the form data to the backend using fetch
+                method: 'POST',
+                body: formData
+            });
+            if (response.ok) { // STEP 4: Extract the filename from the response
+                const blob = await response.blob();
+                const contentDisposition = response.headers.get('content-disposition');
+                let filename = 'migrated.xlsx';
+                if (contentDisposition) {
+                    const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
+                    if (filenameMatch) filename = filenameMatch[1];
+                }
+                // STEP 5: Create a download link and trigger the download
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                window.URL.revokeObjectURL(url);
+                // STEP 6: Wait a moment for download to start, then reload to show results
+                setTimeout(() => {
+                    hideSpinner();
+                    window.location.reload();
+                }, 1500);
+
+            } else {
+                console.error("Migration failed with status:", response.status);
+                alert('Migration failed. Please try again.');
+                hideSpinner();
+            }
+        } catch (error) {
+            console.error('Error during migration:', error);
+            alert('An error occurred during migration: ' + error.message);
+            hideSpinner();
+        }
+    }
+
+    // STEP 0: Attach the submit handler when the page loads
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('migrateForm');
+        if (form) {
+            form.addEventListener('submit', handleMigrateSubmit);
+        }
+    });
+</script>
+
+<div class="flex justify-center">
+    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition"
+        style="min-width: 200px;">
+        Back to Converter
+    </button>
+</div>
+
+{% endblock %}

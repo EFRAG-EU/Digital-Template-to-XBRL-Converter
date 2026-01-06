@@ -1,9 +1,11 @@
 import logging
 from datetime import datetime, timedelta, timezone
+from io import BytesIO
 from random import randint
 from secrets import token_hex
 from typing import Any
 
+from openpyxl import load_workbook
 from dotenv import load_dotenv
 from flask import (
     Blueprint,
@@ -23,6 +25,7 @@ from flask import (
 from flask_session import Session  # type: ignore
 
 import mireport
+from migration_tool.tool import tool as migration_tool_function
 from mireport import loadTaxonomyJSON
 from mireport.arelle.report_info import (
     ARELLE_VERSION_INFORMATION,
@@ -223,13 +226,80 @@ def format_timedelta(td: timedelta) -> str:
 
 @convert_bp.route("/")
 def index() -> Response:
+    # Get last migration results from session if available
+    last_migration = session.get("last_migration")
+    template_vars = {
+        "existing_conversions": hasConversions(),
+        "ENABLE_CAPTCHA": ENABLE_CAPTCHA,
+    }
+    if last_migration:
+        template_vars["elapsed"] = last_migration.get("elapsed")
+        template_vars["migration_issues"] = last_migration.get("issues")
+        # Clear the last_migration after displaying it
+        session.pop("last_migration", None)
+
     return Response(
         render_template(
-            "excel-to-xbrl-converter.html.jinja",
-            existing_conversions=hasConversions(),
-            ENABLE_CAPTCHA=ENABLE_CAPTCHA,
+            "migration_page.html.jinja",
+            **template_vars,
         )
     )
+
+
+@convert_bp.route("/migrate", methods=["POST"])
+def migrate() -> Response:
+    """Handle migration of old VSME templates to new version."""
+    if "file" not in request.files:
+        flash("No file uploaded", "error")
+        return make_response(redirect(url_for("basic.index")))
+
+    file = request.files["file"]
+    if file.filename == "":
+        flash("No file selected", "error")
+        return make_response(redirect(url_for("basic.index")))
+
+    if not file.filename or not file.filename.lower().endswith(".xlsx"):
+        flash("Invalid file format (only .xlsx files supported)", "error")
+        return make_response(redirect(url_for("basic.index")))
+
+    try:
+        # Read the uploaded file into memory and open as workbook
+        file_content = BytesIO(file.read())
+        file_content.seek(0)
+        old_wb = load_workbook(file_content, data_only=False)
+
+        # Call the migration tool with an openpyxl workbook
+        new_wb, elapsed, migration_issues = migration_tool_function(old_wb)
+
+        # Save the workbook to BytesIO
+        output = BytesIO()
+        new_wb.save(output)
+        output.seek(0)
+
+        # Generate filename
+        original_name = file.filename.rsplit(".", 1)[0]
+        download_name = f"{original_name}_migrated.xlsx"
+
+        # Create response with file download
+        response = make_response(
+            send_file(
+                output,
+                as_attachment=True,
+                download_name=download_name,
+                mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            )
+        )
+
+        # Store migration info in session for display after redirect
+        session["last_migration"] = {"elapsed": elapsed, "issues": migration_issues}
+
+        flash(f"Migration completed in {elapsed:.2f} seconds", "success")
+        return response
+
+    except Exception as e:
+        L.exception("Exception during migration", exc_info=e)
+        flash(f"Migration failed: {str(e)}", "error")
+        return make_response(redirect(url_for("basic.index")))
 
 
 @convert_bp.errorhandler(413)
