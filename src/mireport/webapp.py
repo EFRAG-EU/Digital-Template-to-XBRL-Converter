@@ -434,12 +434,6 @@ def convert(id: str) -> Response:
             return make_response({"error": str(e)}, 500)
 
 
-@convert_bp.route("/migrateConversion/<id>", methods=["GET"])
-def migrateConversion(id: str) -> Response:
-    """Backward-compatible alias for the migration page endpoint."""
-    return make_response(redirect(url_for("basic.migrationPage", id=id), code=303))
-
-
 @convert_bp.route("/migrationPage/<id>", methods=["GET"])
 def migrationPage(id: str) -> Response:
     try:
