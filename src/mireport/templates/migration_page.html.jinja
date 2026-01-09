@@ -66,6 +66,7 @@
 
 <!-- Loading Spinner -->
 <!-- To restore dark backdrop, add bg-black/80 to the outer loadingSpinner div -->
+<!-- To substitute with Stuart's default javascript -->
 <div id="loadingSpinner" class="flex fixed inset-0 items-center justify-center z-50 hidden">
     <div class="flex items-center text-white text-lg font-bold border-4 border-white p-4 rounded-lg bg-black">
         <svg class="mr-3 h-5 w-5 animate-spin text-white" viewBox="0 0 24 24" fill="none"
@@ -77,17 +78,18 @@
     </div>
 </div>
 
-<!-- Upload Form -->
-<form id="migrateForm" action="{{ url_for('basic.migrate') }}" method="post" enctype="multipart/form-data"
+<!-- Migration Form -->
+<form id="migrateForm" action="{{ url_for('basic.migrationButton', id=conversion_id) }}" method="post"
     class="space-y-4">
 
-    <!-- Old Template File -->
-    <div>
-        <label for="file" class="block text-sm font-medium text-gray-700 mb-1">Choose your old VSME Digital Template
-            file (.xlsx)</label>
-        <input type="file" id="file" name="file" accept=".xlsx"
-            class="block w-full text-sm text-gray-700 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            required />
+    <!-- File Already Loaded Info -->
+    <div class="bg-blue-50 border border-blue-300 rounded-lg p-4">
+        <p class="text-sm text-blue-800">
+            <strong>File loaded:</strong> {{ filename }}
+        </p>
+        <p class="text-xs text-blue-700 mt-2">
+            The file you uploaded will be migrated to the newest template version and downloaded on your device.
+        </p>
     </div>
 
     <!-- Submit Button -->
@@ -101,8 +103,8 @@
 </form>
 
 <!-- Migration Results (if available) -->
-{% if elapsed is defined %}
-{# checks if the variable 'elapsed' is defined in the template context. #}
+{% if elapsed is not none %}
+{# Only show results when we have a numeric elapsed value #}
 <div class="mt-6 space-y-4">
     <div class="bg-blue-50 border border-blue-300 rounded-lg p-4">
         <h3 class="font-semibold text-blue-900 mb-2">Migration Completed!</h3>
@@ -144,10 +146,8 @@
         showSpinner(); // STEP 2: Show the loading spinner immediately
 
         try {
-            const formData = new FormData(document.getElementById('migrateForm'));
-            const response = await fetch('{{ url_for("basic.migrate") }}', { // STEP 3: Send the form data to the backend using fetch
+            const response = await fetch('{{ url_for("basic.migrationButton", id=conversion_id) }}', { // STEP 3: Send the request to the backend
                 method: 'POST',
-                body: formData
             });
             if (response.ok) { // STEP 4: Extract the filename from the response
                 const blob = await response.blob();

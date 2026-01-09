@@ -226,80 +226,12 @@ def format_timedelta(td: timedelta) -> str:
 
 @convert_bp.route("/")
 def index() -> Response:
-    # Get last migration results from session if available
-    last_migration = session.get("last_migration")
-    template_vars = {
-        "existing_conversions": hasConversions(),
-        "ENABLE_CAPTCHA": ENABLE_CAPTCHA,
-    }
-    if last_migration:
-        template_vars["elapsed"] = last_migration.get("elapsed")
-        template_vars["migration_issues"] = last_migration.get("issues")
-        # Clear the last_migration after displaying it
-        session.pop("last_migration", None)
-
     return Response(
         render_template(
-            "migration_page.html.jinja",
-            **template_vars,
+            "excel-to-xbrl-converter.html.jinja",
+            ENABLE_CAPTCHA=ENABLE_CAPTCHA,
         )
     )
-
-
-@convert_bp.route("/migrate", methods=["POST"])
-def migrate() -> Response:
-    """Handle migration of old VSME templates to new version."""
-    if "file" not in request.files:
-        flash("No file uploaded", "error")
-        return make_response(redirect(url_for("basic.index")))
-
-    file = request.files["file"]
-    if file.filename == "":
-        flash("No file selected", "error")
-        return make_response(redirect(url_for("basic.index")))
-
-    if not file.filename or not file.filename.lower().endswith(".xlsx"):
-        flash("Invalid file format (only .xlsx files supported)", "error")
-        return make_response(redirect(url_for("basic.index")))
-
-    try:
-        # Read the uploaded file into memory and open as workbook
-        file_content = BytesIO(file.read())
-        file_content.seek(0)
-        old_wb = load_workbook(file_content, data_only=False)
-
-        # Call the migration tool with an openpyxl workbook
-        new_wb, elapsed, migration_issues = migration_tool_function(old_wb)
-
-        # Save the workbook to BytesIO
-        output = BytesIO()
-        new_wb.save(output)
-        output.seek(0)
-
-        # Generate filename
-        original_name = file.filename.rsplit(".", 1)[0]
-        download_name = f"{original_name}_migrated.xlsx"
-
-        # Create response with file download
-        response = make_response(
-            send_file(
-                output,
-                as_attachment=True,
-                download_name=download_name,
-                mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            )
-        )
-
-        # Store migration info in session for display after redirect
-        session["last_migration"] = {"elapsed": elapsed, "issues": migration_issues}
-
-        flash(f"Migration completed in {elapsed:.2f} seconds", "success")
-        return response
-
-    except Exception as e:
-        L.exception("Exception during migration", exc_info=e)
-        flash(f"Migration failed: {str(e)}", "error")
-        return make_response(redirect(url_for("basic.index")))
 
 
 @convert_bp.errorhandler(413)
@@ -477,10 +409,18 @@ def convert(id: str) -> Response:
         results = ConversionResults.fromDict(conversion["results"])
         devInfo = request.args.get("show_developer_messages") == "true"
 
+        # If there are warnings, redirect directly to migration page
+        if results.getOverallSeverity() == Severity.WARNING:
+            return make_response(
+                redirect(url_for("basic.migrationPage", id=id), code=303)
+            )
+
+        # Show results (green or red status)
         return Response(
             render_template(
                 "conversion-results.html.jinja",
                 conversion_result=results,
+                conversion_id=id,
                 dev=devInfo,
                 conversion_date=conversion["date"],
                 upload_filename=getUploadFilename(id),
@@ -492,6 +432,99 @@ def convert(id: str) -> Response:
         else:
             L.exception("Exception during conversion", exc_info=e)
             return make_response({"error": str(e)}, 500)
+
+
+@convert_bp.route("/migrateConversion/<id>", methods=["GET"])
+def migrateConversion(id: str) -> Response:
+    """Backward-compatible alias for the migration page endpoint."""
+    return make_response(redirect(url_for("basic.migrationPage", id=id), code=303))
+
+
+@convert_bp.route("/migrationPage/<id>", methods=["GET"])
+def migrationPage(id: str) -> Response:
+    try:
+        if id not in session:
+            flash("Conversion session expired", "error")
+            return make_response(redirect(url_for("basic.index")))
+
+        conversion = session[id]
+        excel = FilelikeAndFileName(*conversion["excel"])
+
+        last_migration = session.get("last_migration")
+
+        return Response(
+            render_template(
+                "migration_page.html.jinja",
+                conversion_id=id,
+                filename=excel.filename,
+                existing_conversions=hasConversions(),
+                ENABLE_CAPTCHA=ENABLE_CAPTCHA,
+                elapsed=last_migration.get("elapsed") if last_migration else None,
+                migration_issues=last_migration.get("issues")
+                if last_migration
+                else None,
+            )
+        )
+    except Exception as e:
+        L.exception("Exception during migration page display", exc_info=e)
+        flash(f"Migration page failed to load: {str(e)}", "error")
+        return make_response(redirect(url_for("basic.index")))
+
+
+@convert_bp.route("/migrationButton/<id>", methods=["POST"])
+def migrationButton(id: str) -> Response:
+    """Handle migration of old VSME templates to new version."""
+    try:
+        # Get the file from session
+        if id not in session:
+            flash("Conversion session expired", "error")
+            return make_response(redirect(url_for("basic.index")))
+
+        conversion = session[id]
+        if "excel" not in conversion:
+            flash("No file found in session", "error")
+            return make_response(redirect(url_for("basic.index")))
+
+        # Get the file from session
+        excel = FilelikeAndFileName(*conversion["excel"])
+
+        # Read the file into memory and open as workbook
+        file_content = BytesIO(excel.fileContent)
+        file_content.seek(0)
+        old_wb = load_workbook(file_content, data_only=False)
+
+        # Call the migration tool with an openpyxl workbook
+        new_wb, elapsed, migration_issues = migration_tool_function(old_wb)
+
+        # Save the workbook to BytesIO
+        output = BytesIO()
+        new_wb.save(output)
+        output.seek(0)
+
+        # Generate filename
+        original_name = excel.filename.rsplit(".", 1)[0]
+        download_name = f"{original_name}_migrated.xlsx"
+
+        # Create response with file download
+        response = make_response(
+            send_file(
+                output,
+                as_attachment=True,
+                download_name=download_name,
+                mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            )
+        )
+
+        # Store migration info in session for display after redirect
+        session["last_migration"] = {"elapsed": elapsed, "issues": migration_issues}
+
+        flash(f"Migration completed in {elapsed:.2f} seconds", "success")
+        return response
+
+    except Exception as e:
+        L.exception("Exception during migration", exc_info=e)
+        flash(f"Migration failed: {str(e)}", "error")
+        return make_response(redirect(url_for("basic.index")))
 
 
 def getUploadFilename(id: str) -> str:

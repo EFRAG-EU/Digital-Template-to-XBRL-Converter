@@ -7,12 +7,14 @@
 
 
 <div class="flex justify-between items-center">
-  <a href="{{url_for('basic.index')}}" class="inline-block px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition">
-    ← Back to Home
-  </a>
-  <a href="{{url_for('basic.conversions', **request.args)}}" class="inline-block px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition">
-    My Conversions →
-  </a>
+    <a href="{{url_for('basic.index')}}"
+        class="inline-block px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition">
+        ← Back to Home
+    </a>
+    <a href="{{url_for('basic.conversions', **request.args)}}"
+        class="inline-block px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition">
+        My Conversions →
+    </a>
 </div>
 
 <div class="mt-8 space-y-8">
@@ -24,8 +26,8 @@
         <p class="text-center font-semibold">No conversion results available.</p>
     </div>
     {% else %}
-        {% include "_svg.html.jinja" %}
-        {% set conv_rag = conversion_result.getRAG(withoutXBRLValidation=true) %}
+    {% include "_svg.html.jinja" %}
+    {% set conv_rag = conversion_result.getRAG(withoutXBRLValidation=true) %}
     <!-- Title -->
     <h2 class="text-3xl font-bold text-center text-gray-800">Conversion Results</h2>
     <!-- Conversion Status -->
@@ -34,15 +36,26 @@
         {% elif conv_rag.red %}bg-red-100 border border-red-400 text-red-800
         {% elif conv_rag.amber %}bg-amber-100 border border-amber-400 text-amber-800
         {% endif %}">
-        <p class="text-center font-semibold">
-        {% if conv_rag.red %}
-            Technical conversion failed with ERRORS, please review the messages and the Digital Template
-        {% elif conv_rag.amber %}
-            Technical conversion successful with WARNINGs, please review the messages and the Digital Template
-        {% elif conv_rag.green %}
-            Technical conversion of the Digital Template to XBRL was successful!
-        {% endif %}
-        </p>
+        <div class="flex justify-between items-center gap-4">
+            <p class="{% if not conv_rag.green %}text-center w-full {% endif %}font-semibold">
+                <!-- Provide newest Template Version if user has tried to upload an older one -->
+                {% if conv_rag.red %}
+                Technical conversion failed with ERRORS, please review the messages and the Digital Template
+                <!-- Go directly to Migration webpage if version used is X.[X<newest].X (when user is behind major revisions) -->
+                <!-- Otherwise, show this with the Migration button -->
+                {% elif conv_rag.amber %}
+                Technical conversion successful with WARNINGs, please review the messages and the Digital Template
+                {% elif conv_rag.green %}
+                Technical conversion of the Digital Template to XBRL was successful!
+                {% endif %}
+            </p>
+            {% if conv_rag.green %}
+            <a href="{{ url_for('basic.migrationPage', id=conversion_id) }}"
+                class="inline-block px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition whitespace-nowrap">
+                Migration
+            </a>
+            {% endif %}
+        </div>
     </div>
 
     <!-- XBRL Validation Status -->
@@ -53,15 +66,15 @@
         {% elif val_rag.green %}bg-green-100 border border-green-400 text-green-800
         {% endif %}">
         <p class="text-center font-semibold">
-        {% if not conversion_result.conversionSuccessful %}
+            {% if not conversion_result.conversionSuccessful %}
             XBRL Report not validated due to earlier conversion failure
-        {% elif val_rag.red %}
+            {% elif val_rag.red %}
             The generated XBRL report has validation ERRORS, please review the messages and the Digital Template
-        {% elif val_rag.amber %}
+            {% elif val_rag.amber %}
             The generated XBRL report has validation WARNINGs, please review the messages and the Digital Template
-        {% elif val_rag.green %}
+            {% elif val_rag.green %}
             The generated XBRL report is valid according to the technical XBRL specifications!
-        {% endif %}
+            {% endif %}
         </p>
     </div>
 
@@ -76,35 +89,36 @@
         </h3>
         {% if conversion_result.conversionSuccessful %}
         <p>
-            Please review the generated XBRL report and the messages below to ensure that all disclosures are complete and accurate. The report can be downloaded in various formats:
+            Please review the generated XBRL report and the messages below to ensure that all disclosures are complete
+            and accurate. The report can be downloaded in various formats:
         </p>
         {% endif %}
         <div class="flex gap-4 justify-between items-center download-buttons">
             {{ download_button(
-                'viewer',
-                url_for('basic.downloadFile', id=conversion_result.conversionId, ftype='viewer'),
-                conversion_result.conversionSuccessful
+            'viewer',
+            url_for('basic.downloadFile', id=conversion_result.conversionId, ftype='viewer'),
+            conversion_result.conversionSuccessful
             ) }}
 
             {{ download_button(
-                'zip',
-                url_for('basic.downloadFile', id=conversion_result.conversionId, ftype='zip'),
-                conversion_result.conversionSuccessful
+            'zip',
+            url_for('basic.downloadFile', id=conversion_result.conversionId, ftype='zip'),
+            conversion_result.conversionSuccessful
             ) }}
 
             {{ download_button(
-                'json',
-                url_for('basic.downloadFile', id=conversion_result.conversionId, ftype='json'),
-                conversion_result.conversionSuccessful
+            'json',
+            url_for('basic.downloadFile', id=conversion_result.conversionId, ftype='json'),
+            conversion_result.conversionSuccessful
             ) }}
         </div>
     </div>
     <style>
-    @media (max-width: 800px) {
-        .download-buttons {
-            flex-direction: column !important;
+        @media (max-width: 800px) {
+            .download-buttons {
+                flex-direction: column !important;
+            }
         }
-    }
     </style>
     <div class="flex justify-between items-center gap-4">
         <div><span class="font-bold text-gray-600">Timestamp:</span> {{ conversion_date | e }}</div>
@@ -132,20 +146,21 @@
             <tbody>
                 {% set messages = conversion_result.userMessages if not dev else conversion_result.developerMessages %}
                 {% for message in messages %}
-                    <tr class="hover:bg-gray-50">
-                        <td class="border border-gray-300 px-4 py-2">{{ message.messageType.value | e }}</td>
-                        <td class="border border-gray-300 px-4 py-2 text-center">
-                            <span class="px-2 py-1 rounded text-white {% if message.severity is sameas Severity.INFO %}bg-blue-500{% elif message.severity is sameas Severity.WARNING %}bg-amber-500{% elif message.severity is sameas Severity.ERROR %}bg-red-500{% endif %}">
-                                {{ message.severity.value | e }}
-                            </span>
-                        </td>
-                        <td class="border border-gray-300 px-4 py-2">{{ message.messageText | e }}</td>
-                        {% if message.excelReference is not none %}
-                        <td class="border border-gray-300 px-4 py-2">{{ message.excelReference | e }}</td>
-                        {% else %}
-                        <td class="border border-gray-300 px-4 py-2"></td>
-                        {% endif %}
-                    </tr>
+                <tr class="hover:bg-gray-50">
+                    <td class="border border-gray-300 px-4 py-2">{{ message.messageType.value | e }}</td>
+                    <td class="border border-gray-300 px-4 py-2 text-center">
+                        <span
+                            class="px-2 py-1 rounded text-white {% if message.severity is sameas Severity.INFO %}bg-blue-500{% elif message.severity is sameas Severity.WARNING %}bg-amber-500{% elif message.severity is sameas Severity.ERROR %}bg-red-500{% endif %}">
+                            {{ message.severity.value | e }}
+                        </span>
+                    </td>
+                    <td class="border border-gray-300 px-4 py-2">{{ message.messageText | e }}</td>
+                    {% if message.excelReference is not none %}
+                    <td class="border border-gray-300 px-4 py-2">{{ message.excelReference | e }}</td>
+                    {% else %}
+                    <td class="border border-gray-300 px-4 py-2"></td>
+                    {% endif %}
+                </tr>
                 {% endfor %}
             </tbody>
         </table>
@@ -160,31 +175,34 @@
 
         <!-- Text -->
         <p class="text-sm text-blue-800">
-            The EFRAG Secretariat is interested in your experience using this tool and in real VSME disclosures for internal analytical purposes
-            (any reports received by EFRAG will not be shared or published). Please feel free to send your VSME report to
-            <a href="mailto:vsme@efrag.org" class="underline font-medium hover:text-blue-600">vsme@efrag.org</a> – Thank you!
+            The EFRAG Secretariat is interested in your experience using this tool and in real VSME disclosures for
+            internal analytical purposes
+            (any reports received by EFRAG will not be shared or published). Please feel free to send your VSME report
+            to
+            <a href="mailto:vsme@efrag.org" class="underline font-medium hover:text-blue-600">vsme@efrag.org</a> – Thank
+            you!
         </p>
     </div>
     {% endif %}
 </div>
 
 <script>
-document.addEventListener("DOMContentLoaded", function() {
-    let url = new URL(window.location.href);
-    let checkbox = document.getElementById("toggleDeveloperMessages");
-    checkbox.checked = url.searchParams.get("show_developer_messages") === "true";
-});
+    document.addEventListener("DOMContentLoaded", function () {
+        let url = new URL(window.location.href);
+        let checkbox = document.getElementById("toggleDeveloperMessages");
+        checkbox.checked = url.searchParams.get("show_developer_messages") === "true";
+    });
 
-document.getElementById("toggleDeveloperMessages").addEventListener("change", function() {
-    let url = new URL(window.location.href);
-    if (this.checked) {
-        url.searchParams.set("show_developer_messages", "true");
-    } else {
-        url.searchParams.delete("show_developer_messages");
-    }
-    window.location.href = url.toString();
-});
+    document.getElementById("toggleDeveloperMessages").addEventListener("change", function () {
+        let url = new URL(window.location.href);
+        if (this.checked) {
+            url.searchParams.set("show_developer_messages", "true");
+        } else {
+            url.searchParams.delete("show_developer_messages");
+        }
+        window.location.href = url.toString();
+    });
 </script>
-    {% endif %}
+{% endif %}
 
 {% endblock %}
