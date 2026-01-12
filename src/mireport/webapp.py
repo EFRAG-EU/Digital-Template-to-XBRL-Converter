@@ -592,8 +592,9 @@ def viewer(id: str) -> Response:
             .viewer
         )
         conversion["viewer"] = stuff
-        if request.method == "HEAD":
-            return Response(status=200, headers={"X-File-Ready": "true"})
+
+    if request.method == "HEAD":
+        return Response(status=200, headers={"X-File-Ready": "true"})
 
     return send_file(
         stuff.fileLike(),
