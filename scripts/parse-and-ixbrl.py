@@ -117,8 +117,9 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, ExcelProc
     ) as pc:
         pc.mark("Loading taxonomy metadata")
         mireport.loadTaxonomyJSON()
+        allTaxonomies = mireport.taxonomy.listTaxonomies()
         pc.addDevInfoMessage(
-            f"Taxonomies available: {', '.join(mireport.taxonomy.listTaxonomies())}"
+            f"Taxonomies entry points ({len(allTaxonomies)}) available: {', '.join(allTaxonomies)}"
         )
         pc.mark(
             "Extracting data from Excel",
