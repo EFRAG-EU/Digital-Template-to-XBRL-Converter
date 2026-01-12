@@ -742,7 +742,7 @@ class ExcelProcessor:
             if possible_units:
                 # our cleanUnitTextFromExcel fix up worked
                 self._results.addMessage(
-                    f"Workaround performed for mislabelled unit for {unitHolder.concept.qname}. Cell value '{cellValue}'. Unit ids now guessed '{possible_units}'",
+                    f"Workaround performed for mislabelled unit for {unitHolder.concept.qname}. Cell value '{cellValue}'. Unit ids now guessed: [{', '.join(str(qname) for qname in possible_units)}]",
                     Severity.WARNING,
                     MessageType.DevInfo,
                     taxonomy_concept=unitHolder.concept,
