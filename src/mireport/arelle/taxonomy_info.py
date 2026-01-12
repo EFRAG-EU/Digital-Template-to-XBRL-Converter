@@ -585,6 +585,11 @@ class TaxonomyInfoExtractor:
                     for rel in relSet.fromModelObject(root_concept):
                         concept: ModelConcept = rel.toModelObject
                         if concept.isHypercubeItem:
+                            if not rel.isClosed:
+                                self.cntlr.addToLog(
+                                    f"INFO: {elrUri} hypercube '{concept.qname}' is open.",
+                                    level=logging.INFO,
+                                )
                             cube = {
                                 "primaryItems": self.getPrimaryItems(
                                     rel.consecutiveLinkrole, root_concept
