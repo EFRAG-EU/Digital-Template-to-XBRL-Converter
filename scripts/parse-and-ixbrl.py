@@ -187,7 +187,9 @@ def outputMessages(
 
     if hasMessages:
         print()
-        print(f"Information and issues encountered ({len(result)} messages):")
+        print(
+            f"Information and issues encountered ({len(messages)} message{'s'[: len(messages) ^ 1]}):"
+        )
         for message in messages:
             print(f"\t{message}")
 
