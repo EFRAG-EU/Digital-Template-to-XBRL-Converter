@@ -161,11 +161,14 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, ExcelProc
             )
             if args.viewer:
                 arelleResults = arp.generateInlineViewer(reportPackage)
-                viewer = arelleResults.viewer
-                if not dir_specified:
-                    viewer.saveToFilepath(output_path)
+                if arelleResults.has_viewer:
+                    viewer = arelleResults.viewer
+                    if not dir_specified:
+                        viewer.saveToFilepath(output_path)
+                    else:
+                        viewer.saveToDirectory(output_path)
                 else:
-                    viewer.saveToDirectory(output_path)
+                    pc.addDevInfoMessage("Failed to create viewer.")
             else:
                 arelleResults = arp.validateReportPackage(reportPackage)
 
