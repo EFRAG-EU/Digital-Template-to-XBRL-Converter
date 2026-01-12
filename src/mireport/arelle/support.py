@@ -2,7 +2,7 @@ import json
 import logging
 from collections.abc import Mapping, MutableMapping
 from dataclasses import dataclass
-from typing import Any, NamedTuple, Optional, Self
+from typing import Any, Optional, Self
 
 from arelle.logging.handlers.LogToXmlHandler import LogToXmlHandler
 from arelle.ModelValue import QName
@@ -11,6 +11,7 @@ from arelle.ModelXbrl import ModelXbrl
 from mireport.conversionresults import Message, MessageType, Severity
 from mireport.exceptions import MIReportException
 from mireport.filesupport import FilelikeAndFileName
+from mireport.version import VersionInformationTuple
 from mireport.xml import QName as MireportQName
 from mireport.xml import QNameMaker, getBootsrapQNameMaker
 
@@ -21,14 +22,6 @@ class ArelleRelatedException(MIReportException):
     """Exception to wrap any exception that come from calling in to Arelle."""
 
     pass
-
-
-class VersionInformationTuple(NamedTuple):
-    name: str
-    version: str
-
-    def __str__(self) -> str:
-        return f"{self.name} (version {self.version})"
 
 
 @dataclass

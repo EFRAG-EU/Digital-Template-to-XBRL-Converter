@@ -16,9 +16,9 @@ from mireport.arelle.support import (
     ArelleProcessingResult,
     ArelleRelatedException,
     ArelleVersionHolder,
-    VersionInformationTuple,
 )
 from mireport.filesupport import FilelikeAndFileName
+from mireport.version import VersionInformationTuple
 from mireport.xbrlreport import UNCONSTRAINED_REPORT_PACKAGE_JSON
 
 BIG_ARELLE_LOCK = threading.Lock()

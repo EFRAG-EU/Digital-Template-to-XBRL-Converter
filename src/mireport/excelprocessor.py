@@ -19,7 +19,6 @@ from openpyxl.workbook.defined_name import DefinedName
 from openpyxl.worksheet.cell_range import CellRange
 from openpyxl.worksheet.worksheet import Worksheet
 
-import mireport
 from mireport.conversionresults import (
     ConversionResultsBuilder,
     MessageType,
@@ -49,6 +48,7 @@ from mireport.taxonomy import (
     getTaxonomy,
     listTaxonomies,
 )
+from mireport.version import OUR_VERSION_HOLDER, VersionHolder
 from mireport.xbrlreport import FactBuilder, FactValue, InlineReport
 
 L = logging.getLogger(__name__)
@@ -77,35 +77,6 @@ def eeDomainAsText(concept: Concept) -> str:
 
 def conceptsToText(concepts: Iterable[Concept]) -> str:
     return ", ".join(sorted(str(c.qname) for c in concepts))
-
-
-class VersionHolder(NamedTuple):
-    major: int
-    minor: int
-    micro: int
-    suffix: str
-
-    def __str__(self) -> str:
-        return f"{self.major}.{self.minor}.{self.micro}{self.suffix}"
-
-    @classmethod
-    def parse(cls, version_str: str) -> VersionHolder:
-        version_str = version_str.strip()
-        match = re.match(r"^(\d+)\.(\d+)\.(\d+)(.*)?$", version_str)
-        if not match:
-            raise ValueError(f"Invalid version format: {version_str}")
-        major, minor, micro, suffix = match.groups()
-        return cls(int(major), int(minor), int(micro), suffix or "")
-
-    @classmethod
-    def parse_safe(cls, version_str: str) -> VersionHolder | None:
-        try:
-            return cls.parse(version_str)
-        except ValueError:
-            return None
-
-
-OUR_VERSION_HOLDER = VersionHolder.parse(mireport.__version__)
 
 
 class ComplexUnit(NamedTuple):
