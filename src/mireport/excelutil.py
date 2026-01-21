@@ -53,7 +53,9 @@ def checkExcelFilePath(path: Path) -> None:
         raise Exception(f'"{path}" is not a supported (.xlsx) Excel file')
 
 
-def loadExcelFromPathOrFileLike(pathOrFile: Path | BinaryIO) -> Workbook:
+def loadExcelFromPathOrFileLike(
+    pathOrFile: Path | BinaryIO, read_only: bool = False
+) -> Workbook:
     # We can safely suppress these warnings as our use-case is **just**
     # extracting data from the Excel file.
     with warnings.catch_warnings():
@@ -64,7 +66,7 @@ def loadExcelFromPathOrFileLike(pathOrFile: Path | BinaryIO) -> Workbook:
             module=r"openpyxl\.worksheet\._reader",
         )
         wb = load_workbook(
-            filename=pathOrFile, read_only=False, data_only=True, rich_text=True
+            filename=pathOrFile, read_only=read_only, data_only=True, rich_text=True
         )
     return wb
 
