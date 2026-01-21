@@ -402,6 +402,7 @@ def convert(id: str) -> Response:
 
         conversion = session[id]
         if "results" not in conversion:
+            doMigrationChecks(conversion, id)
             results = doConversion(conversion, id)
             conversion["results"] = results.toDict()
             conversion["successful"] = results.conversionSuccessful
@@ -603,6 +604,23 @@ def doConversion(conversion: dict, id: str) -> ConversionResults:
         L.exception("Exception encountered", exc_info=e)
 
     return resultBuilder.build()
+
+
+def doMigrationChecks(conversion: dict, id: str) -> None:
+    upload = FilelikeAndFileName(*conversion["excel"])
+    check_results = ExcelProcessor.checkReport(upload.fileLike())
+
+    if check_results is None:
+        return  # Can't do anything if we can't read the report
+    elif check_results.version_is_same:
+        pass  # No action needed if version is same
+    elif check_results.version_major_minor_same:
+        pass  # No need for required migration but may want to offer migration button after conversion
+    else:
+        if check_results.validation_is_incomplete:
+            pass  # Can't migrate if internal validation is incomplete
+        else:
+            pass  # Bounce straight to migration page and skip conversion
 
 
 @convert_bp.route("/downloadFile/<string:id>/<string:ftype>/", methods=["GET", "HEAD"])

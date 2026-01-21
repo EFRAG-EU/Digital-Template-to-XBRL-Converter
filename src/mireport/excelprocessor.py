@@ -108,6 +108,13 @@ class VersionHolder(NamedTuple):
 OUR_VERSION_HOLDER = VersionHolder.parse(mireport.__version__)
 
 
+class TemplateCheckResult(NamedTuple):
+    validation_is_incomplete: bool
+    version_is_same: bool
+    version_major_minor_same: bool
+    reported_version: VersionHolder
+
+
 class ComplexUnit(NamedTuple):
     numerator: list[QName]
     denominator: list[QName]
@@ -243,8 +250,10 @@ class ExcelProcessor:
         finally:
             self._workbook.close()
 
-    def _loadWorkbook(self) -> None:
-        self._workbook = loadExcelFromPathOrFileLike(self._excelPathOrFileLike)
+    def _loadWorkbook(self, read_only: bool = False) -> None:
+        self._workbook = loadExcelFromPathOrFileLike(
+            self._excelPathOrFileLike, read_only
+        )
 
     def _recordNamedRanges(self) -> None:
         self._unusedDefinedNames.update(
@@ -481,19 +490,21 @@ class ExcelProcessor:
                 MessageType.ExcelParsing,
             )
 
-    def checkTemplate(self) -> None:
+    def checkTemplate(self) -> TemplateCheckResult:
         # warn if template thinks it is incomplete
         template_validation_name = "template_overall_validation_status"
         template_validation_fail_name = "template_label_incomplete"
+
         validation_failed_expected_value = self.getSingleStringValue(
             template_validation_fail_name
         )
         validation_status = self.getSingleStringValue(template_validation_name)
-        if (
+        is_incomplete = bool(
             validation_failed_expected_value
             and validation_status
             and validation_status == validation_failed_expected_value
-        ):
+        )
+        if is_incomplete:
             self._results.addMessage(
                 "The Digital Template reports that it is incomplete (missing mandatory items).",
                 Severity.WARNING,
@@ -508,6 +519,12 @@ class ExcelProcessor:
         template_version_string = self.getSingleStringValue(template_version_name)
         excel_version = VersionHolder.parse_safe(template_version_string)
         converter_version = OUR_VERSION_HOLDER
+
+        major_minor_match = (
+            excel_version is not None
+            and converter_version.major == excel_version.major
+            and converter_version.minor == excel_version.minor
+        )
 
         if not template_version_string.strip():
             self._results.addMessage(
@@ -527,12 +544,17 @@ class ExcelProcessor:
                     self.getDefinedNameForString(template_version_name)
                 ),
             )
-        elif excel_version != converter_version:
-            major_minor_same = (
-                excel_version.major == converter_version.major
-                and excel_version.minor == converter_version.minor
+        elif excel_version == converter_version:
+            self._results.addMessage(
+                f"The Digital Template is the same version as the converter {converter_version}.",
+                Severity.INFO,
+                MessageType.DevInfo,
+                excel_reference=excelDefinedNameRef(
+                    self.getDefinedNameForString(template_version_name)
+                ),
             )
-            if major_minor_same:
+        elif excel_version != converter_version:
+            if major_minor_match:
                 self._results.addMessage(
                     f"The Digital Template is based on version {excel_version}. The latest version available is {converter_version}, consider updating the template to the latest version.",
                     Severity.INFO,
@@ -550,6 +572,35 @@ class ExcelProcessor:
                         self.getDefinedNameForString(template_version_name)
                     ),
                 )
+        return TemplateCheckResult(
+            validation_is_incomplete=is_incomplete,
+            version_is_same=excel_version == converter_version
+            if excel_version
+            else False,
+            version_major_minor_same=major_minor_match,
+            reported_version=excel_version
+            if excel_version
+            else VersionHolder(0, 0, 0, template_version_string),
+        )
+
+    @classmethod
+    def checkReport(cls, excelBlob: BinaryIO) -> Optional[TemplateCheckResult]:
+        """
+        Check the report template for internal validation and version information.
+        """
+        processor = cls(
+            excelBlob,
+            ConversionResultsBuilder(),
+            VSME_DEFAULTS,
+        )
+        try:
+            processor._loadWorkbook(read_only=True)
+            assert processor._workbook
+            return processor.checkTemplate()
+        except Exception:
+            return None
+        finally:
+            processor._workbook.close()
 
     def abortEarlyIfErrors(self) -> None:
         if self._results.hasErrors():

@@ -1,5 +1,5 @@
-from importlib.abc import Traversable
 from importlib.resources import Package, files
+from importlib.resources.abc import Traversable
 from json import loads
 from typing import Any, Generator
 
