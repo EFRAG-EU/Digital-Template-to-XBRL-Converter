@@ -36,8 +36,10 @@
         {% elif conv_rag.red %}bg-red-100 border border-red-400 text-red-800
         {% elif conv_rag.amber %}bg-amber-100 border border-amber-400 text-amber-800
         {% endif %}">
-        <div class="flex justify-between items-center gap-4">
-            <p class="{% if not conv_rag.green %}text-center w-full {% endif %}font-semibold">
+        {% set show_migration_button = migration_optional and conv_rag.green %}
+        <div
+            class="flex items-center gap-4 {% if show_migration_button %}justify-between{% else %}justify-center{% endif %}">
+            <p class="font-semibold {% if show_migration_button %}text-left{% else %}text-center{% endif %}">
                 <!-- Provide newest Template Version if user has tried to upload an older one -->
                 {% if conv_rag.red %}
                 Technical conversion failed with ERRORS, please review the messages and the Digital Template
@@ -49,8 +51,9 @@
                 Technical conversion of the Digital Template to XBRL was successful!
                 {% endif %}
             </p>
-            {% if conv_rag.green %}
+            {% if show_migration_button %}
             <a href="{{ url_for('basic.migrationPage', id=conversion_id) }}"
+                title="A newer version of the template is available. You may choose to migrate your report and re-do conversion"
                 class="inline-block px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition whitespace-nowrap">
                 Migration
             </a>

@@ -14,7 +14,7 @@
 <div class="flex justify-center my-8" style="gap: 6rem;">
     <!-- Your Version Box -->
     <div class="bg-gray-50 rounded-xl p-8 text-center" style="min-width: 300px;">
-        <p class="text-3xl font-bold text-gray-800">Your Version: {{ your_version | default("X.X.X") }}</p>
+        <p class="text-3xl font-bold text-gray-800">Your Version: {{ version | default("X.X.X") }}</p>
     </div>
 
     <!-- Newest Version Box -->
@@ -148,15 +148,35 @@
         try {
             const response = await fetch('{{ url_for("basic.migrationButton", id=conversion_id) }}', { // STEP 3: Send the request to the backend
                 method: 'POST',
+                credentials: 'same-origin',
+                cache: 'no-store',
             });
-            if (response.ok) { // STEP 4: Extract the filename from the response
+            if (response.ok) { // STEP 4: Validate content type and extract filename
+                const contentType = response.headers.get('content-type') || '';
+                const expectedType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+                if (!contentType.includes(expectedType)) {
+                    console.error('Unexpected Content-Type for migration download:', contentType);
+                    const preview = await response.text();
+                    console.error('Response preview (first 500 chars):', preview.slice(0, 500));
+                    alert('Migration did not produce an Excel file. Please try again.');
+                    hideSpinner();
+                    return;
+                }
                 const blob = await response.blob();
                 const contentDisposition = response.headers.get('content-disposition');
-                let filename = 'migrated.xlsx';
+                // Fallback: derive from original filename shown on page
+                const orig = '{{ filename | e }}';
+                let filename = orig && orig.endsWith('.xlsx') ? orig.slice(0, -5) + '_migrated.xlsx' : 'migrated.xlsx';
                 if (contentDisposition) {
-                    const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
-                    if (filenameMatch) filename = filenameMatch[1];
+                    // Try standard filename="..."
+                    const matchStd = contentDisposition.match(/filename="?([^";]+)"?/i);
+                    // Try RFC 5987 encoded filename*=UTF-8''...
+                    const matchStar = contentDisposition.match(/filename\*=(?:UTF-8'')?([^;]+)/i);
+                    const decoded = matchStd ? matchStd[1] : (matchStar ? decodeURIComponent(matchStar[1]) : null);
+                    if (decoded) filename = decoded.trim();
                 }
+                // Ensure we have an .xlsx extension
+                if (!/\.xlsx$/i.test(filename)) filename = filename + '.xlsx';
                 // STEP 5: Create a download link and trigger the download
                 const url = window.URL.createObjectURL(blob);
                 const link = document.createElement('a');
@@ -194,10 +214,11 @@
 </script>
 
 <div class="flex justify-center">
-    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition"
-        style="min-width: 200px;">
+    <a href="{{ url_for('basic.index') }}"
+        class="inline-block px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition"
+        style="min-width: 200px; text-align: center;">
         Back to Converter
-    </button>
+    </a>
 </div>
 
 {% endblock %}

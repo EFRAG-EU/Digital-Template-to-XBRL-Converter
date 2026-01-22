@@ -1,6 +1,9 @@
+from enum import Enum
 import logging
 from datetime import datetime, timedelta, timezone
 from io import BytesIO
+import os
+import tempfile
 from random import randint
 from secrets import token_hex
 from typing import Any
@@ -26,6 +29,7 @@ from flask_session import Session  # type: ignore
 
 import mireport
 from migration_tool.tool import tool as migration_tool_function
+from mireport.excelprocessor import OUR_VERSION_HOLDER
 from mireport import loadTaxonomyJSON
 from mireport.arelle.report_info import (
     ARELLE_VERSION_INFORMATION,
@@ -59,6 +63,14 @@ L = logging.getLogger(__name__)
 convert_bp = Blueprint(
     "basic", __name__, template_folder="templates", static_folder="static"
 )
+
+
+class Outcome(Enum):
+    SUCCESS = "success"
+    MISSING = "report_missing"
+    INVALID = "report_invalid"
+    MIGRATION_OPTIONAL = "migration_optional"
+    MIGRATION_REQUIRED = "migration_required"
 
 
 def create_app() -> Flask:
@@ -402,25 +414,45 @@ def convert(id: str) -> Response:
 
         conversion = session[id]
         if "results" not in conversion:
-            doMigrationChecks(conversion, id)
+            outcome, version = doMigrationChecks(conversion, id)
+            conversion["template_version"] = version
+            match outcome:
+                case Outcome.MIGRATION_REQUIRED:
+                    return make_response(
+                        redirect(
+                            url_for("basic.migrationPage", id=id, version=version),
+                            code=303,
+                        )
+                    )
+                case Outcome.INVALID:
+                    flash("Report validation is not complete", "error")
+                    return make_response(redirect(url_for("basic.index")))
+                case Outcome.MISSING:
+                    flash("Report missing for migration", "error")
+                    return make_response(redirect(url_for("basic.index")))
+                case Outcome.MIGRATION_OPTIONAL:
+                    pass  # Continue with conversion
+                case Outcome.SUCCESS:
+                    pass  # Continue with conversion
             results = doConversion(conversion, id)
             conversion["results"] = results.toDict()
             conversion["successful"] = results.conversionSuccessful
+            migration_optional = outcome == Outcome.MIGRATION_OPTIONAL
+        else:
+            # Reuse stored version when results already exist
+            version = conversion.get("template_version", "unknown")
+            migration_optional = False
 
         results = ConversionResults.fromDict(conversion["results"])
         devInfo = request.args.get("show_developer_messages") == "true"
-
-        # If there are warnings, redirect directly to migration page
-        if results.getOverallSeverity() == Severity.WARNING:
-            return make_response(
-                redirect(url_for("basic.migrationPage", id=id), code=303)
-            )
 
         # Show results (green or red status)
         return Response(
             render_template(
                 "conversion-results.html.jinja",
                 conversion_result=results,
+                migration_optional=migration_optional,
+                version=version,
                 conversion_id=id,
                 dev=devInfo,
                 conversion_date=conversion["date"],
@@ -443,6 +475,9 @@ def migrationPage(id: str) -> Response:
             return make_response(redirect(url_for("basic.index")))
 
         conversion = session[id]
+        version = request.args.get(
+            "version", conversion.get("template_version", "unknown")
+        )
         excel = FilelikeAndFileName(*conversion["excel"])
 
         last_migration = session.get("last_migration")
@@ -452,6 +487,8 @@ def migrationPage(id: str) -> Response:
                 "migration_page.html.jinja",
                 conversion_id=id,
                 filename=excel.filename,
+                version=version,
+                newest_version=OUR_VERSION_HOLDER,
                 existing_conversions=hasConversions(),
                 ENABLE_CAPTCHA=ENABLE_CAPTCHA,
                 elapsed=last_migration.get("elapsed") if last_migration else None,
@@ -472,24 +509,28 @@ def migrationButton(id: str) -> Response:
     try:
         # Get the file from session
         if id not in session:
-            flash("Conversion session expired", "error")
-            return make_response(redirect(url_for("basic.index")))
+            L.warning("MigrationButton: session expired or missing id=%s", id)
+            return make_response(jsonify({"error": "Conversion session expired"}), 401)
 
         conversion = session[id]
         if "excel" not in conversion:
-            flash("No file found in session", "error")
-            return make_response(redirect(url_for("basic.index")))
+            L.warning("MigrationButton: no excel in session for id=%s", id)
+            return make_response(jsonify({"error": "No file found in session"}), 400)
 
         # Get the file from session
         excel = FilelikeAndFileName(*conversion["excel"])
 
-        # Read the file into memory and open as workbook
-        file_content = BytesIO(excel.fileContent)
-        file_content.seek(0)
-        old_wb = load_workbook(file_content, data_only=False)
-
-        # Call the migration tool with an openpyxl workbook
-        new_wb, elapsed, migration_issues = migration_tool_function(old_wb)
+        # Write the uploaded Excel to a temporary file and invoke the tool by path
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as tmp:
+            tmp.write(excel.fileContent)
+            tmp_path = tmp.name
+        try:
+            new_wb, elapsed, migration_issues = migration_tool_function(tmp_path)
+        finally:
+            try:
+                os.unlink(tmp_path)
+            except Exception:
+                pass
 
         # Save the workbook to BytesIO
         output = BytesIO()
@@ -500,26 +541,34 @@ def migrationButton(id: str) -> Response:
         original_name = excel.filename.rsplit(".", 1)[0]
         download_name = f"{original_name}_migrated.xlsx"
 
-        # Create response with file download
-        response = make_response(
-            send_file(
-                output,
-                as_attachment=True,
-                download_name=download_name,
-                mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        # Store in session before returning so BytesIO stays alive
+        session["last_migration"] = {
+            "elapsed": elapsed,
+            "issues": migration_issues,
+            "file_data": output.getvalue(),  # Store as bytes
+        }
+        session.modified = True
+
+        # Guard against empty output
+        size = len(output.getvalue())
+        L.info("MigrationButton: generated workbook size=%d bytes for id=%s", size, id)
+        if size == 0:
+            L.error("MigrationButton: empty workbook output for id=%s", id)
+            return make_response(
+                jsonify({"error": "Migration produced empty file"}), 500
             )
+
+        # Create response with file download
+        return send_file(
+            output,
+            as_attachment=True,
+            download_name=download_name,
+            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
-
-        # Store migration info in session for display after redirect
-        session["last_migration"] = {"elapsed": elapsed, "issues": migration_issues}
-
-        flash(f"Migration completed in {elapsed:.2f} seconds", "success")
-        return response
 
     except Exception as e:
         L.exception("Exception during migration", exc_info=e)
-        flash(f"Migration failed: {str(e)}", "error")
-        return make_response(redirect(url_for("basic.index")))
+        return make_response(jsonify({"error": str(e)}), 500)
 
 
 def getUploadFilename(id: str) -> str:
@@ -606,21 +655,24 @@ def doConversion(conversion: dict, id: str) -> ConversionResults:
     return resultBuilder.build()
 
 
-def doMigrationChecks(conversion: dict, id: str) -> None:
+def doMigrationChecks(conversion: dict, id: str) -> tuple[Outcome, str]:
     upload = FilelikeAndFileName(*conversion["excel"])
     check_results = ExcelProcessor.checkReport(upload.fileLike())
+    version = str(check_results.reported_version) if check_results else "unknown"
 
     if check_results is None:
-        return  # Can't do anything if we can't read the report
+        return Outcome.MISSING, version  # can't do anything if we can't read the report
     elif check_results.version_is_same:
-        pass  # No action needed if version is same
+        return Outcome.SUCCESS, version  # up-to-date version
+    elif check_results.validation_is_incomplete:
+        return Outcome.INVALID, version  # invalid report, can't proceed
     elif check_results.version_major_minor_same:
-        pass  # No need for required migration but may want to offer migration button after conversion
+        return Outcome.MIGRATION_OPTIONAL, version  # optional migration offered
     else:
-        if check_results.validation_is_incomplete:
-            pass  # Can't migrate if internal validation is incomplete
-        else:
-            pass  # Bounce straight to migration page and skip conversion
+        return (
+            Outcome.MIGRATION_REQUIRED,
+            version,
+        )  # older (major) version, must migrate
 
 
 @convert_bp.route("/downloadFile/<string:id>/<string:ftype>/", methods=["GET", "HEAD"])
