@@ -1,9 +1,11 @@
 from enum import Enum
+import json
 import logging
 from datetime import datetime, timedelta, timezone
 from io import BytesIO
 import os
 import tempfile
+from pathlib import Path
 from random import randint
 from secrets import token_hex
 from typing import Any
@@ -414,13 +416,15 @@ def convert(id: str) -> Response:
 
         conversion = session[id]
         if "results" not in conversion:
-            outcome, version = doMigrationChecks(conversion, id)
-            conversion["template_version"] = version
+            outcome, conversion["template_version"] = doMigrationChecks(conversion, id)
             match outcome:
                 case Outcome.MIGRATION_REQUIRED:
                     return make_response(
                         redirect(
-                            url_for("basic.migrationPage", id=id, version=version),
+                            url_for(
+                                "basic.migrationPage",
+                                id=id,
+                            ),
                             code=303,
                         )
                     )
@@ -439,8 +443,6 @@ def convert(id: str) -> Response:
             conversion["successful"] = results.conversionSuccessful
             migration_optional = outcome == Outcome.MIGRATION_OPTIONAL
         else:
-            # Reuse stored version when results already exist
-            version = conversion.get("template_version", "unknown")
             migration_optional = False
 
         results = ConversionResults.fromDict(conversion["results"])
@@ -452,7 +454,6 @@ def convert(id: str) -> Response:
                 "conversion-results.html.jinja",
                 conversion_result=results,
                 migration_optional=migration_optional,
-                version=version,
                 conversion_id=id,
                 dev=devInfo,
                 conversion_date=conversion["date"],
@@ -480,7 +481,10 @@ def migrationPage(id: str) -> Response:
         )
         excel = FilelikeAndFileName(*conversion["excel"])
 
-        last_migration = session.get("last_migration")
+        # Parse migration results from query parameters
+        elapsed = request.args.get("elapsed", type=float)
+        issues_json = request.args.get("issues", "[]")
+        migration_issues = json.loads(issues_json)
 
         return Response(
             render_template(
@@ -491,10 +495,8 @@ def migrationPage(id: str) -> Response:
                 newest_version=OUR_VERSION_HOLDER,
                 existing_conversions=hasConversions(),
                 ENABLE_CAPTCHA=ENABLE_CAPTCHA,
-                elapsed=last_migration.get("elapsed") if last_migration else None,
-                migration_issues=last_migration.get("issues")
-                if last_migration
-                else None,
+                elapsed=elapsed,
+                migration_issues=migration_issues,
             )
         )
     except Exception as e:
@@ -520,11 +522,11 @@ def migrationButton(id: str) -> Response:
         # Get the file from session
         excel = FilelikeAndFileName(*conversion["excel"])
 
-        # Write the uploaded Excel to a temporary file and invoke the tool by path
+        # Write to temporary file and invoke migration tool
         with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as tmp:
-            tmp.write(excel.fileContent)
             tmp_path = tmp.name
         try:
+            excel.saveToFilepath(Path(tmp_path))
             new_wb, elapsed, migration_issues = migration_tool_function(tmp_path)
         finally:
             try:
@@ -532,25 +534,18 @@ def migrationButton(id: str) -> Response:
             except Exception:
                 pass
 
-        # Save the workbook to BytesIO
+        # Save workbook to bytes and create FilelikeAndFileName
         output = BytesIO()
         new_wb.save(output)
-        output.seek(0)
-
-        # Generate filename
         original_name = excel.filename.rsplit(".", 1)[0]
         download_name = f"{original_name}_migrated.xlsx"
-
-        # Store in session before returning so BytesIO stays alive
-        session["last_migration"] = {
-            "elapsed": elapsed,
-            "issues": migration_issues,
-            "file_data": output.getvalue(),  # Store as bytes
-        }
-        session.modified = True
+        migrated_file = FilelikeAndFileName(
+            fileContent=output.getvalue(),
+            filename=download_name,
+        )
 
         # Guard against empty output
-        size = len(output.getvalue())
+        size = len(migrated_file.fileContent)
         L.info("MigrationButton: generated workbook size=%d bytes for id=%s", size, id)
         if size == 0:
             L.error("MigrationButton: empty workbook output for id=%s", id)
@@ -558,17 +553,41 @@ def migrationButton(id: str) -> Response:
                 jsonify({"error": "Migration produced empty file"}), 500
             )
 
-        # Create response with file download
-        return send_file(
-            output,
-            as_attachment=True,
-            download_name=download_name,
-            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        # Store migrated file temporarily in session and redirect with results
+        session["migrated_file"] = migrated_file
+        session.modified = True
+
+        # Redirect to migration page with results as query parameters
+        return make_response(
+            redirect(
+                url_for(
+                    "basic.migrationPage",
+                    id=id,
+                    elapsed=elapsed,
+                    issues=json.dumps(migration_issues),
+                ),
+                code=303,
+            )
         )
 
     except Exception as e:
         L.exception("Exception during migration", exc_info=e)
         return make_response(jsonify({"error": str(e)}), 500)
+
+
+@convert_bp.route("/downloadMigrated/<id>", methods=["GET"])
+def downloadMigrated(id: str) -> Response:
+    """Download the migrated file from the session."""
+    if id not in session or "migrated_file" not in session:
+        return make_response({"error": "No migrated file found"}, 404)
+
+    migrated_file = FilelikeAndFileName(*session.pop("migrated_file"))
+    return send_file(
+        migrated_file.fileLike(),
+        as_attachment=True,
+        download_name=migrated_file.filename,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
 
 
 def getUploadFilename(id: str) -> str:

@@ -94,9 +94,10 @@
 
     <!-- Submit Button -->
     <div class="flex justify-center">
-        <button type="submit" class="bg-amber-500 text-white font-medium py-2 px-4 rounded-lg transition"
+        <button type="submit"
+            class="migrate-handler bg-amber-500 text-white font-medium py-2 px-4 rounded-lg transition"
             style="min-width: 200px;" onmouseover="this.style.backgroundColor='#b45309'"
-            onmouseout="this.style.backgroundColor='#f59e0b'">
+            onmouseout="this.style.backgroundColor='#f59e0b'" data-spinner-text="Migrating...">
             Migrate Template
         </button>
     </div>
@@ -104,7 +105,6 @@
 
 <!-- Migration Results (if available) -->
 {% if elapsed is not none %}
-{# Only show results when we have a numeric elapsed value #}
 <div class="mt-6 space-y-4">
     <div class="bg-blue-50 border border-blue-300 rounded-lg p-4">
         <h3 class="font-semibold text-blue-900 mb-2">Migration Completed!</h3>
@@ -129,87 +129,26 @@
 {% endif %}
 
 <script>
-    function showSpinner() {
-        document.getElementById('loadingSpinner').classList.remove('hidden');
-        document.getElementById('loadingSpinner').classList.add('flex');
-    }
-
-    function hideSpinner() {
-        document.getElementById('loadingSpinner').classList.add('hidden');
-        document.getElementById('loadingSpinner').classList.remove('flex');
-    }
-
-    async function handleMigrateSubmit(e) {
-        e.preventDefault(); // STEP 1: Stop the form from submitting normally
-
-        console.log("Form submitted - starting migration...");
-        showSpinner(); // STEP 2: Show the loading spinner immediately
-
-        try {
-            const response = await fetch('{{ url_for("basic.migrationButton", id=conversion_id) }}', { // STEP 3: Send the request to the backend
-                method: 'POST',
-                credentials: 'same-origin',
-                cache: 'no-store',
+    // Show spinner while form submits
+    document.addEventListener('DOMContentLoaded', () => {
+        const button = document.querySelector('.migrate-handler');
+        if (button) {
+            button.addEventListener('click', () => {
+                const spinner = document.getElementById('loadingSpinner');
+                const spinnerText = document.getElementById('spinner-text');
+                if (spinner && spinnerText) {
+                    spinnerText.textContent = button.dataset.spinnerText || 'Migrating...';
+                    spinner.classList.remove('hidden');
+                    spinner.classList.add('flex');
+                }
             });
-            if (response.ok) { // STEP 4: Validate content type and extract filename
-                const contentType = response.headers.get('content-type') || '';
-                const expectedType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-                if (!contentType.includes(expectedType)) {
-                    console.error('Unexpected Content-Type for migration download:', contentType);
-                    const preview = await response.text();
-                    console.error('Response preview (first 500 chars):', preview.slice(0, 500));
-                    alert('Migration did not produce an Excel file. Please try again.');
-                    hideSpinner();
-                    return;
-                }
-                const blob = await response.blob();
-                const contentDisposition = response.headers.get('content-disposition');
-                // Fallback: derive from original filename shown on page
-                const orig = '{{ filename | e }}';
-                let filename = orig && orig.endsWith('.xlsx') ? orig.slice(0, -5) + '_migrated.xlsx' : 'migrated.xlsx';
-                if (contentDisposition) {
-                    // Try standard filename="..."
-                    const matchStd = contentDisposition.match(/filename="?([^";]+)"?/i);
-                    // Try RFC 5987 encoded filename*=UTF-8''...
-                    const matchStar = contentDisposition.match(/filename\*=(?:UTF-8'')?([^;]+)/i);
-                    const decoded = matchStd ? matchStd[1] : (matchStar ? decodeURIComponent(matchStar[1]) : null);
-                    if (decoded) filename = decoded.trim();
-                }
-                // Ensure we have an .xlsx extension
-                if (!/\.xlsx$/i.test(filename)) filename = filename + '.xlsx';
-                // STEP 5: Create a download link and trigger the download
-                const url = window.URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = filename;
-                document.body.appendChild(link);
-                link.click();
-                link.remove();
-                window.URL.revokeObjectURL(url);
-                // STEP 6: Wait a moment for download to start, then reload to show results
-                setTimeout(() => {
-                    hideSpinner();
-                    window.location.reload();
-                }, 1500);
-
-            } else {
-                console.error("Migration failed with status:", response.status);
-                alert('Migration failed. Please try again.');
-                hideSpinner();
-            }
-        } catch (error) {
-            console.error('Error during migration:', error);
-            alert('An error occurred during migration: ' + error.message);
-            hideSpinner();
         }
-    }
 
-    // STEP 0: Attach the submit handler when the page loads
-    document.addEventListener('DOMContentLoaded', function () {
-        const form = document.getElementById('migrateForm');
-        if (form) {
-            form.addEventListener('submit', handleMigrateSubmit);
-        }
+        // Auto-download migrated file if results are shown
+        {% if elapsed is not none %}
+        const downloadUrl = '{{ url_for("basic.downloadMigrated", id=conversion_id) }}';
+        window.location.href = downloadUrl;
+        {% endif %}
     });
 </script>
 
