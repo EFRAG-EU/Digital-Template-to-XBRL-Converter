@@ -510,9 +510,8 @@ class TaxonomyInfoExtractor:
         for r in relSet.fromModelObject(concept):
             label_resource: ModelResource = r.toModelObject
             role: str = str(label_resource.role) or XbrlConst.standardLabel
-            if lang := label_resource.xmlLang:
+            if (lang := label_resource.xmlLang) and (lang := lang.strip().lower()):
                 # BCP47 says that xml:lang is case insensitive
-                lang = lang.lower()
                 label = label_resource.stringValue.strip()
                 if (label0 := jconcept["labels"][lang].get(role)) and label0 != label:
                     self.cntlr.addToLog(
