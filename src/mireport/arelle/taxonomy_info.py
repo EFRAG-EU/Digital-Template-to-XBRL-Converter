@@ -228,7 +228,7 @@ class TaxonomyInfoExtractor:
                         level=logging.WARNING,
                     )
 
-        for qname, concept in sorted(self.modelXbrl.qnameConcepts.items()):
+        for qname, concept in self.modelXbrl.qnameConcepts.items():
             if concept.isItem:
                 if concept.qname.namespaceURI in {XbrlConst.xbrli, XbrlConst.xbrldt}:
                     continue
@@ -529,7 +529,7 @@ class TaxonomyInfoExtractor:
 
     def extractConceptsAndMetadata(self) -> None:
         self.cntlr.addToLog("Processing concepts (including labels and references)")
-        for qname, concept in sorted(self.modelXbrl.qnameConcepts.items()):
+        for qname, concept in self.modelXbrl.qnameConcepts.items():
             if concept.isItem:
                 if concept.qname.namespaceURI in (XbrlConst.xbrli, XbrlConst.xbrldt):
                     # We don't need/want xbrli:item, xbrldt:dimensionItem or
