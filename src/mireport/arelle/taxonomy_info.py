@@ -526,6 +526,50 @@ class TaxonomyInfoExtractor:
                     level=logging.WARNING,
                 )
 
+    def addReferences(
+        self,
+        concept: ModelConcept,
+        jconcept: dict,
+    ) -> None:
+        """Add references to the concept JSON."""
+        relSet = self.modelXbrl.relationshipSet(XbrlConst.conceptReference)
+        refs = []
+        for r in relSet.fromModelObject(concept):
+            ref_resource: ModelResource = r.toModelObject
+            role: str = str(ref_resource.role)
+            assert role, f"Reference {ref_resource} should have a role"
+
+            ref_parts: list[tuple[str, str]] = []
+            for part in ref_resource.iterchildren():
+                if value := part.stringValue.strip():
+                    ref_parts.append((part.qname, value))
+
+            if ref_parts:
+                refs.append(
+                    {
+                        "role": role,
+                        "order": r.order,
+                        "parts": ref_parts,
+                        "sort_key": tuple(
+                            (r.order, role, tuple((str(name), str(value)) for name, value in ref_parts))
+                        ),
+                    }
+                )
+
+        if refs:
+            all_order1 = all(r["order"] == 1 for r in refs)
+
+            if not all_order1:
+                self.cntlr.addToLog(
+                    f"INFO: {concept.qname} uses references with order values other than 1. Orders found: {sorted(set(r['order'] for r in refs))}. References will be sorted by order.",
+                    level=logging.INFO,
+                )
+
+            refs.sort(key=lambda r: r["sort_key"])
+
+            refs = [{"role": r["role"], "parts": r["parts"]} for r in refs]
+            jconcept["references"] = refs
+
     def extractConceptsAndMetadata(self) -> None:
         self.cntlr.addToLog("Processing concepts (including labels and references)")
         for qname, concept in self.modelXbrl.qnameConcepts.items():
@@ -548,6 +592,7 @@ class TaxonomyInfoExtractor:
                 }
                 self.addConceptMetadata(concept, jconcept)
                 self.addLabels(concept, jconcept)
+                self.addReferences(concept, jconcept)
 
                 if concept.isEnumeration and not concept.isEnumeration2Item:
                     self.cntlr.addToLog(
