@@ -1,16 +1,15 @@
-from enum import Enum
 import json
 import logging
-from datetime import datetime, timedelta, timezone
-from io import BytesIO
 import os
 import tempfile
+from datetime import datetime, timedelta, timezone
+from enum import Enum
+from io import BytesIO
 from pathlib import Path
 from random import randint
 from secrets import token_hex
 from typing import Any
 
-from openpyxl import load_workbook
 from dotenv import load_dotenv
 from flask import (
     Blueprint,
@@ -28,10 +27,9 @@ from flask import (
     url_for,
 )
 from flask_session import Session  # type: ignore
+from migration_tool import migrate_workbook
 
 import mireport
-from migration_tool.tool import tool as migration_tool_function
-from mireport.excelprocessor import OUR_VERSION_HOLDER
 from mireport import loadTaxonomyJSON
 from mireport.arelle.report_info import (
     ARELLE_VERSION_INFORMATION,
@@ -44,6 +42,7 @@ from mireport.conversionresults import (
     Severity,
 )
 from mireport.excelprocessor import (
+    OUR_VERSION_HOLDER,
     VSME_DEFAULTS,
     ExcelProcessor,
 )
@@ -527,7 +526,7 @@ def migrationButton(id: str) -> Response:
             tmp_path = tmp.name
         try:
             excel.saveToFilepath(Path(tmp_path))
-            new_wb, elapsed, migration_issues = migration_tool_function(tmp_path)
+            new_wb, elapsed, migration_issues = migrate_workbook(tmp_path)
         finally:
             try:
                 os.unlink(tmp_path)
