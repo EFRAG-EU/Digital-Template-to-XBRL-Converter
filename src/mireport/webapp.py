@@ -1,11 +1,8 @@
 import json
 import logging
-import os
-import tempfile
 from datetime import datetime, timedelta, timezone
 from enum import Enum
-from io import BytesIO
-from pathlib import Path
+from pathlib import PurePath
 from random import randint
 from secrets import token_hex
 from typing import Any
@@ -27,7 +24,7 @@ from flask import (
     url_for,
 )
 from flask_session import Session  # type: ignore
-from migration_tool import migrate_workbook
+from migration_tool import migrate_workbook_as_bytes
 
 import mireport
 from mireport import loadTaxonomyJSON
@@ -416,6 +413,7 @@ def convert(id: str) -> Response:
         conversion = session[id]
         if "results" not in conversion:
             outcome, conversion["template_version"] = doMigrationChecks(conversion, id)
+
             match outcome:
                 case Outcome.MIGRATION_REQUIRED:
                     return make_response(
@@ -437,6 +435,7 @@ def convert(id: str) -> Response:
                     pass  # Continue with conversion
                 case Outcome.SUCCESS:
                     pass  # Continue with conversion
+
             results = doConversion(conversion, id)
             conversion["results"] = results.toDict()
             conversion["successful"] = results.conversionSuccessful
@@ -518,42 +517,27 @@ def migrationButton(id: str) -> Response:
             L.warning("MigrationButton: no excel in session for id=%s", id)
             return make_response(jsonify({"error": "No file found in session"}), 400)
 
-        # Get the file from session
-        excel = FilelikeAndFileName(*conversion["excel"])
-
-        # Write to temporary file and invoke migration tool
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as tmp:
-            tmp_path = tmp.name
-        try:
-            excel.saveToFilepath(Path(tmp_path))
-            new_wb, elapsed, migration_issues = migrate_workbook(tmp_path)
-        finally:
-            try:
-                os.unlink(tmp_path)
-            except Exception:
-                pass
-
-        # Save workbook to bytes and create FilelikeAndFileName
-        output = BytesIO()
-        new_wb.save(output)
-        original_name = excel.filename.rsplit(".", 1)[0]
-        download_name = f"{original_name}_migrated.xlsx"
-        migrated_file = FilelikeAndFileName(
-            fileContent=output.getvalue(),
-            filename=download_name,
+        original_excel = FilelikeAndFileName(*conversion["excel"])
+        migrated_bytes, elapsed, migration_issues = migrate_workbook_as_bytes(
+            original_excel.fileLike()
+        )
+        o_path = PurePath(original_excel.filename)
+        m_name = o_path.with_stem(f"{o_path.stem}_migrated").name
+        migrated_excel = FilelikeAndFileName(
+            fileContent=migrated_bytes, filename=m_name
         )
 
         # Guard against empty output
-        size = len(migrated_file.fileContent)
+        size = len(migrated_excel.fileContent)
         L.info("MigrationButton: generated workbook size=%d bytes for id=%s", size, id)
-        if size == 0:
+        if not size:
             L.error("MigrationButton: empty workbook output for id=%s", id)
             return make_response(
                 jsonify({"error": "Migration produced empty file"}), 500
             )
 
         # Store migrated file temporarily in session and redirect with results
-        session["migrated_file"] = migrated_file
+        session["migrated_excel"] = migrated_excel
         session.modified = True
 
         # Redirect to migration page with results as query parameters
@@ -577,14 +561,14 @@ def migrationButton(id: str) -> Response:
 @convert_bp.route("/downloadMigrated/<id>", methods=["GET"])
 def downloadMigrated(id: str) -> Response:
     """Download the migrated file from the session."""
-    if id not in session or "migrated_file" not in session:
+    if id not in session or "migrated_excel" not in session:
         return make_response({"error": "No migrated file found"}, 404)
 
-    migrated_file = FilelikeAndFileName(*session.pop("migrated_file"))
+    migrated_excel = FilelikeAndFileName(*session.pop("migrated_excel"))
     return send_file(
-        migrated_file.fileLike(),
+        migrated_excel.fileLike(),
         as_attachment=True,
-        download_name=migrated_file.filename,
+        download_name=migrated_excel.filename,
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
 
