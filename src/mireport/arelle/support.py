@@ -2,7 +2,7 @@ import json
 import logging
 from collections.abc import Mapping, MutableMapping
 from dataclasses import dataclass
-from typing import Any, Optional, Self
+from typing import Any, Counter, Optional, Self
 
 from arelle.logging.handlers.LogToXmlHandler import LogToXmlHandler
 from arelle.ModelValue import QName
@@ -194,26 +194,43 @@ class ArelleQNameCanonicaliser:
     def bootstrap(cls, arelle_model: ModelXbrl) -> Self:
         qnameMaker = getBootsrapQNameMaker()
 
-        # Bootstrap using Arelle's existing prefix list, but strip out any
-        # ambiguous prefixes. That is those prefixes which are bound to more
-        # than one namespace (allowed because the bindings appear in different
-        # XML documents). This is not necessary (we fall back to generating new
+        # Bootstrap using Arelle's existing prefix bindings, but strip out any
+        # ambiguous prefixes.
+        #
+        # Ambiguous means those prefixes which are bound to more than one
+        # namespace (allowed because the bindings appear in different XML
+        # documents). This is not necessary (we fall back to generating new
         # prefixes rather than using an incorrect one) but lets us lazily work
         # out which prefix wins in the event of a clash based on the
         # concepts/types we're actually using later in convert().
-        expected: dict[str, str] = dict(arelle_model.prefixedNamespaces)
-        potentially_inconsistent: frozenset[tuple[str, str]] = frozenset(
+        #
+        # ModelXbrl.prefixedNamespaces gives us a snapshot of all prefix
+        # bindings but does not tell us if they are consistently used throughout
+        # the loaded documents and in the case of a prefix bound to multiple
+        # namespaces, only tells us one of them. We avoid loading all the
+        # ModelXbrl.prefixedNamespaces into our QNameMaker as we do not need
+        # unused bindings in our JSON.
+
+        all_existing_used_prefixes_set: frozenset[tuple[str, str]] = frozenset(
             (prefix, qname.namespaceURI)
             for qname in arelle_model.qnameConcepts.keys()
             | arelle_model.qnameTypes.keys()
             if (prefix := qname.prefix)
         )
-        for prefix, namespace in potentially_inconsistent:
-            if (expectedNS := expected.get(prefix)) and expectedNS != namespace:
-                del expected[prefix]
 
-        for prefix, namespace in expected.items():
+        prefix_namespace_count: Counter[str] = Counter(
+            prefix for prefix, _ in all_existing_used_prefixes_set
+        )
+
+        consistent_and_used_prefix_map: dict[str, str] = {
+            prefix: namespace
+            for prefix, namespace in all_existing_used_prefixes_set
+            if prefix_namespace_count[prefix] == 1
+        }
+
+        for prefix, namespace in consistent_and_used_prefix_map.items():
             qnameMaker.addNamespacePrefix(prefix, namespace)
+
         return cls(qnameMaker)
 
     def convert(self, qname: QName) -> MireportQName:
@@ -232,11 +249,15 @@ class ArelleQNameCanonicaliser:
         # Anything we don't know about in VANITY_NAMESPACE_PREFIX_MAP will
         # either have its taxonomy defined prefix or get a generated ns0, ns1
         # prefix
-        wanted_prefix = self.VANITY_NAMESPACE_PREFIX_MAP.get(namespace) or wanted_prefix
+        if namespace not in self.qnameMaker.namespacePrefixesMap.values():
+            if vanity_prefix := self.VANITY_NAMESPACE_PREFIX_MAP.get(namespace):
+                wanted_prefix = vanity_prefix
 
-        # If the wanted prefix has not yet been used, add it so that it can be used
-        if wanted_prefix and not self.qnameMaker.nsManager.prefixIsKnown(wanted_prefix):
-            self.qnameMaker.addNamespacePrefix(wanted_prefix, namespace)
+            if (
+                wanted_prefix
+                and wanted_prefix not in self.qnameMaker.namespacePrefixesMap
+            ):
+                self.qnameMaker.addNamespacePrefix(wanted_prefix, namespace)
 
         return self.qnameMaker.fromNamespaceAndLocalName(namespace, qname.localName)
 
