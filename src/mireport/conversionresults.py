@@ -1,7 +1,8 @@
+import re
 import uuid
 from collections.abc import Iterable
 from enum import StrEnum
-from functools import cache, lru_cache
+from functools import lru_cache
 from time import perf_counter_ns
 from types import MappingProxyType, TracebackType
 from typing import Mapping, Optional, Self, Type
@@ -27,12 +28,28 @@ class Severity(StrEnum):
         return max(len(s.value) for s in cls.__members__.values())
 
     @classmethod
-    @cache
+    @lru_cache(32)
     def fromLogLevelString(cls, level: str, *, default: Optional[Self] = None) -> Self:
         # return cls.__members__.get(level.title(), cls(cls.WARNING.value))
         lower_lookup = {k.lower(): v for k, v in cls.__members__.items()}
-        if (attempt1 := lower_lookup.get(level.lower())) is not None:
+        level_lower = level.lower()
+
+        if (attempt1 := lower_lookup.get(level_lower)) is not None:
             return cls(attempt1.value)
+
+        if (
+            attempt2 := next(
+                (
+                    a
+                    for a in lower_lookup
+                    for word in re.split(r"\W+", level_lower)
+                    if a == word
+                ),
+                None,
+            )
+        ) is not None:
+            return cls(lower_lookup[attempt2].value)
+
         return default or cls(cls.WARNING.value)
 
     @property
@@ -271,11 +288,13 @@ class ConversionResultsBuilder(ConversionResults):
         self.cellsPopulatedBuilder: set[tuple[str, int, int]] = set()
         self.consoleOutput = consoleOutput
 
-    def addCellQueries(self, delta: Iterable[tuple[str, int, int]]) -> None:
+    def addCellQueries(self, delta: Iterable[tuple[str, int, int]]) -> Self:
         self.cellsQueriedBuilder.update(delta)
+        return self
 
-    def addCellsWithData(self, delta: Iterable[tuple[str, int, int]]) -> None:
+    def addCellsWithData(self, delta: Iterable[tuple[str, int, int]]) -> Self:
         self.cellsPopulatedBuilder.update(delta)
+        return self
 
     @property
     def numCellQueries(self) -> int:
@@ -293,7 +312,7 @@ class ConversionResultsBuilder(ConversionResults):
         *,
         taxonomy_concept: Optional[QName | Concept] = None,
         excel_reference: Optional[str] = None,
-    ) -> None:
+    ) -> Self:
         concept_str_or_none: Optional[str]
         if taxonomy_concept is None:
             concept_str_or_none = taxonomy_concept
@@ -308,12 +327,14 @@ class ConversionResultsBuilder(ConversionResults):
                 excel_reference,
             )
         )
+        return self
 
     def processingContext(self, name: str) -> "ProcessingContext":
         return ProcessingContext(self, name)
 
-    def addMessages(self, messages: Iterable[Message]) -> None:
+    def addMessages(self, messages: Iterable[Message]) -> Self:
         self.messages.extend(messages)
+        return self
 
     @property
     def conversionSuccessful(self) -> bool:

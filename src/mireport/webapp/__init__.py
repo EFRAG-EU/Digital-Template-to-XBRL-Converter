@@ -6,7 +6,6 @@ from typing import Any
 
 from dotenv import load_dotenv
 from flask import (
-    Blueprint,
     Flask,
     Response,
     current_app,
@@ -47,15 +46,14 @@ from mireport.localise import (
 )
 from mireport.taxonomy import getTaxonomy, listTaxonomies
 
+from .blueprints import convert_bp
+from .migration import MigrationOutcome, checkMigration
+
 ENABLE_CAPTCHA = False
 MAX_FILE_SIZE = 16 * 2**20  # 16 MiB
 DEPLOYMENT_DATETIME = datetime.now(timezone.utc)
 
 L = logging.getLogger(__name__)
-
-convert_bp = Blueprint(
-    "basic", __name__, template_folder="templates", static_folder="static"
-)
 
 
 def create_app() -> Flask:
@@ -357,7 +355,7 @@ def upload() -> Response:
             400,
         )
     result = ConversionResultsBuilder()
-    conversion = session.setdefault(result.conversionId, {})
+    conversion = session.setdefault(result.conversionId, {"id": result.conversionId})
     conversion["date"] = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
     conversion["excel"] = FilelikeAndFileName(
         fileContent=blob.stream.read(), filename=blob.filename
@@ -400,7 +398,10 @@ def convert(id: str) -> Response:
 
         conversion = session[id]
         if "results" not in conversion:
-            doMigrationChecks(conversion, id)
+            if (migrationResponse := checkMigration(conversion)) is not None:
+                # Migration deemed to be required so no conversion done at this stage.
+                return migrationResponse
+
             results = doConversion(conversion, id)
             conversion["results"] = results.toDict()
             conversion["successful"] = results.conversionSuccessful
@@ -412,6 +413,9 @@ def convert(id: str) -> Response:
             render_template(
                 "conversion-results.html.jinja",
                 conversion_result=results,
+                migration_optional=conversion.get("migration_outcome", "")
+                == str(MigrationOutcome.MIGRATION_OPTIONAL),
+                conversion_id=id,
                 dev=devInfo,
                 conversion_date=conversion["date"],
                 upload_filename=getUploadFilename(id),
@@ -509,23 +513,6 @@ def doConversion(conversion: dict, id: str) -> ConversionResults:
     return resultBuilder.build()
 
 
-def doMigrationChecks(conversion: dict, id: str) -> None:
-    upload = FilelikeAndFileName(*conversion["excel"])
-    check_results = ExcelProcessor.checkReport(upload.fileLike())
-
-    if check_results is None:
-        return  # Can't do anything if we can't read the report
-    elif check_results.version_is_same:
-        pass  # No action needed if version is same
-    elif check_results.version_major_minor_same:
-        pass  # No need for required migration but may want to offer migration button after conversion
-    else:
-        if check_results.validation_is_incomplete:
-            pass  # Can't migrate if internal validation is incomplete
-        else:
-            pass  # Bounce straight to migration page and skip conversion
-
-
 @convert_bp.route("/downloadFile/<string:id>/<string:ftype>/", methods=["GET", "HEAD"])
 def downloadFile(id: str, ftype: str) -> Response:
     """Download the converted file from the session."""
@@ -573,6 +560,14 @@ def getConversions() -> dict[str, Any]:
         for key, value in session.items()
         if key not in {"_permanent", "csrf_token", "captcha_answer"}
     }
+    # Strip out any "conversions" that are actually aborted as they turned in to
+    # mandatory migrations
+    for uuid in tuple(conversions):
+        details = dict(conversions[uuid])
+        if details.get("migration_outcome", "") == str(
+            MigrationOutcome.MIGRATION_REQUIRED
+        ):
+            conversions.pop(uuid)
     return conversions
 
 

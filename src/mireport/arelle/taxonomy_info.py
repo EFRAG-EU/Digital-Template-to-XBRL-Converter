@@ -34,6 +34,25 @@ def unique_list(i: Iterable[T]) -> list[T]:
     return list(dict.fromkeys(i))
 
 
+def concepts_to_qnames(
+    concept_list: Iterable[ModelConcept], should_sort: bool = True
+) -> list[QName]:
+    """
+    Convert an iterable of ModelConcept objects to a list of their qualified names.
+
+    Args:
+        concept_list: An iterable of ModelConcept objects to convert.
+        should_sort: If True, sorts the qualified names alphabetically before joining. Defaults to True.
+
+    Returns:
+        A list of qualified names (QNames).
+    """
+    qname_list = [concept.qname for concept in concept_list]
+    if should_sort:
+        qname_list.sort()
+    return qname_list
+
+
 def callArelleForTaxonomyInfo(
     entry_point: str,
     taxonomy_zips: list[str],
@@ -168,12 +187,15 @@ class TaxonomyInfoExtractor:
         self.qnameConverter: ArelleQNameCanonicaliser = (
             ArelleQNameCanonicaliser.bootstrap(modelXbrl)
         )
+        self.dimensionDefaults: dict[ModelConcept, ModelConcept] = {}
+        self.elr_hypercube_dimension_seen: set[str] = set()
 
     def extract(self) -> None:
         self.verifyConceptQNamesHavePrefixes()
         self.taxonomyJson["entryPoint"] = self.options.entrypointFile
 
         self.extractPresentation()
+        self.extractDimensionDefaults()
         self.extractDimensionDefinitions()
         self.extractConceptsAndMetadata()
 
@@ -206,7 +228,7 @@ class TaxonomyInfoExtractor:
                         level=logging.WARNING,
                     )
 
-        for qname, concept in sorted(self.modelXbrl.qnameConcepts.items()):
+        for qname, concept in self.modelXbrl.qnameConcepts.items():
             if concept.isItem:
                 if concept.qname.namespaceURI in {XbrlConst.xbrli, XbrlConst.xbrldt}:
                     continue
@@ -267,29 +289,29 @@ class TaxonomyInfoExtractor:
             self.walkPresentationChildren(child_concept, relSet, rows, indent + 1)
 
     def getPrimaryItems(
-        self, elrUri: str, root_concept: ModelConcept
+        self, elrUri: str, domainHeadConcept: ModelConcept
     ) -> list[tuple[int, QName]]:
         relSet = self.modelXbrl.relationshipSet(XbrlConst.domainMember, elrUri)
         rows: list[tuple[int, QName, bool | None]] = []
-        rows.append((0, root_concept.qname, None))
-        if root_concept not in relSet.rootConcepts:
+        rows.append((0, domainHeadConcept.qname, None))
+
+        # N.B. domainHeadConcept does not have to be a root concept
+
+        if not relSet.fromModelObject(domainHeadConcept):
             self.cntlr.addToLog(
-                f"WARNING: {elrUri} has no primary items attached to hypercube beyond {root_concept.qname} (no outgoing domain-member relationships).",
+                f"WARNING: {elrUri} has no primary items attached to hypercube beyond {domainHeadConcept.qname} (no outgoing domain-member relationships).",
                 level=logging.WARNING,
             )
-            return [(0, root_concept.qname)]
+            return [(0, domainHeadConcept.qname)]
 
-        assert root_concept in relSet.rootConcepts, (
-            f"{elrUri} {root_concept} should be in [{', '.join(str(r.qname) for r in relSet.rootConcepts)}]"
-        )
-        self.walkDefinitionChildren(root_concept, relSet, rows, 1)
+        self.walkDefinitionChildren(domainHeadConcept, relSet, rows, 1)
         return [(i, qname) for i, qname, _ in rows]
 
     def getDimensions(
         self, elrUri: str, hypercube: ModelConcept, hypercubeIsClosed: bool
     ) -> list[tuple[ModelConcept, str]]:
         relSet = self.modelXbrl.relationshipSet(XbrlConst.hypercubeDimension, elrUri)
-        roots = frozenset(relSet.rootConcepts)
+        roots: frozenset[ModelConcept] = frozenset(relSet.rootConcepts)
 
         if not roots:
             if hypercubeIsClosed:
@@ -299,13 +321,16 @@ class TaxonomyInfoExtractor:
                 )
             return []
 
-        if len(roots) > 1:
+        if len(roots) > 1 and elrUri not in self.elr_hypercube_dimension_seen:
+            self.elr_hypercube_dimension_seen.add(elrUri)
             self.cntlr.addToLog(
-                f"INFO: {elrUri} has {len(roots)} hypercubes [{sorted(str(root.qname) for root in roots)}]. How exciting!",
+                f"INFO: {elrUri} has {len(roots)} hypercubes: {concepts_to_qnames(roots)}.",
                 level=logging.INFO,
             )
 
-        assert hypercube in roots, f"{hypercube} should be in {roots}"
+        assert hypercube in roots, (
+            f"{hypercube.qname} should be in {concepts_to_qnames(roots)}"
+        )
         return [
             (rel.toModelObject, rel.consecutiveLinkrole)
             for rel in relSet.fromModelObject(hypercube)
@@ -321,9 +346,9 @@ class TaxonomyInfoExtractor:
         )
 
         assert explicitDimension in dimensionDomainRelSet.rootConcepts, (
-            f"Dimension {explicitDimension.qname} should be in {dimensionDomainRelSet.rootConcepts}"
+            f"Dimension {explicitDimension.qname} should be in {concepts_to_qnames(dimensionDomainRelSet.rootConcepts)}"
         )
-        domainRoots: list[tuple[ModelConcept, bool, ModelRelationshipSet]] = [
+        domainMemberTrees: list[tuple[ModelConcept, bool, ModelRelationshipSet]] = [
             (
                 rel.toModelObject,
                 rel.isUsable,
@@ -334,30 +359,81 @@ class TaxonomyInfoExtractor:
             for rel in dimensionDomainRelSet.fromModelObject(explicitDimension)
         ]
 
-        for domainConcept, _, domainMemberRelSet in domainRoots:
-            outgoing = domainMemberRelSet.fromModelObject(domainConcept)
-            incoming = domainMemberRelSet.toModelObject(domainConcept)
-            if 0 == len(outgoing):
+        hasDefaultedDomainMember = explicitDimension in self.dimensionDefaults
+
+        if not domainMemberTrees:
+            if hasDefaultedDomainMember:
                 self.cntlr.addToLog(
-                    f"WARNING: {elrUri} Dimension {explicitDimension.qname} has domain head {domainConcept.qname} with no outgoing domain-member relationships",
+                    f"WARNING: {elrUri} Dimension {explicitDimension.qname} has a defaulted domain member {self.dimensionDefaults[explicitDimension].qname} but no domain relationships",
                     level=logging.WARNING,
                 )
-            if 0 != len(incoming):
+            else:
                 self.cntlr.addToLog(
-                    f"WARNING: {elrUri} Dimension {explicitDimension.qname} has domain head {domainConcept.qname} with incoming domain-member relationships. How exciting!",
+                    f"WARNING: {elrUri} Dimension {explicitDimension.qname} has no domain relationships",
                     level=logging.WARNING,
                 )
+            return []
+
+        dimensionHasMultipleDimensionDomainRelationships = 1 < len(
+            dimensionDomainRelSet.fromModelObject(explicitDimension)
+        )
 
         rows: list[tuple[int, QName, bool | None]] = []
-        for domainConcept, usable, domainMemberRelSet in domainRoots:
-            rows.append((0, domainConcept.qname, usable))
+        for domainHeadConcept, usable, domainMemberRelSet in domainMemberTrees:
+            self.verifyDomainMemberTree(
+                explicitDimension,
+                hasDefaultedDomainMember,
+                dimensionHasMultipleDimensionDomainRelationships,
+                domainHeadConcept,
+                domainMemberRelSet,
+            )
+
+            rows.append((0, domainHeadConcept.qname, usable))
             self.walkDefinitionChildren(
-                domainConcept, domainMemberRelSet, rows, 1, includeUsable=True
+                domainHeadConcept, domainMemberRelSet, rows, 1, includeUsable=True
             )
         return unique_list(q for _, q, usable in rows if usable)
 
+    def verifyDomainMemberTree(
+        self,
+        explicitDimension,
+        hasDefaultedDomainMember,
+        dimensionHasMultipleDimensionDomainRelationships,
+        domainHeadConcept,
+        domainMemberRelSet,
+    ) -> None:
+        outgoing = domainMemberRelSet.fromModelObject(domainHeadConcept)
+        incoming = domainMemberRelSet.toModelObject(domainHeadConcept)
+        elrUri = domainMemberRelSet.linkrole
+
+        if not outgoing:
+            if (
+                hasDefaultedDomainMember
+                and domainHeadConcept == self.dimensionDefaults[explicitDimension]
+            ):
+                # Dimension pointing at domain head with no members that's
+                # also the default is the standard pattern for a domain that
+                # is expected to be extended by the reporting entity.
+                pass
+            elif dimensionHasMultipleDimensionDomainRelationships:
+                # Multiple dimension-domain relationships instead of one
+                # dimension-domain followed by domain-member(s) is not great
+                # modelling but technically OK.
+                pass
+            else:
+                self.cntlr.addToLog(
+                    f"WARNING: {elrUri} Dimension {explicitDimension.qname} has domain head {domainHeadConcept.qname} with no outgoing domain-member relationships",
+                    level=logging.WARNING,
+                )
+
+        if incoming:
+            self.cntlr.addToLog(
+                f"WARNING: {elrUri} Dimension {explicitDimension.qname} has domain head {domainHeadConcept.qname} with incoming domain-member relationships. How exciting!",
+                level=logging.WARNING,
+            )
+
     def getDomainMembersForEE(
-        self, elrUri: str, headUsable: bool, domainConcept: ModelConcept
+        self, elrUri: str, headUsable: bool, domainHeadConcept: ModelConcept
     ) -> list[QName]:
         """Deliberately over simplified for now."""
         domainMemberRelSet = self.modelXbrl.relationshipSet(
@@ -365,36 +441,51 @@ class TaxonomyInfoExtractor:
         )
         rows: list[tuple[int, QName, bool | None]] = []
         self.walkDefinitionChildren(
-            domainConcept, domainMemberRelSet, rows, 1, includeUsable=True
+            domainHeadConcept, domainMemberRelSet, rows, 1, includeUsable=True
         )
         if headUsable:
-            rows.insert(0, (0, domainConcept.qname, headUsable))
+            rows.insert(0, (0, domainHeadConcept.qname, headUsable))
         return unique_list(q for _, q, usable in rows if usable)
 
-    def getDimensionDefaults(self) -> dict[QName, QName]:
-        defaults: dict[QName, QName] = {}
+    def extractDimensionDefaults(self) -> None:
         elrsWithDefaults = set()
         for arcroleUri, elrUri, linkqname, arcqname in self.modelXbrl.baseSets.keys():
             if arcroleUri == XbrlConst.dimensionDefault and elrUri is not None:
                 elrsWithDefaults.add(elrUri)
+
+        dimToElrMap: dict[ModelConcept, list[str]] = defaultdict(list)
+
         for elrUri in elrsWithDefaults:
             dimensionDefaultRelSet = self.modelXbrl.relationshipSet(
                 XbrlConst.dimensionDefault, elrUri
             )
+
             dimensions: list[ModelConcept] = dimensionDefaultRelSet.rootConcepts
+
             for d in dimensions:
+                dimToElrMap[d].append(elrUri)
+
                 members: list[ModelConcept] = [
                     rel.toModelObject
                     for rel in dimensionDefaultRelSet.fromModelObject(d)
                 ]
                 assert len(members) == 1, (
-                    f"More than one default for dimension {d} in {elrUri}, {members}."
+                    f"More than one default for dimension {d.qname} in {elrUri}, {concepts_to_qnames(members)}."
                 )
-                assert d not in defaults, (
-                    f"Default defined more than once for {d}. Last seen in {elrUri}."
-                )
-                defaults[d.qname] = members[0].qname
-        return defaults
+                m = members[0]
+                if (m0 := self.dimensionDefaults.get(d)) is not None:
+                    otherElrs = dimToElrMap[d][:-1]
+                    if m0 != m:
+                        self.cntlr.addToLog(
+                            f"WARNING: Inconsistent duplicate definition of dimension default for dimension {d.qname}, member {m.qname=} {m0.qname=} in {elrUri=}. {otherElrs=}",
+                            level=logging.WARNING,
+                        )
+                    else:
+                        self.cntlr.addToLog(
+                            f"INFO: Consistent duplicate definition of dimension default for dimension {d.qname}, member {m.qname} in {elrUri}. {otherElrs=}",
+                            level=logging.INFO,
+                        )
+                self.dimensionDefaults[d] = m
 
     def addConceptMetadata(self, concept: ModelConcept, jconcept: dict) -> None:
         meta = {
@@ -419,13 +510,12 @@ class TaxonomyInfoExtractor:
         for r in relSet.fromModelObject(concept):
             label_resource: ModelResource = r.toModelObject
             role: str = str(label_resource.role) or XbrlConst.standardLabel
-            if lang := label_resource.xmlLang:
+            if (lang := label_resource.xmlLang) and (lang := lang.strip().lower()):
                 # BCP47 says that xml:lang is case insensitive
-                lang = lang.lower()
                 label = label_resource.stringValue.strip()
                 if (label0 := jconcept["labels"][lang].get(role)) and label0 != label:
                     self.cntlr.addToLog(
-                        f"Inconsistent duplicate labels found for [{concept.qname}]: {label0=} {label=} {lang=} {role=}",
+                        f"WARNING: Inconsistent duplicate labels found for [{concept.qname}]: {label0=} {label=} {lang=} {role=}",
                         level=logging.WARNING,
                     )
                     label = max(label0, label, key=len)
@@ -436,9 +526,59 @@ class TaxonomyInfoExtractor:
                     level=logging.WARNING,
                 )
 
+    def addReferences(
+        self,
+        concept: ModelConcept,
+        jconcept: dict,
+    ) -> None:
+        """Add references to the concept JSON."""
+        relSet = self.modelXbrl.relationshipSet(XbrlConst.conceptReference)
+        refs = []
+        for r in relSet.fromModelObject(concept):
+            ref_resource: ModelResource = r.toModelObject
+            role: str = str(ref_resource.role)
+            assert role, f"Reference {ref_resource} should have a role"
+
+            ref_parts: list[tuple[str, str]] = []
+            for part in ref_resource.iterchildren():
+                if value := part.stringValue.strip():
+                    ref_parts.append((part.qname, value))
+
+            if ref_parts:
+                refs.append(
+                    {
+                        "role": role,
+                        "order": r.order,
+                        "parts": ref_parts,
+                        "sort_key": tuple(
+                            (
+                                r.order,
+                                role,
+                                tuple(
+                                    (str(name), str(value)) for name, value in ref_parts
+                                ),
+                            )
+                        ),
+                    }
+                )
+
+        if refs:
+            all_order1 = all(r["order"] == 1 for r in refs)
+
+            if not all_order1:
+                self.cntlr.addToLog(
+                    f"INFO: {concept.qname} uses references with order values other than 1. Orders found: {sorted(set(r['order'] for r in refs))}. References will be sorted by order.",
+                    level=logging.INFO,
+                )
+
+            refs.sort(key=lambda r: r["sort_key"])
+
+            refs = [{"role": r["role"], "parts": r["parts"]} for r in refs]
+            jconcept["references"] = refs
+
     def extractConceptsAndMetadata(self) -> None:
         self.cntlr.addToLog("Processing concepts (including labels and references)")
-        for qname, concept in sorted(self.modelXbrl.qnameConcepts.items()):
+        for qname, concept in self.modelXbrl.qnameConcepts.items():
             if concept.isItem:
                 if concept.qname.namespaceURI in (XbrlConst.xbrli, XbrlConst.xbrldt):
                     # We don't need/want xbrli:item, xbrldt:dimensionItem or
@@ -458,6 +598,7 @@ class TaxonomyInfoExtractor:
                 }
                 self.addConceptMetadata(concept, jconcept)
                 self.addLabels(concept, jconcept)
+                self.addReferences(concept, jconcept)
 
                 if concept.isEnumeration and not concept.isEnumeration2Item:
                     self.cntlr.addToLog(
@@ -494,6 +635,11 @@ class TaxonomyInfoExtractor:
                     for rel in relSet.fromModelObject(root_concept):
                         concept: ModelConcept = rel.toModelObject
                         if concept.isHypercubeItem:
+                            if not rel.isClosed:
+                                self.cntlr.addToLog(
+                                    f"INFO: {elrUri} hypercube '{concept.qname}' is open.",
+                                    level=logging.INFO,
+                                )
                             cube = {
                                 "primaryItems": self.getPrimaryItems(
                                     rel.consecutiveLinkrole, root_concept
@@ -523,7 +669,10 @@ class TaxonomyInfoExtractor:
                             )
 
         self.cntlr.addToLog("Processing dimension defaults")
-        self.taxonomyJson["dimensions"]["_defaults"] = self.getDimensionDefaults()
+        if self.dimensionDefaults:
+            self.taxonomyJson["dimensions"]["_defaults"] = {
+                d.qname: m.qname for d, m in self.dimensionDefaults.items()
+            }
 
     def getLabelsForRoleType(self, roleType: ModelRoleType) -> dict[str, str]:
         relSet = self.modelXbrl.relationshipSet(XbrlConst.elementLabel)
@@ -577,7 +726,7 @@ class TaxonomyInfoExtractor:
                         pass
                     case _:
                         self.cntlr.addToLog(
-                            f"WARNING: {elrUri} has multiple ({len(roots)}) roots. Presentation order will be arbitrary. Roots: [{', '.join(str(root.qname) for root in roots)}]",
+                            f"WARNING: {elrUri} has multiple ({len(roots)}) roots. Presentation order will be arbitrary. Roots: {concepts_to_qnames(roots, should_sort=False)}",
                             level=logging.WARNING,
                         )
                 rows: list[tuple[int, QName, str] | tuple[int, QName]] = []
@@ -585,6 +734,7 @@ class TaxonomyInfoExtractor:
                     rows.append((0, root.qname))
                     self.walkPresentationChildren(root, relSet, rows, 1)
                 self.taxonomyJson["presentation"][elrUri]["rows"] = rows
+        self.cntlr.addToLog("Processing presentation network [completed]")
 
 
 def runTaxonomyInfo(

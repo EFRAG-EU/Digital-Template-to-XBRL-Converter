@@ -117,8 +117,9 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, ExcelProc
     ) as pc:
         pc.mark("Loading taxonomy metadata")
         mireport.loadTaxonomyJSON()
+        allTaxonomies = mireport.taxonomy.listTaxonomies()
         pc.addDevInfoMessage(
-            f"Taxonomies available: {', '.join(mireport.taxonomy.listTaxonomies())}"
+            f"Taxonomies entry points ({len(allTaxonomies)}) available: {', '.join(allTaxonomies)}"
         )
         pc.mark(
             "Extracting data from Excel",
@@ -160,11 +161,14 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, ExcelProc
             )
             if args.viewer:
                 arelleResults = arp.generateInlineViewer(reportPackage)
-                viewer = arelleResults.viewer
-                if not dir_specified:
-                    viewer.saveToFilepath(output_path)
+                if arelleResults.has_viewer:
+                    viewer = arelleResults.viewer
+                    if not dir_specified:
+                        viewer.saveToFilepath(output_path)
+                    else:
+                        viewer.saveToDirectory(output_path)
                 else:
-                    viewer.saveToDirectory(output_path)
+                    pc.addDevInfoMessage("Failed to create viewer.")
             else:
                 arelleResults = arp.validateReportPackage(reportPackage)
 
@@ -183,7 +187,9 @@ def outputMessages(
 
     if hasMessages:
         print()
-        print(f"Information and issues encountered ({len(result)} messages):")
+        print(
+            f"Information and issues encountered ({len(messages)} message{('s' if len(messages) != 1 else '')}):"
+        )
         for message in messages:
             print(f"\t{message}")
 

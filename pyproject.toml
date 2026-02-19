@@ -1,6 +1,6 @@
 [project]
-name = "mireport"
-version = "1.1.1"
+name = "EFRAG-DigitalTemplateToXBRL-Converter"
+version = "1.2.0"
 description = "Converts a filled-in Excel template into an Inline XBRL Report"
 authors = [
     {name = "Stuart Rowan", email = "stuart.rowan@efrag.org"},
@@ -9,6 +9,7 @@ authors = [
 
 dependencies = [
     "aoix@git+https://code.blinkace.com/xbrl/aoix.git@feature-typed-dimensions",
+    "migration_tool@git+https://github.com/EFRAG-EU/Digital-Template-Data-Migration-Tool.git@v0.9.0",
     "arelle-release>=2.37.63",
     "babel>=2.17.0",
     "flask-session",
