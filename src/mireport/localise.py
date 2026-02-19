@@ -38,15 +38,15 @@ EU_LOCALES = {
     "es-ES",  # Spanish
     "sv-SE",  # Swedish
     # Additional variants in multilingual EU countries
-    "nl-BE",  # Dutch (Belgium)
-    "fr-BE",  # French (Belgium)
-    "de-BE",  # German (Belgium)
-    "sv-FI",  # Swedish (Finland)
-    "fr-LU",  # French (Luxembourg)
-    "de-LU",  # German (Luxembourg)
-    "en-MT",  # English (Malta)
-    "el-CY",  # Greek (Cyprus)
     "de-AT",  # German (Austria)
+    "de-BE",  # German (Belgium)
+    "de-LU",  # German (Luxembourg)
+    "el-CY",  # Greek (Cyprus)
+    "en-MT",  # English (Malta)
+    "fr-BE",  # French (Belgium)
+    "fr-LU",  # French (Luxembourg)
+    "nl-BE",  # Dutch (Belgium)
+    "sv-FI",  # Swedish (Finland)
 }
 
 
