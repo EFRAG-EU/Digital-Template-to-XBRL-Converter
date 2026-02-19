@@ -355,7 +355,7 @@ def upload() -> Response:
             400,
         )
     result = ConversionResultsBuilder()
-    conversion = session.setdefault(result.conversionId, {})
+    conversion = session.setdefault(result.conversionId, {"id": result.conversionId})
     conversion["date"] = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
     conversion["excel"] = FilelikeAndFileName(
         fileContent=blob.stream.read(), filename=blob.filename

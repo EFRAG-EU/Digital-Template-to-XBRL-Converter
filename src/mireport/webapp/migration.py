@@ -68,7 +68,7 @@ def checkMigration(conversion: dict) -> Response | None:
                 redirect(
                     url_for(
                         "basic.migrationPage",
-                        id=id,
+                        id=conversion["id"],
                     ),
                     code=303,
                 )
@@ -132,6 +132,7 @@ def migrationButton(id: str) -> Response:
             return make_response(jsonify({"error": "Conversion session expired"}), 401)
 
         conversion = session[id]
+
         if "excel" not in conversion:
             L.warning("MigrationButton: no excel in session for id=%s", id)
             return make_response(jsonify({"error": "No file found in session"}), 400)
@@ -156,7 +157,7 @@ def migrationButton(id: str) -> Response:
             )
 
         # Store migrated file temporarily in session and redirect with results
-        session["migrated_excel"] = migrated_excel
+        conversion["migrated_excel"] = migrated_excel
         session.modified = True
 
         # Redirect to migration page with results as query parameters
@@ -180,10 +181,15 @@ def migrationButton(id: str) -> Response:
 @convert_bp.route("/downloadMigrated/<id>", methods=["GET"])
 def downloadMigrated(id: str) -> Response:
     """Download the migrated file from the session."""
-    if id not in session or "migrated_excel" not in session:
+    if id not in session:
+        return make_response({"error": "Conversion session expired / not found"}, 404)
+
+    conversion = session[id]
+
+    if "migrated_excel" not in conversion:
         return make_response({"error": "No migrated file found"}, 404)
 
-    migrated_excel = FilelikeAndFileName(*session.pop("migrated_excel"))
+    migrated_excel = FilelikeAndFileName(*conversion.get("migrated_excel"))
     return send_file(
         migrated_excel.fileLike(),
         as_attachment=True,
