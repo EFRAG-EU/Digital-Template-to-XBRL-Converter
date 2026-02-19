@@ -95,9 +95,8 @@
     <!-- Submit Button -->
     <div class="flex justify-center">
         <button type="submit"
-            class="migrate-handler bg-amber-500 text-white font-medium py-2 px-4 rounded-lg transition"
-            style="min-width: 200px;" onmouseover="this.style.backgroundColor='#b45309'"
-            onmouseout="this.style.backgroundColor='#f59e0b'" data-spinner-text="Migrating...">
+            class="migrate-handler bg-amber-500 hover:bg-amber-600 focus-visible:bg-amber-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-amber-500 text-white font-medium py-2 px-4 rounded-lg transition"
+            style="min-width: 200px;" data-spinner-text="Migrating...">
             Migrate Template
         </button>
     </div>
@@ -116,7 +115,7 @@
         <h3 class="font-semibold text-yellow-900 mb-2">Migration Issues:</h3>
         <ul class="list-disc list-inside text-sm text-yellow-800 space-y-1">
             {% for issue in migration_issues %}
-            <li>{{ issue }}</li>
+            <li>{{ issue|e }}</li>
             {% endfor %}
         </ul>
     </div>

@@ -38,7 +38,7 @@ class VersionHolder(NamedTuple):
 
 
 try:
-    OUR_VERSION = version("mireport")
+    OUR_VERSION = version("EFRAG-DigitalTemplateToXBRL-Converter")
     OUR_VERSION_HOLDER = VersionHolder.parse(OUR_VERSION)
 except PackageNotFoundError:
     OUR_VERSION = "(unknown version)"

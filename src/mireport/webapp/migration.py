@@ -103,7 +103,19 @@ def migrationPage(id: str) -> Response:
         # Parse migration results from query parameters
         elapsed = request.args.get("elapsed", type=float)
         issues_json = request.args.get("issues", "[]")
-        migration_issues = json.loads(issues_json)
+        migration_issues: list | dict = []
+        if issues_json:
+            try:
+                parsed_issues = json.loads(issues_json)
+                if isinstance(parsed_issues, (list, dict)):
+                    migration_issues = parsed_issues
+                else:
+                    L.warning(
+                        "Invalid type for migration issues: %s",
+                        type(parsed_issues),
+                    )
+            except (TypeError, ValueError) as parse_err:
+                L.warning("Failed to parse migration issues JSON: %s", parse_err)
 
         return Response(
             render_template(

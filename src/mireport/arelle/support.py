@@ -2,7 +2,8 @@ import json
 import logging
 from collections.abc import Mapping, MutableMapping
 from dataclasses import dataclass
-from typing import Any, Counter, Optional, Self
+from collections import Counter
+from typing import Any, Optional, Self
 
 from arelle.logging.handlers.LogToXmlHandler import LogToXmlHandler
 from arelle.ModelValue import QName

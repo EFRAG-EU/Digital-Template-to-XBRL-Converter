@@ -35,20 +35,20 @@ def unique_list(i: Iterable[T]) -> list[T]:
 
 
 def concepts_to_qnames(
-    concept_list: Iterable[ModelConcept], sorted: bool = True
+    concept_list: Iterable[ModelConcept], should_sort: bool = True
 ) -> list[QName]:
     """
     Convert an iterable of ModelConcept objects to a list of their qualified names.
 
     Args:
         concept_list: An iterable of ModelConcept objects to convert.
-        sorted: If True, sorts the qualified names alphabetically before joining. Defaults to True.
+        should_sort: If True, sorts the qualified names alphabetically before joining. Defaults to True.
 
     Returns:
         A list of qualified names (QNames).
     """
     qname_list = [concept.qname for concept in concept_list]
-    if sorted:
+    if should_sort:
         qname_list.sort()
     return qname_list
 
