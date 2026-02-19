@@ -36,7 +36,7 @@
         {% elif conv_rag.red %}bg-red-100 border border-red-400 text-red-800
         {% elif conv_rag.amber %}bg-amber-100 border border-amber-400 text-amber-800
         {% endif %}">
-        <p class="font-semibold {% if show_migration_button %}text-left{% else %}text-center{% endif %}">
+        <p class="text-center font-semibold">
     {% if conv_rag.red %}
             Technical conversion failed with ERRORS, please review the messages and the Digital Template
     {% elif conv_rag.amber %}
@@ -97,21 +97,21 @@
     {% endif %}
         <div class="flex gap-4 justify-between items-center download-buttons">
             {{ download_button(
-            'viewer',
-            url_for('basic.downloadFile', id=conversion_result.conversionId, ftype='viewer'),
-            conversion_result.conversionSuccessful
+                'viewer',
+                url_for('basic.downloadFile', id=conversion_result.conversionId, ftype='viewer'),
+                conversion_result.conversionSuccessful
             ) }}
 
             {{ download_button(
-            'zip',
-            url_for('basic.downloadFile', id=conversion_result.conversionId, ftype='zip'),
-            conversion_result.conversionSuccessful
+                'zip',
+                url_for('basic.downloadFile', id=conversion_result.conversionId, ftype='zip'),
+                conversion_result.conversionSuccessful
             ) }}
 
             {{ download_button(
-            'json',
-            url_for('basic.downloadFile', id=conversion_result.conversionId, ftype='json'),
-            conversion_result.conversionSuccessful
+                'json',
+                url_for('basic.downloadFile', id=conversion_result.conversionId, ftype='json'),
+                conversion_result.conversionSuccessful
             ) }}
         </div>
     </div>
@@ -177,12 +177,9 @@
 
         <!-- Text -->
         <p class="text-sm text-blue-800">
-            The EFRAG Secretariat is interested in your experience using this tool and in real VSME disclosures for
-            internal analytical purposes
-            (any reports received by EFRAG will not be shared or published). Please feel free to send your VSME report
-            to
-            <a href="mailto:vsme@efrag.org" class="underline font-medium hover:text-blue-600">vsme@efrag.org</a> – Thank
-            you!
+            The EFRAG Secretariat is interested in your experience using this tool and in real VSME disclosures for internal analytical purposes
+            (any reports received by EFRAG will not be shared or published). Please feel free to send your VSME report to
+            <a href="mailto:vsme@efrag.org" class="underline font-medium hover:text-blue-600">vsme@efrag.org</a> – Thank you!
         </p>
     </div>
     {% endif %}
