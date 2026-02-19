@@ -409,7 +409,6 @@ def convert(id: str) -> Response:
         results = ConversionResults.fromDict(conversion["results"])
         devInfo = request.args.get("show_developer_messages") == "true"
 
-        # Show results (green or red status)
         return Response(
             render_template(
                 "conversion-results.html.jinja",
@@ -561,6 +560,8 @@ def getConversions() -> dict[str, Any]:
         for key, value in session.items()
         if key not in {"_permanent", "csrf_token", "captcha_answer"}
     }
+    # Strip out any "conversions" that are actually aborted as they turned in to
+    # mandatory migrations
     for uuid in tuple(conversions):
         details = dict(conversions[uuid])
         if details.get("migration_outcome", "") == str(
