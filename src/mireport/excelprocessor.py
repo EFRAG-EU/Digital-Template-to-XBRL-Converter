@@ -79,6 +79,13 @@ def conceptsToText(concepts: Iterable[Concept]) -> str:
     return ", ".join(sorted(str(c.qname) for c in concepts))
 
 
+class TemplateCheckResult(NamedTuple):
+    validation_is_incomplete: bool
+    version_is_same: bool
+    version_major_minor_same: bool
+    reported_version: VersionHolder
+
+
 class ComplexUnit(NamedTuple):
     numerator: list[QName]
     denominator: list[QName]
