@@ -16,9 +16,9 @@ from mireport.arelle.support import (
     ArelleProcessingResult,
     ArelleRelatedException,
     ArelleVersionHolder,
-    VersionInformationTuple,
 )
 from mireport.filesupport import FilelikeAndFileName
+from mireport.version import VersionInformationTuple
 from mireport.xbrlreport import UNCONSTRAINED_REPORT_PACKAGE_JSON
 
 BIG_ARELLE_LOCK = threading.Lock()
@@ -166,15 +166,23 @@ class ArelleReportProcessor:
             validateDuplicateFacts="inconsistent",
             showOptions=False,
         )
-        with BytesIO() as fobj:
-            result = self._run(source, jsonOptions, fobj)
-            fobj.seek(0)
-            with zipfile.ZipFile(fobj, "r") as zf:
+
+        jsonBytesIO = BytesIO()
+        result = self._run(source, jsonOptions, jsonBytesIO)
+        jsonBytesIO.seek(0)
+        try:
+            with zipfile.ZipFile(jsonBytesIO, "r") as zf:
                 a = zf.infolist()
                 assert len(a) == 1, (
                     f"Arelle xBRL JSON generation has gone wrong. Zip contents: {zf.namelist()}"
                 )
                 json = zf.read(a[0])
+        except Exception as e:
+            result.addException(e)
+            raise
+        finally:
+            del jsonBytesIO
+
         jsonFilename = PurePath(source.filename).with_suffix(".json").name
         result._xbrlJson = FilelikeAndFileName(fileContent=json, filename=jsonFilename)
         return result
@@ -182,9 +190,9 @@ class ArelleReportProcessor:
     def generateInlineViewer(
         self, source: FilelikeAndFileName
     ) -> ArelleProcessingResult:
-        viewerFileLike = BytesIO()
+        viewerBytesIO = BytesIO()
         viewer_plugin_options = {
-            "saveViewerDest": viewerFileLike,
+            "saveViewerDest": viewerBytesIO,
             "viewer_feature_review": True,
             "validationMessages": True,
             "viewerNoCopyScript": True,
@@ -212,24 +220,32 @@ class ArelleReportProcessor:
             showOptions=False,
         )
         result = self._run(source, viewerOptions)
-        viewerFileLike.seek(0)
+        viewerBytesIO.seek(0)
         try:
-            with zipfile.ZipFile(viewerFileLike, "r") as zf:
+            with zipfile.ZipFile(viewerBytesIO, "r") as zf:
                 a = zf.infolist()
                 assert len(a) == 1, (
                     f"Arelle & inline-viewer has gone wrong. Zip contents: {zf.namelist()}"
                 )
                 viewer = zf.read(a[0])
-            viewerFilename = f"{PurePath(source.filename).stem}_viewer.html"
-            result._viewer = FilelikeAndFileName(
-                fileContent=viewer, filename=viewerFilename
+        except Exception as e:
+            result.addException(
+                e,
+                message="Exception encountered during processing of Arelle's response stream",
             )
-        except zipfile.BadZipFile:
-            pass
+        finally:
+            del viewerBytesIO
+
+        viewerFilename = f"{PurePath(source.filename).stem}_viewer.html"
+        result._viewer = FilelikeAndFileName(
+            fileContent=viewer, filename=viewerFilename
+        )
         return result
 
     @staticmethod
-    def getTaxonomyPackagesFromDir(taxonomyPackageDir: Optional[str]) -> list[Path]:
+    def getTaxonomyPackagesFromDir(
+        taxonomyPackageDir: Optional[str | Path],
+    ) -> list[Path]:
         if taxonomyPackageDir is None:
             return []
 

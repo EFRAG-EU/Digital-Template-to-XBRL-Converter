@@ -78,13 +78,10 @@ class NamespaceManager:
             return prefix
         elif old_ns is not namespace:
             raise BrokenNamespacePrefixException(
-                f"Unable to add namespace prefix binding for '{prefix}': existing namespace: '{old_ns}'; attempted namespace '{namespace}'."
+                f"Unable to add namespace prefix binding for '{prefix}': already bound to existing namespace: '{old_ns}'; attempted namespace '{namespace}'."
             )
         self._prefixToNamespaces[prefix] = namespace
         return prefix
-
-    def prefixIsKnown(self, prefix: str) -> bool:
-        return prefix in self._prefixToNamespaces
 
     def getOrGeneratePrefixForNamespace(self, namespace: str) -> str:
         try:
@@ -99,6 +96,15 @@ class NamespaceManager:
 
 
 class QName:
+    """
+    Core class representing a QName. Stores the local name, namespace and
+    prefix.
+
+    Do not instantiate directly but instead create a :class:`QNameMaker`
+    using :method:`myQnameMaker = getBootsrapQNameMaker()` and then call
+    :meth:`myQnameMaker.fromString(qname_string)`.
+    """
+
     __slots__ = ("localName", "namespace", "prefix")
 
     def __init__(
@@ -141,7 +147,7 @@ class QName:
 
 class QNameMaker:
     def __init__(self, nsManager: NamespaceManager):
-        self.nsManager = nsManager
+        self._nsManager = nsManager
 
     def _getAndValidateParts(self, /, qname: str) -> _QNameTuple:
         if not (qname and len(parts := qname.split(":", 1)) == 2):
@@ -150,7 +156,7 @@ class QNameMaker:
             )
         prefix, localName = parts
         try:
-            namespace = self.nsManager.getNamespaceForPrefix(prefix)
+            namespace = self._nsManager.getNamespaceForPrefix(prefix)
         except KeyError as k:
             raise BrokenQNameException(f"QName {qname} has an unknown prefix.") from k
         q = _QNameTuple(prefix=prefix, localName=localName, namespace=namespace)
@@ -181,18 +187,18 @@ class QNameMaker:
         return QName(q)
 
     def fromNamespaceAndLocalName(self, /, namespace: str, localName: str) -> QName:
-        prefix = self.nsManager.getOrGeneratePrefixForNamespace(namespace)
+        prefix = self._nsManager.getOrGeneratePrefixForNamespace(namespace)
         q = _QNameTuple(prefix=prefix, localName=localName, namespace=namespace)
         self._partsValidator(q)
         return QName(q)
 
     def addNamespacePrefix(self, prefix: str, namespace: str) -> None:
-        self.nsManager.add(prefix, namespace)
+        self._nsManager.add(prefix, namespace)
 
     @property
     def namespacePrefixesMap(self) -> Mapping[str, str]:
         """Get a mapping of prefix to namespace for all known prefixes."""
-        return MappingProxyType(self.nsManager._prefixToNamespaces)
+        return MappingProxyType(self._nsManager._prefixToNamespaces)
 
 
 def getBootsrapQNameMaker() -> QNameMaker:

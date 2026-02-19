@@ -3,6 +3,7 @@ import glob
 import logging
 import time
 from pathlib import Path
+from typing import Optional
 
 import rich
 from rich import print as rich_print
@@ -39,6 +40,12 @@ def parse_args() -> argparse.Namespace:
         help="The path of the viewer to be created.",
     )
     parser.add_argument(
+        "--json-path",
+        type=Path,
+        default=None,
+        help="The path of the xBRL-JSON to be created.",
+    )
+    parser.add_argument(
         "--ignore-calculation-warnings",
         action=argparse.BooleanOptionalAction,
         default=False,
@@ -66,7 +73,8 @@ def main() -> None:
     args = parse_args()
     report_path: Path = args.report_path
     taxonomy_package_globs: list[str] = args.taxonomy_packages
-    viewer_path: Path = args.viewer_path
+    viewer_path: Optional[Path] = args.viewer_path
+    json_path: Optional[Path] = args.json_path
 
     taxonomy_packages: list[Path] = []
     if taxonomy_package_globs:
@@ -110,26 +118,38 @@ def main() -> None:
     )
     source = getOrCreateReportPackage(report_path)
 
-    if not viewer_path:
+    outputsWanted: bool = viewer_path or json_path
+    arelle_messages = []
+    if not outputsWanted:
         arelle_result = arp.validateReportPackage(
             source, disableCalculationValidation=args.ignore_calculation_warnings
         )
+        arelle_messages.extend(arelle_result.messages)
     else:
-        arelle_result = arp.generateInlineViewer(source)
-        if arelle_result.has_viewer:
-            if viewer_path.is_file():
-                print(f"Overwriting {viewer_path}.")
-            arelle_result.viewer.saveToFilepath(viewer_path)
-        else:
-            print("Failed to create inline viewer.")
+        if viewer_path:
+            arelle_result = arp.generateInlineViewer(source)
+            arelle_messages.extend(arelle_result.messages)
+            if arelle_result.has_viewer:
+                if viewer_path.is_file():
+                    print(f"Overwriting {viewer_path}.")
+                arelle_result.viewer.saveToFilepath(viewer_path)
+                print(f"Viewer written to {viewer_path}.")
+            else:
+                print("Failed to create inline viewer.")
+
+        if json_path:
+            arelle_result = arp.generateXBRLJson(source)
+            arelle_messages.extend(arelle_result.messages)
+            if arelle_result:
+                if json_path.is_file():
+                    print(f"Overwriting {json_path}.")
+                arelle_result._xbrlJson.saveToFilepath(json_path)
+                print(f"xBRL-JSON written to {json_path}.")
+            else:
+                print("Failed to create xBRL-JSON.")
+    results = ConversionResultsBuilder().addMessages(arelle_messages).build()
     elapsed = (time.perf_counter_ns() - start) / 1_000_000_000
     print(f"Finished querying Arelle ({elapsed:,.2f} seconds elapsed).")
-
-    results = ConversionResultsBuilder()
-    results.addMessages(arelle_result.messages)
-
-    if viewer_path and arelle_result.has_viewer:
-        print(f"Viewer written to {viewer_path}.")
 
     if (args.verbose and results.userMessages) or results.hasErrorsOrWarnings():
         print()
@@ -149,7 +169,7 @@ def main() -> None:
         for message in results.developerMessages:
             print(f"\t{message}")
 
-    final_word_and_exit(results.build())
+    final_word_and_exit(results)
 
 
 def final_word_and_exit(results: ConversionResults) -> None:
