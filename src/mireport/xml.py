@@ -101,7 +101,7 @@ class QName:
     prefix.
 
     Do not instantiate directly but instead create a :class:`QNameMaker`
-    using :method:`myQnameMaker = getBootsrapQNameMaker()` and then call
+    using :method:`myQnameMaker = getBootstrapQNameMaker()` and then call
     :meth:`myQnameMaker.fromString(qname_string)`.
     """
 
@@ -201,7 +201,7 @@ class QNameMaker:
         return MappingProxyType(self._nsManager._prefixToNamespaces)
 
 
-def getBootsrapQNameMaker() -> QNameMaker:
+def getBootstrapQNameMaker() -> QNameMaker:
     """Get a QNameMaker configured with the bare minimum necessary namespaces configured on it for mireport to work correctly."""
     # Only put the namespaces here we *must* have working for our code to work.
     # Namespaces such as dtr-types (which there are many versions of) are a good

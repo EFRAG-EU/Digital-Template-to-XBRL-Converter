@@ -30,7 +30,7 @@ from mireport.xml import (
     XBRLI_NS,
     QName,
     QNameMaker,
-    getBootsrapQNameMaker,
+    getBootstrapQNameMaker,
 )
 
 MEASUREMENT_GUIDANCE_LABEL_ROLE = "http://www.xbrl.org/2003/role/measurementGuidance"
@@ -961,7 +961,7 @@ def _loadTaxonomyFromFile(bits: dict) -> None:
             f"Already loaded taxonomy. Taxonomies loaded: {' '.join(_TAXONOMIES.keys())}"
         )
 
-    qnameMaker = getBootsrapQNameMaker()
+    qnameMaker = getBootstrapQNameMaker()
     for prefix, namespace in bits["namespaces"].items():
         qnameMaker.addNamespacePrefix(prefix, namespace)
 

@@ -1,8 +1,8 @@
 import json
 import logging
+from collections import Counter
 from collections.abc import Mapping, MutableMapping
 from dataclasses import dataclass
-from collections import Counter
 from typing import Any, Optional, Self
 
 from arelle.logging.handlers.LogToXmlHandler import LogToXmlHandler
@@ -14,7 +14,7 @@ from mireport.exceptions import MIReportException
 from mireport.filesupport import FilelikeAndFileName
 from mireport.version import VersionInformationTuple
 from mireport.xml import QName as MireportQName
-from mireport.xml import QNameMaker, getBootsrapQNameMaker
+from mireport.xml import QNameMaker, getBootstrapQNameMaker
 
 L = logging.getLogger(__name__)
 
@@ -193,7 +193,7 @@ class ArelleQNameCanonicaliser:
 
     @classmethod
     def bootstrap(cls, arelle_model: ModelXbrl) -> Self:
-        qnameMaker = getBootsrapQNameMaker()
+        qnameMaker = getBootstrapQNameMaker()
 
         # Bootstrap using Arelle's existing prefix bindings, but strip out any
         # ambiguous prefixes.

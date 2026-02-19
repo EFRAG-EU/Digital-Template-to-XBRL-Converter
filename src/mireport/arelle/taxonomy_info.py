@@ -726,7 +726,7 @@ class TaxonomyInfoExtractor:
                         pass
                     case _:
                         self.cntlr.addToLog(
-                            f"WARNING: {elrUri} has multiple ({len(roots)}) roots. Presentation order will be arbitrary. Roots: {concepts_to_qnames(roots, sorted=False)}",
+                            f"WARNING: {elrUri} has multiple ({len(roots)}) roots. Presentation order will be arbitrary. Roots: {concepts_to_qnames(roots, should_sort=False)}",
                             level=logging.WARNING,
                         )
                 rows: list[tuple[int, QName, str] | tuple[int, QName]] = []
