@@ -3,7 +3,7 @@
     If you modify this, you need to have npm installed, and tailwindcss cli installed::after
     > npm install tailwindcss @tailwindcss/cli
     and then run:
-    > npx @tailwindcss/cli -i .\src\mireport\templates\source.css -o .\src\mireport\static\style.css --minify
+    > npx @tailwindcss/cli -i .\src\mireport\webapp\templates\source.css -o .\src\mireport\webapp\static\style.css --minify
     See https://tailwindcss.com/docs/installation/tailwind-cli for further information
 */
 @import "tailwindcss" source(none);
