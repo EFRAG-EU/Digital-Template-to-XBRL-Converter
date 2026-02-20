@@ -9,7 +9,7 @@ authors = [
 
 dependencies = [
     "aoix@git+https://code.blinkace.com/xbrl/aoix.git@feature-typed-dimensions",
-    "migration_tool@git+https://github.com/EFRAG-EU/Digital-Template-Data-Migration-Tool.git@v0.1.2",
+    "migration_tool@git+https://github.com/EFRAG-EU/Digital-Template-Data-Migration-Tool.git@v0.1.3",
     "arelle-release>=2.37.63",
     "babel>=2.17.0",
     "flask-session",

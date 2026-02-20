@@ -154,7 +154,7 @@ def migrationButton(id: str) -> Response:
             original_excel.fileLike()
         )
         o_path = PurePath(original_excel.filename)
-        m_name = o_path.with_stem(f"{o_path.stem}_migrated").name
+        m_name = o_path.with_stem(f"{o_path.stem}_migrated_to_latest_version").name
         migrated_excel = FilelikeAndFileName(
             fileContent=migrated_bytes, filename=m_name
         )
