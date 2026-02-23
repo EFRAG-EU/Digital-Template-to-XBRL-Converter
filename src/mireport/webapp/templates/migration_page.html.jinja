@@ -29,16 +29,16 @@
     <ul class="space-y-3">
         <li class="flex items-start text-green-800">
             <span class="text-green-600 font-bold mr-3">✓</span>
-            <span><strong>8 new languages available</strong> (Danish, French, German, Italian, Lithuanian, Polish,
-                Portuguese, Spanish)</span>
+            <span><strong>10 additional languages available</strong> (Danish, Dutch, French, Gaelic, German, Italian,
+                Lithuanian, Polish, Portuguese, Spanish)</span>
         </li>
         <li class="flex items-start text-green-800">
             <span class="text-green-600 font-bold mr-3">✓</span>
-            <span><strong>New version of the Fuel Converter</strong></span>
+            <span>New version of the <strong>Fuel Converter</strong></span>
         </li>
         <li class="flex items-start text-green-800">
             <span class="text-green-600 font-bold mr-3">✓</span>
-            <span><strong>More flexibility</strong> in expanding additional rows</span>
+            <span><strong>More flexibility</strong> in the choice of classified information</span>
         </li>
         <li class="flex items-start text-green-800">
             <span class="text-green-600 font-bold mr-3">✓</span>
@@ -112,7 +112,8 @@
 
     {% if migration_issues %}
     <div class="bg-yellow-50 border border-yellow-300 rounded-lg p-4">
-        <h3 class="font-semibold text-yellow-900 mb-2">Migration Issues:</h3>
+        <h3 class="font-semibold text-yellow-900 mb-2">Migration Issues (please review the file and correct any issues
+            before proceeding):</h3>
         <ul class="list-disc list-inside text-sm text-yellow-800 space-y-1">
             {% for issue in migration_issues %}
             <li>{{ issue|e }}</li>
