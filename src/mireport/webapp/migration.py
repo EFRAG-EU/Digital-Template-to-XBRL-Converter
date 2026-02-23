@@ -15,7 +15,20 @@ from flask import (
     session,
     url_for,
 )
-from migration_tool import migrate_workbook_as_bytes
+
+try:
+    from migration_tool import migrate_workbook_as_bytes
+
+    MIGRATION_WORKING = True
+except ImportError:
+    logging.getLogger(__name__).warning(
+        "Migration tool not available, migration functionality will be disabled"
+    )
+    MIGRATION_WORKING = False
+
+    def migrate_workbook_as_bytes(*args, **kwargs):
+        raise NotImplementedError("Migration tool not available")
+
 
 from mireport.excelprocessor import OUR_VERSION_HOLDER, ExcelProcessor
 from mireport.filesupport import FilelikeAndFileName

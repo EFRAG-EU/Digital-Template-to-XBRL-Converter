@@ -47,9 +47,10 @@ from mireport.localise import (
 from mireport.taxonomy import getTaxonomy, listTaxonomies
 
 from .blueprints import convert_bp
-from .migration import MigrationOutcome, checkMigration
+from .migration import MIGRATION_WORKING, MigrationOutcome, checkMigration
 
 ENABLE_CAPTCHA = False
+ENABLE_MIGRATION = False
 MAX_FILE_SIZE = 16 * 2**20  # 16 MiB
 DEPLOYMENT_DATETIME = datetime.now(timezone.utc)
 
@@ -81,6 +82,11 @@ def create_app() -> Flask:
 
     global ENABLE_CAPTCHA
     ENABLE_CAPTCHA = bool(app.config.get("ENABLE_CAPTCHA", False))
+
+    global ENABLE_MIGRATION
+    ENABLE_MIGRATION = (
+        bool(app.config.get("ENABLE_MIGRATION", False)) and MIGRATION_WORKING
+    )
 
     if (
         "development" == app.config.get("DEPLOYMENT", "development")
@@ -398,7 +404,10 @@ def convert(id: str) -> Response:
 
         conversion = session[id]
         if "results" not in conversion:
-            if (migrationResponse := checkMigration(conversion)) is not None:
+            if (
+                ENABLE_MIGRATION
+                and (migrationResponse := checkMigration(conversion)) is not None
+            ):
                 # Migration deemed to be required so no conversion done at this stage.
                 return migrationResponse
 
@@ -409,12 +418,16 @@ def convert(id: str) -> Response:
         results = ConversionResults.fromDict(conversion["results"])
         devInfo = request.args.get("show_developer_messages") == "true"
 
+        offer_migration: bool = ENABLE_MIGRATION and (
+            conversion.get("migration_outcome", "")
+            == str(MigrationOutcome.MIGRATION_OPTIONAL)
+        )
+
         return Response(
             render_template(
                 "conversion-results.html.jinja",
                 conversion_result=results,
-                migration_optional=conversion.get("migration_outcome", "")
-                == str(MigrationOutcome.MIGRATION_OPTIONAL),
+                offer_migration=offer_migration,
                 conversion_id=id,
                 dev=devInfo,
                 conversion_date=conversion["date"],

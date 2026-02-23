@@ -67,7 +67,7 @@
         </p>
     </div>
 
-    {% if migration_optional and conversion_result.getRAG(withoutXBRLValidation=true).green %}
+    {% if offer_migration and conversion_result.getRAG(withoutXBRLValidation=true).green %}
     <!-- Offer to migrate to current template version -->
     <div class="p-4 rounded-lg shadow-md bg-amber-100 border border-amber-400 text-amber-800">
         <p class="text-center font-semibold">
