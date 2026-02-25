@@ -22,6 +22,7 @@ from mireport.exceptions import (
 from mireport.json import getObject, getResource
 from mireport.localise import getBestSupportedLanguage
 from mireport.stringutil import unicodeDashNormalization
+from mireport.typealiases import LabelsByLang
 from mireport.utr import UTR
 from mireport.xml import (
     ENUM2_NS,
@@ -99,7 +100,7 @@ class Concept:
         self.qname: QName = qnameMaker.fromString(s_qname)
         self._qnameMaker = qnameMaker
 
-        self._labels: Mapping[str, Mapping[str, str]] = details["labels"]
+        self._labels: LabelsByLang = details["labels"]
         self._isAbstract: bool = details.get("abstract", False)
         self._isDimension: bool = details.get("dimension", False)
         self._isHypercube: bool = details.get("hypercube", False)
@@ -287,6 +288,45 @@ class Concept:
             fallbackToAnyLang=fallbackToAnyLang,
             fallbackToQName=fallbackToQName,
         )
+
+    def _getLabelIterable(
+        self,
+        labelRole: Optional[str] = None,
+        lang: Optional[str] = None,
+    ) -> Iterable[str]:
+        """
+        Yield labels for this concept, optionally filtered by role and/or language.
+
+        Args:
+            labelRole: Only yield labels with this role.
+            lang: Only consider labels in this language.
+        """
+
+        # If a specific language is requested, restrict to that mapping
+        if lang is not None:
+            labelsByRole = self._labels.get(lang)
+            if not labelsByRole:
+                return  # no labels for this language
+            if labelRole is None:
+                yield from labelsByRole.values()
+            elif (label := labelsByRole.get(labelRole)) is not None:
+                yield label
+            return
+
+        # No language filter → iterate all languages
+        if labelRole is None:
+            # Fast path: yield all labels across all languages
+            for labelsByRole in self._labels.values():
+                yield from labelsByRole.values()
+        else:
+            # Filter by role across all languages
+            for labelsByRole in self._labels.values():
+                if (label := labelsByRole.get(labelRole)) is not None:
+                    yield label
+
+    def getAllStandardLabels(self) -> tuple[str, ...]:
+        """Return a tuple of all standard labels for this concept."""
+        return tuple(self._getLabelIterable(STANDARD_LABEL_ROLE))
 
     @cache
     def getRequiredUnitQNames(self) -> Optional[frozenset[QName]]:
@@ -613,7 +653,7 @@ class Taxonomy:
         cByStdLbl: dict[str, list[Concept]] = defaultdict(list)
         cByPretend: dict[str, list[Concept]] = defaultdict(list)
         for concept in concepts.values():
-            if (label := concept.getStandardLabel()) is not None:
+            for label in concept.getAllStandardLabels():
                 cByStdLbl[label].append(concept)
                 stripped = unicodeDashNormalization(label)
                 cByPretend[stripped].append(concept)
@@ -621,6 +661,7 @@ class Taxonomy:
                 label_no_suffix = label_no_suffix.strip()
                 cByPretend[label_no_suffix].append(concept)
                 cByPretend[label_no_suffix.lower()].append(concept)
+
         self._lookupConceptsByStandardLabel: dict[str, frozenset[Concept]] = dict(
             (k, frozenset(v)) for k, v in cByStdLbl.items()
         )
