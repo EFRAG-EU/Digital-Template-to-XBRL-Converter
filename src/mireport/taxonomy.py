@@ -21,7 +21,7 @@ from mireport.exceptions import (
 )
 from mireport.json import getObject, getResource
 from mireport.localise import getBestSupportedLanguage
-from mireport.stringutil import unicodeDashNormalization
+from mireport.stringutil import normalizeLabelText, stripLabelSuffix
 from mireport.typealiases import LabelsByLang
 from mireport.utr import UTR
 from mireport.xml import (
@@ -653,14 +653,16 @@ class Taxonomy:
         cByStdLbl: dict[str, list[Concept]] = defaultdict(list)
         cByPretend: dict[str, list[Concept]] = defaultdict(list)
         for concept in concepts.values():
-            for label in concept.getAllStandardLabels():
-                cByStdLbl[label].append(concept)
-                stripped = unicodeDashNormalization(label)
-                cByPretend[stripped].append(concept)
-                label_no_suffix, _, _ = stripped.rpartition("[")
-                label_no_suffix = label_no_suffix.strip()
-                cByPretend[label_no_suffix].append(concept)
-                cByPretend[label_no_suffix.lower()].append(concept)
+            for actual_label in concept.getAllStandardLabels():
+                cByStdLbl[actual_label].append(concept)
+
+                norm_label = normalizeLabelText(actual_label)
+                norm_label_no_suffix = stripLabelSuffix(norm_label)
+                norm_label_no_suffix_all_lc = norm_label_no_suffix.lower()
+
+                cByPretend[norm_label].append(concept)
+                cByPretend[norm_label_no_suffix].append(concept)
+                cByPretend[norm_label_no_suffix_all_lc].append(concept)
 
         self._lookupConceptsByStandardLabel: dict[str, frozenset[Concept]] = dict(
             (k, frozenset(v)) for k, v in cByStdLbl.items()
@@ -781,7 +783,7 @@ class Taxonomy:
             label, frozenset()
         )
         if not possible:
-            label = unicodeDashNormalization(label)
+            label = normalizeLabelText(label)
             possible = self._lookupConceptsByPretendLabel.get(label, frozenset())
         if not possible:
             label = label.lower()
