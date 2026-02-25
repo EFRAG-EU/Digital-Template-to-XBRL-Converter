@@ -24232,37 +24232,37 @@
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "B1 \u2013 Grundlag for udarbejdelse"
+          "http://www.xbrl.org/2003/role/label": "B1 \u2013 Grundlag for udarbejdelse [member]"
         },
         "de": {
-          "http://www.xbrl.org/2003/role/label": "B1 - Grundlagen f\u00fcr die Erstellung"
+          "http://www.xbrl.org/2003/role/label": "B1 - Grundlagen f\u00fcr die Erstellung [member]"
         },
         "en": {
           "http://www.xbrl.org/2003/role/label": "B1 - Basis for preparation [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "B1 \u2013 Base para la elaboraci\u00f3n"
+          "http://www.xbrl.org/2003/role/label": "B1 \u2013 Base para la elaboraci\u00f3n [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "B1 \u2013 Base de pr\u00e9paration"
+          "http://www.xbrl.org/2003/role/label": "B1 \u2013 Base de pr\u00e9paration [member]"
         },
         "ga": {
-          "http://www.xbrl.org/2003/role/label": "B1 - Bun\u00fas le haghaidh Ullmh\u00fach\u00e1in"
+          "http://www.xbrl.org/2003/role/label": "B1 - Bun\u00fas le haghaidh Ullmh\u00fach\u00e1in [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "B1 \u2013 Criteri per la redazione"
+          "http://www.xbrl.org/2003/role/label": "B1 \u2013 Criteri per la redazione [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "B1. Ataskaitos rengimo pagrindas"
+          "http://www.xbrl.org/2003/role/label": "B1. Ataskaitos rengimo pagrindas [member]"
         },
         "nl": {
-          "http://www.xbrl.org/2003/role/label": "B1 - Grondslag voor het opstellen van informatie"
+          "http://www.xbrl.org/2003/role/label": "B1 - Grondslag voor het opstellen van informatie [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "B1 \u2013 Podstawa sporz\u0105dzenia"
+          "http://www.xbrl.org/2003/role/label": "B1 \u2013 Podstawa sporz\u0105dzenia [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "B1 \u2014 Base para a elabora\u00e7\u00e3o"
+          "http://www.xbrl.org/2003/role/label": "B1 \u2014 Base para a elabora\u00e7\u00e3o [member]"
         }
       },
       "nillable": true,
@@ -24274,37 +24274,37 @@
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "B10 - Arbejdsstyrke - Vederlag, kollektive overenskomster og uddannelse"
+          "http://www.xbrl.org/2003/role/label": "B10 - Arbejdsstyrke - Vederlag, kollektive overenskomster og uddannelse [member]"
         },
         "de": {
-          "http://www.xbrl.org/2003/role/label": "B10 - Arbeitskr\u00e4fte \u2013 Verg\u00fctung, Tarif-/Kollektivverhandlungen und Schulung"
+          "http://www.xbrl.org/2003/role/label": "B10 - Arbeitskr\u00e4fte \u2013 Verg\u00fctung, Tarif-/Kollektivverhandlungen und Schulung [member]"
         },
         "en": {
           "http://www.xbrl.org/2003/role/label": "B10 - Workforce - Remuneration, collective bargaining and training [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "B10 \u2013 Trabajadores \u2013 Retribuci\u00f3n, negociaci\u00f3n colectiva y formaci\u00f3n"
+          "http://www.xbrl.org/2003/role/label": "B10 \u2013 Trabajadores \u2013 Retribuci\u00f3n, negociaci\u00f3n colectiva y formaci\u00f3n [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "B10 \u2013   Personnel \u2013 R\u00e9mun\u00e9ration, n\u00e9gociation collective et formation"
+          "http://www.xbrl.org/2003/role/label": "B10 \u2013 Personnel \u2013 R\u00e9mun\u00e9ration, n\u00e9gociation collective et formation [member]"
         },
         "ga": {
-          "http://www.xbrl.org/2003/role/label": "B10 - Lucht saothair \u2013 Luach saothair, c\u00f3mharg\u00e1il agus oili\u00faint"
+          "http://www.xbrl.org/2003/role/label": "B10 - Lucht saothair \u2013 Luach saothair, c\u00f3mharg\u00e1il agus oili\u00faint [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "B10 \u2013 Forza lavoro \u2013 Retribuzione, contrattazione collettiva e formazione"
+          "http://www.xbrl.org/2003/role/label": "B10 \u2013 Forza lavoro \u2013 Retribuzione, contrattazione collettiva e formazione [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "B10 - Darbuotojai \u2013 Atlyginimas, kolektyvin\u0117s derybos ir mokymai"
+          "http://www.xbrl.org/2003/role/label": "B10 - Darbuotojai \u2013 Atlyginimas, kolektyvin\u0117s derybos ir mokymai [member]"
         },
         "nl": {
-          "http://www.xbrl.org/2003/role/label": "B10 \u2013 Personeel \u2013 Vergoeding, collectieve onderhandelingen en opleiding"
+          "http://www.xbrl.org/2003/role/label": "B10 \u2013 Personeel \u2013 Vergoeding, collectieve onderhandelingen en opleiding [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "B10 \u2013 Zasoby pracownicze \u2013 wynagrodzenie, rokowania zbiorowe i szkolenia"
+          "http://www.xbrl.org/2003/role/label": "B10 \u2013 Zasoby pracownicze \u2013 wynagrodzenie, rokowania zbiorowe i szkolenia [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "B10 - M\u00e3o-de-obra \u2013 Remunera\u00e7\u00e3o, negocia\u00e7\u00e3o coletiva e forma\u00e7\u00e3o"
+          "http://www.xbrl.org/2003/role/label": "B10 - M\u00e3o-de-obra \u2013 Remunera\u00e7\u00e3o, negocia\u00e7\u00e3o coletiva e forma\u00e7\u00e3o [member]"
         }
       },
       "nillable": true,
@@ -24316,37 +24316,37 @@
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "B10 \u2013 Arbejdsstyrke \u2013 Gennemsnitligt antal \u00e5rlige uddannelsestimer pr. ansat i rapporteringsperioden"
+          "http://www.xbrl.org/2003/role/label": "B10 \u2013 Arbejdsstyrke \u2013 Gennemsnitligt antal \u00e5rlige uddannelsestimer pr. ansat i rapporteringsperioden [member]"
         },
         "de": {
-          "http://www.xbrl.org/2003/role/label": "B10 \u2013 Arbeitskr\u00e4fte \u2013 Anzahl der j\u00e4hrlichen Schulungsstunden je Besch\u00e4ftigtem im Berichtszeitraum"
+          "http://www.xbrl.org/2003/role/label": "B10 \u2013 Arbeitskr\u00e4fte \u2013 Anzahl der j\u00e4hrlichen Schulungsstunden je Besch\u00e4ftigtem im Berichtszeitraum [member]"
         },
         "en": {
           "http://www.xbrl.org/2003/role/label": "B10 - Workforce - Number of annual training hours per employee during the reporting period [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "B10 \u2013 Trabajadores \u2013 N\u00famero de horas anuales de formaci\u00f3n por empleado durante el per\u00edodo de informaci\u00f3n"
+          "http://www.xbrl.org/2003/role/label": "B10 \u2013 Trabajadores \u2013 N\u00famero de horas anuales de formaci\u00f3n por empleado durante el per\u00edodo de informaci\u00f3n [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "B10 \u2013 Personnel \u2013 Nombre moyen d'heures annuelles de formation par salari\u00e9 au cours de la p\u00e9riode de reporting"
+          "http://www.xbrl.org/2003/role/label": "B10 \u2013 Personnel \u2013 Nombre moyen d'heures annuelles de formation par salari\u00e9 au cours de la p\u00e9riode de reporting [member]"
         },
         "ga": {
-          "http://www.xbrl.org/2003/role/label": "B10 \u2013 Lucht saothair \u2013L\u00edon na n-uaireanta oili\u00fana bliant\u00fala in aghaidh an fhosta\u00ed le linn na tr\u00e9imhse tuairiscithe"
+          "http://www.xbrl.org/2003/role/label": "B10 \u2013 Lucht saothair \u2013L\u00edon na n-uaireanta oili\u00fana bliant\u00fala in aghaidh an fhosta\u00ed le linn na tr\u00e9imhse tuairiscithe [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "B10 \u2013 Forza lavoro \u2013 Numero annuo di ore di formazione per dipendente durante il periodo di riferimento"
+          "http://www.xbrl.org/2003/role/label": "B10 \u2013 Forza lavoro \u2013 Numero annuo di ore di formazione per dipendente durante il periodo di riferimento [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "B10 \u2013 Sava darbo j\u0117ga \u2013 Vidutinis metinis mokymo valand\u0173 skai\u010dius vienam darbuotojui ataskaitiniu laikotarpiu"
+          "http://www.xbrl.org/2003/role/label": "B10 \u2013 Sava darbo j\u0117ga \u2013 Vidutinis metinis mokymo valand\u0173 skai\u010dius vienam darbuotojui ataskaitiniu laikotarpiu [member]"
         },
         "nl": {
-          "http://www.xbrl.org/2003/role/label": "B10 \u2014 Personeel \u2014 Gemiddeld aantal jaarlijkse trainingsuren per werknemer tijdens de rapportageperiode"
+          "http://www.xbrl.org/2003/role/label": "B10 \u2014 Personeel \u2014 Gemiddeld aantal jaarlijkse trainingsuren per werknemer tijdens de rapportageperiode [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "B10 \u2013 Zasoby pracownicze \u2013 \u015arednia liczba godzin szkole\u0144 w ci\u0105gu roku na pracownika w okresie sprawozdawczym"
+          "http://www.xbrl.org/2003/role/label": "B10 \u2013 Zasoby pracownicze \u2013 \u015arednia liczba godzin szkole\u0144 w ci\u0105gu roku na pracownika w okresie sprawozdawczym [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "B10 \u2013 M\u00e3o-de-obra \u2013 N\u00famero m\u00e9dio de horas de forma\u00e7\u00e3o anual por trabalhador durante o per\u00edodo de relato"
+          "http://www.xbrl.org/2003/role/label": "B10 \u2013 M\u00e3o-de-obra \u2013 N\u00famero m\u00e9dio de horas de forma\u00e7\u00e3o anual por trabalhador durante o per\u00edodo de relato [member]"
         }
       },
       "periodType": "duration"
@@ -24357,37 +24357,37 @@
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "B10 \u2013 Arbejdsstyrke \u2013 Vederlag og kollektive overenskomster"
+          "http://www.xbrl.org/2003/role/label": "B10 \u2013 Arbejdsstyrke \u2013 Vederlag og kollektive overenskomster [member]"
         },
         "de": {
-          "http://www.xbrl.org/2003/role/label": "B10 \u2013 Arbeitskr\u00e4fte \u2013 Verg\u00fctung und Tarif-/Kollektivverhandlungen"
+          "http://www.xbrl.org/2003/role/label": "B10 \u2013 Arbeitskr\u00e4fte \u2013 Verg\u00fctung und Tarif-/Kollektivverhandlungen [member]"
         },
         "en": {
           "http://www.xbrl.org/2003/role/label": "B10 - Workforce - Remuneration and collective bargaining [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "B10 \u2013 Trabajadores \u2013 Retribuci\u00f3n y negociaci\u00f3n colectiva"
+          "http://www.xbrl.org/2003/role/label": "B10 \u2013 Trabajadores \u2013 Retribuci\u00f3n y negociaci\u00f3n colectiva [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "B10 \u2013 Personnel \u2013 R\u00e9mun\u00e9ration et n\u00e9gociation collective"
+          "http://www.xbrl.org/2003/role/label": "B10 \u2013 Personnel \u2013 R\u00e9mun\u00e9ration et n\u00e9gociation collective [member]"
         },
         "ga": {
-          "http://www.xbrl.org/2003/role/label": "B10 \u2013 Lucht saothair \u2013 Luach saothair agus c\u00f3mharg\u00e1il"
+          "http://www.xbrl.org/2003/role/label": "B10 \u2013 Lucht saothair \u2013 Luach saothair agus c\u00f3mharg\u00e1il [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "B10 \u2013 Forza lavoro \u2013 Retribuzione e contrattazione collettiva"
+          "http://www.xbrl.org/2003/role/label": "B10 \u2013 Forza lavoro \u2013 Retribuzione e contrattazione collettiva [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "B10 \u2013 Sava darbo j\u0117ga \u2013 Atlyginimas ir kolektyvin\u0117s derybos"
+          "http://www.xbrl.org/2003/role/label": "B10 \u2013 Sava darbo j\u0117ga \u2013 Atlyginimas ir kolektyvin\u0117s derybos [member]"
         },
         "nl": {
-          "http://www.xbrl.org/2003/role/label": "B10 \u2014 Personeel \u2014 Vergoeding en collectieve onderhandelingen"
+          "http://www.xbrl.org/2003/role/label": "B10 \u2014 Personeel \u2014 Vergoeding en collectieve onderhandelingen [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "B10 \u2013 Zasoby pracownicze \u2013 wynagrodzenie i rokowania zbiorowe"
+          "http://www.xbrl.org/2003/role/label": "B10 \u2013 Zasoby pracownicze \u2013 wynagrodzenie i rokowania zbiorowe [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "B10 \u2013 M\u00e3o-de-obra \u2013 Remunera\u00e7\u00e3o e negocia\u00e7\u00e3o coletiva"
+          "http://www.xbrl.org/2003/role/label": "B10 \u2013 M\u00e3o-de-obra \u2013 Remunera\u00e7\u00e3o e negocia\u00e7\u00e3o coletiva [member]"
         }
       },
       "periodType": "duration"
@@ -24398,37 +24398,37 @@
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "B11 \u2013 Domme og b\u00f8der for korruption og bestikkelse"
+          "http://www.xbrl.org/2003/role/label": "B11 \u2013 Domme og b\u00f8der for korruption og bestikkelse [member]"
         },
         "de": {
-          "http://www.xbrl.org/2003/role/label": "B11 - Verurteilungen und Geldstrafen wegen Korruption und Bestechung"
+          "http://www.xbrl.org/2003/role/label": "B11 - Verurteilungen und Geldstrafen wegen Korruption und Bestechung [member]"
         },
         "en": {
           "http://www.xbrl.org/2003/role/label": "B11 - Convictions and fines for corruption and bribery [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "B11 \u2013 Condenas y multas por corrupci\u00f3n y soborno"
+          "http://www.xbrl.org/2003/role/label": "B11 \u2013 Condenas y multas por corrupci\u00f3n y soborno [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "B11 \u2013 Condamnations et amendes pour corruption et pots-de-vin"
+          "http://www.xbrl.org/2003/role/label": "B11 \u2013 Condamnations et amendes pour corruption et pots-de-vin [member]"
         },
         "ga": {
-          "http://www.xbrl.org/2003/role/label": "B11 - Ciontuithe agus f\u00edne\u00e1lacha mar gheall ar \u00e9illi\u00fa agus breabaireacht"
+          "http://www.xbrl.org/2003/role/label": "B11 - Ciontuithe agus f\u00edne\u00e1lacha mar gheall ar \u00e9illi\u00fa agus breabaireacht [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "B11 - Condanne e ammende per corruzione attiva e passiva"
+          "http://www.xbrl.org/2003/role/label": "B11 - Condanne e ammende per corruzione attiva e passiva [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "B11 - Nuosprend\u017eiai ir baudos u\u017e korupcij\u0105 ir ky\u0161ininkavim\u0105"
+          "http://www.xbrl.org/2003/role/label": "B11 - Nuosprend\u017eiai ir baudos u\u017e korupcij\u0105 ir ky\u0161ininkavim\u0105 [member]"
         },
         "nl": {
-          "http://www.xbrl.org/2003/role/label": "B11 \u2013 Veroordelingen en boetes voor corruptie en omkoping"
+          "http://www.xbrl.org/2003/role/label": "B11 \u2013 Veroordelingen en boetes voor corruptie en omkoping [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "B11 \u2013 Wyroki skazuj\u0105ce i grzywny za naruszenie przepis\u00f3w antykorupcyjnych i przepis\u00f3w w sprawie zwalczania przekupstwa"
+          "http://www.xbrl.org/2003/role/label": "B11 \u2013 Wyroki skazuj\u0105ce i grzywny za naruszenie przepis\u00f3w antykorupcyjnych i przepis\u00f3w w sprawie zwalczania przekupstwa [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "B11 \u2014 Condena\u00e7\u00f5es e multas por corrup\u00e7\u00e3o e suborno"
+          "http://www.xbrl.org/2003/role/label": "B11 \u2014 Condena\u00e7\u00f5es e multas por corrup\u00e7\u00e3o e suborno [member]"
         }
       },
       "nillable": true,
@@ -24440,37 +24440,37 @@
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "B1 - \u00d8vrige generelle oplysninger om virksomheden"
+          "http://www.xbrl.org/2003/role/label": "B1 - \u00d8vrige generelle oplysninger om virksomheden [member]"
         },
         "de": {
-          "http://www.xbrl.org/2003/role/label": "B1 \u2013 Allgemeine Informationen zum Unternehmen"
+          "http://www.xbrl.org/2003/role/label": "B1 \u2013 Allgemeine Informationen zum Unternehmen [member]"
         },
         "en": {
           "http://www.xbrl.org/2003/role/label": "B1 - Other undertaking's general information [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "B1 - Otra informaci\u00f3n general del empresario"
+          "http://www.xbrl.org/2003/role/label": "B1 - Otra informaci\u00f3n general del empresario [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "B1 - Autres informations g\u00e9n\u00e9rales de l'entreprise"
+          "http://www.xbrl.org/2003/role/label": "B1 - Autres informations g\u00e9n\u00e9rales de l'entreprise [member]"
         },
         "ga": {
-          "http://www.xbrl.org/2003/role/label": "B1 - Faisn\u00e9is ghinear\u00e1lta gn\u00f3thais eile"
+          "http://www.xbrl.org/2003/role/label": "B1 - Faisn\u00e9is ghinear\u00e1lta gn\u00f3thais eile [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "B1 - Informazioni generali dell'impresa"
+          "http://www.xbrl.org/2003/role/label": "B1 - Informazioni generali dell'impresa [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "B1 \u2013 Kita \u012fmon\u0117s bendroji informacija"
+          "http://www.xbrl.org/2003/role/label": "B1 \u2013 Kita \u012fmon\u0117s bendroji informacija [member]"
         },
         "nl": {
-          "http://www.xbrl.org/2003/role/label": "B1 - Algemene informatie over andere ondernemingen"
+          "http://www.xbrl.org/2003/role/label": "B1 - Algemene informatie over andere ondernemingen [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "B1 \u2013 Og\u00f3lne informacje o jednostce"
+          "http://www.xbrl.org/2003/role/label": "B1 \u2013 Og\u00f3lne informacje o jednostce [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "B1 - Outras informa\u00e7\u00f5es gerais da entidade"
+          "http://www.xbrl.org/2003/role/label": "B1 - Outras informa\u00e7\u00f5es gerais da entidade [member]"
         }
       },
       "periodType": "duration"
@@ -24481,37 +24481,37 @@
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "B1 - Oplysning om b\u00e6redygtighedsrelaterede certificeringer eller m\u00e6rker"
+          "http://www.xbrl.org/2003/role/label": "B1 - Oplysning om b\u00e6redygtighedsrelaterede certificeringer eller m\u00e6rker [member]"
         },
         "de": {
-          "http://www.xbrl.org/2003/role/label": "B1 - Angabe von nachhaltigkeitsbezogenen Zertifizierung(en) oder Siegel(n)"
+          "http://www.xbrl.org/2003/role/label": "B1 - Angabe von nachhaltigkeitsbezogenen Zertifizierung(en) oder Siegel(n) [member]"
         },
         "en": {
           "http://www.xbrl.org/2003/role/label": "B1 - Disclosure of sustainability-related certification(s) or label(s) [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "B1 - Divulgaci\u00f3n de certificaci\u00f3n(es) o etiqueta(s) relacionada(s) con la sostenibilidad"
+          "http://www.xbrl.org/2003/role/label": "B1 - Divulgaci\u00f3n de certificaci\u00f3n(es) o etiqueta(s) relacionada(s) con la sostenibilidad [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "B1 - Publication de la ou des certification(s) ou label(s) li\u00e9s \u00e0 la durabilit\u00e9"
+          "http://www.xbrl.org/2003/role/label": "B1 - Publication de la ou des certification(s) ou label(s) li\u00e9s \u00e0 la durabilit\u00e9 [member]"
         },
         "ga": {
-          "http://www.xbrl.org/2003/role/label": "Aon deimhni\u00fa n\u00f3 lip\u00e9ad i nd\u00e1il le hinbhuanaitheacht a nochtadh"
+          "http://www.xbrl.org/2003/role/label": "Aon deimhni\u00fa n\u00f3 lip\u00e9ad i nd\u00e1il le hinbhuanaitheacht a nochtadh [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "B1 - Informativa delle certificazioni o marchi di sostenibilit\u00e0"
+          "http://www.xbrl.org/2003/role/label": "B1 - Informativa delle certificazioni o marchi di sostenibilit\u00e0 [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "B1 - Su tvarumu susijusi\u0173 sertifikat\u0173 ar \u017eenkl\u0173 atskleidimas"
+          "http://www.xbrl.org/2003/role/label": "B1 - Su tvarumu susijusi\u0173 sertifikat\u0173 ar \u017eenkl\u0173 atskleidimas [member]"
         },
         "nl": {
-          "http://www.xbrl.org/2003/role/label": "B1 -  Rapportage van duurzaamheidsgerelateerde certificering(en) of label(s)"
+          "http://www.xbrl.org/2003/role/label": "B1 - Rapportage van duurzaamheidsgerelateerde certificering(en) of label(s) [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "B1 - Ujawnienie certyfikat\u00f3w lub oznacze\u0144 zwi\u0105zanych ze zr\u00f3wnowa\u017conym rozwojem"
+          "http://www.xbrl.org/2003/role/label": "B1 - Ujawnienie certyfikat\u00f3w lub oznacze\u0144 zwi\u0105zanych ze zr\u00f3wnowa\u017conym rozwojem [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "B1 - Divulga\u00e7\u00e3o de certifica\u00e7\u00e3o(\u00f5es) ou selo(s) relacionados com a sustentabilidade"
+          "http://www.xbrl.org/2003/role/label": "B1 - Divulga\u00e7\u00e3o de certifica\u00e7\u00e3o(\u00f5es) ou selo(s) relacionados com a sustentabilidade [member]"
         }
       },
       "periodType": "duration"
@@ -24522,37 +24522,37 @@
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "B1 - Liste over adresser og geolokation p\u00e5 v\u00e6sentlige aktiver og anl\u00e6g, som virksomheden ejer, lejer eller forvalter"
+          "http://www.xbrl.org/2003/role/label": "B1 - Liste over adresser og geolokation p\u00e5 v\u00e6sentlige aktiver og anl\u00e6g, som virksomheden ejer, lejer eller forvalter [member]"
         },
         "de": {
-          "http://www.xbrl.org/2003/role/label": "B1 - Liste der Standorte"
+          "http://www.xbrl.org/2003/role/label": "B1 - Liste der Standorte [member]"
         },
         "en": {
           "http://www.xbrl.org/2003/role/label": "B1 - List of site(s) [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "B1 - Listado de emplazamiento(s)"
+          "http://www.xbrl.org/2003/role/label": "B1 - Listado de emplazamiento(s) [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "B1 - Liste des site(s)"
+          "http://www.xbrl.org/2003/role/label": "B1 - Liste des site(s) [member]"
         },
         "ga": {
-          "http://www.xbrl.org/2003/role/label": "B1 - Liosta l\u00e1ithre\u00e1in/l\u00e1ithre\u00e1n"
+          "http://www.xbrl.org/2003/role/label": "B1 - Liosta l\u00e1ithre\u00e1in/l\u00e1ithre\u00e1n [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "Elenco del/i sito(i) B1"
+          "http://www.xbrl.org/2003/role/label": "Elenco del/i sito(i) B1 [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "B1 - Objekt\u0173 s\u0105ra\u0161as"
+          "http://www.xbrl.org/2003/role/label": "B1 - Objekt\u0173 s\u0105ra\u0161as [member]"
         },
         "nl": {
-          "http://www.xbrl.org/2003/role/label": "B1 - Lijst van  bedrijfslocaties"
+          "http://www.xbrl.org/2003/role/label": "B1 - Lijst van bedrijfslocaties [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "B1 - Lista lokalizacji"
+          "http://www.xbrl.org/2003/role/label": "B1 - Lista lokalizacji [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "B1 - Lista de locais"
+          "http://www.xbrl.org/2003/role/label": "B1 - Lista de locais [member]"
         }
       },
       "periodType": "duration"
@@ -24563,37 +24563,37 @@
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "B1 - Liste over datterselskaber"
+          "http://www.xbrl.org/2003/role/label": "B1 - Liste over datterselskaber [member]"
         },
         "de": {
-          "http://www.xbrl.org/2003/role/label": "B1 - Liste der Tochterunternehmen"
+          "http://www.xbrl.org/2003/role/label": "B1 - Liste der Tochterunternehmen [member]"
         },
         "en": {
           "http://www.xbrl.org/2003/role/label": "B1 - List of subsidiaries [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "B1 - Lista de filiales"
+          "http://www.xbrl.org/2003/role/label": "B1 - Lista de filiales [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "B1 - Liste des filiales"
+          "http://www.xbrl.org/2003/role/label": "B1 - Liste des filiales [member]"
         },
         "ga": {
-          "http://www.xbrl.org/2003/role/label": "B1 - Liosta na bhfochuideachta\u00ed"
+          "http://www.xbrl.org/2003/role/label": "B1 - Liosta na bhfochuideachta\u00ed [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "B1 - Elenco delle imprese figlie"
+          "http://www.xbrl.org/2003/role/label": "B1 - Elenco delle imprese figlie [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "B1 - Dukterini\u0173 \u012fmoni\u0173 s\u0105ra\u0161as"
+          "http://www.xbrl.org/2003/role/label": "B1 - Dukterini\u0173 \u012fmoni\u0173 s\u0105ra\u0161as [member]"
         },
         "nl": {
-          "http://www.xbrl.org/2003/role/label": "B1 - Lijst van dochterondernemingen"
+          "http://www.xbrl.org/2003/role/label": "B1 - Lijst van dochterondernemingen [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "B1 \u2013 Lista jednostek zale\u017cnych"
+          "http://www.xbrl.org/2003/role/label": "B1 \u2013 Lista jednostek zale\u017cnych [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "B1 - Lista de subsidi\u00e1rias"
+          "http://www.xbrl.org/2003/role/label": "B1 - Lista de subsidi\u00e1rias [member]"
         }
       },
       "periodType": "duration"
@@ -24604,37 +24604,37 @@
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "B2 - Praksisser, politikker og fremtidige initiativer for omstilling til en mere b\u00e6redygtig \u00f8konomi"
+          "http://www.xbrl.org/2003/role/label": "B2 - Praksisser, politikker og fremtidige initiativer for omstilling til en mere b\u00e6redygtig \u00f8konomi [member]"
         },
         "de": {
-          "http://www.xbrl.org/2003/role/label": "B2 - Verfahrensweisen, Richtlinien und k\u00fcnftige Initiativen f\u00fcr den \u00dcbergang zu einer nachhaltigeren Wirtschaft"
+          "http://www.xbrl.org/2003/role/label": "B2 - Verfahrensweisen, Richtlinien und k\u00fcnftige Initiativen f\u00fcr den \u00dcbergang zu einer nachhaltigeren Wirtschaft [member]"
         },
         "en": {
           "http://www.xbrl.org/2003/role/label": "B2 - Practices, policies and future initiatives for transitioning towards a more sustainable economy [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "B2 \u2013 Pr\u00e1cticas, pol\u00edticas e iniciativas futuras para la transici\u00f3n hacia una econom\u00eda m\u00e1s sostenible"
+          "http://www.xbrl.org/2003/role/label": "B2 \u2013 Pr\u00e1cticas, pol\u00edticas e iniciativas futuras para la transici\u00f3n hacia una econom\u00eda m\u00e1s sostenible [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "B2 \u2013 Pratiques, politiques et initiatives futures en vue de la transition vers une \u00e9conomie plus durable"
+          "http://www.xbrl.org/2003/role/label": "B2 \u2013 Pratiques, politiques et initiatives futures en vue de la transition vers une \u00e9conomie plus durable [member]"
         },
         "ga": {
-          "http://www.xbrl.org/2003/role/label": "B2 - Cleachtais, beartais agus tionscnaimh amach anseo chun aistri\u00fa i dtreo geilleagar n\u00edos inbhuanaithe"
+          "http://www.xbrl.org/2003/role/label": "B2 - Cleachtais, beartais agus tionscnaimh amach anseo chun aistri\u00fa i dtreo geilleagar n\u00edos inbhuanaithe [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "B2 - Pratiche, politiche e iniziative future per la transizione verso un'economia pi\u00f9 sostenibile"
+          "http://www.xbrl.org/2003/role/label": "B2 - Pratiche, politiche e iniziative future per la transizione verso un'economia pi\u00f9 sostenibile [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "Praktikos, politikos ir b\u016bsimos iniciatyvos pereinant prie tvaresn\u0117s ekonomikos"
+          "http://www.xbrl.org/2003/role/label": "Praktikos, politikos ir b\u016bsimos iniciatyvos pereinant prie tvaresn\u0117s ekonomikos [member]"
         },
         "nl": {
-          "http://www.xbrl.org/2003/role/label": "B2 \u2014 Praktijken, beleid en toekomstige initiatieven voor de transitie naar een duurzamere economie"
+          "http://www.xbrl.org/2003/role/label": "B2 \u2014 Praktijken, beleid en toekomstige initiatieven voor de transitie naar een duurzamere economie [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "B2 \u2013 Praktyki, polityki i przysz\u0142e inicjatywy na rzecz przej\u015bcia na bardziej zr\u00f3wnowa\u017con\u0105 gospodark\u0119"
+          "http://www.xbrl.org/2003/role/label": "B2 \u2013 Praktyki, polityki i przysz\u0142e inicjatywy na rzecz przej\u015bcia na bardziej zr\u00f3wnowa\u017con\u0105 gospodark\u0119 [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "B2 \u2014 Pr\u00e1ticas, pol\u00edticas e iniciativas futuras para a transi\u00e7\u00e3o para uma economia mais sustent\u00e1vel"
+          "http://www.xbrl.org/2003/role/label": "B2 \u2014 Pr\u00e1ticas, pol\u00edticas e iniciativas futuras para a transi\u00e7\u00e3o para uma economia mais sustent\u00e1vel [member]"
         }
       },
       "nillable": true,
@@ -24646,37 +24646,37 @@
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "B2 - Samarbejdsspecifikke oplysninger"
+          "http://www.xbrl.org/2003/role/label": "B2 - Samarbejdsspecifikke oplysninger [member]"
         },
         "de": {
-          "http://www.xbrl.org/2003/role/label": "B2 - Genossenschaftsspezifische Angaben"
+          "http://www.xbrl.org/2003/role/label": "B2 - Genossenschaftsspezifische Angaben [member]"
         },
         "en": {
           "http://www.xbrl.org/2003/role/label": "B2 - Cooperative specific disclosures [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "B2 - Informaci\u00f3n espec\u00edfica de la cooperativa"
+          "http://www.xbrl.org/2003/role/label": "B2 - Informaci\u00f3n espec\u00edfica de la cooperativa [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "B2 - Divulgations propres aux coop\u00e9ratives"
+          "http://www.xbrl.org/2003/role/label": "B2 - Divulgations propres aux coop\u00e9ratives [member]"
         },
         "ga": {
-          "http://www.xbrl.org/2003/role/label": "B2 - Nochtadh sonrach do chomharchumann"
+          "http://www.xbrl.org/2003/role/label": "B2 - Nochtadh sonrach do chomharchumann [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "B2 - Informative specifiche per cooperative"
+          "http://www.xbrl.org/2003/role/label": "B2 - Informative specifiche per cooperative [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "B2 - Konkre\u010dios kooperatyv\u0173 informacijos atskleidimas"
+          "http://www.xbrl.org/2003/role/label": "B2 - Konkre\u010dios kooperatyv\u0173 informacijos atskleidimas [member]"
         },
         "nl": {
-          "http://www.xbrl.org/2003/role/label": "B2 - Co\u00f6peratieve specifieke openbaarmakingen"
+          "http://www.xbrl.org/2003/role/label": "B2 - Co\u00f6peratieve specifieke openbaarmakingen [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "B2 - Ujawnianie informacji na temat wsp\u00f3\u0142pracy"
+          "http://www.xbrl.org/2003/role/label": "B2 - Ujawnianie informacji na temat wsp\u00f3\u0142pracy [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "B2 - Divulga\u00e7\u00f5es espec\u00edficas da cooperativa"
+          "http://www.xbrl.org/2003/role/label": "B2 - Divulga\u00e7\u00f5es espec\u00edficas da cooperativa [member]"
         }
       },
       "periodType": "duration"
@@ -24687,37 +24687,37 @@
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "B2 - Praksisser, politikker og fremtidige initiativer for omstilling til en mere b\u00e6redygtig \u00f8konomi"
+          "http://www.xbrl.org/2003/role/label": "B2 - Praksisser, politikker og fremtidige initiativer for omstilling til en mere b\u00e6redygtig \u00f8konomi [member]"
         },
         "de": {
-          "http://www.xbrl.org/2003/role/label": "B2 - Verfahrensweisen, Richtlinien und k\u00fcnftige Initiativen f\u00fcr den \u00dcbergang zu einer nachhaltigeren Wirtschaft"
+          "http://www.xbrl.org/2003/role/label": "B2 - Verfahrensweisen, Richtlinien und k\u00fcnftige Initiativen f\u00fcr den \u00dcbergang zu einer nachhaltigeren Wirtschaft [member]"
         },
         "en": {
           "http://www.xbrl.org/2003/role/label": "B2 - Practices, policies and future initiatives for transitioning towards a more sustainable economy [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "B2 \u2013 Pr\u00e1cticas, pol\u00edticas e iniciativas futuras para la transici\u00f3n hacia una econom\u00eda m\u00e1s sostenible"
+          "http://www.xbrl.org/2003/role/label": "B2 \u2013 Pr\u00e1cticas, pol\u00edticas e iniciativas futuras para la transici\u00f3n hacia una econom\u00eda m\u00e1s sostenible [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "B2 \u2013 Pratiques, politiques et initiatives futures en vue de la transition vers une \u00e9conomie plus durable"
+          "http://www.xbrl.org/2003/role/label": "B2 \u2013 Pratiques, politiques et initiatives futures en vue de la transition vers une \u00e9conomie plus durable [member]"
         },
         "ga": {
-          "http://www.xbrl.org/2003/role/label": "B2 - Cleachtais, beartais agus tionscnaimh amach anseo chun aistri\u00fa i dtreo geilleagar n\u00edos inbhuanaithe"
+          "http://www.xbrl.org/2003/role/label": "B2 - Cleachtais, beartais agus tionscnaimh amach anseo chun aistri\u00fa i dtreo geilleagar n\u00edos inbhuanaithe [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "B2 - Pratiche, politiche e iniziative future per la transizione verso un'economia pi\u00f9 sostenibile"
+          "http://www.xbrl.org/2003/role/label": "B2 - Pratiche, politiche e iniziative future per la transizione verso un'economia pi\u00f9 sostenibile [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "Praktikos, politikos ir b\u016bsimos iniciatyvos pereinant prie tvaresn\u0117s ekonomikos"
+          "http://www.xbrl.org/2003/role/label": "Praktikos, politikos ir b\u016bsimos iniciatyvos pereinant prie tvaresn\u0117s ekonomikos [member]"
         },
         "nl": {
-          "http://www.xbrl.org/2003/role/label": "B2 \u2014 Praktijken, beleid en toekomstige initiatieven voor de transitie naar een duurzamere economie"
+          "http://www.xbrl.org/2003/role/label": "B2 \u2014 Praktijken, beleid en toekomstige initiatieven voor de transitie naar een duurzamere economie [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "B2 \u2013 Praktyki, polityki i przysz\u0142e inicjatywy na rzecz przej\u015bcia na bardziej zr\u00f3wnowa\u017con\u0105 gospodark\u0119"
+          "http://www.xbrl.org/2003/role/label": "B2 \u2013 Praktyki, polityki i przysz\u0142e inicjatywy na rzecz przej\u015bcia na bardziej zr\u00f3wnowa\u017con\u0105 gospodark\u0119 [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "B2 \u2014 Pr\u00e1ticas, pol\u00edticas e iniciativas futuras para a transi\u00e7\u00e3o para uma economia mais sustent\u00e1vel"
+          "http://www.xbrl.org/2003/role/label": "B2 \u2014 Pr\u00e1ticas, pol\u00edticas e iniciativas futuras para a transi\u00e7\u00e3o para uma economia mais sustent\u00e1vel [member]"
         }
       },
       "periodType": "duration"
@@ -24728,37 +24728,37 @@
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "B3 - Energi og drivhusgasudledninger"
+          "http://www.xbrl.org/2003/role/label": "B3 - Energi og drivhusgasudledninger [member]"
         },
         "de": {
-          "http://www.xbrl.org/2003/role/label": "B3 - Energie und Treibhausgasemissionen"
+          "http://www.xbrl.org/2003/role/label": "B3 - Energie und Treibhausgasemissionen [member]"
         },
         "en": {
           "http://www.xbrl.org/2003/role/label": "B3 - Energy and greenhouse gas emissions [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "B3 - Energ\u00eda y emisiones de gases de efecto invernadero"
+          "http://www.xbrl.org/2003/role/label": "B3 - Energ\u00eda y emisiones de gases de efecto invernadero [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "B3 \u2013 \u00c9nergie et \u00e9missions de gaz \u00e0 effet de serre"
+          "http://www.xbrl.org/2003/role/label": "B3 \u2013 \u00c9nergie et \u00e9missions de gaz \u00e0 effet de serre [member]"
         },
         "ga": {
-          "http://www.xbrl.org/2003/role/label": "B3 - Fuinneamh agus asta\u00edochta\u00ed g\u00e1s ceaptha teasa"
+          "http://www.xbrl.org/2003/role/label": "B3 - Fuinneamh agus asta\u00edochta\u00ed g\u00e1s ceaptha teasa [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "B3 - Energia ed emissioni di gas a effetto serra"
+          "http://www.xbrl.org/2003/role/label": "B3 - Energia ed emissioni di gas a effetto serra [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "B3 \u2013 Energija ir \u0161iltnamio efekt\u0105 sukelian\u010dios dujos"
+          "http://www.xbrl.org/2003/role/label": "B3 \u2013 Energija ir \u0161iltnamio efekt\u0105 sukelian\u010dios dujos [member]"
         },
         "nl": {
-          "http://www.xbrl.org/2003/role/label": "B3 - Energie en broeikasgasemissies"
+          "http://www.xbrl.org/2003/role/label": "B3 - Energie en broeikasgasemissies [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "B3 \u2013 Energia i emisje gaz\u00f3w cieplarnianych"
+          "http://www.xbrl.org/2003/role/label": "B3 \u2013 Energia i emisje gaz\u00f3w cieplarnianych [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "B3 \u2014 Energia e emiss\u00f5es de gases com efeito de estufa"
+          "http://www.xbrl.org/2003/role/label": "B3 \u2014 Energia e emiss\u00f5es de gases com efeito de estufa [member]"
         }
       },
       "nillable": true,
@@ -24770,37 +24770,37 @@
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "B3 \u2013 Opdeling af energiforbrug (i MWh)"
+          "http://www.xbrl.org/2003/role/label": "B3 \u2013 Opdeling af energiforbrug (i MWh) [member]"
         },
         "de": {
-          "http://www.xbrl.org/2003/role/label": "B3 - Aufschl\u00fcsselung des Energieverbrauchs (in MWh)"
+          "http://www.xbrl.org/2003/role/label": "B3 - Aufschl\u00fcsselung des Energieverbrauchs (in MWh) [member]"
         },
         "en": {
           "http://www.xbrl.org/2003/role/label": "B3 - Breakdown of energy consumption (in MWh) [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "B3 - Desglose del consumo de energ\u00eda (en MWh)"
+          "http://www.xbrl.org/2003/role/label": "B3 - Desglose del consumo de energ\u00eda (en MWh) [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "B3 - Ventilation de la consommation d'\u00e9nergie (en MWh)"
+          "http://www.xbrl.org/2003/role/label": "B3 - Ventilation de la consommation d'\u00e9nergie (en MWh) [member]"
         },
         "ga": {
-          "http://www.xbrl.org/2003/role/label": "B3 - Miondeal\u00fa ar \u00eddi\u00fa fuinnimh (i MWh)"
+          "http://www.xbrl.org/2003/role/label": "B3 - Miondeal\u00fa ar \u00eddi\u00fa fuinnimh (i MWh) [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "B3 - Ripartizione del consumo di energia (in MWh)"
+          "http://www.xbrl.org/2003/role/label": "B3 - Ripartizione del consumo di energia (in MWh) [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "B3 - Energijos suvartojimo (MWh) i\u0161skaidymas"
+          "http://www.xbrl.org/2003/role/label": "B3 - Energijos suvartojimo (MWh) i\u0161skaidymas [member]"
         },
         "nl": {
-          "http://www.xbrl.org/2003/role/label": "B3 \u2014 Uitsplitsing van het energieverbruik (in MWh)"
+          "http://www.xbrl.org/2003/role/label": "B3 \u2014 Uitsplitsing van het energieverbruik (in MWh) [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "B3 - Podzia\u0142 zu\u017cycia energii (w MWh)"
+          "http://www.xbrl.org/2003/role/label": "B3 - Podzia\u0142 zu\u017cycia energii (w MWh) [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "B3 \u2014 Reparti\u00e7\u00e3o do consumo de energia (em MWh)"
+          "http://www.xbrl.org/2003/role/label": "B3 \u2014 Reparti\u00e7\u00e3o do consumo de energia (em MWh) [member]"
         }
       },
       "periodType": "duration"
@@ -24811,37 +24811,37 @@
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "B3 - Ansl\u00e5ede drivhusgasudledninger under hensyntagen til GHG-protokollen version 2004 (i tCO2e)"
+          "http://www.xbrl.org/2003/role/label": "B3 - Ansl\u00e5ede drivhusgasudledninger under hensyntagen til GHG-protokollen version 2004 (i tCO2e) [member]"
         },
         "de": {
-          "http://www.xbrl.org/2003/role/label": "B3 - Gesch\u00e4tzte Treibhausgasemissionen gem\u00e4\u00df des THG-Protokolls Version 2004 (in tCO2e)"
+          "http://www.xbrl.org/2003/role/label": "B3 - Gesch\u00e4tzte Treibhausgasemissionen gem\u00e4\u00df des THG-Protokolls Version 2004 (in tCO2e) [member]"
         },
         "en": {
           "http://www.xbrl.org/2003/role/label": "B3 - Estimated Greenhouse Gas Emissions considering the GHG Protocol Version 2004 (in tCO2e) [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "B3 \u2013 Emisiones brutas estimadas de gases de efecto invernadero considerando el Protocolo GEI versi\u00f3n 2004 (en tCO2e)"
+          "http://www.xbrl.org/2003/role/label": "B3 \u2013 Emisiones brutas estimadas de gases de efecto invernadero considerando el Protocolo GEI versi\u00f3n 2004 (en tCO2e) [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "B3 - Estimations des \u00e9missions de gaz \u00e0 effet de serre en prenant en consid\u00e9ration la norme du protocole des GES relative aux entreprises (GHG Protocol) (version 2004) (en tCO\u2082e)"
+          "http://www.xbrl.org/2003/role/label": "B3 - Estimations des \u00e9missions de gaz \u00e0 effet de serre en prenant en consid\u00e9ration la norme du protocole des GES relative aux entreprises (GHG Protocol) (version 2004) (en tCO\u2082e) [member]"
         },
         "ga": {
-          "http://www.xbrl.org/2003/role/label": "B3 - Asta\u00edochta\u00ed Measta G\u00e1s Ceaptha Teasa ag smaoineamh ar Phr\u00f3tacal GCT Leagan 2004 (i tCO2e)"
+          "http://www.xbrl.org/2003/role/label": "B3 - Asta\u00edochta\u00ed Measta G\u00e1s Ceaptha Teasa ag smaoineamh ar Phr\u00f3tacal GCT Leagan 2004 (i tCO2e) [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "B3 - Emissioni stimate di gas a effetto serra considerando il Greenhouse Gas Protocol versione 2004 (in tCO2e)"
+          "http://www.xbrl.org/2003/role/label": "B3 - Emissioni stimate di gas a effetto serra considerando il Greenhouse Gas Protocol versione 2004 (in tCO2e) [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "B3 \u2013 Apskai\u010diuotos \u0161iltnamio efekt\u0105 sukelian\u010di\u0173 duj\u0173 emisijos, atsi\u017evelgiant \u012f 2004 m. \u0160ESD protokolo versij\u0105 (tCO2e)"
+          "http://www.xbrl.org/2003/role/label": "B3 \u2013 Apskai\u010diuotos \u0161iltnamio efekt\u0105 sukelian\u010di\u0173 duj\u0173 emisijos, atsi\u017evelgiant \u012f 2004 m. \u0160ESD protokolo versij\u0105 (tCO2e) [member]"
         },
         "nl": {
-          "http://www.xbrl.org/2003/role/label": "B3 - Geraamde broeikasgasemissies rekening houdend met het GHG Protocol versie 2004 (in tCO2e)"
+          "http://www.xbrl.org/2003/role/label": "B3 - Geraamde broeikasgasemissies rekening houdend met het GHG Protocol versie 2004 (in tCO2e) [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "B3 \u2013 Szacunkowa emisja gaz\u00f3w cieplarnianych z uwzgl\u0119dnieniem wymog\u00f3w GHG Protocol Corporate Standard w wersji z 2004 r. (w tCO2e)"
+          "http://www.xbrl.org/2003/role/label": "B3 \u2013 Szacunkowa emisja gaz\u00f3w cieplarnianych z uwzgl\u0119dnieniem wymog\u00f3w GHG Protocol Corporate Standard w wersji z 2004 r. (w tCO2e) [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "B3 \u2013 Emiss\u00f5es estimadas de gases com efeito de estufa considerando o Protocolo GEE Vers\u00e3o 2004 (em teCO2)"
+          "http://www.xbrl.org/2003/role/label": "B3 \u2013 Emiss\u00f5es estimadas de gases com efeito de estufa considerando o Protocolo GEE Vers\u00e3o 2004 (em teCO2) [member]"
         }
       },
       "periodType": "duration"
@@ -24852,37 +24852,37 @@
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "B3 - Drivhusgasintensitet"
+          "http://www.xbrl.org/2003/role/label": "B3 - Drivhusgasintensitet [member]"
         },
         "de": {
-          "http://www.xbrl.org/2003/role/label": "B3 - Treibhausgas-Emissionsintensit\u00e4t bezogen auf Umsatzerl\u00f6se (in tCO2e)"
+          "http://www.xbrl.org/2003/role/label": "B3 - Treibhausgas-Emissionsintensit\u00e4t bezogen auf Umsatzerl\u00f6se (in tCO2e) [member]"
         },
         "en": {
           "http://www.xbrl.org/2003/role/label": "B3 - Greenhouse gas emission intensity per turnover (in tCO2e) [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "B3 - Intensidad de las emisiones de gases de efecto invernadero por facturaci\u00f3n (en tCO2e)"
+          "http://www.xbrl.org/2003/role/label": "B3 - Intensidad de las emisiones de gases de efecto invernadero por facturaci\u00f3n (en tCO2e) [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "B3 - Intensit\u00e9 des \u00e9missions de gaz \u00e0 effet de serre sur la base du chiffre d'affaires (en  tCO\u2082e)"
+          "http://www.xbrl.org/2003/role/label": "B3 - Intensit\u00e9 des \u00e9missions de gaz \u00e0 effet de serre sur la base du chiffre d'affaires (en tCO\u2082e) [member]"
         },
         "ga": {
-          "http://www.xbrl.org/2003/role/label": "B3 - D\u00e9ine asta\u00edochta\u00ed g\u00e1s ceaptha teasa in aghaidh an l\u00e1imhdeachas (i tCO2e)"
+          "http://www.xbrl.org/2003/role/label": "B3 - D\u00e9ine asta\u00edochta\u00ed g\u00e1s ceaptha teasa in aghaidh an l\u00e1imhdeachas (i tCO2e) [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "B3 - Intensit\u00e0 delle emissioni di gas a effetto serra per ricavi delle vendite e delle prestazioni (in tCO2e)"
+          "http://www.xbrl.org/2003/role/label": "B3 - Intensit\u00e0 delle emissioni di gas a effetto serra per ricavi delle vendite e delle prestazioni (in tCO2e) [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "B3 - \u0160iltnamio efekt\u0105 sukelian\u010di\u0173 duj\u0173 (\u0160ESD) intensyvumas pagal apyvart\u0105 (tCO2e)"
+          "http://www.xbrl.org/2003/role/label": "B3 - \u0160iltnamio efekt\u0105 sukelian\u010di\u0173 duj\u0173 (\u0160ESD) intensyvumas pagal apyvart\u0105 (tCO2e) [member]"
         },
         "nl": {
-          "http://www.xbrl.org/2003/role/label": "B3 - Intensiteit van de broeikasgasemissies per omzet (in tCO2e)"
+          "http://www.xbrl.org/2003/role/label": "B3 - Intensiteit van de broeikasgasemissies per omzet (in tCO2e) [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "B3 - Intensywno\u015b\u0107 emisji gaz\u00f3w cieplarnianych na jednostk\u0119 obrotu (w tCO2e)"
+          "http://www.xbrl.org/2003/role/label": "B3 - Intensywno\u015b\u0107 emisji gaz\u00f3w cieplarnianych na jednostk\u0119 obrotu (w tCO2e) [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "B3 - Intensidade das emiss\u00f5es de gases com efeito de estufa por volume de neg\u00f3cios (em teCO2)"
+          "http://www.xbrl.org/2003/role/label": "B3 - Intensidade das emiss\u00f5es de gases com efeito de estufa por volume de neg\u00f3cios (em teCO2) [member]"
         }
       },
       "periodType": "duration"
@@ -24893,37 +24893,37 @@
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "B3 \u2013 Samlet energiforbrug (i MWh)"
+          "http://www.xbrl.org/2003/role/label": "B3 \u2013 Samlet energiforbrug (i MWh) [member]"
         },
         "de": {
-          "http://www.xbrl.org/2003/role/label": "B3 \u2013 Gesamtenergieverbrauch (in MWh)"
+          "http://www.xbrl.org/2003/role/label": "B3 \u2013 Gesamtenergieverbrauch (in MWh) [member]"
         },
         "en": {
           "http://www.xbrl.org/2003/role/label": "B3 - Total Energy Consumption (in MWh) [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "B3 \u2013 Consumo total de energ\u00eda (en MWh)"
+          "http://www.xbrl.org/2003/role/label": "B3 \u2013 Consumo total de energ\u00eda (en MWh) [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "B3 - Consommation totale d\u2019\u00e9nergie (en MWh)"
+          "http://www.xbrl.org/2003/role/label": "B3 - Consommation totale d\u2019\u00e9nergie (en MWh) [member]"
         },
         "ga": {
-          "http://www.xbrl.org/2003/role/label": "B3 - Tomhaltas Ioml\u00e1n Fuinnimh (i MWh)"
+          "http://www.xbrl.org/2003/role/label": "B3 - Tomhaltas Ioml\u00e1n Fuinnimh (i MWh) [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "B3 - Consumo totale di energia (in MWh)"
+          "http://www.xbrl.org/2003/role/label": "B3 - Consumo totale di energia (in MWh) [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "B3 \u2013 Bendras energijos suvartojimas (MWh)"
+          "http://www.xbrl.org/2003/role/label": "B3 \u2013 Bendras energijos suvartojimas (MWh) [member]"
         },
         "nl": {
-          "http://www.xbrl.org/2003/role/label": "B3 \u2014 Totaal energieverbruik (in MWh)"
+          "http://www.xbrl.org/2003/role/label": "B3 \u2014 Totaal energieverbruik (in MWh) [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "B3 - Ca\u0142kowite zu\u017cycie energii (w MWh)"
+          "http://www.xbrl.org/2003/role/label": "B3 - Ca\u0142kowite zu\u017cycie energii (w MWh) [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "B3 \u2014 Consumo total de energia (em MWh)"
+          "http://www.xbrl.org/2003/role/label": "B3 \u2014 Consumo total de energia (em MWh) [member]"
         }
       },
       "periodType": "duration"
@@ -24934,37 +24934,37 @@
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "B4 \u2013 Forurening af luft, vand og jord"
+          "http://www.xbrl.org/2003/role/label": "B4 \u2013 Forurening af luft, vand og jord [member]"
         },
         "de": {
-          "http://www.xbrl.org/2003/role/label": "B4 - Luft-, Wasser- und Bodenverschmutzung"
+          "http://www.xbrl.org/2003/role/label": "B4 - Luft-, Wasser- und Bodenverschmutzung [member]"
         },
         "en": {
           "http://www.xbrl.org/2003/role/label": "B4 - Pollution of air, water and soil [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "B4 \u2013 Contaminaci\u00f3n de la atm\u00f3sfera, del agua y del suelo"
+          "http://www.xbrl.org/2003/role/label": "B4 \u2013 Contaminaci\u00f3n de la atm\u00f3sfera, del agua y del suelo [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "B4 - Pollution de l\u2019air, de l\u2019eau et des sols"
+          "http://www.xbrl.org/2003/role/label": "B4 - Pollution de l\u2019air, de l\u2019eau et des sols [member]"
         },
         "ga": {
-          "http://www.xbrl.org/2003/role/label": "B4 - Truailli\u00fa aeir, uisce agus ithreach"
+          "http://www.xbrl.org/2003/role/label": "B4 - Truailli\u00fa aeir, uisce agus ithreach [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "B4 \u2013 Inquinamento di aria, acqua e suolo"
+          "http://www.xbrl.org/2003/role/label": "B4 \u2013 Inquinamento di aria, acqua e suolo [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "B4. Oro, vandens ir dirvo\u017eemio tar\u0161a"
+          "http://www.xbrl.org/2003/role/label": "B4. Oro, vandens ir dirvo\u017eemio tar\u0161a [member]"
         },
         "nl": {
-          "http://www.xbrl.org/2003/role/label": "B4 \u2013  Verontreiniging van lucht, water en bodem"
+          "http://www.xbrl.org/2003/role/label": "B4 \u2013 Verontreiniging van lucht, water en bodem [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "B4 \u2013 Zanieczyszczenie powietrza, wody i gleby"
+          "http://www.xbrl.org/2003/role/label": "B4 \u2013 Zanieczyszczenie powietrza, wody i gleby [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "B4 \u2014 Polui\u00e7\u00e3o do ar, da \u00e1gua e do solo"
+          "http://www.xbrl.org/2003/role/label": "B4 \u2014 Polui\u00e7\u00e3o do ar, da \u00e1gua e do solo [member]"
         }
       },
       "nillable": true,
@@ -24976,37 +24976,37 @@
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "B5 \u2013 Biodiversitet"
+          "http://www.xbrl.org/2003/role/label": "B5 \u2013 Biodiversitet [member]"
         },
         "de": {
-          "http://www.xbrl.org/2003/role/label": "B5 - Biodiversit\u00e4t"
+          "http://www.xbrl.org/2003/role/label": "B5 - Biodiversit\u00e4t [member]"
         },
         "en": {
           "http://www.xbrl.org/2003/role/label": "B5 - Biodiversity [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "B5 \u2013 Biodiversidad"
+          "http://www.xbrl.org/2003/role/label": "B5 \u2013 Biodiversidad [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "B5 \u2013 Biodiversit\u00e9"
+          "http://www.xbrl.org/2003/role/label": "B5 \u2013 Biodiversit\u00e9 [member]"
         },
         "ga": {
-          "http://www.xbrl.org/2003/role/label": "B5 - Bith\u00e9ags\u00falacht"
+          "http://www.xbrl.org/2003/role/label": "B5 - Bith\u00e9ags\u00falacht [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "B5 \u2013 Biodiversit\u00e0"
+          "http://www.xbrl.org/2003/role/label": "B5 \u2013 Biodiversit\u00e0 [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "B5. Biologin\u0117 \u012fvairov\u0117"
+          "http://www.xbrl.org/2003/role/label": "B5. Biologin\u0117 \u012fvairov\u0117 [member]"
         },
         "nl": {
-          "http://www.xbrl.org/2003/role/label": "B5 \u2014 Biodiversiteit"
+          "http://www.xbrl.org/2003/role/label": "B5 \u2014 Biodiversiteit [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "B5 \u2013 Bior\u00f3\u017cnorodno\u015b\u0107"
+          "http://www.xbrl.org/2003/role/label": "B5 \u2013 Bior\u00f3\u017cnorodno\u015b\u0107 [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "B5 \u2014 Biodiversidade"
+          "http://www.xbrl.org/2003/role/label": "B5 \u2014 Biodiversidade [member]"
         }
       },
       "nillable": true,
@@ -25018,37 +25018,37 @@
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "B5 - Biodiversitet - Arealforbrug"
+          "http://www.xbrl.org/2003/role/label": "B5 - Biodiversitet - Arealforbrug [member]"
         },
         "de": {
-          "http://www.xbrl.org/2003/role/label": "B5 \u2013 Biodiversit\u00e4t \u2013 Fl\u00e4chennutzung"
+          "http://www.xbrl.org/2003/role/label": "B5 \u2013 Biodiversit\u00e4t \u2013 Fl\u00e4chennutzung [member]"
         },
         "en": {
           "http://www.xbrl.org/2003/role/label": "B5 - Biodiversity - Land-use [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "B5 - Biodiversidad - Uso del suelo"
+          "http://www.xbrl.org/2003/role/label": "B5 - Biodiversidad - Uso del suelo [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "B5 - Biodiversit\u00e9 - Utilisation des terres"
+          "http://www.xbrl.org/2003/role/label": "B5 - Biodiversit\u00e9 - Utilisation des terres [member]"
         },
         "ga": {
-          "http://www.xbrl.org/2003/role/label": "B5 - Bith\u00e9ags\u00falacht - \u00das\u00e1id tal\u00fan"
+          "http://www.xbrl.org/2003/role/label": "B5 - Bith\u00e9ags\u00falacht - \u00das\u00e1id tal\u00fan [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "B5 \u2013 Biodiversit\u00e0 \u2013 Uso del suolo"
+          "http://www.xbrl.org/2003/role/label": "B5 \u2013 Biodiversit\u00e0 \u2013 Uso del suolo [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "B5 - Biologin\u0117 \u012fvairov\u0117 - \u017dem\u0117s naudojimas"
+          "http://www.xbrl.org/2003/role/label": "B5 - Biologin\u0117 \u012fvairov\u0117 - \u017dem\u0117s naudojimas [member]"
         },
         "nl": {
-          "http://www.xbrl.org/2003/role/label": "B5 \u2013 Biodiversiteit \u2013 Landgebruik"
+          "http://www.xbrl.org/2003/role/label": "B5 \u2013 Biodiversiteit \u2013 Landgebruik [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "B5 \u2013 Bior\u00f3\u017cnorodno\u015b\u0107 \u2013 U\u017cytkowanie grunt\u00f3w"
+          "http://www.xbrl.org/2003/role/label": "B5 \u2013 Bior\u00f3\u017cnorodno\u015b\u0107 \u2013 U\u017cytkowanie grunt\u00f3w [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "B5 \u2013 Biodiversidade \u2013 Utiliza\u00e7\u00e3o do solo"
+          "http://www.xbrl.org/2003/role/label": "B5 \u2013 Biodiversidade \u2013 Utiliza\u00e7\u00e3o do solo [member]"
         }
       },
       "periodType": "duration"
@@ -25059,37 +25059,37 @@
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "B5 - Steder i eller i n\u00e6rheden af 'biodiversitetsf\u00f8lsomme omr\u00e5der\u2019, som virksomheden a) ejer, b) lejer eller c) forvalter"
+          "http://www.xbrl.org/2003/role/label": "B5 - Steder i eller i n\u00e6rheden af 'biodiversitetsf\u00f8lsomme omr\u00e5der\u2019, som virksomheden a) ejer, b) lejer eller c) forvalter [member]"
         },
         "de": {
-          "http://www.xbrl.org/2003/role/label": "B5 \u2013 Gebiete mit schutzbed\u00fcrftiger Biodiversit\u00e4t"
+          "http://www.xbrl.org/2003/role/label": "B5 \u2013 Gebiete mit schutzbed\u00fcrftiger Biodiversit\u00e4t [member]"
         },
         "en": {
           "http://www.xbrl.org/2003/role/label": "B5 - Sites in biodiversity sensitive areas [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "B5 \u2013 Emplazamientos en zonas sensibles en cuanto a la biodiversidad"
+          "http://www.xbrl.org/2003/role/label": "B5 \u2013 Emplazamientos en zonas sensibles en cuanto a la biodiversidad [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "B5 \u2013 Sites situ\u00e9s dans des zones sensibles sur le plan de la biodiversit\u00e9"
+          "http://www.xbrl.org/2003/role/label": "B5 \u2013 Sites situ\u00e9s dans des zones sensibles sur le plan de la biodiversit\u00e9 [member]"
         },
         "ga": {
-          "http://www.xbrl.org/2003/role/label": "B5 - L\u00e1ithre\u00e1in at\u00e1 suite i limist\u00e9ir at\u00e1 \u00edogair \u00f3 thaobh na bith\u00e9ags\u00falachta de"
+          "http://www.xbrl.org/2003/role/label": "B5 - L\u00e1ithre\u00e1in at\u00e1 suite i limist\u00e9ir at\u00e1 \u00edogair \u00f3 thaobh na bith\u00e9ags\u00falachta de [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "B5 \u2013 Siti all'interno di aree sensibili sotto il profilo della biodiversit\u00e0"
+          "http://www.xbrl.org/2003/role/label": "B5 \u2013 Siti all'interno di aree sensibili sotto il profilo della biodiversit\u00e0 [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "B5 - Veiklos objektai biologinei \u012fvairovei jautriose teritorijose"
+          "http://www.xbrl.org/2003/role/label": "B5 - Veiklos objektai biologinei \u012fvairovei jautriose teritorijose [member]"
         },
         "nl": {
-          "http://www.xbrl.org/2003/role/label": "B5 \u2014 Vestigingen in biodiversiteitsgevoelige gebieden"
+          "http://www.xbrl.org/2003/role/label": "B5 \u2014 Vestigingen in biodiversiteitsgevoelige gebieden [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "B5 \u2013 Lokalizacje po\u0142o\u017cone na obszarach wra\u017cliwych pod wzgl\u0119dem bior\u00f3\u017cnorodno\u015bci"
+          "http://www.xbrl.org/2003/role/label": "B5 \u2013 Lokalizacje po\u0142o\u017cone na obszarach wra\u017cliwych pod wzgl\u0119dem bior\u00f3\u017cnorodno\u015bci [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "B5 \u2013 Locais em \u00e1reas sens\u00edveis \u00e0 biodiversidade"
+          "http://www.xbrl.org/2003/role/label": "B5 \u2013 Locais em \u00e1reas sens\u00edveis \u00e0 biodiversidade [member]"
         }
       },
       "periodType": "duration"
@@ -25100,37 +25100,37 @@
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "B6 \u2013 Vand"
+          "http://www.xbrl.org/2003/role/label": "B6 \u2013 Vand [member]"
         },
         "de": {
-          "http://www.xbrl.org/2003/role/label": "B6 - Wasser"
+          "http://www.xbrl.org/2003/role/label": "B6 - Wasser [member]"
         },
         "en": {
           "http://www.xbrl.org/2003/role/label": "B6 - Water [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "B6 \u2013 Agua"
+          "http://www.xbrl.org/2003/role/label": "B6 \u2013 Agua [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "B6 \u2013 Eau"
+          "http://www.xbrl.org/2003/role/label": "B6 \u2013 Eau [member]"
         },
         "ga": {
-          "http://www.xbrl.org/2003/role/label": "B6 - Uisce"
+          "http://www.xbrl.org/2003/role/label": "B6 - Uisce [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "B6 \u2013\u00a0\u00a0\u00a0Acque"
+          "http://www.xbrl.org/2003/role/label": "B6 \u2013\u00a0\u00a0\u00a0Acque [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "B6 \u2013 Vanduo"
+          "http://www.xbrl.org/2003/role/label": "B6 \u2013 Vanduo [member]"
         },
         "nl": {
-          "http://www.xbrl.org/2003/role/label": "B6 \u2014 Water"
+          "http://www.xbrl.org/2003/role/label": "B6 \u2014 Water [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "B6 \u2013 Woda"
+          "http://www.xbrl.org/2003/role/label": "B6 \u2013 Woda [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "B6 \u2013 \u00c1gua"
+          "http://www.xbrl.org/2003/role/label": "B6 \u2013 \u00c1gua [member]"
         }
       },
       "nillable": true,
@@ -25142,37 +25142,37 @@
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "B6 \u2013 Vand"
+          "http://www.xbrl.org/2003/role/label": "B6 \u2013 Vand [member]"
         },
         "de": {
-          "http://www.xbrl.org/2003/role/label": "B6 \u2013 Wasserverbrauch"
+          "http://www.xbrl.org/2003/role/label": "B6 \u2013 Wasserverbrauch [member]"
         },
         "en": {
           "http://www.xbrl.org/2003/role/label": "B6 - Water Consumption [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "B6 - Consumo de agua"
+          "http://www.xbrl.org/2003/role/label": "B6 - Consumo de agua [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "B6 - Consommation d'eau"
+          "http://www.xbrl.org/2003/role/label": "B6 - Consommation d'eau [member]"
         },
         "ga": {
-          "http://www.xbrl.org/2003/role/label": "B6 - Tomhaltas Uisce"
+          "http://www.xbrl.org/2003/role/label": "B6 - Tomhaltas Uisce [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "B6 \u2013 Acque"
+          "http://www.xbrl.org/2003/role/label": "B6 \u2013 Acque [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "B6 \u2013 Vandens suvartojimas"
+          "http://www.xbrl.org/2003/role/label": "B6 \u2013 Vandens suvartojimas [member]"
         },
         "nl": {
-          "http://www.xbrl.org/2003/role/label": "B6 \u2014 Waterverbruik"
+          "http://www.xbrl.org/2003/role/label": "B6 \u2014 Waterverbruik [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "B6 - Zu\u017cycie wody"
+          "http://www.xbrl.org/2003/role/label": "B6 - Zu\u017cycie wody [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "B6 - Consumo de \u00e1gua"
+          "http://www.xbrl.org/2003/role/label": "B6 - Consumo de \u00e1gua [member]"
         }
       },
       "periodType": "duration"
@@ -25183,37 +25183,37 @@
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "B6 - Vand"
+          "http://www.xbrl.org/2003/role/label": "B6 - Vand [member]"
         },
         "de": {
-          "http://www.xbrl.org/2003/role/label": "B6 \u2013 Wasserentnahme"
+          "http://www.xbrl.org/2003/role/label": "B6 \u2013 Wasserentnahme [member]"
         },
         "en": {
           "http://www.xbrl.org/2003/role/label": "B6 - Water Withdrawal [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "Extracci\u00f3n de agua"
+          "http://www.xbrl.org/2003/role/label": "Extracci\u00f3n de agua [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "B6 \u2013 Pr\u00e9l\u00e8vements d'eau"
+          "http://www.xbrl.org/2003/role/label": "B6 \u2013 Pr\u00e9l\u00e8vements d'eau [member]"
         },
         "ga": {
-          "http://www.xbrl.org/2003/role/label": "B6 - Aistarraingt Uisce"
+          "http://www.xbrl.org/2003/role/label": "B6 - Aistarraingt Uisce [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "B6 - Prelievo Idrico"
+          "http://www.xbrl.org/2003/role/label": "B6 - Prelievo Idrico [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "B6 \u2013 Vandens i\u0161gavimas"
+          "http://www.xbrl.org/2003/role/label": "B6 \u2013 Vandens i\u0161gavimas [member]"
         },
         "nl": {
-          "http://www.xbrl.org/2003/role/label": "B6 \u2014  Wateronttrekking"
+          "http://www.xbrl.org/2003/role/label": "B6 \u2014 Wateronttrekking [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "B6 \u2013 Pob\u00f3r wody"
+          "http://www.xbrl.org/2003/role/label": "B6 \u2013 Pob\u00f3r wody [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "B6 \u2014 Capta\u00e7\u00e3o de \u00e1gua"
+          "http://www.xbrl.org/2003/role/label": "B6 \u2014 Capta\u00e7\u00e3o de \u00e1gua [member]"
         }
       },
       "periodType": "duration"
@@ -25224,37 +25224,37 @@
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "B7 \u2013\u00a0\u00a0\u00a0Ressourceforbrug, cirkul\u00e6r \u00f8konomi og affaldsh\u00e5ndtering"
+          "http://www.xbrl.org/2003/role/label": "B7 \u2013\u00a0\u00a0\u00a0Ressourceforbrug, cirkul\u00e6r \u00f8konomi og affaldsh\u00e5ndtering [member]"
         },
         "de": {
-          "http://www.xbrl.org/2003/role/label": "B7 - Ressourcennutzung, Kreislaufwirtschaft und Abfallwirtschaft"
+          "http://www.xbrl.org/2003/role/label": "B7 - Ressourcennutzung, Kreislaufwirtschaft und Abfallwirtschaft [member]"
         },
         "en": {
           "http://www.xbrl.org/2003/role/label": "B7 - Resource use, circular economy and waste management [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "B7 - Uso de los recursos, econom\u00eda circular y gesti\u00f3n de residuos"
+          "http://www.xbrl.org/2003/role/label": "B7 - Uso de los recursos, econom\u00eda circular y gesti\u00f3n de residuos [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "B7 - Utilisation des ressources, \u00e9conomie circulaire et gestion des d\u00e9chets"
+          "http://www.xbrl.org/2003/role/label": "B7 - Utilisation des ressources, \u00e9conomie circulaire et gestion des d\u00e9chets [member]"
         },
         "ga": {
-          "http://www.xbrl.org/2003/role/label": "B7 - \u00das\u00e1id acmhainn\u00ed, geilleagar ciorclach agus bainisti\u00fa dramha\u00edola"
+          "http://www.xbrl.org/2003/role/label": "B7 - \u00das\u00e1id acmhainn\u00ed, geilleagar ciorclach agus bainisti\u00fa dramha\u00edola [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "B7 \u2013 Uso delle risorse, economia circolare e gestione dei rifiuti"
+          "http://www.xbrl.org/2003/role/label": "B7 \u2013 Uso delle risorse, economia circolare e gestione dei rifiuti [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "B7 - I\u0161tekli\u0173 naudojimas, \u017eiedin\u0117 ekonomika ir atliek\u0173 tvarkymas"
+          "http://www.xbrl.org/2003/role/label": "B7 - I\u0161tekli\u0173 naudojimas, \u017eiedin\u0117 ekonomika ir atliek\u0173 tvarkymas [member]"
         },
         "nl": {
-          "http://www.xbrl.org/2003/role/label": "B7 \u2014 Gebruik van hulpbronnen, circulaire economie en afvalbeheer"
+          "http://www.xbrl.org/2003/role/label": "B7 \u2014 Gebruik van hulpbronnen, circulaire economie en afvalbeheer [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "B7 \u2013 Wykorzystanie zasob\u00f3w, gospodarka o obiegu zamkni\u0119tym i gospodarowanie odpadami"
+          "http://www.xbrl.org/2003/role/label": "B7 \u2013 Wykorzystanie zasob\u00f3w, gospodarka o obiegu zamkni\u0119tym i gospodarowanie odpadami [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "B7 - Utiliza\u00e7\u00e3o dos recursos, economia circular e gest\u00e3o de res\u00edduos"
+          "http://www.xbrl.org/2003/role/label": "B7 - Utiliza\u00e7\u00e3o dos recursos, economia circular e gest\u00e3o de res\u00edduos [member]"
         }
       },
       "nillable": true,
@@ -25266,37 +25266,37 @@
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "B7 - \u00c5rlig massestr\u00f8m af betydelige materialer brugt i virksomheden"
+          "http://www.xbrl.org/2003/role/label": "B7 - \u00c5rlig massestr\u00f8m af betydelige materialer brugt i virksomheden [member]"
         },
         "de": {
-          "http://www.xbrl.org/2003/role/label": "B7 \u2013 J\u00e4hrlicher Massenstrom der verwendeten relevanten Materialien"
+          "http://www.xbrl.org/2003/role/label": "B7 \u2013 J\u00e4hrlicher Massenstrom der verwendeten relevanten Materialien [member]"
         },
         "en": {
           "http://www.xbrl.org/2003/role/label": "B7 - Annual mass-flow of relevant materials used [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "B7 \u2013 Flujo anual de masa de materiales relevantes utilizados"
+          "http://www.xbrl.org/2003/role/label": "B7 \u2013 Flujo anual de masa de materiales relevantes utilizados [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "B7 \u2013 Flux massique annuel des mati\u00e8res pertinentes utilis\u00e9es"
+          "http://www.xbrl.org/2003/role/label": "B7 \u2013 Flux massique annuel des mati\u00e8res pertinentes utilis\u00e9es [member]"
         },
         "ga": {
-          "http://www.xbrl.org/2003/role/label": "B7 \u2013 Mais-sreabhadh bliant\u00fail na n-\u00e1bhar \u00e1bhartha a \u00fas\u00e1ideadh"
+          "http://www.xbrl.org/2003/role/label": "B7 \u2013 Mais-sreabhadh bliant\u00fail na n-\u00e1bhar \u00e1bhartha a \u00fas\u00e1ideadh [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "B7 \u2013 Flusso di massa annuo dei materiali pertinenti utilizzati"
+          "http://www.xbrl.org/2003/role/label": "B7 \u2013 Flusso di massa annuo dei materiali pertinenti utilizzati [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "B7 \u2013 Sunaudot\u0173 reik\u0161ming\u0173 med\u017eiag\u0173 kiekis"
+          "http://www.xbrl.org/2003/role/label": "B7 \u2013 Sunaudot\u0173 reik\u0161ming\u0173 med\u017eiag\u0173 kiekis [member]"
         },
         "nl": {
-          "http://www.xbrl.org/2003/role/label": "B7 \u2013 Jaarlijkse massastroom van relevante gebruikte materialen"
+          "http://www.xbrl.org/2003/role/label": "B7 \u2013 Jaarlijkse massastroom van relevante gebruikte materialen [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "B7 \u2013 Roczny przep\u0142yw masowy u\u017cywanych istotnych materia\u0142\u00f3w"
+          "http://www.xbrl.org/2003/role/label": "B7 \u2013 Roczny przep\u0142yw masowy u\u017cywanych istotnych materia\u0142\u00f3w [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "B7 \u2013 Fluxo anual de massa de materiais relevantes utilizados"
+          "http://www.xbrl.org/2003/role/label": "B7 \u2013 Fluxo anual de massa de materiais relevantes utilizados [member]"
         }
       },
       "periodType": "duration"
@@ -25307,37 +25307,37 @@
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "B7 - Beskrivelse af principperne for cirkul\u00e6r \u00f8konomi"
+          "http://www.xbrl.org/2003/role/label": "B7 - Beskrivelse af principperne for cirkul\u00e6r \u00f8konomi [member]"
         },
         "de": {
-          "http://www.xbrl.org/2003/role/label": "B7 \u2013 Beschreibung der Grunds\u00e4tze der Kreislaufwirtschaft"
+          "http://www.xbrl.org/2003/role/label": "B7 \u2013 Beschreibung der Grunds\u00e4tze der Kreislaufwirtschaft [member]"
         },
         "en": {
           "http://www.xbrl.org/2003/role/label": "B7 - Description of circular economy principles [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "B7 \u2013 Descripci\u00f3n de los principios de la econom\u00eda circular"
+          "http://www.xbrl.org/2003/role/label": "B7 \u2013 Descripci\u00f3n de los principios de la econom\u00eda circular [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "B7 \u2013 Description des principes de l\u2019\u00e9conomie circulaire"
+          "http://www.xbrl.org/2003/role/label": "B7 \u2013 Description des principes de l\u2019\u00e9conomie circulaire [member]"
         },
         "ga": {
-          "http://www.xbrl.org/2003/role/label": "B7 - Cur s\u00edos ar phrionsabail an gheilleagair chiorclaigh"
+          "http://www.xbrl.org/2003/role/label": "B7 - Cur s\u00edos ar phrionsabail an gheilleagair chiorclaigh [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "B7 \u2013 Descrizione dei principi dell'economia circolare"
+          "http://www.xbrl.org/2003/role/label": "B7 \u2013 Descrizione dei principi dell'economia circolare [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "B7 - \u017diedin\u0117s ekonomikos princip\u0173 apra\u0161ymas"
+          "http://www.xbrl.org/2003/role/label": "B7 - \u017diedin\u0117s ekonomikos princip\u0173 apra\u0161ymas [member]"
         },
         "nl": {
-          "http://www.xbrl.org/2003/role/label": "B7 - Beschrijving van de beginselen van de circulaire economie"
+          "http://www.xbrl.org/2003/role/label": "B7 - Beschrijving van de beginselen van de circulaire economie [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "B7 \u2013 Opis zasad gospodarki o obiegu zamkni\u0119tym"
+          "http://www.xbrl.org/2003/role/label": "B7 \u2013 Opis zasad gospodarki o obiegu zamkni\u0119tym [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "B7 - Descri\u00e7\u00e3o dos princ\u00edpios da economia circular"
+          "http://www.xbrl.org/2003/role/label": "B7 - Descri\u00e7\u00e3o dos princ\u00edpios da economia circular [member]"
         }
       },
       "periodType": "duration"
@@ -25348,37 +25348,37 @@
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "B7 - Ressourceforbrug, cirkul\u00e6r \u00f8konomi og affaldsh\u00e5ndtering"
+          "http://www.xbrl.org/2003/role/label": "B7 - Ressourceforbrug, cirkul\u00e6r \u00f8konomi og affaldsh\u00e5ndtering [member]"
         },
         "de": {
-          "http://www.xbrl.org/2003/role/label": "B7 \u2013 Abfallaufkommen"
+          "http://www.xbrl.org/2003/role/label": "B7 \u2013 Abfallaufkommen [member]"
         },
         "en": {
           "http://www.xbrl.org/2003/role/label": "B7 - Waste generated [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "B7 \u2013 Uso de los residuos generados"
+          "http://www.xbrl.org/2003/role/label": "B7 \u2013 Uso de los residuos generados [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "B7 - D\u00e9chets produits"
+          "http://www.xbrl.org/2003/role/label": "B7 - D\u00e9chets produits [member]"
         },
         "ga": {
-          "http://www.xbrl.org/2003/role/label": "B7 - Dramha\u00edl a ghintear"
+          "http://www.xbrl.org/2003/role/label": "B7 - Dramha\u00edl a ghintear [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "B7 \u2013 Uso delle risorse, economia circolare e gestione dei rifiuti"
+          "http://www.xbrl.org/2003/role/label": "B7 \u2013 Uso delle risorse, economia circolare e gestione dei rifiuti [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "B7 - I\u0161metam\u0173j\u0173 atliek\u0173 kiekis"
+          "http://www.xbrl.org/2003/role/label": "B7 - I\u0161metam\u0173j\u0173 atliek\u0173 kiekis [member]"
         },
         "nl": {
-          "http://www.xbrl.org/2003/role/label": "B7 - Afval gegenereerd"
+          "http://www.xbrl.org/2003/role/label": "B7 - Afval gegenereerd [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "B7 - Wytworzone odpady"
+          "http://www.xbrl.org/2003/role/label": "B7 - Wytworzone odpady [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "B7 - Res\u00edduos gerados"
+          "http://www.xbrl.org/2003/role/label": "B7 - Res\u00edduos gerados [member]"
         }
       },
       "periodType": "duration"
@@ -25389,37 +25389,37 @@
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "B8 - Arbejdsstyrke - Generelle karakteristika"
+          "http://www.xbrl.org/2003/role/label": "B8 - Arbejdsstyrke - Generelle karakteristika [member]"
         },
         "de": {
-          "http://www.xbrl.org/2003/role/label": "B8 - Arbeitskr\u00e4fte \u2013 Allgemeine Merkmale"
+          "http://www.xbrl.org/2003/role/label": "B8 - Arbeitskr\u00e4fte \u2013 Allgemeine Merkmale [member]"
         },
         "en": {
           "http://www.xbrl.org/2003/role/label": "B8 - Workforce - General characteristics [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Trabajadores \u2013 Caracter\u00edsticas generales"
+          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Trabajadores \u2013 Caracter\u00edsticas generales [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Personnel \u2013 Caract\u00e9ristiques g\u00e9n\u00e9rales"
+          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Personnel \u2013 Caract\u00e9ristiques g\u00e9n\u00e9rales [member]"
         },
         "ga": {
-          "http://www.xbrl.org/2003/role/label": "B8 - Lucht saothair - Saintr\u00e9ithe ginear\u00e1lta"
+          "http://www.xbrl.org/2003/role/label": "B8 - Lucht saothair - Saintr\u00e9ithe ginear\u00e1lta [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "B8 - Forza lavoro - Caratteristiche generali"
+          "http://www.xbrl.org/2003/role/label": "B8 - Forza lavoro - Caratteristiche generali [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "B8 - Darbuotojai - Bendrieji rodikliai"
+          "http://www.xbrl.org/2003/role/label": "B8 - Darbuotojai - Bendrieji rodikliai [member]"
         },
         "nl": {
-          "http://www.xbrl.org/2003/role/label": "B8 - Personeel - Algemene kenmerken"
+          "http://www.xbrl.org/2003/role/label": "B8 - Personeel - Algemene kenmerken [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Zasoby pracownicze \u2013 Charakterystyka og\u00f3lna"
+          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Zasoby pracownicze \u2013 Charakterystyka og\u00f3lna [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "B8 \u2013 For\u00e7a de trabalho \u2013 Caracter\u00edsticas gerais"
+          "http://www.xbrl.org/2003/role/label": "B8 \u2013 For\u00e7a de trabalho \u2013 Caracter\u00edsticas gerais [member]"
         }
       },
       "nillable": true,
@@ -25431,37 +25431,37 @@
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Arbejdsstyrke \u2013 Generelle karakteristika - Land for indg\u00e5else af ans\u00e6ttelseskontrakten"
+          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Arbejdsstyrke \u2013 Generelle karakteristika - Land for indg\u00e5else af ans\u00e6ttelseskontrakten [member]"
         },
         "de": {
-          "http://www.xbrl.org/2003/role/label": "Arbeitskr\u00e4fte \u2013 Allgemeine Merkmale \u2013 Besch\u00e4ftigungsland"
+          "http://www.xbrl.org/2003/role/label": "Arbeitskr\u00e4fte \u2013 Allgemeine Merkmale \u2013 Besch\u00e4ftigungsland [member]"
         },
         "en": {
           "http://www.xbrl.org/2003/role/label": "B8 - Workforce - General characteristics - Country of employment [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Trabajadores \u2013 Caracter\u00edsticas generales - Pa\u00eds de empleo"
+          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Trabajadores \u2013 Caracter\u00edsticas generales - Pa\u00eds de empleo [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "B8 \u2013   Personnel \u2013 Caract\u00e9ristiques g\u00e9n\u00e9rales  - Pays d'emploi"
+          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Personnel \u2013 Caract\u00e9ristiques g\u00e9n\u00e9rales - Pays d'emploi [member]"
         },
         "ga": {
-          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Lucht saothair \u2013 Saintr\u00e9ithe ginear\u00e1lta \u2013 T\u00edr na fosta\u00edochta"
+          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Lucht saothair \u2013 Saintr\u00e9ithe ginear\u00e1lta \u2013 T\u00edr na fosta\u00edochta [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Forza lavoro \u2013 Caratteristiche generali - Paese del contratto di lavoro"
+          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Forza lavoro \u2013 Caratteristiche generali - Paese del contratto di lavoro [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Sava darbo j\u0117ga \u2013 Bendrieji rodikliai - Darbo sutarties \u0161alis"
+          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Sava darbo j\u0117ga \u2013 Bendrieji rodikliai - Darbo sutarties \u0161alis [member]"
         },
         "nl": {
-          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Personeel \u2013 Algemene kenmerken - Land van tewerkstelling"
+          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Personeel \u2013 Algemene kenmerken - Land van tewerkstelling [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Zasoby pracownicze \u2013 Og\u00f3lna charakterystyka - Kraj zatrudnienia"
+          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Zasoby pracownicze \u2013 Og\u00f3lna charakterystyka - Kraj zatrudnienia [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "B8 \u2013 M\u00e3o-de-obra \u2013 Caracter\u00edsticas gerais \u2013 Pa\u00eds do contrato de trabalho"
+          "http://www.xbrl.org/2003/role/label": "B8 \u2013 M\u00e3o-de-obra \u2013 Caracter\u00edsticas gerais \u2013 Pa\u00eds do contrato de trabalho [member]"
         }
       },
       "periodType": "duration"
@@ -25472,37 +25472,37 @@
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Arbejdsstyrke \u2013 Generelle karakteristika - K\u00f8n"
+          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Arbejdsstyrke \u2013 Generelle karakteristika - K\u00f8n [member]"
         },
         "de": {
-          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Belegschaft \u2013 Allgemeine Merkmale \u2013 Geschlecht"
+          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Belegschaft \u2013 Allgemeine Merkmale \u2013 Geschlecht [member]"
         },
         "en": {
           "http://www.xbrl.org/2003/role/label": "B8 - Workforce - General characteristics - Gender [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Trabajadores \u2013 Caracter\u00edsticas generales \u2013 G\u00e9nero"
+          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Trabajadores \u2013 Caracter\u00edsticas generales \u2013 G\u00e9nero [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "B8 \u2013   Personnel \u2013 Caract\u00e9ristiques g\u00e9n\u00e9rales  - Genre"
+          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Personnel \u2013 Caract\u00e9ristiques g\u00e9n\u00e9rales - Genre [member]"
         },
         "ga": {
-          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Lucht saothair \u2013 Saintr\u00e9ithe ginear\u00e1lta \u2013 Inscne"
+          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Lucht saothair \u2013 Saintr\u00e9ithe ginear\u00e1lta \u2013 Inscne [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Forza lavoro \u2013 Caratteristiche generali - Genere"
+          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Forza lavoro \u2013 Caratteristiche generali - Genere [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Sava darbo j\u0117ga \u2013 Bendrieji rodikliai \u2013 Lytis"
+          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Sava darbo j\u0117ga \u2013 Bendrieji rodikliai \u2013 Lytis [member]"
         },
         "nl": {
-          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Personeel \u2013 Algemene kenmerken - Gender"
+          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Personeel \u2013 Algemene kenmerken - Gender [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Zasoby pracownicze \u2013 Og\u00f3lne charakterystyki - P\u0142e\u0107"
+          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Zasoby pracownicze \u2013 Og\u00f3lne charakterystyki - P\u0142e\u0107 [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "B8 \u2013 For\u00e7a de trabalho \u2013 Caracter\u00edsticas gerais - G\u00e9nero"
+          "http://www.xbrl.org/2003/role/label": "B8 \u2013 For\u00e7a de trabalho \u2013 Caracter\u00edsticas gerais - G\u00e9nero [member]"
         }
       },
       "periodType": "duration"
@@ -25513,37 +25513,37 @@
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Arbejdsstyrke \u2013 Generelle karakteristika - Medarbejderoms\u00e6tning"
+          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Arbejdsstyrke \u2013 Generelle karakteristika - Medarbejderoms\u00e6tning [member]"
         },
         "de": {
-          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Arbeitskr\u00e4fte \u2013 Allgemeine Merkmale \u2013 Fluktuationsrate"
+          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Arbeitskr\u00e4fte \u2013 Allgemeine Merkmale \u2013 Fluktuationsrate [member]"
         },
         "en": {
           "http://www.xbrl.org/2003/role/label": "B8 - Workforce - General characteristics - Turnover rate [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Trabajadores \u2013 Caracter\u00edsticas generales - Tasa de rotaci\u00f3n"
+          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Trabajadores \u2013 Caracter\u00edsticas generales - Tasa de rotaci\u00f3n [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "B8 \u2013   Personnel \u2013 Caract\u00e9ristiques g\u00e9n\u00e9rales  - Taux de rotation des salari\u00e9s"
+          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Personnel \u2013 Caract\u00e9ristiques g\u00e9n\u00e9rales - Taux de rotation des salari\u00e9s [member]"
         },
         "ga": {
-          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Lucht saothair \u2013 Saintr\u00e9ithe ginear\u00e1lta \u2013 R\u00e1ta l\u00e1imhdeachais"
+          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Lucht saothair \u2013 Saintr\u00e9ithe ginear\u00e1lta \u2013 R\u00e1ta l\u00e1imhdeachais [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Forza lavoro \u2013 Caratteristiche generali - Tasso di avvicendamento"
+          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Forza lavoro \u2013 Caratteristiche generali - Tasso di avvicendamento [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Sava darbo j\u0117ga\u2013 Bendrieji rodikliai \u2013 Darbuotoj\u0173 kaita"
+          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Sava darbo j\u0117ga\u2013 Bendrieji rodikliai \u2013 Darbuotoj\u0173 kaita [member]"
         },
         "nl": {
-          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Personeel \u2013 Algemene kenmerken - Verlooppercentage"
+          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Personeel \u2013 Algemene kenmerken - Verlooppercentage [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Zasoby pracownicze \u2013 Og\u00f3lna charakterystyka - Wska\u017anik rotacji"
+          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Zasoby pracownicze \u2013 Og\u00f3lna charakterystyka - Wska\u017anik rotacji [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "B8 \u2013 M\u00e3o-de-obra \u2013 Caracter\u00edsticas gerais - Taxa de rotatividade"
+          "http://www.xbrl.org/2003/role/label": "B8 \u2013 M\u00e3o-de-obra \u2013 Caracter\u00edsticas gerais - Taxa de rotatividade [member]"
         }
       },
       "periodType": "duration"
@@ -25554,37 +25554,37 @@
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Arbejdsstyrke \u2013 Generelle karakteristika - Type af ans\u00e6ttelseskontrakt"
+          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Arbejdsstyrke \u2013 Generelle karakteristika - Type af ans\u00e6ttelseskontrakt [member]"
         },
         "de": {
-          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Arbeitskr\u00e4fte \u2013 Allgemeine Merkmale \u2013 Art des Arbeitsvertrags"
+          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Arbeitskr\u00e4fte \u2013 Allgemeine Merkmale \u2013 Art des Arbeitsvertrags [member]"
         },
         "en": {
           "http://www.xbrl.org/2003/role/label": "B8 - Workforce - General characteristics - Type of contract [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "B8 \u2013Trabajadores\u2013 Caracter\u00edsticas generales - Tipo de contrato"
+          "http://www.xbrl.org/2003/role/label": "B8 \u2013Trabajadores\u2013 Caracter\u00edsticas generales - Tipo de contrato [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "B8 \u2013   Personnel \u2013 Caract\u00e9ristiques g\u00e9n\u00e9rales  - Type de contrat"
+          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Personnel \u2013 Caract\u00e9ristiques g\u00e9n\u00e9rales - Type de contrat [member]"
         },
         "ga": {
-          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Lucht saothair \u2013 Saintr\u00e9ithe ginear\u00e1lta \u2013 Cine\u00e1l an chonartha"
+          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Lucht saothair \u2013 Saintr\u00e9ithe ginear\u00e1lta \u2013 Cine\u00e1l an chonartha [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Forza lavoro \u2013 Caratteristiche generali - Tipo di contratto"
+          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Forza lavoro \u2013 Caratteristiche generali - Tipo di contratto [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "B8 \u2013Sava darbo j\u0117ga \u2013 Bendrieji rodikliai - Sutarties r\u016b\u0161is"
+          "http://www.xbrl.org/2003/role/label": "B8 \u2013Sava darbo j\u0117ga \u2013 Bendrieji rodikliai - Sutarties r\u016b\u0161is [member]"
         },
         "nl": {
-          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Personeel \u2013 Algemene kenmerken - Soort arbeidsovereenkomst"
+          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Personeel \u2013 Algemene kenmerken - Soort arbeidsovereenkomst [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Zasoby pracownicze \u2013 Og\u00f3lna charakterystyka - Rodzaj umowy"
+          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Zasoby pracownicze \u2013 Og\u00f3lna charakterystyka - Rodzaj umowy [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "B8 \u2013 M\u00e3o-de-obra \u2013 Caracter\u00edsticas gerais - Tipo de contrato"
+          "http://www.xbrl.org/2003/role/label": "B8 \u2013 M\u00e3o-de-obra \u2013 Caracter\u00edsticas gerais - Tipo de contrato [member]"
         }
       },
       "periodType": "duration"
@@ -25595,37 +25595,37 @@
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "B9 \u2013 Arbejdsstyrke \u2013 Sundhed og sikkerhed"
+          "http://www.xbrl.org/2003/role/label": "B9 \u2013 Arbejdsstyrke \u2013 Sundhed og sikkerhed [member]"
         },
         "de": {
-          "http://www.xbrl.org/2003/role/label": "B9 - Arbeitskr\u00e4fte \u2013 Gesundheitsschutz und Sicherheit"
+          "http://www.xbrl.org/2003/role/label": "B9 - Arbeitskr\u00e4fte \u2013 Gesundheitsschutz und Sicherheit [member]"
         },
         "en": {
           "http://www.xbrl.org/2003/role/label": "B9 - Workforce - Health and safety [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "B9 \u2013 Trabajadores \u2013 Salud y seguridad"
+          "http://www.xbrl.org/2003/role/label": "B9 \u2013 Trabajadores \u2013 Salud y seguridad [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "B9 \u2013 Personnel \u2013 Sant\u00e9 et s\u00e9curit\u00e9"
+          "http://www.xbrl.org/2003/role/label": "B9 \u2013 Personnel \u2013 Sant\u00e9 et s\u00e9curit\u00e9 [member]"
         },
         "ga": {
-          "http://www.xbrl.org/2003/role/label": "B9 - Lucht saothair \u2013 Sl\u00e1inte agus s\u00e1bh\u00e1ilteacht"
+          "http://www.xbrl.org/2003/role/label": "B9 - Lucht saothair \u2013 Sl\u00e1inte agus s\u00e1bh\u00e1ilteacht [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "B9 \u2013 Forza lavoro \u2013 Salute e sicurezza"
+          "http://www.xbrl.org/2003/role/label": "B9 \u2013 Forza lavoro \u2013 Salute e sicurezza [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "B9 - Darbuotojai - Sveikata ir sauga"
+          "http://www.xbrl.org/2003/role/label": "B9 - Darbuotojai - Sveikata ir sauga [member]"
         },
         "nl": {
-          "http://www.xbrl.org/2003/role/label": "B9 - Personeel \u2013 Gezondheid en veiligheid"
+          "http://www.xbrl.org/2003/role/label": "B9 - Personeel \u2013 Gezondheid en veiligheid [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "B9 - Zasoby pracownicze \u2013 Bezpiecze\u0144stwo i higiena pracy"
+          "http://www.xbrl.org/2003/role/label": "B9 - Zasoby pracownicze \u2013 Bezpiecze\u0144stwo i higiena pracy [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "B9 \u2014 M\u00e3o-de-obra \u2014 Sa\u00fade e seguran\u00e7a"
+          "http://www.xbrl.org/2003/role/label": "B9 \u2014 M\u00e3o-de-obra \u2014 Sa\u00fade e seguran\u00e7a [member]"
         }
       },
       "nillable": true,
@@ -26584,37 +26584,37 @@
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "C1 \u2013 Strategi: Forretningsmodel og b\u00e6redygtighedsrelaterede initiativer"
+          "http://www.xbrl.org/2003/role/label": "C1 \u2013 Strategi: Forretningsmodel og b\u00e6redygtighedsrelaterede initiativer [member]"
         },
         "de": {
-          "http://www.xbrl.org/2003/role/label": "C1 - Strategie: Gesch\u00e4ftsmodell und Nachhaltigkeit \u2013 Zugeh\u00f6rige Initiativen"
+          "http://www.xbrl.org/2003/role/label": "C1 - Strategie: Gesch\u00e4ftsmodell und Nachhaltigkeit \u2013 Zugeh\u00f6rige Initiativen [member]"
         },
         "en": {
           "http://www.xbrl.org/2003/role/label": "C1 - Strategy: Business Model and Sustainability - Related Initiatives [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "C1 \u2013 Estrategia: modelo de negocio y sostenibilidad \u2013 Iniciativas relacionadas"
+          "http://www.xbrl.org/2003/role/label": "C1 \u2013 Estrategia: modelo de negocio y sostenibilidad \u2013 Iniciativas relacionadas [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "C1 \u2013 Strat\u00e9gie : mod\u00e8le \u00e9conomique et durabilit\u00e9 \u2013 initiatives associ\u00e9es"
+          "http://www.xbrl.org/2003/role/label": "C1 \u2013 Strat\u00e9gie : mod\u00e8le \u00e9conomique et durabilit\u00e9 \u2013 initiatives associ\u00e9es [member]"
         },
         "ga": {
-          "http://www.xbrl.org/2003/role/label": "C1 - Strait\u00e9is: M\u00fanla Gn\u00f3 agus Inbhuanaitheacht \u2013 Tionscnaimh Gaolmhara"
+          "http://www.xbrl.org/2003/role/label": "C1 - Strait\u00e9is: M\u00fanla Gn\u00f3 agus Inbhuanaitheacht \u2013 Tionscnaimh Gaolmhara [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "C1 - Strategia: modello aziendale e iniziative connesse alla sostenibilit\u00e0"
+          "http://www.xbrl.org/2003/role/label": "C1 - Strategia: modello aziendale e iniziative connesse alla sostenibilit\u00e0 [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "C1. Strategija: verslo modelis ir su tvarumu susijusios iniciatyvos"
+          "http://www.xbrl.org/2003/role/label": "C1. Strategija: verslo modelis ir su tvarumu susijusios iniciatyvos [member]"
         },
         "nl": {
-          "http://www.xbrl.org/2003/role/label": "C1 \u2013 Strategie: l businessmodel en duurzaamheid \u2013 Gerelateerde initiatieven"
+          "http://www.xbrl.org/2003/role/label": "C1 \u2013 Strategie: l businessmodel en duurzaamheid \u2013 Gerelateerde initiatieven [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "C1 \u2013 Strategia: model biznesowy i zr\u00f3wnowa\u017cony rozw\u00f3j \u2013 powi\u0105zane inicjatywy"
+          "http://www.xbrl.org/2003/role/label": "C1 \u2013 Strategia: model biznesowy i zr\u00f3wnowa\u017cony rozw\u00f3j \u2013 powi\u0105zane inicjatywy [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "C1 - Estrat\u00e9gia: Modelo de neg\u00f3cio e sustentabilidade \u2014 Iniciativas conexas"
+          "http://www.xbrl.org/2003/role/label": "C1 - Estrat\u00e9gia: Modelo de neg\u00f3cio e sustentabilidade \u2014 Iniciativas conexas [member]"
         }
       },
       "nillable": true,
@@ -26626,37 +26626,37 @@
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "C2 - Beskrivelse af praksisser, politikker og fremtidige initiativer for omstillingen til en mere b\u00e6redygtig \u00f8konomi"
+          "http://www.xbrl.org/2003/role/label": "C2 - Beskrivelse af praksisser, politikker og fremtidige initiativer for omstillingen til en mere b\u00e6redygtig \u00f8konomi [member]"
         },
         "de": {
-          "http://www.xbrl.org/2003/role/label": "C2 - Beschreibung von Verfahrensweisen, Richtlinien und k\u00fcnftigen Initiativen f\u00fcr den \u00dcbergang zu einer nachhaltigeren Wirtschaft"
+          "http://www.xbrl.org/2003/role/label": "C2 - Beschreibung von Verfahrensweisen, Richtlinien und k\u00fcnftigen Initiativen f\u00fcr den \u00dcbergang zu einer nachhaltigeren Wirtschaft [member]"
         },
         "en": {
           "http://www.xbrl.org/2003/role/label": "C2 - Description of practices, policies and future initiatives for transitioning towards a more sustainable economy [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "C2 \u2013 Descripci\u00f3n de las pr\u00e1cticas, pol\u00edticas e iniciativas futuras para la transici\u00f3n hacia una econom\u00eda m\u00e1s sostenible"
+          "http://www.xbrl.org/2003/role/label": "C2 \u2013 Descripci\u00f3n de las pr\u00e1cticas, pol\u00edticas e iniciativas futuras para la transici\u00f3n hacia una econom\u00eda m\u00e1s sostenible [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "C2 \u2013 Description des pratiques, politiques et initiatives futures en vue de la transition vers une \u00e9conomie plus durable"
+          "http://www.xbrl.org/2003/role/label": "C2 \u2013 Description des pratiques, politiques et initiatives futures en vue de la transition vers une \u00e9conomie plus durable [member]"
         },
         "ga": {
-          "http://www.xbrl.org/2003/role/label": "C2 - Cur s\u00edos ar chleachtais, ar bheartais agus ar thionscnaimh amach anseo chun aistri\u00fa i dtreo geilleagar n\u00edos inbhuanaithe"
+          "http://www.xbrl.org/2003/role/label": "C2 - Cur s\u00edos ar chleachtais, ar bheartais agus ar thionscnaimh amach anseo chun aistri\u00fa i dtreo geilleagar n\u00edos inbhuanaithe [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "C2 \u2013 Descrizione delle pratiche, delle politiche e delle iniziative future per la transizione verso un'economia pi\u00f9 sostenibile"
+          "http://www.xbrl.org/2003/role/label": "C2 \u2013 Descrizione delle pratiche, delle politiche e delle iniziative future per la transizione verso un'economia pi\u00f9 sostenibile [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "C2. Per\u0117jimo prie tvaresn\u0117s ekonomikos praktik\u0173, politikos ir b\u016bsim\u0173 iniciatyv\u0173 apra\u0161ymas"
+          "http://www.xbrl.org/2003/role/label": "C2. Per\u0117jimo prie tvaresn\u0117s ekonomikos praktik\u0173, politikos ir b\u016bsim\u0173 iniciatyv\u0173 apra\u0161ymas [member]"
         },
         "nl": {
-          "http://www.xbrl.org/2003/role/label": "C2 \u2013 Beschrijving van praktijken, beleid en toekomstige initiatieven voor de transitie naar een duurzamere economie"
+          "http://www.xbrl.org/2003/role/label": "C2 \u2013 Beschrijving van praktijken, beleid en toekomstige initiatieven voor de transitie naar een duurzamere economie [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "C2 \u2013 Opis praktyk, polityk i przysz\u0142ych inicjatyw na rzecz przej\u015bcia na bardziej zr\u00f3wnowa\u017con\u0105 gospodark\u0119"
+          "http://www.xbrl.org/2003/role/label": "C2 \u2013 Opis praktyk, polityk i przysz\u0142ych inicjatyw na rzecz przej\u015bcia na bardziej zr\u00f3wnowa\u017con\u0105 gospodark\u0119 [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "C2 - Descri\u00e7\u00e3o das pr\u00e1ticas, pol\u00edticas e iniciativas futuras para a transi\u00e7\u00e3o para uma economia mais sustent\u00e1vel"
+          "http://www.xbrl.org/2003/role/label": "C2 - Descri\u00e7\u00e3o das pr\u00e1ticas, pol\u00edticas e iniciativas futuras para a transi\u00e7\u00e3o para uma economia mais sustent\u00e1vel [member]"
         }
       },
       "nillable": true,
@@ -26668,37 +26668,37 @@
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "C3 - M\u00e5l for reduktion af drivhusgasser og klimaomstilling"
+          "http://www.xbrl.org/2003/role/label": "C3 - M\u00e5l for reduktion af drivhusgasser og klimaomstilling [member]"
         },
         "de": {
-          "http://www.xbrl.org/2003/role/label": "C3 - THG-Reduktionsziele und \u00dcbergang f\u00fcr den Klimaschutz"
+          "http://www.xbrl.org/2003/role/label": "C3 - THG-Reduktionsziele und \u00dcbergang f\u00fcr den Klimaschutz [member]"
         },
         "en": {
           "http://www.xbrl.org/2003/role/label": "C3 - GHG reduction targets and climate transition [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "C3 - Metas de reducci\u00f3n de GEI y transici\u00f3n clim\u00e1tica"
+          "http://www.xbrl.org/2003/role/label": "C3 - Metas de reducci\u00f3n de GEI y transici\u00f3n clim\u00e1tica [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "C3 \u2013\u00a0\u00a0\u00a0Cibles de r\u00e9duction des \u00e9missions de GES et transition climatique"
+          "http://www.xbrl.org/2003/role/label": "C3 \u2013\u00a0\u00a0\u00a0Cibles de r\u00e9duction des \u00e9missions de GES et transition climatique [member]"
         },
         "ga": {
-          "http://www.xbrl.org/2003/role/label": "C3 - Spriocanna laghdaithe g\u00e1s ceaptha teasa agus aistri\u00fa aer\u00e1ide"
+          "http://www.xbrl.org/2003/role/label": "C3 - Spriocanna laghdaithe g\u00e1s ceaptha teasa agus aistri\u00fa aer\u00e1ide [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "C3 \u2013 Obiettivi di riduzione delle emissioni di gas a effetto serra e transizione climatica"
+          "http://www.xbrl.org/2003/role/label": "C3 \u2013 Obiettivi di riduzione delle emissioni di gas a effetto serra e transizione climatica [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "C3 \u2013 \u0160ESD emisij\u0173 ma\u017einimo tikslai ir klimato per\u0117jimo planas"
+          "http://www.xbrl.org/2003/role/label": "C3 \u2013 \u0160ESD emisij\u0173 ma\u017einimo tikslai ir klimato per\u0117jimo planas [member]"
         },
         "nl": {
-          "http://www.xbrl.org/2003/role/label": "C3 - Streefcijfers voor broeikasgasreductie en klimaattransitie"
+          "http://www.xbrl.org/2003/role/label": "C3 - Streefcijfers voor broeikasgasreductie en klimaattransitie [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "C3 \u2013 Cele redukcji emisji gaz\u00f3w cieplarnianych i transformacja klimatyczna"
+          "http://www.xbrl.org/2003/role/label": "C3 \u2013 Cele redukcji emisji gaz\u00f3w cieplarnianych i transformacja klimatyczna [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "C3 - Objetivos de redu\u00e7\u00e3o de GEE e transi\u00e7\u00e3o clim\u00e1tica"
+          "http://www.xbrl.org/2003/role/label": "C3 - Objetivos de redu\u00e7\u00e3o de GEE e transi\u00e7\u00e3o clim\u00e1tica [member]"
         }
       },
       "nillable": true,
@@ -26710,37 +26710,37 @@
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "C3 - Liste over de vigtigste foranstaltninger, som virksomheden s\u00f8ger at gennemf\u00f8re for at n\u00e5 sine m\u00e5l"
+          "http://www.xbrl.org/2003/role/label": "C3 - Liste over de vigtigste foranstaltninger, som virksomheden s\u00f8ger at gennemf\u00f8re for at n\u00e5 sine m\u00e5l [member]"
         },
         "de": {
-          "http://www.xbrl.org/2003/role/label": "C3 \u2013 Angabe der wesentlichen Ma\u00dfnahmen, die das Unternehmen zur Erreichung seiner Ziele durchzuf\u00fchren beabsichtigt"
+          "http://www.xbrl.org/2003/role/label": "C3 \u2013 Angabe der wesentlichen Ma\u00dfnahmen, die das Unternehmen zur Erreichung seiner Ziele durchzuf\u00fchren beabsichtigt [member]"
         },
         "en": {
           "http://www.xbrl.org/2003/role/label": "C3 - Disclosure of list of main actions the entity seeks in order to achieve its targets [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "C3 - Divulgaci\u00f3n de la lista de principales actuaciones que la entidad busca llevar a cabo para alcanzar sus metas"
+          "http://www.xbrl.org/2003/role/label": "C3 - Divulgaci\u00f3n de la lista de principales actuaciones que la entidad busca llevar a cabo para alcanzar sus metas [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "C3 - Publication de la liste des principales actions que l'entreprise entend mettre en \u0153uvre pour atteindre ses cibles"
+          "http://www.xbrl.org/2003/role/label": "C3 - Publication de la liste des principales actions que l'entreprise entend mettre en \u0153uvre pour atteindre ses cibles [member]"
         },
         "ga": {
-          "http://www.xbrl.org/2003/role/label": "C3 - Nochtadh liosta de na pr\u00edomhghn\u00edomhartha a fh\u00e9achann an gn\u00f3thas lena gcur chun feidhme chun a spriocanna a bhaint amach"
+          "http://www.xbrl.org/2003/role/label": "C3 - Nochtadh liosta de na pr\u00edomhghn\u00edomhartha a fh\u00e9achann an gn\u00f3thas lena gcur chun feidhme chun a spriocanna a bhaint amach [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "C3 - Comunicazione dell'elenco delle principali azioni che l'impresa intende attuare per raggiungere i propri obiettivi"
+          "http://www.xbrl.org/2003/role/label": "C3 - Comunicazione dell'elenco delle principali azioni che l'impresa intende attuare per raggiungere i propri obiettivi [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "C3 \u2013 Pagrindini\u0173 veiksm\u0173, kuriuos \u012fmon\u0117 numato \u012fgyvendinti siekdama savo tiksl\u0173, s\u0105ra\u0161o atskleidimas"
+          "http://www.xbrl.org/2003/role/label": "C3 \u2013 Pagrindini\u0173 veiksm\u0173, kuriuos \u012fmon\u0117 numato \u012fgyvendinti siekdama savo tiksl\u0173, s\u0105ra\u0161o atskleidimas [member]"
         },
         "nl": {
-          "http://www.xbrl.org/2003/role/label": "C3 -  Rapportage van de lijst van belangrijkste acties die de entiteit nastreeft om haar doelstellingen te bereiken"
+          "http://www.xbrl.org/2003/role/label": "C3 - Rapportage van de lijst van belangrijkste acties die de entiteit nastreeft om haar doelstellingen te bereiken [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "C3 - wykaz g\u0142\u00f3wnych dzia\u0142a\u0144, kt\u00f3re jednostka zamierza wdro\u017cy\u0107, aby osi\u0105gn\u0105\u0107 swoje cele"
+          "http://www.xbrl.org/2003/role/label": "C3 - wykaz g\u0142\u00f3wnych dzia\u0142a\u0144, kt\u00f3re jednostka zamierza wdro\u017cy\u0107, aby osi\u0105gn\u0105\u0107 swoje cele [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "C3 - Divulga\u00e7\u00e3o da lista das principais a\u00e7\u00f5es que a entidade pretende implementar para atingir os seus objetivos"
+          "http://www.xbrl.org/2003/role/label": "C3 - Divulga\u00e7\u00e3o da lista das principais a\u00e7\u00f5es que a entidade pretende implementar para atingir os seus objetivos [member]"
         }
       },
       "periodType": "duration"
@@ -26751,37 +26751,37 @@
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "C3 \u2013 M\u00e5l for reduktion af drivhusgasudledninger (i tCO2e)"
+          "http://www.xbrl.org/2003/role/label": "C3 \u2013 M\u00e5l for reduktion af drivhusgasudledninger (i tCO2e) [member]"
         },
         "de": {
-          "http://www.xbrl.org/2003/role/label": "C3 \u2013 THG-Reduktionsziele (in tCO2e)"
+          "http://www.xbrl.org/2003/role/label": "C3 \u2013 THG-Reduktionsziele (in tCO2e) [member]"
         },
         "en": {
           "http://www.xbrl.org/2003/role/label": "C3 - GHG reduction targets (in tC02e) [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "C3 - Metas de reducci\u00f3n de GEI (en tCO2e)"
+          "http://www.xbrl.org/2003/role/label": "C3 - Metas de reducci\u00f3n de GEI (en tCO2e) [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "Cibles de r\u00e9duction des \u00e9missions de GES (en tCO\u2082e)"
+          "http://www.xbrl.org/2003/role/label": "Cibles de r\u00e9duction des \u00e9missions de GES (en tCO\u2082e) [member]"
         },
         "ga": {
-          "http://www.xbrl.org/2003/role/label": "C3 - Spriocanna laghdaithe g\u00e1s ceaptha teasa (i tC02e)"
+          "http://www.xbrl.org/2003/role/label": "C3 - Spriocanna laghdaithe g\u00e1s ceaptha teasa (i tC02e) [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "C3 - Obiettivi di riduzione delle emissioni di gas a effetto serra (in tCO2e)"
+          "http://www.xbrl.org/2003/role/label": "C3 - Obiettivi di riduzione delle emissioni di gas a effetto serra (in tCO2e) [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "C3 \u2013 \u0160iltnamio efekt\u0105 sukelian\u010di\u0173 duj\u0173 ma\u017einimo tikslai (tCO2e)"
+          "http://www.xbrl.org/2003/role/label": "C3 \u2013 \u0160iltnamio efekt\u0105 sukelian\u010di\u0173 duj\u0173 ma\u017einimo tikslai (tCO2e) [member]"
         },
         "nl": {
-          "http://www.xbrl.org/2003/role/label": "C3 - Streefcijfers voor broeikasgasreductie (in tCO2e)"
+          "http://www.xbrl.org/2003/role/label": "C3 - Streefcijfers voor broeikasgasreductie (in tCO2e) [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "C3 \u2013 Cele redukcji emisji gaz\u00f3w cieplarnianych (w tCO2e)"
+          "http://www.xbrl.org/2003/role/label": "C3 \u2013 Cele redukcji emisji gaz\u00f3w cieplarnianych (w tCO2e) [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "C3 - Metas de redu\u00e7\u00e3o de GEE (em tCO2e)"
+          "http://www.xbrl.org/2003/role/label": "C3 - Metas de redu\u00e7\u00e3o de GEE (em tCO2e) [member]"
         }
       },
       "periodType": "duration"
@@ -26792,37 +26792,37 @@
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "C3 - Omstillingsplan for virksomheder, der opererer i sektorer med stor klimaindvirkning"
+          "http://www.xbrl.org/2003/role/label": "C3 - Omstillingsplan for virksomheder, der opererer i sektorer med stor klimaindvirkning [member]"
         },
         "de": {
-          "http://www.xbrl.org/2003/role/label": "C3 \u2013 \u00dcbergangsplan f\u00fcr Unternehmen, die in klimaintensiven Sektoren t\u00e4tig sind"
+          "http://www.xbrl.org/2003/role/label": "C3 \u2013 \u00dcbergangsplan f\u00fcr Unternehmen, die in klimaintensiven Sektoren t\u00e4tig sind [member]"
         },
         "en": {
           "http://www.xbrl.org/2003/role/label": "C3 - Transition plan for undertakings operating in high climate impact sectors [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "C3 - Plan de transici\u00f3n para empresas que operan en sectores de alto impacto clim\u00e1tico"
+          "http://www.xbrl.org/2003/role/label": "C3 - Plan de transici\u00f3n para empresas que operan en sectores de alto impacto clim\u00e1tico [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "C3 - Plan de transition pour les entreprises op\u00e9rant dans des secteurs \u00e0 fort impact climatique"
+          "http://www.xbrl.org/2003/role/label": "C3 - Plan de transition pour les entreprises op\u00e9rant dans des secteurs \u00e0 fort impact climatique [member]"
         },
         "ga": {
-          "http://www.xbrl.org/2003/role/label": "C3 - Plean aistrithe do ghn\u00f3thais at\u00e1 ag feidhmi\u00fa in earn\u00e1lacha ardtionchair aer\u00e1ide"
+          "http://www.xbrl.org/2003/role/label": "C3 - Plean aistrithe do ghn\u00f3thais at\u00e1 ag feidhmi\u00fa in earn\u00e1lacha ardtionchair aer\u00e1ide [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "C3 - Piano di transizione per le imprese che operano in settori ad alto impatto climatico"
+          "http://www.xbrl.org/2003/role/label": "C3 - Piano di transizione per le imprese che operano in settori ad alto impatto climatico [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "C3 \u2013 Per\u0117jimo planas \u012fmon\u0117ms, veikian\u010dioms didelio poveikio klimatui sektoriuose"
+          "http://www.xbrl.org/2003/role/label": "C3 \u2013 Per\u0117jimo planas \u012fmon\u0117ms, veikian\u010dioms didelio poveikio klimatui sektoriuose [member]"
         },
         "nl": {
-          "http://www.xbrl.org/2003/role/label": "C3 \u2013 Transitieplan voor ondernemingen die actief zijn in sectoren met een hoge klimaatimpact"
+          "http://www.xbrl.org/2003/role/label": "C3 \u2013 Transitieplan voor ondernemingen die actief zijn in sectoren met een hoge klimaatimpact [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "C3 \u2013 Plan transformacji dla jednostek prowadz\u0105cych dzia\u0142alno\u015b\u0107 w sektorach o znacznym oddzia\u0142ywaniu na klimat"
+          "http://www.xbrl.org/2003/role/label": "C3 \u2013 Plan transformacji dla jednostek prowadz\u0105cych dzia\u0142alno\u015b\u0107 w sektorach o znacznym oddzia\u0142ywaniu na klimat [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "C3 - Plano de transi\u00e7\u00e3o para empresas que operam em setores com elevado impacto clim\u00e1tico"
+          "http://www.xbrl.org/2003/role/label": "C3 - Plano de transi\u00e7\u00e3o para empresas que operam em setores com elevado impacto clim\u00e1tico [member]"
         }
       },
       "periodType": "duration"
@@ -26833,37 +26833,37 @@
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "C4 - Klimarisici"
+          "http://www.xbrl.org/2003/role/label": "C4 - Klimarisici [member]"
         },
         "de": {
-          "http://www.xbrl.org/2003/role/label": "C4 - Klimabedingte Risiken"
+          "http://www.xbrl.org/2003/role/label": "C4 - Klimabedingte Risiken [member]"
         },
         "en": {
           "http://www.xbrl.org/2003/role/label": "C4 - Climate risks [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "C4 - Riesgos clim\u00e1ticos"
+          "http://www.xbrl.org/2003/role/label": "C4 - Riesgos clim\u00e1ticos [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "C4 \u2013 Risques climatiques"
+          "http://www.xbrl.org/2003/role/label": "C4 \u2013 Risques climatiques [member]"
         },
         "ga": {
-          "http://www.xbrl.org/2003/role/label": "C4 - Riosca\u00ed aer\u00e1ide"
+          "http://www.xbrl.org/2003/role/label": "C4 - Riosca\u00ed aer\u00e1ide [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "C4 - Rischi climatici"
+          "http://www.xbrl.org/2003/role/label": "C4 - Rischi climatici [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "C4 \u2013 Klimato rizikos"
+          "http://www.xbrl.org/2003/role/label": "C4 \u2013 Klimato rizikos [member]"
         },
         "nl": {
-          "http://www.xbrl.org/2003/role/label": "C4 \u2013 Klimaatrisico\u2019s"
+          "http://www.xbrl.org/2003/role/label": "C4 \u2013 Klimaatrisico\u2019s [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "C4 \u2013 Ryzyka zwi\u0105zane z klimatem"
+          "http://www.xbrl.org/2003/role/label": "C4 \u2013 Ryzyka zwi\u0105zane z klimatem [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "C4 \u2013 Riscos clim\u00e1ticos"
+          "http://www.xbrl.org/2003/role/label": "C4 \u2013 Riscos clim\u00e1ticos [member]"
         }
       },
       "nillable": true,
@@ -26875,37 +26875,37 @@
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "C5 - Supplerende (generelle) oplysninger om arbejdsstyrken"
+          "http://www.xbrl.org/2003/role/label": "C5 - Supplerende (generelle) oplysninger om arbejdsstyrken [member]"
         },
         "de": {
-          "http://www.xbrl.org/2003/role/label": "C5 - Zus\u00e4tzliche (allgemeine) Merkmale der Arbeitskr\u00e4fte"
+          "http://www.xbrl.org/2003/role/label": "C5 - Zus\u00e4tzliche (allgemeine) Merkmale der Arbeitskr\u00e4fte [member]"
         },
         "en": {
           "http://www.xbrl.org/2003/role/label": "C5 - Additional (general) workforce characteristics [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "C5 \u2013 Caracter\u00edsticas (generales) adicionales de los trabajadores"
+          "http://www.xbrl.org/2003/role/label": "C5 \u2013 Caracter\u00edsticas (generales) adicionales de los trabajadores [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "C5 \u2013 Caract\u00e9ristiques suppl\u00e9mentaires (g\u00e9n\u00e9rales) du personnel"
+          "http://www.xbrl.org/2003/role/label": "C5 \u2013 Caract\u00e9ristiques suppl\u00e9mentaires (g\u00e9n\u00e9rales) du personnel [member]"
         },
         "ga": {
-          "http://www.xbrl.org/2003/role/label": "C5 - Saintr\u00e9ithe breise (ginear\u00e1lta) den lucht saothair"
+          "http://www.xbrl.org/2003/role/label": "C5 - Saintr\u00e9ithe breise (ginear\u00e1lta) den lucht saothair [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "C5 \u2013 Altre caratteristiche (generali) della forza lavoro"
+          "http://www.xbrl.org/2003/role/label": "C5 \u2013 Altre caratteristiche (generali) della forza lavoro [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "C5 - Papildomi (bendrieji) darbuotoj\u0173 rodikliai"
+          "http://www.xbrl.org/2003/role/label": "C5 - Papildomi (bendrieji) darbuotoj\u0173 rodikliai [member]"
         },
         "nl": {
-          "http://www.xbrl.org/2003/role/label": "C5 - Aanvullende (algemene) kenmerken van het personeelsbestand"
+          "http://www.xbrl.org/2003/role/label": "C5 - Aanvullende (algemene) kenmerken van het personeelsbestand [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "C5 \u2013 Dodatkowa (og\u00f3lna) charakterystyka pracownik\u00f3w"
+          "http://www.xbrl.org/2003/role/label": "C5 \u2013 Dodatkowa (og\u00f3lna) charakterystyka pracownik\u00f3w [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "C5 - Caracter\u00edsticas adicionais (gerais) da m\u00e3o-de-obra"
+          "http://www.xbrl.org/2003/role/label": "C5 - Caracter\u00edsticas adicionais (gerais) da m\u00e3o-de-obra [member]"
         }
       },
       "nillable": true,
@@ -26917,37 +26917,37 @@
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "C6 - Yderligere oplysninger om egen arbejdsstyrke - Politikker og processer vedr\u00f8rende menneskerettigheder"
+          "http://www.xbrl.org/2003/role/label": "C6 - Yderligere oplysninger om egen arbejdsstyrke - Politikker og processer vedr\u00f8rende menneskerettigheder [member]"
         },
         "de": {
-          "http://www.xbrl.org/2003/role/label": "C6 - Zus\u00e4tzliche Informationen \u00fcber die Arbeitskr\u00e4fte des Unternehmens \u2013 Richtlinien f\u00fcr die Achtung der Menschenrechte und diesbez\u00fcgliche Prozesse"
+          "http://www.xbrl.org/2003/role/label": "C6 - Zus\u00e4tzliche Informationen \u00fcber die Arbeitskr\u00e4fte des Unternehmens \u2013 Richtlinien f\u00fcr die Achtung der Menschenrechte und diesbez\u00fcgliche Prozesse [member]"
         },
         "en": {
           "http://www.xbrl.org/2003/role/label": "C6 - Additional own workforce information - Human rights policies and processes [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "C6 \u2013 Informaci\u00f3n adicional sobre el personal propio \u2013 Pol\u00edticas y procesos en materia de derechos humanos"
+          "http://www.xbrl.org/2003/role/label": "C6 \u2013 Informaci\u00f3n adicional sobre el personal propio \u2013 Pol\u00edticas y procesos en materia de derechos humanos [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "C6 \u2013 Informations suppl\u00e9mentaires sur le personnel \u2013 Politiques et proc\u00e9dures en mati\u00e8re de droits de l\u2019homme"
+          "http://www.xbrl.org/2003/role/label": "C6 \u2013 Informations suppl\u00e9mentaires sur le personnel \u2013 Politiques et proc\u00e9dures en mati\u00e8re de droits de l\u2019homme [member]"
         },
         "ga": {
-          "http://www.xbrl.org/2003/role/label": "C6 - Faisn\u00e9is bhreise faoin lucht saothair f\u00e9in - Beartais agus pr\u00f3isis chearta an duine"
+          "http://www.xbrl.org/2003/role/label": "C6 - Faisn\u00e9is bhreise faoin lucht saothair f\u00e9in - Beartais agus pr\u00f3isis chearta an duine [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "C6 - Altre informazioni sulla forza lavoro propria \u2013 Politiche e procedure in materia di diritti umani"
+          "http://www.xbrl.org/2003/role/label": "C6 - Altre informazioni sulla forza lavoro propria \u2013 Politiche e procedure in materia di diritti umani [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "C6 - Papildoma darbuotoj\u0173 informacija - \u017dmogaus teisi\u0173 politika ir procesai"
+          "http://www.xbrl.org/2003/role/label": "C6 - Papildoma darbuotoj\u0173 informacija - \u017dmogaus teisi\u0173 politika ir procesai [member]"
         },
         "nl": {
-          "http://www.xbrl.org/2003/role/label": "C6 \u2014 Aanvullende informatie over het personeel \u2014 Mensenrechtenbeleid en -processen"
+          "http://www.xbrl.org/2003/role/label": "C6 \u2014 Aanvullende informatie over het personeel \u2014 Mensenrechtenbeleid en -processen [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "C6 \u2013 Dodatkowe informacje dotycz\u0105ce w\u0142asnych zasob\u00f3w pracowniczych \u2013 polityki i procesy dotycz\u0105ce praw cz\u0142owieka"
+          "http://www.xbrl.org/2003/role/label": "C6 \u2013 Dodatkowe informacje dotycz\u0105ce w\u0142asnych zasob\u00f3w pracowniczych \u2013 polityki i procesy dotycz\u0105ce praw cz\u0142owieka [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "C6 \u2014 Informa\u00e7\u00f5es adicionais sobre a pr\u00f3pria m\u00e3o-de-obra \u2014 Pol\u00edticas e processos em mat\u00e9ria de direitos humanos"
+          "http://www.xbrl.org/2003/role/label": "C6 \u2014 Informa\u00e7\u00f5es adicionais sobre a pr\u00f3pria m\u00e3o-de-obra \u2014 Pol\u00edticas e processos em mat\u00e9ria de direitos humanos [member]"
         }
       },
       "nillable": true,
@@ -26959,37 +26959,37 @@
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "C7 \u2013 Alvorlige negative menneskerettighedsh\u00e6ndelser"
+          "http://www.xbrl.org/2003/role/label": "C7 \u2013 Alvorlige negative menneskerettighedsh\u00e6ndelser [member]"
         },
         "de": {
-          "http://www.xbrl.org/2003/role/label": "C7 - Schwerwiegende Vorf\u00e4lle im Zusammenhang mit Menschenrechten"
+          "http://www.xbrl.org/2003/role/label": "C7 - Schwerwiegende Vorf\u00e4lle im Zusammenhang mit Menschenrechten [member]"
         },
         "en": {
           "http://www.xbrl.org/2003/role/label": "C7 - Severe negative human rights incidents [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "C7 - Incidentes graves negativos de derechos humanos"
+          "http://www.xbrl.org/2003/role/label": "C7 - Incidentes graves negativos de derechos humanos [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "C7 \u2013 Incidents graves en mati\u00e8re de droits de l\u2019homme"
+          "http://www.xbrl.org/2003/role/label": "C7 \u2013 Incidents graves en mati\u00e8re de droits de l\u2019homme [member]"
         },
         "ga": {
-          "http://www.xbrl.org/2003/role/label": "C7 \u2013 Teagmhais dhi\u00faltacha thromch\u00faiseacha a bhaineann le cearta an duine"
+          "http://www.xbrl.org/2003/role/label": "C7 \u2013 Teagmhais dhi\u00faltacha thromch\u00faiseacha a bhaineann le cearta an duine [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "C7 - Incidenti gravi in materia di diritti umani"
+          "http://www.xbrl.org/2003/role/label": "C7 - Incidenti gravi in materia di diritti umani [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "C7 - Dideli neigiami incidentai \u017emogaus teisi\u0173 srityje"
+          "http://www.xbrl.org/2003/role/label": "C7 - Dideli neigiami incidentai \u017emogaus teisi\u0173 srityje [member]"
         },
         "nl": {
-          "http://www.xbrl.org/2003/role/label": "C7 - Ernstige negatieve incidenten met betrekking tot mensenrechten"
+          "http://www.xbrl.org/2003/role/label": "C7 - Ernstige negatieve incidenten met betrekking tot mensenrechten [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "C7 \u2013 Powa\u017cne incydenty dotycz\u0105ce praw cz\u0142owieka"
+          "http://www.xbrl.org/2003/role/label": "C7 \u2013 Powa\u017cne incydenty dotycz\u0105ce praw cz\u0142owieka [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "C7 - Incidentes negativos graves em mat\u00e9ria de direitos humanos"
+          "http://www.xbrl.org/2003/role/label": "C7 - Incidentes negativos graves em mat\u00e9ria de direitos humanos [member]"
         }
       },
       "nillable": true,
@@ -27001,37 +27001,37 @@
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "C8 - Indt\u00e6gter fra bestemte aktiviteter og udelukkelse fra EU-referencebenchmarks"
+          "http://www.xbrl.org/2003/role/label": "C8 - Indt\u00e6gter fra bestemte aktiviteter og udelukkelse fra EU-referencebenchmarks [member]"
         },
         "de": {
-          "http://www.xbrl.org/2003/role/label": "C8 - Umsatzerl\u00f6se aus bestimmten T\u00e4tigkeiten und Ausnahme von EU-Referenzwerten"
+          "http://www.xbrl.org/2003/role/label": "C8 - Umsatzerl\u00f6se aus bestimmten T\u00e4tigkeiten und Ausnahme von EU-Referenzwerten [member]"
         },
         "en": {
           "http://www.xbrl.org/2003/role/label": "C8 - Revenues from certain activities and exclusion from EU reference benchmarks [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "C8 \u2013 Ingresos de determinadas actividades y exclusi\u00f3n de los \u00edndices de referencia de la UE"
+          "http://www.xbrl.org/2003/role/label": "C8 \u2013 Ingresos de determinadas actividades y exclusi\u00f3n de los \u00edndices de referencia de la UE [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "C8 \u2013 Chiffre d\u2019affaires de certains secteurs et exclusion des indices de r\u00e9f\u00e9rence de l\u2019Union europ\u00e9enne"
+          "http://www.xbrl.org/2003/role/label": "C8 \u2013 Chiffre d\u2019affaires de certains secteurs et exclusion des indices de r\u00e9f\u00e9rence de l\u2019Union europ\u00e9enne [member]"
         },
         "ga": {
-          "http://www.xbrl.org/2003/role/label": "C8 - Ioncaim \u00f3 ghn\u00edomha\u00edochta\u00ed \u00e1irithe agus eisiamh \u00f3 thagarmharcanna tagartha an AE"
+          "http://www.xbrl.org/2003/role/label": "C8 - Ioncaim \u00f3 ghn\u00edomha\u00edochta\u00ed \u00e1irithe agus eisiamh \u00f3 thagarmharcanna tagartha an AE [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "C8 \u2013 Ricavi da determinate attivit\u00e0 ed esclusione dagli indici di riferimento dell'UE"
+          "http://www.xbrl.org/2003/role/label": "C8 \u2013 Ricavi da determinate attivit\u00e0 ed esclusione dagli indici di riferimento dell'UE [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "C8 \u2013 Pajamos i\u0161 tam tikr\u0173 sektori\u0173 ir ne\u012ftraukimai \u012f ES lyginamuosius etalonus"
+          "http://www.xbrl.org/2003/role/label": "C8 \u2013 Pajamos i\u0161 tam tikr\u0173 sektori\u0173 ir ne\u012ftraukimai \u012f ES lyginamuosius etalonus [member]"
         },
         "nl": {
-          "http://www.xbrl.org/2003/role/label": "C8 \u2014 Ontvangsten uit bepaalde activiteiten en uitsluiting van EU-referentiebenchmarks"
+          "http://www.xbrl.org/2003/role/label": "C8 \u2014 Ontvangsten uit bepaalde activiteiten en uitsluiting van EU-referentiebenchmarks [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "C8 \u2013 Przychody z niekt\u00f3rych rodzaj\u00f3w dzia\u0142alno\u015bci i wykluczenie z unijnych wska\u017anik\u00f3w referencyjnych"
+          "http://www.xbrl.org/2003/role/label": "C8 \u2013 Przychody z niekt\u00f3rych rodzaj\u00f3w dzia\u0142alno\u015bci i wykluczenie z unijnych wska\u017anik\u00f3w referencyjnych [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "C8 \u2013 R\u00e9dito de determinadas atividades e exclus\u00e3o dos \u00edndices de refer\u00eancia da UE"
+          "http://www.xbrl.org/2003/role/label": "C8 \u2013 R\u00e9dito de determinadas atividades e exclus\u00e3o dos \u00edndices de refer\u00eancia da UE [member]"
         }
       },
       "nillable": true,
@@ -27043,37 +27043,37 @@
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "C8 \u2013 Udelukkelse fra EU-referencebenchmarks"
+          "http://www.xbrl.org/2003/role/label": "C8 \u2013 Udelukkelse fra EU-referencebenchmarks [member]"
         },
         "de": {
-          "http://www.xbrl.org/2003/role/label": "C8 \u2013  Ausnahme von EU-Referenzwerten"
+          "http://www.xbrl.org/2003/role/label": "C8 \u2013 Ausnahme von EU-Referenzwerten [member]"
         },
         "en": {
           "http://www.xbrl.org/2003/role/label": "C8 - Exclusion from EU reference benchmarks [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "C8 \u2013 Exclusi\u00f3n de los \u00edndices de referencia de la UE"
+          "http://www.xbrl.org/2003/role/label": "C8 \u2013 Exclusi\u00f3n de los \u00edndices de referencia de la UE [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "C8 - Exclusion des indices de r\u00e9f\u00e9rence de l\u2019Union europ\u00e9enne"
+          "http://www.xbrl.org/2003/role/label": "C8 - Exclusion des indices de r\u00e9f\u00e9rence de l\u2019Union europ\u00e9enne [member]"
         },
         "ga": {
-          "http://www.xbrl.org/2003/role/label": "C8 \u2013 Eisiamh \u00f3 thagarmharcanna tagartha AE"
+          "http://www.xbrl.org/2003/role/label": "C8 \u2013 Eisiamh \u00f3 thagarmharcanna tagartha AE [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "C8 \u2013 Esclusione dagli indici di riferimento dell'UE"
+          "http://www.xbrl.org/2003/role/label": "C8 \u2013 Esclusione dagli indici di riferimento dell'UE [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "C8 \u2013 Ne\u012ftraukimas \u012f ES lyginamuosius etalonus"
+          "http://www.xbrl.org/2003/role/label": "C8 \u2013 Ne\u012ftraukimas \u012f ES lyginamuosius etalonus [member]"
         },
         "nl": {
-          "http://www.xbrl.org/2003/role/label": "C8 \u2013 Uitsluiting van EU-referentiebenchmarks"
+          "http://www.xbrl.org/2003/role/label": "C8 \u2013 Uitsluiting van EU-referentiebenchmarks [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "C8 \u2013 Wykluczenie z unijnych wska\u017anik\u00f3w referencyjnych"
+          "http://www.xbrl.org/2003/role/label": "C8 \u2013 Wykluczenie z unijnych wska\u017anik\u00f3w referencyjnych [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "C8 \u2013 Exclus\u00e3o dos \u00edndices de refer\u00eancia da UE"
+          "http://www.xbrl.org/2003/role/label": "C8 \u2013 Exclus\u00e3o dos \u00edndices de refer\u00eancia da UE [member]"
         }
       },
       "periodType": "duration"
@@ -27084,37 +27084,37 @@
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "C8 \u2013 Indt\u00e6gter fra bestemte aktiviteter"
+          "http://www.xbrl.org/2003/role/label": "C8 \u2013 Indt\u00e6gter fra bestemte aktiviteter [member]"
         },
         "de": {
-          "http://www.xbrl.org/2003/role/label": "C8 \u2013 Umsatzerl\u00f6se aus bestimmten T\u00e4tigkeiten"
+          "http://www.xbrl.org/2003/role/label": "C8 \u2013 Umsatzerl\u00f6se aus bestimmten T\u00e4tigkeiten [member]"
         },
         "en": {
           "http://www.xbrl.org/2003/role/label": "C8 - Revenues from certain activities [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "C8 \u2013 Ingresos de determinadas actividades"
+          "http://www.xbrl.org/2003/role/label": "C8 \u2013 Ingresos de determinadas actividades [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "C8 \u2013 Chiffre d\u2019affaires de certains secteurs"
+          "http://www.xbrl.org/2003/role/label": "C8 \u2013 Chiffre d\u2019affaires de certains secteurs [member]"
         },
         "ga": {
-          "http://www.xbrl.org/2003/role/label": "C8 \u2013 Ioncam \u00f3 ghn\u00edomha\u00edochta\u00ed \u00e1irithe"
+          "http://www.xbrl.org/2003/role/label": "C8 \u2013 Ioncam \u00f3 ghn\u00edomha\u00edochta\u00ed \u00e1irithe [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "C8 \u2013 Ricavi da determinate attivit\u00e0"
+          "http://www.xbrl.org/2003/role/label": "C8 \u2013 Ricavi da determinate attivit\u00e0 [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "C8 \u2013 Pajamos i\u0161 tam tikr\u0173 veikl\u0173"
+          "http://www.xbrl.org/2003/role/label": "C8 \u2013 Pajamos i\u0161 tam tikr\u0173 veikl\u0173 [member]"
         },
         "nl": {
-          "http://www.xbrl.org/2003/role/label": "C8 \u2014 Ontvangsten uit bepaalde activiteiten"
+          "http://www.xbrl.org/2003/role/label": "C8 \u2014 Ontvangsten uit bepaalde activiteiten [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "C8 \u2013 Przychody z niekt\u00f3rych rodzaj\u00f3w dzia\u0142alno\u015bci"
+          "http://www.xbrl.org/2003/role/label": "C8 \u2013 Przychody z niekt\u00f3rych rodzaj\u00f3w dzia\u0142alno\u015bci [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "C8 \u2013 R\u00e9dito de determinadas atividades"
+          "http://www.xbrl.org/2003/role/label": "C8 \u2013 R\u00e9dito de determinadas atividades [member]"
         }
       },
       "periodType": "duration"
@@ -27125,37 +27125,37 @@
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "C9 \u2013 K\u00f8nsfordeling i ledelsesorganet"
+          "http://www.xbrl.org/2003/role/label": "C9 \u2013 K\u00f8nsfordeling i ledelsesorganet [member]"
         },
         "de": {
-          "http://www.xbrl.org/2003/role/label": "C9 - Geschlechtervielfalt im Leitungsorgan"
+          "http://www.xbrl.org/2003/role/label": "C9 - Geschlechtervielfalt im Leitungsorgan [member]"
         },
         "en": {
           "http://www.xbrl.org/2003/role/label": "C9 - Gender diversity ratio in the governance body [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "C9 \u2013 \u00cdndice de diversidad de g\u00e9nero en el \u00f3rgano de gobierno"
+          "http://www.xbrl.org/2003/role/label": "C9 \u2013 \u00cdndice de diversidad de g\u00e9nero en el \u00f3rgano de gobierno [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "C9 \u2013 Ratio de mixit\u00e9 au sein de l\u2019organe de gouvernance"
+          "http://www.xbrl.org/2003/role/label": "C9 \u2013 Ratio de mixit\u00e9 au sein de l\u2019organe de gouvernance [member]"
         },
         "ga": {
-          "http://www.xbrl.org/2003/role/label": "C9 - C\u00f3imheas \u00e9ags\u00falachta inscne sa chomhlacht rialachais"
+          "http://www.xbrl.org/2003/role/label": "C9 - C\u00f3imheas \u00e9ags\u00falachta inscne sa chomhlacht rialachais [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "C9 - Diversit\u00e0 di genere nell'organo di governance"
+          "http://www.xbrl.org/2003/role/label": "C9 - Diversit\u00e0 di genere nell'organo di governance [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "C9 - Ly\u010di\u0173 \u012fvairov\u0117s rodiklis valdymo organe"
+          "http://www.xbrl.org/2003/role/label": "C9 - Ly\u010di\u0173 \u012fvairov\u0117s rodiklis valdymo organe [member]"
         },
         "nl": {
-          "http://www.xbrl.org/2003/role/label": "C9 \u2014 Genderdiversiteitsverhouding in het bestuursorgaan"
+          "http://www.xbrl.org/2003/role/label": "C9 \u2014 Genderdiversiteitsverhouding in het bestuursorgaan [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "C9 - Wska\u017anik zr\u00f3\u017cnicowania organu zarz\u0105dzaj\u0105cego pod wzgl\u0119dem p\u0142ci"
+          "http://www.xbrl.org/2003/role/label": "C9 - Wska\u017anik zr\u00f3\u017cnicowania organu zarz\u0105dzaj\u0105cego pod wzgl\u0119dem p\u0142ci [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "C9 - R\u00e1cio de diversidade de g\u00e9nero no \u00f3rg\u00e3o de governa\u00e7\u00e3o"
+          "http://www.xbrl.org/2003/role/label": "C9 - R\u00e1cio de diversidade de g\u00e9nero no \u00f3rg\u00e3o de governa\u00e7\u00e3o [member]"
         }
       },
       "nillable": true,
