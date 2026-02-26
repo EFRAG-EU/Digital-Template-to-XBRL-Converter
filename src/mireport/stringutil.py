@@ -59,8 +59,8 @@ def normalizeLabelText(text: str) -> str:
 
 def stripLabelSuffix(text: str) -> str:
     """Strip any [asdf] suffix from label text."""
-    label_no_suffix, _, _ = text.rpartition("[")
-    return label_no_suffix.rstrip()
+    before, sep, _ = text.rpartition("[")
+    return stripped if sep and (stripped := before.rstrip()) else text
 
 
 NumberGroupingApostrophes = frozenset("'`´’′")
