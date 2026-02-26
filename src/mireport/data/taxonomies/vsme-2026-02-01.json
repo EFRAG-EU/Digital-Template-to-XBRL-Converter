@@ -24681,47 +24681,6 @@
       },
       "periodType": "duration"
     },
-    "vsme:B2PracticesPoliciesAndFutureInitiativesForTransitioningTowardsAMoreSustainableEconomyMember": {
-      "abstract": true,
-      "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
-      "labels": {
-        "da": {
-          "http://www.xbrl.org/2003/role/label": "B2 - Praksisser, politikker og fremtidige initiativer for omstilling til en mere b\u00e6redygtig \u00f8konomi [member]"
-        },
-        "de": {
-          "http://www.xbrl.org/2003/role/label": "B2 - Verfahrensweisen, Richtlinien und k\u00fcnftige Initiativen f\u00fcr den \u00dcbergang zu einer nachhaltigeren Wirtschaft [member]"
-        },
-        "en": {
-          "http://www.xbrl.org/2003/role/label": "B2 - Practices, policies and future initiatives for transitioning towards a more sustainable economy [member]"
-        },
-        "es": {
-          "http://www.xbrl.org/2003/role/label": "B2 \u2013 Pr\u00e1cticas, pol\u00edticas e iniciativas futuras para la transici\u00f3n hacia una econom\u00eda m\u00e1s sostenible [member]"
-        },
-        "fr": {
-          "http://www.xbrl.org/2003/role/label": "B2 \u2013 Pratiques, politiques et initiatives futures en vue de la transition vers une \u00e9conomie plus durable [member]"
-        },
-        "ga": {
-          "http://www.xbrl.org/2003/role/label": "B2 - Cleachtais, beartais agus tionscnaimh amach anseo chun aistri\u00fa i dtreo geilleagar n\u00edos inbhuanaithe [member]"
-        },
-        "it": {
-          "http://www.xbrl.org/2003/role/label": "B2 - Pratiche, politiche e iniziative future per la transizione verso un'economia pi\u00f9 sostenibile [member]"
-        },
-        "lt": {
-          "http://www.xbrl.org/2003/role/label": "Praktikos, politikos ir b\u016bsimos iniciatyvos pereinant prie tvaresn\u0117s ekonomikos [member]"
-        },
-        "nl": {
-          "http://www.xbrl.org/2003/role/label": "B2 \u2014 Praktijken, beleid en toekomstige initiatieven voor de transitie naar een duurzamere economie [member]"
-        },
-        "pl": {
-          "http://www.xbrl.org/2003/role/label": "B2 \u2013 Praktyki, polityki i przysz\u0142e inicjatywy na rzecz przej\u015bcia na bardziej zr\u00f3wnowa\u017con\u0105 gospodark\u0119 [member]"
-        },
-        "pt": {
-          "http://www.xbrl.org/2003/role/label": "B2 \u2014 Pr\u00e1ticas, pol\u00edticas e iniciativas futuras para a transi\u00e7\u00e3o para uma economia mais sustent\u00e1vel [member]"
-        }
-      },
-      "periodType": "duration"
-    },
     "vsme:B3-EnergyAndGreenhouseGasEmissionsMember": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
@@ -25142,7 +25101,7 @@
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "B6 \u2013 Vand [member]"
+          "http://www.xbrl.org/2003/role/label": "B6 - Vandforbrug [member]"
         },
         "de": {
           "http://www.xbrl.org/2003/role/label": "B6 \u2013 Wasserverbrauch [member]"
@@ -25160,7 +25119,7 @@
           "http://www.xbrl.org/2003/role/label": "B6 - Tomhaltas Uisce [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "B6 \u2013 Acque [member]"
+          "http://www.xbrl.org/2003/role/label": "B6 - Consumo Idrico [member]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "B6 \u2013 Vandens suvartojimas [member]"
@@ -25183,7 +25142,7 @@
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "B6 - Vand [member]"
+          "http://www.xbrl.org/2003/role/label": "B6 - Samlede Vandudtag [member]"
         },
         "de": {
           "http://www.xbrl.org/2003/role/label": "B6 \u2013 Wasserentnahme [member]"
@@ -25348,7 +25307,7 @@
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "B7 - Ressourceforbrug, cirkul\u00e6r \u00f8konomi og affaldsh\u00e5ndtering [member]"
+          "http://www.xbrl.org/2003/role/label": "B7 - Produktion af affald [member]"
         },
         "de": {
           "http://www.xbrl.org/2003/role/label": "B7 \u2013 Abfallaufkommen [member]"
@@ -25366,7 +25325,7 @@
           "http://www.xbrl.org/2003/role/label": "B7 - Dramha\u00edl a ghintear [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "B7 \u2013 Uso delle risorse, economia circolare e gestione dei rifiuti [member]"
+          "http://www.xbrl.org/2003/role/label": "B7 - Rifiuti generati [member]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "B7 - I\u0161metam\u0173j\u0173 atliek\u0173 kiekis [member]"
@@ -33226,7 +33185,6 @@
           "vsme:B1DisclosureOfSustainabilityRelatedCertificationSOrLabelSMember",
           "vsme:B1ListOfSiteSMember",
           "vsme:B2-PracticesPoliciesAndFutureInitiativesForTransitioningTowardsAMoreSustainableEconomyMember",
-          "vsme:B2PracticesPoliciesAndFutureInitiativesForTransitioningTowardsAMoreSustainableEconomyMember",
           "vsme:B2CooperativeSpecificDisclosuresMember",
           "vsme:B3-EnergyAndGreenhouseGasEmissionsMember",
           "vsme:B3TotalEnergyConsumptionInMWhMember",
@@ -33419,7 +33377,6 @@
           "vsme:B1DisclosureOfSustainabilityRelatedCertificationSOrLabelSMember",
           "vsme:B1ListOfSiteSMember",
           "vsme:B2-PracticesPoliciesAndFutureInitiativesForTransitioningTowardsAMoreSustainableEconomyMember",
-          "vsme:B2PracticesPoliciesAndFutureInitiativesForTransitioningTowardsAMoreSustainableEconomyMember",
           "vsme:B2CooperativeSpecificDisclosuresMember",
           "vsme:B3-EnergyAndGreenhouseGasEmissionsMember",
           "vsme:B3TotalEnergyConsumptionInMWhMember",
