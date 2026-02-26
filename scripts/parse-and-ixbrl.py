@@ -71,6 +71,12 @@ def createArgParser() -> argparse.ArgumentParser:
         default=False,
         help="Generate a viewer as well.",
     )
+    parser.add_argument(
+        "--json",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Generate JSON output as well.",
+    )
 
     return parser
 
@@ -159,8 +165,15 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, ExcelProc
                 taxonomyPackages=args.taxonomy_packages,
                 workOffline=args.offline,
             )
+
+            if not args.viewer and not args.json:
+                arelleResults = arp.validateReportPackage(reportPackage)
+                resultsBuilder.addMessages(arelleResults.messages)
+
             if args.viewer:
                 arelleResults = arp.generateInlineViewer(reportPackage)
+                resultsBuilder.addMessages(arelleResults.messages)
+
                 if arelleResults.has_viewer:
                     viewer = arelleResults.viewer
                     if not dir_specified:
@@ -169,10 +182,21 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, ExcelProc
                         viewer.saveToDirectory(output_path)
                 else:
                     pc.addDevInfoMessage("Failed to create viewer.")
-            else:
-                arelleResults = arp.validateReportPackage(reportPackage)
 
-            resultsBuilder.addMessages(arelleResults.messages)
+            if args.json:
+                arelleResults = arp.generateXBRLJson(reportPackage)
+                resultsBuilder.addMessages(arelleResults.messages)
+
+                if arelleResults.has_json:
+                    json_output = arelleResults.xBRL_JSON
+                    if not dir_specified:
+                        json_path = output_path.with_suffix(".json")
+                        json_output.saveToFilepath(json_path)
+                    else:
+                        json_output.saveToDirectory(output_path)
+                else:
+                    pc.addDevInfoMessage("Failed to create JSON output.")
+
     return resultsBuilder.build(), excel
 
 

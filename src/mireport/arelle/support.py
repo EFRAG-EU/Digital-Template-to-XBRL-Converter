@@ -130,6 +130,10 @@ class ArelleProcessingResult:
         raise ArelleRelatedException("No JSON stored/retrieved.")
 
     @property
+    def has_json(self) -> bool:
+        return self._xbrlJson is not None
+
+    @property
     def messages(self) -> list[Message]:
         return list(self._validationMessages)
 

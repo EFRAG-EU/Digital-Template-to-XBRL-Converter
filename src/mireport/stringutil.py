@@ -45,6 +45,24 @@ def unicodeSpaceNormalize(text: str) -> str:
     return text.translate(_unicodeSpaceNormalize_Translation_Table)
 
 
+def normalizeLabelText(text: str) -> str:
+    """Remove extraneous spaces from a label and normalize other characters
+    (such as dashes) so that it is easy to compare against the label from
+    another tool (or Excel template)."""
+    # Replace any run of whitespace (that matches str.isspace()), unicode or
+    # ascii, with a single space. Used this way, strip() is also done by the
+    # no-args split().
+    out = " ".join(text.split())
+    out = unicodeDashNormalization(out)
+    return out
+
+
+def stripLabelSuffix(text: str) -> str:
+    """Strip any [asdf] suffix from label text."""
+    label_no_suffix, _, _ = text.rpartition("[")
+    return label_no_suffix.rstrip()
+
+
 NumberGroupingApostrophes = frozenset("'`´’′")
 
 
