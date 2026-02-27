@@ -151,3 +151,9 @@ In this case, the undertaking should select “Option A (Basic Module only)” i
 Please note that in the inline XBRL report, all disclosures that the undertaking has filled in the template will be displayed
 ![Image](https://github.com/user-attachments/assets/552cd3d2-66b3-4ad6-9c49-504d1278cb20)
 ![Image](https://github.com/user-attachments/assets/c891d2df-553e-4d59-90c1-7322e4588fee)
+
+## **20. If a language  is not present in the VSME Digital Template, could I add my own translation to the VSME Digital Template?**
+
+It is technically possible to add a new translation to the Digital Template by unlocking the digital template using the password provided in the Explanatory Note and using correctly the named ranges. Please note however, that the translation will not be official and therefore EFRAG assumes no responsibilities for the content of the translation. 
+Moreover, the process of adding a new translation could compromise the correct functioning and the validations within the template. EFRAG is not liable for any issue that could arise after structural changes made to the Digital Template by third parties in any attempt to implement new translations or other elements.
+Please note that official translations within the VSME Digital Template are those reviewed by National Standard Setters and published on EFRAG's website. EFRAG encourages, in case the undertaking is interested in a translation which is not available at the moment in the VSME Digital Template, to flag the interest to relevant National Standard Setter so that they could contact directly EFRAG.
