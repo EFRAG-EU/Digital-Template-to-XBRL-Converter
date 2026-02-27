@@ -58,18 +58,22 @@ def doMigrationChecks(conversion: dict) -> tuple[MigrationOutcome, str]:
         )  # can't do anything if we can't read the report
     elif check_results.version_is_same:
         return MigrationOutcome.SUCCESS, version  # up-to-date version
-    elif check_results.validation_is_incomplete:
-        return MigrationOutcome.INVALID, version  # invalid report, can't proceed
     elif check_results.version_major_minor_same:
         return (
             MigrationOutcome.MIGRATION_OPTIONAL,
             version,
         )  # optional migration offered
     else:
-        return (
-            MigrationOutcome.MIGRATION_REQUIRED,
-            version,
-        )  # older (major) version, must migrate
+        # Definitely an old report that we want to force migrate to the latest version
+        if check_results.validation_is_incomplete:
+            # invalid report, migration cannot proceed.
+            return MigrationOutcome.INVALID, version
+        else:
+            # older (major) version, must migrate
+            return (
+                MigrationOutcome.MIGRATION_REQUIRED,
+                version,
+            )
 
 
 def checkMigration(conversion: dict) -> Response | None:
@@ -87,10 +91,16 @@ def checkMigration(conversion: dict) -> Response | None:
                 )
             )
         case MigrationOutcome.INVALID:
-            flash("Report validation is not complete", "error")
+            flash(
+                "Digital template contains validation issues. These must be resolved before uploading.",
+                "error",
+            )
             response = make_response(redirect(url_for("basic.index")))
         case MigrationOutcome.MISSING:
-            flash("Report missing for migration", "error")
+            flash(
+                "The uploaded file is not recognised as a valid digital template.",
+                "error",
+            )
             response = make_response(redirect(url_for("basic.index")))
         case MigrationOutcome.MIGRATION_OPTIONAL:
             pass  # Continue with conversion

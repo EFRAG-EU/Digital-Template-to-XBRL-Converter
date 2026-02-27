@@ -507,7 +507,7 @@ class ExcelProcessor:
         template_validation_fail_name = "template_label_incomplete"
 
         validation_failed_expected_value = self.getSingleStringValue(
-            template_validation_fail_name
+            template_validation_fail_name, fallbackValue="INCOMPLETE"
         )
         validation_status = self.getSingleStringValue(template_validation_name)
         is_incomplete = bool(
@@ -803,9 +803,10 @@ class ExcelProcessor:
         *,
         row: int = -1,
         column: int = -1,
+        fallbackValue: str = "",
     ) -> str:
         value = self.getSingleValue(definedName, row=row, column=column)
-        return str(value) if value is not None else ""
+        return str(value) if value is not None else str(fallbackValue)
 
     def getSimpleUnit(
         self, unitHolder: CellAndXBRLMetadataHolder, cell: CellType
