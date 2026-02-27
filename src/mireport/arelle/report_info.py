@@ -193,7 +193,7 @@ class ArelleReportProcessor:
         viewerBytesIO = BytesIO()
         viewer_plugin_options = {
             "saveViewerDest": viewerBytesIO,
-            "viewer_feature_review": True,
+            "viewer_feature_review": False,
             "validationMessages": True,
             "viewerNoCopyScript": True,
             "viewer_feature_highlight_facts_on_startup": True,
