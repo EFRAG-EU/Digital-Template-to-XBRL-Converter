@@ -25151,7 +25151,7 @@
           "http://www.xbrl.org/2003/role/label": "B6 - Water Withdrawal [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "Extracci\u00f3n de agua [member]"
+          "http://www.xbrl.org/2003/role/label": "B6 - Extracci\u00f3n de agua [member]"
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "B6 \u2013 Pr\u00e9l\u00e8vements d'eau [member]"
@@ -25918,10 +25918,10 @@
           "http://www.xbrl.org/2003/role/label": "Basis for reporting [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "Base para la elaboraci\u00f3n [member]"
+          "http://www.xbrl.org/2003/role/label": "Base para la presentaci\u00f3n de informes [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "Base de pr\u00e9paration [member]"
+          "http://www.xbrl.org/2003/role/label": "Base de pr\u00e9sentation [member]"
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "An bun\u00fas leis an ullmh\u00fa [member]"
@@ -25930,7 +25930,7 @@
           "http://www.xbrl.org/2003/role/label": "Base per la redazione [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "Ataskaitos rengimo pagrindas [member]"
+          "http://www.xbrl.org/2003/role/label": "Atskaitomyb\u0117s pagrindas [member]"
         },
         "nl": {
           "http://www.xbrl.org/2003/role/label": "Basis voor verslaggeving [member]"
@@ -29824,7 +29824,7 @@
           "http://www.xbrl.org/2003/role/label": "Publication de toute autre information environnementale et/ ou sp\u00e9cifique \u00e0 l'entit\u00e9"
         },
         "ga": {
-          "http://www.xbrl.org/2003/role/label": "Nochtadh aon nochta\u00ed comhshaoil eile agus/n\u00f3 comhshaoil sonrach don ghn\u00f3thas"
+          "http://www.xbrl.org/2003/role/label": "Nochtadh aon nochtadh comhshaoil eile a bhaineann go sonrach leis an gcomhshaol agus/n\u00f3 a bhaineann go sonrach le comhshaol"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Comunicazione di qualsiasi altra informativa ambientale e/o specifica per soggetto"
@@ -39146,7 +39146,7 @@
           "http://www.xbrl.org/2003/role/label": "Vestiging gelegen in een biodiversiteitsgevoelig gebied"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "Lokalizacja na obszarze wra\u017cliwym pod wzgl\u0119dem bior\u00f3\u017cnorodno\u015bci"
+          "http://www.xbrl.org/2003/role/label": "Lokalizacja znajduj\u0105ca si\u0119 na obszarach wra\u017cliwych pod wzgl\u0119dem bior\u00f3\u017cnorodno\u015bci"
         },
         "pt": {
           "http://www.xbrl.org/2003/role/label": "S\u00edtio localizado em zona sens\u00edvel \u00e0 biodiversidade"
@@ -39222,7 +39222,7 @@
           "http://www.xbrl.org/2003/role/label": "Vestiging gelegen nabij een biodiversiteitsgevoelig gebied"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "Lokalizacja na obszarze wra\u017cliwym pod wzgl\u0119dem bior\u00f3\u017cnorodno\u015bci"
+          "http://www.xbrl.org/2003/role/label": "Lokalizacja znajduj\u0105ca si\u0119 w pobli\u017cu obszar\u00f3w wra\u017cliwych pod wzgl\u0119dem bior\u00f3\u017cnorodno\u015bci"
         },
         "pt": {
           "http://www.xbrl.org/2003/role/label": "S\u00edtio localizado pr\u00f3ximo de zona sens\u00edvel \u00e0 biodiversidade"
@@ -42469,7 +42469,7 @@
         },
         "it": {
           "http://www.xbrl.org/2003/role/documentation": "Calcolo: rifiuti reindirizzati al riciclaggio o al riutilizzo + rifiuti destinati allo smaltimento (massa)",
-          "http://www.xbrl.org/2003/role/label": "Totale rifiuti riciclati, riutilizzati e destinati allo smaltimento (volume)"
+          "http://www.xbrl.org/2003/role/label": "Totale rifiuti riciclati, riutilizzati e destinati allo smaltimento (massa)"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/documentation": "Apskai\u010diavimas: perdirbimui arba pakartotiniam naudojimui nukreipt\u0173 atliek\u0173 kiekis + i\u0161metimui nukreipt\u0173 atliek\u0173 kiekis (mas\u0117)",
@@ -44539,7 +44539,7 @@
           "http://www.xbrl.org/2003/role/label": "D\u00e9chets destin\u00e9s \u00e0 \u00eatre \u00e9limin\u00e9s (en masse)"
         },
         "ga": {
-          "http://www.xbrl.org/2003/role/label": "Dramha\u00edl arna treor\u00fa chuig di\u00fascairt (toirt)"
+          "http://www.xbrl.org/2003/role/label": "Dramha\u00edl arna treor\u00fa chuig di\u00fascairt (mais)"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Rifiuti destinati allo smaltimento (massa)"

@@ -7,6 +7,7 @@ from collections import defaultdict
 from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import date, datetime
+from functools import lru_cache
 from itertools import combinations
 from pathlib import Path
 from typing import BinaryIO, Callable, NamedTuple, Optional, Self
@@ -41,6 +42,7 @@ from mireport.excelutil import (
 from mireport.exceptions import EarlyAbortException, InlineReportException
 from mireport.json import getObject, getResource
 from mireport.localise import as_xmllang, get_locale_from_str
+from mireport.stringutil import stripLabelSuffix
 from mireport.taxonomy import (
     Concept,
     QName,
@@ -77,6 +79,38 @@ def eeDomainAsText(concept: Concept) -> str:
 
 def conceptsToText(concepts: Iterable[Concept]) -> str:
     return ", ".join(sorted(str(c.qname) for c in concepts))
+
+
+@lru_cache(maxsize=100)
+def eeDomainByLabel(eeConcept: Concept) -> dict[str, tuple[Concept, str]]:
+    if not (eeConcept.isEnumerationSet or eeConcept.isEnumerationSingle):
+        raise ValueError(
+            f"Concept {eeConcept} with data-type {eeConcept.dataType} is not of enumeration type."
+        )
+
+    eeDomainLabels: dict[str, tuple[Concept, str]] = dict()
+    for eeConcept in eeConcept.getEEDomain():
+        all_labels = eeConcept.getAllStandardLabels()
+        for actual_label in all_labels:
+            result = (eeConcept, actual_label)
+            eeDomainLabels[actual_label] = result
+
+            # difflib matching works better if we strip the [member] suffix
+            label_no_suffix = stripLabelSuffix(actual_label)
+            eeDomainLabels[label_no_suffix] = result
+    return eeDomainLabels
+
+
+def getClosestEEMemberMatch(
+    eeConcept: Concept, text: str
+) -> Optional[tuple[Concept, str]]:
+    eeDomainLabels = eeDomainByLabel(eeConcept)
+    closest_matches = difflib.get_close_matches(
+        text, eeDomainLabels.keys(), n=1, cutoff=0.6
+    )
+    if closest_matches:
+        return eeDomainLabels[closest_matches[0]]
+    return None
 
 
 class TemplateCheckResult(NamedTuple):
@@ -176,6 +210,12 @@ class ExcelProcessor:
     @property
     def unusedNames(self) -> list[str]:
         return sorted(dn.name for dn in self._unusedDefinedNames if dn.name)
+
+    @property
+    def preferredLanguage(self) -> str:
+        if self._outputLocale is not None:
+            return as_xmllang(self._outputLocale)
+        return self._report.taxonomy.defaultLanguage or "en"
 
     def populateReport(self) -> InlineReport:
         """
@@ -1596,30 +1636,24 @@ class ExcelProcessor:
                             Severity.WARNING,
                             MessageType.DevInfo,
                             taxonomy_concept=concept,
+                            excel_reference=excelCellRef(stuff.worksheet, cell),
                         )
+                elif result := getClosestEEMemberMatch(concept, s_value):
+                    eeMember, label_matched = result
+                    fb.setHiddenValue(eeMember.expandedName)
+                    self._results.addMessage(
+                        f"Using closest match EE concept when reporting {concept.qname}. Cell value '{value}'. Chosen EE domain member: {eeMember.qname} with label: '{label_matched}'",
+                        Severity.WARNING,
+                        MessageType.Conversion,
+                        taxonomy_concept=concept,
+                        excel_reference=excelCellRef(stuff.worksheet, cell),
+                    )
                 else:
-                    eeDomainLabels: dict[str, Concept] = dict(
-                        (label.replace("[member]", "").strip(), member)
-                        for member in concept.getEEDomain()
-                        if (label := member.getStandardLabel()) is not None
+                    self._results.addMessage(
+                        f"Unable to find EE concept when reporting {concept.qname}. Cell value '{value}'.",
+                        Severity.ERROR,
+                        MessageType.Conversion,
                     )
-                    closest_matches: Optional[list[str]] = difflib.get_close_matches(
-                        s_value, eeDomainLabels.keys(), n=1, cutoff=0.6
-                    )
-                    if closest_matches:
-                        eeValue = eeDomainLabels[closest_matches[0]]
-                        fb.setHiddenValue(eeValue.expandedName)
-                        self._results.addMessage(
-                            f"Using closest match EE concept when reporting {concept.qname}. Cell value '{value}'. Chosen EE domain member: {eeValue.qname}; part of label used: '{closest_matches[0]}'",
-                            Severity.WARNING,
-                            MessageType.Conversion,
-                        )
-                    else:
-                        self._results.addMessage(
-                            f"Unable to find EE concept when reporting {concept.qname}. Cell value '{value}'. EE domain: {eeDomainAsText(concept)}",
-                            Severity.ERROR,
-                            MessageType.Conversion,
-                        )
 
             if (presetDimensions := self._presetDimensions.get(stuff)) is not None:
                 for dim, dimValue in presetDimensions.items():
@@ -1684,7 +1718,10 @@ class ExcelProcessor:
                 eeSetValue.add(eeMember)
                 value.append(
                     eeMember.getStandardLabel(
-                        fallbackIfMissing=str(eeMember.qname), removeSuffix=True
+                        self.preferredLanguage,
+                        fallbackIfMissing=str(eeMember.qname),
+                        removeSuffix=True,
+                        fallbackToAnyLang=True,
                     )
                 )
             elif isinstance(v, str) and v == EE_SET_DESIRED_EMPTY_PLACEHOLDER_VALUE:
@@ -1708,7 +1745,7 @@ class ExcelProcessor:
                     warn = True
                     eeConcept = self._report.taxonomy.getConceptForLabel(fake_value)
                 if eeConcept is not None:
-                    value.append(str(v))
+                    value.append(v)
                     eeSetValue.add(eeConcept)
                     if warn:
                         self._results.addMessage(
@@ -1718,6 +1755,17 @@ class ExcelProcessor:
                             taxonomy_concept=concept,
                             excel_reference=excelCellRef(stuff.worksheet, cell),
                         )
+                elif result := getClosestEEMemberMatch(concept, v):
+                    eeConcept, label_matched = result
+                    value.append(v)
+                    eeSetValue.add(eeConcept)
+                    self._results.addMessage(
+                        f"Using closest match EE concept when reporting {concept.qname}. Cell value '{v}'. Chosen EE domain member: {eeConcept.qname} with label: '{label_matched}'",
+                        Severity.WARNING,
+                        MessageType.Conversion,
+                        taxonomy_concept=concept,
+                        excel_reference=excelCellRef(stuff.worksheet, cell),
+                    )
                 else:
                     self._results.addMessage(
                         f"Unable to find EE member when reporting {concept.qname}. Cell value '{v}'.",
