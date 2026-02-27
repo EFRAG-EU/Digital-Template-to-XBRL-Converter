@@ -97,7 +97,10 @@ def checkMigration(conversion: dict) -> Response | None:
             )
             response = make_response(redirect(url_for("basic.index")))
         case MigrationOutcome.MISSING:
-            flash("The uploaded file is not recognised as a valid digital template.", "error")
+            flash(
+                "The uploaded file is not recognised as a valid digital template.",
+                "error",
+            )
             response = make_response(redirect(url_for("basic.index")))
         case MigrationOutcome.MIGRATION_OPTIONAL:
             pass  # Continue with conversion
