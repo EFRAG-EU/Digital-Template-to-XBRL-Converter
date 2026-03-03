@@ -47,7 +47,12 @@ from mireport.localise import (
 from mireport.taxonomy import getTaxonomy, listTaxonomies
 
 from .blueprints import convert_bp
-from .migration import MIGRATION_WORKING, MigrationOutcome, checkMigration
+from .migration import (
+    MIGRATION_WORKING,
+    MigrationOutcome,
+    checkMigration,
+    returnMigrationStatus,
+)
 
 ENABLE_CAPTCHA = False
 ENABLE_MIGRATION = False
@@ -410,6 +415,8 @@ def convert(id: str) -> Response:
             ):
                 # Migration deemed to be required so no conversion done at this stage.
                 return migrationResponse
+
+            returnMigrationStatus(conversion)
 
             results = doConversion(conversion, id)
             conversion["results"] = results.toDict()

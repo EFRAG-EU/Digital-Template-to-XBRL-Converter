@@ -613,6 +613,31 @@ class ExcelProcessor:
         finally:
             processor._workbook.close()
 
+    @classmethod
+    def checkMigrationStatus(cls, excelBlob: BinaryIO) -> bool | None:
+        """
+        Check the report template for internal validation and version information.
+        """
+        processor = cls(
+            excelBlob,
+            ConversionResultsBuilder(),
+            VSME_DEFAULTS,
+        )
+        try:
+            processor._loadWorkbook(read_only=True)
+            assert processor._workbook
+            if processor._workbook.defined_names.get("template_migration_status"):
+                if (processor.getSingleValue("template_migration_status")) is None:
+                    return True
+                else:
+                    return False
+            else:
+                return False
+        except Exception:
+            return None
+        finally:
+            processor._workbook.close()
+
     def abortEarlyIfErrors(self) -> None:
         if self._results.hasErrors():
             raise EarlyAbortException(
