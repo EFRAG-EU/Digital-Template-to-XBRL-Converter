@@ -1,9 +1,5 @@
 import argparse
-import logging
 from pathlib import Path
-
-import rich.traceback
-from rich.logging import RichHandler
 
 import mireport
 import mireport.taxonomy
@@ -11,7 +7,13 @@ from mireport.arelle.report_info import (
     ARELLE_VERSION_INFORMATION,
     ArelleReportProcessor,
 )
-from mireport.cli import validateTaxonomyPackages
+from mireport.cli import (
+    configure_rich_output,
+    validateTaxonomyPackages,
+)
+from mireport.cli import (
+    console_print as print,
+)
 from mireport.conversionresults import ConversionResults, ConversionResultsBuilder
 from mireport.excelprocessor import (
     VSME_DEFAULTS,
@@ -245,11 +247,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    rich.traceback.install(show_locals=False)
-    logging.basicConfig(
-        format="%(message)s",
-        datefmt="[%Y-%m-%d %H:%M:%S]",
-        handlers=[RichHandler(rich_tracebacks=True)],
-    )
-    logging.captureWarnings(True)
+    configure_rich_output()
     main()
