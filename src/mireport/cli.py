@@ -29,8 +29,8 @@ _EMOJI_DELETE_TABLE = str.maketrans(
             (0x1F900, 0x1F9FF),  # Supplemental Symbols & Pictographs
             (0x1FA00, 0x1FA7F),  # Chess Symbols
             (0x1FA80, 0x1FAFF),  # Symbols and Pictographs Extended-A
-            (0x2600, 0x26FF),    # Miscellaneous Symbols
-            (0x2700, 0x27BF),    # Dingbats
+            (0x2600, 0x26FF),  # Miscellaneous Symbols
+            (0x2700, 0x27BF),  # Dingbats
         ]
         for i in range(start, end + 1)
     }

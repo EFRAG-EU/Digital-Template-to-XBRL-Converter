@@ -35,9 +35,20 @@ from mireport.xml import (
     getBootstrapQNameMaker,
 )
 
-MEASUREMENT_GUIDANCE_LABEL_ROLE = "http://www.xbrl.org/2003/role/measurementGuidance"
 STANDARD_LABEL_ROLE = "http://www.xbrl.org/2003/role/label"
 DOCUMENTATION_LABEL_ROLE = "http://www.xbrl.org/2003/role/documentation"
+TERSE_LABEL_ROLE = "http://www.xbrl.org/2003/role/terseLabel"
+VERBOSE_LABEL_ROLE = "http://www.xbrl.org/2003/role/verboseLabel"
+
+TOTAL_LABEL_ROLE = "http://www.xbrl.org/2003/role/totalLabel"
+PERIOD_START_LABEL_ROLE = "http://www.xbrl.org/2003/role/periodStartLabel"
+PERIOD_END_LABEL_ROLE = "http://www.xbrl.org/2003/role/periodEndLabel"
+
+DEFINITION_GUIDANCE_LABEL_ROLE = "http://www.xbrl.org/2003/role/definitionGuidance"
+DISCLOSURE_GUIDANCE_LABEL_ROLE = "http://www.xbrl.org/2003/role/disclosureGuidance"
+PRESENTATION_GUIDANCE_LABEL_ROLE = "http://www.xbrl.org/2003/role/presentationGuidance"
+MEASUREMENT_GUIDANCE_LABEL_ROLE = "http://www.xbrl.org/2003/role/measurementGuidance"
+
 
 LABEL_SUFFIX_PATTERN = re.compile(r"\s*\[[A-Z]?[a-z ]+\]\s*$")
 
@@ -175,7 +186,7 @@ class Concept:
             )
             self._eeDomainMemberStrings = None
 
-    def _getLabelForRole(
+    def getLabelForRole(
         self,
         roleUri: str,
         requestedLanguage: Optional[str] = None,
@@ -184,6 +195,7 @@ class Concept:
         fallbackToQName: bool = False,
         removeSuffix: bool = False,
     ) -> Optional[str]:
+        """Return the label for *roleUri* in the requested language."""
         if (defaultLanguage := self._taxonomy.defaultLanguage) is None:
             return None
 
@@ -263,7 +275,7 @@ class Concept:
         fallbackToAnyLang: bool = False,
         fallbackToQName: bool = False,
     ) -> Optional[str]:
-        return self._getLabelForRole(
+        return self.getLabelForRole(
             STANDARD_LABEL_ROLE,
             requestedLanguage=lang,
             fallbackLabel=fallbackIfMissing,
@@ -281,7 +293,7 @@ class Concept:
         fallbackToAnyLang: bool = False,
         fallbackToQName: bool = False,
     ) -> Optional[str]:
-        return self._getLabelForRole(
+        return self.getLabelForRole(
             DOCUMENTATION_LABEL_ROLE,
             requestedLanguage=lang,
             fallbackLabel=fallbackIfMissing,
@@ -329,6 +341,15 @@ class Concept:
         """Return a tuple of all standard labels for this concept."""
         return tuple(self._getLabelIterable(STANDARD_LABEL_ROLE))
 
+    @property
+    def labelRoles(self) -> frozenset[str]:
+        """All label role URIs for which this concept has at least one label."""
+        return frozenset(
+            role_uri
+            for lang_labels in self._labels.values()
+            for role_uri in lang_labels
+        )
+
     @cache
     def getRequiredUnitQNames(self) -> Optional[frozenset[QName]]:
         """If there is a valid UTR unitId or a valid unit QName in the
@@ -338,7 +359,7 @@ class Concept:
         if not self.isNumeric:
             return None
 
-        measurementLabel = self._getLabelForRole(
+        measurementLabel = self.getLabelForRole(
             MEASUREMENT_GUIDANCE_LABEL_ROLE,
             fallbackToAnyLang=True,
         )
@@ -487,7 +508,7 @@ class Relationship(NamedTuple):
     ) -> Optional[str]:
         """Get the label for this relationship's concept."""
         labelRole = self.preferredLabel or STANDARD_LABEL_ROLE
-        return self.concept._getLabelForRole(
+        return self.concept.getLabelForRole(
             labelRole,
             requestedLanguage,
             removeSuffix=removeSuffix,
@@ -798,6 +819,11 @@ class Taxonomy:
                 raise AmbiguousComponentException(
                     f"Ambiguous label specified. Candidate concepts: {', '.join(str(concept.qname) for concept in sorted(possible))}"
                 )
+
+    @cached_property
+    def concepts(self) -> frozenset[Concept]:
+        """All concepts in the taxonomy."""
+        return frozenset(self._concepts.values())
 
     @property
     def presentation(self) -> tuple[PresentationGroup, ...]:
