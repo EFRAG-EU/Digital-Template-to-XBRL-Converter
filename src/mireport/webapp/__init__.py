@@ -51,7 +51,6 @@ from .migration import (
     MIGRATION_WORKING,
     MigrationOutcome,
     checkMigration,
-    returnMigrationStatus,
 )
 
 ENABLE_CAPTCHA = False
@@ -415,8 +414,6 @@ def convert(id: str) -> Response:
             ):
                 # Migration deemed to be required so no conversion done at this stage.
                 return migrationResponse
-
-            returnMigrationStatus(conversion)
 
             results = doConversion(conversion, id)
             conversion["results"] = results.toDict()

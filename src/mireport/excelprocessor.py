@@ -7,6 +7,7 @@ from collections import defaultdict
 from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import date, datetime
+from enum import StrEnum
 from functools import lru_cache
 from itertools import combinations
 from pathlib import Path
@@ -118,7 +119,11 @@ class TemplateCheckResult(NamedTuple):
     version_is_same: bool
     version_major_minor_same: bool
     reported_version: VersionHolder
+    migration_status: Optional[MigrationStatusOption] = None
 
+class MigrationStatusOption(StrEnum):
+    REFRESHED = "refreshed"
+    NOT_REFRESHED = "not_refreshed"
 
 class ComplexUnit(NamedTuple):
     numerator: list[QName]
@@ -556,6 +561,9 @@ class ExcelProcessor:
                 ),
             )
         elif excel_version == converter_version:
+
+            migration_status = self.checkMigrationStatus()
+
             self._results.addMessage(
                 f"The Digital Template is the same version as the converter {converter_version}.",
                 Severity.INFO,
@@ -565,6 +573,9 @@ class ExcelProcessor:
                 ),
             )
         elif excel_version != converter_version:
+
+            migration_status = self.checkMigrationStatus()
+
             if major_minor_match:
                 self._results.addMessage(
                     f"The Digital Template is based on version {excel_version}. The latest version available is {converter_version}, consider updating the template to the latest version.",
@@ -592,6 +603,7 @@ class ExcelProcessor:
             reported_version=excel_version
             if excel_version
             else VersionHolder(0, 0, 0, template_version_string),
+            migration_status=migration_status if migration_status else None,
         )
 
     @classmethod
@@ -613,30 +625,18 @@ class ExcelProcessor:
         finally:
             processor._workbook.close()
 
-    @classmethod
-    def checkMigrationStatus(cls, excelBlob: BinaryIO) -> bool | None:
+    def checkMigrationStatus(self) -> MigrationStatusOption | None:
         """
         Check the report template for internal validation and version information.
         """
-        processor = cls(
-            excelBlob,
-            ConversionResultsBuilder(),
-            VSME_DEFAULTS,
-        )
-        try:
-            processor._loadWorkbook(read_only=True)
-            assert processor._workbook
-            if processor._workbook.defined_names.get("template_migration_status"):
-                if (processor.getSingleValue("template_migration_status")) is None:
-                    return True
-                else:
-                    return False
+        if self._workbook.defined_names.get("template_migration_status"):
+            if (self.getSingleValue("template_migration_status")) is None:
+                return MigrationStatusOption.NOT_REFRESHED
             else:
-                return False
-        except Exception:
+                return MigrationStatusOption.REFRESHED
+        else:
             return None
-        finally:
-            processor._workbook.close()
+
 
     def abortEarlyIfErrors(self) -> None:
         if self._results.hasErrors():

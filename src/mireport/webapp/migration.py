@@ -30,7 +30,11 @@ except ImportError:
         raise NotImplementedError("Migration tool not available")
 
 
-from mireport.excelprocessor import OUR_VERSION_HOLDER, ExcelProcessor
+from mireport.excelprocessor import (
+    OUR_VERSION_HOLDER,
+    ExcelProcessor,
+    MigrationStatusOption,
+)
 from mireport.filesupport import FilelikeAndFileName
 
 from .blueprints import convert_bp
@@ -42,6 +46,7 @@ class MigrationOutcome(StrEnum):
     SUCCESS = "success"
     MISSING = "report_missing"
     INVALID = "report_invalid"
+    NOT_REFRESHED = "report_not_refreshed"
     MIGRATION_OPTIONAL = "migration_optional"
     MIGRATION_REQUIRED = "migration_required"
 
@@ -56,10 +61,21 @@ def doMigrationChecks(conversion: dict) -> tuple[MigrationOutcome, str]:
             MigrationOutcome.MISSING,
             version,
         )  # can't do anything if we can't read the report
+    elif check_results.migration_status == MigrationStatusOption.NOT_REFRESHED:
+        return (
+            MigrationOutcome.NOT_REFRESHED,
+            version,
+        )  # report not refreshed after migration
     elif check_results.version_is_same:
-        return MigrationOutcome.SUCCESS, version  # up-to-date version
+        return (
+            MigrationOutcome.SUCCESS,
+            version,
+        )  # up-to-date version
     elif check_results.validation_is_incomplete:
-        return MigrationOutcome.INVALID, version  # invalid report, can't proceed
+        return (
+            MigrationOutcome.INVALID,
+            version,
+        )  # invalid report, can't proceed
     elif check_results.version_major_minor_same:
         return (
             MigrationOutcome.MIGRATION_OPTIONAL,
@@ -76,6 +92,9 @@ def checkMigration(conversion: dict) -> Response | None:
     outcome, conversion["template_version"] = doMigrationChecks(conversion)
     response = None
     match outcome:
+        case MigrationOutcome.NOT_REFRESHED:
+            flash("Open the migrated file and save it before conversion", "error")
+            response = make_response(redirect(url_for("basic.index")))
         case MigrationOutcome.MIGRATION_REQUIRED:
             response = make_response(
                 redirect(
