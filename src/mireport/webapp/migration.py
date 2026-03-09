@@ -88,10 +88,16 @@ def doMigrationChecks(conversion: dict) -> tuple[MigrationOutcome, str]:
             version,
         )  # optional migration offered
     else:
-        return (
-            MigrationOutcome.MIGRATION_REQUIRED,
-            version,
-        )  # older (major) version, must migrate
+        # Definitely an old report that we want to force migrate to the latest version
+        if check_results.validation_is_incomplete:
+            # invalid report, migration cannot proceed.
+            return MigrationOutcome.INVALID, version
+        else:
+            # older (major) version, must migrate
+            return (
+                MigrationOutcome.MIGRATION_REQUIRED,
+                version,
+            )
 
 
 def checkMigration(conversion: dict) -> Response | None:
@@ -118,7 +124,10 @@ def checkMigration(conversion: dict) -> Response | None:
             flash("Invalid report format", "error")
             response = make_response(redirect(url_for("basic.index")))
         case MigrationOutcome.MISSING:
-            flash("Report missing for migration", "error")
+            flash(
+                "The uploaded file is not recognised as a valid digital template.",
+                "error",
+            )
             response = make_response(redirect(url_for("basic.index")))
         case MigrationOutcome.MIGRATION_OPTIONAL:
             pass  # Continue with conversion
