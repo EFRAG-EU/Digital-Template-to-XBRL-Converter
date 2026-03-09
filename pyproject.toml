@@ -61,7 +61,7 @@ redis = [
 ]
 
 migration = [
-    "migration_tool@git+https://github.com/EFRAG-EU/Digital-Template-Data-Migration-Tool.git@11c6698",
+    "migration_tool @ git+https://github.com/EFRAG-EU/Digital-Template-Data-Migration-Tool.git@v0.1.4",
 ]
 
 

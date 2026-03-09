@@ -121,9 +121,11 @@ class TemplateCheckResult(NamedTuple):
     reported_version: VersionHolder
     migration_status: Optional[MigrationStatusOption] = None
 
+
 class MigrationStatusOption(StrEnum):
     REFRESHED = "refreshed"
     NOT_REFRESHED = "not_refreshed"
+
 
 class ComplexUnit(NamedTuple):
     numerator: list[QName]
@@ -507,6 +509,8 @@ class ExcelProcessor:
             )
 
     def checkTemplate(self) -> TemplateCheckResult:
+        migration_status: Optional[MigrationStatusOption] = None
+
         # warn if template thinks it is incomplete
         template_validation_name = "template_overall_validation_status"
         template_validation_fail_name = "template_label_incomplete"
@@ -561,7 +565,6 @@ class ExcelProcessor:
                 ),
             )
         elif excel_version == converter_version:
-
             migration_status = self.checkMigrationStatus()
 
             self._results.addMessage(
@@ -573,7 +576,6 @@ class ExcelProcessor:
                 ),
             )
         elif excel_version != converter_version:
-
             migration_status = self.checkMigrationStatus()
 
             if major_minor_match:
@@ -603,7 +605,7 @@ class ExcelProcessor:
             reported_version=excel_version
             if excel_version
             else VersionHolder(0, 0, 0, template_version_string),
-            migration_status=migration_status if migration_status else None,
+            migration_status=migration_status,
         )
 
     @classmethod
@@ -629,14 +631,13 @@ class ExcelProcessor:
         """
         Check the report template for internal validation and version information.
         """
-        if self._workbook.defined_names.get("template_migration_status"):
-            if (self.getSingleValue("template_migration_status")) is None:
+        if self._workbook.defined_names.get("template_migration_status") is not None:
+            if self.getSingleValue("template_migration_status") is None:
                 return MigrationStatusOption.NOT_REFRESHED
             else:
                 return MigrationStatusOption.REFRESHED
         else:
             return None
-
 
     def abortEarlyIfErrors(self) -> None:
         if self._results.hasErrors():

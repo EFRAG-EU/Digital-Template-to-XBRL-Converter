@@ -45,7 +45,8 @@ L = logging.getLogger(__name__)
 class MigrationOutcome(StrEnum):
     SUCCESS = "success"
     MISSING = "report_missing"
-    INVALID = "report_invalid"
+    NOT_COMPLETE = "validation_not_complete"
+    INVALID_FORMAT = "invalid_report_format"
     NOT_REFRESHED = "report_not_refreshed"
     MIGRATION_OPTIONAL = "migration_optional"
     MIGRATION_REQUIRED = "migration_required"
@@ -61,6 +62,11 @@ def doMigrationChecks(conversion: dict) -> tuple[MigrationOutcome, str]:
             MigrationOutcome.MISSING,
             version,
         )  # can't do anything if we can't read the report
+    elif version == "0.0.0":
+        return (
+            MigrationOutcome.INVALID_FORMAT,
+            version,
+        )  # can't determine version, likely invalid report
     elif check_results.migration_status == MigrationStatusOption.NOT_REFRESHED:
         return (
             MigrationOutcome.NOT_REFRESHED,
@@ -73,7 +79,7 @@ def doMigrationChecks(conversion: dict) -> tuple[MigrationOutcome, str]:
         )  # up-to-date version
     elif check_results.validation_is_incomplete:
         return (
-            MigrationOutcome.INVALID,
+            MigrationOutcome.NOT_COMPLETE,
             version,
         )  # invalid report, can't proceed
     elif check_results.version_major_minor_same:
@@ -105,8 +111,11 @@ def checkMigration(conversion: dict) -> Response | None:
                     code=303,
                 )
             )
-        case MigrationOutcome.INVALID:
+        case MigrationOutcome.NOT_COMPLETE:
             flash("Report validation is not complete", "error")
+            response = make_response(redirect(url_for("basic.index")))
+        case MigrationOutcome.INVALID_FORMAT:
+            flash("Invalid report format", "error")
             response = make_response(redirect(url_for("basic.index")))
         case MigrationOutcome.MISSING:
             flash("Report missing for migration", "error")
