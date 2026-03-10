@@ -118,6 +118,7 @@ class TemplateCheckResult(NamedTuple):
     version_is_same: bool
     version_major_minor_same: bool
     reported_version: VersionHolder
+    migration_status: bool | None
 
 
 class ComplexUnit(NamedTuple):
@@ -592,6 +593,7 @@ class ExcelProcessor:
             reported_version=excel_version
             if excel_version
             else VersionHolder(0, 0, 0, template_version_string),
+            migration_status=self.checkMigrationStatus(),
         )
 
     @classmethod
@@ -612,6 +614,20 @@ class ExcelProcessor:
             return None
         finally:
             processor._workbook.close()
+
+    def checkMigrationStatus(self) -> bool | None:
+        """
+        Check the report template for internal validation and version information.
+        If report has not been opened and saved (so, refreshed), formula cells return None.
+        template_migration_status is a formula cell.
+        """
+        if self._workbook.defined_names.get("template_migration_status") is not None:
+            if self.getSingleValue("template_migration_status") is None:
+                return False  # not refreshed
+            else:
+                return True  # okay
+        else:
+            return None
 
     def abortEarlyIfErrors(self) -> None:
         if self._results.hasErrors():

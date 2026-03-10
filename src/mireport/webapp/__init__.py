@@ -47,7 +47,11 @@ from mireport.localise import (
 from mireport.taxonomy import getTaxonomy, listTaxonomies
 
 from .blueprints import convert_bp
-from .migration import MIGRATION_WORKING, MigrationOutcome, checkMigration
+from .migration import (
+    MIGRATION_WORKING,
+    MigrationOutcome,
+    checkMigration,
+)
 
 ENABLE_CAPTCHA = False
 ENABLE_MIGRATION = False

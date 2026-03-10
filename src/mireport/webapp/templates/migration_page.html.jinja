@@ -104,7 +104,7 @@
 
 <!-- Migration Results (if available) -->
 {% if elapsed is not none %}
-<div class="mt-6 space-y-4">
+<div id="migrationResults" class="mt-6 space-y-4" tabindex="-1">
     <div class="bg-blue-50 border border-blue-300 rounded-lg p-4">
         <h3 class="font-semibold text-blue-900 mb-2">Migration Completed!</h3>
         <p class="text-sm text-blue-800">Time elapsed: <strong>{{ "%.2f"|format(elapsed) }} seconds</strong></p>
@@ -122,7 +122,8 @@
     </div>
     {% else %}
     <div class="bg-green-50 border border-green-300 rounded-lg p-4">
-        <p class="text-sm text-green-800">No migration issues detected. ✓</p>
+        <p class="text-sm text-green-800">No migration issues detected. ✓<br><br>Please open the file and save it before
+            conversion.</p>
     </div>
     {% endif %}
 </div>
@@ -150,6 +151,13 @@
         window.location.href = downloadUrl;
         {% endif %}
     });
+
+    const results = document.getElementById('migrationResults');
+    if (results) {
+        results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        results.focus({ preventScroll: true });
+    }
+
 </script>
 
 <div class="flex justify-center">

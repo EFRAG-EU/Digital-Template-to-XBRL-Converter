@@ -30,7 +30,10 @@ except ImportError:
         raise NotImplementedError("Migration tool not available")
 
 
-from mireport.excelprocessor import OUR_VERSION_HOLDER, ExcelProcessor
+from mireport.excelprocessor import (
+    OUR_VERSION_HOLDER,
+    ExcelProcessor,
+)
 from mireport.filesupport import FilelikeAndFileName
 
 from .blueprints import convert_bp
@@ -41,7 +44,9 @@ L = logging.getLogger(__name__)
 class MigrationOutcome(StrEnum):
     SUCCESS = "success"
     MISSING = "report_missing"
-    INVALID = "report_invalid"
+    NOT_COMPLETE = "validation_not_complete"
+    INVALID_FORMAT = "invalid_report_format"
+    NOT_REFRESHED = "report_not_refreshed"
     MIGRATION_OPTIONAL = "migration_optional"
     MIGRATION_REQUIRED = "migration_required"
 
@@ -56,8 +61,21 @@ def doMigrationChecks(conversion: dict) -> tuple[MigrationOutcome, str]:
             MigrationOutcome.MISSING,
             version,
         )  # can't do anything if we can't read the report
+    elif version == "0.0.0":
+        return (
+            MigrationOutcome.INVALID_FORMAT,
+            version,
+        )  # can't determine version, likely invalid report
+    elif check_results.migration_status is False:
+        return (
+            MigrationOutcome.NOT_REFRESHED,
+            version,
+        )  # report not refreshed after migration
     elif check_results.version_is_same:
-        return MigrationOutcome.SUCCESS, version  # up-to-date version
+        return (
+            MigrationOutcome.SUCCESS,
+            version,
+        )  # up-to-date version
     elif check_results.version_major_minor_same:
         return (
             MigrationOutcome.MIGRATION_OPTIONAL,
@@ -67,7 +85,7 @@ def doMigrationChecks(conversion: dict) -> tuple[MigrationOutcome, str]:
         # Definitely an old report that we want to force migrate to the latest version
         if check_results.validation_is_incomplete:
             # invalid report, migration cannot proceed.
-            return MigrationOutcome.INVALID, version
+            return MigrationOutcome.NOT_COMPLETE, version
         else:
             # older (major) version, must migrate
             return (
@@ -80,6 +98,9 @@ def checkMigration(conversion: dict) -> Response | None:
     outcome, conversion["template_version"] = doMigrationChecks(conversion)
     response = None
     match outcome:
+        case MigrationOutcome.NOT_REFRESHED:
+            flash("Open the migrated file and save it before conversion", "error")
+            response = make_response(redirect(url_for("basic.index")))
         case MigrationOutcome.MIGRATION_REQUIRED:
             response = make_response(
                 redirect(
@@ -90,11 +111,11 @@ def checkMigration(conversion: dict) -> Response | None:
                     code=303,
                 )
             )
-        case MigrationOutcome.INVALID:
-            flash(
-                "Digital template contains validation issues. These must be resolved before uploading.",
-                "error",
-            )
+        case MigrationOutcome.NOT_COMPLETE:
+            flash("Report validation is not complete", "error")
+            response = make_response(redirect(url_for("basic.index")))
+        case MigrationOutcome.INVALID_FORMAT:
+            flash("Invalid report format", "error")
             response = make_response(redirect(url_for("basic.index")))
         case MigrationOutcome.MISSING:
             flash(
