@@ -1,9 +1,12 @@
 import argparse
+import re
 from contextlib import contextmanager
+from itertools import count
 from time import perf_counter_ns
 from typing import NamedTuple
 
 import xlsxwriter
+from rich.table import Table
 
 import mireport
 from mireport.cli import configure_rich_output
@@ -18,6 +21,7 @@ from mireport.taxonomy import (
     TOTAL_LABEL_ROLE,
     VERBOSE_LABEL_ROLE,
     Concept,
+    PresentationGroup,
     Taxonomy,
     getTaxonomy,
     listTaxonomies,
@@ -25,11 +29,28 @@ from mireport.taxonomy import (
 from mireport.taxonomy_checker import TaxonomyChecker
 
 
-class LabelRow(NamedTuple):
+class Mismatch(NamedTuple):
+    lang: str
+    kind: str
+    identifier: str
+    expected: str
+    actual: str
+
+
+class ConceptLabelRow(NamedTuple):
     concept: Concept
     roleUri: str
     suffix: str
     labelNoSuffix: str
+
+
+GROUP_LABEL_PREFIX_PATTERN = re.compile(r"^\s*\[[\d\w]?[. \d\w]+\](\s+-\s+)?\s*")
+
+
+class GroupLabelRow(NamedTuple):
+    group: PresentationGroup
+    prefix: str
+    labelNoPrefix: str
 
 
 BRANCH = "\N{BOX DRAWINGS LIGHT VERTICAL AND RIGHT}\N{BOX DRAWINGS LIGHT HORIZONTAL}"
@@ -102,7 +123,7 @@ def compute_last_flags(relationships) -> tuple[bool, ...]:
 
 def dump_group(group) -> None:
     """Print a single presentation group as a tree."""
-    print(f"{group.getLabel()} [{group.roleUri}]")
+    print(f"{group.getLabel()} [{group.roleUri}]", markup=False)
     last_flags = compute_last_flags(group.relationships)
     active_depths: set[int] = set()
     for relationship, is_last in zip(group.relationships, last_flags, strict=True):
@@ -111,7 +132,7 @@ def dump_group(group) -> None:
         active_depths = {d for d in active_depths if d < depth}
         if not is_last:
             active_depths.add(depth)
-        print(format_relationship(relationship, active_depths))
+        print(format_relationship(relationship, active_depths), markup=False)
 
 
 def pick_entry_point() -> str:
@@ -156,13 +177,34 @@ def dump_translation_sheet(
     filter_measurement_guidance: bool = True,
 ) -> None:
     """Write a translation sheet Excel file with labels for every concept/role pair."""
+
+    baseLanguage = taxonomy.defaultLanguage
+    if baseLanguage is None:
+        # Taxonomy without labels. Got to start somewhere!
+        baseLanguage = "en"
+    elif baseLanguage in languages:
+        raise ValueError(
+            f"{baseLanguage} detected as base taxonomy language so can't be a translation too."
+        )
+
+    group_rows: list[GroupLabelRow] = []
+    for group in taxonomy.presentation:
+        en_label = group.getLabel(baseLanguage)
+        prefix = (
+            m.group(0).strip()
+            if (m := GROUP_LABEL_PREFIX_PATTERN.match(en_label))
+            else ""
+        )
+        label_no_prefix = GROUP_LABEL_PREFIX_PATTERN.sub("", en_label)
+        group_rows.append(GroupLabelRow(group, prefix, label_no_prefix))
+
     concepts = taxonomy.concepts
 
     if only_prefixes:
         prefix_set = frozenset(only_prefixes)
         concepts = frozenset(c for c in concepts if c.qname.prefix in prefix_set)
 
-    rows: list[LabelRow] = []
+    concept_rows: list[ConceptLabelRow] = []
 
     for concept in sorted(concepts):
         all_roles = concept.labelRoles
@@ -171,7 +213,7 @@ def dump_translation_sheet(
             all_roles -= {MEASUREMENT_GUIDANCE_LABEL_ROLE}
 
         for role_uri in sorted(all_roles):
-            if (en_label := concept.getLabelForRole(role_uri, "en")) is None:
+            if (en_label := concept.getLabelForRole(role_uri, baseLanguage)) is None:
                 continue
 
             suffix = (
@@ -181,40 +223,121 @@ def dump_translation_sheet(
             )
             label_no_suffix = LABEL_SUFFIX_PATTERN.sub("", en_label).strip()
 
-            rows.append(LabelRow(concept, role_uri, suffix, label_no_suffix))
+            concept_rows.append(
+                ConceptLabelRow(concept, role_uri, suffix, label_no_suffix)
+            )
 
     with xlsxwriter.Workbook(output_path) as workbook:
         worksheet = workbook.add_worksheet("Labels")
 
         bold = workbook.add_format({"bold": True})
 
-        headers = ["Concept", "Role", "Label Postfix", "en"] + languages
-        for col, header in enumerate(headers):
-            worksheet.write(0, col, header, bold)
+        headers = [
+            "XBRL Identifier",
+            "Label Type",
+            "Label Prefix",
+            "Label Suffix",
+            baseLanguage,
+        ] + languages
+        worksheet.write_row(0, 0, headers, bold)
 
-        # Column widths: Label Postfix (col 2) is 15, everything else is 40
-        worksheet.set_column(0, 0, 40)  # Concept
-        worksheet.set_column(1, 1, 15)  # Role
-        worksheet.set_column(2, 2, 15)  # Label Postfix
-        worksheet.set_column(3, 3 + len(languages), 40)  # en + lang columns
+        # Column widths: Label Prefix/Suffix (cols 2-3) are 15, everything else is 40
+        worksheet.set_column(0, 0, 40)  # XBRL Identifier
+        worksheet.set_column(1, 3, 15)  # Label Type, Label Prefix, Label Suffix
+        worksheet.set_column(4, 4 + len(languages), 40)  # en + lang columns
 
         worksheet.freeze_panes(1, 0)
         worksheet.autofilter(0, 0, 0, len(headers) - 1)
 
-        for row_idx, row in enumerate(rows, start=1):
-            role_name = LABEL_ROLE_NAMES.get(row.roleUri, row.roleUri)
-            worksheet.write(row_idx, 0, str(row.concept.qname))
-            worksheet.write(row_idx, 1, role_name)
-            worksheet.write(row_idx, 2, row.suffix)
-            worksheet.write(row_idx, 3, row.labelNoSuffix)
-            for col_offset, lang in enumerate(languages):
-                worksheet.write(
-                    row_idx,
-                    4 + col_offset,
-                    row.concept.getLabelForRole(row.roleUri, lang) or "",
-                )
+        row_counter = count(1)
+        mismatches: list[Mismatch] = []
 
-    print(f"✅ Translation sheet written to {output_path} ({len(rows):,} rows)")
+        for row in group_rows:
+            lang_labels = []
+            for lang in languages:
+                raw = row.group.getLabel(
+                    lang, fallbackToDefaultLanguage=False, fallbackToDefinition=False
+                )
+                if raw and (m := GROUP_LABEL_PREFIX_PATTERN.match(raw)):
+                    actual_prefix = m.group(0).strip()
+                    stripped = raw[m.end() :]
+                else:
+                    actual_prefix = ""
+                    stripped = raw
+                if raw and actual_prefix != row.prefix:
+                    mismatches.append(
+                        Mismatch(
+                            lang,
+                            "Group prefix",
+                            row.group.roleUri,
+                            row.prefix,
+                            actual_prefix,
+                        )
+                    )
+                lang_labels.append(stripped)
+            worksheet.write_row(
+                next(row_counter),
+                0,
+                [
+                    row.group.roleUri,
+                    "Standard",
+                    row.prefix,
+                    "",
+                    row.labelNoPrefix,
+                    *lang_labels,
+                ],
+            )
+
+        for row in concept_rows:
+            role_name = LABEL_ROLE_NAMES.get(row.roleUri, row.roleUri)
+            lang_labels = []
+            for lang in languages:
+                raw = row.concept.getLabelForRole(row.roleUri, lang) or ""
+                if raw and (m := LABEL_SUFFIX_PATTERN.search(raw)):
+                    actual_suffix = m.group(0).strip()
+                    stripped = raw[: m.start()].strip()
+                else:
+                    actual_suffix = ""
+                    stripped = raw.strip()
+                if raw and actual_suffix != row.suffix:
+                    mismatches.append(
+                        Mismatch(
+                            lang,
+                            f"Concept suffix ({role_name})",
+                            str(row.concept.qname),
+                            row.suffix,
+                            actual_suffix,
+                        )
+                    )
+                lang_labels.append(stripped)
+            worksheet.write_row(
+                next(row_counter),
+                0,
+                [
+                    str(row.concept.qname),
+                    role_name,
+                    "",
+                    row.suffix,
+                    row.labelNoSuffix,
+                    *lang_labels,
+                ],
+            )
+
+    print(
+        f"✅ Translation sheet written to {output_path} ({len(group_rows):,} groups, {len(concept_rows):,} concept rows)"
+    )
+    if mismatches:
+        table = Table(
+            title=f"⚠️  {len(mismatches):,} prefix/suffix mismatches in translated labels"
+        )
+        table.add_column("Language", style="bold")
+        table.add_column("Kind")
+        table.add_column("Identifier")
+        table.add_column("Expected")
+        table.add_column("Actual")
+        for mm in sorted(mismatches, key=lambda mm: (mm.lang, mm.kind, mm.identifier)):
+            table.add_row(mm.lang, mm.kind, mm.identifier, mm.expected, mm.actual)
+        print(table)
 
 
 def build_parser() -> argparse.ArgumentParser:

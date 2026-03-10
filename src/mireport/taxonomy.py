@@ -559,17 +559,24 @@ class PresentationGroup(NamedTuple):
             return (self.definition, self.roleUri) < (other.definition, other.roleUri)
         return NotImplemented
 
-    def getLabel(self, requestedLanguage: Optional[str] = None) -> str:
-        label: Optional[str] = None
-        if self.labels:
-            label = (
-                self.labels.get(requestedLanguage) if requestedLanguage else None
-            ) or (
-                self.labels.get(self.taxonomy.defaultLanguage)
-                if self.taxonomy.defaultLanguage
-                else None
-            )
-        return label or self.definition
+    def getLabel(
+        self,
+        requestedLanguage: Optional[str] = None,
+        *,
+        fallbackToDefaultLanguage: bool = True,
+        fallbackToDefinition: bool = True,
+    ) -> str:
+        if requestedLanguage and (label := self.labels.get(requestedLanguage)):
+            return label
+        if (
+            fallbackToDefaultLanguage
+            and (default := self.taxonomy.defaultLanguage)
+            and (label := self.labels.get(default))
+        ):
+            return label
+        if fallbackToDefinition:
+            return self.definition
+        return ""
 
     @classmethod
     def fromJSON(cls, taxonomy: Taxonomy, roleUri: str, metaData: Mapping) -> Self:
