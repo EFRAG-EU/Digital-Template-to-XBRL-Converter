@@ -33,7 +33,6 @@ except ImportError:
 from mireport.excelprocessor import (
     OUR_VERSION_HOLDER,
     ExcelProcessor,
-    MigrationStatusOption,
 )
 from mireport.filesupport import FilelikeAndFileName
 
@@ -67,7 +66,7 @@ def doMigrationChecks(conversion: dict) -> tuple[MigrationOutcome, str]:
             MigrationOutcome.INVALID_FORMAT,
             version,
         )  # can't determine version, likely invalid report
-    elif check_results.migration_status == MigrationStatusOption.NOT_REFRESHED:
+    elif check_results.migration_status is False:
         return (
             MigrationOutcome.NOT_REFRESHED,
             version,
@@ -77,11 +76,6 @@ def doMigrationChecks(conversion: dict) -> tuple[MigrationOutcome, str]:
             MigrationOutcome.SUCCESS,
             version,
         )  # up-to-date version
-    elif check_results.validation_is_incomplete:
-        return (
-            MigrationOutcome.NOT_COMPLETE,
-            version,
-        )  # invalid report, can't proceed
     elif check_results.version_major_minor_same:
         return (
             MigrationOutcome.MIGRATION_OPTIONAL,
@@ -91,7 +85,7 @@ def doMigrationChecks(conversion: dict) -> tuple[MigrationOutcome, str]:
         # Definitely an old report that we want to force migrate to the latest version
         if check_results.validation_is_incomplete:
             # invalid report, migration cannot proceed.
-            return MigrationOutcome.INVALID, version
+            return MigrationOutcome.NOT_COMPLETE, version
         else:
             # older (major) version, must migrate
             return (
@@ -258,18 +252,3 @@ def downloadMigrated(id: str) -> Response:
         download_name=migrated_excel.filename,
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
-
-
-def returnMigrationStatus(conversion: dict) -> Response | None:
-    upload = FilelikeAndFileName(*conversion["excel"])
-    status_result = ExcelProcessor.checkMigrationStatus(upload.fileLike())
-
-    if status_result is None:
-        return make_response(
-            jsonify({"error": "Could not read report for migration status"}), 400
-        )
-    elif status_result is True:
-        flash("Open the migrated file and save it before conversion", "error")
-        return make_response(redirect(url_for("basic.index")))
-    else:
-        pass

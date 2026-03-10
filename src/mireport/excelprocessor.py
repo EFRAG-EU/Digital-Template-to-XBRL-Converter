@@ -119,12 +119,7 @@ class TemplateCheckResult(NamedTuple):
     version_is_same: bool
     version_major_minor_same: bool
     reported_version: VersionHolder
-    migration_status: Optional[MigrationStatusOption] = None
-
-
-class MigrationStatusOption(StrEnum):
-    REFRESHED = "refreshed"
-    NOT_REFRESHED = "not_refreshed"
+    migration_status: bool | None
 
 
 class ComplexUnit(NamedTuple):
@@ -509,8 +504,6 @@ class ExcelProcessor:
             )
 
     def checkTemplate(self) -> TemplateCheckResult:
-        migration_status: Optional[MigrationStatusOption] = None
-
         # warn if template thinks it is incomplete
         template_validation_name = "template_overall_validation_status"
         template_validation_fail_name = "template_label_incomplete"
@@ -565,8 +558,6 @@ class ExcelProcessor:
                 ),
             )
         elif excel_version == converter_version:
-            migration_status = self.checkMigrationStatus()
-
             self._results.addMessage(
                 f"The Digital Template is the same version as the converter {converter_version}.",
                 Severity.INFO,
@@ -576,8 +567,6 @@ class ExcelProcessor:
                 ),
             )
         elif excel_version != converter_version:
-            migration_status = self.checkMigrationStatus()
-
             if major_minor_match:
                 self._results.addMessage(
                     f"The Digital Template is based on version {excel_version}. The latest version available is {converter_version}, consider updating the template to the latest version.",
@@ -605,7 +594,7 @@ class ExcelProcessor:
             reported_version=excel_version
             if excel_version
             else VersionHolder(0, 0, 0, template_version_string),
-            migration_status=migration_status,
+            migration_status=self.checkMigrationStatus(),
         )
 
     @classmethod
@@ -627,15 +616,17 @@ class ExcelProcessor:
         finally:
             processor._workbook.close()
 
-    def checkMigrationStatus(self) -> MigrationStatusOption | None:
+    def checkMigrationStatus(self) -> bool | None:
         """
         Check the report template for internal validation and version information.
+        If report has not been opened and saved (so, refreshed), formula cells return None.
+        template_migration_status is a formula cell.
         """
         if self._workbook.defined_names.get("template_migration_status") is not None:
             if self.getSingleValue("template_migration_status") is None:
-                return MigrationStatusOption.NOT_REFRESHED
+                return False  # not refreshed
             else:
-                return MigrationStatusOption.REFRESHED
+                return True  # okay
         else:
             return None
 
