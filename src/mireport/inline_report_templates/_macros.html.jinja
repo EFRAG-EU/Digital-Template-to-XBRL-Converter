@@ -59,3 +59,18 @@
     {{- section.getLabel(labelLanguage) -}}
 {%- endmacro %}
 
+{#- Extract the section prefix (e.g. "[B01" from "[B01.000] - ...").
+    Uses the definition field which always contains the prefix regardless of language. -#}
+{% macro section_prefix(section) -%}
+    {{- section.presentation.definition.split('.')[0] -}}
+{%- endmacro %}
+
+{#- Return the CSS page class for a section based on its orientation needs. -#}
+{% macro page_class_for_section(section) -%}
+    {%- if section.tabular and section.dataColumns | length > 4 -%}
+        page landscape-page
+    {%- else -%}
+        page portrait-page
+    {%- endif -%}
+{%- endmacro %}
+

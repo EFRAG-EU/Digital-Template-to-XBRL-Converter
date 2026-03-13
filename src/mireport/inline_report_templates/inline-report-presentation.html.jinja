@@ -68,9 +68,25 @@
 {% endfor %}
             </ol>
         </div>
+{% set page = namespace(open=false, prefix='', css_class='') %}
 {% for section in sections if section.hasFacts %}
+        {#- Compute this section's prefix and page class -#}
+        {% set current_prefix = macros.section_prefix(section) %}
+        {% set current_class = macros.page_class_for_section(section) %}
+
         {% if section.style is sameas PresentationStyle.List %}
-        <div class="page portrait-page">
+        {#- LIST SECTIONS: merge into same page when prefix and orientation match -#}
+            {% if page.open and (current_prefix != page.prefix or current_class != page.css_class) %}
+        </div>
+                {% set page.open = false %}
+            {% endif %}
+            {% if not page.open %}
+        <div class="{{ current_class }}">
+                {% set page.open = true %}
+                {% set page.prefix = current_prefix %}
+                {% set page.css_class = current_class %}
+            {% endif %}
+
             {{ macros.create_h2_title(section, loop) }}
 
             <div class="fact-list">
@@ -102,9 +118,20 @@
                 {% endfor %}
             {% endfor %}
             </div>
-        </div>
+
         {% elif section.style is sameas PresentationStyle.Table %}
-        <div class="page {% if section.dataColumns | length > 4 %}landscape-page{% else %}portrait-page{% endif %}">
+        {#- TABLE SECTIONS: merge into same page when prefix and orientation match -#}
+            {% if page.open and (current_prefix != page.prefix or current_class != page.css_class) %}
+        </div>
+                {% set page.open = false %}
+            {% endif %}
+            {% if not page.open %}
+        <div class="{{ current_class }}">
+                {% set page.open = true %}
+                {% set page.prefix = current_prefix %}
+                {% set page.css_class = current_class %}
+            {% endif %}
+
             {{ macros.create_h2_title(section, loop) }}
 
             <table class="thematic-table">
@@ -163,14 +190,25 @@
                     {% endfor %}
                 </tbody>
             </table>
-        </div>
+
         {% else %}
+        {#- UNSUPPORTED STYLES: always get their own page -#}
+            {% if page.open %}
+        </div>
+                {% set page.open = false %}
+            {% endif %}
         <div class="page portrait-page">
             <h2>{{ macros.section_label(section) | e }}</h2>
             <pre>Unsupported presentation style. [{{section.style.name}}{% if section.tabular %}, {{ section.tableStyle.name }}{% endif %}]</pre>
         </div>
+            {% set page.prefix = '' %}
+            {% set page.css_class = '' %}
         {% endif %}
 {% endfor %}
+        {#- Close the last page div if still open -#}
+        {% if page.open %}
+        </div>
+        {% endif %}
 
   <!-- Final Page -->
   <div class="page portrait-page footer-page">
