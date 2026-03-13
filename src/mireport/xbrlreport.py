@@ -1035,12 +1035,34 @@ class ReportLayoutOrganiser:
         for fact in self.report._facts:
             self.factsByConceptMap[fact.concept].append(fact)
 
+    @staticmethod
+    def _sectionPrefix(section: "ReportSection") -> str:
+        """Extract the group prefix (e.g. '[B02') from a section's definition."""
+        return section.presentation.definition.split(".")[0]
+
     def organise(self) -> list["ReportSection"]:
         self.createReportSections()
         self.createReportTables()
         self.reportSections.sort(key=lambda x: x.presentation)
+        self._moveC02AfterB02()
         self.checkAllFactsUsed()
         return self.reportSections
+
+    def _moveC02AfterB02(self) -> None:
+        """Move all [C02.*] sections to immediately after the last [B02.*] section."""
+        prefixes = {id(s): self._sectionPrefix(s) for s in self.reportSections}
+        c02 = [s for s in self.reportSections if prefixes[id(s)] == "[C02"]
+        if not c02:
+            return
+        remaining = [s for s in self.reportSections if prefixes[id(s)] != "[C02"]
+        # Find insertion point: after the last [B02.*] section
+        insert_pos = None
+        for i, s in enumerate(remaining):
+            if prefixes[id(s)] == "[B02":
+                insert_pos = i + 1
+        if insert_pos is None:
+            return
+        self.reportSections = remaining[:insert_pos] + c02 + remaining[insert_pos:]
 
     def checkAllFactsUsed(self) -> None:
         """

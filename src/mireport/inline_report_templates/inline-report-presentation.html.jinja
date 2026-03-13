@@ -69,10 +69,15 @@
         </div>
         <div class="page portrait-page toc-page" id="table-of-contents">
             <h1>Table of Contents</h1>
+            {#- Build ToC entries with their body-loop indices, then sort alphabetically -#}
+            {% set toc_entries = [] %}
+            {% for section in sections if section.hasFacts %}
+                {% if toc_entries.append({'idx': loop.index, 'section': section}) %}{% endif %}
+            {% endfor %}
             <ol class="toc-list">
-{% set toc = namespace(current_prefix='', index=0) %}
-{% for section in sections if section.hasFacts %}
-    {% set toc.index = toc.index + 1 %}
+{% set toc = namespace(current_prefix='') %}
+{% for entry in toc_entries | sort(attribute='section.presentation.definition') %}
+    {% set section = entry.section %}
     {% set prefix = macros.section_prefix(section) %}
     {% if prefix != toc.current_prefix %}
         {% if toc.current_prefix != '' %}
@@ -86,7 +91,7 @@
     {% endif %}
     {% set subtitle = macros.toc_subtitle(section) %}
                         <li>
-                            <a href="#section-class{{ toc.index }}">
+                            <a href="#section-class{{ entry.idx }}">
                                 {{ (subtitle if subtitle else macros.toc_category(section)) | e }}
                             </a>
                         </li>
