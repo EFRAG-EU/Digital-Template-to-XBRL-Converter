@@ -65,6 +65,35 @@
     {{- section.presentation.definition.split('.')[0] -}}
 {%- endmacro %}
 
+{#- ToC helpers: parse "[B02.000] - General information - Practices, policies ..." into
+    a short prefix ("B2"), category ("General information"), and subtitle
+    ("Practices, policies ..."). -#}
+
+{#- Short prefix for ToC group headings: "[B02.000]" → "B2", "[D99.000]" → "D99". -#}
+{% macro toc_short_prefix(section) -%}
+    {%- set raw = section.presentation.definition.split('.')[0] | replace('[', '') -%}
+    {{- raw[0] ~ (raw[1:] | int) -}}
+{%- endmacro %}
+
+{#- Category (text between first and second dash): "... - General information - ..." → "General information". -#}
+{% macro toc_category(section) -%}
+    {%- set parts = section_label(section).split(' - ') -%}
+    {%- if parts | length >= 2 -%}
+        {{- parts[1] | trim -}}
+    {%- else -%}
+        {{- section_label(section) -}}
+    {%- endif -%}
+{%- endmacro %}
+
+{#- Subtitle (everything after the second dash): "... - General information - Basis for Preparation" → "Basis for Preparation". -#}
+{% macro toc_subtitle(section) -%}
+    {%- set parts = section_label(section).split(' - ') -%}
+    {%- if parts | length >= 3 -%}
+        {{- parts[2:] | join(' - ') | trim -}}
+    {%- else -%}
+        {%- endif -%}
+{%- endmacro %}
+
 {#- Return the CSS page class for a section based on its orientation needs. -#}
 {% macro page_class_for_section(section) -%}
     {%- if section.tabular and section.dataColumns | length > 4 -%}

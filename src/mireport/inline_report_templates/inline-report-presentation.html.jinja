@@ -70,13 +70,31 @@
         <div class="page portrait-page toc-page" id="table-of-contents">
             <h1>Table of Contents</h1>
             <ol class="toc-list">
+{% set toc = namespace(current_prefix='', index=0) %}
 {% for section in sections if section.hasFacts %}
-                <li>
-                    <a href="#section-class{{loop.index}}">
-                        {{ macros.section_label(section) | e }}
-                    </a>
+    {% set toc.index = toc.index + 1 %}
+    {% set prefix = macros.section_prefix(section) %}
+    {% if prefix != toc.current_prefix %}
+        {% if toc.current_prefix != '' %}
+                    </ul>
                 </li>
+        {% endif %}
+        {% set toc.current_prefix = prefix %}
+                <li>
+                    <span>[{{ macros.toc_short_prefix(section) }}] &#8212; {{ macros.toc_category(section) | e }}</span>
+                    <ul>
+    {% endif %}
+    {% set subtitle = macros.toc_subtitle(section) %}
+                        <li>
+                            <a href="#section-class{{ toc.index }}">
+                                {{ (subtitle if subtitle else macros.toc_category(section)) | e }}
+                            </a>
+                        </li>
 {% endfor %}
+{% if toc.current_prefix != '' %}
+                    </ul>
+                </li>
+{% endif %}
             </ol>
         </div>
 {% set page = namespace(open=false, prefix='', css_class='') %}
