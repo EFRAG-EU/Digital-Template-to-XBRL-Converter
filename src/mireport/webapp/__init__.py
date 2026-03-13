@@ -498,6 +498,18 @@ def doConversion(conversion: dict, id: str) -> ConversionResults:
                         MessageType.Conversion,
                     )
 
+            if "cover_image" in conversion:
+                cover = ImageFileLikeAndFileName(*conversion["cover_image"])
+                if cover.can_open_image():
+                    pc.addDevInfoMessage(f"Adding cover image to report {cover}")
+                    report.setCoverImage(cover)
+                else:
+                    resultBuilder.addMessage(
+                        f"Unable to use supplied cover image {cover}. Please try a different format.",
+                        Severity.WARNING,
+                        MessageType.Conversion,
+                    )
+
             pc.mark(
                 "Generating Inline Report",
                 additionalInfo=f"({report.factCount} facts to include)",

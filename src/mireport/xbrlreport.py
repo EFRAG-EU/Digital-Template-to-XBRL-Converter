@@ -731,6 +731,7 @@ class InlineReport:
         self._reportSubtitle: str = ""
         self._theme: str = "light"
         self._logo: Optional[FilelikeAndFileName] = None
+        self._coverImage: Optional[FilelikeAndFileName] = None
         if not outputLocale:
             outputLocale = (
                 get_locale_from_str(taxonomy.defaultLanguage or "") or Locale.default()
@@ -801,6 +802,9 @@ class InlineReport:
 
     def setEntityLogo(self, logo: ImageFileLikeAndFileName) -> None:
         self._logo = logo
+
+    def setCoverImage(self, image: ImageFileLikeAndFileName) -> None:
+        self._coverImage = image
 
     def setDefaultPeriodName(self, name: str) -> None:
         if name not in self._periods:
@@ -952,6 +956,7 @@ class InlineReport:
                 "title": self._reportTitle,
                 "subtitle": self._reportSubtitle,
                 "optionalLogo": self._logo,
+                "optionalCoverImage": self._coverImage,
             },
             software={
                 "version": mireport.__version__,

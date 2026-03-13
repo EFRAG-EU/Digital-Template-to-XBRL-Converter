@@ -24,15 +24,26 @@
         </div>
         <!-- Cover Page -->
         <div class="page portrait-page cover-page">
+            <div class="cover-top">
+                <div class="cover-headline">
+                    {% if reportInfo.entityName %}<h2>{{ reportInfo.entityName | e }}</h2>{% endif %}
+                    {% if reportInfo.title %}<h1>{{ reportInfo.title | e }}</h1>{% endif %}
+                    {% if reportInfo.defaultPeriod %}<h2>{{ macros.render_duration_period_endyear(reportInfo.defaultPeriod) }}</h2>{% endif %}
+                </div>
+                {% if reportInfo.subtitle %}
+                <div class="report-subtitle"><h3>{{ reportInfo.subtitle | e }}</h3></div>
+                {% endif %}
+            </div>
+            {% if reportInfo.optionalCoverImage %}
+            <div class="cover-image">
+                <img src="{{ reportInfo.optionalCoverImage.as_data_url(max_width=600, max_height=400) }}" alt="Cover image" />
+            </div>
+            {% endif %}
             {% if reportInfo.optionalLogo %}
             <div class="company-logo">
                 <img src="{{ reportInfo.optionalLogo.as_data_url(max_width=400) }}" alt="{{ reportInfo.entityName | e }} logo" />
             </div>
             {% endif %}
-            <div class="entity-name"><h2>{{ reportInfo.entityName | e }}</h2></div>
-            <div class="report-title"><h1>{{ reportInfo.title | e }}</h1></div>
-            <div class="report-period"><h1>{{ macros.render_duration_period_endyear(reportInfo.defaultPeriod) }}</h1></div>
-            <div class="report-subtitle"><h3>{{ reportInfo.subtitle | e }}</h3></div>
         </div>
         <div class="page portrait-page doc-page" id="document-information">
             <div class="document-information">
@@ -212,7 +223,7 @@
 
   <!-- Final Page -->
   <div class="page portrait-page footer-page">
-    <p>This report contains {{ ns.fact_count }} XBRL facts (generated from {{ uniqueFactCount }} unique input facts).</p>
+    <p>This report contains {{ ns.fact_count }} XBRL facts{% if ns.fact_count != uniqueFactCount %} (generated from {{ uniqueFactCount }} unique input facts){% endif %}.</p>
   </div>
 
 </body>

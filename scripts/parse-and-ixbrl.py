@@ -91,6 +91,12 @@ def createArgParser() -> argparse.ArgumentParser:
         default=None,
         help="Path to an image file to use as the entity logo.",
     )
+    parser.add_argument(
+        "--cover-image",
+        type=Path,
+        default=None,
+        help="Path to an image file to use as the cover page image.",
+    )
 
     return parser
 
@@ -107,6 +113,8 @@ def parseArgs(parser: argparse.ArgumentParser) -> argparse.Namespace:
         )
     if args.logo and not args.logo.is_file():
         parser.error(f"Logo file not found: {args.logo}")
+    if args.cover_image and not args.cover_image.is_file():
+        parser.error(f"Cover image file not found: {args.cover_image}")
 
     return args
 
@@ -166,6 +174,18 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, ExcelProc
             else:
                 pc.addDevInfoMessage(
                     f"Unable to use supplied image file {logo_path}. Please try a different format."
+                )
+        if args.cover_image:
+            cover_path: Path = args.cover_image
+            cover = ImageFileLikeAndFileName(
+                fileContent=cover_path.read_bytes(),
+                filename=cover_path.name,
+            )
+            if cover.can_open_image():
+                report.setCoverImage(cover)
+            else:
+                pc.addDevInfoMessage(
+                    f"Unable to use supplied cover image {cover_path}. Please try a different format."
                 )
         pc.mark("Generating Inline Report")
         reportFile = report.getInlineReport()
