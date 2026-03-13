@@ -1,6 +1,8 @@
 :root {
     --green: #6AA744;
-    --green-100: rgb(225.2, 237.4, 217.6);
+    --green-50: rgb(245, 249, 243);
+    --green-75: rgb(235, 243, 230);
+    --green-100: rgb(225, 237, 218);
     --green-300: #6EAE47;
 }
 
@@ -434,7 +436,11 @@ color: #666;
 
 /* Row striping */
 .thematic-table tbody tr:nth-child(even) {
-    background-color: #fafafa;
+    background-color: var(--green-50);
+}
+
+.thematic-table tbody tr:nth-child(even) td {
+    background-color: transparent;
 }
 
 /* No border on last row */
@@ -444,7 +450,7 @@ color: #666;
 
 /* Narrow, wrapping row labels in tbody */
 .thematic-table tbody th {
-    background-color: #f9f9f9;
+    background-color: var(--green-75);
     font-weight: bold;
     color: #444;
     white-space: normal;
@@ -580,4 +586,280 @@ code {
     white-space: nowrap;
     line-height: 1;         /* make line height tight */
     vertical-align: middle; /* align nicely with text */
+}
+
+/* ==========================================================================
+   DARK MODE THEME
+   Applied when body has class="theme-dark".
+   Page background becomes --green, all text flips to white.
+   ========================================================================== */
+
+body.theme-dark {
+    background: #1a2e10;
+    color: #fff;
+}
+
+body.theme-dark .page {
+    background: var(--green);
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.4);
+    color: #fff;
+}
+
+/* --- Cover page --- */
+body.theme-dark .cover-page h1,
+body.theme-dark .cover-page h2,
+body.theme-dark .cover-page h3 {
+    color: #fff;
+}
+
+/* --- Section headings --- */
+body.theme-dark .page > h2 {
+    color: #fff;
+    border-bottom-color: rgba(255, 255, 255, 0.4);
+}
+
+/* --- General tables --- */
+body.theme-dark table {
+    color: #fff;
+}
+
+body.theme-dark th,
+body.theme-dark td {
+    border-color: rgba(255, 255, 255, 0.2);
+    background-color: transparent;
+}
+
+/* --- Fact list --- */
+body.theme-dark .fact {
+    background: rgba(0, 0, 0, 0.15);
+}
+
+body.theme-dark .fact-label {
+    color: #fff;
+}
+
+body.theme-dark .fact-value {
+    color: #fff;
+}
+
+body.theme-dark .fact-period {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+body.theme-dark .fact-ref {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+body.theme-dark .fact-textblock {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-color: #fff;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    color: #fff;
+}
+
+body.theme-dark .fact-textblock::before,
+body.theme-dark .fact-textblock::after {
+    color: #fff;
+}
+
+/* --- Tooltip --- */
+body.theme-dark .tooltip {
+    background-color: #000;
+}
+
+/* --- Thematic table --- */
+body.theme-dark .thematic-table {
+    border-color: rgba(255, 255, 255, 0.2);
+    background-color: transparent;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+body.theme-dark .thematic-table thead th {
+    background-color: rgba(0, 0, 0, 0.2);
+    color: #fff;
+    border-bottom-color: rgba(255, 255, 255, 0.2);
+}
+
+body.theme-dark .thematic-table td,
+body.theme-dark .thematic-table th {
+    border-bottom-color: rgba(255, 255, 255, 0.15);
+    background-color: transparent;
+    color: #fff;
+}
+
+body.theme-dark .thematic-table tbody tr:nth-child(even) {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+body.theme-dark .thematic-table tbody th {
+    background-color: rgba(0, 0, 0, 0.1);
+    color: #fff;
+}
+
+/* --- Table of Contents --- */
+body.theme-dark .toc-page h1 {
+    color: #fff;
+}
+
+body.theme-dark .toc-list a {
+    color: #fff;
+}
+
+body.theme-dark .toc-back-link {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+body.theme-dark .toc-back-link:hover {
+    color: #fff;
+}
+
+/* --- Document information --- */
+body.theme-dark .document-information {
+    background: rgba(0, 0, 0, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+body.theme-dark .document-information h2 {
+    color: #fff;
+}
+
+body.theme-dark .document-info-list dt {
+    color: #fff;
+}
+
+body.theme-dark .document-info-list dd {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+/* --- Code --- */
+body.theme-dark code {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: #fff;
+}
+
+/* --- Footer --- */
+body.theme-dark .copyright {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* --- Print: always use light appearance --- */
+@media print {
+    body.theme-dark {
+        background: white;
+        color: #333;
+    }
+
+    body.theme-dark .page {
+        background: white;
+        color: #333;
+        box-shadow: none;
+    }
+
+    body.theme-dark .page > h2 {
+        color: var(--green);
+        border-bottom-color: var(--green);
+    }
+
+    body.theme-dark table {
+        color: #333;
+    }
+
+    body.theme-dark th,
+    body.theme-dark td {
+        border-color: #ddd;
+        background-color: #fff;
+    }
+
+    body.theme-dark .fact {
+        background: #f9f9f9;
+    }
+
+    body.theme-dark .fact-label,
+    body.theme-dark .fact-value {
+        color: #333;
+    }
+
+    body.theme-dark .fact-period {
+        color: #444;
+    }
+
+    body.theme-dark .fact-ref {
+        color: #666;
+    }
+
+    body.theme-dark .fact-textblock {
+        background-color: var(--green-100);
+        border-color: var(--green);
+        color: #333;
+    }
+
+    body.theme-dark .fact-textblock::before,
+    body.theme-dark .fact-textblock::after {
+        color: var(--green);
+    }
+
+    body.theme-dark .thematic-table {
+        border-color: #ccc;
+        background-color: #fff;
+    }
+
+    body.theme-dark .thematic-table thead th {
+        background-color: var(--green-100);
+        color: #333;
+        border-bottom-color: #ccc;
+    }
+
+    body.theme-dark .thematic-table td,
+    body.theme-dark .thematic-table th {
+        border-bottom-color: #e0e0e0;
+        background-color: #fff;
+        color: #333;
+    }
+
+    body.theme-dark .thematic-table tbody tr:nth-child(even) {
+        background-color: var(--green-100);
+    }
+
+    body.theme-dark .thematic-table tbody th {
+        background-color: #f9f9f9;
+        color: #444;
+    }
+
+    body.theme-dark .toc-page h1 {
+        color: #333;
+    }
+
+    body.theme-dark .toc-list a {
+        color: var(--green);
+    }
+
+    body.theme-dark .document-information {
+        background: var(--green-100);
+        border-color: var(--green);
+    }
+
+    body.theme-dark .document-information h2 {
+        color: var(--green);
+    }
+
+    body.theme-dark .document-info-list dt {
+        color: #333;
+    }
+
+    body.theme-dark .document-info-list dd {
+        color: #555;
+    }
+
+    body.theme-dark code {
+        background-color: var(--green-100);
+        border-color: var(--green);
+        color: var(--green);
+    }
+
+    body.theme-dark .cover-page h1,
+    body.theme-dark .cover-page h2,
+    body.theme-dark .cover-page h3 {
+        color: #333;
+    }
 }

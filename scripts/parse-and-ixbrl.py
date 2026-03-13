@@ -17,6 +17,7 @@ from mireport.excelprocessor import (
     VSME_DEFAULTS,
     ExcelProcessor,
 )
+from mireport.filesupport import ImageFileLikeAndFileName
 from mireport.localise import EU_LOCALES, argparse_locale
 
 
@@ -77,6 +78,19 @@ def createArgParser() -> argparse.ArgumentParser:
         default=False,
         help="Generate JSON output as well.",
     )
+    parser.add_argument(
+        "--theme",
+        type=str,
+        choices=["light", "dark"],
+        default="light",
+        help="Report colour theme (default: light).",
+    )
+    parser.add_argument(
+        "--logo",
+        type=Path,
+        default=None,
+        help="Path to an image file to use as the entity logo.",
+    )
 
     return parser
 
@@ -91,6 +105,8 @@ def parseArgs(parser: argparse.ArgumentParser) -> argparse.Namespace:
         args.taxonomy_packages = validateTaxonomyPackages(
             args.taxonomy_packages, parser
         )
+    if args.logo and not args.logo.is_file():
+        parser.error(f"Logo file not found: {args.logo}")
 
     return args
 
@@ -138,6 +154,19 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, ExcelProc
             outputLocale=args.output_locale,
         )
         report = excel.populateReport()
+        report.setTheme(args.theme)
+        if args.logo:
+            logo_path: Path = args.logo
+            logo = ImageFileLikeAndFileName(
+                fileContent=logo_path.read_bytes(),
+                filename=logo_path.name,
+            )
+            if logo.can_open_image():
+                report.setEntityLogo(logo)
+            else:
+                pc.addDevInfoMessage(
+                    f"Unable to use supplied image file {logo_path}. Please try a different format."
+                )
         pc.mark("Generating Inline Report")
         reportFile = report.getInlineReport()
         reportPackage = report.getInlineReportPackage()

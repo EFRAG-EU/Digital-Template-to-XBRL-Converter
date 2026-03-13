@@ -729,6 +729,7 @@ class InlineReport:
         self._schemaRefs: set[str] = set()
         self._reportTitle: str = ""
         self._reportSubtitle: str = ""
+        self._theme: str = "light"
         self._logo: Optional[FilelikeAndFileName] = None
         if not outputLocale:
             outputLocale = (
@@ -790,6 +791,13 @@ class InlineReport:
 
     def setEntityName(self, name: str) -> None:
         self._entityName = name
+
+    def setTheme(self, theme: str) -> None:
+        if theme not in {"light", "dark"}:
+            raise InlineReportException(
+                f"Theme must be 'light' or 'dark', got '{theme}'."
+            )
+        self._theme = theme
 
     def setEntityLogo(self, logo: ImageFileLikeAndFileName) -> None:
         self._logo = logo
@@ -953,6 +961,7 @@ class InlineReport:
             facts=list(self._facts),
             sections=sections,
             uniqueFactCount=len(frozenset(self._facts)),
+            theme=self._theme,
         )
 
         try:
