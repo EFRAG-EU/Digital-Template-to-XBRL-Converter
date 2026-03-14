@@ -20,6 +20,7 @@ import ixbrltemplates
 from babel import Locale
 from jinja2 import Environment, PackageLoader
 from markupsafe import Markup, escape
+from rcssmin import cssmin
 
 import mireport
 from mireport.exceptions import InlineReportException
@@ -730,8 +731,9 @@ class InlineReport:
         self._reportTitle: str = ""
         self._reportSubtitle: str = ""
         self._theme: str = "light"
-        self._logo: Optional[FilelikeAndFileName] = None
-        self._coverImage: Optional[FilelikeAndFileName] = None
+        self._logo: Optional[ImageFileLikeAndFileName] = None
+        self._coverImage: Optional[ImageFileLikeAndFileName] = None
+        self._watermark: Optional[ImageFileLikeAndFileName] = None
         if not outputLocale:
             outputLocale = (
                 get_locale_from_str(taxonomy.defaultLanguage or "") or Locale.default()
@@ -800,11 +802,14 @@ class InlineReport:
             )
         self._theme = theme
 
-    def setEntityLogo(self, logo: ImageFileLikeAndFileName) -> None:
+    def setImageLogo(self, logo: ImageFileLikeAndFileName) -> None:
         self._logo = logo
 
-    def setCoverImage(self, image: ImageFileLikeAndFileName) -> None:
+    def setImageCover(self, image: ImageFileLikeAndFileName) -> None:
         self._coverImage = image
+
+    def setImageWatermark(self, image: ImageFileLikeAndFileName) -> None:
+        self._watermark = image
 
     def setDefaultPeriodName(self, name: str) -> None:
         if name not in self._periods:
@@ -924,8 +929,10 @@ class InlineReport:
         )
 
         env = Environment(
-            loader=PackageLoader(__package__, "inline_report_templates"),
+            loader=PackageLoader(mireport.__name__, "inline_report_templates"),
             keep_trailing_newline=True,
+            trim_blocks=True,
+            lstrip_blocks=True,
         )
         env.globals.update(
             {
@@ -939,9 +946,19 @@ class InlineReport:
         env.filters.update(
             {
                 "tidyTdValue": tidyTdValue,
+                "cssmin": cssmin,
             }
         )
         template = env.get_template("inline-report-presentation.html.jinja")
+
+        watermark_data_url = ""
+        if self._watermark is not None:
+            watermark_data_url = self._watermark.as_data_url()
+
+        logo_data_url = ""
+        if self._logo is not None:
+            logo_data_url = self._logo.as_data_url(max_width=200)
+
         html_content = template.render(
             aoix={
                 "defaults": self.getDefaultAspectsForAoix(),
@@ -967,6 +984,8 @@ class InlineReport:
             sections=sections,
             uniqueFactCount=len(frozenset(self._facts)),
             theme=self._theme,
+            watermarkDataUrl=watermark_data_url,
+            logoDataUrl=logo_data_url,
         )
 
         try:

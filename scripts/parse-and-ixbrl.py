@@ -86,16 +86,22 @@ def createArgParser() -> argparse.ArgumentParser:
         help="Report colour theme (default: light).",
     )
     parser.add_argument(
-        "--logo",
+        "--image-logo",
         type=Path,
         default=None,
         help="Path to an image file to use as the entity logo.",
     )
     parser.add_argument(
-        "--cover-image",
+        "--image-cover",
         type=Path,
         default=None,
         help="Path to an image file to use as the cover page image.",
+    )
+    parser.add_argument(
+        "--image-watermark",
+        type=Path,
+        default=None,
+        help="Path to an image file to use as a background watermark on report pages.",
     )
 
     return parser
@@ -111,11 +117,6 @@ def parseArgs(parser: argparse.ArgumentParser) -> argparse.Namespace:
         args.taxonomy_packages = validateTaxonomyPackages(
             args.taxonomy_packages, parser
         )
-    if args.logo and not args.logo.is_file():
-        parser.error(f"Logo file not found: {args.logo}")
-    if args.cover_image and not args.cover_image.is_file():
-        parser.error(f"Cover image file not found: {args.cover_image}")
-
     return args
 
 
@@ -163,30 +164,17 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, ExcelProc
         )
         report = excel.populateReport()
         report.setTheme(args.theme)
-        if args.logo:
-            logo_path: Path = args.logo
-            logo = ImageFileLikeAndFileName(
-                fileContent=logo_path.read_bytes(),
-                filename=logo_path.name,
-            )
-            if logo.can_open_image():
-                report.setEntityLogo(logo)
-            else:
-                pc.addDevInfoMessage(
-                    f"Unable to use supplied image file {logo_path}. Please try a different format."
-                )
-        if args.cover_image:
-            cover_path: Path = args.cover_image
-            cover = ImageFileLikeAndFileName(
-                fileContent=cover_path.read_bytes(),
-                filename=cover_path.name,
-            )
-            if cover.can_open_image():
-                report.setCoverImage(cover)
-            else:
-                pc.addDevInfoMessage(
-                    f"Unable to use supplied cover image {cover_path}. Please try a different format."
-                )
+        for arg_name, setter in [
+            ("image_logo", report.setImageLogo),
+            ("image_cover", report.setImageCover),
+            ("image_watermark", report.setImageWatermark),
+        ]:
+            if image_path := getattr(args, arg_name):
+                image, err = ImageFileLikeAndFileName.prepare(image_path)
+                if err:
+                    pc.addDevInfoMessage(err)
+                else:
+                    setter(image)
         pc.mark("Generating Inline Report")
         reportFile = report.getInlineReport()
         reportPackage = report.getInlineReportPackage()

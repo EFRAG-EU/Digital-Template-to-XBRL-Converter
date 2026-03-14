@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import base64
 import re
 from collections.abc import Iterable
@@ -173,6 +175,31 @@ class ImageFileLikeAndFileName(FilelikeAndFileName):
     Variant of FilelikeAndFileName that has additional methods related to image
     support.
     """
+
+    @classmethod
+    def prepare(
+        cls,
+        source: Path | bytes,
+        filename: str | None = None,
+    ) -> tuple[ImageFileLikeAndFileName | None, str | None]:
+        """
+        Validate and wrap an image source into an ImageFileLikeAndFileName.
+
+        Returns (image, None) on success, or (None, error_message) on failure.
+        """
+        if isinstance(source, Path):
+            if not source.is_file():
+                return None, f"Image file not found: {source}"
+            content = source.read_bytes()
+            filename = filename or source.name
+        else:
+            content = source
+            if not filename:
+                return None, "A filename is required when providing image bytes."
+        image = cls(fileContent=content, filename=filename)
+        if not image.can_open_image():
+            return None, f"Unable to use supplied image {filename}. Please try a different format."
+        return image, None
 
     def can_open_image(self) -> bool:
         """

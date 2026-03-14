@@ -486,29 +486,24 @@ def doConversion(conversion: dict, id: str) -> ConversionResults:
                 )
                 return resultBuilder.build()
 
-            if "logo" in conversion:
-                logo = ImageFileLikeAndFileName(*conversion["logo"])
-                if logo.can_open_image():
-                    pc.addDevInfoMessage(f"Adding logo to report {logo}")
-                    report.setEntityLogo(logo)
-                else:
-                    resultBuilder.addMessage(
-                        f"Unable to use supplied image file {logo}. Please try a different format.",
-                        Severity.WARNING,
-                        MessageType.Conversion,
+            for key, setter in [
+                ("logo", report.setImageLogo),
+                ("cover_image", report.setImageCover),
+                ("watermark", report.setImageWatermark),
+            ]:
+                if key in conversion:
+                    image, err = ImageFileLikeAndFileName.prepare(
+                        conversion[key].fileContent, conversion[key].filename
                     )
-
-            if "cover_image" in conversion:
-                cover = ImageFileLikeAndFileName(*conversion["cover_image"])
-                if cover.can_open_image():
-                    pc.addDevInfoMessage(f"Adding cover image to report {cover}")
-                    report.setCoverImage(cover)
-                else:
-                    resultBuilder.addMessage(
-                        f"Unable to use supplied cover image {cover}. Please try a different format.",
-                        Severity.WARNING,
-                        MessageType.Conversion,
-                    )
+                    if err:
+                        resultBuilder.addMessage(
+                            err,
+                            Severity.WARNING,
+                            MessageType.Conversion,
+                        )
+                    else:
+                        pc.addDevInfoMessage(f"Adding {key} to report {image}")
+                        setter(image)
 
             pc.mark(
                 "Generating Inline Report",

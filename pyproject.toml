@@ -19,6 +19,7 @@ dependencies = [
     "pillow>=11.3.0",
     "python-dateutil",
     "python-dotenv>=1.0.1",
+    "rcssmin==1.2.2",
     "rich>=14.0.0",
     "waitress",
 ]

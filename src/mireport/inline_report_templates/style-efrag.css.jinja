@@ -135,6 +135,48 @@ td {
     contain-intrinsic-size: 500mm;
 }
 
+/* Watermark background on every page except the cover */
+{% if watermarkDataUrl %}
+.page:not(.cover-page)::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 40%;
+    height: 40%;
+    background-image: url('{{ watermarkDataUrl }}');
+    background-repeat: no-repeat;
+    background-position: bottom right;
+    background-size: contain;
+    opacity: 0.2;
+    pointer-events: none;
+    z-index: 0;
+}
+{% endif %}
+
+/* Corporate logo on every page except the cover (top-right corner) */
+{% if logoDataUrl %}
+.page:not(.cover-page)::after {
+    content: '';
+    position: absolute;
+    top: 3mm;
+    right: 3mm;
+    width: 25mm;
+    height: 12mm;
+    background-image: url('{{ logoDataUrl }}');
+    background-repeat: no-repeat;
+    background-position: top right;
+    background-size: contain;
+    opacity: 0.4;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.page:not(.cover-page) {
+    padding-top: 18mm;
+}
+{% endif %}
+
 /* Define Portrait Pages */
 .portrait-page {
     width: 210mm;
@@ -175,6 +217,7 @@ td {
     max-width: 80%;
     max-height: 100%;
     height: auto;
+    border-radius: 12px;
 }
 
 .company-logo {
