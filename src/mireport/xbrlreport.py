@@ -322,6 +322,7 @@ class Fact:
             symbol = f"{numSymbol} per {denSymbol}"
             return symbol
 
+        units = None
         if self.concept.isMonetary:
             units = self.aspects.get(
                 "monetary-units", self._report.defaultAspects.get("monetary-units")
@@ -553,10 +554,10 @@ class FactBuilder:
             elif s_value in {"false", "0", "no"}:
                 b_value = False
 
-        if b_value is None:
-            raise InlineReportException(
-                f"Unable to determine boolean value for string value {s_value=}"
-            )
+            if b_value is None:
+                raise InlineReportException(
+                    f"Unable to determine boolean value for string value {s_value=}"
+                )
 
         if b_value is True:
             self._aspects["transform"] = "fixed-true"
