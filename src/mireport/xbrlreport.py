@@ -1066,25 +1066,28 @@ class ReportLayoutOrganiser:
         self.createReportSections()
         self.createReportTables()
         self.reportSections.sort(key=lambda x: x.presentation)
-        self._moveC02AfterB02()
+        self._vsme_move_hacks_for_efrag_report()
         self.checkAllFactsUsed()
         return self.reportSections
 
-    def _moveC02AfterB02(self) -> None:
-        """Move all [C02.*] sections to immediately after the last [B02.*] section."""
+    def _vsme_move_hacks_for_efrag_report(self) -> None:
+        """Reorder sections: [C02] after [B02]."""
+        self._move_sections_after("[C02", "[B02")
+
+    def _move_sections_after(self, source_prefix: str, target_prefix: str) -> None:
+        """Move all sections with *source_prefix* to immediately after the last *target_prefix* section."""
         prefixes = {id(s): self._sectionPrefix(s) for s in self.reportSections}
-        c02 = [s for s in self.reportSections if prefixes[id(s)] == "[C02"]
-        if not c02:
+        to_move = [s for s in self.reportSections if prefixes[id(s)] == source_prefix]
+        if not to_move:
             return
-        remaining = [s for s in self.reportSections if prefixes[id(s)] != "[C02"]
-        # Find insertion point: after the last [B02.*] section
+        remaining = [s for s in self.reportSections if prefixes[id(s)] != source_prefix]
         insert_pos = None
         for i, s in enumerate(remaining):
-            if prefixes[id(s)] == "[B02":
+            if prefixes[id(s)] == target_prefix:
                 insert_pos = i + 1
         if insert_pos is None:
             return
-        self.reportSections = remaining[:insert_pos] + c02 + remaining[insert_pos:]
+        self.reportSections = remaining[:insert_pos] + to_move + remaining[insert_pos:]
 
     def checkAllFactsUsed(self) -> None:
         """
