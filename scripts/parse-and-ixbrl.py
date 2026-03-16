@@ -3,7 +3,9 @@ import json
 import logging
 from pathlib import Path
 
+import mammoth
 import rich.traceback
+from markupsafe import Markup
 from rich.logging import RichHandler
 
 import mireport
@@ -110,6 +112,14 @@ def createArgParser() -> argparse.ArgumentParser:
         default=None,
         help="Path to a JSON file containing footnotes to attach to matching concepts.",
     )
+    parser.add_argument(
+        "--from-word",
+        nargs=2,
+        action="append",
+        default=[],
+        metavar=("QNAME", "FILENAME"),
+        help="A qualified name and a path to a Word document. Can be specified multiple times.",
+    )
 
     return parser
 
@@ -124,6 +134,15 @@ def parseArgs(parser: argparse.ArgumentParser) -> argparse.Namespace:
         args.taxonomy_packages = validateTaxonomyPackages(
             args.taxonomy_packages, parser
         )
+    from_word: dict[str, Path] = {}
+    for qname, filename in args.from_word:
+        if qname in from_word:
+            parser.error(f"Duplicate --from-word qname: {qname}")
+        path = Path(filename)
+        if not path.is_file():
+            parser.error(f"--from-word file does not exist: {filename}")
+        from_word[qname] = path
+    args.from_word = from_word
     return args
 
 
@@ -185,6 +204,16 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, ExcelProc
         if (fn_file := args.footnotes) and fn_file.is_file():
             fn_data = json.loads(fn_file.read_text(encoding="utf-8"))
             report.setFootnotes(fn_data.get("footnotes", []))
+        for qname, word_path in args.from_word.items():
+            pc.mark(
+                "Converting Word document",
+                additionalInfo=f"{qname} from {word_path}",
+            )
+            with open(word_path, "rb") as f:
+                result = mammoth.convert_to_html(f)
+            for msg in result.messages:
+                pc.addDevInfoMessage(f"mammoth ({word_path.name}): {msg}")
+            report.replaceFactValue(qname, Markup(result.value))
         pc.mark("Generating Inline Report")
         reportFile = report.getInlineReport()
         reportPackage = report.getInlineReportPackage()
