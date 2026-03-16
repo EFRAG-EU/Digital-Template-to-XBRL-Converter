@@ -715,6 +715,8 @@ class FactBuilder:
         elif self._concept.isNumeric:
             self.validateNumeric()
         self._aspects["period-type"] = self._concept.periodType.value
+        if self._concept.isTextblock:
+            self._aspects["escape"] = "true"
         self.validateTaxonomyDimensions()
         # TODO: check aspect validity before creating fact and raise Exception if invalid
         return Fact(self._concept, self._value, self._report, self._aspects)
