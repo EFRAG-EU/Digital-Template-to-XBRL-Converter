@@ -871,6 +871,17 @@ class InlineReport:
         """
         self._facts.append(fact)
 
+    def replaceFactValue(self, qname: str, value: FactValue) -> None:
+        """
+        Replace the value of the first fact matching the given qname string.
+        """
+        concept = self._taxonomy.getConcept(qname)
+        for fact in self._facts:
+            if fact.concept is concept:
+                fact.value = value
+                return
+        raise InlineReportException(f"No fact found for concept {qname} to replace.")
+
     @property
     def hasFacts(self) -> bool:
         return bool(self._facts)
