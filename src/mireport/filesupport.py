@@ -198,7 +198,10 @@ class ImageFileLikeAndFileName(FilelikeAndFileName):
                 return None, "A filename is required when providing image bytes."
         image = cls(fileContent=content, filename=filename)
         if not image.can_open_image():
-            return None, f"Unable to use supplied image {filename}. Please try a different format."
+            return (
+                None,
+                f"Unable to use supplied image {filename}. Please try a different format.",
+            )
         return image, None
 
     def can_open_image(self) -> bool:
