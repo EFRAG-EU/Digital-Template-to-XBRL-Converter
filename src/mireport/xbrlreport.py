@@ -230,7 +230,15 @@ class Fact:
 
     def format_value(self) -> str:
         """Return the value formatted for HTML with locale-aware numeric formatting."""
-        if not self.concept.isNumeric:
+        if self.concept.isBoolean:
+            match self.value:
+                case True:
+                    output = "YES"
+                case False:
+                    output = "NO"
+                case _:
+                    output = escape(self.value)
+        elif not self.concept.isNumeric:
             # Non-numeric values: escape and replace newlines with <br />
             v = str(self.value)
             if "\n" in v:
