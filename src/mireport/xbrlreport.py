@@ -239,12 +239,12 @@ class Fact:
                 case _:
                     output = escape(self.value)
         elif not self.concept.isNumeric:
-            # Non-numeric values: escape and replace newlines with <br />
-            v = str(self.value)
-            if "\n" in v:
-                output = "<br />".join(escape(p) for p in v.split("\n"))
+            if hasattr(self.value, "__html__"):
+                output = self.value
             else:
-                output = escape(v)
+                output = Markup("<br />").join(
+                    escape(p) for p in str(self.value).splitlines()
+                )
         else:
             decimal_places: DecimalPlaces
             if self._decimals and self._decimals != "INF" and self._numeric_scale:
