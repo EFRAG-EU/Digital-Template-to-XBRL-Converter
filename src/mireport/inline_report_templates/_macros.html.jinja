@@ -103,3 +103,13 @@
     {%- endif -%}
 {%- endmacro %}
 
+{#- Return a page-group key for deciding page breaks.
+    Sections whose prefixes belong to the same affinity group share a key
+    so they are kept on the same page.  Unrecognised prefixes fall back
+    to the raw section_prefix value. -#}
+{% macro page_group(section) -%}
+    {%- set prefix = section_prefix(section) -%}
+    {%- set affinity = {'[C07': '[C06', '[C09': '[C08'} -%}
+    {{- affinity.get(prefix, prefix) -}}
+{%- endmacro %}
+

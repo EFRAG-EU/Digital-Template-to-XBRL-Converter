@@ -114,8 +114,8 @@
         </div>
 {% set page = namespace(open=false, prefix='', css_class='') %}
 {% for section in sections if section.hasFacts %}
-        {#- Compute this section's prefix and page class -#}
-        {% set current_prefix = macros.section_prefix(section) %}
+        {#- Compute this section's page-group key and page class -#}
+        {% set current_prefix = macros.page_group(section) %}
         {% set current_class = macros.page_class_for_section(section) %}
 
         {% if section.style is sameas PresentationStyle.List %}
