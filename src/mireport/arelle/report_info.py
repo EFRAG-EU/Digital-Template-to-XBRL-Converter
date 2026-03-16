@@ -196,7 +196,7 @@ class ArelleReportProcessor:
             "viewer_feature_review": False,
             "validationMessages": True,
             "viewerNoCopyScript": True,
-            "viewer_feature_highlight_facts_on_startup": True,
+            "viewer_feature_highlight_facts_on_startup": False,
             "useStubViewer": False,
             "viewerURL": ARELLE_VIEWER_URL,
         }
@@ -233,6 +233,7 @@ class ArelleReportProcessor:
                 e,
                 message="Exception encountered during processing of Arelle's response stream",
             )
+            return result
         finally:
             del viewerBytesIO
 
