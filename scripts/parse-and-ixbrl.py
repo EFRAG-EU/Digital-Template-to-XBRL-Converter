@@ -1,4 +1,5 @@
 import argparse
+import json
 import logging
 from pathlib import Path
 
@@ -103,6 +104,12 @@ def createArgParser() -> argparse.ArgumentParser:
         default=None,
         help="Path to an image file to use as a background watermark on report pages.",
     )
+    parser.add_argument(
+        "--footnotes",
+        type=Path,
+        default=None,
+        help="Path to a JSON file containing footnotes to attach to matching concepts.",
+    )
 
     return parser
 
@@ -175,6 +182,9 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, ExcelProc
                     pc.addDevInfoMessage(err)
                 else:
                     setter(image)
+        if (fn_file := args.footnotes) and fn_file.is_file():
+            fn_data = json.loads(fn_file.read_text(encoding="utf-8"))
+            report.setFootnotes(fn_data.get("footnotes", []))
         pc.mark("Generating Inline Report")
         reportFile = report.getInlineReport()
         reportPackage = report.getInlineReportPackage()

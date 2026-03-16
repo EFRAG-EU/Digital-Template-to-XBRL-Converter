@@ -113,6 +113,9 @@
             </ol>
         </div>
 {% set page = namespace(open=false, prefix='', css_class='') %}
+{% set page_footnotes = [] %}
+{% set page_fn_ids = [] %}
+{% set fn_counter = namespace(num=0, page=0) %}
 {% for section in sections if section.hasFacts %}
         {#- Compute this section's page-group key and page class -#}
         {% set current_prefix = macros.page_group(section) %}
@@ -121,6 +124,10 @@
         {% if section.style is sameas PresentationStyle.List %}
         {#- LIST SECTIONS: merge into same page when prefix and orientation match -#}
             {% if page.open and (current_prefix != page.prefix or current_class != page.css_class) %}
+            {{ macros.render_page_footnotes(page_footnotes) }}
+            {% if page_footnotes.clear() is none %}{% endif %}
+            {% if page_fn_ids.clear() is none %}{% endif %}
+            {% set fn_counter.num = 0 %}
         </div>
                 {% set page.open = false %}
             {% endif %}
@@ -129,6 +136,7 @@
                 {% set page.open = true %}
                 {% set page.prefix = current_prefix %}
                 {% set page.css_class = current_class %}
+                {% set fn_counter.page = fn_counter.page + 1 %}
             {% endif %}
 
             {{ macros.create_h2_title(section, loop) }}
@@ -140,7 +148,8 @@
                 {% for fact in factList %}
                     {% set documentation = rel.concept.getDocumentationLabel() %}
                     <dl class="fact fact-depth-{{ rel.depth if rel.depth <= 4 else 4 }} fact-depth-{{ rel.depth if rel.depth <= 4 else 4 }}-{{ shade }}">
-                        <dt class="fact-value {% if fact.concept.isTextblock %}fact-textblock{% endif %}" title="{{ rel.concept.qname }}">{{ macros.render_fact_value(fact) }}{% set ns.fact_count = ns.fact_count + 1 %}</dt>
+                        {% set _fn = footnotes_by_concept.get(rel.concept.qname | string) %}
+                        <dt class="fact-value {% if fact.concept.isTextblock %}fact-textblock{% endif %}" title="{{ rel.concept.qname }}">{{ macros.render_fact_value(fact) }}{% if _fn and _fn.id not in page_fn_ids %}{% set fn_counter.num = fn_counter.num + 1 %}<a href="#fn-{{ fn_counter.page }}-{{ fn_counter.num }}" id="fnref-{{ fn_counter.page }}-{{ fn_counter.num }}"><sup class="footnote-ref">[{{ fn_counter.num }}]</sup></a>{% if page_footnotes.append({'fn': _fn, 'num': fn_counter.num, 'page': fn_counter.page}) is none %}{% endif %}{% if page_fn_ids.append(_fn.id) is none %}{% endif %}{% elif _fn %}<a href="#fn-{{ fn_counter.page }}-{{ page_footnotes | selectattr('fn.id', 'equalto', _fn.id) | map(attribute='num') | first }}"><sup class="footnote-ref">[{{ page_footnotes | selectattr('fn.id', 'equalto', _fn.id) | map(attribute='num') | first }}]</sup></a>{% endif %}{% set ns.fact_count = ns.fact_count + 1 %}</dt>
                         <dd class="fact-label">
                             <span {% if documentation != none %}class="hover-box"{% endif %}>
                                 {{ macros.relationship_label(rel) | e }}
@@ -166,6 +175,10 @@
         {% elif section.style is sameas PresentationStyle.Table %}
         {#- TABLE SECTIONS: merge into same page when prefix and orientation match -#}
             {% if page.open and (current_prefix != page.prefix or current_class != page.css_class) %}
+            {{ macros.render_page_footnotes(page_footnotes) }}
+            {% if page_footnotes.clear() is none %}{% endif %}
+            {% if page_fn_ids.clear() is none %}{% endif %}
+            {% set fn_counter.num = 0 %}
         </div>
                 {% set page.open = false %}
             {% endif %}
@@ -174,6 +187,7 @@
                 {% set page.open = true %}
                 {% set page.prefix = current_prefix %}
                 {% set page.css_class = current_class %}
+                {% set fn_counter.page = fn_counter.page + 1 %}
             {% endif %}
 
             {{ macros.create_h2_title(section, loop) }}
@@ -225,8 +239,9 @@
                             {% if fact is none %}
                         <td></td>
                             {% else %}
+                        {% set _fn = footnotes_by_concept.get(fact.concept.qname | string) %}
                         <td {% if fact.concept.isNumeric%}class="numeric"{% endif %}>
-                        {{ macros.render_fact_value(fact, section.unitSymbol or section.columnHasUnit(loop.index0)) }}{% set ns.fact_count = ns.fact_count + 1 %}
+                        {{ macros.render_fact_value(fact, section.unitSymbol or section.columnHasUnit(loop.index0)) }}{% if _fn and _fn.id not in page_fn_ids %}{% set fn_counter.num = fn_counter.num + 1 %}<a href="#fn-{{ fn_counter.page }}-{{ fn_counter.num }}" id="fnref-{{ fn_counter.page }}-{{ fn_counter.num }}"><sup class="footnote-ref">[{{ fn_counter.num }}]</sup></a>{% if page_footnotes.append({'fn': _fn, 'num': fn_counter.num, 'page': fn_counter.page}) is none %}{% endif %}{% if page_fn_ids.append(_fn.id) is none %}{% endif %}{% elif _fn %}<a href="#fn-{{ fn_counter.page }}-{{ page_footnotes | selectattr('fn.id', 'equalto', _fn.id) | map(attribute='num') | first }}"><sup class="footnote-ref">[{{ page_footnotes | selectattr('fn.id', 'equalto', _fn.id) | map(attribute='num') | first }}]</sup></a>{% endif %}{% set ns.fact_count = ns.fact_count + 1 %}
                         </td>
                             {% endif %}
                         {% endfor %}
@@ -237,6 +252,10 @@
         {% else %}
         {#- UNSUPPORTED STYLES: always get their own page -#}
             {% if page.open %}
+            {{ macros.render_page_footnotes(page_footnotes) }}
+            {% if page_footnotes.clear() is none %}{% endif %}
+            {% if page_fn_ids.clear() is none %}{% endif %}
+            {% set fn_counter.num = 0 %}
         </div>
                 {% set page.open = false %}
             {% endif %}
@@ -250,6 +269,7 @@
 {% endfor %}
         {#- Close the last page div if still open -#}
         {% if page.open %}
+        {{ macros.render_page_footnotes(page_footnotes) }}
         </div>
         {% endif %}
   <!-- Final Page -->

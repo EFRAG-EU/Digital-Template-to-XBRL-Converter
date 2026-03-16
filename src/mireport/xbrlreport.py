@@ -745,6 +745,7 @@ class InlineReport:
         self._logo: Optional[ImageFileLikeAndFileName] = None
         self._coverImage: Optional[ImageFileLikeAndFileName] = None
         self._watermark: Optional[ImageFileLikeAndFileName] = None
+        self._footnotes: list[dict[str, str]] = []
         if not outputLocale:
             outputLocale = (
                 get_locale_from_str(taxonomy.defaultLanguage or "") or Locale.default()
@@ -772,6 +773,9 @@ class InlineReport:
             "numeric-transform": numeric_transform,
             "decimals": "INF",
         }
+
+    def setFootnotes(self, footnotes: list[dict[str, str]]) -> None:
+        self._footnotes = footnotes
 
     def setReportTitle(self, title: str) -> None:
         self._reportTitle = title
@@ -997,6 +1001,7 @@ class InlineReport:
             theme=self._theme,
             watermarkDataUrl=watermark_data_url,
             logoDataUrl=logo_data_url,
+            footnotes_by_concept={fn["concept"]: fn for fn in self._footnotes},
         )
 
         try:

@@ -113,3 +113,17 @@
     {{- affinity.get(prefix, prefix) -}}
 {%- endmacro %}
 
+{#- Render collected footnotes at the bottom of a page div.
+    Only emits markup when the list is non-empty.
+    Each entry is a dict with keys: fn (original footnote), num (page-local number), page (page counter). -#}
+{% macro render_page_footnotes(footnote_list) -%}
+    {%- if footnote_list -%}
+            <div class="page-footnotes">
+                <hr class="footnote-separator" />
+                {% for entry in footnote_list %}
+                <p class="footnote" id="fn-{{ entry.page }}-{{ entry.num }}"><a href="#fnref-{{ entry.page }}-{{ entry.num }}"><sup>[{{ entry.num }}]</sup></a> {{ entry.fn.content | e }}</p>
+                {% endfor %}
+            </div>
+    {%- endif -%}
+{%- endmacro %}
+

@@ -661,6 +661,61 @@ code {
 }
 
 /* ==========================================================================
+   FOOTNOTES
+   ========================================================================== */
+
+.page-footnotes {
+    margin-top: auto;
+    padding-top: 0;
+}
+
+.footnote-separator {
+    border: none;
+    border-top: 1px solid #aaa;
+    margin: 0 0 0.5em 0;
+    width: 40%;
+}
+
+.footnote {
+    font-size: 0.85em;
+    color: #555;
+    margin: 0.25em 0;
+    line-height: 1.4;
+}
+
+.footnote a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.footnote sup {
+    color: var(--green);
+    font-weight: bold;
+    margin-right: 0.3em;
+}
+
+sup.footnote-ref {
+    font-size: 0.75em;
+    color: var(--green);
+    font-weight: bold;
+    margin-left: 0.15em;
+}
+
+a:has(> sup.footnote-ref) {
+    color: inherit;
+    text-decoration: none;
+}
+
+[id^="fnref-"] {
+    scroll-margin-top: 10vh;
+}
+
+[id^="fn-"] {
+    scroll-margin-top: 10vh;
+}
+
+
+/* ==========================================================================
    DARK MODE THEME
    Applied when body has class="theme-dark".
    Page background becomes --green, all text flips to white.
@@ -783,6 +838,23 @@ body.theme-dark .toc-back-link {
 
 body.theme-dark .toc-back-link:hover {
     color: #fff;
+}
+
+/* --- Footnotes --- */
+body.theme-dark .footnote-separator {
+    border-top-color: rgba(255, 255, 255, 0.3);
+}
+
+body.theme-dark .footnote {
+    color: rgba(255, 255, 255, 0.75);
+}
+
+body.theme-dark .footnote sup {
+    color: #a2d87c;
+}
+
+body.theme-dark sup.footnote-ref {
+    color: #a2d87c;
 }
 
 /* --- Document information --- */
@@ -933,5 +1005,21 @@ body.theme-dark .copyright {
     body.theme-dark .cover-page h2,
     body.theme-dark .cover-page h3 {
         color: #333;
+    }
+
+    body.theme-dark .footnote-separator {
+        border-top-color: #aaa;
+    }
+
+    body.theme-dark .footnote {
+        color: #555;
+    }
+
+    body.theme-dark .footnote sup {
+        color: var(--green);
+    }
+
+    body.theme-dark sup.footnote-ref {
+        color: var(--green);
     }
 }
