@@ -47,12 +47,17 @@
     {%- endif -%}
 {%- endmacro %}
 
+{#- Return the label override for a concept qname if one exists, otherwise the fallback. -#}
+{% macro _label_or_override(concept, fallback) -%}
+    {{- label_overrides_by_concept.get(concept.qname | string, fallback) -}}
+{%- endmacro %}
+
 {% macro concept_label(concept) -%}
-    {{- concept.getStandardLabel(labelLanguage, fallbackToAnyLang = true, fallbackToQName = labelQNameFallback, removeSuffix = true) -}}
+    {{- _label_or_override(concept, concept.getStandardLabel(labelLanguage, fallbackToAnyLang = true, fallbackToQName = labelQNameFallback, removeSuffix = true)) -}}
 {%- endmacro %}
 
 {% macro relationship_label(rel) -%}
-    {{- rel.getLabel(labelLanguage, fallbackToAnyLang = true, fallbackToQName = labelQNameFallback, removeSuffix = true) -}}
+    {{- _label_or_override(rel.concept, rel.getLabel(labelLanguage, fallbackToAnyLang = true, fallbackToQName = labelQNameFallback, removeSuffix = true)) -}}
 {%- endmacro %}
 
 {% macro section_label(section) -%}
@@ -109,7 +114,7 @@
     to the raw section_prefix value. -#}
 {% macro page_group(section) -%}
     {%- set prefix = section_prefix(section) -%}
-    {%- set affinity = {'[C07': '[C06', '[C09': '[C08'} -%}
+    {%- set affinity = {'[C07': '[C06', '[C09': '[C08', '[B07': '[B06'} -%}
     {{- affinity.get(prefix, prefix) -}}
 {%- endmacro %}
 

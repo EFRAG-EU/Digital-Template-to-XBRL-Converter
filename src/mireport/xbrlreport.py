@@ -746,6 +746,7 @@ class InlineReport:
         self._coverImage: Optional[ImageFileLikeAndFileName] = None
         self._watermark: Optional[ImageFileLikeAndFileName] = None
         self._footnotes: list[dict[str, str]] = []
+        self._labelOverrides: dict[str, str] = {}
         if not outputLocale:
             outputLocale = (
                 get_locale_from_str(taxonomy.defaultLanguage or "") or Locale.default()
@@ -774,8 +775,15 @@ class InlineReport:
             "decimals": "INF",
         }
 
-    def setFootnotes(self, footnotes: list[dict[str, str]]) -> None:
+    def setExtraData(
+        self,
+        footnotes: list[dict[str, str]],
+        labelOverrides: list[dict[str, str]],
+    ) -> None:
         self._footnotes = footnotes
+        self._labelOverrides = {
+            lo["concept"]: lo["label"] for lo in labelOverrides
+        }
 
     def setReportTitle(self, title: str) -> None:
         self._reportTitle = title
@@ -967,6 +975,7 @@ class InlineReport:
                 "now_utc": lambda: datetime.now(timezone.utc),
                 "labelLanguage": label_language,
                 "labelQNameFallback": label_language is None,
+                "label_overrides_by_concept": self._labelOverrides,
             }
         )
         env.filters.update(

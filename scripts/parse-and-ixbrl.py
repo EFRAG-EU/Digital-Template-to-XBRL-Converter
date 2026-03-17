@@ -107,10 +107,10 @@ def createArgParser() -> argparse.ArgumentParser:
         help="Path to an image file to use as a background watermark on report pages.",
     )
     parser.add_argument(
-        "--footnotes",
+        "--extra-data",
         type=Path,
         default=None,
-        help="Path to a JSON file containing footnotes to attach to matching concepts.",
+        help="Path to a JSON file containing extra report data (footnotes, label overrides, etc.).",
     )
     parser.add_argument(
         "--from-word",
@@ -201,9 +201,12 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, ExcelProc
                     pc.addDevInfoMessage(err)
                 else:
                     setter(image)
-        if (fn_file := args.footnotes) and fn_file.is_file():
-            fn_data = json.loads(fn_file.read_text(encoding="utf-8"))
-            report.setFootnotes(fn_data.get("footnotes", []))
+        if (extra_file := args.extra_data) and extra_file.is_file():
+            extra = json.loads(extra_file.read_text(encoding="utf-8"))
+            report.setExtraData(
+                footnotes=extra.get("footnotes", []),
+                labelOverrides=extra.get("labelOverrides", []),
+            )
         for qname, word_path in args.from_word.items():
             pc.mark(
                 "Converting Word document",
