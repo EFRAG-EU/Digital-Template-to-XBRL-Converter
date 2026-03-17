@@ -1351,15 +1351,16 @@ class ReportLayoutOrganiser:
             tablePeriod = self.getTablePeriod(data)
             columnPeriods = self.getColumnPeriods(data)
 
-            all_numeric = True
-            col_numeric: list[bool] = [True for _ in range(len(columnHeadings[1:]))]
-            for row in data:
-                for col_num, factOrNone in enumerate(row):
-                    if factOrNone is None:
-                        continue
-                    if not factOrNone.concept.isNumeric:
-                        all_numeric = False
-                        col_numeric[col_num] = False
+            col_empty = [all(row[cnum] is None for row in data) for cnum in range(len(columnHeadings) - 1)]
+            col_numeric = [all(f.concept.isNumeric for row in data if (f := row[cnum]) is not None) for cnum in range(len(columnHeadings) - 1)]
+            all_numeric = all(col_numeric)
+
+            if True in col_empty:
+                new_data = [[row[cnum] for cnum, empty in enumerate(col_empty) if not empty] for row in data]
+                new_columnHeadings = [ch for cnum, ch in enumerate(columnHeadings[1:]) if not col_empty[cnum]]
+                assert len(new_columnHeadings) == len(new_data[0]), f"Expected number of column headings to match number of columns in data. {len(new_columnHeadings)=} {len(new_data[0])=}"
+                columnHeadings = [columnHeadings[0]] + new_columnHeadings
+                data = new_data
 
             newColumnHeadings: list[list[TableHeadingCell]] = []
             max_cols = max(1, len(columnHeadings) - 1)
@@ -1382,29 +1383,20 @@ class ReportLayoutOrganiser:
                 colZeroLabel = columnHeadings.pop(0)
 
             for cnum, col in enumerate(columnHeadings):
-                thisNumeric = all_numeric
-                if col_numeric[cnum] is True:
-                    thisNumeric = True
                 headerRows[rowNum].append(
-                    TableHeadingCell(col, colspan=1, rowspan=1, numeric=thisNumeric)
+                    TableHeadingCell(col, colspan=1, rowspan=1, numeric=all_numeric or col_numeric[cnum])
                 )
             if not tablePeriod and columnPeriods:
                 rowNum = next(rowCounter)
                 for cnum, cp in enumerate(columnPeriods):
-                    thisNumeric = all_numeric
-                    if col_numeric[cnum] is True:
-                        thisNumeric = True
                     headerRows[rowNum].append(
-                        TableHeadingCell(cp, colspan=1, rowspan=1, numeric=thisNumeric)
+                        TableHeadingCell(cp, colspan=1, rowspan=1, numeric=all_numeric or col_numeric[cnum])
                     )
             if not tableUnit and columnUnits:
                 rowNum = next(rowCounter)
                 for cnum, cu in enumerate(columnUnits):
-                    thisNumeric = all_numeric
-                    if col_numeric[cnum] is True:
-                        thisNumeric = True
                     headerRows[rowNum].append(
-                        TableHeadingCell(cu, colspan=1, rowspan=1, numeric=thisNumeric)
+                        TableHeadingCell(cu, colspan=1, rowspan=1, numeric=all_numeric or col_numeric[cnum])
                     )
             if headerRows:
                 headerRows[0].insert(
