@@ -781,9 +781,7 @@ class InlineReport:
         labelOverrides: list[dict[str, str]],
     ) -> None:
         self._footnotes = footnotes
-        self._labelOverrides = {
-            lo["concept"]: lo["label"] for lo in labelOverrides
-        }
+        self._labelOverrides = {lo["concept"]: lo["label"] for lo in labelOverrides}
 
     def setReportTitle(self, title: str) -> None:
         self._reportTitle = title
@@ -1360,14 +1358,29 @@ class ReportLayoutOrganiser:
             tablePeriod = self.getTablePeriod(data)
             columnPeriods = self.getColumnPeriods(data)
 
-            col_empty = [all(row[cnum] is None for row in data) for cnum in range(len(columnHeadings) - 1)]
-            col_numeric = [all(f.concept.isNumeric for row in data if (f := row[cnum]) is not None) for cnum in range(len(columnHeadings) - 1)]
+            col_empty = [
+                all(row[cnum] is None for row in data)
+                for cnum in range(len(columnHeadings) - 1)
+            ]
+            col_numeric = [
+                all(f.concept.isNumeric for row in data if (f := row[cnum]) is not None)
+                for cnum in range(len(columnHeadings) - 1)
+            ]
             all_numeric = all(col_numeric)
 
             if True in col_empty:
-                new_data = [[row[cnum] for cnum, empty in enumerate(col_empty) if not empty] for row in data]
-                new_columnHeadings = [ch for cnum, ch in enumerate(columnHeadings[1:]) if not col_empty[cnum]]
-                assert len(new_columnHeadings) == len(new_data[0]), f"Expected number of column headings to match number of columns in data. {len(new_columnHeadings)=} {len(new_data[0])=}"
+                new_data = [
+                    [row[cnum] for cnum, empty in enumerate(col_empty) if not empty]
+                    for row in data
+                ]
+                new_columnHeadings = [
+                    ch
+                    for cnum, ch in enumerate(columnHeadings[1:])
+                    if not col_empty[cnum]
+                ]
+                assert len(new_columnHeadings) == len(new_data[0]), (
+                    f"Expected number of column headings to match number of columns in data. {len(new_columnHeadings)=} {len(new_data[0])=}"
+                )
                 columnHeadings = [columnHeadings[0]] + new_columnHeadings
                 data = new_data
 
@@ -1393,19 +1406,34 @@ class ReportLayoutOrganiser:
 
             for cnum, col in enumerate(columnHeadings):
                 headerRows[rowNum].append(
-                    TableHeadingCell(col, colspan=1, rowspan=1, numeric=all_numeric or col_numeric[cnum])
+                    TableHeadingCell(
+                        col,
+                        colspan=1,
+                        rowspan=1,
+                        numeric=all_numeric or col_numeric[cnum],
+                    )
                 )
             if not tablePeriod and columnPeriods:
                 rowNum = next(rowCounter)
                 for cnum, cp in enumerate(columnPeriods):
                     headerRows[rowNum].append(
-                        TableHeadingCell(cp, colspan=1, rowspan=1, numeric=all_numeric or col_numeric[cnum])
+                        TableHeadingCell(
+                            cp,
+                            colspan=1,
+                            rowspan=1,
+                            numeric=all_numeric or col_numeric[cnum],
+                        )
                     )
             if not tableUnit and columnUnits:
                 rowNum = next(rowCounter)
                 for cnum, cu in enumerate(columnUnits):
                     headerRows[rowNum].append(
-                        TableHeadingCell(cu, colspan=1, rowspan=1, numeric=all_numeric or col_numeric[cnum])
+                        TableHeadingCell(
+                            cu,
+                            colspan=1,
+                            rowspan=1,
+                            numeric=all_numeric or col_numeric[cnum],
+                        )
                     )
             if headerRows:
                 headerRows[0].insert(
