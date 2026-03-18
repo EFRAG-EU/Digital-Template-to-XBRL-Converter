@@ -5,7 +5,7 @@ from pathlib import Path
 
 import mammoth
 import rich.traceback
-from markupsafe import Markup
+from markupsafe import Markup, escape
 from rich.logging import RichHandler
 
 import mireport
@@ -207,6 +207,16 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, ExcelProc
                 footnotes=extra.get("footnotes", []),
                 labelOverrides=extra.get("labelOverrides", []),
             )
+            for si in extra.get("supportingImages", []):
+                img_path = extra_file.parent / si["path"]
+                image, err = ImageFileLikeAndFileName.prepare(img_path)
+                if image is None:
+                    pc.addDevInfoMessage(err or f"Failed to load image: {img_path}")
+                    continue
+                data_url = image.as_data_url(max_width=700)
+                alt = escape(si.get("description", ""))
+                suffix = Markup(f'<br/><img src="{data_url}" alt="{alt}"/>')
+                report.appendFactValue(si["concept"], suffix)
         for qname, word_path in args.from_word.items():
             pc.mark(
                 "Converting Word document",

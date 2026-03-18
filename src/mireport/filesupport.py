@@ -181,7 +181,7 @@ class ImageFileLikeAndFileName(FilelikeAndFileName):
         cls,
         source: Path | bytes,
         filename: str | None = None,
-    ) -> tuple[ImageFileLikeAndFileName | None, str | None]:
+    ) -> tuple[ImageFileLikeAndFileName, None] | tuple[None, str]:
         """
         Validate and wrap an image source into an ImageFileLikeAndFileName.
 

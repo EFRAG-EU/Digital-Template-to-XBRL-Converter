@@ -888,6 +888,20 @@ class InlineReport:
                 return
         raise InlineReportException(f"No fact found for concept {qname} to replace.")
 
+    def appendFactValue(self, qname: str, suffix: str | Markup) -> None:
+        """
+        Append content to the value of the first fact matching the given qname string.
+        The existing value and suffix are both preserved as safe Markup.
+
+        Currently limited to textblock facts.
+        """
+        concept = self._taxonomy.getConcept(qname)
+        for fact in self._facts:
+            if fact.concept is concept and concept.isTextblock:
+                fact.value = escape(fact.value) + escape(suffix)
+                return
+        raise InlineReportException(f"No fact found for concept {qname} to append to.")
+
     @property
     def hasFacts(self) -> bool:
         return bool(self._facts)
