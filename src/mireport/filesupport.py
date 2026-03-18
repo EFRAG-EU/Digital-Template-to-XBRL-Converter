@@ -247,7 +247,7 @@ class ImageFileLikeAndFileName(FilelikeAndFileName):
                 img.thumbnail((target_width, target_height), Resampling.LANCZOS)
 
                 bio = BytesIO()
-                img.save(bio, format=output_format)
+                img.save(bio, format=output_format, compress_level=9)
                 base64_data = base64.b64encode(bio.getbuffer()).decode("ascii")
                 return f"data:{output_mime_type};base64,{base64_data}"
         except UnidentifiedImageError as e:
