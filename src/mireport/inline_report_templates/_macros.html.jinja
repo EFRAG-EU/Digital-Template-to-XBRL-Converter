@@ -28,9 +28,24 @@
     {{- period.instant -}}
 {%- endmacro %}
 
-{% macro create_h2_title(section, loop) -%}
+{#- Emit a footnote superscript ref for _fn, tracking it in the page-level accumulators.
+    Mutates fn_counter.num, page_footnotes (list) and page_fn_ids (list) in the caller's scope. -#}
+{% macro footnote_ref(_fn, fn_counter, page_footnotes, page_fn_ids) -%}
+    {%- if _fn and _fn.id not in page_fn_ids -%}
+        {%- set fn_counter.num = fn_counter.num + 1 -%}
+        <a href="#fn-{{ fn_counter.page }}-{{ fn_counter.num }}" id="fnref-{{ fn_counter.page }}-{{ fn_counter.num }}"><sup class="footnote-ref">[{{ fn_counter.num }}]</sup></a>
+        {%- if page_footnotes.append({'fn': _fn, 'num': fn_counter.num, 'page': fn_counter.page}) is none -%}{%- endif -%}
+        {%- if page_fn_ids.append(_fn.id) is none -%}{%- endif -%}
+    {%- elif _fn -%}
+        {%- set _existing_num = page_footnotes | selectattr('fn.id', 'equalto', _fn.id) | map(attribute='num') | first -%}
+        <a href="#fn-{{ fn_counter.page }}-{{ _existing_num }}"><sup class="footnote-ref">[{{ _existing_num }}]</sup></a>
+    {%- endif -%}
+{%- endmacro %}
+
+{% macro create_h2_title(section, loop, _fn=none, fn_counter=none, page_footnotes=none, page_fn_ids=none) -%}
             <h2 id="section-class{{loop.index}}">
             {{ section_label(section) | e }}
+            {%- if _fn %} {{ footnote_ref(_fn, fn_counter, page_footnotes, page_fn_ids) }}{% endif %}
             <a href="#table-of-contents" class="toc-back-link no-print">⮌</a>
             </h2>
 {%- endmacro %}

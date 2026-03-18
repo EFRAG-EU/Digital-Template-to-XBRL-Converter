@@ -138,7 +138,8 @@
                 {% set fn_counter.page = fn_counter.page + 1 %}
             {% endif %}
 
-            {{ macros.create_h2_title(section, loop) }}
+            {% set _grp_fn = footnotes_by_group.get(section.presentation.roleUri) %}
+            {{ macros.create_h2_title(section, loop, _grp_fn, fn_counter, page_footnotes, page_fn_ids) }}
 
             <div class="fact-list">
             {% for rel, factList in section.relationshipToFact.items() %}
@@ -148,7 +149,7 @@
                     {% set documentation = rel.concept.getDocumentationLabel() %}
                     <dl class="fact fact-depth-{{ rel.depth if rel.depth <= 4 else 4 }} fact-depth-{{ rel.depth if rel.depth <= 4 else 4 }}-{{ shade }}">
                         {% set _fn = footnotes_by_concept.get(rel.concept.qname | string) %}
-                        <dt class="fact-value {% if fact.concept.isTextblock %}fact-textblock{% endif %}" title="{{ rel.concept.qname }}">{{ macros.render_fact_value(fact) }}{% if _fn and _fn.id not in page_fn_ids %}{% set fn_counter.num = fn_counter.num + 1 %}<a href="#fn-{{ fn_counter.page }}-{{ fn_counter.num }}" id="fnref-{{ fn_counter.page }}-{{ fn_counter.num }}"><sup class="footnote-ref">[{{ fn_counter.num }}]</sup></a>{% if page_footnotes.append({'fn': _fn, 'num': fn_counter.num, 'page': fn_counter.page}) is none %}{% endif %}{% if page_fn_ids.append(_fn.id) is none %}{% endif %}{% elif _fn %}<a href="#fn-{{ fn_counter.page }}-{{ page_footnotes | selectattr('fn.id', 'equalto', _fn.id) | map(attribute='num') | first }}"><sup class="footnote-ref">[{{ page_footnotes | selectattr('fn.id', 'equalto', _fn.id) | map(attribute='num') | first }}]</sup></a>{% endif %}{% set ns.fact_count = ns.fact_count + 1 %}</dt>
+                        <dt class="fact-value {% if fact.concept.isTextblock %}fact-textblock{% endif %}" title="{{ rel.concept.qname }}">{{ macros.render_fact_value(fact) }}{{ macros.footnote_ref(_fn, fn_counter, page_footnotes, page_fn_ids) }}{% set ns.fact_count = ns.fact_count + 1 %}</dt>
                         <dd class="fact-label">
                             <span {% if documentation != none %}class="hover-box"{% endif %}>
                                 {{ macros.relationship_label(rel) | e }}
@@ -188,7 +189,8 @@
                 {% set fn_counter.page = fn_counter.page + 1 %}
             {% endif %}
 
-            {{ macros.create_h2_title(section, loop) }}
+            {% set _grp_fn = footnotes_by_group.get(section.presentation.roleUri) %}
+            {{ macros.create_h2_title(section, loop, _grp_fn, fn_counter, page_footnotes, page_fn_ids) }}
 
             <table class="thematic-table">
                 <thead>
@@ -239,7 +241,7 @@
                             {% else %}
                         {% set _fn = footnotes_by_concept.get(fact.concept.qname | string) %}
                         <td {% if fact.concept.isNumeric%}class="numeric"{% endif %}>
-                        {{ macros.render_fact_value(fact, section.unitSymbol or section.columnHasUnit(loop.index0)) }}{% if _fn and _fn.id not in page_fn_ids %}{% set fn_counter.num = fn_counter.num + 1 %}<a href="#fn-{{ fn_counter.page }}-{{ fn_counter.num }}" id="fnref-{{ fn_counter.page }}-{{ fn_counter.num }}"><sup class="footnote-ref">[{{ fn_counter.num }}]</sup></a>{% if page_footnotes.append({'fn': _fn, 'num': fn_counter.num, 'page': fn_counter.page}) is none %}{% endif %}{% if page_fn_ids.append(_fn.id) is none %}{% endif %}{% elif _fn %}<a href="#fn-{{ fn_counter.page }}-{{ page_footnotes | selectattr('fn.id', 'equalto', _fn.id) | map(attribute='num') | first }}"><sup class="footnote-ref">[{{ page_footnotes | selectattr('fn.id', 'equalto', _fn.id) | map(attribute='num') | first }}]</sup></a>{% endif %}{% set ns.fact_count = ns.fact_count + 1 %}
+                        {{ macros.render_fact_value(fact, section.unitSymbol or section.columnHasUnit(loop.index0)) }}{{ macros.footnote_ref(_fn, fn_counter, page_footnotes, page_fn_ids) }}{% set ns.fact_count = ns.fact_count + 1 %}
                         </td>
                             {% endif %}
                         {% endfor %}
