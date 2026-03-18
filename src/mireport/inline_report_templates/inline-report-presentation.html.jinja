@@ -77,6 +77,14 @@
                 </div>
             </div>
         </div>
+{% if introduction %}
+        <div class="page portrait-page doc-page" id="introduction">
+            <div class="introduction">
+                <h2>Introduction</h2>
+                {{ introduction | e }}
+            </div>
+        </div>
+{% endif %}
         <div class="page portrait-page toc-page" id="table-of-contents">
             <h1>Table of contents</h1>
             {#- Build ToC entries with their body-loop indices, then sort alphabetically -#}
@@ -273,6 +281,11 @@
         {% endif %}
   <!-- Final Page -->
   <div class="page portrait-page footer-page">
+{% if backCoverMatter %}
+    <div class="back-cover-matter">
+      {{ backCoverMatter | e }}
+    </div>
+{% endif %}
     <p>This report contains {{ ns.fact_count }} XBRL facts{% if ns.fact_count != uniqueFactCount %} (generated from {{ uniqueFactCount }} unique input facts){% endif %}.</p>
   </div>
 

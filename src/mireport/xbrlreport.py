@@ -741,6 +741,8 @@ class InlineReport:
         self._schemaRefs: set[str] = set()
         self._reportTitle: str = ""
         self._reportSubtitle: str = ""
+        self._introduction: Optional[str] = None
+        self._backCoverMatter: Optional[str] = None
         self._theme: str = "light"
         self._logo: Optional[ImageFileLikeAndFileName] = None
         self._coverImage: Optional[ImageFileLikeAndFileName] = None
@@ -788,6 +790,12 @@ class InlineReport:
 
     def setReportSubtitle(self, subtitle: str) -> None:
         self._reportSubtitle = subtitle
+
+    def setIntroduction(self, introduction: str) -> None:
+        self._introduction = introduction
+
+    def setBackCoverMatter(self, backCoverMatter: str) -> None:
+        self._backCoverMatter = backCoverMatter
 
     @property
     def taxonomy(self) -> Taxonomy:
@@ -1033,6 +1041,8 @@ class InlineReport:
             theme=self._theme,
             watermarkDataUrl=watermark_data_url,
             logoDataUrl=logo_data_url,
+            introduction=self._introduction,
+            backCoverMatter=self._backCoverMatter,
             footnotes_by_concept={fn["concept"]: {**fn, "content": Markup(fn["content"])} for fn in self._footnotes if "concept" in fn},
             footnotes_by_group={fn["group"]: {**fn, "content": Markup(fn["content"])} for fn in self._footnotes if "group" in fn},
         )
