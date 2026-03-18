@@ -1019,7 +1019,8 @@ class InlineReport:
             theme=self._theme,
             watermarkDataUrl=watermark_data_url,
             logoDataUrl=logo_data_url,
-            footnotes_by_concept={fn["concept"]: fn for fn in self._footnotes},
+            footnotes_by_concept={fn["concept"]: {**fn, "content": Markup(fn["content"])} for fn in self._footnotes if "concept" in fn},
+            footnotes_by_group={fn["group"]: {**fn, "content": Markup(fn["content"])} for fn in self._footnotes if "group" in fn},
         )
 
         try:
