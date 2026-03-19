@@ -242,9 +242,7 @@ class Fact:
             if hasattr(self.value, "__html__"):
                 output = self.value
             else:
-                output = Markup("<br />").join(
-                    escape(p) for p in str(self.value).splitlines()
-                )
+                output = escape(self.value)
         else:
             decimal_places: DecimalPlaces
             if self._decimals and self._decimals != "INF" and self._numeric_scale:
@@ -725,6 +723,9 @@ class FactBuilder:
         self._aspects["period-type"] = self._concept.periodType.value
         if self._concept.isTextblock:
             self._aspects["escape"] = "true"
+            self._value = Markup("<br />").join(
+                escape(p) for p in str(self._value).splitlines()
+            )
         self.validateTaxonomyDimensions()
         # TODO: check aspect validity before creating fact and raise Exception if invalid
         return Fact(self._concept, self._value, self._report, self._aspects)
@@ -1043,8 +1044,16 @@ class InlineReport:
             logoDataUrl=logo_data_url,
             introduction=self._introduction,
             backCoverMatter=self._backCoverMatter,
-            footnotes_by_concept={fn["concept"]: {**fn, "content": Markup(fn["content"])} for fn in self._footnotes if "concept" in fn},
-            footnotes_by_group={fn["group"]: {**fn, "content": Markup(fn["content"])} for fn in self._footnotes if "group" in fn},
+            footnotes_by_concept={
+                fn["concept"]: {**fn, "content": Markup(fn["content"])}
+                for fn in self._footnotes
+                if "concept" in fn
+            },
+            footnotes_by_group={
+                fn["group"]: {**fn, "content": Markup(fn["content"])}
+                for fn in self._footnotes
+                if "group" in fn
+            },
         )
 
         try:

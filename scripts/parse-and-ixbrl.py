@@ -15,13 +15,34 @@ from mireport.arelle.report_info import (
     ArelleReportProcessor,
 )
 from mireport.cli import validateTaxonomyPackages
-from mireport.conversionresults import ConversionResults, ConversionResultsBuilder
+from mireport.conversionresults import (
+    ConversionResults,
+    ConversionResultsBuilder,
+    ProcessingContext,
+)
 from mireport.excelprocessor import (
     VSME_DEFAULTS,
     ExcelProcessor,
 )
 from mireport.filesupport import ImageFileLikeAndFileName
 from mireport.localise import EU_LOCALES, argparse_locale
+
+
+def _convert_docx_to_markup(docx_path: Path, pc: ProcessingContext) -> Markup:
+    """Convert a .docx file to HTML via mammoth and return as Markup."""
+    with open(docx_path, "rb") as f:
+        result = mammoth.convert_to_html(f)
+    for msg in result.messages:
+        pc.addDevInfoMessage(f"mammoth ({docx_path.name}): {msg}")
+    return Markup(result.value)
+
+
+def _resolve_extra_path(extra_file: Path, relative_path: str) -> Path:
+    """Resolve a relative path from extra_data JSON and verify the file exists."""
+    resolved = extra_file.parent / relative_path
+    if not resolved.is_file():
+        raise FileNotFoundError(f"Referenced file does not exist: {resolved}")
+    return resolved
 
 
 def createArgParser() -> argparse.ArgumentParser:
@@ -112,14 +133,6 @@ def createArgParser() -> argparse.ArgumentParser:
         default=None,
         help="Path to a JSON file containing extra report data (footnotes, label overrides, etc.).",
     )
-    parser.add_argument(
-        "--from-word",
-        nargs=2,
-        action="append",
-        default=[],
-        metavar=("QNAME", "FILENAME"),
-        help="A qualified name and a path to a Word document. Can be specified multiple times.",
-    )
 
     return parser
 
@@ -134,15 +147,6 @@ def parseArgs(parser: argparse.ArgumentParser) -> argparse.Namespace:
         args.taxonomy_packages = validateTaxonomyPackages(
             args.taxonomy_packages, parser
         )
-    from_word: dict[str, Path] = {}
-    for qname, filename in args.from_word:
-        if qname in from_word:
-            parser.error(f"Duplicate --from-word qname: {qname}")
-        path = Path(filename)
-        if not path.is_file():
-            parser.error(f"--from-word file does not exist: {filename}")
-        from_word[qname] = path
-    args.from_word = from_word
     return args
 
 
@@ -208,7 +212,11 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, ExcelProc
                 labelOverrides=extra.get("labelOverrides", []),
             )
             for si in extra.get("supportingImages", []):
-                img_path = extra_file.parent / si["path"]
+                pc.mark(
+                    "Processing supporting image",
+                    additionalInfo=f"Loading image from {si['path']}",
+                )
+                img_path = _resolve_extra_path(extra_file, si["path"])
                 image, err = ImageFileLikeAndFileName.prepare(img_path)
                 if image is None:
                     pc.addDevInfoMessage(err or f"Failed to load image: {img_path}")
@@ -217,16 +225,37 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, ExcelProc
                 alt = escape(si.get("description", ""))
                 suffix = Markup(f'<br/><img src="{data_url}" alt="{alt}"/>')
                 report.appendFactValue(si["concept"], suffix)
-        for qname, word_path in args.from_word.items():
-            pc.mark(
-                "Converting Word document",
-                additionalInfo=f"{qname} from {word_path}",
-            )
-            with open(word_path, "rb") as f:
-                result = mammoth.convert_to_html(f)
-            for msg in result.messages:
-                pc.addDevInfoMessage(f"mammoth ({word_path.name}): {msg}")
-            report.replaceFactValue(qname, Markup(result.value))
+            optional_section_setters = {
+                "introduction": report.setIntroduction,
+                "backCoverMatter": report.setBackCoverMatter,
+            }
+            for section in extra.get("optionalSections", []):
+                section_id = section.get("id")
+                setter = optional_section_setters.get(section_id)
+                if setter is None:
+                    pc.addDevInfoMessage(f"Unknown optionalSections id: {section_id!r}")
+                    continue
+                if "path" in section:
+                    pc.mark(
+                        "Converting Word document",
+                        additionalInfo=f"Creating {section_id} from {section['path']}",
+                    )
+                    docx_path = _resolve_extra_path(extra_file, section["path"])
+                    setter(_convert_docx_to_markup(docx_path, pc))
+                elif "content" in section:
+                    setter(Markup(section["content"]))
+                else:
+                    pc.addDevInfoMessage(
+                        f"optionalSections entry {section_id!r} has neither 'path' nor 'content'"
+                    )
+            for rtv in extra.get("replacementTextblockValues", []):
+                pc.mark(
+                    "Converting Word document",
+                    additionalInfo=f"Replacing {rtv['concept']} from {rtv['path']}",
+                )
+                docx_path = _resolve_extra_path(extra_file, rtv["path"])
+                markup = _convert_docx_to_markup(docx_path, pc)
+                report.replaceFactValue(rtv["concept"], markup)
         pc.mark("Generating Inline Report")
         reportFile = report.getInlineReport()
         reportPackage = report.getInlineReportPackage()
