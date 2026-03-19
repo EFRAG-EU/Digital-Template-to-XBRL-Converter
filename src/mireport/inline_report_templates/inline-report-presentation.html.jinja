@@ -156,8 +156,7 @@
                 {% for fact in factList %}
                     {% set documentation = rel.concept.getDocumentationLabel() %}
                     <dl class="fact fact-depth-{{ rel.depth if rel.depth <= 4 else 4 }} fact-depth-{{ rel.depth if rel.depth <= 4 else 4 }}-{{ shade }}">
-                        {% set _fn = footnotes_by_concept.get(rel.concept.qname | string) %}
-                        <dt class="fact-value {% if fact.concept.isTextblock %}fact-textblock{% endif %}" title="{{ rel.concept.qname }}">{{ macros.render_fact_value(fact) }}{{ macros.footnote_ref(_fn, fn_counter, page_footnotes, page_fn_ids) }}{% set ns.fact_count = ns.fact_count + 1 %}</dt>
+                        <dt class="fact-value {% if fact.concept.isTextblock %}fact-textblock{% endif %}" title="{{ rel.concept.qname }}">{{ macros.render_fact_value(fact) }}{{ macros.footnote_refs(fact.footnotes, fn_counter, page_footnotes, page_fn_ids) }}{% set ns.fact_count = ns.fact_count + 1 %}</dt>
                         <dd class="fact-label">
                             <span {% if documentation != none %}class="hover-box"{% endif %}>
                                 {{ macros.relationship_label(rel) | e }}
@@ -247,9 +246,8 @@
                             {% if fact is none %}
                         <td></td>
                             {% else %}
-                        {% set _fn = footnotes_by_concept.get(fact.concept.qname | string) %}
                         <td {% if fact.concept.isNumeric%}class="numeric"{% endif %}>
-                        {{ macros.render_fact_value(fact, section.unitSymbol or section.columnHasUnit(loop.index0)) }}{{ macros.footnote_ref(_fn, fn_counter, page_footnotes, page_fn_ids) }}{% set ns.fact_count = ns.fact_count + 1 %}
+                        {{ macros.render_fact_value(fact, section.unitSymbol or section.columnHasUnit(loop.index0)) }}{{ macros.footnote_refs(fact.footnotes, fn_counter, page_footnotes, page_fn_ids) }}{% set ns.fact_count = ns.fact_count + 1 %}
                         </td>
                             {% endif %}
                         {% endfor %}

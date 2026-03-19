@@ -162,6 +162,14 @@ class TableStyle(Enum):
     Other = auto()
 
 
+@dataclass(slots=True, frozen=True, eq=True)
+class Footnote:
+    """An immutable footnote that can be shared across many facts."""
+
+    id: str
+    content: Markup
+
+
 class Fact:
     """
     Represents a fact in an XBRL instance document.
@@ -201,6 +209,8 @@ class Fact:
         if aspect_value := str(self._aspects.get("numeric-scale", "")):
             self._numeric_scale = int(aspect_value)
             self._aspects["numeric-scale"] = f'"{aspect_value}"'
+
+        self.footnotes: list[Footnote] = []
 
     def __repr__(self) -> str:
         return (
@@ -734,6 +744,8 @@ class FactBuilder:
 class InlineReport:
     def __init__(self, taxonomy: Taxonomy, outputLocale: Optional[Locale] = None):
         self._facts: list[Fact] = []
+        self._factsByConcept: dict[Concept, list[Fact]] = defaultdict(list)
+        self._footnoteCounter: count = count(1)
         self._taxonomy: Taxonomy = taxonomy
         self._periods: dict[str, DurationPeriodHolder] = {}
         self._entityName: str = "Sample"
@@ -748,7 +760,7 @@ class InlineReport:
         self._logo: Optional[ImageFileLikeAndFileName] = None
         self._coverImage: Optional[ImageFileLikeAndFileName] = None
         self._watermark: Optional[ImageFileLikeAndFileName] = None
-        self._footnotes: list[dict[str, str]] = []
+        self._footnotesByGroup: dict[str, Footnote] = {}
         self._labelOverrides: dict[str, str] = {}
         if not outputLocale:
             outputLocale = (
@@ -778,13 +790,8 @@ class InlineReport:
             "decimals": "INF",
         }
 
-    def setExtraData(
-        self,
-        footnotes: list[dict[str, str]],
-        labelOverrides: list[dict[str, str]],
-    ) -> None:
-        self._footnotes = footnotes
-        self._labelOverrides = {lo["concept"]: lo["label"] for lo in labelOverrides}
+    def setLabelOverrides(self, overrides: dict[str, str]) -> None:
+        self._labelOverrides = overrides
 
     def setReportTitle(self, title: str) -> None:
         self._reportTitle = title
@@ -885,6 +892,33 @@ class InlineReport:
         Adds a Fact to the report.
         """
         self._facts.append(fact)
+        self._factsByConcept[fact.concept].append(fact)
+
+    def _createFootnote(self, content: str) -> Footnote:
+        return Footnote(id=str(next(self._footnoteCounter)), content=Markup(content))
+
+    def addFootnoteForConcept(
+        self, concept_qname: str, content: str
+    ) -> Footnote:
+        """Create a footnote and attach it to every fact matching *concept_qname*."""
+        return self.addFootnoteForConcepts([concept_qname], content)
+
+    def addFootnoteForConcepts(
+        self, concept_qnames: list[str], content: str
+    ) -> Footnote:
+        """Create one footnote and attach it to facts for all listed concepts."""
+        footnote = self._createFootnote(content)
+        for qname in concept_qnames:
+            concept = self._taxonomy.getConcept(qname)
+            for fact in self._factsByConcept.get(concept, []):
+                fact.footnotes.append(footnote)
+        return footnote
+
+    def addFootnoteForGroup(self, group: str, content: str) -> Footnote:
+        """Create a footnote and associate it with a presentation group URI."""
+        footnote = self._createFootnote(content)
+        self._footnotesByGroup[group] = footnote
+        return footnote
 
     def replaceFactValue(self, qname: str, value: FactValue) -> None:
         """
@@ -1044,16 +1078,7 @@ class InlineReport:
             logoDataUrl=logo_data_url,
             introduction=self._introduction,
             backCoverMatter=self._backCoverMatter,
-            footnotes_by_concept={
-                fn["concept"]: {**fn, "content": Markup(fn["content"])}
-                for fn in self._footnotes
-                if "concept" in fn
-            },
-            footnotes_by_group={
-                fn["group"]: {**fn, "content": Markup(fn["content"])}
-                for fn in self._footnotes
-                if "group" in fn
-            },
+            footnotes_by_group=self._footnotesByGroup,
         )
 
         try:

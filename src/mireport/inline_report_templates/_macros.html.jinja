@@ -42,6 +42,13 @@
     {%- endif -%}
 {%- endmacro %}
 
+{#- Emit superscript refs for a list of footnotes. -#}
+{% macro footnote_refs(fn_list, fn_counter, page_footnotes, page_fn_ids) -%}
+    {%- for _fn in fn_list -%}
+        {{ footnote_ref(_fn, fn_counter, page_footnotes, page_fn_ids) }}
+    {%- endfor -%}
+{%- endmacro %}
+
 {% macro create_h2_title(section, loop, _fn=none, fn_counter=none, page_footnotes=none, page_fn_ids=none) -%}
             <h2 id="section-class{{loop.index}}">
             {{ section_label(section) | e }}
