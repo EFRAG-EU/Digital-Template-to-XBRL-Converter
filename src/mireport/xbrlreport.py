@@ -910,7 +910,7 @@ class InlineReport:
         footnote = self._createFootnote(content)
         for qname in concept_qnames:
             concept = self._taxonomy.getConcept(qname)
-            for fact in self._factsByConcept.get(concept, []):
+            for fact in self._getFacts(concept):
                 fact.footnotes.append(footnote)
         return footnote
 
@@ -925,10 +925,9 @@ class InlineReport:
         Replace the value of the first fact matching the given qname string.
         """
         concept = self._taxonomy.getConcept(qname)
-        for fact in self._facts:
-            if fact.concept is concept:
-                fact.value = value
-                return
+        for fact in self._getFacts(concept):
+            fact.value = value
+            return
         raise InlineReportException(f"No fact found for concept {qname} to replace.")
 
     def appendFactValue(self, qname: str, suffix: str | Markup) -> None:
@@ -939,8 +938,8 @@ class InlineReport:
         Currently limited to textblock facts.
         """
         concept = self._taxonomy.getConcept(qname)
-        for fact in self._facts:
-            if fact.concept is concept and concept.isTextblock:
+        if concept.isTextblock:
+            for fact in self._getFacts(concept):
                 fact.value = escape(fact.value) + escape(suffix)
                 return
         raise InlineReportException(f"No fact found for concept {qname} to append to.")
@@ -952,6 +951,16 @@ class InlineReport:
     @property
     def factCount(self) -> int:
         return len(self._facts)
+
+    @property
+    def facts(self) -> list[Fact]:
+        return list(self._facts)
+
+    def _getFacts(self, concept: Concept) -> list[Fact]:
+        return self._factsByConcept.get(concept, [])
+
+    def getFacts(self, concept: Concept) -> list[Fact]:
+        return list(self._getFacts(concept))
 
     def getNamespacesForAoix(self) -> str:
         # {{ namespace utr = "http://www.xbrl.org/2009/utr" }}
@@ -1070,7 +1079,7 @@ class InlineReport:
                 "name": "EFRAG Digital Template to XBRL Converter",
             },
             documentInfo=self.getDocumentInformation(),
-            facts=list(self._facts),
+            facts=self.facts,
             sections=sections,
             uniqueFactCount=len(frozenset(self._facts)),
             theme=self._theme,
@@ -1142,10 +1151,6 @@ class ReportLayoutOrganiser:
         self.report = report
         self.presentation = self.taxonomy.presentation
         self.reportSections: list[ReportSection] = []
-        self.factsByConceptMap: dict[Concept, list[Fact]] = defaultdict(list)
-
-        for fact in self.report._facts:
-            self.factsByConceptMap[fact.concept].append(fact)
 
     @staticmethod
     def _sectionPrefix(section: "ReportSection") -> str:
@@ -1184,7 +1189,7 @@ class ReportLayoutOrganiser:
         Checks that all facts in the report have been used in the report sections.
         Raises an InlineReportException if any facts are not used.
         """
-        potential_unused_facts = set(self.report._facts)
+        potential_unused_facts = set(self.report.facts)
         for section in self.reportSections:
             if not section.tabular:
                 for facts in section.relationshipToFact.values():
@@ -1199,7 +1204,7 @@ class ReportLayoutOrganiser:
             for u in unused_facts:
                 if u in processed:
                     continue
-                others = list(self.factsByConceptMap[u.concept])
+                others = list(self.report.getFacts(u.concept))
                 others.remove(u)
                 u_aspects = frozenset(u.aspects.items())
                 inconsistent_duplicates = [
@@ -1226,9 +1231,9 @@ class ReportLayoutOrganiser:
             # TODO: store hasHypercubes:bool on the group and avoid check every time here.
             for rel in group.relationships:
                 concept = rel.concept
-                if concept not in self.factsByConceptMap:
+                factsForConcept = self.report.getFacts(concept)
+                if not factsForConcept:
                     continue
-                factsForConcept = self.factsByConceptMap[concept]
                 if group.style == PresentationStyle.List:
                     factsForRel[rel].extend(
                         fact
@@ -1297,7 +1302,7 @@ class ReportLayoutOrganiser:
                 tdValues = {
                     str(fact.aspects[typedQname])
                     for r in reportable
-                    for fact in self.factsByConceptMap[r]
+                    for fact in self.report.getFacts(r)
                 }
                 prettyTdValues = [
                     (tidyTdValue(typedValue), typedValue) for typedValue in tdValues
@@ -1306,9 +1311,8 @@ class ReportLayoutOrganiser:
                 for heading, rKey in prettyTdValues:
                     row: list[None | Fact] = []
                     for c in initialColumnHeadings:
-                        facts = self.factsByConceptMap[c]
                         found = None
-                        for fact in facts:
+                        for fact in self.report.getFacts(c):
                             tdValue = fact.aspects.get(typedQname)
                             if tdValue is not None and tdValue == rKey:
                                 if found is not None:
@@ -1350,9 +1354,8 @@ class ReportLayoutOrganiser:
                     for r in initialRowHeadings:
                         row: list[None | Fact] = []
                         for c in initialColumnHeadings:
-                            facts = self.factsByConceptMap[r]
                             found = None
-                            for fact in facts:
+                            for fact in self.report.getFacts(r):
                                 eValue = fact.aspects.get(explicitDim.qname)
                                 if (eValue is None and c == defaultMember) or (
                                     eValue is not None and eValue == c.qname
@@ -1382,9 +1385,8 @@ class ReportLayoutOrganiser:
                     for r in initialRowHeadings:
                         row: list[None | Fact] = []
                         for c in initialColumnHeadings:
-                            facts = self.factsByConceptMap[c]
                             found = None
-                            for fact in facts:
+                            for fact in self.report.getFacts(c):
                                 eValue = fact.aspects.get(explicitDim.qname)
                                 if (
                                     (eValue is None and r == defaultMember)
