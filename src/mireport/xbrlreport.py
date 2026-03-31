@@ -7,7 +7,7 @@ import zipfile
 from abc import ABC
 from collections import defaultdict
 from collections.abc import Collection
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, datetime, timezone
 from enum import Enum, StrEnum, auto
 from io import BytesIO
@@ -166,8 +166,19 @@ class TableStyle(Enum):
 class Footnote:
     """An immutable footnote that can be shared across many facts."""
 
-    id: str
+    id: int
     content: Markup
+    _facts: list[Fact] = field(
+        default_factory=list, compare=False, hash=False, repr=False
+    )
+
+    def __html__(self) -> Markup:
+        if self._facts:
+            return self.as_aoix()
+        return self.content
+
+    def as_aoix(self) -> Markup:
+        return Markup(f"{{{{ footnote {self.id} }}}}{self.content}{{{{ end }}}}")
 
 
 class Fact:
@@ -285,21 +296,24 @@ class Fact:
             output = escape(output)
         return Markup(output)
 
-    def as_aoix(self) -> str:
-        """
-        Returns the AOIX representation of the fact."
-        """
+    def as_aoix(self) -> Markup:
+        """Returns the AOIX representation of the fact."""
         aoix_verb = "string"
         if self.concept.isMonetary:
             aoix_verb = "monetary"
         elif self.concept.isNumeric:
             aoix_verb = "num"
-        aspects = ", ".join([f"{k}={v}" for k, v in self.aspects.items()])
+        aspects = self._aspects.copy()
+        if self.footnotes:
+            aspects["fn-refs"] = f'"{"|".join(str(fn.id) for fn in self.footnotes)}"'
+        aspects_str = ", ".join(f"{k}={v}" for k, v in aspects.items())
         value = self.format_value()
-        fstr = (
-            f"{{{{ {aoix_verb} {self.concept.qname}[{aspects}] }}}}{value}{{{{ end }}}}"
+        return Markup(
+            f"{{{{ {aoix_verb} {self.concept.qname}[{aspects_str}] }}}}{value}{{{{ end }}}}"
         )
-        return fstr
+    
+    def __html__(self) -> Markup:
+        return self.as_aoix()
 
     @property
     def aspects(self) -> dict[str | QName, str | QName]:
@@ -895,29 +909,28 @@ class InlineReport:
         self._factsByConcept[fact.concept].append(fact)
 
     def _createFootnote(self, content: str) -> Footnote:
-        return Footnote(id=str(next(self._footnoteCounter)), content=Markup(content))
+        return Footnote(id=next(self._footnoteCounter), content=Markup(content))
 
-    def addFootnoteForConcept(
-        self, concept_qname: str, content: str
+    def addFootnote(
+        self,
+        content: str,
+        *,
+        group: str | None = None,
+        concept: str | None = None,
+        concepts: list[str] | None = None,
     ) -> Footnote:
-        """Create a footnote and attach it to every fact matching *concept_qname*."""
-        return self.addFootnoteForConcepts([concept_qname], content)
-
-    def addFootnoteForConcepts(
-        self, concept_qnames: list[str], content: str
-    ) -> Footnote:
-        """Create one footnote and attach it to facts for all listed concepts."""
+        """Create a footnote and attach it to facts by concept and/or group."""
+        all_concepts = list(concepts or [])
+        if concept is not None:
+            all_concepts.append(concept)
         footnote = self._createFootnote(content)
-        for qname in concept_qnames:
-            concept = self._taxonomy.getConcept(qname)
-            for fact in self._getFacts(concept):
+        for qname in all_concepts:
+            tax_concept = self._taxonomy.getConcept(qname)
+            for fact in self._getFacts(tax_concept):
                 fact.footnotes.append(footnote)
-        return footnote
-
-    def addFootnoteForGroup(self, group: str, content: str) -> Footnote:
-        """Create a footnote and associate it with a presentation group URI."""
-        footnote = self._createFootnote(content)
-        self._footnotesByGroup[group] = footnote
+                footnote._facts.append(fact)
+        if group is not None:
+            self._footnotesByGroup[group] = footnote
         return footnote
 
     def replaceFactValue(self, qname: str, value: FactValue) -> None:

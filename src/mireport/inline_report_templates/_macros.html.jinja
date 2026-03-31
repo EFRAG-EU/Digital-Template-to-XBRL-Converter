@@ -148,7 +148,7 @@
             <div class="page-footnotes">
                 <hr class="footnote-separator" />
                 {% for entry in footnote_list %}
-                <p class="footnote" id="fn-{{ entry.page }}-{{ entry.num }}"><a href="#fnref-{{ entry.page }}-{{ entry.num }}"><sup>[{{ entry.num }}]</sup></a> {{ entry.fn.content | e }}</p>
+                <p class="footnote" id="fn-{{ entry.page }}-{{ entry.num }}"><a href="#fnref-{{ entry.page }}-{{ entry.num }}"><sup>[{{ entry.num }}]</sup></a> {{ entry.fn | e }}</p>
                 {% endfor %}
             </div>
     {%- endif -%}

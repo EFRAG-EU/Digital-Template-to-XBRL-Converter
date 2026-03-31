@@ -8,7 +8,7 @@ authors = [
 ]
 
 dependencies = [
-    "aoix@git+https://code.blinkace.com/xbrl/aoix.git@feature-typed-dimensions",
+    "aoix@git+https://code.blinkace.com/xbrl/aoix.git@strr/dev",
     "arelle-release>=2.37.76",
     "babel>=2.17.0",
     "flask-session",

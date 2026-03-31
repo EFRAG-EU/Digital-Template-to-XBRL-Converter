@@ -208,16 +208,14 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, ExcelProc
         if (extra_file := args.extra_data) and extra_file.is_file():
             extra = json.loads(extra_file.read_text(encoding="utf-8"))
             for fn in extra.get("footnotes", []):
-                content = fn.get("content", "")
-                if "concepts" in fn:
-                    report.addFootnoteForConcepts(fn["concepts"], content)
-                elif "concept" in fn:
-                    report.addFootnoteForConcept(fn["concept"], content)
-                elif "group" in fn:
-                    report.addFootnoteForGroup(fn["group"], content)
+                report.addFootnote(
+                    fn.get("content", ""),
+                    group=fn.get("group"),
+                    concept=fn.get("concept"),
+                    concepts=fn.get("concepts"),
+                )
             label_overrides = {
-                lo["concept"]: lo["label"]
-                for lo in extra.get("labelOverrides", [])
+                lo["concept"]: lo["label"] for lo in extra.get("labelOverrides", [])
             }
             if label_overrides:
                 report.setLabelOverrides(label_overrides)
