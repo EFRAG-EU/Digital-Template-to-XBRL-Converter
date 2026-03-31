@@ -35,6 +35,18 @@ def main() -> None:
                 f"[{concept.qname} {concept.dataType}]",
             )
     print()
+    print("=== Calculation ===")
+    for group in taxonomy.calculation:
+        print(f"{group.getLabel()} [{group.roleUri}]")
+        for rel in group.relationships:
+            weight_str = f"[{rel.weight:>2}]" if rel.weight is not None else "    "
+            print(
+                "\t" * rel.depth,
+                weight_str,
+                rel.concept.getStandardLabel(),
+                f"[{rel.concept.qname}]",
+            )
+    print()
     print(
         f"Label languages: {', '.join(sorted(taxonomy.supportedLanguages))}; Default language: {taxonomy.defaultLanguage}"
     )

@@ -45,7 +45,7 @@ from mireport.taxonomy import (
     PresentationGroup,
     PresentationStyle,
     QName,
-    Relationship,
+    PresentationRelationship,
     Taxonomy,
 )
 from mireport.typealiases import DecimalPlaces, FactValue
@@ -123,7 +123,7 @@ class InstantPeriodHolder(PeriodHolder):
 
 
 _Period = InstantPeriodHolder | DurationPeriodHolder
-_TableHeadingValue = Concept | Relationship | _Period | str | None
+_TableHeadingValue = Concept | PresentationRelationship | _Period | str | None
 
 
 class TableHeadingCell(NamedTuple):
@@ -150,7 +150,7 @@ class TableHeadingCell(NamedTuple):
 
     @property
     def isRelationship(self) -> bool:
-        return isinstance(self.value, Relationship)
+        return isinstance(self.value, PresentationRelationship)
 
 
 class TableStyle(Enum):
@@ -1243,7 +1243,7 @@ class ReportLayoutOrganiser:
                 )
                 continue
 
-            factsForRel: dict[Relationship, list[Fact]] = defaultdict(list)
+            factsForRel: dict[PresentationRelationship, list[Fact]] = defaultdict(list)
             # TODO: store hasHypercubes:bool on the group and avoid check every time here.
             for rel in group.relationships:
                 concept = rel.concept
@@ -1304,7 +1304,7 @@ class ReportLayoutOrganiser:
             ]
 
             tableStyle = TableStyle.Other
-            rowHeadings: list[Concept | Relationship | str | None] = []
+            rowHeadings: list[Concept | PresentationRelationship | str | None] = []
             columnHeadings: list[Concept | None] = []
             data: list[list[Fact | None]] = []
             explicitDim = None
@@ -1634,7 +1634,7 @@ class ReportLayoutOrganiser:
 
 @dataclass(slots=True, frozen=True, eq=True)
 class ReportSection:
-    relationshipToFact: dict[Relationship, list[Fact]]
+    relationshipToFact: dict[PresentationRelationship, list[Fact]]
     presentation: PresentationGroup
 
     def getLabel(self, language: str) -> str:

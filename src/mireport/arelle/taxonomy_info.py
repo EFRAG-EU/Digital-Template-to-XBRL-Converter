@@ -2,9 +2,10 @@ import json
 import logging
 import time
 from collections import defaultdict
-from collections.abc import Iterable, MutableMapping
+from collections.abc import Iterable
 from contextlib import closing
-from typing import Any, Optional, TypeVar
+from decimal import Decimal
+from typing import Any, Literal, TypeAlias, TypeVar
 
 from arelle import XbrlConst
 from arelle.api.Session import Session
@@ -14,7 +15,7 @@ from arelle.ModelDtsObject import ModelConcept, ModelResource, ModelRoleType
 from arelle.ModelRelationshipSet import ModelRelationshipSet
 from arelle.ModelValue import QName
 from arelle.ModelXbrl import ModelXbrl
-from arelle.RuntimeOptions import RuntimeOptions
+from arelle.RuntimeOptions import RuntimeOptions, RuntimeOptionValue
 from arelle.utils.PluginData import PluginData
 from arelle.ValidateUtr import UtrEntry
 
@@ -27,6 +28,11 @@ from mireport.arelle.support import (
 
 PLUGIN_NAME = "Taxonomy Information Extractor"
 T = TypeVar("T")
+
+CalcWeight: TypeAlias = Literal["-1", "+1"]
+CalcRootRow: TypeAlias = tuple[Literal[0], QName]
+CalcWeightedRow: TypeAlias = tuple[int, QName, CalcWeight]
+CalcRow: TypeAlias = CalcWeightedRow | CalcRootRow
 
 
 def unique_list(i: Iterable[T]) -> list[T]:
@@ -47,7 +53,9 @@ def concepts_to_qnames(
     Returns:
         A list of qualified names (QNames).
     """
-    qname_list = [concept.qname for concept in concept_list]
+    qname_list = [
+        concept.qname for concept in concept_list if concept.qname is not None
+    ]
     if should_sort:
         qname_list.sort()
     return qname_list
@@ -57,9 +65,11 @@ def callArelleForTaxonomyInfo(
     entry_point: str,
     taxonomy_zips: list[str],
     taxonomy_json_path: str,
-    utr_json_path: Optional[str] = None,
+    utr_json_path: str | None = None,
 ) -> ArelleProcessingResult:
-    pluginOptions = {"taxonomyDataFile": taxonomy_json_path}
+    pluginOptions: dict[str, RuntimeOptionValue] = {
+        "taxonomyDataFile": taxonomy_json_path
+    }
     utrValidation = False
     if utr_json_path is not None:
         pluginOptions["utrDataFile"] = utr_json_path
@@ -95,10 +105,13 @@ class TaxonomyInfoPluginData(PluginData):
 
 
 def pluginData(cntlr: Cntlr) -> TaxonomyInfoPluginData:
-    pluginData = cntlr.getPluginData(PLUGIN_NAME)
-    if pluginData is None:
+    if (pluginData := cntlr.getPluginData(PLUGIN_NAME)) is None:
         pluginData = TaxonomyInfoPluginData(PLUGIN_NAME)
         cntlr.setPluginData(pluginData)
+    else:
+        assert isinstance(pluginData, TaxonomyInfoPluginData), (
+            f"Expected plugin data for {PLUGIN_NAME} to be of type TaxonomyInfoPluginData but got {type(pluginData)}"
+        )
     return pluginData
 
 
@@ -169,7 +182,7 @@ class UTRInfoExtractor:
             for dataTypeIsh in self.utrModel.keys()
             for u in self.utrModel[dataTypeIsh].values()
         ]
-        for entry in sorted(utrEntries, key=lambda e: e.unitId):
+        for entry in sorted(utrEntries, key=lambda e: e.unitId or ""):
             jEntry = {}
             for key in interestingKeys:
                 if (value := getattr(entry, key)) is not None and value.strip() != "":
@@ -183,7 +196,7 @@ class TaxonomyInfoExtractor:
         self.cntlr: Cntlr = cntlr
         self.options: RuntimeOptions = options
         self.modelXbrl: ModelXbrl = modelXbrl
-        self.taxonomyJson: dict[str, MutableMapping] = defaultdict(dict)
+        self.taxonomyJson: dict[Any, Any] = defaultdict(dict)
         self.qnameConverter: ArelleQNameCanonicaliser = (
             ArelleQNameCanonicaliser.bootstrap(modelXbrl)
         )
@@ -192,11 +205,15 @@ class TaxonomyInfoExtractor:
 
     def extract(self) -> None:
         self.verifyConceptQNamesHavePrefixes()
+        assert self.options.entrypointFile is not None, (
+            "entrypointFile option should not be None"
+        )
         self.taxonomyJson["entryPoint"] = self.options.entrypointFile
 
         self.extractPresentation()
         self.extractDimensionDefaults()
         self.extractDimensionDefinitions()
+        self.extractCalculation()
         self.extractConceptsAndMetadata()
 
         self.cntlr.addToLog("Processing namespaces and namespace prefixes")
@@ -219,6 +236,7 @@ class TaxonomyInfoExtractor:
 
         def verify_qname(qname: QName) -> None:
             """Get the QName as a string with prefix if possible."""
+            assert qname.namespaceURI, f"QName should have a namespace URI {qname=}"
             if qname.prefix is None:
                 undesiredQNames.add(qname)
                 if qname.namespaceURI not in namespacesWithoutPrefix:
@@ -230,8 +248,22 @@ class TaxonomyInfoExtractor:
 
         for qname, concept in self.modelXbrl.qnameConcepts.items():
             if concept.isItem:
-                if concept.qname.namespaceURI in {XbrlConst.xbrli, XbrlConst.xbrldt}:
+                assert concept.qname is not None and concept.qname.namespaceURI, (
+                    f"Concept MUST have a proper QName {concept.qname=}"
+                )
+                if concept.qname.namespaceURI in {
+                    XbrlConst.xbrli,
+                    XbrlConst.xbrldt,
+                }:
                     continue
+
+                assert concept.type is not None and concept.type.qname is not None, (
+                    f"Concept should have a type with a QName {concept=}"
+                )
+                assert concept.baseXbrliTypeQname is not None and isinstance(
+                    concept.baseXbrliTypeQname, QName
+                ), f"Concept should have a single base XBRL ItemType QName {concept=}"
+
                 verify_qname(qname)
                 verify_qname(concept.type.qname)
                 verify_qname(concept.baseXbrliTypeQname)
@@ -263,7 +295,7 @@ class TaxonomyInfoExtractor:
                 rows.append((indent, child_concept.qname, None))
             if rel.targetRole:
                 childRelSet = self.modelXbrl.relationshipSet(
-                    rel.arcrole, rel.targetRole
+                    arcrole=rel.arcrole, linkrole=rel.targetRole
                 )
             else:
                 childRelSet = relSet
@@ -288,10 +320,50 @@ class TaxonomyInfoExtractor:
             rows.append(row)
             self.walkPresentationChildren(child_concept, relSet, rows, indent + 1)
 
+    _WEIGHT_POSITIVE: CalcWeight = "+1"
+    _WEIGHT_NEGATIVE: CalcWeight = "-1"
+    _EXPECTED_WEIGHTS: dict[Decimal, CalcWeight] = {
+        Decimal(1): _WEIGHT_POSITIVE,
+        Decimal(-1): _WEIGHT_NEGATIVE,
+    }
+
+    def walkCalculationChildren(
+        self,
+        parent_concept: ModelConcept,
+        relSet: ModelRelationshipSet,
+        rows: list[CalcRow],
+        indent: int,
+    ) -> None:
+        for rel in relSet.fromModelObject(parent_concept):
+            child_concept: ModelConcept = rel.toModelObject
+            assert child_concept.qname is not None, f"Child concept should have a QName {child_concept=}"
+            weight: Decimal | None = rel.weightDecimal
+            if weight is None:
+                raise ArelleRelatedException(
+                    f"Calculation relationship from {parent_concept.qname} to {child_concept.qname} has no weight."
+                )
+            if (coerced := self._EXPECTED_WEIGHTS.get(weight)) is not None:
+                row = (indent, child_concept.qname, coerced)
+            else:
+                self.cntlr.addToLog(
+                    f"WARNING: Calculation relationship from {parent_concept.qname} to {child_concept.qname} has unexpected weight {weight}. Expected [{', '.join(map(str, self._EXPECTED_WEIGHTS.keys()))}].",
+                    level=logging.WARNING,
+                )
+                raise ArelleRelatedException(
+                    f"Calculation relationship from {parent_concept.qname} to {child_concept.qname} has unhandled {weight=}."
+                )
+            rows.append(row)
+            self.walkCalculationChildren(child_concept, relSet, rows, indent + 1)
+
     def getPrimaryItems(
         self, elrUri: str, domainHeadConcept: ModelConcept
     ) -> list[tuple[int, QName]]:
-        relSet = self.modelXbrl.relationshipSet(XbrlConst.domainMember, elrUri)
+        assert domainHeadConcept.qname is not None, (
+            "domainHeadConcept should have a QName"
+        )
+        relSet = self.modelXbrl.relationshipSet(
+            arcrole=XbrlConst.domainMember, linkrole=elrUri
+        )
         rows: list[tuple[int, QName, bool | None]] = []
         rows.append((0, domainHeadConcept.qname, None))
 
@@ -342,7 +414,7 @@ class TaxonomyInfoExtractor:
         elrUri: str,
     ) -> list[QName]:
         dimensionDomainRelSet = self.modelXbrl.relationshipSet(
-            XbrlConst.dimensionDomain, elrUri
+            arcrole=XbrlConst.dimensionDomain, linkrole=elrUri
         )
 
         assert explicitDimension in dimensionDomainRelSet.rootConcepts, (
@@ -353,7 +425,7 @@ class TaxonomyInfoExtractor:
                 rel.toModelObject,
                 rel.isUsable,
                 self.modelXbrl.relationshipSet(
-                    XbrlConst.domainMember, rel.consecutiveLinkrole
+                    arcrole=XbrlConst.domainMember, linkrole=rel.consecutiveLinkrole
                 ),
             )
             for rel in dimensionDomainRelSet.fromModelObject(explicitDimension)
@@ -387,7 +459,7 @@ class TaxonomyInfoExtractor:
                 domainHeadConcept,
                 domainMemberRelSet,
             )
-
+            assert domainHeadConcept.qname is not None
             rows.append((0, domainHeadConcept.qname, usable))
             self.walkDefinitionChildren(
                 domainHeadConcept, domainMemberRelSet, rows, 1, includeUsable=True
@@ -436,8 +508,12 @@ class TaxonomyInfoExtractor:
         self, elrUri: str, headUsable: bool, domainHeadConcept: ModelConcept
     ) -> list[QName]:
         """Deliberately over simplified for now."""
+        assert domainHeadConcept.qname is not None, (
+            "domainHeadConcept should have a QName"
+        )
+
         domainMemberRelSet = self.modelXbrl.relationshipSet(
-            XbrlConst.domainMember, elrUri
+            arcrole=XbrlConst.domainMember, linkrole=elrUri
         )
         rows: list[tuple[int, QName, bool | None]] = []
         self.walkDefinitionChildren(
@@ -539,9 +615,10 @@ class TaxonomyInfoExtractor:
             role: str = str(ref_resource.role)
             assert role, f"Reference {ref_resource} should have a role"
 
-            ref_parts: list[tuple[str, str]] = []
+            ref_parts: list[tuple[QName, str]] = []
             for part in ref_resource.iterchildren():
                 if value := part.stringValue.strip():
+                    assert part.qname is not None, f"Reference part should have a QName {part=}"
                     ref_parts.append((part.qname, value))
 
             if ref_parts:
@@ -579,6 +656,8 @@ class TaxonomyInfoExtractor:
     def extractConceptsAndMetadata(self) -> None:
         self.cntlr.addToLog("Processing concepts (including labels and references)")
         for qname, concept in self.modelXbrl.qnameConcepts.items():
+            assert concept.qname is not None, f"Concept should have a QName {concept=}"
+            assert concept.type is not None and concept.type.qname is not None
             if concept.isItem:
                 if concept.qname.namespaceURI in (XbrlConst.xbrli, XbrlConst.xbrldt):
                     # We don't need/want xbrli:item, xbrldt:dimensionItem or
@@ -606,6 +685,8 @@ class TaxonomyInfoExtractor:
                         level=logging.WARN,
                     )
                 if concept.isEnumeration2Item:
+                    assert concept.enumDomainQname is not None
+                    assert concept.enumLinkrole is not None
                     headUsable = concept.isEnumDomainUsable
                     linkrole = concept.enumLinkrole
                     jconcept.setdefault("other", {})["ee20DomainMembers"] = (
@@ -616,6 +697,7 @@ class TaxonomyInfoExtractor:
                         )
                     )
                 if concept.isTypedDimension:
+                    assert concept.typedDomainElement is not None, f"Typed dimension should have a typed domain element {concept=}"
                     jconcept.setdefault("other", {})["typedElement"] = (
                         concept.typedDomainElement.qname
                     )
@@ -630,7 +712,9 @@ class TaxonomyInfoExtractor:
             if linkqname is None or arcqname is None:
                 continue
             if arcroleUri in hypercubeArcRoles and elrUri is not None:
-                relSet = self.modelXbrl.relationshipSet(hypercubeArcRoles, elrUri)
+                relSet = self.modelXbrl.relationshipSet(
+                    arcrole=arcroleUri, linkrole=elrUri
+                )
                 for root_concept in relSet.rootConcepts:
                     for rel in relSet.fromModelObject(root_concept):
                         concept: ModelConcept = rel.toModelObject
@@ -675,10 +759,18 @@ class TaxonomyInfoExtractor:
             }
 
     def getLabelsForRoleType(self, roleType: ModelRoleType) -> dict[str, str]:
-        relSet = self.modelXbrl.relationshipSet(XbrlConst.elementLabel)
+        relSet = self.modelXbrl.relationshipSet(arcrole=XbrlConst.elementLabel)
         labels: dict[str, str] = {}
         for r in relSet.fromModelObject(roleType):
             label_resource: ModelResource = r.toModelObject
+
+            if label_resource.role != XbrlConst.genStandardLabel:
+                self.cntlr.addToLog(
+                    f"WARNING: Non-standard label role {label_resource.role} found on label for role type {roleType.roleURI}. This label will be ignored.",
+                    level=logging.WARNING,
+                )
+                continue
+
             if lang := label_resource.xmlLang:
                 # BCP47 says that xml:lang is case insensitive
                 lang = lang.lower()
@@ -714,7 +806,9 @@ class TaxonomyInfoExtractor:
                 }
                 if labels := self.getLabelsForRoleType(roleType):
                     self.taxonomyJson["presentation"][elrUri]["labels"] = labels
-                relSet = self.modelXbrl.relationshipSet(XbrlConst.parentChild, elrUri)
+                relSet = self.modelXbrl.relationshipSet(
+                    arcrole=XbrlConst.parentChild, linkrole=elrUri
+                )
                 roots = relSet.rootConcepts
                 match len(roots):
                     case 0:
@@ -735,6 +829,51 @@ class TaxonomyInfoExtractor:
                     self.walkPresentationChildren(root, relSet, rows, 1)
                 self.taxonomyJson["presentation"][elrUri]["rows"] = rows
         self.cntlr.addToLog("Processing presentation network [completed]")
+
+    def extractCalculation(self) -> None:
+        summationItemArcroles = frozenset(
+            {XbrlConst.summationItem, XbrlConst.summationItem11}
+        )
+        self.cntlr.addToLog("Processing calculation network")
+        for arcroleUri, elrUri, linkqname, arcqname in self.modelXbrl.baseSets.keys():
+            # cntlr.addToLog(f"{arcroleUri}, {elrUri}, {linkqname}, {arcqname}")
+            if (
+                linkqname is None
+                or arcqname is None
+                or elrUri is None
+                or arcroleUri not in summationItemArcroles
+            ):
+                continue
+
+            self.cntlr.addToLog(f"Processing {elrUri}")
+            # roleType = self.getRoleType(elrUri)
+            # self.taxonomyJson["calculation"][elrUri] = {
+            #    "definition": roleType.definition,
+            # }
+            # if labels := self.getLabelsForRoleType(roleType):
+            #    self.taxonomyJson["calculation"][elrUri]["labels"] = labels
+            relSet = self.modelXbrl.relationshipSet(
+                arcrole=tuple(summationItemArcroles), linkrole=elrUri
+            )
+            roots = relSet.rootConcepts
+            match len(roots):
+                case 0:
+                    self.cntlr.addToLog(
+                        f"WARNING: {elrUri} calculation is defined but empty",
+                        level=logging.WARNING,
+                    )
+                case 1:
+                    pass
+                case _:
+                    # multiple roots is fine in a calc linkbase ...
+                    pass
+            self.taxonomyJson["calculation"].setdefault(elrUri, {})
+            rows: list[CalcRow] = []
+            for root in roots:
+                rows.append((0, root.qname))
+                self.walkCalculationChildren(root, relSet, rows, 1)
+            self.taxonomyJson["calculation"][elrUri]["rows"] = rows
+        self.cntlr.addToLog("Processing calculation network [completed]")
 
 
 def runTaxonomyInfo(

@@ -9,9 +9,10 @@ import re
 import warnings
 from collections import Counter, defaultdict
 from collections.abc import Iterable, Mapping
+from dataclasses import dataclass
 from enum import Enum, StrEnum, auto
 from functools import cache, cached_property
-from typing import Any, NamedTuple, Optional, Self, overload
+from typing import Any, Generic, Literal, NamedTuple, Optional, Self, TypeVar, overload
 
 from mireport import data
 from mireport.exceptions import (
@@ -39,6 +40,8 @@ STANDARD_LABEL_ROLE = "http://www.xbrl.org/2003/role/label"
 DOCUMENTATION_LABEL_ROLE = "http://www.xbrl.org/2003/role/documentation"
 
 LABEL_SUFFIX_PATTERN = re.compile(r"\s*\[[A-Z]?[a-z ]+\]\s*$")
+
+CalculationWeight = Literal["+1", "-1"]
 
 
 class PeriodType(StrEnum):
@@ -469,10 +472,15 @@ class Concept:
         return tuple(self._eeDomainMembers) if self._eeDomainMembers is not None else ()
 
 
-class Relationship(NamedTuple):
+@dataclass(frozen=True, slots=True)
+class NetworkRelationship:
     roleUri: str
     depth: int
     concept: Concept
+
+
+@dataclass(frozen=True, slots=True)
+class PresentationRelationship(NetworkRelationship):
     preferredLabel: Optional[str] = None
 
     def getLabel(
@@ -517,24 +525,35 @@ class Relationship(NamedTuple):
         )
 
 
-class PresentationGroup(NamedTuple):
+@dataclass(frozen=True, slots=True)
+class CalculationRelationship(NetworkRelationship):
+    weight: Optional[CalculationWeight] = None  # None for root concepts (depth 0)
+
+
+R = TypeVar("R", bound=NetworkRelationship)
+
+
+@dataclass(frozen=True, slots=True, eq=False)
+class NetworkGroup(Generic[R]):
     taxonomy: Taxonomy
-    style: PresentationStyle
     roleUri: str
+    relationships: tuple[R, ...]
     definition: str
     labels: Mapping[str, str]
-    relationships: tuple[Relationship, ...]
 
     def __eq__(self, other: object) -> bool:
         if self is other:
             return True
-        if isinstance(other, PresentationGroup):
-            return self.roleUri == other.roleUri
+        if type(self) is type(other):
+            return self.roleUri == other.roleUri  # type: ignore[union-attr]
         return NotImplemented
 
+    def __hash__(self) -> int:
+        return hash(self.roleUri)
+
     def __lt__(self, other: object) -> bool:
-        if isinstance(other, PresentationGroup):
-            return (self.definition, self.roleUri) < (other.definition, other.roleUri)
+        if type(self) is type(other):
+            return (self.definition, self.roleUri) < (other.definition, other.roleUri)  # type: ignore[union-attr]
         return NotImplemented
 
     def getLabel(self, requestedLanguage: Optional[str] = None) -> str:
@@ -549,9 +568,14 @@ class PresentationGroup(NamedTuple):
             )
         return label or self.definition
 
+
+@dataclass(frozen=True, slots=True, eq=False)
+class PresentationGroup(NetworkGroup[PresentationRelationship]):
+    style: PresentationStyle = PresentationStyle.Empty
+
     @classmethod
     def fromJSON(cls, taxonomy: Taxonomy, roleUri: str, metaData: Mapping) -> Self:
-        relationships: list[Relationship] = []
+        relationships: list[PresentationRelationship] = []
         for row in metaData["rows"]:
             if len(row) == 2:
                 indent, concept_qname = row
@@ -559,22 +583,22 @@ class PresentationGroup(NamedTuple):
             else:
                 indent, concept_qname, preferredLabel = row
             relationships.append(
-                Relationship(
+                PresentationRelationship(
                     roleUri, indent, taxonomy.getConcept(concept_qname), preferredLabel
                 )
             )
         return cls(
-            taxonomy,
-            cls._identifyPresentationStyle(relationships),
-            roleUri,
-            str(metaData.get("definition", "")).strip(),
-            metaData.get("labels", {}),
-            tuple(relationships),
+            taxonomy=taxonomy,
+            roleUri=roleUri,
+            relationships=tuple(relationships),
+            definition=str(metaData.get("definition", "")).strip(),
+            labels=metaData.get("labels", {}),
+            style=cls._identifyPresentationStyle(relationships),
         )
 
     @classmethod
     def _identifyPresentationStyle(
-        cls, rels: Iterable[Relationship]
+        cls, rels: Iterable[PresentationRelationship]
     ) -> PresentationStyle:
         hasHypercubes = any(rel for rel in rels if rel.concept.isHypercube)
         hasReportable = any(rel for rel in rels if rel.concept.isReportable)
@@ -612,6 +636,31 @@ class PresentationGroup(NamedTuple):
                 return PresentationStyle.Empty
 
 
+@dataclass(frozen=True, slots=True, eq=False)
+class CalculationGroup(NetworkGroup[CalculationRelationship]):
+    @classmethod
+    def fromJSON(cls, taxonomy: Taxonomy, roleUri: str, metaData: Mapping) -> Self:
+        relationships: list[CalculationRelationship] = []
+        for row in metaData["rows"]:
+            if len(row) == 2:
+                depth, concept_qname = row
+                weight = None
+            else:
+                depth, concept_qname, weight = row
+            relationships.append(
+                CalculationRelationship(
+                    roleUri, depth, taxonomy.getConcept(concept_qname), weight
+                )
+            )
+        return cls(
+            taxonomy=taxonomy,
+            roleUri=roleUri,
+            relationships=tuple(relationships),
+            definition=str(metaData.get("definition", "")).strip(),
+            labels=metaData.get("labels", {}),
+        )
+
+
 class BaseSet(NamedTuple):
     roleUri: str
     hyperCubes: frozenset[Concept]
@@ -623,6 +672,7 @@ class Taxonomy:
         concepts: dict[str, Concept],
         entryPoint: str,
         presentation: dict[str, dict[str, Any]],
+        calculation: dict[str, dict[str, Any]],
         dimensions: dict[str, dict],
         qnameMaker: QNameMaker,
         utr: UTR,
@@ -644,6 +694,11 @@ class Taxonomy:
         self._groups: tuple[PresentationGroup, ...] = tuple(
             PresentationGroup.fromJSON(self, roleUri, bits)
             for roleUri, bits in presentation.items()
+        )
+
+        self._calculationGroups: tuple[CalculationGroup, ...] = tuple(
+            CalculationGroup.fromJSON(self, roleUri, bits)
+            for roleUri, bits in calculation.items()
         )
 
         self._lookupConceptsByName = defaultdict(list)
@@ -682,7 +737,7 @@ class Taxonomy:
             list
         )
         desired_containers: set[DimensionContainerType] = set()
-        open_hcs: set[Relationship] = set()
+        open_hcs: set[NetworkRelationship] = set()
         domainByDimension: dict[Concept, list[Concept]] = defaultdict(list)
 
         for role, cubes in dimensions.items():
@@ -694,7 +749,7 @@ class Taxonomy:
                 closed = bool(cubeDetails.pop("xbrldt:closed"))
                 d["xbrldt:closed"] = closed
                 if not closed:
-                    open_hcs.add(Relationship(role, 0, hc_concept))
+                    open_hcs.add(NetworkRelationship(role, 0, hc_concept))
 
                 container = DimensionContainerType(
                     cubeDetails.pop("xbrldt:contextElement")
@@ -703,7 +758,7 @@ class Taxonomy:
                 d["xbrldt:contextElement"] = container
 
                 d["primaryItems"] = [
-                    Relationship(role, depth, concepts[qname])
+                    NetworkRelationship(role, depth, concepts[qname])
                     for depth, qname in cubeDetails.pop("primaryItems", [])
                 ]
                 for r in d["primaryItems"]:
@@ -801,6 +856,10 @@ class Taxonomy:
     @property
     def presentation(self) -> tuple[PresentationGroup, ...]:
         return self._groups
+
+    @property
+    def calculation(self) -> tuple[CalculationGroup, ...]:
+        return self._calculationGroups
 
     @property
     def hypercubes(self) -> frozenset[Concept]:
@@ -1017,6 +1076,7 @@ def _loadTaxonomyFromFile(bits: dict) -> None:
         concepts,
         entryPoint=entryPoint,
         presentation=bits["presentation"],
+        calculation=bits.get("calculation", {}),
         dimensions=bits["dimensions"],
         qnameMaker=qnameMaker,
         utr=UTR.fromDict(
