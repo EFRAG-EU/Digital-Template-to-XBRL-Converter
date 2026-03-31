@@ -6,7 +6,7 @@
 {% set ns = namespace(fact_count = 0) %}
 {% set timestamp = now_utc() %}
 <!DOCTYPE html>
-<html xml:lang="en"
+<html xml:lang="{{ reportInfo.language }}"
   xmlns="http://www.w3.org/1999/xhtml"
   {{ '{{ namespaces }}' }}>
     <head>

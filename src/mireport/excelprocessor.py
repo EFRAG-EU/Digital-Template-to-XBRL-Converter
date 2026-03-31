@@ -212,12 +212,6 @@ class ExcelProcessor:
     def unusedNames(self) -> list[str]:
         return sorted(dn.name for dn in self._unusedDefinedNames if dn.name)
 
-    @property
-    def preferredLanguage(self) -> str:
-        if self._outputLocale is not None:
-            return as_xmllang(self._outputLocale)
-        return self._report.taxonomy.defaultLanguage or "en"
-
     def populateReport(self) -> InlineReport:
         """
         Add facts to InlineReport from the provided Excel workbook.
@@ -1701,6 +1695,7 @@ class ExcelProcessor:
         eeSetValue: set[Concept] = set()
         value: list[str] = []
         eeDomain = concept.getEEDomain()
+        cell = None
 
         for rnum, cnum, cell in getCellRangeIterator(stuff.worksheet, stuff.cellRange):
             v = cell.value
@@ -1735,7 +1730,7 @@ class ExcelProcessor:
                 eeSetValue.add(eeMember)
                 value.append(
                     eeMember.getStandardLabel(
-                        self.preferredLanguage,
+                        self._report.language,
                         fallbackIfMissing=str(eeMember.qname),
                         removeSuffix=True,
                         fallbackToAnyLang=True,
@@ -1824,7 +1819,9 @@ class ExcelProcessor:
                 Severity.INFO,
                 MessageType.DevInfo,
                 taxonomy_concept=concept,
-                excel_reference=excelCellRef(stuff.worksheet, cell),
+                excel_reference=excelCellOrCellRangeRef(
+                    stuff.worksheet, stuff.cellRange, cell
+                ),
             )
         else:
             fb.setConcept(concept).setHiddenValue(

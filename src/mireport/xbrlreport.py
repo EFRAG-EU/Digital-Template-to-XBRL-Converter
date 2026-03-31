@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import re
-import shutil
+import time
 import zipfile
 from abc import ABC
 from collections import defaultdict
@@ -12,7 +12,6 @@ from datetime import date, datetime, timezone
 from enum import Enum, StrEnum, auto
 from io import BytesIO
 from itertools import count
-from pathlib import Path
 from typing import NamedTuple, Optional, Self, cast
 from unicodedata import name as unicode_name
 
@@ -311,7 +310,7 @@ class Fact:
         return Markup(
             f"{{{{ {aoix_verb} {self.concept.qname}[{aspects_str}] }}}}{value}{{{{ end }}}}"
         )
-    
+
     def __html__(self) -> Markup:
         return self.as_aoix()
 
@@ -888,6 +887,13 @@ class InlineReport:
     def defaultPeriod(self) -> DurationPeriodHolder:
         return self._periods[self._defaultPeriodName]
 
+    @property
+    def language(self) -> str:
+        """Returns the language of the report (as a BCP 47 string like `xml:lang` uses).
+
+        Useful for requesting the right taxonomy labels and other language-sensitive output."""
+        return as_xmllang(self._outputLocale)
+
     def getPeriodsForAoix(self) -> str:
         p = []
         for name, period in self._periods.items():
@@ -1024,7 +1030,7 @@ class InlineReport:
         )
         return bits
 
-    def _getInlineReport(self) -> str:
+    def _constructInlineReport(self) -> str:
         if not (self.hasFacts and self._defaultPeriodName):
             raise InlineReportException(
                 "Cannot generate a report with no facts or period."
@@ -1035,9 +1041,7 @@ class InlineReport:
         rl = ReportLayoutOrganiser(self._taxonomy, self)
         sections = rl.organise()
 
-        label_language = self._taxonomy.getBestSupportedLanguage(
-            as_xmllang(self._outputLocale)
-        )
+        label_language = self._taxonomy.getBestSupportedLanguage(self.language)
 
         env = Environment(
             loader=PackageLoader(mireport.__name__, "inline_report_templates"),
@@ -1086,6 +1090,7 @@ class InlineReport:
                 "subtitle": self._reportSubtitle,
                 "optionalLogo": self._logo,
                 "optionalCoverImage": self._coverImage,
+                "language": self.language,
             },
             software={
                 "version": mireport.__version__,
@@ -1104,12 +1109,15 @@ class InlineReport:
         )
 
         try:
+            start_time = time.perf_counter_ns()
             parser = ixbrltemplates.Parser(
                 "http://www.xbrl.org/inlineXBRL/transformation/2022-02-16",
                 self.taxonomy.dimensionContainer.value,
             )
             ixbrl_content = parser.parse(html_content).strip()
             self._generatedReport = ixbrl_content
+            elapsed = time.perf_counter_ns() - start_time
+            L.info(f"aoix parsing and transformation took {elapsed / 1_000_000:.2f}ms")
             return ixbrl_content
         except ixbrltemplates.ParseError as e:
             errors = []
@@ -1120,11 +1128,6 @@ class InlineReport:
             errors.append(" " * offset + "^")
             message = "\n".join(errors)
             raise InlineReportException(message) from e
-
-    def saveInlineReport(self, target: Path) -> None:
-        ixbrl_content = self.getInlineReport()
-        with open(target, "wb") as out:
-            shutil.copyfileobj(ixbrl_content.fileLike(), out)
 
     def _getSafeEntityName(self) -> str:
         safeName = zipSafeString(self._entityName, fallback="Sample")
@@ -1154,7 +1157,7 @@ class InlineReport:
         yearEnd = self.defaultPeriod.end.year
         filename = f"{self._getSafeEntityName()}_{yearEnd}_XBRL_Report.html"
         return FilelikeAndFileName(
-            fileContent=self._getInlineReport().encode("UTF-8"), filename=filename
+            fileContent=self._constructInlineReport().encode("UTF-8"), filename=filename
         )
 
 

@@ -207,8 +207,8 @@ def group_symbol(locale: Optional[Locale] = None) -> str:
 
 def as_xmllang(locale: Locale) -> str:
     xml_lang_parts = [locale.language]
-    if locale.territory:
-        xml_lang_parts.append(locale.territory)
+    if t := locale.territory:
+        xml_lang_parts.append(t)
     return "-".join(xml_lang_parts)
 
 
