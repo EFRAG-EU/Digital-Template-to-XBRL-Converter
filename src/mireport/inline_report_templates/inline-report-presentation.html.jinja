@@ -22,7 +22,7 @@
     </head>
     <body class="theme-{{ theme }}">
         <div style="display:none">
-            {{ '{{ header }}' }}
+{{ '{{ header }}' }}
         </div>
         <!-- Cover Page -->
         <div class="page portrait-page cover-page">
@@ -55,7 +55,7 @@
             </div>
 {% endif %}
         </div>
-        <div class="page portrait-page doc-page" id="document-information">
+        <div class="page portrait-page" id="document-information">
             <div class="document-information">
                 <h2>Document Information</h2>
                 <dl class="document-info-list">
@@ -78,15 +78,15 @@
             </div>
         </div>
 {% if introduction %}
-        <div class="page portrait-page doc-page" id="introduction">
-            <div class="introduction">
-                <h2>Introduction</h2>
+        <div class="page portrait-page" id="introduction">
+            <h2>Introduction</h2>
+            <div class="introduction-content">
                 {{ introduction | e }}
             </div>
         </div>
 {% endif %}
         <div class="page portrait-page toc-page" id="table-of-contents">
-            <h1>Table of contents</h1>
+            <h2>Table of contents</h2>
             {#- Build ToC entries with their body-loop indices, then sort alphabetically -#}
             {% set toc_entries = [] %}
             {% for section in sections if section.hasFacts %}
