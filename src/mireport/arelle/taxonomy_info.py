@@ -5,6 +5,7 @@ from collections import defaultdict
 from collections.abc import Iterable
 from contextlib import closing
 from decimal import Decimal
+from operator import itemgetter
 from typing import Any, Literal, TypeAlias, TypeVar
 
 from arelle import XbrlConst
@@ -209,6 +210,7 @@ class TaxonomyInfoExtractor:
             "entrypointFile option should not be None"
         )
         self.taxonomyJson["entryPoint"] = self.options.entrypointFile
+        self.taxonomyJson["groups"] = defaultdict(dict)
 
         self.extractPresentation()
         self.extractDimensionDefaults()
@@ -216,6 +218,7 @@ class TaxonomyInfoExtractor:
         self.extractCalculation()
         self.extractConceptsAndMetadata()
 
+        self.taxonomyJson["groups"] = sorted(self.taxonomyJson["groups"].values(), key=itemgetter("roleUri"))
         self.cntlr.addToLog("Processing namespaces and namespace prefixes")
         self.taxonomyJson = self.qnameConverter.convert_recursive(self.taxonomyJson)
         self.taxonomyJson["namespaces"] = self.qnameConverter.getNamespacePrefixMap()
@@ -657,13 +660,14 @@ class TaxonomyInfoExtractor:
         self.cntlr.addToLog("Processing concepts (including labels and references)")
         for qname, concept in self.modelXbrl.qnameConcepts.items():
             assert concept.qname is not None, f"Concept should have a QName {concept=}"
-            assert concept.type is not None and concept.type.qname is not None
             if concept.isItem:
                 if concept.qname.namespaceURI in (XbrlConst.xbrli, XbrlConst.xbrldt):
                     # We don't need/want xbrli:item, xbrldt:dimensionItem or
                     # xbrldt:hypercubeItem in our concept list. Arelle docs
                     # suggests isItem should supress xbrli:item but it doesn't.
                     continue
+                assert concept.type is not None and concept.type.qname is not None
+
                 jconcept = {
                     # We use concept.type.qname as it gets the namespace prefix
                     # right, i.e. something defined in modelXbrl.prefixedNamespace.
@@ -801,11 +805,11 @@ class TaxonomyInfoExtractor:
             if arcroleUri == XbrlConst.parentChild and elrUri is not None:
                 self.cntlr.addToLog(f"Processing {elrUri}")
                 roleType = self.getRoleType(elrUri)
-                self.taxonomyJson["presentation"][elrUri] = {
-                    "definition": roleType.definition,
-                }
+                group = self.taxonomyJson["groups"][elrUri]
+                group["roleUri"] = elrUri
+                group["definition"] = roleType.definition
                 if labels := self.getLabelsForRoleType(roleType):
-                    self.taxonomyJson["presentation"][elrUri]["labels"] = labels
+                    group["labels"] = labels
                 relSet = self.modelXbrl.relationshipSet(
                     arcrole=XbrlConst.parentChild, linkrole=elrUri
                 )
@@ -827,7 +831,7 @@ class TaxonomyInfoExtractor:
                 for root in roots:
                     rows.append((0, root.qname))
                     self.walkPresentationChildren(root, relSet, rows, 1)
-                self.taxonomyJson["presentation"][elrUri]["rows"] = rows
+                group.setdefault("networks", {})["presentation"] = rows
         self.cntlr.addToLog("Processing presentation network [completed]")
 
     def extractCalculation(self) -> None:
@@ -846,12 +850,13 @@ class TaxonomyInfoExtractor:
                 continue
 
             self.cntlr.addToLog(f"Processing {elrUri}")
-            # roleType = self.getRoleType(elrUri)
-            # self.taxonomyJson["calculation"][elrUri] = {
-            #    "definition": roleType.definition,
-            # }
-            # if labels := self.getLabelsForRoleType(roleType):
-            #    self.taxonomyJson["calculation"][elrUri]["labels"] = labels
+            group = self.taxonomyJson["groups"][elrUri]
+            group.setdefault("roleUri", elrUri)
+            if "definition" not in group:
+                roleType = self.getRoleType(elrUri)
+                group["definition"] = roleType.definition
+                if labels := self.getLabelsForRoleType(roleType):
+                    group["labels"] = labels
             relSet = self.modelXbrl.relationshipSet(
                 arcrole=tuple(summationItemArcroles), linkrole=elrUri
             )
@@ -867,12 +872,11 @@ class TaxonomyInfoExtractor:
                 case _:
                     # multiple roots is fine in a calc linkbase ...
                     pass
-            self.taxonomyJson["calculation"].setdefault(elrUri, {})
             rows: list[CalcRow] = []
             for root in roots:
                 rows.append((0, root.qname))
                 self.walkCalculationChildren(root, relSet, rows, 1)
-            self.taxonomyJson["calculation"][elrUri]["rows"] = rows
+            group.setdefault("networks", {})["calculation"] = rows
         self.cntlr.addToLog("Processing calculation network [completed]")
 
 

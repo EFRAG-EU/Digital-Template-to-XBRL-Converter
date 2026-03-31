@@ -574,9 +574,10 @@ class PresentationGroup(NetworkGroup[PresentationRelationship]):
     style: PresentationStyle = PresentationStyle.Empty
 
     @classmethod
-    def fromJSON(cls, taxonomy: Taxonomy, roleUri: str, metaData: Mapping) -> Self:
+    def fromJSON(cls, taxonomy: Taxonomy, group: Mapping) -> Self:
+        roleUri: str = group["roleUri"]
         relationships: list[PresentationRelationship] = []
-        for row in metaData["rows"]:
+        for row in group["networks"]["presentation"]:
             if len(row) == 2:
                 indent, concept_qname = row
                 preferredLabel = None
@@ -591,8 +592,8 @@ class PresentationGroup(NetworkGroup[PresentationRelationship]):
             taxonomy=taxonomy,
             roleUri=roleUri,
             relationships=tuple(relationships),
-            definition=str(metaData.get("definition", "")).strip(),
-            labels=metaData.get("labels", {}),
+            definition=str(group.get("definition", "")).strip(),
+            labels=group.get("labels", {}),
             style=cls._identifyPresentationStyle(relationships),
         )
 
@@ -639,9 +640,10 @@ class PresentationGroup(NetworkGroup[PresentationRelationship]):
 @dataclass(frozen=True, slots=True, eq=False)
 class CalculationGroup(NetworkGroup[CalculationRelationship]):
     @classmethod
-    def fromJSON(cls, taxonomy: Taxonomy, roleUri: str, metaData: Mapping) -> Self:
+    def fromJSON(cls, taxonomy: Taxonomy, group: Mapping) -> Self:
+        roleUri: str = group["roleUri"]
         relationships: list[CalculationRelationship] = []
-        for row in metaData["rows"]:
+        for row in group["networks"]["calculation"]:
             if len(row) == 2:
                 depth, concept_qname = row
                 weight = None
@@ -656,8 +658,8 @@ class CalculationGroup(NetworkGroup[CalculationRelationship]):
             taxonomy=taxonomy,
             roleUri=roleUri,
             relationships=tuple(relationships),
-            definition=str(metaData.get("definition", "")).strip(),
-            labels=metaData.get("labels", {}),
+            definition=str(group.get("definition", "")).strip(),
+            labels=group.get("labels", {}),
         )
 
 
@@ -671,8 +673,7 @@ class Taxonomy:
         self,
         concepts: dict[str, Concept],
         entryPoint: str,
-        presentation: dict[str, dict[str, Any]],
-        calculation: dict[str, dict[str, Any]],
+        groups: list[dict[str, Any]],
         dimensions: dict[str, dict],
         qnameMaker: QNameMaker,
         utr: UTR,
@@ -692,13 +693,15 @@ class Taxonomy:
             concept._reifyUsingTaxonomy(self)
 
         self._groups: tuple[PresentationGroup, ...] = tuple(
-            PresentationGroup.fromJSON(self, roleUri, bits)
-            for roleUri, bits in presentation.items()
+            PresentationGroup.fromJSON(self, group)
+            for group in groups
+            if "presentation" in group.get("networks", {})
         )
 
         self._calculationGroups: tuple[CalculationGroup, ...] = tuple(
-            CalculationGroup.fromJSON(self, roleUri, bits)
-            for roleUri, bits in calculation.items()
+            CalculationGroup.fromJSON(self, group)
+            for group in groups
+            if "calculation" in group.get("networks", {})
         )
 
         self._lookupConceptsByName = defaultdict(list)
@@ -1075,8 +1078,7 @@ def _loadTaxonomyFromFile(bits: dict) -> None:
     _TAXONOMIES[entryPoint] = Taxonomy(
         concepts,
         entryPoint=entryPoint,
-        presentation=bits["presentation"],
-        calculation=bits.get("calculation", {}),
+        groups=bits["groups"],
         dimensions=bits["dimensions"],
         qnameMaker=qnameMaker,
         utr=UTR.fromDict(
