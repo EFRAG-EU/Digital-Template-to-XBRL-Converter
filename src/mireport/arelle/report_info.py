@@ -177,14 +177,14 @@ class ArelleReportProcessor:
                     f"Arelle xBRL JSON generation has gone wrong. Zip contents: {zf.namelist()}"
                 )
                 json = zf.read(a[0])
+            jsonFilename = PurePath(source.filename).with_suffix(".json").name
+            result._xbrlJson = FilelikeAndFileName(
+                fileContent=json, filename=jsonFilename
+            )
         except Exception as e:
             result.addException(e)
-            raise
         finally:
             del jsonBytesIO
-
-        jsonFilename = PurePath(source.filename).with_suffix(".json").name
-        result._xbrlJson = FilelikeAndFileName(fileContent=json, filename=jsonFilename)
         return result
 
     def generateInlineViewer(
@@ -195,9 +195,9 @@ class ArelleReportProcessor:
             "saveViewerDest": viewerBytesIO,
             "viewer_feature_review": False,
             "validationMessages": True,
-            "viewerNoCopyScript": True,
             "viewer_feature_highlight_facts_on_startup": False,
             "useStubViewer": False,
+            "viewerNoCopyScript": True,
             "viewerURL": ARELLE_VIEWER_URL,
         }
 
@@ -228,6 +228,10 @@ class ArelleReportProcessor:
                     f"Arelle & inline-viewer has gone wrong. Zip contents: {zf.namelist()}"
                 )
                 viewer = zf.read(a[0])
+            viewerFilename = f"{PurePath(source.filename).stem}_viewer.html"
+            result._viewer = FilelikeAndFileName(
+                fileContent=viewer, filename=viewerFilename
+            )
         except Exception as e:
             result.addException(
                 e,
@@ -236,11 +240,6 @@ class ArelleReportProcessor:
             return result
         finally:
             del viewerBytesIO
-
-        viewerFilename = f"{PurePath(source.filename).stem}_viewer.html"
-        result._viewer = FilelikeAndFileName(
-            fileContent=viewer, filename=viewerFilename
-        )
         return result
 
     @staticmethod

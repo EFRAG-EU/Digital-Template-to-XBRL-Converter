@@ -140,7 +140,7 @@ def main() -> None:
         if json_path:
             arelle_result = arp.generateXBRLJson(source)
             arelle_messages.extend(arelle_result.messages)
-            if arelle_result:
+            if arelle_result.has_json:
                 if json_path.is_file():
                     print(f"Overwriting {json_path}.")
                 arelle_result._xbrlJson.saveToFilepath(json_path)

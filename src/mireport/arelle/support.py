@@ -54,6 +54,7 @@ class ArelleProcessingResult:
         self._viewer: Optional[FilelikeAndFileName] = None
         self._xbrlJson: Optional[FilelikeAndFileName] = None
         self.__importArelleMessages(jsonMessages)
+        self._exceptions: list[Exception] = []
 
     def __importArelleMessages(self, json_str: str) -> None:
         wantDebug = L.isEnabledFor(logging.DEBUG)
@@ -133,6 +134,9 @@ class ArelleProcessingResult:
     def has_json(self) -> bool:
         return self._xbrlJson is not None
 
+    def has_exceptions(self) -> bool:
+        return bool(self._exceptions)
+
     @property
     def messages(self) -> list[Message]:
         return list(self._validationMessages)
@@ -142,6 +146,7 @@ class ArelleProcessingResult:
         return list(self._textLogLines)
 
     def addException(self, exception: Exception, message: Optional[str] = None) -> None:
+        self._exceptions.append(exception)
         text = f"{exception.__class__.__name__}: {exception}"
         if message:
             text = f"{message}. {text}"
@@ -217,10 +222,12 @@ class ArelleQNameCanonicaliser:
         # unused bindings in our JSON.
 
         all_existing_used_prefixes_set: frozenset[tuple[str, str]] = frozenset(
-            (prefix, qname.namespaceURI)
+            (prefix, ns)
             for qname in arelle_model.qnameConcepts.keys()
             | arelle_model.qnameTypes.keys()
-            if (prefix := qname.prefix)
+            if qname is not None
+            and (prefix := qname.prefix) is not None
+            and (ns := qname.namespaceURI) is not None
         )
 
         prefix_namespace_count: Counter[str] = Counter(
@@ -239,6 +246,9 @@ class ArelleQNameCanonicaliser:
         return cls(qnameMaker)
 
     def convert(self, qname: QName) -> MireportQName:
+        assert qname.prefix is not None and qname.namespaceURI is not None, (
+            f"QName should have a prefix and namespace {qname=}"
+        )
         wanted_prefix = qname.prefix
         namespace = qname.namespaceURI
 
