@@ -38,6 +38,7 @@ class NamespaceManager:
     def __init__(self) -> None:
         self.__prefixCounter = itertools.count(0)
         self._prefixToNamespaces: dict[str, str] = {}
+        self._boundNamespaces: set[str] = set()
 
     def getNamespaceForPrefix(self, prefix: str) -> str:
         return self._prefixToNamespaces[prefix]
@@ -81,6 +82,7 @@ class NamespaceManager:
                 f"Unable to add namespace prefix binding for '{prefix}': already bound to existing namespace: '{old_ns}'; attempted namespace '{namespace}'."
             )
         self._prefixToNamespaces[prefix] = namespace
+        self._boundNamespaces.add(namespace)
         return prefix
 
     def getOrGeneratePrefixForNamespace(self, namespace: str) -> str:
@@ -199,6 +201,10 @@ class QNameMaker:
     def namespacePrefixesMap(self) -> Mapping[str, str]:
         """Get a mapping of prefix to namespace for all known prefixes."""
         return MappingProxyType(self._nsManager._prefixToNamespaces)
+
+    def hasNamespace(self, namespace: str) -> bool:
+        """Return True if the namespace has a registered prefix."""
+        return namespace in self._nsManager._boundNamespaces
 
 
 def getBootstrapQNameMaker() -> QNameMaker:
