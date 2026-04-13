@@ -288,7 +288,9 @@ class ArelleQNameCanonicaliser:
                 self.convert_recursive(k): self.convert_recursive(v)
                 for k, v in obj.items()
             }
-        elif isinstance(obj, (list, tuple)):
-            return type(obj)(self.convert_recursive(item) for item in obj)
+        elif isinstance(obj, list):
+            return [self.convert_recursive(item) for item in obj]
+        elif isinstance(obj, tuple):
+            return tuple(self.convert_recursive(item) for item in obj)
         else:
             return obj
