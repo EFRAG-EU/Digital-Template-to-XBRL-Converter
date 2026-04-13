@@ -3,6 +3,7 @@ import logging
 from collections import Counter
 from collections.abc import Mapping, MutableMapping
 from dataclasses import dataclass
+from functools import cache
 from typing import Any, Optional, Self
 
 from arelle.logging.handlers.LogToXmlHandler import LogToXmlHandler
@@ -273,6 +274,10 @@ class ArelleQNameCanonicaliser:
                 self.qnameMaker.addNamespacePrefix(wanted_prefix, namespace)
 
         return self.qnameMaker.fromNamespaceAndLocalName(namespace, qname.localName)
+    
+    @cache
+    def convert_to_str(self, qname: QName) -> str:
+        return str(self.convert(qname))
 
     def getNamespacePrefixMap(self) -> MutableMapping[str, str]:
         """Get a mapping of namespace URI to prefix."""
@@ -282,7 +287,7 @@ class ArelleQNameCanonicaliser:
     def convert_recursive(self, obj: Any) -> Any:
         """Recursively convert all QNames in a data structure to MireportQNames."""
         if isinstance(obj, QName):
-            return str(self.convert(obj))
+            return self.convert_to_str(obj)
         elif isinstance(obj, Mapping):
             return {
                 self.convert_recursive(k): self.convert_recursive(v)
