@@ -246,12 +246,10 @@ class ArelleQNameCanonicaliser:
         return cls(qnameMaker)
 
     def convert(self, qname: QName) -> MireportQName:
-        assert qname.prefix is not None and qname.namespaceURI is not None, (
-            f"QName should have a prefix and namespace {qname=}"
-        )
-        wanted_prefix = qname.prefix
-        namespace = qname.namespaceURI
+        if (namespace := qname.namespaceURI) is None:
+            raise ValueError(f"Cannot convert QName with no namespace: {qname}")
 
+        wanted_prefix = qname.prefix
         # Use our own vanity prefixes in preference to the taxonomy defined
         # prefixes.
         #
@@ -264,7 +262,7 @@ class ArelleQNameCanonicaliser:
         # Anything we don't know about in VANITY_NAMESPACE_PREFIX_MAP will
         # either have its taxonomy defined prefix or get a generated ns0, ns1
         # prefix
-        if namespace not in self.qnameMaker.namespacePrefixesMap.values():
+        if not self.qnameMaker.hasNamespace(namespace):
             if vanity_prefix := self.VANITY_NAMESPACE_PREFIX_MAP.get(namespace):
                 wanted_prefix = vanity_prefix
 
