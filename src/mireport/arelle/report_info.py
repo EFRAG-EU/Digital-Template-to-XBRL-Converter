@@ -10,7 +10,6 @@ from typing import BinaryIO, Optional
 from arelle import PackageManager, PluginManager
 from arelle.api.Session import Session
 from arelle.CntlrCmdLine import RuntimeOptions
-from arelle.logging.handlers.LogToXmlHandler import LogToXmlHandler
 
 from mireport.arelle.support import (
     ArelleProcessingResult,
@@ -94,17 +93,15 @@ class ArelleReportProcessor:
                     pass
                 with (
                     Session() as session,
-                    closing(LogToXmlHandler()) as logHandler,
                     reportPackage.fileLike() as requestZipStream,
                 ):
                     session.run(
                         options,
                         sourceZipStream=requestZipStream,
                         responseZipStream=responseZipStream,
-                        logHandler=logHandler,
                         logFilters=[],
                     )
-                    result = ArelleProcessingResult.fromLogToXmlHandler(logHandler)
+                    result = ArelleProcessingResult.fromSession(session)
                 assert requestZipStream.closed, "Forgot to close the stream."
                 return result
             except Exception as arelle_exception:
@@ -125,6 +122,7 @@ class ArelleReportProcessor:
         validationOptions = RuntimeOptions(
             internetConnectivity="offline" if self.workOffline is True else "online",
             keepOpen=True,
+            logFile="logToBuffer",
             logFormat="%(asctime)s [%(messageCode)s] %(message)s - %(file)s",
             logPropagate=False,
             packages=[str(t) for t in self.taxonomyPackages],
@@ -149,6 +147,7 @@ class ArelleReportProcessor:
         jsonOptions = RuntimeOptions(
             internetConnectivity="offline" if self.workOffline else "online",
             keepOpen=True,
+            logFile="logToBuffer",
             logFormat="%(asctime)s [%(messageCode)s] %(message)s - %(file)s",
             logPropagate=False,
             packages=[str(t) for t in self.taxonomyPackages],
@@ -204,6 +203,7 @@ class ArelleReportProcessor:
         viewerOptions = RuntimeOptions(
             internetConnectivity="offline" if self.workOffline else "online",
             keepOpen=True,
+            logFile="logToBuffer",
             logFormat="%(asctime)s [%(messageCode)s] %(message)s - %(file)s",
             logPropagate=False,
             packages=[str(t) for t in self.taxonomyPackages],
