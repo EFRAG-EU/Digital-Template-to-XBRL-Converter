@@ -1,7 +1,6 @@
 import logging
 import threading
 import zipfile
-from contextlib import closing
 from importlib.metadata import PackageNotFoundError, metadata, version
 from io import BytesIO
 from pathlib import Path, PurePath

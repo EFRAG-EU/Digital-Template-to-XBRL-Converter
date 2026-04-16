@@ -3,7 +3,6 @@ import logging
 import time
 from collections import defaultdict
 from collections.abc import Iterable, MutableMapping
-from contextlib import closing
 from typing import Any, Optional, TypeVar
 
 from arelle import XbrlConst
