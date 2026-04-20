@@ -1,5 +1,5 @@
 :root {
-    --green: #6AA744;
+    --green: #4F7F2A;
     --green-50: rgb(245, 249, 243);
     --green-75: rgb(235, 243, 230);
     --green-100: rgb(225, 237, 218);
@@ -249,8 +249,8 @@ td {
 
 .cover-headline {
     text-align: center;
-    line-height: 1.4;
-    font-size: 4em;
+    line-height: 1.25;
+    font-size: 3.4em;
     font-weight: bold;
     max-width: 160mm;
     margin-left: auto;
@@ -258,9 +258,21 @@ td {
     overflow-wrap: break-word;
 }
 
-.cover-headline h1,
-.cover-headline h2 {
+.cover-headline h1.inline,
+.cover-headline h2.inline,
+.cover-headline h3.inline,
+.cover-headline h4.inline,
+.cover-headline h5.inline,
+.cover-headline h6.inline {
     display: inline;
+}
+
+.cover-headline h1,
+.cover-headline h2,
+.cover-headline h3,
+.cover-headline h4,
+.cover-headline h5,
+.cover-headline h6 {
     font-size: inherit;
 }
 
