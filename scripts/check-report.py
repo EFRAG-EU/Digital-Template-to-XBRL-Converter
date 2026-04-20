@@ -63,6 +63,11 @@ def parse_args() -> argparse.Namespace:
         action=argparse.BooleanOptionalAction,
         help="Enable display of developer information issues (not normally visible to users)",
     )
+    parser.add_argument(
+        "--debug",
+        action=argparse.BooleanOptionalAction,
+        help="Turn on debugging output.",
+    )
     args = parser.parse_args()
     return args
 
@@ -71,6 +76,12 @@ def main() -> None:
     start = time.perf_counter_ns()
 
     args = parse_args()
+    if args.debug:
+        rich_print(
+            "[red]Debugging information will be included in the output.[/red]"
+        )
+        logging.root.setLevel(logging.DEBUG)
+
     report_path: Path = args.report_path
     taxonomy_package_globs: list[str] = args.taxonomy_packages
     viewer_path: Optional[Path] = args.viewer_path
