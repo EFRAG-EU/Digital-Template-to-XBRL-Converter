@@ -118,7 +118,7 @@ def main() -> None:
     )
     source = getOrCreateReportPackage(report_path)
 
-    outputsWanted: bool = viewer_path or json_path
+    outputsWanted: bool = bool(viewer_path or json_path)
     arelle_messages = []
     if not outputsWanted:
         arelle_result = arp.validateReportPackage(
