@@ -45,7 +45,7 @@ def concepts_to_qnames(
     Returns:
         A list of qualified names (QNames).
     """
-    qname_list = [concept.qname for concept in concept_list]
+    qname_list = [q for concept in concept_list if (q := concept.qname) is not None]
     if should_sort:
         qname_list.sort()
     return qname_list
@@ -57,7 +57,7 @@ def callArelleForTaxonomyInfo(
     taxonomy_json_path: str,
     utr_json_path: Optional[str] = None,
 ) -> ArelleProcessingResult:
-    pluginOptions = {"taxonomyDataFile": taxonomy_json_path}
+    pluginOptions: dict[str, RuntimeOptionValue] = {"taxonomyDataFile": taxonomy_json_path}
     utrValidation = False
     if utr_json_path is not None:
         pluginOptions["utrDataFile"] = utr_json_path
