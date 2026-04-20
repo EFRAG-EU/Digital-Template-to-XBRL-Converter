@@ -12,7 +12,7 @@ from arelle.ModelDtsObject import ModelConcept, ModelResource, ModelRoleType
 from arelle.ModelRelationshipSet import ModelRelationshipSet
 from arelle.ModelValue import QName
 from arelle.ModelXbrl import ModelXbrl
-from arelle.RuntimeOptions import RuntimeOptionValue, RuntimeOptions
+from arelle.RuntimeOptions import RuntimeOptions, RuntimeOptionValue
 from arelle.utils.PluginData import PluginData
 from arelle.ValidateUtr import UtrEntry
 
@@ -57,7 +57,9 @@ def callArelleForTaxonomyInfo(
     taxonomy_json_path: str,
     utr_json_path: Optional[str] = None,
 ) -> ArelleProcessingResult:
-    pluginOptions: dict[str, RuntimeOptionValue] = {"taxonomyDataFile": taxonomy_json_path}
+    pluginOptions: dict[str, RuntimeOptionValue] = {
+        "taxonomyDataFile": taxonomy_json_path
+    }
     utrValidation = False
     if utr_json_path is not None:
         pluginOptions["utrDataFile"] = utr_json_path
