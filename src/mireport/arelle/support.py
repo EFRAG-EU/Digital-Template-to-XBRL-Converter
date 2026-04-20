@@ -66,7 +66,7 @@ class ArelleProcessingResult:
             fact: Optional[str] = r.get("message", {}).get("fact")
 
             if wantDebug:
-                L.debug(f"{code=} {level=} {text=} {fact=}")
+                L.debug(f"Record: {r=}")
 
             match code:
                 case "info" | "":

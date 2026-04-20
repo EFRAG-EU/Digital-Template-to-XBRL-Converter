@@ -12,7 +12,7 @@ from arelle.ModelDtsObject import ModelConcept, ModelResource, ModelRoleType
 from arelle.ModelRelationshipSet import ModelRelationshipSet
 from arelle.ModelValue import QName
 from arelle.ModelXbrl import ModelXbrl
-from arelle.RuntimeOptions import RuntimeOptions
+from arelle.RuntimeOptions import RuntimeOptions, RuntimeOptionValue
 from arelle.utils.PluginData import PluginData
 from arelle.ValidateUtr import UtrEntry
 
@@ -45,7 +45,7 @@ def concepts_to_qnames(
     Returns:
         A list of qualified names (QNames).
     """
-    qname_list = [concept.qname for concept in concept_list]
+    qname_list = [q for concept in concept_list if (q := concept.qname) is not None]
     if should_sort:
         qname_list.sort()
     return qname_list
@@ -57,7 +57,9 @@ def callArelleForTaxonomyInfo(
     taxonomy_json_path: str,
     utr_json_path: Optional[str] = None,
 ) -> ArelleProcessingResult:
-    pluginOptions = {"taxonomyDataFile": taxonomy_json_path}
+    pluginOptions: dict[str, RuntimeOptionValue] = {
+        "taxonomyDataFile": taxonomy_json_path
+    }
     utrValidation = False
     if utr_json_path is not None:
         pluginOptions["utrDataFile"] = utr_json_path
@@ -70,7 +72,7 @@ def callArelleForTaxonomyInfo(
         formulaAction="none",
         keepOpen=False,
         logFile="logToBuffer",
-        logFormat="%(asctime)s [%(messageCode)s] %(message)s - %(file)s",
+        logFormat="%(message)s",
         logPropagate=False,
         packages=taxonomy_zips,
         pluginOptions=pluginOptions,
