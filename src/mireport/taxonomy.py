@@ -151,7 +151,7 @@ class Concept:
 
     def __lt__(self, other: object) -> bool:
         if isinstance(other, Concept):
-            return str(self.qname) < str(other.qname)
+            return self.qname < other.qname
         return NotImplemented
 
     def __eq__(self, other: object) -> bool:
@@ -243,6 +243,17 @@ class Concept:
         removeSuffix: bool = ...,
         fallbackToAnyLang: bool = ...,
         fallbackToQName: bool = ...,
+    ) -> str: ...
+
+    @overload
+    def getStandardLabel(
+        self,
+        lang: Optional[str] = None,
+        *,
+        fallbackIfMissing: None = None,
+        removeSuffix: bool = ...,
+        fallbackToAnyLang: bool = ...,
+        fallbackToQName: Literal[True],
     ) -> str: ...
 
     @overload
@@ -482,6 +493,39 @@ class NetworkRelationship:
 @dataclass(frozen=True, slots=True)
 class PresentationRelationship(NetworkRelationship):
     preferredLabel: Optional[str] = None
+
+    @overload
+    def getLabel(
+        self,
+        requestedLanguage: Optional[str] = None,
+        *,
+        removeSuffix: bool = ...,
+        fallbackLabel: str,
+        fallbackToAnyLang: bool = ...,
+        fallbackToQName: bool = ...,
+    ) -> str: ...
+
+    @overload
+    def getLabel(
+        self,
+        requestedLanguage: Optional[str] = None,
+        *,
+        removeSuffix: bool = ...,
+        fallbackLabel: None = None,
+        fallbackToAnyLang: bool = ...,
+        fallbackToQName: Literal[True],
+    ) -> str: ...
+
+    @overload
+    def getLabel(
+        self,
+        requestedLanguage: Optional[str] = None,
+        *,
+        removeSuffix: bool = ...,
+        fallbackLabel: None = None,
+        fallbackToAnyLang: bool = ...,
+        fallbackToQName: bool = ...,
+    ) -> Optional[str]: ...
 
     def getLabel(
         self,
