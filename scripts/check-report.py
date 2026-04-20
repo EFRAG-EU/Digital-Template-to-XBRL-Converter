@@ -77,9 +77,7 @@ def main() -> None:
 
     args = parse_args()
     if args.debug:
-        rich_print(
-            "[red]Debugging information will be included in the output.[/red]"
-        )
+        rich_print("[red]Debugging information will be included in the output.[/red]")
         logging.root.setLevel(logging.DEBUG)
 
     report_path: Path = args.report_path
