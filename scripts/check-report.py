@@ -5,7 +5,7 @@ import time
 from pathlib import Path
 from typing import Optional
 
-import rich
+import rich.traceback
 from rich import print as rich_print
 from rich.logging import RichHandler
 

@@ -5,7 +5,7 @@ from collections.abc import Mapping, MutableMapping
 from dataclasses import dataclass
 from typing import Any, Optional, Self
 
-from arelle.logging.handlers.LogToXmlHandler import LogToXmlHandler
+from arelle.api.Session import Session
 from arelle.ModelValue import QName
 from arelle.ModelXbrl import ModelXbrl
 
@@ -108,10 +108,10 @@ class ArelleProcessingResult:
                     )
 
     @classmethod
-    def fromLogToXmlHandler(cls, logHandler: LogToXmlHandler) -> Self:
-        json = logHandler.getJson(clearLogBuffer=False)
-        logLines = logHandler.getLines(clearLogBuffer=False)
-        logHandler.clearLogBuffer()
+    def fromSession(cls, session: Session) -> Self:
+        json = session.get_logs("json", clear_logs=False)
+        text = session.get_logs("text", clear_logs=True)
+        logLines = text.split("\n")
         return cls(json, logLines)
 
     @property

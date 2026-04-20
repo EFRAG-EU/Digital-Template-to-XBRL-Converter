@@ -3,13 +3,11 @@ import logging
 import time
 from collections import defaultdict
 from collections.abc import Iterable, MutableMapping
-from contextlib import closing
 from typing import Any, Optional, TypeVar
 
 from arelle import XbrlConst
 from arelle.api.Session import Session
 from arelle.Cntlr import Cntlr
-from arelle.logging.handlers.LogToXmlHandler import LogToXmlHandler
 from arelle.ModelDtsObject import ModelConcept, ModelResource, ModelRoleType
 from arelle.ModelRelationshipSet import ModelRelationshipSet
 from arelle.ModelValue import QName
@@ -71,6 +69,7 @@ def callArelleForTaxonomyInfo(
         internetConnectivity="offline",
         formulaAction="none",
         keepOpen=False,
+        logFile="logToBuffer",
         logFormat="%(asctime)s [%(messageCode)s] %(message)s - %(file)s",
         logPropagate=False,
         packages=taxonomy_zips,
@@ -79,13 +78,12 @@ def callArelleForTaxonomyInfo(
         validate=True,
         utrValidate=utrValidation,
     )
-    with Session() as session, closing(LogToXmlHandler()) as log_handler:
+    with Session() as session:
         session.run(
             options,
-            logHandler=log_handler,
             logFilters=[],
         )
-        results = ArelleProcessingResult.fromLogToXmlHandler(log_handler)
+        results = ArelleProcessingResult.fromSession(session)
     return results
 
 
