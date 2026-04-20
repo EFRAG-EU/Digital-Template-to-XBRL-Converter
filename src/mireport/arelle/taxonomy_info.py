@@ -12,7 +12,7 @@ from arelle.ModelDtsObject import ModelConcept, ModelResource, ModelRoleType
 from arelle.ModelRelationshipSet import ModelRelationshipSet
 from arelle.ModelValue import QName
 from arelle.ModelXbrl import ModelXbrl
-from arelle.RuntimeOptions import RuntimeOptions
+from arelle.RuntimeOptions import RuntimeOptionValue, RuntimeOptions
 from arelle.utils.PluginData import PluginData
 from arelle.ValidateUtr import UtrEntry
 
@@ -70,7 +70,7 @@ def callArelleForTaxonomyInfo(
         formulaAction="none",
         keepOpen=False,
         logFile="logToBuffer",
-        logFormat="%(asctime)s [%(messageCode)s] %(message)s - %(file)s",
+        logFormat="%(message)s",
         logPropagate=False,
         packages=taxonomy_zips,
         pluginOptions=pluginOptions,
