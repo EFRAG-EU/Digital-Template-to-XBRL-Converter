@@ -248,7 +248,7 @@ class Fact:
     def __hash__(self) -> int:
         return hash(self.__key())
 
-    def format_value(self) -> str:
+    def html_format_value(self) -> str:
         """Return the value formatted for HTML with locale-aware numeric formatting."""
         if self.concept.isBoolean:
             match self.value:
@@ -261,6 +261,10 @@ class Fact:
         elif not self.concept.isNumeric:
             if hasattr(self.value, "__html__"):
                 output = self.value
+            elif isinstance(self.value, str):
+                output = Markup("<br />").join(
+                    escape(p) for p in self.value.splitlines()
+                )
             else:
                 output = escape(self.value)
         else:
@@ -306,7 +310,7 @@ class Fact:
         if self.footnotes:
             aspects["fn-refs"] = f'"{"|".join(str(fn.id) for fn in self.footnotes)}"'
         aspects_str = ", ".join(f"{k}={v}" for k, v in aspects.items())
-        value = self.format_value()
+        value = self.html_format_value()
         return Markup(
             f"{{{{ {aoix_verb} {self.concept.qname}[{aspects_str}] }}}}{value}{{{{ end }}}}"
         )
@@ -744,11 +748,11 @@ class FactBuilder:
         elif self._concept.isNumeric:
             self.validateNumeric()
         self._aspects["period-type"] = self._concept.periodType.value
+
         if self._concept.isTextblock:
+            # https://www.xbrl.org/WGN/html-for-ixbrl-wgn/WGN-2024-11-05/html-for-ixbrl-wgn-2024-11-05.html#sec-text-block-tags
             self._aspects["escape"] = "true"
-            self._value = Markup("<br />").join(
-                escape(p) for p in str(self._value).splitlines()
-            )
+
         self.validateTaxonomyDimensions()
         # TODO: check aspect validity before creating fact and raise Exception if invalid
         return Fact(self._concept, self._value, self._report, self._aspects)
