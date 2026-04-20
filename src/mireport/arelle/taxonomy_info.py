@@ -6,13 +6,15 @@ from collections.abc import Iterable
 from contextlib import closing
 from decimal import Decimal
 from operator import itemgetter
-from typing import Any, Literal, TypeAlias, TypeVar
+from pathlib import Path
+from typing import Any, Literal, TypeAlias, TypeVar, cast
 
 from arelle import XbrlConst
 from arelle.api.Session import Session
 from arelle.Cntlr import Cntlr
 from arelle.logging.handlers.LogToXmlHandler import LogToXmlHandler
-from arelle.ModelDtsObject import ModelConcept, ModelResource, ModelRoleType
+from arelle.ModelDtsObject import ModelConcept, ModelResource, ModelRoleType, ModelType
+from arelle.ModelObject import ModelObject
 from arelle.ModelRelationshipSet import ModelRelationshipSet
 from arelle.ModelValue import QName
 from arelle.ModelXbrl import ModelXbrl
@@ -109,28 +111,26 @@ def pluginData(cntlr: Cntlr) -> TaxonomyInfoPluginData:
     if (pluginData := cntlr.getPluginData(PLUGIN_NAME)) is None:
         pluginData = TaxonomyInfoPluginData(PLUGIN_NAME)
         cntlr.setPluginData(pluginData)
-    else:
-        assert isinstance(pluginData, TaxonomyInfoPluginData), (
-            f"Expected plugin data for {PLUGIN_NAME} to be of type TaxonomyInfoPluginData but got {type(pluginData)}"
-        )
-    return pluginData
+    return cast(TaxonomyInfoPluginData, pluginData)
 
 
 def writeDataFile(
     cntlr: Cntlr,
-    jsonPath: str,
+    filePath: str,
     dataType: str,
+    pre_tidied: bool = False,
 ) -> None:
     pdata = pluginData(cntlr)
     data = getattr(pdata, dataType, None)
     if not data:
         cntlr.addToLog(f"No {dataType} data to write")
         return
-
-    with open(jsonPath, "w", encoding="UTF-8") as f:
-        tidied = ArelleObjectJSONEncoder.tidyKeys(data)
-        json.dump(tidied, f, indent=2, sort_keys=True, cls=ArelleObjectJSONEncoder)
-        cntlr.addToLog(f"{dataType} data written to {jsonPath}")
+    
+    path = Path(filePath)
+    data = data if pre_tidied else ArelleObjectJSONEncoder.tidyKeys(data)
+    payload = json.dumps(data, indent=2, sort_keys=True, cls=ArelleObjectJSONEncoder)
+    path.write_text(payload, encoding="UTF-8")
+    cntlr.addToLog(f"{dataType} data written to {filePath}")
 
 
 class UTRInfoExtractor:
@@ -198,11 +198,16 @@ class TaxonomyInfoExtractor:
         self.options: RuntimeOptions = options
         self.modelXbrl: ModelXbrl = modelXbrl
         self.taxonomyJson: dict[Any, Any] = defaultdict(dict)
+        self.labelRelSet: ModelRelationshipSet = modelXbrl.relationshipSet(XbrlConst.conceptLabel)
+        self.referenceRelSet: ModelRelationshipSet = modelXbrl.relationshipSet(XbrlConst.conceptReference)
         self.qnameConverter: ArelleQNameCanonicaliser = (
             ArelleQNameCanonicaliser.bootstrap(modelXbrl)
         )
         self.dimensionDefaults: dict[ModelConcept, ModelConcept] = {}
         self.elr_hypercube_dimension_seen: set[str] = set()
+        # Keyed by id(ref_resource) since lxml elements are not hashable.
+        self._ref_resource_cache: dict[int, tuple[str, list[tuple[QName, str]]]] = {}
+        self._ref_resource_lookups: int = 0
 
     def extract(self) -> None:
         self.verifyConceptQNamesHavePrefixes()
@@ -218,7 +223,7 @@ class TaxonomyInfoExtractor:
         self.extractCalculation()
         self.extractConceptsAndMetadata()
 
-        self.taxonomyJson["groups"] = sorted(self.taxonomyJson["groups"].values(), key=itemgetter("roleUri"))
+        self.taxonomyJson["groups"] = sorted(self.taxonomyJson["groups"].values(), key=itemgetter("definition", "roleUri"))
         self.cntlr.addToLog("Processing namespaces and namespace prefixes")
         self.taxonomyJson = self.qnameConverter.convert_recursive(self.taxonomyJson)
         self.taxonomyJson["namespaces"] = self.qnameConverter.getNamespacePrefixMap()
@@ -585,8 +590,7 @@ class TaxonomyInfoExtractor:
     ) -> None:
         """Add labels to the concept JSON."""
         jconcept["labels"] = defaultdict(dict)
-        relSet = self.modelXbrl.relationshipSet(XbrlConst.conceptLabel)
-        for r in relSet.fromModelObject(concept):
+        for r in self.labelRelSet.fromModelObject(concept):
             label_resource: ModelResource = r.toModelObject
             role: str = str(label_resource.role) or XbrlConst.standardLabel
             if (lang := label_resource.xmlLang) and (lang := lang.strip().lower()):
@@ -605,68 +609,57 @@ class TaxonomyInfoExtractor:
                     level=logging.WARNING,
                 )
 
+    def _getRefParts(self, ref_resource: ModelResource) -> tuple[str, list[tuple[QName, str]]]:
+        """Get (role, parts) for a reference resource, with id()-keyed caching."""
+        self._ref_resource_lookups += 1
+        cache_key = id(ref_resource)
+        if (cached := self._ref_resource_cache.get(cache_key)) is not None:
+            return cached
+        ref_role = cast(str, ref_resource.role)
+        ref_parts = [
+            (cast(QName, part.qname), value)
+            for part in ref_resource.iterchildren()
+            if (value := part.stringValue.strip())
+        ]
+        self._ref_resource_cache[cache_key] = result = (ref_role, ref_parts)
+        return result
+
     def addReferences(
         self,
         concept: ModelConcept,
         jconcept: dict,
     ) -> None:
         """Add references to the concept JSON."""
-        relSet = self.modelXbrl.relationshipSet(XbrlConst.conceptReference)
         refs = []
-        for r in relSet.fromModelObject(concept):
-            ref_resource: ModelResource = r.toModelObject
-            role: str = str(ref_resource.role)
-            assert role, f"Reference {ref_resource} should have a role"
-
-            ref_parts: list[tuple[QName, str]] = []
-            for part in ref_resource.iterchildren():
-                if value := part.stringValue.strip():
-                    assert part.qname is not None, f"Reference part should have a QName {part=}"
-                    ref_parts.append((part.qname, value))
-
+        for r in self.referenceRelSet.fromModelObject(concept):
+            ref_role, ref_parts = self._getRefParts(r.toModelObject)
             if ref_parts:
-                refs.append(
-                    {
-                        "role": role,
-                        "order": r.order,
-                        "parts": ref_parts,
-                        "sort_key": tuple(
-                            (
-                                r.order,
-                                role,
-                                tuple(
-                                    (str(name), str(value)) for name, value in ref_parts
-                                ),
-                            )
-                        ),
-                    }
-                )
+                refs.append({"role": ref_role, "order": r.order, "parts": ref_parts})
 
-        if refs:
-            all_order1 = all(r["order"] == 1 for r in refs)
+        if not refs:
+            return
 
-            if not all_order1:
-                self.cntlr.addToLog(
-                    f"INFO: {concept.qname} uses references with order values other than 1. Orders found: {sorted(set(r['order'] for r in refs))}. References will be sorted by order.",
-                    level=logging.INFO,
-                )
+        if not all(1 == r["order"] for r in refs):
+            # Sort by order is the right way but it seems unusual in practice.
+            refs.sort(key=itemgetter("order"))
+        else:
+            refs.sort(key=lambda r: (r["role"], tuple((str(n), v) for n, v in r["parts"])))
 
-            refs.sort(key=lambda r: r["sort_key"])
-
-            refs = [{"role": r["role"], "parts": r["parts"]} for r in refs]
-            jconcept["references"] = refs
+        for r in refs:
+            del r["order"]
+        jconcept["references"] = refs
 
     def extractConceptsAndMetadata(self) -> None:
         self.cntlr.addToLog("Processing concepts (including labels and references)")
         for qname, concept in self.modelXbrl.qnameConcepts.items():
-            assert concept.qname is not None, f"Concept should have a QName {concept=}"
             if concept.isItem:
-                if concept.qname.namespaceURI in (XbrlConst.xbrli, XbrlConst.xbrldt):
+                if qname.namespaceURI in (XbrlConst.xbrli, XbrlConst.xbrldt):
                     # We don't need/want xbrli:item, xbrldt:dimensionItem or
                     # xbrldt:hypercubeItem in our concept list. Arelle docs
                     # suggests isItem should supress xbrli:item but it doesn't.
                     continue
-                assert concept.type is not None and concept.type.qname is not None
+                concept_type = cast(ModelType, concept.type)
+                concept_type_qname = cast(QName, concept_type.qname)
 
                 jconcept = {
                     # We use concept.type.qname as it gets the namespace prefix
@@ -675,7 +668,7 @@ class TaxonomyInfoExtractor:
                     # prefix from ?the defining schema? and can use one that is not
                     # defined in modelXbrl.prefixedNamespace which makes it
                     # impossible to find the namespace
-                    "dataType": concept.type.qname,
+                    "dataType": concept_type_qname,
                     "baseDataType": concept.baseXbrliTypeQname,
                     "periodType": concept.periodType,
                 }
@@ -689,23 +682,30 @@ class TaxonomyInfoExtractor:
                         level=logging.WARN,
                     )
                 if concept.isEnumeration2Item:
-                    assert concept.enumDomainQname is not None
-                    assert concept.enumLinkrole is not None
                     headUsable = concept.isEnumDomainUsable
-                    linkrole = concept.enumLinkrole
+                    linkrole = cast(str, concept.enumLinkrole)
                     jconcept.setdefault("other", {})["ee20DomainMembers"] = (
                         self.getDomainMembersForEE(
                             linkrole,
                             headUsable,
-                            self.modelXbrl.qnameConcepts[concept.enumDomainQname],
+                            self.modelXbrl.qnameConcepts[cast(QName, concept.enumDomainQname)],
                         )
                     )
                 if concept.isTypedDimension:
                     assert concept.typedDomainElement is not None, f"Typed dimension should have a typed domain element {concept=}"
                     jconcept.setdefault("other", {})["typedElement"] = (
-                        concept.typedDomainElement.qname
+                        cast(ModelObject, concept.typedDomainElement).qname
                     )
                 self.taxonomyJson["concepts"][qname] = jconcept
+
+        cache_size = len(self._ref_resource_cache)
+        total = self._ref_resource_lookups
+        hits = total - cache_size
+        hit_pct = (100 * hits // total) if total else 0
+        self.cntlr.addToLog(
+            f"Reference resource cache: {hits} hits, {cache_size} misses"
+            f" ({hit_pct}% hit rate, {cache_size} unique resources cached)"
+        )
 
     def extractDimensionDefinitions(self) -> None:
         self.cntlr.addToLog("Processing dimensions")
@@ -892,7 +892,7 @@ def runTaxonomyInfo(
     extractor = TaxonomyInfoExtractor(cntlr, options, modelXbrl)
     extractor.extract()
     if (jsonPath := getattr(options, "taxonomyDataFile", None)) is not None:
-        writeDataFile(cntlr, jsonPath, "Taxonomy")
+        writeDataFile(cntlr, jsonPath, "Taxonomy", pre_tidied=True)
     if (jsonPath := getattr(options, "utrDataFile", None)) is not None:
         writeDataFile(cntlr, jsonPath, "UTR")
     elapsed = (time.perf_counter_ns() - start) / 1_000_000_000
