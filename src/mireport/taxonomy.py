@@ -1025,6 +1025,22 @@ class Taxonomy:
         return self._dimensionDefaults.get(dimension)
 
     @cached_property
+    def _calcGroupsByConcept(self) -> dict[Concept, frozenset[CalculationGroup]]:
+        """Map each Concept → frozenset of calculation groups it appears in."""
+        result: dict[Concept, set[CalculationGroup]] = {}
+        for group in self.calculation:
+            for rel in group.relationships:
+                result.setdefault(rel.concept, set()).add(group)
+        return {k: frozenset(v) for k, v in result.items()}
+
+    def getCalculationGroupsForConcept(self, concept: Concept) -> frozenset[CalculationGroup]:
+        """Return the set of calculation groups where this concept appears."""
+        groups = self._calcGroupsByConcept.get(concept)
+        if groups is None:
+            return frozenset()
+        return frozenset(groups)
+
+    @cached_property
     def defaultedDimensions(self) -> frozenset[Concept]:
         return frozenset(self._dimensionDefaults.keys())
 
