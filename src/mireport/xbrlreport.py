@@ -766,6 +766,17 @@ class FactBuilder:
         return Fact(self._concept, self._value, self._report, self._aspects)
 
 
+_VALID_COLOURS: dict[str, str] = {
+    "green":  "#4F7F2A",
+    "azure":  "#007acc",
+    "blue":   "#1565C0",
+    "teal":   "#00695C",
+    "purple": "#6A1B9A",
+    "navy":   "#1A237E",
+    "grey":   "#455A64",
+}
+
+
 class InlineReport:
     def __init__(self, taxonomy: Taxonomy, outputLocale: Optional[Locale] = None):
         self._facts: list[Fact] = []
@@ -782,6 +793,7 @@ class InlineReport:
         self._introduction: Optional[str] = None
         self._backCoverMatter: Optional[str] = None
         self._theme: str = "light"
+        self._colour: str = "green"
         self._logo: Optional[ImageFileLikeAndFileName] = None
         self._coverImage: Optional[ImageFileLikeAndFileName] = None
         self._watermark: Optional[ImageFileLikeAndFileName] = None
@@ -863,6 +875,13 @@ class InlineReport:
                 f"Theme must be 'light' or 'dark', got '{theme}'."
             )
         self._theme = theme
+
+    def setColour(self, colour: str) -> None:
+        if colour not in _VALID_COLOURS:
+            raise InlineReportException(
+                f"Colour must be one of {sorted(_VALID_COLOURS)}, got '{colour}'."
+            )
+        self._colour = colour
 
     def setImageLogo(self, logo: ImageFileLikeAndFileName) -> None:
         self._logo = logo
@@ -1102,6 +1121,7 @@ class InlineReport:
             sections=sections,
             uniqueFactCount=len(frozenset(self._facts)),
             theme=self._theme,
+            colour=_VALID_COLOURS[self._colour],
             watermarkDataUrl=watermark_data_url,
             logoDataUrl=logo_data_url,
             introduction=self._introduction,
