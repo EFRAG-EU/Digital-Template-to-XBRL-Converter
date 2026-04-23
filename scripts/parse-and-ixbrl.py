@@ -199,7 +199,9 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, ExcelProc
             outputLocale=args.output_locale,
         )
         report = excel.populateReport()
+
         report.setTheme(args.theme)
+
         for arg_name, setter in [
             ("image_logo", report.setImageLogo),
             ("image_cover", report.setImageCover),
@@ -211,8 +213,10 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, ExcelProc
                     pc.addDevInfoMessage(err)
                 else:
                     setter(image)
+
         if (extra_file := args.extra_data) and extra_file.is_file():
             extra = json.loads(extra_file.read_text(encoding="utf-8"))
+
             for fn in extra.get("footnotes", []):
                 report.addFootnote(
                     fn.get("content", ""),
@@ -220,25 +224,13 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, ExcelProc
                     concept=fn.get("concept"),
                     concepts=fn.get("concepts"),
                 )
+
             label_overrides = {
                 lo["concept"]: lo["label"] for lo in extra.get("labelOverrides", [])
             }
             if label_overrides:
                 report.setLabelOverrides(label_overrides)
-            for si in extra.get("supportingImages", []):
-                pc.mark(
-                    "Processing supporting image",
-                    additionalInfo=f"Loading image from {si['path']}",
-                )
-                img_path = _resolve_extra_path(extra_file, si["path"])
-                image, err = ImageFileLikeAndFileName.prepare(img_path)
-                if image is None:
-                    pc.addDevInfoMessage(err or f"Failed to load image: {img_path}")
-                    continue
-                data_url = image.as_data_url(max_width=700)
-                alt = escape(si.get("description", ""))
-                suffix = Markup(f'<br/><img src="{data_url}" alt="{alt}"/>')
-                report.appendFactValue(si["concept"], suffix)
+
             optional_section_setters = {
                 "introduction": report.setIntroduction,
                 "backCoverMatter": report.setBackCoverMatter,
@@ -262,6 +254,7 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, ExcelProc
                     pc.addDevInfoMessage(
                         f"optionalSections entry {section_id!r} has neither 'path' nor 'content'"
                     )
+
             for rtv in extra.get("replacementTextblockValues", []):
                 pc.mark(
                     "Converting Word document",
@@ -270,6 +263,7 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, ExcelProc
                 docx_path = _resolve_extra_path(extra_file, rtv["path"])
                 markup = _convert_docx_to_markup(docx_path, pc)
                 report.replaceFactValue(rtv["concept"], markup)
+
         pc.mark("Generating Inline Report")
         reportFile = report.getInlineReport()
         reportPackage = report.getInlineReportPackage()
