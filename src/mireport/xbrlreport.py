@@ -944,36 +944,27 @@ class InlineReport:
         footnote = self._createFootnote(content)
         for qname in all_concepts:
             tax_concept = self._taxonomy.getConcept(qname)
-            for fact in self._getFacts(tax_concept):
+            for fact in self.getFacts(tax_concept):
                 fact.footnotes.append(footnote)
                 footnote._facts.append(fact)
         if group is not None:
             self._footnotesByGroup[group] = footnote
         return footnote
 
-    def replaceFactValue(self, qname: str, value: FactValue) -> None:
+    def replaceFactValue(self, concept_qname: str | QName, value: FactValue) -> None:
         """
-        Replace the value of the first fact matching the given qname string.
+        Replace the value of the only fact for the specified concept QName.
         """
-        concept = self._taxonomy.getConcept(qname)
-        for fact in self._getFacts(concept):
-            fact.value = value
-            return
-        raise InlineReportException(f"No fact found for concept {qname} to replace.")
+        concept = self._taxonomy.getConcept(concept_qname)
+        candidates = self.getFacts(concept)
 
-    def appendFactValue(self, qname: str, suffix: str | Markup) -> None:
-        """
-        Append content to the value of the first fact matching the given qname string.
-        The existing value and suffix are both preserved as safe Markup.
+        if not candidates:
+            raise InlineReportException(f"No existing fact found for concept {concept_qname}. Cannot replace value.")
+        if len(candidates) != 1:
+            raise InlineReportException(f"Multiple existing facts found for concept {concept_qname}. Cannot replace value unambiguously.")
 
-        Currently limited to textblock facts.
-        """
-        concept = self._taxonomy.getConcept(qname)
-        if concept.isTextblock:
-            for fact in self._getFacts(concept):
-                fact.value = escape(fact.value) + escape(suffix)
-                return
-        raise InlineReportException(f"No fact found for concept {qname} to append to.")
+        candidates[0].value = value
+        return
 
     @property
     def hasFacts(self) -> bool:
@@ -987,11 +978,9 @@ class InlineReport:
     def facts(self) -> list[Fact]:
         return list(self._facts)
 
-    def _getFacts(self, concept: Concept) -> list[Fact]:
-        return self._factsByConcept.get(concept, [])
-
     def getFacts(self, concept: Concept) -> list[Fact]:
-        return list(self._getFacts(concept))
+        result = self._factsByConcept.get(concept)
+        return [] if result is None else result.copy()
 
     def getNamespacesForAoix(self) -> str:
         # {{ namespace utr = "http://www.xbrl.org/2009/utr" }}
