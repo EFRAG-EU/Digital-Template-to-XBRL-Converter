@@ -133,7 +133,11 @@ def createArgParser() -> argparse.ArgumentParser:
         default=None,
         help="Path to a JSON file containing extra report data (footnotes, label overrides, etc.).",
     )
-
+    parser.add_argument(
+        "--debug",
+        action=argparse.BooleanOptionalAction,
+        help="Turn on debugging output.",
+    )
     return parser
 
 
@@ -147,6 +151,8 @@ def parseArgs(parser: argparse.ArgumentParser) -> argparse.Namespace:
         args.taxonomy_packages = validateTaxonomyPackages(
             args.taxonomy_packages, parser
         )
+    if args.debug:
+        logging.getLogger("mireport").setLevel(logging.DEBUG)
     return args
 
 
