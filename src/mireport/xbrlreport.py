@@ -1121,7 +1121,7 @@ class InlineReport:
             ixbrl_content = parser.parse(html_content).strip()
             self._generatedReport = ixbrl_content
             elapsed = time.perf_counter_ns() - start_time
-            L.info(f"aoix parsing and transformation took {elapsed / 1_000_000:.2f}ms")
+            L.info(f"aoix parsing and transformation took {elapsed / 1_000_000:.2f} milliseconds")
             return ixbrl_content
         except ixbrltemplates.ParseError as e:
             errors = []
