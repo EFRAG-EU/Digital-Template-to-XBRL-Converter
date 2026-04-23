@@ -1,5 +1,5 @@
 from collections import defaultdict
-from functools import cache
+from functools import cache, cached_property
 from typing import Optional, Self
 
 from mireport.exceptions import UnitException
@@ -93,18 +93,22 @@ class UTR:
         unitEntry = self._lookupUnitEntriesByQName[unit]
         return unitEntry.get("symbol", "")
 
-    @cache
-    def validCurrency(self, unit: QName | str) -> bool:
-        if isinstance(unit, QName):
-            unitId = unit.localName
-            if unit.namespace is not ISO4217_NS:
-                return False
-        currencies = frozenset(
+    @cached_property
+    def _currencies(self) -> frozenset[str]:
+        return frozenset(
             self._lookupUnitIdByDataType[
                 self._qnameMaker.fromNamespaceAndLocalName(XBRLI_NS, "monetaryItemType")
             ]
         )
-        return unitId in currencies
+
+    def validCurrency(self, unit: QName | str) -> bool:
+        if isinstance(unit, QName):
+            if unit.namespace is not ISO4217_NS:
+                return False
+            code = unit.localName
+        else:
+            code = unit
+        return code in self._currencies
 
     def valid(self, dataType: QName, unitType: QName) -> bool:
         units_for_dataType = self.getUnitsForDataType(dataType)
