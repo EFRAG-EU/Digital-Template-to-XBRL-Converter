@@ -355,22 +355,28 @@ class Fact:
             symbol = f"{numSymbol} per {denSymbol}"
             return symbol
 
-        units = None
+        units: QName | str | None = None
         if self.concept.isMonetary:
-            units = self.aspects.get(
+            currency = self.aspects.get(
                 "monetary-units", self._report.defaultAspects.get("monetary-units")
             )
-            units = self._report.taxonomy.QNameMaker.fromString(f"iso4217:{units}")
+            if isinstance(currency, str):
+                units = self._report.taxonomy.QNameMaker.fromString(
+                    f"iso4217:{currency}"
+                )
+            else:
+                raise InlineReportException(
+                    f"Monetary concept with non-string currency unit {currency=}"
+                )
         elif self.concept.isNumeric:
             units = self.aspects.get("units")
 
-        if not units:
-            return ""
+        symbol = ""
+        if units and isinstance(units, QName):
+            symbol = self._report.taxonomy.UTR.getSymbolForUnit(
+                units, self.concept.dataType
+            )
 
-        units = cast(QName, units)
-        symbol = self._report.taxonomy.UTR.getSymbolForUnit(
-            units, self.concept.dataType
-        )
         if not symbol and "percentItemType" == self.concept.dataType.localName:
             # No UTR unit for % so hack it in here.
             symbol = "%"
@@ -534,6 +540,8 @@ class FactBuilder:
             raise InlineReportException(
                 f"Currency '{code}' does not look like a valid currency code."
             )
+        if isinstance(code, QName):
+            code = code.localName
         self._aspects["monetary-units"] = code
         return self
 
@@ -1121,7 +1129,9 @@ class InlineReport:
             ixbrl_content = parser.parse(html_content).strip()
             self._generatedReport = ixbrl_content
             elapsed = time.perf_counter_ns() - start_time
-            L.info(f"aoix parsing and transformation took {elapsed / 1_000_000:.2f} milliseconds")
+            L.info(
+                f"aoix parsing and transformation took {elapsed / 1_000_000:.2f} milliseconds"
+            )
             return ixbrl_content
         except ixbrltemplates.ParseError as e:
             errors = []
