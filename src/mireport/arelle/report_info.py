@@ -125,10 +125,7 @@ class ArelleReportProcessor:
             logFormat="%(message)s",
             logPropagate=False,
             packages=[str(t) for t in self.taxonomyPackages],
-            # You have to specify a plugin to avoid specifying an entryPointFile. We
-            # don't want to specify and entryPointFile as we pass the zipStream in
-            # later. saveLoadableOIM is used as a "null" plugin here to passify Arelle.
-            plugins="saveLoadableOIM",
+            plugins=None,
             pluginOptions={},
             # Turn validation on
             validate=True,
