@@ -30,11 +30,11 @@ except ImportError:
         raise NotImplementedError("Migration tool not available")
 
 
+from mireport.filesupport import FilelikeAndFileName
 from mireport.xlsx_template_reader.processor import (
     OUR_VERSION_HOLDER,
     ExcelProcessor,
 )
-from mireport.filesupport import FilelikeAndFileName
 
 from .blueprints import convert_bp
 

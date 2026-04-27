@@ -26,6 +26,20 @@ from mireport.conversionresults import (
     Severity,
 )
 from mireport.data import disclosures
+from mireport.exceptions import EarlyAbortException, InlineReportException
+from mireport.json import getObject, getResource
+from mireport.localise import as_xmllang, get_locale_from_str
+from mireport.report import FactBuilder, InlineReport
+from mireport.stringutil import stripLabelSuffix
+from mireport.taxonomy import (
+    Concept,
+    QName,
+    Taxonomy,
+    getTaxonomy,
+    listTaxonomies,
+)
+from mireport.typealiases import FactValue
+from mireport.version import OUR_VERSION_HOLDER, VersionHolder
 from mireport.xlsx_template_reader._util import (
     EXCEL_PLACEHOLDER_VALUE,
     CellType,
@@ -39,20 +53,6 @@ from mireport.xlsx_template_reader._util import (
     getEffectiveCellRangeDimensions,
     loadExcelFromPathOrFileLike,
 )
-from mireport.exceptions import EarlyAbortException, InlineReportException
-from mireport.json import getObject, getResource
-from mireport.localise import as_xmllang, get_locale_from_str
-from mireport.stringutil import stripLabelSuffix
-from mireport.taxonomy import (
-    Concept,
-    QName,
-    Taxonomy,
-    getTaxonomy,
-    listTaxonomies,
-)
-from mireport.version import OUR_VERSION_HOLDER, VersionHolder
-from mireport.report import FactBuilder, InlineReport
-from mireport.typealiases import FactValue
 
 L = logging.getLogger(__name__)
 

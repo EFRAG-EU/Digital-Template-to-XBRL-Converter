@@ -9,10 +9,10 @@ from markupsafe import Markup, escape
 
 from mireport.exceptions import InlineReportException
 from mireport.localise import localise_and_format_number
+from mireport.report.periods import DurationPeriodHolder, InstantPeriodHolder
 from mireport.stringutil import unicodeSpaceNormalize
 from mireport.taxonomy import Concept, QName
 from mireport.typealiases import DecimalPlaces, FactValue
-from mireport.report.periods import DurationPeriodHolder, InstantPeriodHolder
 
 if TYPE_CHECKING:
     from mireport.report.inlinereport import InlineReport
@@ -35,7 +35,7 @@ def numeric_string_key(value: str) -> tuple[int, str | int]:
         return (1, value)  # fallback to lexicographic
 
 
-class CoreDimensionNames(StrEnum):
+class CoreDimension(StrEnum):
     Concept = "concept"
     Entity = "entity"
     Period = "period"
@@ -286,11 +286,11 @@ class Fact:
                 dims[name] = value
         return dims
 
-    def getCoreDimensions(self) -> dict[CoreDimensionNames, Concept | QName | str]:
-        oimD: dict[CoreDimensionNames, Concept | QName | str] = {}
-        oimD[CoreDimensionNames.Concept] = self.concept
-        oimD[CoreDimensionNames.Entity] = self._report._entityName
-        oimD[CoreDimensionNames.Period] = self._report.getPeriodsForAoix()
+    def getCoreDimensions(self) -> dict[CoreDimension, Concept | QName | str]:
+        oimD: dict[CoreDimension, Concept | QName | str] = {}
+        oimD[CoreDimension.Concept] = self.concept
+        oimD[CoreDimension.Entity] = self._report._entityName
+        oimD[CoreDimension.Period] = self._report.getPeriodsForAoix()
         if self.concept.isNumeric:
             unit_aspect_names = ("monetary-units", "units", "complex-units")
             defaults = self._report.defaultAspects
@@ -303,5 +303,5 @@ class Fact:
                 raise InlineReportException(
                     f"Numeric concept without a unit is not good! {self}"
                 )
-            oimD[CoreDimensionNames.Unit] = unit
+            oimD[CoreDimension.Unit] = unit
         return oimD

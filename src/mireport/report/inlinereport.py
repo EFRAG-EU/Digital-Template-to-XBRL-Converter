@@ -25,14 +25,14 @@ from mireport.localise import (
     get_locale_from_str,
     group_symbol,
 )
-from mireport.stringutil import NumberGroupingApostrophes
-from mireport.taxonomy import Concept, PresentationStyle, QName, Taxonomy
-from mireport.typealiases import FactValue
 from mireport.report.fact import Fact, Footnote, Symbol, tidyTdValue
 from mireport.report.factbuilder import FactBuilder
 from mireport.report.layout import ReportLayoutOrganiser, TableStyle
 from mireport.report.periods import DurationPeriodHolder, PeriodHolder
 from mireport.report.theme import ReportTheme
+from mireport.stringutil import NumberGroupingApostrophes
+from mireport.taxonomy import Concept, PresentationStyle, QName, Taxonomy
+from mireport.typealiases import FactValue
 
 L = logging.getLogger(__name__)
 

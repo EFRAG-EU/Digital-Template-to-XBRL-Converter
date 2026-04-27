@@ -20,13 +20,13 @@ from mireport.conversionresults import (
     ConversionResultsBuilder,
     ProcessingContext,
 )
+from mireport.filesupport import ImageFileLikeAndFileName
+from mireport.localise import EU_LOCALES, argparse_locale
+from mireport.report.theme import ColourPalette, DisplayMode, ReportTheme
 from mireport.xlsx_template_reader.processor import (
     VSME_DEFAULTS,
     ExcelProcessor,
 )
-from mireport.filesupport import ImageFileLikeAndFileName
-from mireport.localise import EU_LOCALES, argparse_locale
-from mireport.report.theme import ColourPalette, DisplayMode, ReportTheme
 
 
 def _convert_docx_to_markup(docx_path: Path, pc: ProcessingContext) -> Markup:

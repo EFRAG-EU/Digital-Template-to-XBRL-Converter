@@ -1,5 +1,5 @@
 from mireport.report.fact import (  # noqa: F401
-    CoreDimensionNames,
+    CoreDimension,
     Fact,
     Footnote,
     Symbol,
@@ -15,9 +15,9 @@ from mireport.report.inlinereport import (  # noqa: F401
 from mireport.report.layout import (  # noqa: F401
     ReportLayoutOrganiser,
     ReportSection,
-    TabularReportSection,
     TableHeadingCell,
     TableStyle,
+    TabularReportSection,
 )
 from mireport.report.periods import (  # noqa: F401
     DurationPeriodHolder,

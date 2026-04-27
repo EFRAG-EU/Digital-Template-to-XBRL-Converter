@@ -8,9 +8,15 @@ from itertools import count
 from typing import TYPE_CHECKING, NamedTuple, Optional, cast
 
 from mireport.exceptions import InlineReportException
-from mireport.taxonomy import Concept, PresentationGroup, PresentationStyle, Relationship, Taxonomy
 from mireport.report.fact import Fact, numeric_string_key, tidyTdValue
 from mireport.report.periods import DurationPeriodHolder, InstantPeriodHolder, _Period
+from mireport.taxonomy import (
+    Concept,
+    PresentationGroup,
+    PresentationStyle,
+    Relationship,
+    Taxonomy,
+)
 
 if TYPE_CHECKING:
     from mireport.report.inlinereport import InlineReport

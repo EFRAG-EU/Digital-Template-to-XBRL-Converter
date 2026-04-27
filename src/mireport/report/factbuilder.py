@@ -5,11 +5,10 @@ from collections.abc import Collection
 from typing import TYPE_CHECKING, Optional, Self
 
 from mireport.exceptions import InlineReportException
+from mireport.report.fact import Fact
 from mireport.stringutil import xml_clean
 from mireport.taxonomy import Concept, QName, Taxonomy
 from mireport.typealiases import DecimalPlaces, FactValue
-from mireport.report.fact import CoreDimensionNames, Fact, Symbol
-from mireport.report.periods import DurationPeriodHolder, InstantPeriodHolder, PeriodHolder
 
 if TYPE_CHECKING:
     from mireport.report.inlinereport import InlineReport
