@@ -152,7 +152,7 @@ class FilelikeAndFileName(NamedTuple):
         # Check if parent directory exists
         if not parent.exists():
             raise ValueError(f"Parent directory {parent} does not exist")
-        
+
         path.write_bytes(self.fileContent)
         return
 

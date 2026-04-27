@@ -5,7 +5,7 @@ from pathlib import Path
 
 import mammoth
 import rich.traceback
-from markupsafe import Markup, escape
+from markupsafe import Markup
 from rich.logging import RichHandler
 
 import mireport
@@ -26,6 +26,7 @@ from mireport.excelprocessor import (
 )
 from mireport.filesupport import ImageFileLikeAndFileName
 from mireport.localise import EU_LOCALES, argparse_locale
+from mireport.theme import ColourPalette, DisplayMode, ReportTheme
 
 
 def _convert_docx_to_markup(docx_path: Path, pc: ProcessingContext) -> Markup:
@@ -103,11 +104,17 @@ def createArgParser() -> argparse.ArgumentParser:
         help="Generate JSON output as well.",
     )
     parser.add_argument(
-        "--theme",
-        type=str,
-        choices=["light", "dark"],
-        default="light",
-        help="Report colour theme (default: light).",
+        "--style-mode",
+        type=DisplayMode,
+        choices=list(DisplayMode),
+        default=ReportTheme.DEFAULT_DISPLAY_MODE,
+        help=f"Report colour mode (default: {ReportTheme.DEFAULT_DISPLAY_MODE}).",
+    )
+    parser.add_argument(
+        "--style-palette",
+        choices=ColourPalette.labels(),
+        default=ReportTheme.DEFAULT_COLOUR.label,
+        help=f"Report colour palette (default: {ReportTheme.DEFAULT_COLOUR.label}).",
     )
     parser.add_argument(
         "--image-logo",
@@ -200,18 +207,20 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, ExcelProc
         )
         report = excel.populateReport()
 
-        report.setTheme(args.theme)
+        report.theme.setDisplayMode(args.style_mode).setColour(
+            ColourPalette.from_label(args.style_palette)
+        )
 
         for arg_name, setter in [
-            ("image_logo", report.setImageLogo),
-            ("image_cover", report.setImageCover),
-            ("image_watermark", report.setImageWatermark),
+            ("image_logo", report.theme.setLogo),
+            ("image_cover", report.theme.setCoverImage),
+            ("image_watermark", report.theme.setWatermark),
         ]:
             if image_path := getattr(args, arg_name):
                 image, err = ImageFileLikeAndFileName.prepare(image_path)
                 if err:
                     pc.addDevInfoMessage(err)
-                else:
+                elif image:
                     setter(image)
 
         if (extra_file := args.extra_data) and extra_file.is_file():

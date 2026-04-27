@@ -25,7 +25,6 @@ import mireport
 from mireport.exceptions import InlineReportException
 from mireport.filesupport import (
     FilelikeAndFileName,
-    ImageFileLikeAndFileName,
     zipSafeString,
 )
 from mireport.localise import (
@@ -48,6 +47,7 @@ from mireport.taxonomy import (
     Relationship,
     Taxonomy,
 )
+from mireport.theme import ReportTheme
 from mireport.typealiases import DecimalPlaces, FactValue
 
 L = logging.getLogger(__name__)
@@ -766,17 +766,6 @@ class FactBuilder:
         return Fact(self._concept, self._value, self._report, self._aspects)
 
 
-_VALID_COLOURS: dict[str, str] = {
-    "green":  "#4F7F2A",
-    "azure":  "#007acc",
-    "blue":   "#1565C0",
-    "teal":   "#00695C",
-    "purple": "#6A1B9A",
-    "navy":   "#1A237E",
-    "grey":   "#455A64",
-}
-
-
 class InlineReport:
     def __init__(self, taxonomy: Taxonomy, outputLocale: Optional[Locale] = None):
         self._facts: list[Fact] = []
@@ -792,11 +781,7 @@ class InlineReport:
         self._reportSubtitle: str = ""
         self._introduction: Optional[str] = None
         self._backCoverMatter: Optional[str] = None
-        self._theme: str = "light"
-        self._colour: str = "green"
-        self._logo: Optional[ImageFileLikeAndFileName] = None
-        self._coverImage: Optional[ImageFileLikeAndFileName] = None
-        self._watermark: Optional[ImageFileLikeAndFileName] = None
+        self._theme: ReportTheme = ReportTheme.default()
         self._footnotesByGroup: dict[str, Footnote] = {}
         self._labelOverrides: dict[str, str] = {}
         if not outputLocale:
@@ -866,31 +851,16 @@ class InlineReport:
     def setDefaultAspect(self, key: str, value: str) -> None:
         self._defaultAspects[key] = value
 
+    @property
+    def theme(self) -> ReportTheme:
+        return self._theme
+
+    @theme.setter
+    def theme(self, value: ReportTheme) -> None:
+        self._theme = value
+
     def setEntityName(self, name: str) -> None:
         self._entityName = name
-
-    def setTheme(self, theme: str) -> None:
-        if theme not in {"light", "dark"}:
-            raise InlineReportException(
-                f"Theme must be 'light' or 'dark', got '{theme}'."
-            )
-        self._theme = theme
-
-    def setColour(self, colour: str) -> None:
-        if colour not in _VALID_COLOURS:
-            raise InlineReportException(
-                f"Colour must be one of {sorted(_VALID_COLOURS)}, got '{colour}'."
-            )
-        self._colour = colour
-
-    def setImageLogo(self, logo: ImageFileLikeAndFileName) -> None:
-        self._logo = logo
-
-    def setImageCover(self, image: ImageFileLikeAndFileName) -> None:
-        self._coverImage = image
-
-    def setImageWatermark(self, image: ImageFileLikeAndFileName) -> None:
-        self._watermark = image
 
     def setDefaultPeriodName(self, name: str) -> None:
         if name not in self._periods:
@@ -978,9 +948,13 @@ class InlineReport:
         candidates = self.getFacts(concept)
 
         if not candidates:
-            raise InlineReportException(f"No existing fact found for concept {concept_qname}. Cannot replace value.")
+            raise InlineReportException(
+                f"No existing fact found for concept {concept_qname}. Cannot replace value."
+            )
         if len(candidates) != 1:
-            raise InlineReportException(f"Multiple existing facts found for concept {concept_qname}. Cannot replace value unambiguously.")
+            raise InlineReportException(
+                f"Multiple existing facts found for concept {concept_qname}. Cannot replace value unambiguously."
+            )
 
         candidates[0].value = value
         return
@@ -1087,13 +1061,12 @@ class InlineReport:
         )
         template = env.get_template("inline-report-presentation.html.jinja")
 
-        watermark_data_url = ""
-        if self._watermark is not None:
-            watermark_data_url = self._watermark.as_data_url()
-
-        logo_data_url = ""
-        if self._logo is not None:
-            logo_data_url = self._logo.as_data_url(max_width=200)
+        watermark_data_url = (
+            self.theme.watermark.as_data_url() if self.theme.watermark else ""
+        )
+        logo_data_url = (
+            self.theme.logo.as_data_url(max_width=200) if self.theme.logo else ""
+        )
 
         html_content = template.render(
             aoix={
@@ -1108,8 +1081,8 @@ class InlineReport:
                 "factCount": self.factCount,
                 "title": self._reportTitle,
                 "subtitle": self._reportSubtitle,
-                "optionalLogo": self._logo,
-                "optionalCoverImage": self._coverImage,
+                "optionalLogo": self.theme.logo,
+                "optionalCoverImage": self.theme.cover_image,
                 "language": self.language,
             },
             software={
@@ -1120,8 +1093,8 @@ class InlineReport:
             facts=self.facts,
             sections=sections,
             uniqueFactCount=len(frozenset(self._facts)),
-            theme=self._theme,
-            colour=_VALID_COLOURS[self._colour],
+            theme=self.theme.displayMode,
+            colour=self.theme.colour,
             watermarkDataUrl=watermark_data_url,
             logoDataUrl=logo_data_url,
             introduction=self._introduction,

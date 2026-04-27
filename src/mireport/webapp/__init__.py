@@ -487,9 +487,9 @@ def doConversion(conversion: dict, id: str) -> ConversionResults:
                 return resultBuilder.build()
 
             for key, setter in [
-                ("logo", report.setImageLogo),
-                ("cover_image", report.setImageCover),
-                ("watermark", report.setImageWatermark),
+                ("logo", report.theme.setLogo),
+                ("cover_image", report.theme.setCoverImage),
+                ("watermark", report.theme.setWatermark),
             ]:
                 if key in conversion:
                     image, err = ImageFileLikeAndFileName.prepare(
@@ -501,7 +501,7 @@ def doConversion(conversion: dict, id: str) -> ConversionResults:
                             Severity.WARNING,
                             MessageType.Conversion,
                         )
-                    else:
+                    elif image:
                         pc.addDevInfoMessage(f"Adding {key} to report {image}")
                         setter(image)
 
