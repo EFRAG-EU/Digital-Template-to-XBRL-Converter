@@ -1,9 +1,14 @@
+from __future__ import annotations
+
 import itertools
 import re
 import sys
-from collections.abc import Mapping
 from types import MappingProxyType
-from typing import Any, NamedTuple
+from typing import TYPE_CHECKING, NamedTuple
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+    from typing import Any
 
 from mireport.exceptions import BrokenNamespacePrefixException, BrokenQNameException
 

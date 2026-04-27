@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 from enum import StrEnum
-from typing import TYPE_CHECKING, NamedTuple, Optional, cast
+from typing import TYPE_CHECKING, NamedTuple, cast
 
 from markupsafe import Markup, escape
 
@@ -15,6 +15,8 @@ from mireport.taxonomy import Concept, QName
 from mireport.typealiases import DecimalPlaces, FactValue
 
 if TYPE_CHECKING:
+    from typing import Optional
+
     from mireport.report.inlinereport import InlineReport
 
 TD_VALUE_RE = re.compile(r">(.*?)</")

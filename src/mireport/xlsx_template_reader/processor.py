@@ -10,7 +10,10 @@ from datetime import date, datetime
 from functools import lru_cache
 from itertools import combinations
 from pathlib import Path
-from typing import BinaryIO, Callable, NamedTuple, Optional, Self
+from typing import TYPE_CHECKING, NamedTuple
+
+if TYPE_CHECKING:
+    from typing import BinaryIO, Callable, Optional, Self
 
 from babel import Locale
 from dateutil.parser import parse as parse_datetime

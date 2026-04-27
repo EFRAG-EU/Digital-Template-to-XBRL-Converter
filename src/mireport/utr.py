@@ -1,6 +1,11 @@
+from __future__ import annotations
+
 from collections import defaultdict
 from functools import cache, cached_property
-from typing import Optional, Self
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Optional, Self
 
 from mireport.exceptions import UnitException
 from mireport.xml import ISO4217_NS, XBRLI_NS, QName, QNameMaker

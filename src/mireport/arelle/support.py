@@ -1,9 +1,14 @@
+from __future__ import annotations
+
 import json
 import logging
 from collections import Counter
 from collections.abc import Mapping, MutableMapping
 from dataclasses import dataclass
-from typing import Any, ClassVar, Optional, Self
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Any, ClassVar, Optional, Self
 
 from arelle.api.Session import Session
 from arelle.ModelValue import QName

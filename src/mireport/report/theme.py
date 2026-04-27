@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import ClassVar, Optional, Self
+from typing import TYPE_CHECKING, ClassVar, Optional
+
+if TYPE_CHECKING:
+    from typing import Self
 
 from mireport.exceptions import InlineReportException
 from mireport.filesupport import ImageFileLikeAndFileName

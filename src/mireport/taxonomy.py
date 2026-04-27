@@ -12,7 +12,7 @@ from collections import Counter, defaultdict
 from collections.abc import Iterable, Mapping
 from enum import Enum, StrEnum, auto
 from functools import cache, cached_property
-from typing import Any, NamedTuple, Optional, Self, overload
+from typing import TYPE_CHECKING, NamedTuple, overload
 
 from mireport.data import registries, taxonomies
 from mireport.exceptions import (
@@ -34,6 +34,9 @@ from mireport.xml import (
     QNameMaker,
     getBootstrapQNameMaker,
 )
+
+if TYPE_CHECKING:
+    from typing import Any, Optional, Self
 
 MEASUREMENT_GUIDANCE_LABEL_ROLE = "http://www.xbrl.org/2003/role/measurementGuidance"
 STANDARD_LABEL_ROLE = "http://www.xbrl.org/2003/role/label"

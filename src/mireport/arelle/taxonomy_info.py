@@ -1,9 +1,14 @@
+from __future__ import annotations
+
 import json
 import logging
 import time
 from collections import defaultdict
 from collections.abc import Iterable, MutableMapping
-from typing import Any, Optional, TypeVar
+from typing import TYPE_CHECKING, TypeVar
+
+if TYPE_CHECKING:
+    from typing import Any, Optional
 
 from arelle import XbrlConst
 from arelle.api.Session import Session

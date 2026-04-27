@@ -4,7 +4,10 @@ import zipfile
 from importlib.metadata import PackageNotFoundError, metadata, version
 from io import BytesIO
 from pathlib import Path, PurePath
-from typing import BinaryIO, Optional
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import BinaryIO, Optional
 
 from arelle import PackageManager, PluginManager
 from arelle.api.Session import Session

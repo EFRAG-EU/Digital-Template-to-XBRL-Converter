@@ -2,14 +2,18 @@ from __future__ import annotations
 
 import base64
 import re
-from collections.abc import Iterable
 from io import BytesIO, UnsupportedOperation
 from pathlib import Path
-from typing import BinaryIO, NamedTuple, Optional
+from typing import TYPE_CHECKING, NamedTuple
 
 from PIL import Image, UnidentifiedImageError
 from PIL.Image import Resampling
-from typing_extensions import Buffer
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+    from typing import BinaryIO, Optional
+
+    from typing_extensions import Buffer
 
 from mireport.stringutil import format_bytes
 
@@ -234,13 +238,13 @@ class ImageFileLikeAndFileName(FilelikeAndFileName):
 
         fio = self.fileLike()
         try:
-            with Image.open(fio) as img:
+            with Image.open(fio) as img_file:
                 # Fill in missing dimensions
-                orig_width, orig_height = img.size
+                orig_width, orig_height = img_file.size
                 target_width = orig_width if max_width is None else max_width
                 target_height = orig_height if max_height is None else max_height
 
-                img = img.convert("RGBA")  # Preserve transparency and unify mode
+                img = img_file.convert("RGBA")  # Preserve transparency and unify mode
                 img.thumbnail((target_width, target_height), Resampling.LANCZOS)
 
                 bio = BytesIO()

@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Collection
-from typing import TYPE_CHECKING, Optional, Self
+from typing import TYPE_CHECKING
 
 from mireport.exceptions import InlineReportException
 from mireport.report.fact import Fact
@@ -11,6 +10,9 @@ from mireport.taxonomy import Concept, QName, Taxonomy
 from mireport.typealiases import DecimalPlaces, FactValue
 
 if TYPE_CHECKING:
+    from collections.abc import Collection
+    from typing import Optional, Self
+
     from mireport.report.inlinereport import InlineReport
 
 L = logging.getLogger(__name__)

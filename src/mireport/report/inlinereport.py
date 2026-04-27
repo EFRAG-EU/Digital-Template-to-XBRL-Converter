@@ -7,8 +7,11 @@ from collections import defaultdict
 from datetime import date, datetime, timezone
 from io import BytesIO
 from itertools import count
-from typing import Optional
+from typing import TYPE_CHECKING
 from unicodedata import name as unicode_name
+
+if TYPE_CHECKING:
+    from typing import Optional
 
 import ixbrltemplates
 from babel import Locale
