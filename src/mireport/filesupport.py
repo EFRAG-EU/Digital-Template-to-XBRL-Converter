@@ -23,6 +23,12 @@ FILE_UNWANTED_RE = re.compile(r'[<>:"/\\|?*]')
 
 def is_valid_filename(filename: str) -> bool:
     """Checks if the filename is valid for Windows."""
+    if not filename:
+        return False
+
+    if filename.endswith((" ", ".")):
+        return False
+
     # Disallowed names (case-insensitive)
     reserved_names = {
         "CON",

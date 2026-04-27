@@ -50,6 +50,29 @@ class TestIsValidFilename:
     def test_invalid_characters(self, filename: str) -> None:
         assert not is_valid_filename(filename)
 
+    def test_empty_string(self) -> None:
+        assert not is_valid_filename("")
+
+    def test_trailing_dot(self) -> None:
+        assert not is_valid_filename("file.")
+        assert not is_valid_filename(".hidden.")
+
+    def test_trailing_space(self) -> None:
+        assert not is_valid_filename("file ")
+        assert not is_valid_filename("file  ")
+
+    @pytest.mark.parametrize("filename", ["NUL", "PRN"], ids=["nul", "prn"])
+    def test_reserved_names_nul_prn(self, filename: str) -> None:
+        assert not is_valid_filename(filename)
+
+    @pytest.mark.parametrize(
+        "filename",
+        ["a<b", "a>b", 'a"b', "a/b", "a\\b", "a?b"],
+        ids=["lt", "gt", "quote", "slash", "backslash", "question"],
+    )
+    def test_invalid_chars_extended(self, filename: str) -> None:
+        assert not is_valid_filename(filename)
+
 
 # ── zipSafeString ─────────────────────────────────────────────────────────────
 
@@ -90,6 +113,10 @@ class TestZipSafeString:
 
     def test_custom_fallback(self) -> None:
         assert zipSafeString("CON", fallback="default") == "default"
+
+    def test_whitespace_only(self) -> None:
+        assert zipSafeString("   ") == "fallback"
+        assert zipSafeString("\t\n") == "fallback"
 
 
 # ── FilelikeAndFileName ───────────────────────────────────────────────────────
@@ -299,6 +326,12 @@ class TestFilelikeAndFileName:
             ):
                 file_obj.saveToDirectory(existing_file)
 
+    def test_saveToFilepath_invalid_filename(self) -> None:
+        file_obj = FilelikeAndFileName(b"data", "valid.txt")
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with pytest.raises(ValueError, match="is not valid"):
+                file_obj.saveToFilepath(Path(temp_dir) / "CON")
+
     def test_saveToDirectory_file_extension_in_path(self) -> None:
         content = b"Extension test"
         filename = "result.txt"
@@ -376,6 +409,11 @@ class TestReadOnlyNamedBytesIO:
         assert "file.txt" in str_str
         assert "3 B" in str_str
 
+    def test_writelines_raises(self) -> None:
+        bio = ReadOnlyNamedBytesIO(b"abc", name="file.txt")
+        with pytest.raises(UnsupportedOperation, match="read-only"):
+            bio.writelines([b"x"])
+
 
 # ── NamedBytesIO ──────────────────────────────────────────────────────────────
 
@@ -398,8 +436,16 @@ class TestNamedBytesIO:
         assert not mv.readonly
         assert bytes(mv) == b"abcd"
 
+    def test_repr(self) -> None:
+        bio = NamedBytesIO(b"hello", name="greet.bin")
+        r = repr(bio)
+        assert "NamedBytesIO" in r
+        assert "name='greet.bin'" in r
+        assert "size=5" in r
+        assert "peek=" in r
+
     def test_str_contains_name_and_size(self) -> None:
         bio = NamedBytesIO(b"x" * 150, name="big.bin")
         s = str(bio)
         assert "big.bin" in s
-        assert "150 B" in s or "KiB" in s
+        assert "150 B" in s
