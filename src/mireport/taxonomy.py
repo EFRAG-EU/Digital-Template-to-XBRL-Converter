@@ -6,7 +6,6 @@ concept details and presentation networks.
 from __future__ import annotations
 
 import logging
-import logging
 import re
 import warnings
 from collections import Counter, defaultdict
@@ -1071,12 +1070,3 @@ def _createTaxonomyFromJSON(bits: dict) -> None:
             getObject(getResource(registries, "utr.json")), qnameMaker=qnameMaker
         ),
     )
-
-
-def loadTaxonomyJSON() -> None:
-    """Loads the taxonomies, unit registry and other models."""
-    for f in getJsonFiles(taxonomies):
-        try:
-            _loadTaxonomyFromFile(getObject(f))
-        except Exception as e:
-            logging.error(f"Error loading taxonomy from {f.name}", exc_info=e)
