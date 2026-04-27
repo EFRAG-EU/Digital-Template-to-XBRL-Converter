@@ -1,20 +1,20 @@
 import argparse
 import re
+from collections.abc import Sequence
 from contextlib import contextmanager
 from itertools import count
 from time import perf_counter_ns
 from typing import NamedTuple
 
 import xlsxwriter
+from rich import box
+from rich.prompt import Prompt
 from rich.table import Table
+from rich.text import Text
 
 import mireport
 from mireport.cli import configure_rich_output
 from mireport.cli import console_print as print
-from mireport.taxonomy import getTaxonomy, listTaxonomies
-from mireport.xlsx_template_reader.processor import VSME_DEFAULTS
-
-
 from mireport.taxonomy import (
     DOCUMENTATION_LABEL_ROLE,
     LABEL_SUFFIX_PATTERN,
@@ -25,11 +25,13 @@ from mireport.taxonomy import (
     VERBOSE_LABEL_ROLE,
     Concept,
     PresentationGroup,
+    Relationship,
     Taxonomy,
     getTaxonomy,
     listTaxonomies,
 )
 from mireport.taxonomy_checker import TaxonomyChecker
+from mireport.xlsx_template_reader.processor import VSME_DEFAULTS
 
 
 class Mismatch(NamedTuple):
@@ -72,7 +74,7 @@ def timer(label: str):
         yield
     finally:
         elapsed_ms = (perf_counter_ns() - start) // 1_000_000
-        print(f"✓ {label} in {elapsed_ms:,} milliseconds")
+        print(f"[green]✓[/green] {label} in [bold]{elapsed_ms:,}[/bold] ms")
 
 
 def indent(depth: int, active_depths: set[int]) -> str:
@@ -96,14 +98,21 @@ def indent(depth: int, active_depths: set[int]) -> str:
     return "".join(glyph(d) for d in range(depth + 1))
 
 
-def format_relationship(relationship, active_depths: set[int]) -> str:
-    """Format a relationship for display."""
+def format_relationship(relationship: Relationship, active_depths: set[int]) -> Text:
     concept = relationship.concept
     prefix = indent(relationship.depth, active_depths)
-    return f"{prefix} {concept.getStandardLabel()} [{concept.qname} {concept.dataType}]"
+    t = Text(no_wrap=True)
+    t.append(prefix, style="dim")
+    t.append(f" {relationship.getLabel(fallbackLabel='')}")
+    t.append("  [", style="dim")
+    t.append(str(concept.qname), style="cyan")
+    t.append(" ", style="dim")
+    t.append(str(concept.dataType), style="yellow")
+    t.append("]", style="dim")
+    return t
 
 
-def compute_last_flags(relationships) -> tuple[bool, ...]:
+def compute_last_flags(relationships: Sequence[Relationship]) -> tuple[bool, ...]:
     """Pre-compute whether each relationship is the last at its depth.
 
     Scans backwards in a single O(n) pass, tracking which depths
@@ -112,7 +121,7 @@ def compute_last_flags(relationships) -> tuple[bool, ...]:
     """
     n = len(relationships)
     flags = [False] * n
-    seen_depths: dict[int, None] = {}
+    seen_depths: dict[int, None] = {}  # ordered set: popitem() removes deepest key
     for i in range(n - 1, -1, -1):
         depth = relationships[i].depth
         # Pop any deeper depths — they belong to a previous group
@@ -124,9 +133,12 @@ def compute_last_flags(relationships) -> tuple[bool, ...]:
     return tuple(flags)
 
 
-def dump_group(group) -> None:
+def dump_group(group: PresentationGroup) -> None:
     """Print a single presentation group as a tree."""
-    print(f"{group.getLabel()} [{group.roleUri}]", markup=False)
+    header = Text()
+    header.append(group.getLabel(), style="bold")
+    header.append(f"  [{group.roleUri}]", style="dim")
+    print(header)
     last_flags = compute_last_flags(group.relationships)
     active_depths: set[int] = set()
     for relationship, is_last in zip(group.relationships, last_flags, strict=True):
@@ -135,7 +147,7 @@ def dump_group(group) -> None:
         active_depths = {d for d in active_depths if d < depth}
         if not is_last:
             active_depths.add(depth)
-        print(format_relationship(relationship, active_depths), markup=False)
+        print(format_relationship(relationship, active_depths))
 
 
 def pick_entry_point() -> str:
@@ -144,17 +156,18 @@ def pick_entry_point() -> str:
     available = {
         str(num): ep for num, ep in enumerate(sorted(listTaxonomies()), start=1)
     }
-    print(
-        "Available taxonomies:",
-        *[
-            f"{num}: {url}{' *' if url == default else ''}"
-            for num, url in available.items()
-        ],
-        sep="\n\t",
-    )
-    response = input("Specify alternate entry point or leave default (*): ").strip()
 
-    if not response or response == default:
+    table = Table(show_header=True, box=box.SIMPLE)
+    table.add_column("#", style="bold cyan", justify="right", no_wrap=True)
+    table.add_column("Entry point")
+    for num, url in available.items():
+        marker = "  [bold green]← default[/bold green]" if url == default else ""
+        table.add_row(num, url + marker)
+    print(table)
+
+    response = Prompt.ask("Number or URL (enter for default)", default=default).strip()
+
+    if response == default:
         return default
     if (entry_point := available.get(response, response)) in available.values():
         return entry_point
@@ -327,11 +340,15 @@ def dump_translation_sheet(
             )
 
     print(
-        f"✅ Translation sheet written to {output_path} ({len(group_rows):,} groups, {len(concept_rows):,} concept rows)"
+        f"[green]✓[/green] Translation sheet written to [bold]{output_path}[/bold] "
+        f"([cyan]{len(group_rows):,}[/cyan] groups, [cyan]{len(concept_rows):,}[/cyan] concept rows)"
     )
     if mismatches:
         table = Table(
-            title=f"⚠️  {len(mismatches):,} prefix/suffix mismatches in translated labels"
+            title=f"{len(mismatches):,} prefix/suffix mismatches",
+            title_style="bold yellow",
+            box=box.SIMPLE_HEAD,
+            border_style="dim",
         )
         table.add_column("Language", style="bold")
         table.add_column("Kind")
@@ -400,11 +417,14 @@ def main() -> None:
     for group in taxonomy.presentation:
         dump_group(group)
 
-    print(
-        f"\nLabel languages: {', '.join(sorted(taxonomy.supportedLanguages))}",
-        f"Default language: {taxonomy.defaultLanguage}",
-        sep="\n",
-    )
+    summary = Text()
+    summary.append("Label languages: ", style="bold")
+    summary.append(", ".join(sorted(taxonomy.supportedLanguages)), style="cyan")
+    summary.append("\nDefault language: ", style="bold")
+    summary.append(taxonomy.defaultLanguage or "—", style="cyan")
+    print()
+    print(summary)
+
     if args.check:
         print()
         TaxonomyChecker(taxonomy).reportIssues()
