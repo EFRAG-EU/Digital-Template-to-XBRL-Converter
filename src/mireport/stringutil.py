@@ -59,6 +59,8 @@ def normalizeLabelText(text: str) -> str:
 
 def stripLabelSuffix(text: str) -> str:
     """Strip any [asdf] suffix from label text."""
+    if not text.rstrip().endswith("]"):
+        return text
     before, sep, _ = text.rpartition("[")
     return stripped if sep and (stripped := before.rstrip()) else text
 

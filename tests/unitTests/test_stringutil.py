@@ -73,7 +73,7 @@ class TestUnicodeSpaceNormalize:
         assert unicodeSpaceNormalize("") == ""
 
     def test_multiple_special_spaces(self) -> None:
-        text = f"a\N{NO-BREAK SPACE}b\N{EM SPACE}c\N{THIN SPACE}d"
+        text = "a\N{NO-BREAK SPACE}b\N{EM SPACE}c\N{THIN SPACE}d"
         assert unicodeSpaceNormalize(text) == "a b c d"
 
 
@@ -149,6 +149,14 @@ class TestStripLabelSuffix:
 
     def test_nested_brackets(self) -> None:
         assert stripLabelSuffix("A [B] C [D]") == "A [B] C"
+
+    def test_unclosed_bracket_unchanged(self) -> None:
+        assert stripLabelSuffix("Revenue [unclosed") == "Revenue [unclosed"
+
+    def test_bracket_not_at_end_unchanged(self) -> None:
+        assert (
+            stripLabelSuffix("Revenue [total] and more") == "Revenue [total] and more"
+        )
 
 
 # ── format_time_ns ───────────────────────────────────────────────────────
@@ -246,7 +254,10 @@ class TestXmlClean:
             ("'", "&apos;"),
             ('"', "&quot;"),
             ("a\tb\nc\rd\ve\f", "abcde"),
-            ("<b>hello & 'world'</b>", "&lt;b&gt;hello &amp; &apos;world&apos;&lt;/b&gt;"),
+            (
+                "<b>hello & 'world'</b>",
+                "&lt;b&gt;hello &amp; &apos;world&apos;&lt;/b&gt;",
+            ),
         ],
         ids=[
             "ampersand",
