@@ -51,7 +51,8 @@ from mireport.taxonomy import (
     listTaxonomies,
 )
 from mireport.version import OUR_VERSION_HOLDER, VersionHolder
-from mireport.xbrlreport import FactBuilder, FactValue, InlineReport
+from mireport.report import FactBuilder, InlineReport
+from mireport.typealiases import FactValue
 
 L = logging.getLogger(__name__)
 

@@ -26,7 +26,7 @@ from mireport.xlsx_template_reader.processor import (
 )
 from mireport.filesupport import ImageFileLikeAndFileName
 from mireport.localise import EU_LOCALES, argparse_locale
-from mireport.theme import ColourPalette, DisplayMode, ReportTheme
+from mireport.report.theme import ColourPalette, DisplayMode, ReportTheme
 
 
 def _convert_docx_to_markup(docx_path: Path, pc: ProcessingContext) -> Markup:
@@ -190,7 +190,7 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, ExcelProc
         "mireport Excel to validated Inline Report"
     ) as pc:
         pc.mark("Loading taxonomy metadata")
-        mireport.loadTaxonomyJSON()
+        mireport.loadBuiltInTaxonomyJSON()
         allTaxonomies = mireport.taxonomy.listTaxonomies()
         pc.addDevInfoMessage(
             f"Taxonomies entry points ({len(allTaxonomies)}) available: {', '.join(allTaxonomies)}"

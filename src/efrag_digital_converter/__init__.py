@@ -22,7 +22,7 @@ from flask import (
 from flask_session import Session  # type: ignore
 
 import mireport
-from mireport import loadTaxonomyJSON
+from mireport import loadBuiltInTaxonomyJSON
 from mireport.arelle.report_info import (
     ARELLE_VERSION_INFORMATION,
     ArelleReportProcessor,
@@ -75,7 +75,7 @@ def create_app() -> Flask:
     logging.captureWarnings(True)
 
     # Get taxonomy related objects loaded
-    loadTaxonomyJSON()
+    loadBuiltInTaxonomyJSON()
 
     global LOCALE_JSON
     LOCALE_JSON = make_locale_json()

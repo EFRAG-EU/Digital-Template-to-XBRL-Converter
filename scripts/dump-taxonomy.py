@@ -4,7 +4,7 @@ from mireport.taxonomy import getTaxonomy, listTaxonomies
 
 
 def main() -> None:
-    mireport.loadTaxonomyJSON()
+    mireport.loadBuiltInTaxonomyJSON()
     entry_point = VSME_DEFAULTS["taxonomyEntryPoints"]["supportedEntryPoint"]
     available = {
         str(num): ep for num, ep in enumerate(sorted(listTaxonomies()), start=1)

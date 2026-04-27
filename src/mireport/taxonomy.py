@@ -5,6 +5,7 @@ concept details and presentation networks.
 
 from __future__ import annotations
 
+import logging
 import re
 import warnings
 from collections import Counter, defaultdict
@@ -13,13 +14,13 @@ from enum import Enum, StrEnum, auto
 from functools import cache, cached_property
 from typing import Any, NamedTuple, Optional, Self, overload
 
-from mireport.data import registries
+from mireport.data import registries, taxonomies
 from mireport.exceptions import (
     AmbiguousComponentException,
     TaxonomyException,
     UnknownTaxonomyException,
 )
-from mireport.json import getObject, getResource
+from mireport.json import getJsonFiles, getObject, getResource
 from mireport.localise import getBestSupportedLanguage
 from mireport.stringutil import normalizeLabelText, stripLabelSuffix
 from mireport.typealiases import LabelsByLang
@@ -997,7 +998,16 @@ def listTaxonomies() -> tuple[str, ...]:
     return tuple(_TAXONOMIES.keys())
 
 
-def _loadTaxonomyFromFile(bits: dict) -> None:
+def loadBuiltInTaxonomyJSON() -> None:
+    """Loads the taxonomies, unit registry and other models."""
+    for f in getJsonFiles(taxonomies):
+        try:
+            _createTaxonomyFromJSON(getObject(f))
+        except Exception as e:
+            logging.error(f"Error loading taxonomy from {f.name}", exc_info=e)
+
+
+def _createTaxonomyFromJSON(bits: dict) -> None:
     entryPoint = bits["entryPoint"]
     if _TAXONOMIES.get(entryPoint) is not None:
         raise TaxonomyException(
