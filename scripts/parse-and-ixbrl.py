@@ -4,9 +4,7 @@ import logging
 from pathlib import Path
 
 import mammoth
-import rich.traceback
 from markupsafe import Markup
-from rich.logging import RichHandler
 
 import mireport
 import mireport.taxonomy
@@ -21,7 +19,6 @@ from mireport.cli import (
 from mireport.cli import (
     console_print as print,
 )
-from mireport.cli import validateTaxonomyPackages
 from mireport.conversionresults import (
     ConversionResults,
     ConversionResultsBuilder,
