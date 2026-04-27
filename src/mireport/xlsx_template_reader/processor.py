@@ -29,7 +29,8 @@ from mireport.data import disclosures
 from mireport.exceptions import EarlyAbortException, InlineReportException
 from mireport.json import getObject, getResource
 from mireport.localise import as_xmllang, get_locale_from_str
-from mireport.report import FactBuilder, InlineReport
+from mireport.report import InlineReport
+from mireport.report.factbuilder import FactBuilder
 from mireport.stringutil import stripLabelSuffix
 from mireport.taxonomy import (
     Concept,
