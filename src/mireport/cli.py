@@ -56,9 +56,16 @@ def configure_utf8_output() -> None:
     This ensures emoji and other Unicode characters can be output even when
     writing to pipes or redirected output on Windows systems.
     """
-    if sys.platform == "win32":
-        sys.stdout.reconfigure(encoding="utf-8")
-        sys.stderr.reconfigure(encoding="utf-8")
+    if sys.platform != "win32":
+        return
+
+    for stream in (sys.stdout, sys.stderr):
+        # Some test runners and redirected streams may not expose reconfigure().
+        if stream is None:
+            continue
+        reconfigure = getattr(stream, "reconfigure", None)
+        if callable(reconfigure):
+            reconfigure(encoding="utf-8", errors="replace")
 
 
 def get_console() -> Console:
