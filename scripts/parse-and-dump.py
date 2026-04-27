@@ -5,7 +5,7 @@ from argparse import ArgumentParser, BooleanOptionalAction
 from contextlib import closing
 from pathlib import Path
 
-from mireport.excelutil import (
+from mireport.xlsx_template_reader._util import (
     checkExcelFilePath,
     getNamedRanges,
     loadExcelFromPathOrFileLike,

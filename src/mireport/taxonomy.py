@@ -13,7 +13,7 @@ from enum import Enum, StrEnum, auto
 from functools import cache, cached_property
 from typing import Any, NamedTuple, Optional, Self, overload
 
-from mireport import data
+from mireport.data import registries
 from mireport.exceptions import (
     AmbiguousComponentException,
     TaxonomyException,
@@ -1020,6 +1020,6 @@ def _loadTaxonomyFromFile(bits: dict) -> None:
         dimensions=bits["dimensions"],
         qnameMaker=qnameMaker,
         utr=UTR.fromDict(
-            getObject(getResource(data, "utr.json")), qnameMaker=qnameMaker
+            getObject(getResource(registries, "utr.json")), qnameMaker=qnameMaker
         ),
     )

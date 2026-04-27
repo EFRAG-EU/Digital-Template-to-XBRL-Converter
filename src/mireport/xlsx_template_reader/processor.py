@@ -25,8 +25,8 @@ from mireport.conversionresults import (
     MessageType,
     Severity,
 )
-from mireport.data import excel_templates
-from mireport.excelutil import (
+from mireport.data import disclosures
+from mireport.xlsx_template_reader._util import (
     EXCEL_PLACEHOLDER_VALUE,
     CellType,
     CellValueType,
@@ -59,7 +59,7 @@ EE_SET_DESIRED_EMPTY_PLACEHOLDER_VALUE = "None"
 
 EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE = ("-", EXCEL_PLACEHOLDER_VALUE)
 
-VSME_DEFAULTS: dict = getObject(getResource(excel_templates, "vsme.json"))
+VSME_DEFAULTS: dict = getObject(getResource(disclosures, "vsme.json"))
 
 
 def cleanUnitTextFromExcel(unitTest: str, replacements: dict[str, str]) -> str:

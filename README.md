@@ -55,7 +55,7 @@ python ./scripts/parse-and-ixbrl.py example.xlsx  output.html
 ### Run webserver locally
 
 ```bash
-python -m flask --app mireport.webapp run
+python -m flask --app efrag_digital_converter run
 ```
 
 ## Developers
@@ -69,7 +69,7 @@ Follow [the user instructions](#set-up-for-deploying) but make the distribution 
 ### Run auto-redeploying and debug webserver
 
 ```bash
-python -m flask --app mireport.webapp run --debug
+python -m flask --app efrag_digital_converter run --debug
 ```
 
 ### Dump the named ranges from an Excel file (for debugging/testing purposes)

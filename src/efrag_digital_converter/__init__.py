@@ -33,7 +33,7 @@ from mireport.conversionresults import (
     MessageType,
     Severity,
 )
-from mireport.excelprocessor import (
+from mireport.xlsx_template_reader.processor import (
     VSME_DEFAULTS,
     ExcelProcessor,
 )

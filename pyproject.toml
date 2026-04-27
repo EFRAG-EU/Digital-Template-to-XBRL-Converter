@@ -39,7 +39,7 @@ build-backend = "hatchling.build"
 allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/mireport"]
+packages = ["src/mireport", "src/efrag_digital_converter"]
 
 [project.optional-dependencies]
 dev = [

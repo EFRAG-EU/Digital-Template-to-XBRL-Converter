@@ -1,5 +1,5 @@
 import mireport
-from mireport.excelprocessor import VSME_DEFAULTS
+from mireport.xlsx_template_reader.processor import VSME_DEFAULTS
 from mireport.taxonomy import getTaxonomy, listTaxonomies
 
 

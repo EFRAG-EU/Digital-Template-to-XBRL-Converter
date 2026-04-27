@@ -20,7 +20,7 @@ from mireport.conversionresults import (
     ConversionResultsBuilder,
     ProcessingContext,
 )
-from mireport.excelprocessor import (
+from mireport.xlsx_template_reader.processor import (
     VSME_DEFAULTS,
     ExcelProcessor,
 )

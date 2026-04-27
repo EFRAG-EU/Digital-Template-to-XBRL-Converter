@@ -3,7 +3,7 @@ import logging
 from collections import Counter
 from collections.abc import Mapping, MutableMapping
 from dataclasses import dataclass
-from typing import Any, Optional, Self
+from typing import Any, ClassVar, Optional, Self
 
 from arelle.api.Session import Session
 from arelle.ModelValue import QName
@@ -191,7 +191,7 @@ class ArelleQNameCanonicaliser:
     mireport.xml.QNames have a unique prefix for each namespace URI (prefixes are unique per taxonomy).
     """
 
-    VANITY_NAMESPACE_PREFIX_MAP: Mapping[str, str] = {
+    VANITY_NAMESPACE_PREFIX_MAP: ClassVar[Mapping[str, str]] = {
         "http://www.xbrl.org/dtr/type/2024-01-31": "dtr-types",
         "http://www.xbrl.org/dtr/type/2022-03-31": "dtr-types-2022",
         "http://www.xbrl.org/dtr/type/2020-01-21": "dtr-types-2020",
