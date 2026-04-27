@@ -6,6 +6,7 @@ concept details and presentation networks.
 from __future__ import annotations
 
 import logging
+import logging
 import re
 import warnings
 from collections import Counter, defaultdict
@@ -41,6 +42,18 @@ if TYPE_CHECKING:
 MEASUREMENT_GUIDANCE_LABEL_ROLE = "http://www.xbrl.org/2003/role/measurementGuidance"
 STANDARD_LABEL_ROLE = "http://www.xbrl.org/2003/role/label"
 DOCUMENTATION_LABEL_ROLE = "http://www.xbrl.org/2003/role/documentation"
+TERSE_LABEL_ROLE = "http://www.xbrl.org/2003/role/terseLabel"
+VERBOSE_LABEL_ROLE = "http://www.xbrl.org/2003/role/verboseLabel"
+
+TOTAL_LABEL_ROLE = "http://www.xbrl.org/2003/role/totalLabel"
+PERIOD_START_LABEL_ROLE = "http://www.xbrl.org/2003/role/periodStartLabel"
+PERIOD_END_LABEL_ROLE = "http://www.xbrl.org/2003/role/periodEndLabel"
+
+DEFINITION_GUIDANCE_LABEL_ROLE = "http://www.xbrl.org/2003/role/definitionGuidance"
+DISCLOSURE_GUIDANCE_LABEL_ROLE = "http://www.xbrl.org/2003/role/disclosureGuidance"
+PRESENTATION_GUIDANCE_LABEL_ROLE = "http://www.xbrl.org/2003/role/presentationGuidance"
+MEASUREMENT_GUIDANCE_LABEL_ROLE = "http://www.xbrl.org/2003/role/measurementGuidance"
+
 
 LABEL_SUFFIX_PATTERN = re.compile(r"\s*\[[A-Z]?[a-z ]+\]\s*$")
 
@@ -178,7 +191,7 @@ class Concept:
             )
             self._eeDomainMemberStrings = None
 
-    def _getLabelForRole(
+    def getLabelForRole(
         self,
         roleUri: str,
         requestedLanguage: Optional[str] = None,
@@ -187,6 +200,7 @@ class Concept:
         fallbackToQName: bool = False,
         removeSuffix: bool = False,
     ) -> Optional[str]:
+        """Return the label for *roleUri* in the requested language."""
         if (defaultLanguage := self._taxonomy.defaultLanguage) is None:
             return None
 
@@ -266,7 +280,7 @@ class Concept:
         fallbackToAnyLang: bool = False,
         fallbackToQName: bool = False,
     ) -> Optional[str]:
-        return self._getLabelForRole(
+        return self.getLabelForRole(
             STANDARD_LABEL_ROLE,
             requestedLanguage=lang,
             fallbackLabel=fallbackIfMissing,
@@ -284,7 +298,7 @@ class Concept:
         fallbackToAnyLang: bool = False,
         fallbackToQName: bool = False,
     ) -> Optional[str]:
-        return self._getLabelForRole(
+        return self.getLabelForRole(
             DOCUMENTATION_LABEL_ROLE,
             requestedLanguage=lang,
             fallbackLabel=fallbackIfMissing,
@@ -332,6 +346,15 @@ class Concept:
         """Return a tuple of all standard labels for this concept."""
         return tuple(self._getLabelIterable(STANDARD_LABEL_ROLE))
 
+    @property
+    def labelRoles(self) -> frozenset[str]:
+        """All label role URIs for which this concept has at least one label."""
+        return frozenset(
+            role_uri
+            for lang_labels in self._labels.values()
+            for role_uri in lang_labels
+        )
+
     @cache
     def getRequiredUnitQNames(self) -> Optional[frozenset[QName]]:
         """If there is a valid UTR unitId or a valid unit QName in the
@@ -341,7 +364,7 @@ class Concept:
         if not self.isNumeric:
             return None
 
-        measurementLabel = self._getLabelForRole(
+        measurementLabel = self.getLabelForRole(
             MEASUREMENT_GUIDANCE_LABEL_ROLE,
             fallbackToAnyLang=True,
         )
@@ -490,7 +513,7 @@ class Relationship(NamedTuple):
     ) -> Optional[str]:
         """Get the label for this relationship's concept."""
         labelRole = self.preferredLabel or STANDARD_LABEL_ROLE
-        return self.concept._getLabelForRole(
+        return self.concept.getLabelForRole(
             labelRole,
             requestedLanguage,
             removeSuffix=removeSuffix,
@@ -541,17 +564,24 @@ class PresentationGroup(NamedTuple):
             return (self.definition, self.roleUri) < (other.definition, other.roleUri)
         return NotImplemented
 
-    def getLabel(self, requestedLanguage: Optional[str] = None) -> str:
-        label: Optional[str] = None
-        if self.labels:
-            label = (
-                self.labels.get(requestedLanguage) if requestedLanguage else None
-            ) or (
-                self.labels.get(self.taxonomy.defaultLanguage)
-                if self.taxonomy.defaultLanguage
-                else None
-            )
-        return label or self.definition
+    def getLabel(
+        self,
+        requestedLanguage: Optional[str] = None,
+        *,
+        fallbackToDefaultLanguage: bool = True,
+        fallbackToDefinition: bool = True,
+    ) -> str:
+        if requestedLanguage and (label := self.labels.get(requestedLanguage)):
+            return label
+        if (
+            fallbackToDefaultLanguage
+            and (default := self.taxonomy.defaultLanguage)
+            and (label := self.labels.get(default))
+        ):
+            return label
+        if fallbackToDefinition:
+            return self.definition
+        return ""
 
     @classmethod
     def fromJSON(cls, taxonomy: Taxonomy, roleUri: str, metaData: Mapping) -> Self:
@@ -802,6 +832,11 @@ class Taxonomy:
                     f"Ambiguous label specified. Candidate concepts: {', '.join(str(concept.qname) for concept in sorted(possible))}"
                 )
 
+    @cached_property
+    def concepts(self) -> frozenset[Concept]:
+        """All concepts in the taxonomy."""
+        return frozenset(self._concepts.values())
+
     @property
     def presentation(self) -> tuple[PresentationGroup, ...]:
         return self._groups
@@ -1036,3 +1071,12 @@ def _createTaxonomyFromJSON(bits: dict) -> None:
             getObject(getResource(registries, "utr.json")), qnameMaker=qnameMaker
         ),
     )
+
+
+def loadTaxonomyJSON() -> None:
+    """Loads the taxonomies, unit registry and other models."""
+    for f in getJsonFiles(taxonomies):
+        try:
+            _loadTaxonomyFromFile(getObject(f))
+        except Exception as e:
+            logging.error(f"Error loading taxonomy from {f.name}", exc_info=e)

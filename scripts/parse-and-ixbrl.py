@@ -14,6 +14,13 @@ from mireport.arelle.report_info import (
     ARELLE_VERSION_INFORMATION,
     ArelleReportProcessor,
 )
+from mireport.cli import (
+    configure_rich_output,
+    validateTaxonomyPackages,
+)
+from mireport.cli import (
+    console_print as print,
+)
 from mireport.cli import validateTaxonomyPackages
 from mireport.conversionresults import (
     ConversionResults,
@@ -380,11 +387,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    rich.traceback.install(show_locals=False)
-    logging.basicConfig(
-        format="%(message)s",
-        datefmt="[%Y-%m-%d %H:%M:%S]",
-        handlers=[RichHandler(rich_tracebacks=True)],
-    )
-    logging.captureWarnings(True)
+    configure_rich_output()
     main()

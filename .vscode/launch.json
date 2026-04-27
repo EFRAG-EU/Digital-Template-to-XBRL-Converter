@@ -21,6 +21,15 @@
             "args": ["src/mireport/data/taxonomies/vsme.json", "VSME-XBRL-Taxonomy-May-2025.zip"]
         },
         {
+            "name": "pytest (including slow tests)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "args": ["--run-slow", "-v", "tests/integrationTests/"],
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
             "name": "Start Converter Webserver",
             "type": "debugpy",
             "request": "launch",

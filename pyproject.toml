@@ -71,6 +71,7 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 markers = [
     "integration: marks tests as integration tests",
+    "slow: marks tests as slow (deselected by default; pass --run-slow to include)",
 ]
 addopts = [
     "-ra -q",
