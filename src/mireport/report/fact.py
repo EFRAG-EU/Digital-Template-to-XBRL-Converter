@@ -137,56 +137,61 @@ class Fact:
     def __hash__(self) -> int:
         return hash(self.__key())
 
-    def html_format_value(self) -> str:
+    def html_format_value(self) -> Markup:
         """Return the value formatted for HTML with locale-aware numeric formatting."""
         if self.concept.isBoolean:
             match self.value:
                 case True:
-                    output = "YES"
+                    output = escape("YES")
                 case False:
-                    output = "NO"
+                    output = escape("NO")
                 case _:
                     output = escape(self.value)
-        elif not self.concept.isNumeric:
-            if hasattr(self.value, "__html__"):
-                output = Markup(self.value)
-            elif isinstance(self.value, str):
-                output = Markup("<br />").join(
-                    escape(p) for p in self.value.splitlines()
-                )
-            else:
-                output = escape(self.value)
+            return output
+
+        if self.concept.isNumeric:
+            output = self._format_numeric_value()
+            return output
+
+        if hasattr(self.value, "__html__"):
+            output = Markup(self.value)
+        elif isinstance(self.value, str):
+            output = Markup("<br />").join(escape(p) for p in self.value.splitlines())
         else:
-            decimal_places: DecimalPlaces
-            if self._decimals and self._decimals != "INF" and self._numeric_scale:
-                decimal_places = self._decimals + self._numeric_scale
-            else:
-                decimal_places = self._decimals or "INF"
+            output = escape(self.value)
+        return output
 
-            locale = self._report._outputLocale
-            try:
-                match self.value:
-                    case bool():
-                        raise TypeError(
-                            f"Boolean cannot be formatted numerically: {self.value}"
-                        )
-                    case int() | float() | str():
-                        number = self.value
-                    case _:
-                        raise TypeError(
-                            f"Unsupported type for numeric formatting: {type(self.value).__name__}"
-                        )
-                output = localise_and_format_number(number, decimal_places, locale)
-            except (ValueError, TypeError) as e:
-                raise InlineReportException(
-                    f"Unexpected fact value {self.value=} for numeric concept {self.concept=}."
-                ) from e
+    def _format_numeric_value(self) -> Markup:
+        decimal_places: DecimalPlaces
+        if self._decimals and self._decimals != "INF" and self._numeric_scale:
+            decimal_places = self._decimals + self._numeric_scale
+        else:
+            decimal_places = self._decimals or "INF"
 
-            # inline xbrl transforms don't support space characters (e.g.
-            # non-break space) other than space.
-            output = unicodeSpaceNormalize(output)
-            output = escape(output)
-        return Markup(output)
+        try:
+            match self.value:
+                case bool():
+                    raise TypeError(
+                        f"Boolean cannot be formatted numerically: {self.value}"
+                    )
+                case int() | float() | str():
+                    number = self.value
+                case _:
+                    raise TypeError(
+                        f"Unsupported type for numeric formatting: {type(self.value).__name__}"
+                    )
+            output = localise_and_format_number(
+                number, decimal_places, self._report._outputLocale
+            )
+        except (ValueError, TypeError) as e:
+            raise InlineReportException(
+                f"Unexpected fact value {self.value=} for numeric concept {self.concept=}."
+            ) from e
+
+        # inline xbrl transforms don't support space characters (e.g.
+        # non-break space) other than space.
+        output = unicodeSpaceNormalize(output)
+        return escape(output)
 
     def as_aoix(self) -> Markup:
         """Returns the AOIX representation of the fact."""
