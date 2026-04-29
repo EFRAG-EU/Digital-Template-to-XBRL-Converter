@@ -149,7 +149,7 @@ class Fact:
                     output = escape(self.value)
         elif not self.concept.isNumeric:
             if hasattr(self.value, "__html__"):
-                output = self.value
+                output = Markup(self.value)
             elif isinstance(self.value, str):
                 output = Markup("<br />").join(
                     escape(p) for p in self.value.splitlines()
