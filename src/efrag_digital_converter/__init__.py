@@ -57,6 +57,7 @@ ENABLE_CAPTCHA = False
 ENABLE_MIGRATION = False
 MAX_FILE_SIZE = 16 * 2**20  # 16 MiB
 DEPLOYMENT_DATETIME = datetime.now(timezone.utc)
+LOCALE_JSON: list[dict[str, str]]
 
 L = logging.getLogger(__name__)
 

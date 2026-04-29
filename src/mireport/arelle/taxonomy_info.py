@@ -392,7 +392,12 @@ class TaxonomyInfoExtractor:
                 domainHeadConcept,
                 domainMemberRelSet,
             )
-
+            if domainHeadConcept.qname is None:
+                self.cntlr.addToLog(
+                    f"WARNING: {elrUri} Dimension {explicitDimension.qname} has a domain head with no QName. Skipping this domain head and its members.",
+                    level=logging.WARNING,
+                )
+                continue
             rows.append((0, domainHeadConcept.qname, usable))
             self.walkDefinitionChildren(
                 domainHeadConcept, domainMemberRelSet, rows, 1, includeUsable=True
@@ -401,11 +406,11 @@ class TaxonomyInfoExtractor:
 
     def verifyDomainMemberTree(
         self,
-        explicitDimension,
-        hasDefaultedDomainMember,
-        dimensionHasMultipleDimensionDomainRelationships,
-        domainHeadConcept,
-        domainMemberRelSet,
+        explicitDimension: ModelConcept,
+        hasDefaultedDomainMember: bool,
+        dimensionHasMultipleDimensionDomainRelationships: bool,
+        domainHeadConcept: ModelConcept,
+        domainMemberRelSet: ModelRelationshipSet,
     ) -> None:
         outgoing = domainMemberRelSet.fromModelObject(domainHeadConcept)
         incoming = domainMemberRelSet.toModelObject(domainHeadConcept)

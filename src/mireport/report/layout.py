@@ -273,48 +273,9 @@ class ReportLayoutOrganiser:
             columnHeadings: list[Concept | None] = []
             data: list[list[Fact | None]] = []
             explicitDim = None
-            typedQname = None
 
             if len(typedDims) == 1 and not explicitDims:
-                tableStyle = TableStyle.SingleTypedDimensionColumn
-                initialColumnHeadings: list[Concept] = reportable
-                typedQname = f"typed {typedDims[0].qname}"
-
-                tdValues = {
-                    str(fact.aspects[typedQname])
-                    for r in reportable
-                    for fact in self.report.getFacts(r)
-                }
-                prettyTdValues = [
-                    (tidyTdValue(typedValue), typedValue) for typedValue in tdValues
-                ]
-                prettyTdValues.sort(key=lambda x: numeric_string_key(x[0]))
-                for heading, rKey in prettyTdValues:
-                    row: list[None | Fact] = []
-                    for c in initialColumnHeadings:
-                        found = None
-                        for fact in self.report.getFacts(c):
-                            tdValue = fact.aspects.get(typedQname)
-                            if tdValue is not None and tdValue == rKey:
-                                if found is not None:
-                                    L.debug(
-                                        f"Multiple facts found (handle this better) {section.presentation.roleUri=} {tableStyle=}\n{found=}\n{fact=}"
-                                    )
-                                found = fact
-                        row.append(found)
-                    if len(row) != len(initialColumnHeadings):
-                        raise InlineReportException(
-                            f"Failed to fill row correctly {heading}, with {initialColumnHeadings}"
-                        )
-                    row_empty = all(c is None for c in row)
-                    if not row_empty:
-                        data.append(row)
-                        rowHeadings.append(heading)
-
-                # Put the Dimension name as the heading above the row headings which are the domain members.
-                columnHeadings.insert(0, typedDims[0])
-                columnHeadings.extend(reportable)
-
+                tableStyle = self.assembleTypedDimTable(section, typedDims, reportable, rowHeadings, columnHeadings, data)
             elif len(explicitDims) == 1 and not typedDims:
                 explicitDim = explicitDims[0]
                 domain_set = self.taxonomy.getDomainMembersForExplicitDimension(
@@ -328,69 +289,9 @@ class ReportLayoutOrganiser:
                 defaultMember = self.taxonomy.getDimensionDefault(explicitDim)
 
                 if len(domain) <= len(reportable):
-                    tableStyle = TableStyle.SingleExplicitDimensionColumn
-                    initialColumnHeadings = domain
-                    initialRowHeadings = reportable
-
-                    for r in initialRowHeadings:
-                        row: list[None | Fact] = []
-                        for c in initialColumnHeadings:
-                            found = None
-                            for fact in self.report.getFacts(r):
-                                eValue = fact.aspects.get(explicitDim.qname)
-                                if (eValue is None and c == defaultMember) or (
-                                    eValue is not None and eValue == c.qname
-                                ):
-                                    if found is not None:
-                                        L.debug(
-                                            f"Multiple facts found (handle this better) {section.presentation.roleUri=} {tableStyle=}\n{found=}\n{fact=}"
-                                        )
-                                    found = fact
-                            row.append(found)
-                        if len(row) != len(initialColumnHeadings):
-                            raise InlineReportException(
-                                f"Failed to fill row correctly {r}, with {initialColumnHeadings}"
-                            )
-                        row_empty = all(c is None for c in row)
-                        if not row_empty:
-                            data.append(row)
-                            rowHeadings.append(r)
-                    # There is no column heading above the row headings
-                    columnHeadings.insert(0, None)
-                    columnHeadings.extend(domain)
+                    tableStyle = self.assembleDimsAsColumnTable(section, reportable, rowHeadings, columnHeadings, data, explicitDim, domain, defaultMember)
                 else:
-                    tableStyle = TableStyle.SingleExplicitDimensionRow
-                    initialColumnHeadings = reportable
-                    initialRowHeadings = domain
-
-                    for r in initialRowHeadings:
-                        row: list[None | Fact] = []
-                        for c in initialColumnHeadings:
-                            found = None
-                            for fact in self.report.getFacts(c):
-                                eValue = fact.aspects.get(explicitDim.qname)
-                                if (
-                                    (eValue is None and r == defaultMember)
-                                    or eValue is not None
-                                    and eValue == r.qname
-                                ):
-                                    if found is not None:
-                                        L.debug(
-                                            f"Multiple facts found (handle this better) {section.presentation.roleUri=} {tableStyle=}\n{found=}\n{fact=}"
-                                        )
-                                    found = fact
-                            row.append(found)
-                        if len(row) != len(initialColumnHeadings):
-                            raise InlineReportException(
-                                f"Failed to fill row correctly {r}, with {initialColumnHeadings}"
-                            )
-                        row_empty = all(c is None for c in row)
-                        if not row_empty:
-                            data.append(row)
-                            rowHeadings.append(r)
-                    # Put the Dimension name as the heading above the row headings which are the domain members.
-                    columnHeadings.insert(0, explicitDim)
-                    columnHeadings.extend(reportable)
+                    tableStyle = self.assembleDimsAsRowsTable(section, reportable, rowHeadings, columnHeadings, data, explicitDim, domain, defaultMember)
 
             if not data:
                 continue
@@ -519,6 +420,115 @@ class ReportLayoutOrganiser:
             else:
                 merged_sections.append(section)
         self.reportSections = merged_sections
+
+    def assembleDimsAsColumnTable(self, section, reportable, rowHeadings, columnHeadings, data, explicitDim, domain, defaultMember) -> TableStyle:
+        tableStyle = TableStyle.SingleExplicitDimensionColumn
+        initialColumnHeadings = domain
+        initialRowHeadings = reportable
+
+        for r in initialRowHeadings:
+            row: list[None | Fact] = []
+            for c in initialColumnHeadings:
+                found = None
+                for fact in self.report.getFacts(r):
+                    eValue = fact.aspects.get(explicitDim.qname)
+                    if (eValue is None and c == defaultMember) or (
+                                    eValue is not None and eValue == c.qname
+                                ):
+                        if found is not None:
+                            L.debug(
+                                            f"Multiple facts found (handle this better) {section.presentation.roleUri=} {tableStyle=}\n{found=}\n{fact=}"
+                                        )
+                        found = fact
+                row.append(found)
+            if len(row) != len(initialColumnHeadings):
+                raise InlineReportException(
+                                f"Failed to fill row correctly {r}, with {initialColumnHeadings}"
+                            )
+            row_empty = all(c is None for c in row)
+            if not row_empty:
+                data.append(row)
+                rowHeadings.append(r)
+                    # There is no column heading above the row headings
+        columnHeadings.insert(0, None)
+        columnHeadings.extend(domain)
+        return tableStyle
+
+    def assembleDimsAsRowsTable(self, section, reportable, rowHeadings, columnHeadings, data, explicitDim, domain, defaultMember) -> TableStyle:
+        tableStyle = TableStyle.SingleExplicitDimensionRow
+        initialColumnHeadings = reportable
+        initialRowHeadings = domain
+
+        for r in initialRowHeadings:
+            row: list[None | Fact] = []
+            for c in initialColumnHeadings:
+                found = None
+                for fact in self.report.getFacts(c):
+                    eValue = fact.aspects.get(explicitDim.qname)
+                    if (
+                                    (eValue is None and r == defaultMember)
+                                    or eValue is not None
+                                    and eValue == r.qname
+                                ):
+                        if found is not None:
+                            L.debug(
+                                            f"Multiple facts found (handle this better) {section.presentation.roleUri=} {tableStyle=}\n{found=}\n{fact=}"
+                                        )
+                        found = fact
+                row.append(found)
+            if len(row) != len(initialColumnHeadings):
+                raise InlineReportException(
+                                f"Failed to fill row correctly {r}, with {initialColumnHeadings}"
+                            )
+            row_empty = all(c is None for c in row)
+            if not row_empty:
+                data.append(row)
+                rowHeadings.append(r)
+                    # Put the Dimension name as the heading above the row headings which are the domain members.
+        columnHeadings.insert(0, explicitDim)
+        columnHeadings.extend(reportable)
+        return tableStyle
+
+    def assembleTypedDimTable(self, section, typedDims, reportable, rowHeadings, columnHeadings, data) -> TableStyle:
+        tableStyle = TableStyle.SingleTypedDimensionColumn
+        initialColumnHeadings: list[Concept] = reportable
+        typedQname = f"typed {typedDims[0].qname}"
+
+        tdValues = {
+                    str(fact.aspects[typedQname])
+                    for r in reportable
+                    for fact in self.report.getFacts(r)
+                }
+        prettyTdValues = [
+                    (tidyTdValue(typedValue), typedValue) for typedValue in tdValues
+                ]
+        prettyTdValues.sort(key=lambda x: numeric_string_key(x[0]))
+        for heading, rKey in prettyTdValues:
+            row: list[None | Fact] = []
+            for c in initialColumnHeadings:
+                found = None
+                for fact in self.report.getFacts(c):
+                    tdValue = fact.aspects.get(typedQname)
+                    if tdValue is not None and tdValue == rKey:
+                        if found is not None:
+                            L.debug(
+                                        f"Multiple facts found (handle this better) {section.presentation.roleUri=} {tableStyle=}\n{found=}\n{fact=}"
+                                    )
+                        found = fact
+                row.append(found)
+            if len(row) != len(initialColumnHeadings):
+                raise InlineReportException(
+                            f"Failed to fill row correctly {heading}, with {initialColumnHeadings}"
+                        )
+            row_empty = all(c is None for c in row)
+            if not row_empty:
+                data.append(row)
+                rowHeadings.append(heading)
+
+                # Put the Dimension name as the heading above the row headings which are the domain members.
+        columnHeadings.insert(0, typedDims[0])
+        columnHeadings.extend(reportable)
+        return tableStyle
 
     def getTableUnit(self, data: list[list[Fact | None]]) -> Optional[str]:
         units: set[str] = set()
