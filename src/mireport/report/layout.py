@@ -4,7 +4,7 @@ import logging
 from collections import defaultdict
 from dataclasses import dataclass
 from enum import Enum, auto
-from itertools import count
+from itertools import compress, count
 from typing import TYPE_CHECKING, NamedTuple, Optional, cast
 
 from mireport.exceptions import InlineReportException
@@ -313,23 +313,17 @@ class ReportLayoutOrganiser:
             all_numeric = all(col_numeric)
 
             if True in col_empty:
-                new_data = [
-                    [row[cnum] for cnum, empty in enumerate(col_empty) if not empty]
-                    for row in data
-                ]
-                new_columnHeadings = [
-                    ch
-                    for cnum, ch in enumerate(columnHeadings[1:])
-                    if not col_empty[cnum]
-                ]
+                keep = [not e for e in col_empty]
+                new_data = [list(compress(row, keep)) for row in data]
+                new_columnHeadings = list(compress(columnHeadings[1:], keep))
                 assert len(new_columnHeadings) == len(new_data[0]), (
                     f"Expected number of column headings to match number of columns in data. {len(new_columnHeadings)=} {len(new_data[0])=}"
                 )
-                col_numeric = [n for cnum, n in enumerate(col_numeric) if not col_empty[cnum]]
+                col_numeric = list(compress(col_numeric, keep))
                 if columnUnits:
-                    columnUnits = [u for cnum, u in enumerate(columnUnits) if not col_empty[cnum]]
+                    columnUnits = list(compress(columnUnits, keep))
                 if columnPeriods:
-                    columnPeriods = [p for cnum, p in enumerate(columnPeriods) if not col_empty[cnum]]
+                    columnPeriods = list(compress(columnPeriods, keep))
                 columnHeadings = [columnHeadings[0]] + new_columnHeadings
                 data = new_data
 
