@@ -2,15 +2,12 @@ from __future__ import annotations
 
 import logging
 from datetime import date
-from unittest.mock import MagicMock, patch
-
-import pytest
+from unittest.mock import MagicMock
 
 from mireport.report.fact import Fact
 from mireport.report.layout import (
     ReportLayoutOrganiser,
     ReportSection,
-    TabularReportSection,
     TableHeadingCell,
     TableStyle,
     _column_periods,
@@ -30,7 +27,9 @@ from mireport.taxonomy import (
 # ── Test doubles ─────────────────────────────────────────────────────────────
 
 
-def _fact(*, numeric=False, unit=None, period=None, concept=None, aspects=None, value="x"):
+def _fact(
+    *, numeric=False, unit=None, period=None, concept=None, aspects=None, value="x"
+):
     f = MagicMock(spec=Fact)
     f.concept = concept or MagicMock(spec=Concept)
     f.concept.isNumeric = numeric
@@ -457,7 +456,9 @@ class TestAssembleDimsAsColumnTable:
         }
 
         return (
-            explicit_dim, domain, reportable,
+            explicit_dim,
+            domain,
+            reportable,
             [fact_xa, fact_xb, fact_ya, fact_yb],
             facts_map,
         )
@@ -465,31 +466,41 @@ class TestAssembleDimsAsColumnTable:
     def test_returns_correct_table_style(self):
         explicit_dim, domain, reportable, _, facts_map = self._setup()
         o = _organiser(facts_by_concept=facts_map)
-        matrix = o._assemble_explicit_dim_as_columns("[B01.test", reportable, explicit_dim, domain, None)
+        matrix = o._assemble_explicit_dim_as_columns(
+            "[B01.test", reportable, explicit_dim, domain, None
+        )
         assert matrix.style == TableStyle.SingleExplicitDimensionColumn
 
     def test_col_labels(self):
         explicit_dim, domain, reportable, _, facts_map = self._setup()
         o = _organiser(facts_by_concept=facts_map)
-        matrix = o._assemble_explicit_dim_as_columns("[B01.test", reportable, explicit_dim, domain, None)
+        matrix = o._assemble_explicit_dim_as_columns(
+            "[B01.test", reportable, explicit_dim, domain, None
+        )
         assert matrix.col_labels == domain
 
     def test_row_heading_label_is_none(self):
         explicit_dim, domain, reportable, _, facts_map = self._setup()
         o = _organiser(facts_by_concept=facts_map)
-        matrix = o._assemble_explicit_dim_as_columns("[B01.test", reportable, explicit_dim, domain, None)
+        matrix = o._assemble_explicit_dim_as_columns(
+            "[B01.test", reportable, explicit_dim, domain, None
+        )
         assert matrix.row_heading_label is None
 
     def test_row_labels_are_reportable_concepts(self):
         explicit_dim, domain, reportable, _, facts_map = self._setup()
         o = _organiser(facts_by_concept=facts_map)
-        matrix = o._assemble_explicit_dim_as_columns("[B01.test", reportable, explicit_dim, domain, None)
+        matrix = o._assemble_explicit_dim_as_columns(
+            "[B01.test", reportable, explicit_dim, domain, None
+        )
         assert matrix.row_labels == reportable
 
     def test_data_matrix_shape(self):
         explicit_dim, domain, reportable, _, facts_map = self._setup()
         o = _organiser(facts_by_concept=facts_map)
-        matrix = o._assemble_explicit_dim_as_columns("[B01.test", reportable, explicit_dim, domain, None)
+        matrix = o._assemble_explicit_dim_as_columns(
+            "[B01.test", reportable, explicit_dim, domain, None
+        )
         assert len(matrix.data) == 2
         assert len(matrix.data[0]) == len(domain)
 
@@ -499,7 +510,9 @@ class TestAssembleDimsAsColumnTable:
         concept_x = reportable[0]
         facts_map = {concept_x: [], reportable[1]: facts_map[reportable[1]]}
         o = _organiser(facts_by_concept=facts_map)
-        matrix = o._assemble_explicit_dim_as_columns("[B01.test", reportable, explicit_dim, domain, None)
+        matrix = o._assemble_explicit_dim_as_columns(
+            "[B01.test", reportable, explicit_dim, domain, None
+        )
         assert len(matrix.data) == 1
         assert matrix.row_labels == [reportable[1]]
 
@@ -537,25 +550,33 @@ class TestAssembleDimsAsRowsTable:
     def test_returns_correct_table_style(self):
         explicit_dim, domain, reportable, facts_map, _, __ = self._setup()
         o = _organiser(facts_by_concept=facts_map)
-        matrix = o._assemble_explicit_dim_as_rows("[B01.test", reportable, explicit_dim, domain, None)
+        matrix = o._assemble_explicit_dim_as_rows(
+            "[B01.test", reportable, explicit_dim, domain, None
+        )
         assert matrix.style == TableStyle.SingleExplicitDimensionRow
 
     def test_col_labels_are_reportable(self):
         explicit_dim, domain, reportable, facts_map, _, __ = self._setup()
         o = _organiser(facts_by_concept=facts_map)
-        matrix = o._assemble_explicit_dim_as_rows("[B01.test", reportable, explicit_dim, domain, None)
+        matrix = o._assemble_explicit_dim_as_rows(
+            "[B01.test", reportable, explicit_dim, domain, None
+        )
         assert matrix.col_labels == reportable
 
     def test_row_heading_label_is_explicit_dim(self):
         explicit_dim, domain, reportable, facts_map, _, __ = self._setup()
         o = _organiser(facts_by_concept=facts_map)
-        matrix = o._assemble_explicit_dim_as_rows("[B01.test", reportable, explicit_dim, domain, None)
+        matrix = o._assemble_explicit_dim_as_rows(
+            "[B01.test", reportable, explicit_dim, domain, None
+        )
         assert matrix.row_heading_label is explicit_dim
 
     def test_row_labels_are_domain_members(self):
         explicit_dim, domain, reportable, facts_map, member_a, _ = self._setup()
         o = _organiser(facts_by_concept=facts_map)
-        matrix = o._assemble_explicit_dim_as_rows("[B01.test", reportable, explicit_dim, domain, None)
+        matrix = o._assemble_explicit_dim_as_rows(
+            "[B01.test", reportable, explicit_dim, domain, None
+        )
         assert member_a in matrix.row_labels
 
     def test_empty_rows_excluded(self):
@@ -566,7 +587,9 @@ class TestAssembleDimsAsRowsTable:
         fact_xa = _fact(aspects={explicit_dim.qname: "qname:member_a"})
         facts_map = {concept_x: [fact_xa], concept_y: []}
         o = _organiser(facts_by_concept=facts_map)
-        matrix = o._assemble_explicit_dim_as_rows("[B01.test", reportable, explicit_dim, domain, None)
+        matrix = o._assemble_explicit_dim_as_rows(
+            "[B01.test", reportable, explicit_dim, domain, None
+        )
         assert member_b not in matrix.row_labels
 
 
@@ -620,7 +643,7 @@ class TestAssembleTypedDimTable:
         o = _organiser(facts_by_concept=facts_map)
         matrix = o._assemble_typed_dim("[B01.test", [typed_dim], reportable)
         assert len(matrix.data) == 2
-        assert matrix.row_labels[0] == "2"   # tidyTdValue extracts the inner text
+        assert matrix.row_labels[0] == "2"  # tidyTdValue extracts the inner text
         assert matrix.row_labels[1] == "10"
 
     def test_empty_rows_excluded(self):

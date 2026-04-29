@@ -4,8 +4,8 @@ import logging
 from collections import defaultdict
 from dataclasses import dataclass
 from enum import Enum, auto
-from itertools import compress, count
-from typing import TYPE_CHECKING, NamedTuple, Optional, cast
+from itertools import compress
+from typing import TYPE_CHECKING, NamedTuple, cast
 
 from mireport.exceptions import InlineReportException
 from mireport.report.fact import Fact, numeric_string_key, tidyTdValue
@@ -27,6 +27,8 @@ _TableHeadingValue = Concept | Relationship | _Period | str | None
 
 
 class TableHeadingCell(NamedTuple):
+    """A single cell in a table header row, carrying its value, span, and numeric flag."""
+
     value: _TableHeadingValue
     colspan: int = 0
     rowspan: int = 0
@@ -54,6 +56,8 @@ class TableHeadingCell(NamedTuple):
 
 
 class TableStyle(Enum):
+    """How a tabular section's rows and columns are derived from taxonomy dimensions."""
+
     SingleTypedDimensionColumn = auto()
     SingleExplicitDimensionColumn = auto()
     SingleExplicitDimensionRow = auto()
@@ -63,18 +67,24 @@ class TableStyle(Enum):
 
 @dataclass(slots=True, frozen=True)
 class TableCell:
+    """A single data cell: the fact it holds (or None) and whether its unit is already shown elsewhere."""
+
     fact: Fact | None
     suppress_unit: bool
 
 
 @dataclass(slots=True, frozen=True)
 class TableRow:
+    """One row of a table: a row-heading cell and the ordered data cells across all columns."""
+
     heading: TableHeadingCell
     cells: list[TableCell]
 
 
 @dataclass(slots=True, frozen=True)
 class Table:
+    """The fully assembled table ready for the template: header rows, data rows, and display metadata."""
+
     style: TableStyle
     numeric: bool
     header_rows: list[list[TableHeadingCell]]
@@ -86,7 +96,9 @@ class Table:
 
 
 @dataclass(frozen=True, slots=True)
-class _DataMatrix:
+class _FactGrid:
+    """Intermediate representation produced by the assemble methods: facts organised into a row/column grid with labels, before header rows and display metadata are computed."""
+
     style: TableStyle
     data: list[list[Fact | None]]
     row_labels: list[Concept | str]
@@ -96,6 +108,8 @@ class _DataMatrix:
 
 @dataclass(slots=True, frozen=True, eq=True)
 class ReportSection:
+    """A presentation group together with the facts assigned to each of its relationships."""
+
     relationshipToFact: dict[Relationship, list[Fact]]
     presentation: PresentationGroup
 
@@ -128,9 +142,7 @@ class TabularReportSection(ReportSection):
     @property
     def hasFacts(self) -> bool:
         return any(
-            cell.fact is not None
-            for row in self.table.rows
-            for cell in row.cells
+            cell.fact is not None for row in self.table.rows for cell in row.cells
         )
 
 
@@ -161,7 +173,7 @@ def _table_period(data: list[list[Fact | None]]) -> _Period | None:
 
 def _column_units(data: list[list[Fact | None]]) -> list[str | None]:
     col_units_map: dict[int, set[str]] = defaultdict(set)
-    num_cols = max((len(row) for row in data), default=0)
+    num_cols = len(data[0]) if data else 0
     for row in data:
         for col, fact in enumerate(row):
             if fact is not None and fact.concept.isNumeric:
@@ -182,7 +194,7 @@ def _column_units(data: list[list[Fact | None]]) -> list[str | None]:
 
 def _column_periods(data: list[list[Fact | None]]) -> list[_Period | None]:
     col_periods_map: dict[int, set[_Period]] = defaultdict(set)
-    num_cols = max((len(row) for row in data), default=0)
+    num_cols = len(data[0]) if data else 0
     for row in data:
         for col, fact in enumerate(row):
             if fact is not None:
@@ -209,18 +221,18 @@ def _column_flags(
 
 
 def _drop_empty_columns(
-    matrix: _DataMatrix,
+    grid: _FactGrid,
     col_empty: list[bool],
     col_numeric: list[bool],
-) -> tuple[_DataMatrix, list[bool]]:
+) -> tuple[_FactGrid, list[bool]]:
     keep = [not e for e in col_empty]
     return (
-        _DataMatrix(
-            style=matrix.style,
-            data=[list(compress(row, keep)) for row in matrix.data],
-            row_labels=matrix.row_labels,
-            row_heading_label=matrix.row_heading_label,
-            col_labels=list(compress(matrix.col_labels, keep)),
+        _FactGrid(
+            style=grid.style,
+            data=[list(compress(row, keep)) for row in grid.data],
+            row_labels=grid.row_labels,
+            row_heading_label=grid.row_heading_label,
+            col_labels=list(compress(grid.col_labels, keep)),
         ),
         list(compress(col_numeric, keep)),
     )
@@ -237,43 +249,48 @@ def _build_header_rows(
     column_periods: list[_Period | None],
 ) -> list[list[TableHeadingCell]]:
     max_cols = max(1, len(col_labels))
-    hrows: dict[int, list[TableHeadingCell]] = defaultdict(list)
-    row_counter = count()
+    hrows: list[list[TableHeadingCell]] = []
     if table_period:
-        hrows[next(row_counter)].append(
-            TableHeadingCell(table_period, colspan=max_cols, rowspan=1)
-        )
+        hrows.append([TableHeadingCell(table_period, colspan=max_cols, rowspan=1)])
     if table_unit:
-        hrows[next(row_counter)].append(
-            TableHeadingCell(table_unit, colspan=max_cols, rowspan=1, numeric=True)
+        hrows.append(
+            [TableHeadingCell(table_unit, colspan=max_cols, rowspan=1, numeric=True)]
         )
-    row_num = next(row_counter)
-    for cnum, col in enumerate(col_labels):
-        hrows[row_num].append(
-            TableHeadingCell(col, colspan=1, rowspan=1, numeric=all_numeric or col_numeric[cnum])
-        )
+    hrows.append(
+        [
+            TableHeadingCell(
+                col, colspan=1, rowspan=1, numeric=all_numeric or col_numeric[cnum]
+            )
+            for cnum, col in enumerate(col_labels)
+        ]
+    )
     if not table_period and column_periods:
-        row_num = next(row_counter)
-        for cnum, cp in enumerate(column_periods):
-            hrows[row_num].append(
-                TableHeadingCell(cp, colspan=1, rowspan=1, numeric=all_numeric or col_numeric[cnum])
-            )
+        hrows.append(
+            [
+                TableHeadingCell(
+                    cp, colspan=1, rowspan=1, numeric=all_numeric or col_numeric[cnum]
+                )
+                for cnum, cp in enumerate(column_periods)
+            ]
+        )
     if not table_unit and column_units:
-        row_num = next(row_counter)
-        for cnum, cu in enumerate(column_units):
-            hrows[row_num].append(
-                TableHeadingCell(cu, colspan=1, rowspan=1, numeric=all_numeric or col_numeric[cnum])
-            )
+        hrows.append(
+            [
+                TableHeadingCell(
+                    cu, colspan=1, rowspan=1, numeric=all_numeric or col_numeric[cnum]
+                )
+                for cnum, cu in enumerate(column_units)
+            ]
+        )
     if hrows:
         hrows[0].insert(
-            0,
-            TableHeadingCell(row_heading_label, colspan=1, rowspan=len(hrows)),
+            0, TableHeadingCell(row_heading_label, colspan=1, rowspan=len(hrows))
         )
-    return [hrow for hrow in hrows.values() if not all(c.value is None for c in hrow)]
+    return [hrow for hrow in hrows if not all(c.value is None for c in hrow)]
 
 
 def _build_table_rows(
-    matrix: _DataMatrix,
+    grid: _FactGrid,
     table_unit: str | None,
     column_units: list[str | None],
 ) -> list[TableRow]:
@@ -291,7 +308,7 @@ def _build_table_rows(
                 for j, fact in enumerate(raw_row)
             ],
         )
-        for rh, raw_row in zip(matrix.row_labels, matrix.data)
+        for rh, raw_row in zip(grid.row_labels, grid.data)
     ]
 
 
@@ -365,7 +382,7 @@ class ReportLayoutOrganiser:
                 inconsistent_duplicates = [
                     f
                     for f in others
-                    if frozenset(f.aspects.items()) == u_aspects and f.value != u.value
+                    if frozenset(f.aspects.items()) == u_aspects and f.value != u.value  # type: ignore[operator]
                 ]
                 processed.add(u)
                 processed.update(inconsistent_duplicates)
@@ -427,22 +444,30 @@ class ReportLayoutOrganiser:
                 )
 
             typedDims = [
-                r.concept for r in section.presentation.relationships if r.concept.isTypedDimension
+                r.concept
+                for r in section.presentation.relationships
+                if r.concept.isTypedDimension
             ]
             explicitDims = [
-                r.concept for r in section.presentation.relationships if r.concept.isExplicitDimension
+                r.concept
+                for r in section.presentation.relationships
+                if r.concept.isExplicitDimension
             ]
             reportable = [
-                r.concept for r in section.presentation.relationships if r.concept.isReportable
+                r.concept
+                for r in section.presentation.relationships
+                if r.concept.isReportable
             ]
             roleUri = section.presentation.roleUri
 
-            matrix: _DataMatrix | None = None
+            grid: _FactGrid | None = None
             if len(typedDims) == 1 and not explicitDims:
-                matrix = self._assemble_typed_dim(roleUri, typedDims, reportable)
+                grid = self._assemble_typed_dim(roleUri, typedDims, reportable)
             elif len(explicitDims) == 1 and not typedDims:
                 explicitDim = explicitDims[0]
-                domain_set = self.taxonomy.getDomainMembersForExplicitDimension(explicitDim)
+                domain_set = self.taxonomy.getDomainMembersForExplicitDimension(
+                    explicitDim
+                )
                 domain: list[Concept] = [
                     rel.concept
                     for rel in section.presentation.relationships
@@ -450,34 +475,43 @@ class ReportLayoutOrganiser:
                 ]
                 defaultMember = self.taxonomy.getDimensionDefault(explicitDim)
                 if len(domain) <= len(reportable):
-                    matrix = self._assemble_explicit_dim_as_columns(roleUri, reportable, explicitDim, domain, defaultMember)
+                    grid = self._assemble_explicit_dim_as_columns(
+                        roleUri, reportable, explicitDim, domain, defaultMember
+                    )
                 else:
-                    matrix = self._assemble_explicit_dim_as_rows(roleUri, reportable, explicitDim, domain, defaultMember)
+                    grid = self._assemble_explicit_dim_as_rows(
+                        roleUri, reportable, explicitDim, domain, defaultMember
+                    )
 
-            if matrix is None or not matrix.data:
+            if grid is None or not grid.data:
                 continue
 
-            col_empty, col_numeric, all_numeric = _column_flags(matrix.data)
+            col_empty, col_numeric, all_numeric = _column_flags(grid.data)
             if True in col_empty:
-                matrix, col_numeric = _drop_empty_columns(matrix, col_empty, col_numeric)
+                grid, col_numeric = _drop_empty_columns(grid, col_empty, col_numeric)
 
-            table_unit = _table_unit(matrix.data)
-            table_period = _table_period(matrix.data)
-            col_units = _column_units(matrix.data)
-            col_periods = _column_periods(matrix.data)
+            table_unit = _table_unit(grid.data)
+            table_period = _table_period(grid.data)
+            col_units = _column_units(grid.data)
+            col_periods = _column_periods(grid.data)
 
             header_rows = _build_header_rows(
-                matrix.row_heading_label, matrix.col_labels,
-                col_numeric, all_numeric,
-                table_unit, table_period, col_units, col_periods,
+                grid.row_heading_label,
+                grid.col_labels,
+                col_numeric,
+                all_numeric,
+                table_unit,
+                table_period,
+                col_units,
+                col_periods,
             )
-            table_rows = _build_table_rows(matrix, table_unit, col_units)
+            table_rows = _build_table_rows(grid, table_unit, col_units)
 
             table_sections[roleUri] = TabularReportSection(
                 relationshipToFact=section.relationshipToFact,
                 presentation=section.presentation,
                 table=Table(
-                    style=matrix.style,
+                    style=grid.style,
                     numeric=all_numeric,
                     header_rows=header_rows,
                     rows=table_rows,
@@ -504,7 +538,7 @@ class ReportLayoutOrganiser:
         explicitDim: Concept,
         domain: list[Concept],
         defaultMember: Concept | None,
-    ) -> _DataMatrix:
+    ) -> _FactGrid:
         data: list[list[Fact | None]] = []
         row_labels: list[Concept | str] = []
         for r in reportable:
@@ -529,7 +563,7 @@ class ReportLayoutOrganiser:
             if not all(c is None for c in row):
                 data.append(row)
                 row_labels.append(r)
-        return _DataMatrix(
+        return _FactGrid(
             style=TableStyle.SingleExplicitDimensionColumn,
             data=data,
             row_labels=row_labels,
@@ -544,7 +578,7 @@ class ReportLayoutOrganiser:
         explicitDim: Concept,
         domain: list[Concept],
         defaultMember: Concept | None,
-    ) -> _DataMatrix:
+    ) -> _FactGrid:
         data: list[list[Fact | None]] = []
         row_labels: list[Concept | str] = []
         for r in domain:
@@ -569,7 +603,7 @@ class ReportLayoutOrganiser:
             if not all(c is None for c in row):
                 data.append(row)
                 row_labels.append(r)
-        return _DataMatrix(
+        return _FactGrid(
             style=TableStyle.SingleExplicitDimensionRow,
             data=data,
             row_labels=row_labels,
@@ -582,7 +616,7 @@ class ReportLayoutOrganiser:
         roleUri: str,
         typedDims: list[Concept],
         reportable: list[Concept],
-    ) -> _DataMatrix:
+    ) -> _FactGrid:
         typed_qname = f"typed {typedDims[0].qname}"
         td_values = {
             str(fact.aspects[typed_qname])
@@ -614,7 +648,7 @@ class ReportLayoutOrganiser:
             if not all(c is None for c in row):
                 data.append(row)
                 row_labels.append(heading)
-        return _DataMatrix(
+        return _FactGrid(
             style=TableStyle.SingleTypedDimensionColumn,
             data=data,
             row_labels=row_labels,
