@@ -13,6 +13,10 @@ from mireport.report.layout import (
     TabularReportSection,
     TableHeadingCell,
     TableStyle,
+    _column_periods,
+    _column_units,
+    _table_period,
+    _table_unit,
 )
 from mireport.report.periods import DurationPeriodHolder, InstantPeriodHolder
 from mireport.taxonomy import (
@@ -109,154 +113,142 @@ class TestTableHeadingCell:
         assert not cell.isConcept
 
 
-# ── getTableUnit ──────────────────────────────────────────────────────────────
+# ── _table_unit ───────────────────────────────────────────────────────────────
 
 
 class TestGetTableUnit:
-    def _call(self, data):
-        return _organiser().getTableUnit(data)
-
     def test_empty_data(self):
-        assert self._call([]) is None
+        assert _table_unit([]) is None
 
     def test_all_none(self):
-        assert self._call([[None, None]]) is None
+        assert _table_unit([[None, None]]) is None
 
     def test_single_numeric_fact(self):
         f = _fact(numeric=True, unit="EUR")
-        assert self._call([[f]]) == "EUR"
+        assert _table_unit([[f]]) == "EUR"
 
     def test_two_facts_same_unit(self):
         f1 = _fact(numeric=True, unit="EUR")
         f2 = _fact(numeric=True, unit="EUR")
-        assert self._call([[f1], [f2]]) == "EUR"
+        assert _table_unit([[f1], [f2]]) == "EUR"
 
     def test_two_facts_different_units(self):
         f1 = _fact(numeric=True, unit="EUR")
         f2 = _fact(numeric=True, unit="USD")
-        assert self._call([[f1, f2]]) is None
+        assert _table_unit([[f1, f2]]) is None
 
     def test_empty_string_unit_returns_none(self):
         f = _fact(numeric=True, unit="")
-        assert self._call([[f]]) is None
+        assert _table_unit([[f]]) is None
 
     def test_non_numeric_facts_ignored(self):
         f = _fact(numeric=False, unit=None)
-        assert self._call([[f]]) is None
+        assert _table_unit([[f]]) is None
 
     def test_mix_numeric_and_non_numeric(self):
         f_num = _fact(numeric=True, unit="EUR")
         f_text = _fact(numeric=False, unit=None)
-        assert self._call([[f_num, f_text]]) == "EUR"
+        assert _table_unit([[f_num, f_text]]) == "EUR"
 
 
-# ── getTablePeriod ────────────────────────────────────────────────────────────
+# ── _table_period ─────────────────────────────────────────────────────────────
 
 
 class TestGetTablePeriod:
-    def _call(self, data):
-        return _organiser().getTablePeriod(data)
-
     def test_empty_data(self):
-        assert self._call([]) is None
+        assert _table_period([]) is None
 
     def test_all_none(self):
-        assert self._call([[None]]) is None
+        assert _table_period([[None]]) is None
 
     def test_single_period(self):
         f = _fact(period=_DUR)
-        assert self._call([[f]]) == _DUR
+        assert _table_period([[f]]) == _DUR
 
     def test_two_facts_same_period(self):
         f1 = _fact(period=_DUR)
         f2 = _fact(period=_DUR)
-        assert self._call([[f1], [f2]]) == _DUR
+        assert _table_period([[f1], [f2]]) == _DUR
 
     def test_two_facts_different_periods(self):
         f1 = _fact(period=_DUR)
         f2 = _fact(period=_INST)
-        assert self._call([[f1, f2]]) is None
+        assert _table_period([[f1, f2]]) is None
 
 
-# ── getColumnUnits ────────────────────────────────────────────────────────────
+# ── _column_units ─────────────────────────────────────────────────────────────
 
 
 class TestGetColumnUnits:
-    def _call(self, data):
-        return _organiser().getColumnUnits(data)
-
     def test_empty_data(self):
-        assert self._call([]) == []
+        assert _column_units([]) == []
 
     def test_single_column_with_unit(self):
         f = _fact(numeric=True, unit="EUR")
-        assert self._call([[f]]) == ["EUR"]
+        assert _column_units([[f]]) == ["EUR"]
 
     def test_all_none_returns_empty_list(self):
-        assert self._call([[None]]) == []
+        assert _column_units([[None]]) == []
 
     def test_mixed_units_in_column_returns_empty_list(self):
         # mixed units → column is None → all-None short-circuit → []
         f1 = _fact(numeric=True, unit="EUR")
         f2 = _fact(numeric=True, unit="USD")
-        assert self._call([[f1], [f2]]) == []
+        assert _column_units([[f1], [f2]]) == []
 
     def test_partial_none_columns_preserved(self):
         # first column has a unit, second has no numeric facts → [unit, None]
         f_eur = _fact(numeric=True, unit="EUR")
         f_text = _fact(numeric=False)
-        assert self._call([[f_eur, f_text]]) == ["EUR", None]
+        assert _column_units([[f_eur, f_text]]) == ["EUR", None]
 
     def test_two_columns_different_units(self):
         f_eur = _fact(numeric=True, unit="EUR")
         f_usd = _fact(numeric=True, unit="USD")
-        result = self._call([[f_eur, f_usd]])
+        result = _column_units([[f_eur, f_usd]])
         assert result == ["EUR", "USD"]
 
     def test_empty_string_unit_treated_as_none(self):
         f = _fact(numeric=True, unit="")
-        assert self._call([[f]]) == []
+        assert _column_units([[f]]) == []
 
     def test_non_numeric_column_gives_none(self):
         f = _fact(numeric=False, unit=None)
-        result = self._call([[f]])
+        result = _column_units([[f]])
         assert result == []
 
 
-# ── getColumnPeriods ──────────────────────────────────────────────────────────
+# ── _column_periods ───────────────────────────────────────────────────────────
 
 
 class TestGetColumnPeriods:
-    def _call(self, data):
-        return _organiser().getColumnPeriods(data)
-
     def test_empty_data(self):
-        assert self._call([]) == []
+        assert _column_periods([]) == []
 
     def test_single_column_with_period(self):
         f = _fact(period=_DUR)
-        assert self._call([[f]]) == [_DUR]
+        assert _column_periods([[f]]) == [_DUR]
 
     def test_all_none_returns_empty_list(self):
-        assert self._call([[None]]) == []
+        assert _column_periods([[None]]) == []
 
     def test_mixed_periods_in_column_returns_empty_list(self):
         # mixed periods → column is None → all-None short-circuit → []
         f1 = _fact(period=_DUR)
         f2 = _fact(period=_INST)
-        assert self._call([[f1], [f2]]) == []
+        assert _column_periods([[f1], [f2]]) == []
 
     def test_two_columns_different_periods(self):
         f_dur = _fact(period=_DUR)
         f_inst = _fact(period=_INST)
-        result = self._call([[f_dur, f_inst]])
+        result = _column_periods([[f_dur, f_inst]])
         assert result == [_DUR, _INST]
 
     def test_partial_none_columns_preserved(self):
         # second column has no facts → [_DUR, None]
         f_dur = _fact(period=_DUR)
         f_none: Fact | None = None
-        result = self._call([[f_dur, f_none]])
+        result = _column_periods([[f_dur, f_none]])
         assert result == [_DUR, None]
 
 
@@ -434,7 +426,7 @@ class TestCreateReportSections:
         assert dimensional in included
 
 
-# ── assembleDimsAsColumnTable ─────────────────────────────────────────────────
+# ── _assemble_explicit_dim_as_columns ─────────────────────────────────────────
 
 
 class TestAssembleDimsAsColumnTable:
@@ -473,43 +465,33 @@ class TestAssembleDimsAsColumnTable:
     def test_returns_correct_table_style(self):
         explicit_dim, domain, reportable, _, facts_map = self._setup()
         o = _organiser(facts_by_concept=facts_map)
-        section = _section("[B01.test", PresentationStyle.Table)
-        style = o.assembleDimsAsColumnTable(
-            section, reportable, [], [], [], explicit_dim, domain, None
-        )
-        assert style == TableStyle.SingleExplicitDimensionColumn
+        matrix = o._assemble_explicit_dim_as_columns("[B01.test", reportable, explicit_dim, domain, None)
+        assert matrix.style == TableStyle.SingleExplicitDimensionColumn
 
-    def test_column_headings_layout(self):
+    def test_col_labels(self):
         explicit_dim, domain, reportable, _, facts_map = self._setup()
         o = _organiser(facts_by_concept=facts_map)
-        section = _section("[B01.test", PresentationStyle.Table)
-        columnHeadings: list = []
-        o.assembleDimsAsColumnTable(
-            section, reportable, [], columnHeadings, [], explicit_dim, domain, None
-        )
-        assert columnHeadings[0] is None
-        assert columnHeadings[1:] == domain
+        matrix = o._assemble_explicit_dim_as_columns("[B01.test", reportable, explicit_dim, domain, None)
+        assert matrix.col_labels == domain
 
-    def test_row_headings_are_reportable_concepts(self):
+    def test_row_heading_label_is_none(self):
         explicit_dim, domain, reportable, _, facts_map = self._setup()
         o = _organiser(facts_by_concept=facts_map)
-        section = _section("[B01.test", PresentationStyle.Table)
-        rowHeadings: list = []
-        o.assembleDimsAsColumnTable(
-            section, reportable, rowHeadings, [], [], explicit_dim, domain, None
-        )
-        assert rowHeadings == reportable
+        matrix = o._assemble_explicit_dim_as_columns("[B01.test", reportable, explicit_dim, domain, None)
+        assert matrix.row_heading_label is None
+
+    def test_row_labels_are_reportable_concepts(self):
+        explicit_dim, domain, reportable, _, facts_map = self._setup()
+        o = _organiser(facts_by_concept=facts_map)
+        matrix = o._assemble_explicit_dim_as_columns("[B01.test", reportable, explicit_dim, domain, None)
+        assert matrix.row_labels == reportable
 
     def test_data_matrix_shape(self):
         explicit_dim, domain, reportable, _, facts_map = self._setup()
         o = _organiser(facts_by_concept=facts_map)
-        section = _section("[B01.test", PresentationStyle.Table)
-        data: list = []
-        o.assembleDimsAsColumnTable(
-            section, reportable, [], [], data, explicit_dim, domain, None
-        )
-        assert len(data) == 2
-        assert len(data[0]) == len(domain)
+        matrix = o._assemble_explicit_dim_as_columns("[B01.test", reportable, explicit_dim, domain, None)
+        assert len(matrix.data) == 2
+        assert len(matrix.data[0]) == len(domain)
 
     def test_empty_rows_excluded(self):
         explicit_dim, domain, reportable, _, facts_map = self._setup()
@@ -517,17 +499,12 @@ class TestAssembleDimsAsColumnTable:
         concept_x = reportable[0]
         facts_map = {concept_x: [], reportable[1]: facts_map[reportable[1]]}
         o = _organiser(facts_by_concept=facts_map)
-        section = _section("[B01.test", PresentationStyle.Table)
-        data: list = []
-        rowHeadings: list = []
-        o.assembleDimsAsColumnTable(
-            section, reportable, rowHeadings, [], data, explicit_dim, domain, None
-        )
-        assert len(data) == 1
-        assert rowHeadings == [reportable[1]]
+        matrix = o._assemble_explicit_dim_as_columns("[B01.test", reportable, explicit_dim, domain, None)
+        assert len(matrix.data) == 1
+        assert matrix.row_labels == [reportable[1]]
 
 
-# ── assembleDimsAsRowsTable ───────────────────────────────────────────────────
+# ── _assemble_explicit_dim_as_rows ────────────────────────────────────────────
 
 
 class TestAssembleDimsAsRowsTable:
@@ -548,9 +525,7 @@ class TestAssembleDimsAsRowsTable:
         reportable = [concept_x, concept_y]
 
         fact_xa = _fact(aspects={dim_qname: "qname:member_a"})
-        fact_xb = _fact(aspects={dim_qname: "qname:member_b"})  # noqa: F841
         fact_ya = _fact(aspects={dim_qname: "qname:member_a"})
-        fact_yb = _fact(aspects={dim_qname: "qname:member_b"})  # noqa: F841
 
         facts_map = {
             concept_x: [fact_xa],
@@ -562,33 +537,26 @@ class TestAssembleDimsAsRowsTable:
     def test_returns_correct_table_style(self):
         explicit_dim, domain, reportable, facts_map, _, __ = self._setup()
         o = _organiser(facts_by_concept=facts_map)
-        section = _section("[B01.test", PresentationStyle.Table)
-        style = o.assembleDimsAsRowsTable(
-            section, reportable, [], [], [], explicit_dim, domain, None
-        )
-        assert style == TableStyle.SingleExplicitDimensionRow
+        matrix = o._assemble_explicit_dim_as_rows("[B01.test", reportable, explicit_dim, domain, None)
+        assert matrix.style == TableStyle.SingleExplicitDimensionRow
 
-    def test_column_headings_layout(self):
+    def test_col_labels_are_reportable(self):
         explicit_dim, domain, reportable, facts_map, _, __ = self._setup()
         o = _organiser(facts_by_concept=facts_map)
-        section = _section("[B01.test", PresentationStyle.Table)
-        columnHeadings: list = []
-        o.assembleDimsAsRowsTable(
-            section, reportable, [], columnHeadings, [], explicit_dim, domain, None
-        )
-        assert columnHeadings[0] is explicit_dim
-        assert columnHeadings[1:] == reportable
+        matrix = o._assemble_explicit_dim_as_rows("[B01.test", reportable, explicit_dim, domain, None)
+        assert matrix.col_labels == reportable
 
-    def test_row_headings_are_domain_members(self):
+    def test_row_heading_label_is_explicit_dim(self):
+        explicit_dim, domain, reportable, facts_map, _, __ = self._setup()
+        o = _organiser(facts_by_concept=facts_map)
+        matrix = o._assemble_explicit_dim_as_rows("[B01.test", reportable, explicit_dim, domain, None)
+        assert matrix.row_heading_label is explicit_dim
+
+    def test_row_labels_are_domain_members(self):
         explicit_dim, domain, reportable, facts_map, member_a, _ = self._setup()
         o = _organiser(facts_by_concept=facts_map)
-        section = _section("[B01.test", PresentationStyle.Table)
-        rowHeadings: list = []
-        data: list = []
-        o.assembleDimsAsRowsTable(
-            section, reportable, rowHeadings, [], data, explicit_dim, domain, None
-        )
-        assert member_a in rowHeadings
+        matrix = o._assemble_explicit_dim_as_rows("[B01.test", reportable, explicit_dim, domain, None)
+        assert member_a in matrix.row_labels
 
     def test_empty_rows_excluded(self):
         explicit_dim, domain, reportable, _, member_a, member_b = self._setup()
@@ -598,16 +566,11 @@ class TestAssembleDimsAsRowsTable:
         fact_xa = _fact(aspects={explicit_dim.qname: "qname:member_a"})
         facts_map = {concept_x: [fact_xa], concept_y: []}
         o = _organiser(facts_by_concept=facts_map)
-        section = _section("[B01.test", PresentationStyle.Table)
-        rowHeadings: list = []
-        data: list = []
-        o.assembleDimsAsRowsTable(
-            section, reportable, rowHeadings, [], data, explicit_dim, domain, None
-        )
-        assert member_b not in rowHeadings
+        matrix = o._assemble_explicit_dim_as_rows("[B01.test", reportable, explicit_dim, domain, None)
+        assert member_b not in matrix.row_labels
 
 
-# ── assembleTypedDimTable ─────────────────────────────────────────────────────
+# ── _assemble_typed_dim ───────────────────────────────────────────────────────
 
 
 class TestAssembleTypedDimTable:
@@ -637,31 +600,28 @@ class TestAssembleTypedDimTable:
     def test_returns_correct_table_style(self):
         typed_dim, reportable, facts_map, _, __ = self._setup()
         o = _organiser(facts_by_concept=facts_map)
-        section = _section("[B01.test", PresentationStyle.Table)
-        style = o.assembleTypedDimTable(
-            section, [typed_dim], reportable, [], [], []
-        )
-        assert style == TableStyle.SingleTypedDimensionColumn
+        matrix = o._assemble_typed_dim("[B01.test", [typed_dim], reportable)
+        assert matrix.style == TableStyle.SingleTypedDimensionColumn
 
-    def test_column_headings_layout(self):
+    def test_col_labels_are_reportable(self):
         typed_dim, reportable, facts_map, _, __ = self._setup()
         o = _organiser(facts_by_concept=facts_map)
-        section = _section("[B01.test", PresentationStyle.Table)
-        columnHeadings: list = []
-        o.assembleTypedDimTable(section, [typed_dim], reportable, [], columnHeadings, [])
-        assert columnHeadings[0] is typed_dim
-        assert columnHeadings[1:] == reportable
+        matrix = o._assemble_typed_dim("[B01.test", [typed_dim], reportable)
+        assert matrix.col_labels == reportable
+
+    def test_row_heading_label_is_typed_dim(self):
+        typed_dim, reportable, facts_map, _, __ = self._setup()
+        o = _organiser(facts_by_concept=facts_map)
+        matrix = o._assemble_typed_dim("[B01.test", [typed_dim], reportable)
+        assert matrix.row_heading_label is typed_dim
 
     def test_rows_sorted_numerically(self):
         typed_dim, reportable, facts_map, val_2, val_10 = self._setup()
         o = _organiser(facts_by_concept=facts_map)
-        section = _section("[B01.test", PresentationStyle.Table)
-        rowHeadings: list = []
-        data: list = []
-        o.assembleTypedDimTable(section, [typed_dim], reportable, rowHeadings, [], data)
-        assert len(data) == 2
-        assert rowHeadings[0] == "2"   # tidyTdValue extracts the inner text
-        assert rowHeadings[1] == "10"
+        matrix = o._assemble_typed_dim("[B01.test", [typed_dim], reportable)
+        assert len(matrix.data) == 2
+        assert matrix.row_labels[0] == "2"   # tidyTdValue extracts the inner text
+        assert matrix.row_labels[1] == "10"
 
     def test_empty_rows_excluded(self):
         typed_dim, reportable, facts_map, val_2, val_10 = self._setup()
@@ -671,9 +631,6 @@ class TestAssembleTypedDimTable:
         # No val_10 facts at all
         facts_map = {concept_x: [fact_x2], concept_y: []}
         o = _organiser(facts_by_concept=facts_map)
-        section = _section("[B01.test", PresentationStyle.Table)
-        rowHeadings: list = []
-        data: list = []
-        o.assembleTypedDimTable(section, [typed_dim], reportable, rowHeadings, [], data)
-        assert len(data) == 1
-        assert rowHeadings == ["2"]
+        matrix = o._assemble_typed_dim("[B01.test", [typed_dim], reportable)
+        assert len(matrix.data) == 1
+        assert matrix.row_labels == ["2"]
