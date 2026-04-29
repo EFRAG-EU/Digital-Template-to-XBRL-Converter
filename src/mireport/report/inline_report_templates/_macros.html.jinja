@@ -123,7 +123,7 @@
 
 {#- Return the CSS page class for a section based on its orientation needs. -#}
 {% macro page_class_for_section(section) -%}
-    {%- if section.tabular and section.dataColumns | length > 4 -%}
+    {%- if section.tabular and section.table.column_count > 4 -%}
         page landscape-page
     {%- else -%}
         page portrait-page

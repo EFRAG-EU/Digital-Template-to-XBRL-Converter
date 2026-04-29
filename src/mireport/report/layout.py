@@ -61,6 +61,30 @@ class TableStyle(Enum):
     Other = auto()
 
 
+@dataclass(slots=True, frozen=True)
+class TableCell:
+    fact: Fact | None
+    suppress_unit: bool
+
+
+@dataclass(slots=True, frozen=True)
+class TableRow:
+    heading: TableHeadingCell
+    cells: list[TableCell]
+
+
+@dataclass(slots=True, frozen=True)
+class Table:
+    style: TableStyle
+    numeric: bool
+    header_rows: list[list[TableHeadingCell]]
+    rows: list[TableRow]
+
+    @property
+    def column_count(self) -> int:
+        return len(self.rows[0].cells) if self.rows else 0
+
+
 @dataclass(slots=True, frozen=True, eq=True)
 class ReportSection:
     relationshipToFact: dict[Relationship, list[Fact]]
@@ -86,44 +110,19 @@ class ReportSection:
 
 @dataclass(slots=True, frozen=True, eq=True)
 class TabularReportSection(ReportSection):
-    tableStyle: TableStyle
-    dataColumns: list[Concept | None]
-    rowHeadings: list[TableHeadingCell]
-    data: list[list[Fact | None]]
-    columnUnits: list[str | None]
-    newColumnHeadings: list[list[TableHeadingCell]]
-    columnPeriods: list[_Period | None]
-    numeric: bool = False
-    unitSymbol: Optional[str] = None
-    period: Optional[_Period] = None
+    table: Table
 
     @property
     def tabular(self) -> bool:
         return True
 
     @property
-    def rowHeadingsHaveTitle(self) -> bool:
-        if not self.dataColumns:
-            return False
-        firstCol = self.dataColumns[0]
-        if firstCol is None:
-            return False
-        return True
-
-    def columnHasUnit(self, colnum: int) -> bool:
-        try:
-            unit = self.columnUnits[colnum]
-            return unit is not None
-        except IndexError:
-            return False
-
-    @property
     def hasFacts(self) -> bool:
-        for row in self.data:
-            for fact in row:
-                if fact is not None:
-                    return True
-        return False
+        return any(
+            cell.fact is not None
+            for row in self.table.rows
+            for cell in row.cells
+        )
 
 
 class ReportLayoutOrganiser:
@@ -176,9 +175,11 @@ class ReportLayoutOrganiser:
                 for facts in section.relationshipToFact.values():
                     potential_unused_facts.difference_update(facts)
             else:
-                section = cast(TabularReportSection, section)
-                for row in section.data:
-                    potential_unused_facts.difference_update(row)
+                tabular = cast(TabularReportSection, section)
+                for row in tabular.table.rows:
+                    potential_unused_facts.difference_update(
+                        cell.fact for cell in row.cells if cell.fact is not None
+                    )
         unused_facts = frozenset(potential_unused_facts)
         if unused_facts:
             processed: set[Fact] = set()
@@ -324,10 +325,15 @@ class ReportLayoutOrganiser:
                 assert len(new_columnHeadings) == len(new_data[0]), (
                     f"Expected number of column headings to match number of columns in data. {len(new_columnHeadings)=} {len(new_data[0])=}"
                 )
+                col_numeric = [n for cnum, n in enumerate(col_numeric) if not col_empty[cnum]]
+                if columnUnits:
+                    columnUnits = [u for cnum, u in enumerate(columnUnits) if not col_empty[cnum]]
+                if columnPeriods:
+                    columnPeriods = [p for cnum, p in enumerate(columnPeriods) if not col_empty[cnum]]
                 columnHeadings = [columnHeadings[0]] + new_columnHeadings
                 data = new_data
 
-            newColumnHeadings: list[list[TableHeadingCell]] = []
+            header_rows: list[list[TableHeadingCell]] = []
             max_cols = max(1, len(columnHeadings) - 1)
             headerRows: dict[int, list[TableHeadingCell]] = defaultdict(list)
             rowCounter = count()
@@ -337,9 +343,7 @@ class ReportLayoutOrganiser:
                 )
             if tableUnit:
                 headerRows[next(rowCounter)].append(
-                    TableHeadingCell(
-                        tableUnit, colspan=max_cols, rowspan=1, numeric=True
-                    )
+                    TableHeadingCell(tableUnit, colspan=max_cols, rowspan=1, numeric=True)
                 )
             rowNum = next(rowCounter)
 
@@ -385,27 +389,37 @@ class ReportLayoutOrganiser:
                 )
 
             for hrow in headerRows.values():
-                empty_row = all([c.value is None for c in hrow])
-                if not empty_row:
-                    newColumnHeadings.append(hrow)
+                if not all(c.value is None for c in hrow):
+                    header_rows.append(hrow)
 
-            newRowHeadings: list[TableHeadingCell] = [
-                TableHeadingCell(rh) for rh in rowHeadings
+            row_headings: list[TableHeadingCell] = [TableHeadingCell(rh) for rh in rowHeadings]
+
+            table_rows: list[TableRow] = [
+                TableRow(
+                    heading=rh,
+                    cells=[
+                        TableCell(
+                            fact=fact,
+                            suppress_unit=(
+                                tableUnit is not None
+                                or (j < len(columnUnits) and columnUnits[j] is not None)
+                            ),
+                        )
+                        for j, fact in enumerate(raw_row)
+                    ],
+                )
+                for rh, raw_row in zip(row_headings, data)
             ]
 
             table_sections[section.presentation.roleUri] = TabularReportSection(
                 relationshipToFact=section.relationshipToFact,
                 presentation=section.presentation,
-                rowHeadings=newRowHeadings,
-                dataColumns=columnHeadings,
-                tableStyle=tableStyle,
-                data=data,
-                columnUnits=columnUnits,
-                columnPeriods=columnPeriods,
-                numeric=all_numeric,
-                unitSymbol=tableUnit,
-                period=tablePeriod,
-                newColumnHeadings=newColumnHeadings,
+                table=Table(
+                    style=tableStyle,
+                    numeric=all_numeric,
+                    header_rows=header_rows,
+                    rows=table_rows,
+                ),
             )
 
         merged_sections: list[ReportSection] = []

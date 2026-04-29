@@ -199,11 +199,11 @@
 
             <table class="thematic-table">
                 <thead>
-                {% for row in section.newColumnHeadings %}
+                {% for row in section.table.header_rows %}
                     {% set rowloop = loop %}
                     <tr>
                     {% for column in row %}
-                        <th colspan="{{ column.colspan }}" rowspan="{{ column.rowspan }}" class="{% if column.numeric %}numeric{% elif section.numeric and not loop.first %}numeric{% elif not loop.first and rowloop.first and (row | count <= 2)  %}center{% else %}noop{% endif %}">
+                        <th colspan="{{ column.colspan }}" rowspan="{{ column.rowspan }}" class="{% if column.numeric %}numeric{% elif section.table.numeric and not loop.first %}numeric{% elif not loop.first and rowloop.first and (row | count <= 2)  %}center{% else %}noop{% endif %}">
                         {% if column.value is none %}
                             {# nothing to do #}
                         {% elif column.value is string %}
@@ -225,27 +225,24 @@
                 {% endfor %}
                 </thead>
                 <tbody>
-                    {% for row in section.data %}
+                    {% for row in section.table.rows %}
                     <tr>
-                        {% set rowHeading = section.rowHeadings[loop.index0] %}
-                        {% if rowHeading is defined %}
-                            {% set class = "numeric-row" if section.numeric else "row" %}
+                        {% set class = "numeric-row" if section.table.numeric else "row" %}
                         <th class="{{ class }}">
-                            {% if rowHeading.value is string %}
-                                {{ rowHeading.value | e }}
-                            {% elif rowHeading.isConcept %}
-                                {{ macros.concept_label(rowHeading.value) | e }}
-                            {% elif rowHeading.isRelationship %}
-                                {{ macros.relationship_label(rowHeading.value) | e }}
+                            {% if row.heading.value is string %}
+                                {{ row.heading.value | e }}
+                            {% elif row.heading.isConcept %}
+                                {{ macros.concept_label(row.heading.value) | e }}
+                            {% elif row.heading.isRelationship %}
+                                {{ macros.relationship_label(row.heading.value) | e }}
                             {% endif %}
                         </th>
-                        {% endif %}
-                        {% for fact in row %}
-                            {% if fact is none %}
+                        {% for cell in row.cells %}
+                            {% if cell.fact is none %}
                         <td></td>
                             {% else %}
-                        <td {% if fact.concept.isNumeric%}class="numeric"{% endif %}>
-                        {{ macros.render_fact_value(fact, section.unitSymbol or section.columnHasUnit(loop.index0)) }}{{ macros.footnote_refs(fact.footnotes, fn_counter, page_footnotes, page_fn_ids) }}{% set ns.fact_count = ns.fact_count + 1 %}
+                        <td {% if cell.fact.concept.isNumeric %}class="numeric"{% endif %}>
+                        {{ macros.render_fact_value(cell.fact, cell.suppress_unit) }}{{ macros.footnote_refs(cell.fact.footnotes, fn_counter, page_footnotes, page_fn_ids) }}{% set ns.fact_count = ns.fact_count + 1 %}
                         </td>
                             {% endif %}
                         {% endfor %}
@@ -264,7 +261,7 @@
             {% endif %}
         <div class="page portrait-page">
             <h2>{{ macros.section_label(section) | e }}</h2>
-            <pre>Unsupported presentation style. [{{section.style.name}}{% if section.tabular %}, {{ section.tableStyle.name }}{% endif %}]</pre>
+            <pre>Unsupported presentation style. [{{section.style.name}}{% if section.tabular %}, {{ section.table.style.name }}{% endif %}]</pre>
         </div>
             {% set page.prefix = '' %}
             {% set page.css_class = '' %}
