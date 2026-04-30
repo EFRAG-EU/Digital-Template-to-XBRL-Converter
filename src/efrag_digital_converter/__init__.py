@@ -661,7 +661,9 @@ def delete_all() -> Response:
 @convert_bp.route("/viewer/<string:id>/", methods=["GET", "HEAD"])
 def viewer(id: str) -> Response:
     conversion = session[id]
-    if (stuff := conversion.get("viewer")) is None:
+    if (existing := conversion.get("viewer")) is not None:
+        stuff = FilelikeAndFileName.from_tuple(existing)
+    else:
         stuff = (
             getArelle()
             .generateInlineViewer(FilelikeAndFileName.from_tuple(conversion["zip"]))

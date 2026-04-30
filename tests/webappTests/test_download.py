@@ -125,9 +125,6 @@ class TestDownloadHappyPath:
         assert resp.status_code == 200
         assert resp.data == b""
 
-    @pytest.mark.xfail(
-        reason="Viewer page currently returns HTML with the error message instead of the expected zip file"
-    )
     def test_viewer_page_returns_html(self, converted_id):
         conv_id, c = converted_id
         resp = c.get(f"/viewer/{conv_id}/")
