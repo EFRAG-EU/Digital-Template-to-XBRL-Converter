@@ -423,100 +423,8 @@ class ReportLayoutOrganiser:
     def createReportTables(self) -> None:
         table_sections: dict[str, TabularReportSection] = {}
         for section in self.reportSections:
-            if section.presentation.style in {
-                PresentationStyle.List,
-                PresentationStyle.Empty,
-            }:
-                # Nothing to do as these don't have tables
-                continue
-
-            if section.presentation.style is PresentationStyle.Hybrid:
-                raise InlineReportException(
-                    f"Presentation group style ({section.presentation.style.name}) of [{section.presentation.roleUri}] is not currently supported."
-                )
-
-            hypercubes = [
-                r for r in section.presentation.relationships if r.concept.isHypercube
-            ]
-            if len(hypercubes) != 1:
-                raise InlineReportException(
-                    f"Presentation structure of [{section.presentation.roleUri}] is not currently supported."
-                )
-
-            typedDims = [
-                r.concept
-                for r in section.presentation.relationships
-                if r.concept.isTypedDimension
-            ]
-            explicitDims = [
-                r.concept
-                for r in section.presentation.relationships
-                if r.concept.isExplicitDimension
-            ]
-            reportable = [
-                r.concept
-                for r in section.presentation.relationships
-                if r.concept.isReportable
-            ]
-            roleUri = section.presentation.roleUri
-
-            grid: _FactGrid | None = None
-            if len(typedDims) == 1 and not explicitDims:
-                grid = self._assemble_typed_dim(roleUri, typedDims, reportable)
-            elif len(explicitDims) == 1 and not typedDims:
-                explicitDim = explicitDims[0]
-                domain_set = self.taxonomy.getDomainMembersForExplicitDimension(
-                    explicitDim
-                )
-                domain: list[Concept] = [
-                    rel.concept
-                    for rel in section.presentation.relationships
-                    if rel.concept in domain_set
-                ]
-                defaultMember = self.taxonomy.getDimensionDefault(explicitDim)
-                if len(domain) <= len(reportable):
-                    grid = self._assemble_explicit_dim_as_columns(
-                        roleUri, reportable, explicitDim, domain, defaultMember
-                    )
-                else:
-                    grid = self._assemble_explicit_dim_as_rows(
-                        roleUri, reportable, explicitDim, domain, defaultMember
-                    )
-
-            if grid is None or not grid.data:
-                continue
-
-            col_empty, col_numeric, all_numeric = _column_flags(grid.data)
-            if True in col_empty:
-                grid, col_numeric = _drop_empty_columns(grid, col_empty, col_numeric)
-
-            table_unit = _table_unit(grid.data)
-            table_period = _table_period(grid.data)
-            col_units = _column_units(grid.data)
-            col_periods = _column_periods(grid.data)
-
-            header_rows = _build_header_rows(
-                grid.row_heading_label,
-                grid.col_labels,
-                col_numeric,
-                all_numeric,
-                table_unit,
-                table_period,
-                col_units,
-                col_periods,
-            )
-            table_rows = _build_table_rows(grid, table_unit, col_units)
-
-            table_sections[roleUri] = TabularReportSection(
-                relationshipToFact=section.relationshipToFact,
-                presentation=section.presentation,
-                table=Table(
-                    style=grid.style,
-                    numeric=all_numeric,
-                    header_rows=header_rows,
-                    rows=table_rows,
-                ),
-            )
+            if (ts := self._create_table_section(section)) is not None:
+                table_sections[section.presentation.roleUri] = ts
 
         merged_sections: list[ReportSection] = []
         for section in self.reportSections:
@@ -530,6 +438,102 @@ class ReportLayoutOrganiser:
             else:
                 merged_sections.append(section)
         self.reportSections = merged_sections
+
+    def _create_table_section(
+        self, section: ReportSection
+    ) -> TabularReportSection | None:
+        """Build a TabularReportSection for one presentation group, or return None if the section has no data or is not a table."""
+        if section.presentation.style in {
+            PresentationStyle.List,
+            PresentationStyle.Empty,
+        }:
+            return None
+
+        if section.presentation.style is PresentationStyle.Hybrid:
+            raise InlineReportException(
+                f"Presentation group style ({section.presentation.style.name}) of [{section.presentation.roleUri}] is not currently supported."
+            )
+
+        hypercubes = [
+            r for r in section.presentation.relationships if r.concept.isHypercube
+        ]
+        if len(hypercubes) != 1:
+            raise InlineReportException(
+                f"Presentation structure of [{section.presentation.roleUri}] is not currently supported."
+            )
+
+        typedDims = [
+            r.concept
+            for r in section.presentation.relationships
+            if r.concept.isTypedDimension
+        ]
+        explicitDims = [
+            r.concept
+            for r in section.presentation.relationships
+            if r.concept.isExplicitDimension
+        ]
+        reportable = [
+            r.concept
+            for r in section.presentation.relationships
+            if r.concept.isReportable
+        ]
+        roleUri = section.presentation.roleUri
+
+        grid: _FactGrid | None = None
+        if len(typedDims) == 1 and not explicitDims:
+            grid = self._assemble_typed_dim(roleUri, typedDims, reportable)
+        elif len(explicitDims) == 1 and not typedDims:
+            explicitDim = explicitDims[0]
+            domain_set = self.taxonomy.getDomainMembersForExplicitDimension(explicitDim)
+            domain: list[Concept] = [
+                rel.concept
+                for rel in section.presentation.relationships
+                if rel.concept in domain_set
+            ]
+            defaultMember = self.taxonomy.getDimensionDefault(explicitDim)
+            if len(domain) <= len(reportable):
+                grid = self._assemble_explicit_dim_as_columns(
+                    roleUri, reportable, explicitDim, domain, defaultMember
+                )
+            else:
+                grid = self._assemble_explicit_dim_as_rows(
+                    roleUri, reportable, explicitDim, domain, defaultMember
+                )
+
+        if grid is None or not grid.data:
+            return None
+
+        col_empty, col_numeric, all_numeric = _column_flags(grid.data)
+        if True in col_empty:
+            grid, col_numeric = _drop_empty_columns(grid, col_empty, col_numeric)
+
+        table_unit = _table_unit(grid.data)
+        table_period = _table_period(grid.data)
+        col_units = _column_units(grid.data)
+        col_periods = _column_periods(grid.data)
+
+        header_rows = _build_header_rows(
+            grid.row_heading_label,
+            grid.col_labels,
+            col_numeric,
+            all_numeric,
+            table_unit,
+            table_period,
+            col_units,
+            col_periods,
+        )
+        table_rows = _build_table_rows(grid, table_unit, col_units)
+
+        return TabularReportSection(
+            relationshipToFact=section.relationshipToFact,
+            presentation=section.presentation,
+            table=Table(
+                style=grid.style,
+                numeric=all_numeric,
+                header_rows=header_rows,
+                rows=table_rows,
+            ),
+        )
 
     def _assemble_explicit_dim_as_columns(
         self,
