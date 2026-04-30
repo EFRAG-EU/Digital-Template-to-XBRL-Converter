@@ -9,11 +9,12 @@ authors = [
 
 dependencies = [
     "aoix@git+https://code.blinkace.com/xbrl/aoix.git@strr/dev",
-    "arelle-release>=2.37.76",
+    "arelle-release>=2.39.6",
     "babel>=2.17.0",
     "flask-session",
     "flask",
-    "ixbrl-viewer",
+    "ixbrl-viewer>=1.4.90",
+    "mammoth",
     "msgpack",
     "openpyxl",
     "pillow>=11.3.0",
