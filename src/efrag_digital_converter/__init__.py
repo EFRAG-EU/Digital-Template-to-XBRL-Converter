@@ -1,8 +1,8 @@
 import logging
+from collections.abc import Mapping
 from datetime import datetime, timedelta, timezone
 from random import randint
 from secrets import token_hex
-from collections.abc import Mapping
 from typing import Any
 
 from dotenv import load_dotenv
@@ -64,7 +64,7 @@ LOCALE_JSON: list[dict[str, str]]
 L = logging.getLogger(__name__)
 
 
-def create_app() -> Flask:
+def create_app(test_config: Mapping[str, Any] | None = None) -> Flask:
     # Regardless of how we are invoked, make sure to load configuration from any
     # ".env" file
     load_dotenv()
@@ -405,7 +405,11 @@ def upload() -> Response:
     conversion["style_palette"] = palette_label
     conversion["style_mode"] = style_mode
 
-    for field_name, conv_key in [("logo", "logo"), ("cover", "cover_image"), ("watermark", "watermark")]:
+    for field_name, conv_key in [
+        ("logo", "logo"),
+        ("cover", "cover_image"),
+        ("watermark", "watermark"),
+    ]:
         if field_name not in request.files:
             continue
         img_files = request.files.getlist(field_name)

@@ -1,8 +1,7 @@
 import pytest
 
-from mireport.report.theme import ColourPalette, DisplayMode, ReportTheme
-
 from efrag_digital_converter import _parse_theme_form_params
+from mireport.report.theme import ColourPalette, ReportTheme
 
 
 def test_valid_palette_accepted():
