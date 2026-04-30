@@ -13,11 +13,11 @@
 
 function showErrorModal(message) {
     document.getElementById("errorMessage").textContent = message;
-    document.getElementById("errorModal").classList.remove("hidden");
+    document.getElementById("errorModal").classList.replace("hidden", "flex");
 }
 
 document.getElementById("closeModal").addEventListener("click", () => {
-    document.getElementById("errorModal").classList.add("hidden");
+    document.getElementById("errorModal").classList.replace("flex", "hidden");
 });
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -43,7 +43,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const showSpinner = () => {
                 if (spinner && spinnerText) {
                     spinnerText.textContent = downloadLink.dataset.spinnerText || "Downloading...";
-                    spinner.classList.remove("hidden");
+                    spinner.classList.replace("hidden", "flex");
                 } else {
                     console.warn("Spinner not found! Proceeding without showing spinner.");
                 }
@@ -86,7 +86,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 // Hide spinner if visible
                 if (spinner) {
-                    spinner.classList.add("hidden");
+                    spinner.classList.replace("flex", "hidden");
                 }
 
                 if (fileReady) {
@@ -98,7 +98,7 @@ document.addEventListener("DOMContentLoaded", () => {
             } catch (error) {
                 clearTimeout(spinnerTimeout);
                 if (spinner) {
-                    spinner.classList.add("hidden");
+                    spinner.classList.replace("flex", "hidden");
                 }
                 console.error("Error waiting for file:", error);
                 showErrorModal(`Error: ${error.message}`);
