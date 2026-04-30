@@ -1,10 +1,15 @@
+from __future__ import annotations
+
 import logging
 import threading
 import zipfile
 from importlib.metadata import PackageNotFoundError, metadata, version
 from io import BytesIO
 from pathlib import Path, PurePath
-from typing import BinaryIO, Optional
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import BinaryIO, Optional
 
 from arelle import PackageManager, PluginManager
 from arelle.api.Session import Session
@@ -16,8 +21,8 @@ from mireport.arelle.support import (
     ArelleVersionHolder,
 )
 from mireport.filesupport import FilelikeAndFileName
+from mireport.report.inlinereport import UNCONSTRAINED_REPORT_PACKAGE_JSON
 from mireport.version import VersionInformationTuple
-from mireport.xbrlreport import UNCONSTRAINED_REPORT_PACKAGE_JSON
 
 BIG_ARELLE_LOCK = threading.Lock()
 
@@ -122,13 +127,10 @@ class ArelleReportProcessor:
             internetConnectivity="offline" if self.workOffline is True else "online",
             keepOpen=True,
             logFile="logToBuffer",
-            logFormat="%(asctime)s [%(messageCode)s] %(message)s - %(file)s",
+            logFormat="%(message)s",
             logPropagate=False,
             packages=[str(t) for t in self.taxonomyPackages],
-            # You have to specify a plugin to avoid specifying an entryPointFile. We
-            # don't want to specify and entryPointFile as we pass the zipStream in
-            # later. saveLoadableOIM is used as a "null" plugin here to passify Arelle.
-            plugins="saveLoadableOIM",
+            plugins=None,
             pluginOptions={},
             # Turn validation on
             validate=True,
@@ -147,7 +149,7 @@ class ArelleReportProcessor:
             internetConnectivity="offline" if self.workOffline else "online",
             keepOpen=True,
             logFile="logToBuffer",
-            logFormat="%(asctime)s [%(messageCode)s] %(message)s - %(file)s",
+            logFormat="%(message)s",
             logPropagate=False,
             packages=[str(t) for t in self.taxonomyPackages],
             plugins="saveLoadableOIM",
@@ -175,14 +177,14 @@ class ArelleReportProcessor:
                     f"Arelle xBRL JSON generation has gone wrong. Zip contents: {zf.namelist()}"
                 )
                 json = zf.read(a[0])
+            jsonFilename = PurePath(source.filename).with_suffix(".json").name
+            result._xbrlJson = FilelikeAndFileName(
+                fileContent=json, filename=jsonFilename
+            )
         except Exception as e:
             result.addException(e)
-            raise
         finally:
             del jsonBytesIO
-
-        jsonFilename = PurePath(source.filename).with_suffix(".json").name
-        result._xbrlJson = FilelikeAndFileName(fileContent=json, filename=jsonFilename)
         return result
 
     def generateInlineViewer(
@@ -193,9 +195,9 @@ class ArelleReportProcessor:
             "saveViewerDest": viewerBytesIO,
             "viewer_feature_review": False,
             "validationMessages": True,
-            "viewerNoCopyScript": True,
-            "viewer_feature_highlight_facts_on_startup": True,
+            "viewer_feature_highlight_facts_on_startup": False,
             "useStubViewer": False,
+            "viewerNoCopyScript": True,
             "viewerURL": ARELLE_VIEWER_URL,
         }
 
@@ -203,7 +205,7 @@ class ArelleReportProcessor:
             internetConnectivity="offline" if self.workOffline else "online",
             keepOpen=True,
             logFile="logToBuffer",
-            logFormat="%(asctime)s [%(messageCode)s] %(message)s - %(file)s",
+            logFormat="%(message)s",
             logPropagate=False,
             packages=[str(t) for t in self.taxonomyPackages],
             pluginOptions=viewer_plugin_options,
@@ -227,18 +229,18 @@ class ArelleReportProcessor:
                     f"Arelle & inline-viewer has gone wrong. Zip contents: {zf.namelist()}"
                 )
                 viewer = zf.read(a[0])
+            viewerFilename = f"{PurePath(source.filename).stem}_viewer.html"
+            result._viewer = FilelikeAndFileName(
+                fileContent=viewer, filename=viewerFilename
+            )
         except Exception as e:
             result.addException(
                 e,
                 message="Exception encountered during processing of Arelle's response stream",
             )
+            return result
         finally:
             del viewerBytesIO
-
-        viewerFilename = f"{PurePath(source.filename).stem}_viewer.html"
-        result._viewer = FilelikeAndFileName(
-            fileContent=viewer, filename=viewerFilename
-        )
         return result
 
     @staticmethod

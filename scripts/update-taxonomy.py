@@ -2,7 +2,13 @@ import argparse
 import time
 
 from mireport.arelle.taxonomy_info import callArelleForTaxonomyInfo
-from mireport.cli import validateTaxonomyPackages
+from mireport.cli import (
+    configure_rich_output,
+    validateTaxonomyPackages,
+)
+from mireport.cli import (
+    console_print as print,
+)
 
 
 def parser() -> argparse.ArgumentParser:
@@ -70,4 +76,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    configure_rich_output()
     main()

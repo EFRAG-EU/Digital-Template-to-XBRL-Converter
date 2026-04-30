@@ -5,7 +5,10 @@ from openpyxl import Workbook
 from openpyxl.worksheet.cell_range import CellRange
 from openpyxl.worksheet.worksheet import Worksheet
 
-from mireport.excelutil import CellRangeDimensions, getEffectiveCellRangeDimensions
+from mireport.xlsx_template_reader._util import (
+    CellRangeDimensions,
+    getEffectiveCellRangeDimensions,
+)
 
 
 @pytest.fixture

@@ -6,7 +6,7 @@
 {% set ns = namespace(fact_count = 0) %}
 {% set timestamp = now_utc() %}
 <!DOCTYPE html>
-<html xml:lang="en"
+<html xml:lang="{{ reportInfo.language }}"
   xmlns="http://www.w3.org/1999/xhtml"
   {{ '{{ namespaces }}' }}>
     <head>
@@ -15,26 +15,45 @@
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>{{ reportInfo.entityName | e }}&#8201;&#8212;&#8201;{{ reportInfo.title | e }}&#8201;&#8212;&#8201;{{ macros.render_duration_period_endyear(reportInfo.defaultPeriod) }}</title>
         <style type="text/css">
-{% include 'style.css.jinja' %}
+{% filter cssmin %}
+{% include 'style-efrag.css.jinja' %}
+{% endfilter %}
         </style>
     </head>
-    <body>
+    <body class="theme-{{ theme }}">
         <div style="display:none">
-            {{ '{{ header }}' }}
+{{ '{{ header }}' }}
         </div>
         <!-- Cover Page -->
         <div class="page portrait-page cover-page">
-            {% if reportInfo.optionalLogo %}
+            <div class="cover-top">
+                <div class="cover-headline">
+{% if reportInfo.entityName %}
+                    <h2 class="inline">{{ reportInfo.entityName | e }} </h2>
+{% endif %}
+{% if reportInfo.title %}
+                    <h1 class="inline">{{ reportInfo.title | e }} </h1>
+{% endif %}
+{% if reportInfo.subtitle %}
+                    <h2>{{ reportInfo.subtitle | e }}</h2>
+{% endif %}
+{% if reportInfo.defaultPeriod %}
+                    <h2>{{ macros.render_duration_period_endyear(reportInfo.defaultPeriod) }}</h2>
+{% endif %}
+                </div>
+            </div>
+{% if reportInfo.optionalCoverImage %}
+            <div class="cover-image">
+                <img src="{{ reportInfo.optionalCoverImage.as_data_url(max_width=500, max_height=500) }}" alt="Cover image" />
+            </div>
+{% endif %}
+{% if reportInfo.optionalLogo %}
             <div class="company-logo">
                 <img src="{{ reportInfo.optionalLogo.as_data_url(max_width=400) }}" alt="{{ reportInfo.entityName | e }} logo" />
             </div>
-            {% endif %}
-            <div class="entity-name"><h2>{{ reportInfo.entityName | e }}</h2></div>
-            <div class="report-title"><h1>{{ reportInfo.title | e }}</h1></div>
-            <div class="report-period"><h1>{{ macros.render_duration_period_endyear(reportInfo.defaultPeriod) }}</h1></div>
-            <div class="report-subtitle"><h3>{{ reportInfo.subtitle | e }}</h3></div>
+{% endif %}
         </div>
-        <div class="page portrait-page doc-page" id="document-information">
+        <div class="page portrait-page" id="document-information">
             <div class="document-information">
                 <h2>Document Information</h2>
                 <dl class="document-info-list">
@@ -56,22 +75,77 @@
                 </div>
             </div>
         </div>
+{% if introduction %}
+        <div class="page portrait-page" id="introduction">
+            <h2>Introduction</h2>
+            <div class="introduction-content">
+                {{ introduction | e }}
+            </div>
+        </div>
+{% endif %}
         <div class="page portrait-page toc-page" id="table-of-contents">
-            <h1>Table of Contents</h1>
+            <h2>Table of contents</h2>
+            {#- Build ToC entries with their body-loop indices, then sort alphabetically -#}
+            {% set toc_entries = [] %}
+            {% for section in sections if section.hasFacts %}
+                {% if toc_entries.append({'idx': loop.index, 'section': section}) %}{% endif %}
+            {% endfor %}
             <ol class="toc-list">
-{% for section in sections if section.hasFacts %}
-                <li>
-                    <a href="#section-class{{loop.index}}">
-                        {{ macros.section_label(section) | e }}
-                    </a>
+{% set toc = namespace(current_prefix='') %}
+{% for entry in toc_entries | sort(attribute='section.presentation.definition') %}
+    {% set section = entry.section %}
+    {% set prefix = macros.section_prefix(section) %}
+    {% if prefix != toc.current_prefix %}
+        {% if toc.current_prefix != '' %}
+                    </ul>
                 </li>
+        {% endif %}
+        {% set toc.current_prefix = prefix %}
+                <li>
+                    <span>[{{ macros.toc_short_prefix(section) }}] &#8212; {{ macros.toc_category(section) | e }}</span>
+                    <ul>
+    {% endif %}
+    {% set subtitle = macros.toc_subtitle(section) %}
+                        <li>
+                            <a href="#section-class{{ entry.idx }}">
+                                {{ (subtitle if subtitle else macros.toc_category(section)) | e }}
+                            </a>
+                        </li>
 {% endfor %}
+{% if toc.current_prefix != '' %}
+                    </ul>
+                </li>
+{% endif %}
             </ol>
         </div>
+{% set page = namespace(open=false, prefix='', css_class='') %}
+{% set page_footnotes = [] %}
+{% set page_fn_ids = [] %}
+{% set fn_counter = namespace(num=0, page=0) %}
 {% for section in sections if section.hasFacts %}
+        {#- Compute this section's page-group key and page class -#}
+        {% set current_prefix = macros.page_group(section) %}
+        {% set current_class = macros.page_class_for_section(section) %}
+
         {% if section.style is sameas PresentationStyle.List %}
-        <div class="page portrait-page">
-            {{ macros.create_h2_title(section, loop) }}
+        {#- LIST SECTIONS: merge into same page when prefix and orientation match -#}
+            {% if page.open and (current_prefix != page.prefix or current_class != page.css_class) %}
+            {{ macros.render_page_footnotes(page_footnotes) }}
+            {% if page_footnotes.clear() is none %}{% endif %}
+            {% if page_fn_ids.clear() is none %}{% endif %}
+        </div>
+                {% set page.open = false %}
+            {% endif %}
+            {% if not page.open %}
+        <div class="{{ current_class }}">
+                {% set page.open = true %}
+                {% set page.prefix = current_prefix %}
+                {% set page.css_class = current_class %}
+                {% set fn_counter.page = fn_counter.page + 1 %}
+            {% endif %}
+
+            {% set _grp_fn = footnotes_by_group.get(section.presentation.roleUri) %}
+            {{ macros.create_h2_title(section, loop, _grp_fn, fn_counter, page_footnotes, page_fn_ids) }}
 
             <div class="fact-list">
             {% for rel, factList in section.relationshipToFact.items() %}
@@ -80,7 +154,7 @@
                 {% for fact in factList %}
                     {% set documentation = rel.concept.getDocumentationLabel() %}
                     <dl class="fact fact-depth-{{ rel.depth if rel.depth <= 4 else 4 }} fact-depth-{{ rel.depth if rel.depth <= 4 else 4 }}-{{ shade }}">
-                        <dt class="fact-value {% if fact.concept.isTextblock %}fact-textblock{% endif %}" title="{{ rel.concept.qname }}">{{ macros.render_fact_value(fact) }}{% set ns.fact_count = ns.fact_count + 1 %}</dt>
+                        <dt class="fact-value {% if fact.concept.isTextblock %}fact-textblock{% endif %}" title="{{ rel.concept.qname }}">{{ macros.render_fact_value(fact) }}{{ macros.footnote_refs(fact.footnotes, fn_counter, page_footnotes, page_fn_ids) }}{% set ns.fact_count = ns.fact_count + 1 %}</dt>
                         <dd class="fact-label">
                             <span {% if documentation != none %}class="hover-box"{% endif %}>
                                 {{ macros.relationship_label(rel) | e }}
@@ -102,10 +176,26 @@
                 {% endfor %}
             {% endfor %}
             </div>
-        </div>
+
         {% elif section.style is sameas PresentationStyle.Table %}
-        <div class="page {% if section.dataColumns | length > 4 %}landscape-page{% else %}portrait-page{% endif %}">
-            {{ macros.create_h2_title(section, loop) }}
+        {#- TABLE SECTIONS: merge into same page when prefix and orientation match -#}
+            {% if page.open and (current_prefix != page.prefix or current_class != page.css_class) %}
+            {{ macros.render_page_footnotes(page_footnotes) }}
+            {% if page_footnotes.clear() is none %}{% endif %}
+            {% if page_fn_ids.clear() is none %}{% endif %}
+        </div>
+                {% set page.open = false %}
+            {% endif %}
+            {% if not page.open %}
+        <div class="{{ current_class }}">
+                {% set page.open = true %}
+                {% set page.prefix = current_prefix %}
+                {% set page.css_class = current_class %}
+                {% set fn_counter.page = fn_counter.page + 1 %}
+            {% endif %}
+
+            {% set _grp_fn = footnotes_by_group.get(section.presentation.roleUri) %}
+            {{ macros.create_h2_title(section, loop, _grp_fn, fn_counter, page_footnotes, page_fn_ids) }}
 
             <table class="thematic-table">
                 <thead>
@@ -155,7 +245,7 @@
                         <td></td>
                             {% else %}
                         <td {% if fact.concept.isNumeric%}class="numeric"{% endif %}>
-                        {{ macros.render_fact_value(fact, section.unitSymbol or section.columnHasUnit(loop.index0)) }}{% set ns.fact_count = ns.fact_count + 1 %}
+                        {{ macros.render_fact_value(fact, section.unitSymbol or section.columnHasUnit(loop.index0)) }}{{ macros.footnote_refs(fact.footnotes, fn_counter, page_footnotes, page_fn_ids) }}{% set ns.fact_count = ns.fact_count + 1 %}
                         </td>
                             {% endif %}
                         {% endfor %}
@@ -163,18 +253,36 @@
                     {% endfor %}
                 </tbody>
             </table>
-        </div>
         {% else %}
+        {#- UNSUPPORTED STYLES: always get their own page -#}
+            {% if page.open %}
+            {{ macros.render_page_footnotes(page_footnotes) }}
+            {% if page_footnotes.clear() is none %}{% endif %}
+            {% if page_fn_ids.clear() is none %}{% endif %}
+        </div>
+                {% set page.open = false %}
+            {% endif %}
         <div class="page portrait-page">
             <h2>{{ macros.section_label(section) | e }}</h2>
             <pre>Unsupported presentation style. [{{section.style.name}}{% if section.tabular %}, {{ section.tableStyle.name }}{% endif %}]</pre>
         </div>
+            {% set page.prefix = '' %}
+            {% set page.css_class = '' %}
         {% endif %}
 {% endfor %}
-
+        {#- Close the last page div if still open -#}
+        {% if page.open %}
+        {{ macros.render_page_footnotes(page_footnotes) }}
+        </div>
+        {% endif %}
   <!-- Final Page -->
   <div class="page portrait-page footer-page">
-    <p>This report contains {{ ns.fact_count }} XBRL facts (generated from {{ uniqueFactCount }} unique input facts).</p>
+{% if backCoverMatter %}
+    <div class="back-cover-matter">
+      {{ backCoverMatter | e }}
+    </div>
+{% endif %}
+    <p>This report contains {{ ns.fact_count }} XBRL facts{% if ns.fact_count != uniqueFactCount %} (generated from {{ uniqueFactCount }} unique input facts){% endif %}.</p>
   </div>
 
 </body>

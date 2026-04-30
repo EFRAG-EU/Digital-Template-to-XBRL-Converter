@@ -1,9 +1,10 @@
 import argparse
+import json
 import logging
 from pathlib import Path
 
-import rich.traceback
-from rich.logging import RichHandler
+import mammoth
+from markupsafe import Markup
 
 import mireport
 import mireport.taxonomy
@@ -11,13 +12,42 @@ from mireport.arelle.report_info import (
     ARELLE_VERSION_INFORMATION,
     ArelleReportProcessor,
 )
-from mireport.cli import validateTaxonomyPackages
-from mireport.conversionresults import ConversionResults, ConversionResultsBuilder
-from mireport.excelprocessor import (
+from mireport.cli import (
+    configure_rich_output,
+    validateTaxonomyPackages,
+)
+from mireport.cli import (
+    console_print as print,
+)
+from mireport.conversionresults import (
+    ConversionResults,
+    ConversionResultsBuilder,
+    ProcessingContext,
+)
+from mireport.filesupport import ImageFileLikeAndFileName
+from mireport.localise import EU_LOCALES, argparse_locale
+from mireport.report.theme import ColourPalette, DisplayMode, ReportTheme
+from mireport.xlsx_template_reader.processor import (
     VSME_DEFAULTS,
     ExcelProcessor,
 )
-from mireport.localise import EU_LOCALES, argparse_locale
+
+
+def _convert_docx_to_markup(docx_path: Path, pc: ProcessingContext) -> Markup:
+    """Convert a .docx file to HTML via mammoth and return as Markup."""
+    with open(docx_path, "rb") as f:
+        result = mammoth.convert_to_html(f)
+    for msg in result.messages:
+        pc.addDevInfoMessage(f"mammoth ({docx_path.name}): {msg}")
+    return Markup(result.value)
+
+
+def _resolve_extra_path(extra_file: Path, relative_path: str) -> Path:
+    """Resolve a relative path from extra_data JSON and verify the file exists."""
+    resolved = extra_file.parent / relative_path
+    if not resolved.is_file():
+        raise FileNotFoundError(f"Referenced file does not exist: {resolved}")
+    return resolved
 
 
 def createArgParser() -> argparse.ArgumentParser:
@@ -77,7 +107,48 @@ def createArgParser() -> argparse.ArgumentParser:
         default=False,
         help="Generate JSON output as well.",
     )
-
+    parser.add_argument(
+        "--style-mode",
+        type=DisplayMode,
+        choices=list(DisplayMode),
+        default=ReportTheme.DEFAULT_DISPLAY_MODE,
+        help=f"Report colour mode (default: {ReportTheme.DEFAULT_DISPLAY_MODE}).",
+    )
+    parser.add_argument(
+        "--style-palette",
+        choices=ColourPalette.labels(),
+        default=ReportTheme.DEFAULT_COLOUR.label,
+        help=f"Report colour palette (default: {ReportTheme.DEFAULT_COLOUR.label}).",
+    )
+    parser.add_argument(
+        "--image-logo",
+        type=Path,
+        default=None,
+        help="Path to an image file to use as the entity logo.",
+    )
+    parser.add_argument(
+        "--image-cover",
+        type=Path,
+        default=None,
+        help="Path to an image file to use as the cover page image.",
+    )
+    parser.add_argument(
+        "--image-watermark",
+        type=Path,
+        default=None,
+        help="Path to an image file to use as a background watermark on report pages.",
+    )
+    parser.add_argument(
+        "--extra-data",
+        type=Path,
+        default=None,
+        help="Path to a JSON file containing extra report data (footnotes, label overrides, etc.).",
+    )
+    parser.add_argument(
+        "--debug",
+        action=argparse.BooleanOptionalAction,
+        help="Turn on debugging output.",
+    )
     return parser
 
 
@@ -91,7 +162,8 @@ def parseArgs(parser: argparse.ArgumentParser) -> argparse.Namespace:
         args.taxonomy_packages = validateTaxonomyPackages(
             args.taxonomy_packages, parser
         )
-
+    if args.debug:
+        logging.getLogger("mireport").setLevel(logging.DEBUG)
     return args
 
 
@@ -122,7 +194,7 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, ExcelProc
         "mireport Excel to validated Inline Report"
     ) as pc:
         pc.mark("Loading taxonomy metadata")
-        mireport.loadTaxonomyJSON()
+        mireport.loadBuiltInTaxonomyJSON()
         allTaxonomies = mireport.taxonomy.listTaxonomies()
         pc.addDevInfoMessage(
             f"Taxonomies entry points ({len(allTaxonomies)}) available: {', '.join(allTaxonomies)}"
@@ -138,6 +210,73 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, ExcelProc
             outputLocale=args.output_locale,
         )
         report = excel.populateReport()
+
+        report.theme.setDisplayMode(args.style_mode).setColour(
+            ColourPalette.from_label(args.style_palette)
+        )
+
+        for arg_name, setter in [
+            ("image_logo", report.theme.setLogo),
+            ("image_cover", report.theme.setCoverImage),
+            ("image_watermark", report.theme.setWatermark),
+        ]:
+            if image_path := getattr(args, arg_name):
+                image, err = ImageFileLikeAndFileName.prepare(image_path)
+                if err:
+                    pc.addDevInfoMessage(err)
+                elif image:
+                    setter(image)
+
+        if (extra_file := args.extra_data) and extra_file.is_file():
+            extra = json.loads(extra_file.read_text(encoding="utf-8"))
+
+            for fn in extra.get("footnotes", []):
+                report.addFootnote(
+                    fn.get("content", ""),
+                    group=fn.get("group"),
+                    concept=fn.get("concept"),
+                    concepts=fn.get("concepts"),
+                )
+
+            label_overrides = {
+                lo["concept"]: lo["label"] for lo in extra.get("labelOverrides", [])
+            }
+            if label_overrides:
+                report.setLabelOverrides(label_overrides)
+
+            optional_section_setters = {
+                "introduction": report.setIntroduction,
+                "backCoverMatter": report.setBackCoverMatter,
+            }
+            for section in extra.get("optionalSections", []):
+                section_id = section.get("id")
+                setter = optional_section_setters.get(section_id)
+                if setter is None:
+                    pc.addDevInfoMessage(f"Unknown optionalSections id: {section_id!r}")
+                    continue
+                if "path" in section:
+                    pc.mark(
+                        "Converting Word document",
+                        additionalInfo=f"Creating {section_id} from {section['path']}",
+                    )
+                    docx_path = _resolve_extra_path(extra_file, section["path"])
+                    setter(_convert_docx_to_markup(docx_path, pc))
+                elif "content" in section:
+                    setter(Markup(section["content"]))
+                else:
+                    pc.addDevInfoMessage(
+                        f"optionalSections entry {section_id!r} has neither 'path' nor 'content'"
+                    )
+
+            for rtv in extra.get("replacementTextblockValues", []):
+                pc.mark(
+                    "Converting Word document",
+                    additionalInfo=f"Replacing {rtv['concept']} from {rtv['path']}",
+                )
+                docx_path = _resolve_extra_path(extra_file, rtv["path"])
+                markup = _convert_docx_to_markup(docx_path, pc)
+                report.replaceFactValue(rtv["concept"], markup)
+
         pc.mark("Generating Inline Report")
         reportFile = report.getInlineReport()
         reportPackage = report.getInlineReportPackage()
@@ -245,11 +384,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    rich.traceback.install(show_locals=False)
-    logging.basicConfig(
-        format="%(message)s",
-        datefmt="[%Y-%m-%d %H:%M:%S]",
-        handlers=[RichHandler(rich_tracebacks=True)],
-    )
-    logging.captureWarnings(True)
+    configure_rich_output()
     main()

@@ -1,9 +1,14 @@
+from __future__ import annotations
+
 import json
 import logging
 from collections import Counter
 from collections.abc import Mapping, MutableMapping
 from dataclasses import dataclass
-from typing import Any, Optional, Self
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Any, ClassVar, Optional, Self
 
 from arelle.api.Session import Session
 from arelle.ModelValue import QName
@@ -54,6 +59,7 @@ class ArelleProcessingResult:
         self._viewer: Optional[FilelikeAndFileName] = None
         self._xbrlJson: Optional[FilelikeAndFileName] = None
         self.__importArelleMessages(jsonMessages)
+        self._exceptions: list[Exception] = []
 
     def __importArelleMessages(self, json_str: str) -> None:
         wantDebug = L.isEnabledFor(logging.DEBUG)
@@ -65,7 +71,7 @@ class ArelleProcessingResult:
             fact: Optional[str] = r.get("message", {}).get("fact")
 
             if wantDebug:
-                L.debug(f"{code=} {level=} {text=} {fact=}")
+                L.debug(f"Record: {r=}")
 
             match code:
                 case "info" | "":
@@ -133,6 +139,9 @@ class ArelleProcessingResult:
     def has_json(self) -> bool:
         return self._xbrlJson is not None
 
+    def has_exceptions(self) -> bool:
+        return bool(self._exceptions)
+
     @property
     def messages(self) -> list[Message]:
         return list(self._validationMessages)
@@ -142,6 +151,7 @@ class ArelleProcessingResult:
         return list(self._textLogLines)
 
     def addException(self, exception: Exception, message: Optional[str] = None) -> None:
+        self._exceptions.append(exception)
         text = f"{exception.__class__.__name__}: {exception}"
         if message:
             text = f"{message}. {text}"
@@ -186,7 +196,7 @@ class ArelleQNameCanonicaliser:
     mireport.xml.QNames have a unique prefix for each namespace URI (prefixes are unique per taxonomy).
     """
 
-    VANITY_NAMESPACE_PREFIX_MAP: Mapping[str, str] = {
+    VANITY_NAMESPACE_PREFIX_MAP: ClassVar[Mapping[str, str]] = {
         "http://www.xbrl.org/dtr/type/2024-01-31": "dtr-types",
         "http://www.xbrl.org/dtr/type/2022-03-31": "dtr-types-2022",
         "http://www.xbrl.org/dtr/type/2020-01-21": "dtr-types-2020",
@@ -217,10 +227,12 @@ class ArelleQNameCanonicaliser:
         # unused bindings in our JSON.
 
         all_existing_used_prefixes_set: frozenset[tuple[str, str]] = frozenset(
-            (prefix, qname.namespaceURI)
+            (prefix, ns)
             for qname in arelle_model.qnameConcepts.keys()
             | arelle_model.qnameTypes.keys()
-            if (prefix := qname.prefix)
+            if qname is not None
+            and (prefix := qname.prefix) is not None
+            and (ns := qname.namespaceURI) is not None
         )
 
         prefix_namespace_count: Counter[str] = Counter(
@@ -239,6 +251,9 @@ class ArelleQNameCanonicaliser:
         return cls(qnameMaker)
 
     def convert(self, qname: QName) -> MireportQName:
+        assert qname.prefix is not None and qname.namespaceURI is not None, (
+            f"QName should have a prefix and namespace {qname=}"
+        )
         wanted_prefix = qname.prefix
         namespace = qname.namespaceURI
 

@@ -8,17 +8,19 @@ authors = [
 ]
 
 dependencies = [
-    "aoix@git+https://code.blinkace.com/xbrl/aoix.git@feature-typed-dimensions",
-    "arelle-release>=2.37.76",
+    "aoix@git+https://code.blinkace.com/xbrl/aoix.git@strr/dev",
+    "arelle-release>=2.39.6",
     "babel>=2.17.0",
     "flask-session",
     "flask",
-    "ixbrl-viewer",
+    "ixbrl-viewer>=1.4.90",
+    "mammoth",
     "msgpack",
     "openpyxl",
     "pillow>=11.3.0",
     "python-dateutil",
     "python-dotenv>=1.0.1",
+    "rcssmin==1.2.2",
     "rich>=14.0.0",
     "waitress",
 ]
@@ -38,7 +40,7 @@ build-backend = "hatchling.build"
 allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/mireport"]
+packages = ["src/mireport", "src/efrag_digital_converter"]
 
 [project.optional-dependencies]
 dev = [
@@ -70,6 +72,7 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 markers = [
     "integration: marks tests as integration tests",
+    "slow: marks tests as slow (deselected by default; pass --run-slow to include)",
 ]
 addopts = [
     "-ra -q",

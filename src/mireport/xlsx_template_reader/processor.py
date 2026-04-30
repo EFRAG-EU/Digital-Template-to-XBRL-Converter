@@ -10,7 +10,10 @@ from datetime import date, datetime
 from functools import lru_cache
 from itertools import combinations
 from pathlib import Path
-from typing import BinaryIO, Callable, NamedTuple, Optional, Self
+from typing import TYPE_CHECKING, NamedTuple
+
+if TYPE_CHECKING:
+    from typing import BinaryIO, Callable, Optional, Self
 
 from babel import Locale
 from dateutil.parser import parse as parse_datetime
@@ -25,8 +28,23 @@ from mireport.conversionresults import (
     MessageType,
     Severity,
 )
-from mireport.data import excel_templates
-from mireport.excelutil import (
+from mireport.data import disclosures
+from mireport.exceptions import EarlyAbortException, InlineReportException
+from mireport.json import getObject, getResource
+from mireport.localise import as_xmllang, get_locale_from_str
+from mireport.report import InlineReport
+from mireport.report.factbuilder import FactBuilder
+from mireport.stringutil import stripLabelSuffix
+from mireport.taxonomy import (
+    Concept,
+    QName,
+    Taxonomy,
+    getTaxonomy,
+    listTaxonomies,
+)
+from mireport.typealiases import FactValue
+from mireport.version import OUR_VERSION_HOLDER, VersionHolder
+from mireport.xlsx_template_reader._util import (
     EXCEL_PLACEHOLDER_VALUE,
     CellType,
     CellValueType,
@@ -39,19 +57,6 @@ from mireport.excelutil import (
     getEffectiveCellRangeDimensions,
     loadExcelFromPathOrFileLike,
 )
-from mireport.exceptions import EarlyAbortException, InlineReportException
-from mireport.json import getObject, getResource
-from mireport.localise import as_xmllang, get_locale_from_str
-from mireport.stringutil import stripLabelSuffix
-from mireport.taxonomy import (
-    Concept,
-    QName,
-    Taxonomy,
-    getTaxonomy,
-    listTaxonomies,
-)
-from mireport.version import OUR_VERSION_HOLDER, VersionHolder
-from mireport.xbrlreport import FactBuilder, FactValue, InlineReport
 
 L = logging.getLogger(__name__)
 
@@ -59,7 +64,7 @@ EE_SET_DESIRED_EMPTY_PLACEHOLDER_VALUE = "None"
 
 EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE = ("-", EXCEL_PLACEHOLDER_VALUE)
 
-VSME_DEFAULTS: dict = getObject(getResource(excel_templates, "vsme.json"))
+VSME_DEFAULTS: dict = getObject(getResource(disclosures, "vsme.json"))
 
 
 def cleanUnitTextFromExcel(unitTest: str, replacements: dict[str, str]) -> str:
@@ -211,12 +216,6 @@ class ExcelProcessor:
     @property
     def unusedNames(self) -> list[str]:
         return sorted(dn.name for dn in self._unusedDefinedNames if dn.name)
-
-    @property
-    def preferredLanguage(self) -> str:
-        if self._outputLocale is not None:
-            return as_xmllang(self._outputLocale)
-        return self._report.taxonomy.defaultLanguage or "en"
 
     def populateReport(self) -> InlineReport:
         """
@@ -1701,6 +1700,7 @@ class ExcelProcessor:
         eeSetValue: set[Concept] = set()
         value: list[str] = []
         eeDomain = concept.getEEDomain()
+        cell = None
 
         for rnum, cnum, cell in getCellRangeIterator(stuff.worksheet, stuff.cellRange):
             v = cell.value
@@ -1735,7 +1735,7 @@ class ExcelProcessor:
                 eeSetValue.add(eeMember)
                 value.append(
                     eeMember.getStandardLabel(
-                        self.preferredLanguage,
+                        self._report.language,
                         fallbackIfMissing=str(eeMember.qname),
                         removeSuffix=True,
                         fallbackToAnyLang=True,
@@ -1824,7 +1824,9 @@ class ExcelProcessor:
                 Severity.INFO,
                 MessageType.DevInfo,
                 taxonomy_concept=concept,
-                excel_reference=excelCellRef(stuff.worksheet, cell),
+                excel_reference=excelCellOrCellRangeRef(
+                    stuff.worksheet, stuff.cellRange, cell
+                ),
             )
         else:
             fb.setConcept(concept).setHiddenValue(
