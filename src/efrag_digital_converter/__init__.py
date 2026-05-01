@@ -45,7 +45,7 @@ from mireport.report.theme import ColourPalette, DisplayMode, ReportTheme
 from mireport.taxonomy import getTaxonomy, listTaxonomies
 from mireport.xlsx_template_reader.processor import (
     VSME_DEFAULTS,
-    ExcelProcessor,
+    XlsxProcessor,
 )
 
 from .blueprints import convert_bp
@@ -503,14 +503,14 @@ def doConversion(conversion: dict, id: str) -> ConversionResults:
             else:
                 requestedOutputLocale = None
 
-            excel = ExcelProcessor.from_file(
+            xl_processor = XlsxProcessor.from_file(
                 upload.fileLike(),
                 resultBuilder,
                 VSME_DEFAULTS,
                 outputLocale=requestedOutputLocale,
             )
 
-            report = excel.populateReport()
+            report = xl_processor.populateReport()
             if not report.hasFacts:
                 resultBuilder.addMessage(
                     "No facts found in InlineReport (likely due to earlier errors). Stopping here.",

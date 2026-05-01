@@ -49,7 +49,7 @@ class TemplateCheckResult(NamedTuple):
     migration_status: bool | None
 
 
-class ExcelProcessor:
+class XlsxProcessor:
     def __init__(
         self,
         workbook: Workbook,
@@ -61,7 +61,7 @@ class ExcelProcessor:
         if not isinstance(workbook, Workbook):
             raise TypeError(
                 f"workbook must be an openpyxl Workbook, got {type(workbook).__name__}. "
-                "Use ExcelProcessor.from_file() or ExcelProcessor.from_bytes() to load from a file."
+                "Use XlsxProcessor.from_file() or XlsxProcessor.from_bytes() to load from a file."
             )
         self._results = results
         self._defaults = defaults

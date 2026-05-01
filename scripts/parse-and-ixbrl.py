@@ -29,7 +29,7 @@ from mireport.localise import EU_LOCALES, argparse_locale
 from mireport.report.theme import ColourPalette, DisplayMode, ReportTheme
 from mireport.xlsx_template_reader.processor import (
     VSME_DEFAULTS,
-    ExcelProcessor,
+    XlsxProcessor,
 )
 
 
@@ -52,9 +52,9 @@ def _resolve_extra_path(extra_file: Path, relative_path: str) -> Path:
 
 def createArgParser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Extract facts from Excel and generate HTML."
+        description="Extract facts from Excel file and generate HTML."
     )
-    parser.add_argument("excel_file", type=Path, help="Path to the Excel file")
+    parser.add_argument("xlsx_file", type=Path, help="Path to the Excel file")
     parser.add_argument(
         "output_path",
         type=Path,
@@ -188,8 +188,9 @@ def prepare_output_path(path: Path, force: bool) -> tuple[Path, bool]:
             return path, True
 
 
-def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, ExcelProcessor]:
+def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, list[str]]:
     resultsBuilder = ConversionResultsBuilder(consoleOutput=True)
+    unused: list[str] = list()
     with resultsBuilder.processingContext(
         "mireport Excel to validated Inline Report"
     ) as pc:
@@ -200,16 +201,16 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, ExcelProc
             f"Taxonomies entry points ({len(allTaxonomies)}) available: {', '.join(allTaxonomies)}"
         )
         pc.mark(
-            "Extracting data from Excel",
-            additionalInfo=f"Using file: {args.excel_file}",
+            "Extracting data from Excel workbook",
+            additionalInfo=f"Using file: {args.xlsx_file}",
         )
-        excel = ExcelProcessor.from_file(
-            args.excel_file,
+        xl_processor = XlsxProcessor.from_file(
+            args.xlsx_file,
             resultsBuilder,
             VSME_DEFAULTS,
             outputLocale=args.output_locale,
         )
-        report = excel.populateReport()
+        report = xl_processor.populateReport()
 
         report.theme.setDisplayMode(args.style_mode).setColour(
             ColourPalette.from_label(args.style_palette)
@@ -335,12 +336,12 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, ExcelProc
                         json_output.saveToDirectory(output_path)
                 else:
                     pc.addDevInfoMessage("Failed to create JSON output.")
-
-    return resultsBuilder.build(), excel
+        unused = xl_processor.unusedNames
+    return resultsBuilder.build(), unused
 
 
 def outputMessages(
-    args: argparse.Namespace, result: ConversionResults, excel: ExcelProcessor
+    args: argparse.Namespace, result: ConversionResults, unused: list[str]
 ) -> None:
     hasMessages = result.hasMessages(userOnly=True)
     messages = result.userMessages
@@ -356,9 +357,8 @@ def outputMessages(
         for message in messages:
             print(f"\t{message}")
 
-    if args.devinfo and excel.unusedNames:
+    if args.devinfo and unused:
         max_output = 40
-        unused = excel.unusedNames
         if (num := len(unused)) > max_output:
             size = int(max_output / 2)
             unused = (
@@ -378,8 +378,8 @@ def outputMessages(
 def main() -> None:
     parser = createArgParser()
     args = parseArgs(parser)
-    result, excel = doConversion(args)
-    outputMessages(args, result, excel)
+    result, unused = doConversion(args)
+    outputMessages(args, result, unused)
     return
 
 

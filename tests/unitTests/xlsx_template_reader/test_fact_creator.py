@@ -10,7 +10,7 @@ from mireport.xlsx_template_reader._util import (
     WorkbookReader,
     loadExcelFromPathOrFileLike,
 )
-from mireport.xlsx_template_reader.processor import VSME_DEFAULTS, ExcelProcessor
+from mireport.xlsx_template_reader.processor import VSME_DEFAULTS, XlsxProcessor
 
 SAMPLE = (
     Path(__file__).parent.parent.parent
@@ -25,7 +25,7 @@ def _results() -> ConversionResultsBuilder:
 
 @pytest.fixture(scope="module")
 def full_pipeline_fact_count():
-    ep = ExcelProcessor.from_file(SAMPLE, _results(), VSME_DEFAULTS)
+    ep = XlsxProcessor.from_file(SAMPLE, _results(), VSME_DEFAULTS)
     return ep.populateReport().factCount
 
 
