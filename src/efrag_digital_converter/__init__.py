@@ -503,7 +503,7 @@ def doConversion(conversion: dict, id: str) -> ConversionResults:
             else:
                 requestedOutputLocale = None
 
-            excel = ExcelProcessor(
+            excel = ExcelProcessor.from_file(
                 upload.fileLike(),
                 resultBuilder,
                 VSME_DEFAULTS,

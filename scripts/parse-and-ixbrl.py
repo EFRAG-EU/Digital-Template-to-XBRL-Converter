@@ -203,7 +203,7 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, ExcelProc
             "Extracting data from Excel",
             additionalInfo=f"Using file: {args.excel_file}",
         )
-        excel = ExcelProcessor(
+        excel = ExcelProcessor.from_file(
             args.excel_file,
             resultsBuilder,
             VSME_DEFAULTS,
