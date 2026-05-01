@@ -72,14 +72,6 @@ class TestWorkbookReaderUnusedAPI:
         for dn in reader.unused_defined_names:
             assert not dn.name.startswith(_IGNORED_DEFINED_NAME_PREFIXES)
 
-    def test_discard_unused(self):
-        wb = loadExcelFromPathOrFileLike(SAMPLE)
-        r = WorkbookReader(wb, _results())
-        dn = next(iter(r.unused_defined_names))
-        r.discard_unused(dn)
-        assert dn not in r.unused_defined_names
-        wb.close()
-
 
 class TestGetDateFromValue:
     def test_date_passthrough(self):

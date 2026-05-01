@@ -278,14 +278,7 @@ def getCellRangeIterator(
         raise OpenPyXlRelatedException(
             f"Cell range bounds expected to be int but actually None {cr=}"
         )
-    actual_row_start: int = cr.min_row
-    if row_start is not None:
-        actual_row_start = row_start
-
-    actual_col_start: int = cr.min_col
-    if col_start is not None:
-        actual_col_start = col_start
-
+    actual_row_start: int = row_start if row_start is not None else cr.min_row
     for rnum, row in enumerate(
         ws.iter_rows(
             min_row=cr.min_row,
@@ -296,10 +289,11 @@ def getCellRangeIterator(
         start=actual_row_start,
     ):
         if group_by_row:
-            yield rnum, row  # Yield row number and tuple of cells
+            yield rnum, row
         else:
+            actual_col_start: int = col_start if col_start is not None else cr.min_col
             for cnum, cell in enumerate(row, start=actual_col_start):
-                yield rnum, cnum, cell  # Yield row number, column number, and cell
+                yield rnum, cnum, cell
 
 
 class CellRangeDimensions(NamedTuple):
@@ -403,9 +397,6 @@ class WorkbookReader:
     def getDefinedName(self, name: str) -> Optional[DefinedName]:
         return self._workbook.defined_names.get(name)
 
-    def discard_unused(self, dn: DefinedName) -> None:
-        self._unused.discard(dn)
-
     @property
     def unused_defined_names(self) -> frozenset[DefinedName]:
         return frozenset(self._unused)
@@ -442,7 +433,7 @@ class WorkbookReader:
                                 crh, concept
                             )
                         )
-                        self.discard_unused(dn)
+                        self._unused.discard(dn)
                 else:
                     concept = taxonomy.getConceptForName(conceptName)
                     dimValue = taxonomy.getConceptForName(memberName)
@@ -465,7 +456,7 @@ class WorkbookReader:
                                 MessageType.DevInfo,
                             )
             if dn in concept_map:
-                self.discard_unused(dn)
+                self._unused.discard(dn)
 
         results.addMessage(
             f"Excel file parsed ({results.numCellsPopulated} cells had data, with {results.numCellQueries} cells accessed).",
