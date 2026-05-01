@@ -26,7 +26,7 @@ def _results() -> ConversionResultsBuilder:
 @pytest.fixture(scope="module")
 def full_pipeline_fact_count():
     ep = XlsxProcessor.from_file(SAMPLE, _results(), VSME_DEFAULTS)
-    return ep.populateReport().factCount
+    return ep.createReport().factCount
 
 
 @pytest.fixture(scope="module")

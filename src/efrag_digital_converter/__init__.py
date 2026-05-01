@@ -510,7 +510,7 @@ def doConversion(conversion: dict, id: str) -> ConversionResults:
                 outputLocale=requestedOutputLocale,
             )
 
-            report = xl_processor.populateReport()
+            report = xl_processor.createReport()
             if not report.hasFacts:
                 resultBuilder.addMessage(
                     "No facts found in InlineReport (likely due to earlier errors). Stopping here.",

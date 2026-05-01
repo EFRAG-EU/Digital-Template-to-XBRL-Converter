@@ -75,9 +75,9 @@ class TestFromBytesVsFromFile:
         data = SAMPLE.read_bytes()
 
         ep_bytes = XlsxProcessor.from_bytes(data, _builder(), VSME_DEFAULTS)
-        report_bytes = ep_bytes.populateReport()
+        report_bytes = ep_bytes.createReport()
 
         ep_file = XlsxProcessor.from_file(SAMPLE, _builder(), VSME_DEFAULTS)
-        report_file = ep_file.populateReport()
+        report_file = ep_file.createReport()
 
         assert report_bytes.factCount == report_file.factCount

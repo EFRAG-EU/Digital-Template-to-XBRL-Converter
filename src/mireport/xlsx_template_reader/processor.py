@@ -107,7 +107,7 @@ class XlsxProcessor:
     def unusedNames(self) -> list[str]:
         return sorted(dn.name for dn in self._reader.unused_defined_names if dn.name)
 
-    def populateReport(self) -> InlineReport:
+    def createReport(self) -> InlineReport:
         """
         Add facts to InlineReport from the provided Excel workbook.
         The workbook is close()d before this method returns

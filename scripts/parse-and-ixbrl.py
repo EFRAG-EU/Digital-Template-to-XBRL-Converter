@@ -210,7 +210,7 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, list[str]
             VSME_DEFAULTS,
             outputLocale=args.output_locale,
         )
-        report = xl_processor.populateReport()
+        report = xl_processor.createReport()
 
         report.theme.setDisplayMode(args.style_mode).setColour(
             ColourPalette.from_label(args.style_palette)
