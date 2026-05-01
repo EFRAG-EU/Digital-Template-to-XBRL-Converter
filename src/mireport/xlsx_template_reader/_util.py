@@ -44,6 +44,7 @@ CellValueType: TypeAlias = bool | float | int | str | datetime | date | time | N
 
 EXCEL_PLACEHOLDER_VALUE = "#VALUE!"
 EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE = frozenset({"-", EXCEL_PLACEHOLDER_VALUE})
+_IGNORED_DEFINED_NAME_PREFIXES = ("enum_", "template_")
 
 
 def conceptsToText(concepts: Iterable[Concept]) -> str:
@@ -382,11 +383,14 @@ class WorkbookReader:
     def __init__(
         self,
         workbook: Workbook,
-        unused: set[DefinedName],
         results: ConversionResultsBuilder,
     ) -> None:
         self._workbook = workbook
-        self._unused = unused
+        self._unused: set[DefinedName] = {
+            dn
+            for dn in workbook.defined_names.values()
+            if (name := dn.name) and not name.startswith(_IGNORED_DEFINED_NAME_PREFIXES)
+        }
         self._results = results
 
     def close(self) -> None:
@@ -394,6 +398,13 @@ class WorkbookReader:
 
     def getDefinedName(self, name: str) -> Optional[DefinedName]:
         return self._workbook.defined_names.get(name)
+
+    def discard_unused(self, dn: DefinedName) -> None:
+        self._unused.discard(dn)
+
+    @property
+    def unused_defined_names(self) -> frozenset[DefinedName]:
+        return frozenset(self._unused)
 
     def _getCellRange(self, dn: DefinedName) -> Optional[CellRangeMetadata]:
         all_destinations = list(dn.destinations)

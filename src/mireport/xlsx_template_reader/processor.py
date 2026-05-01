@@ -68,14 +68,12 @@ class ExcelProcessor:
         self._results = results
         self._defaults = defaults
 
-        self._unusedDefinedNames: set[DefinedName] = set()
-
         # For passing through to inline report
         self._outputLocale: Optional[Locale] = outputLocale
         self._coverImage: Optional[bytes] = None
 
         self._report: InlineReport
-        self._reader = WorkbookReader(workbook, self._unusedDefinedNames, results)
+        self._reader = WorkbookReader(workbook, results)
 
     @classmethod
     def from_bytes(
@@ -109,7 +107,7 @@ class ExcelProcessor:
 
     @property
     def unusedNames(self) -> list[str]:
-        return sorted(dn.name for dn in self._unusedDefinedNames if dn.name)
+        return sorted(dn.name for dn in self._reader.unused_defined_names if dn.name)
 
     def populateReport(self) -> InlineReport:
         """

@@ -24,7 +24,7 @@ def _results() -> ConversionResultsBuilder:
 @pytest.fixture(scope="module")
 def reader():
     wb = loadExcelFromPathOrFileLike(SAMPLE)
-    yield WorkbookReader(wb, set(), _results())
+    yield WorkbookReader(wb, _results())
     wb.close()
 
 
@@ -37,7 +37,7 @@ class TestWorkbookReaderImport:
 
 
 class TestWorkbookReaderInit:
-    def test_accepts_workbook_unused_results(self, reader):
+    def test_accepts_workbook_and_results(self, reader):
         assert reader is not None
 
     def test_has_get_single_cell(self):
@@ -61,6 +61,23 @@ class TestWorkbookReaderGetSingleStringValue:
     def test_missing_name_returns_fallback(self, reader):
         val = reader.getSingleStringValue("this_does_not_exist_xyz", fallbackValue="FB")
         assert val == "FB"
+
+
+class TestWorkbookReaderUnusedAPI:
+    def test_unused_defined_names_populated_on_init(self, reader):
+        assert len(reader.unused_defined_names) > 0
+
+    def test_excluded_prefixes_absent(self, reader):
+        for dn in reader.unused_defined_names:
+            assert not dn.name.startswith(("enum_", "template_"))
+
+    def test_discard_unused(self):
+        wb = loadExcelFromPathOrFileLike(SAMPLE)
+        r = WorkbookReader(wb, _results())
+        dn = next(iter(r.unused_defined_names))
+        r.discard_unused(dn)
+        assert dn not in r.unused_defined_names
+        wb.close()
 
 
 class TestGetDateFromValue:

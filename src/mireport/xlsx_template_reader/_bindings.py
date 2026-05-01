@@ -61,4 +61,3 @@ class WorkbookBindings:
     table_map: dict[CellAndXBRLMetadataHolder, TableXBRLContents]
     unit_map: dict[Concept, CellAndXBRLMetadataHolder]
     preset_dims: defaultdict[CellAndXBRLMetadataHolder, dict[Concept, Concept]]
-    unused: set[DefinedName]

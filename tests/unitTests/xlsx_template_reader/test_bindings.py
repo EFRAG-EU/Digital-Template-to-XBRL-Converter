@@ -31,7 +31,6 @@ class TestWorkbookBindingsShape:
             "table_map",
             "unit_map",
             "preset_dims",
-            "unused",
         } <= field_names
 
     def test_can_instantiate_empty(self):
@@ -40,7 +39,6 @@ class TestWorkbookBindingsShape:
             table_map={},
             unit_map={},
             preset_dims=defaultdict(dict),
-            unused=set(),
         )
         assert wb.concept_map == {}
 

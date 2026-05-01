@@ -30,26 +30,14 @@ def build_bindings(
     taxonomy: Taxonomy,
     defaults: dict,
 ) -> WorkbookBindings:
-    """Scrape named ranges from the workbook and return a WorkbookBindings.
-
-    Side effects: populates ``reader._unused`` with DefinedName objects that
-    were not matched to any XBRL concept.
-    """
+    """Scrape named ranges from the workbook and return a WorkbookBindings."""
     concept_map: dict = {}
     unit_map: dict = {}
     preset_dims: defaultdict = defaultdict(dict)
 
-    wb = reader._workbook
     results = reader._results
-    unused = reader._unused
 
-    unused.update(
-        dn
-        for dn in wb.defined_names.values()
-        if dn.name and not dn.name.startswith(("enum_", "template_"))
-    )
-
-    for dn in list(unused):
+    for dn in list(reader.unused_defined_names):
         if dn.name is None:
             results.addMessage(
                 "Named range has no name. Skipping.",
@@ -57,7 +45,7 @@ def build_bindings(
                 MessageType.DevInfo,
                 excel_reference=excelDefinedNameRef(dn),
             )
-            unused.discard(dn)
+            reader.discard_unused(dn)
             continue
 
         concept = taxonomy.getConceptForName(dn.name)
@@ -81,7 +69,7 @@ def build_bindings(
                     unit_map[concept] = CellAndXBRLMetadataHolder.fromCellRangeMetadata(
                         crh, concept
                     )
-                    unused.discard(dn)
+                    reader.discard_unused(dn)
             else:
                 concept = taxonomy.getConceptForName(conceptName)
                 dimValue = taxonomy.getConceptForName(memberName)
@@ -104,7 +92,7 @@ def build_bindings(
                             MessageType.DevInfo,
                         )
         if dn in concept_map:
-            unused.discard(dn)
+            reader.discard_unused(dn)
 
     results.addMessage(
         f"Excel file parsed ({results.numCellsPopulated} cells had data, with {results.numCellQueries} cells accessed).",
@@ -219,5 +207,4 @@ def build_bindings(
         table_map=table_map,
         unit_map=unit_map,
         preset_dims=preset_dims,
-        unused=unused,
     )
