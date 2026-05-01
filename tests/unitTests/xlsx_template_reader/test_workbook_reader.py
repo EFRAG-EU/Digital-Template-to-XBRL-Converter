@@ -5,6 +5,7 @@ import pytest
 
 from mireport.conversionresults import ConversionResultsBuilder
 from mireport.xlsx_template_reader._util import (
+    _IGNORED_DEFINED_NAME_PREFIXES,
     WorkbookReader,
     getDateFromValue,
     loadExcelFromPathOrFileLike,
@@ -69,7 +70,7 @@ class TestWorkbookReaderUnusedAPI:
 
     def test_excluded_prefixes_absent(self, reader):
         for dn in reader.unused_defined_names:
-            assert not dn.name.startswith(("enum_", "template_"))
+            assert not dn.name.startswith(_IGNORED_DEFINED_NAME_PREFIXES)
 
     def test_discard_unused(self):
         wb = loadExcelFromPathOrFileLike(SAMPLE)

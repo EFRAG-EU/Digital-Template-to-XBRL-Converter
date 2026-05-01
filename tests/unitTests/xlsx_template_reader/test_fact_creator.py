@@ -6,7 +6,6 @@ from mireport.conversionresults import ConversionResultsBuilder
 from mireport.report import InlineReport
 from mireport.taxonomy import getTaxonomy
 from mireport.xlsx_template_reader._fact_creator import FactCreator
-from mireport.xlsx_template_reader._range_mapper import build_bindings
 from mireport.xlsx_template_reader._util import (
     WorkbookReader,
     loadExcelFromPathOrFileLike,
@@ -34,7 +33,7 @@ def full_pipeline_fact_count():
 def fact_creator_fact_count():
     wb = loadExcelFromPathOrFileLike(SAMPLE)
     results = _results()
-    reader = WorkbookReader(wb, set(), results)
+    reader = WorkbookReader(wb, results)
 
     entry_point = reader.getSingleStringValue(VSME_DEFAULTS.get("entryPoint", ""))
     taxonomy = getTaxonomy(entry_point)
@@ -63,7 +62,7 @@ def fact_creator_fact_count():
         if report.addDurationPeriod(period["name"], start, end):
             report.setDefaultPeriodName(period["name"])
 
-    bindings = build_bindings(reader, taxonomy, VSME_DEFAULTS)
+    bindings = reader.build_bindings(taxonomy, VSME_DEFAULTS)
     try:
         FactCreator(bindings, reader, report, results, VSME_DEFAULTS).create_all_facts()
     finally:

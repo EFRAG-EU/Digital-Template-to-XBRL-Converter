@@ -8,7 +8,6 @@ from mireport.xlsx_template_reader._bindings import (
     CellAndXBRLMetadataHolder,
     WorkbookBindings,
 )
-from mireport.xlsx_template_reader._range_mapper import build_bindings
 from mireport.xlsx_template_reader._util import (
     WorkbookReader,
     loadExcelFromPathOrFileLike,
@@ -29,17 +28,17 @@ def _results() -> ConversionResultsBuilder:
 @pytest.fixture(scope="module")
 def bindings():
     wb = loadExcelFromPathOrFileLike(SAMPLE)
-    reader = WorkbookReader(wb, set(), _results())
+    reader = WorkbookReader(wb, _results())
     entry_point = reader.getSingleStringValue(VSME_DEFAULTS.get("entryPoint", ""))
     taxonomy = getTaxonomy(entry_point)
-    b = build_bindings(reader, taxonomy, VSME_DEFAULTS)
+    b = reader.build_bindings(taxonomy, VSME_DEFAULTS)
     yield b
     wb.close()
 
 
 class TestRangeMapperImport:
-    def test_build_bindings_callable(self):
-        assert callable(build_bindings)
+    def test_has_build_bindings(self):
+        assert callable(WorkbookReader.build_bindings)
 
 
 @pytest.mark.slow

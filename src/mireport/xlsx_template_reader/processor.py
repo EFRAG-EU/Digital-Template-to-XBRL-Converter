@@ -10,7 +10,6 @@ if TYPE_CHECKING:
 
 from babel import Locale
 from openpyxl import Workbook
-from openpyxl.workbook.defined_name import DefinedName
 
 from mireport.conversionresults import (
     ConversionResultsBuilder,
@@ -30,7 +29,6 @@ from mireport.taxonomy import (
 from mireport.version import OUR_VERSION_HOLDER, VersionHolder
 from mireport.xlsx_template_reader._bindings import WorkbookBindings
 from mireport.xlsx_template_reader._fact_creator import FactCreator
-from mireport.xlsx_template_reader._range_mapper import build_bindings
 from mireport.xlsx_template_reader._util import (
     EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE,
     WorkbookReader,
@@ -123,8 +121,8 @@ class ExcelProcessor:
             self.checkTemplate()
             self.abortEarlyIfErrors()
 
-            bindings: WorkbookBindings = build_bindings(
-                self._reader, self.taxonomy, self._defaults
+            bindings: WorkbookBindings = self._reader.build_bindings(
+                self.taxonomy, self._defaults
             )
             FactCreator(
                 bindings, self._reader, self._report, self._results, self._defaults
