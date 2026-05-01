@@ -8,7 +8,7 @@ from mireport.xlsx_template_reader._bindings import (
     CellAndXBRLMetadataHolder,
     WorkbookBindings,
 )
-from mireport.xlsx_template_reader._util import (
+from mireport.xlsx_template_reader._reader import (
     WorkbookReader,
     loadExcelFromPathOrFileLike,
 )

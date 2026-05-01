@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 from mireport.conversionresults import ConversionResultsBuilder
-from mireport.xlsx_template_reader._util import (
+from mireport.xlsx_template_reader._reader import (
     _IGNORED_DEFINED_NAME_PREFIXES,
     WorkbookReader,
     getDateFromValue,

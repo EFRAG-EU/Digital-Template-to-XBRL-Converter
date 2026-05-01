@@ -362,8 +362,8 @@ def getEffectiveCellRangeDimensions(
         else:
             cols_empty.add(cnum)
     else:
-        if not empty_row:
-            populated_rows.add(rnum)
+        if last_rnum is not None and not empty_row:
+            populated_rows.add(last_rnum)
 
     definitely_empty_cols = cols_empty - cols_not_empty
     total_cols = len(cols_not_empty.union(cols_empty))

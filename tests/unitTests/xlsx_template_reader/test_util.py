@@ -5,7 +5,7 @@ from openpyxl import Workbook
 from openpyxl.worksheet.cell_range import CellRange
 from openpyxl.worksheet.worksheet import Worksheet
 
-from mireport.xlsx_template_reader._util import (
+from mireport.xlsx_template_reader._reader import (
     CellRangeDimensions,
     getEffectiveCellRangeDimensions,
 )

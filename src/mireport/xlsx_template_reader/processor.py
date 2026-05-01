@@ -29,7 +29,7 @@ from mireport.taxonomy import (
 from mireport.version import OUR_VERSION_HOLDER, VersionHolder
 from mireport.xlsx_template_reader._bindings import WorkbookBindings
 from mireport.xlsx_template_reader._fact_creator import FactCreator
-from mireport.xlsx_template_reader._util import (
+from mireport.xlsx_template_reader._reader import (
     EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE,
     WorkbookReader,
     excelDefinedNameRef,

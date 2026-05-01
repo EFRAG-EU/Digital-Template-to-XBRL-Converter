@@ -7,7 +7,7 @@ from pathlib import Path
 
 from mireport.cli import configure_rich_output
 from mireport.cli import console_print as print
-from mireport.xlsx_template_reader._util import (
+from mireport.xlsx_template_reader._reader import (
     checkExcelFilePath,
     getNamedRanges,
     loadExcelFromPathOrFileLike,

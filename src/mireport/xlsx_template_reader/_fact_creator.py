@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from openpyxl.workbook.defined_name import DefinedName
 
     from mireport.taxonomy import Concept, QName, Taxonomy
-    from mireport.xlsx_template_reader._util import CellType, WorkbookReader
+    from mireport.xlsx_template_reader._reader import CellType, WorkbookReader
 
 from dateutil.relativedelta import relativedelta
 
@@ -27,7 +27,7 @@ from mireport.xlsx_template_reader._bindings import (
     ComplexUnit,
     WorkbookBindings,
 )
-from mireport.xlsx_template_reader._util import (
+from mireport.xlsx_template_reader._reader import (
     EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE,
     conceptsToText,
     excelCellOrCellRangeRef,
