@@ -349,7 +349,7 @@ class FactCreator:
                                 ),
                             )
                     elif concept.isEnumerationSet:
-                        eeValues = []
+                        eeValues: list[Concept] = []
                         for v in values:
                             if (
                                 eeValue := self._report.taxonomy.getConceptForLabel(
