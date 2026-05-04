@@ -100,10 +100,6 @@ class XlsxProcessor:
         return cls(wb, results, defaults, outputLocale=outputLocale)
 
     @property
-    def taxonomy(self) -> Taxonomy:
-        return self._report.taxonomy
-
-    @property
     def unusedNames(self) -> list[str]:
         return sorted(dn.name for dn in self._reader.unused_defined_names if dn.name)
 
@@ -122,7 +118,7 @@ class XlsxProcessor:
             self.abortEarlyIfErrors()
 
             bindings: WorkbookBindings = self._reader.build_bindings(
-                self.taxonomy, self._defaults
+                self._report.taxonomy, self._defaults
             )
             FactCreator(
                 bindings, self._reader, self._report, self._results, self._defaults
