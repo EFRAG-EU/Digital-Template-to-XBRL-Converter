@@ -228,19 +228,16 @@ def get_decimal_places(cell: CellType) -> DecimalPlaces:
     number_format = cell.number_format
 
     # Match typical decimal number formats like '0.00', '#,##0.000', etc.
-    match = re.search(r"\.(0+)", number_format)
-    if match:
+    if match := re.search(r"\.(0+)", number_format):
         return len(match.group(1))
 
     # Handle cases like percentage formats '0.0%' or '0.000%'
-    match_percent = re.search(r"\.(0+)%", number_format)
-    if match_percent:
-        return len(match_percent.group(1))
+    if match := re.search(r"\.(0+)%", number_format):
+        return len(match.group(1))
 
     # Catch general cases like scientific notation '0.00E+00'
-    match_sci = re.search(r"\.(0+)[eE]", number_format)
-    if match_sci:
-        return len(match_sci.group(1))
+    if match := re.search(r"\.(0+)[eE]", number_format):
+        return len(match.group(1))
 
     return "INF"
 
