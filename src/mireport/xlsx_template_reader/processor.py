@@ -155,22 +155,15 @@ class XlsxProcessor:
             return
 
         # No one specified a locale ... let's see if Excel has one.
-
-        excelOutputLanguage = self._reader.getSingleStringValue(
-            "template_reporting_language"
-        ).strip()
-        languageCellReference = excelDefinedNameRef(
-            self._reader.getDefinedName("template_reporting_language")
-        )
+        name = "template_reporting_language"
+        excelOutputLanguage = self._reader.getSingleStringValue(name).strip()
         if not excelOutputLanguage:
-            excelOutputLanguage = self._reader.getSingleStringValue(
-                "template_selected_display_language"
-            ).strip()
-            languageCellReference = excelDefinedNameRef(
-                self._reader.getDefinedName("template_selected_display_language")
-            )
+            name = "template_selected_display_language"
+            excelOutputLanguage = self._reader.getSingleStringValue(name).strip()
         if not excelOutputLanguage:
             return
+
+        languageCellReference = excelDefinedNameRef(self._reader.getDefinedName(name))
 
         if codeMatch := re.search(
             r"\[([a-zA-Z]+(?:-[a-zA-Z])*?)\]$", excelOutputLanguage
