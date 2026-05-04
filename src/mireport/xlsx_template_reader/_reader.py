@@ -758,15 +758,28 @@ class WorkbookReader:
             )
             return None
 
-        if cr.min_row == cr.max_row:
-            row = cr.min_row
-        if cr.min_col == cr.max_col:
-            column = cr.min_col
+        shouldOverrideRow = row == -1 or stuff.maximum_height == 1
+        shouldOverrideColumn = column == -1 or stuff.maximum_width == 1
 
-        if row == -1:
+        if shouldOverrideRow:
             row = cr.min_row
-        if column == -1:
+            if stuff.populated_height > 1:
+                self._results.addMessage(
+                    f"Named range {stuff.definedName.name} has {stuff.populated_height} populated rows but no row was specified; using the first.",
+                    Severity.WARNING,
+                    MessageType.DevInfo,
+                    excel_reference=excelCellRangeRef(ws, cr),
+                )
+
+        if shouldOverrideColumn:
             column = cr.min_col
+            if stuff.populated_width > 1:
+                self._results.addMessage(
+                    f"Named range {stuff.definedName.name} has {stuff.populated_width} populated columns but no column was specified; using the first.",
+                    Severity.WARNING,
+                    MessageType.DevInfo,
+                    excel_reference=excelCellRangeRef(ws, cr),
+                )
 
         if not (cr.min_row <= row <= cr.max_row):
             self._results.addMessage(

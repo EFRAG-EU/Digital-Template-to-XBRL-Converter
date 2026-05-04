@@ -32,11 +32,11 @@ class CellRangeMetadata:
     populated_min_row: int
 
     @property
-    def maximumWidth(self) -> int:
+    def maximum_width(self) -> int:
         return self.cellRange.max_col - self.cellRange.min_col + 1
 
     @property
-    def maximumHeight(self) -> int:
+    def maximum_height(self) -> int:
         return self.cellRange.max_row - self.cellRange.min_row + 1
 
 
