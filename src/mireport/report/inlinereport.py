@@ -226,24 +226,25 @@ class InlineReport:
             self._footnotesByGroup[group] = footnote
         return footnote
 
-    def replaceFactValue(self, concept_qname: str | QName, value: FactValue) -> None:
+    def replaceFactValue(
+        self, concept: Concept | QName | str, value: FactValue
+    ) -> None:
         """
-        Replace the value of the only fact for the specified concept QName.
+        Replace the value of the only fact for the specified concept.
         """
-        concept = self._taxonomy.getConcept(concept_qname)
+        if not isinstance(concept, Concept):
+            concept = self._taxonomy.getConcept(concept)
         candidates = self.getFacts(concept)
 
         if not candidates:
             raise InlineReportException(
-                f"No existing fact found for concept {concept_qname}. Cannot replace value."
+                f"No existing fact found for concept {concept}. Cannot replace value."
             )
         if len(candidates) != 1:
             raise InlineReportException(
-                f"Multiple existing facts found for concept {concept_qname}. Cannot replace value unambiguously."
+                f"Multiple existing facts found for concept {concept}. Cannot replace value unambiguously."
             )
-
         candidates[0].value = value
-        return
 
     @property
     def hasFacts(self) -> bool:
