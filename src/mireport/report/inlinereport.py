@@ -70,6 +70,7 @@ class InlineReport:
         self._theme: ReportTheme = ReportTheme.default()
         self._footnotesByGroup: dict[str, Footnote] = {}
         self._labelOverrides: dict[str, str] = {}
+        self._partial_facts: dict[Concept, FactBuilder] = {}
         if not outputLocale:
             outputLocale = (
                 get_locale_from_str(taxonomy.defaultLanguage or "") or Locale.default()
@@ -262,6 +263,28 @@ class InlineReport:
         result = self._factsByConcept.get(concept)
         return [] if result is None else result.copy()
 
+    def addPartialFact(self, concept: Concept, fb: FactBuilder) -> None:
+        """Register a partial FactBuilder whose value must be supplied from an external document."""
+        if fb.concept != concept:
+            raise ValueError(
+                f"FactBuilder concept {fb.concept} does not match expected concept {concept}."
+            )
+        if concept in self._partial_facts:
+            raise ValueError(
+                f"Concept {concept} already has a pending external fact registered."
+            )
+        self._partial_facts[concept] = fb
+
+    def completePartialFact(self, concept: Concept, value: FactValue) -> None:
+        """Supply the value for a pending external fact, build it, and add it to the report."""
+        if concept not in self._partial_facts:
+            raise ValueError(
+                f"Concept {concept} is not registered as pending an external value."
+            )
+        fb = self._partial_facts.pop(concept)
+        fb.setValue(value)
+        self.addFact(fb.buildFact())
+
     def getNamespacesForAoix(self) -> str:
         # {{ namespace utr = "http://www.xbrl.org/2009/utr" }}
         lines = []
@@ -316,6 +339,12 @@ class InlineReport:
             raise InlineReportException(
                 "Cannot generate a report with no facts or period."
             )
+        if self._partial_facts:
+            concepts = ", ".join(sorted(str(c) for c in self._partial_facts))
+            raise InlineReportException(
+                f"Cannot generate report while there are partial facts for the following concepts: {concepts}."
+            )
+
         if self._generatedReport is not None:
             return self._generatedReport
 
