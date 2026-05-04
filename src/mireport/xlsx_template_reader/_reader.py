@@ -48,6 +48,7 @@ CellValueType: TypeAlias = bool | float | int | str | datetime | date | time | N
 EXCEL_PLACEHOLDER_VALUE = "#VALUE!"
 EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE = frozenset({"-", EXCEL_PLACEHOLDER_VALUE})
 _IGNORED_DEFINED_NAME_PREFIXES = ("enum_", "template_")
+_EXTERNAL_VALUES_RANGE = "template_external_values"
 
 
 def conceptsToText(concepts: Iterable[Concept]) -> str:
@@ -633,11 +634,38 @@ class WorkbookReader:
                     else:
                         concept_map.pop(holder.definedName, None)
 
+        has_external_value: set[Concept] = set()
+        if (ext_dn := self._workbook.defined_names.get(_EXTERNAL_VALUES_RANGE)) and (
+            crh := self._createCellRangeMetadata(ext_dn)
+        ):
+            for cell in getIteratorForCellRangeMetadata(crh, only_cells=True):
+                if not isinstance(cell.value, str):
+                    continue
+                name_or_label = cell.value.strip()
+                if (
+                    not name_or_label
+                    or name_or_label in EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE
+                ):
+                    continue
+                concept = taxonomy.getConceptForName(
+                    name_or_label
+                ) or taxonomy.getConceptForLabel(name_or_label)
+                if concept is None or not concept.isTextblock:
+                    self._results.addMessage(
+                        f"External value specified in {_EXTERNAL_VALUES_RANGE} named range but no matching concept found for name or label '{name_or_label}'.",
+                        Severity.WARNING,
+                        MessageType.DevInfo,
+                        excel_reference=excelCellRef(crh.worksheet, cell),
+                    )
+                    continue
+                has_external_value.add(concept)
+
         return WorkbookBindings(
             concept_map=concept_map,
             table_map=table_map,
             unit_map=unit_map,
             preset_dims=preset_dims,
+            has_external_value=frozenset(has_external_value),
         )
 
     def _createCellRangeMetadata(self, dn: DefinedName) -> Optional[CellRangeMetadata]:

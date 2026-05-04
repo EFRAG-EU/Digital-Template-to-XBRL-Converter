@@ -770,7 +770,10 @@ class FactCreator:
                 continue
 
             value = cell.value
-            if value is None or value in EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE:
+            external_value = concept in self._bindings.has_external_value
+            if not external_value and (
+                value is None or value in EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE
+            ):
                 concept_map.pop(dn)
                 continue
 
@@ -789,17 +792,18 @@ class FactCreator:
                     continue
 
             fb.setConcept(concept)
-            if isinstance(value, FactValue):
-                fb.setValue(value)
-            else:
-                self._results.addMessage(
-                    f"Rich object '{value}' {type(value).__name__} encountered as fact value for {concept}. Converting to string.",
-                    Severity.WARNING,
-                    MessageType.ExcelParsing,
-                    taxonomy_concept=concept,
-                    excel_reference=excelCellRef(stuff.worksheet, cell),
-                )
-                fb.setValue(str(value))
+            if not external_value:
+                if isinstance(value, FactValue):
+                    fb.setValue(value)
+                else:
+                    self._results.addMessage(
+                        f"Rich object '{value}' {type(value).__name__} encountered as fact value for {concept}. Converting to string.",
+                        Severity.WARNING,
+                        MessageType.ExcelParsing,
+                        taxonomy_concept=concept,
+                        excel_reference=excelCellRef(stuff.worksheet, cell),
+                    )
+                    fb.setValue(str(value))
 
             if concept.isNumeric:
                 self.processNumeric(stuff, cell, fb, value)
@@ -869,7 +873,10 @@ class FactCreator:
                         fb.setNamedPeriod(namedPeriod)
 
             concept_map.pop(dn)
-            self.addFactToReport(fb, stuff)
+            if external_value:
+                self._report.addPartialFact(concept, fb)
+            else:
+                self.addFactToReport(fb, stuff)
 
     def createEESetFact(
         self, stuff: XbrlConceptCellRangeMetadata, fb: FactBuilder

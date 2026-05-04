@@ -71,3 +71,4 @@ class WorkbookBindings:
     table_map: dict[XbrlConceptCellRangeMetadata, XbrlTableCellRangeMetadataHolder]
     unit_map: dict[Concept, XbrlConceptCellRangeMetadata]
     preset_dims: defaultdict[XbrlConceptCellRangeMetadata, dict[Concept, Concept]]
+    has_external_value: frozenset[Concept]
