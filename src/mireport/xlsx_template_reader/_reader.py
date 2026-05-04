@@ -245,6 +245,21 @@ def get_decimal_places(cell: CellType) -> DecimalPlaces:
     return "INF"
 
 
+def getDateFromValue(value: object) -> date:
+    if isinstance(value, datetime):
+        return value.date()
+    elif isinstance(value, date):
+        return value
+    elif isinstance(value, str):
+        if "-" in value:
+            return date.fromisoformat(value)
+        elif "/" in value:
+            return parse_datetime(value, yearfirst=False, dayfirst=True).date()
+        raise ValueError(f"Unsupported date string: '{value}'")
+    else:
+        raise TypeError(f"Unsupported type for date conversion: {type(value).__name__}")
+
+
 @overload
 def _getIteratorForCellRange(
     ws: Worksheet,
@@ -363,21 +378,6 @@ class _CellRangeDimensions(NamedTuple):
     @property
     def countPopulated(self) -> int:
         return len(self.cellsPopulated)
-
-
-def getDateFromValue(value: object) -> date:
-    if isinstance(value, datetime):
-        return value.date()
-    elif isinstance(value, date):
-        return value
-    elif isinstance(value, str):
-        if "-" in value:
-            return date.fromisoformat(value)
-        elif "/" in value:
-            return parse_datetime(value, yearfirst=False, dayfirst=True).date()
-        raise ValueError(f"Unsupported date string: '{value}'")
-    else:
-        raise TypeError(f"Unsupported type for date conversion: {type(value).__name__}")
 
 
 def _getEffectiveCellRangeDimensions(
