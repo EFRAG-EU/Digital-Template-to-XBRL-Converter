@@ -16,7 +16,6 @@ from typing import (
     NamedTuple,
     Optional,
     TypeAlias,
-    Union,
     overload,
 )
 
@@ -35,10 +34,10 @@ from mireport.conversionresults import ConversionResultsBuilder, MessageType, Se
 from mireport.exceptions import OpenPyXlRelatedException
 from mireport.typealiases import DecimalPlaces
 from mireport.xlsx_template_reader._bindings import (
-    CellAndXBRLMetadataHolder,
     CellRangeMetadata,
-    TableXBRLContents,
     WorkbookBindings,
+    XbrlConceptCellRangeMetadata,
+    XbrlTableCellRangeMetadataHolder,
 )
 
 L = logging.getLogger(__name__)
@@ -246,39 +245,47 @@ def get_decimal_places(cell: CellType) -> DecimalPlaces:
 
 
 @overload
-def getCellRangeIterator(
+def _getIteratorForCellRange(
     ws: Worksheet,
     cr: CellRange,
-    row_start: Optional[int] = None,
-    col_start: Optional[int] = None,
-    group_by_row: Literal[False] = False,
+    group_by_row: Literal[False] = ...,
+    only_cells: Literal[False] = ...,
 ) -> Iterator[tuple[int, int, CellType]]: ...
 
 
 @overload
-def getCellRangeIterator(
+def _getIteratorForCellRange(
     ws: Worksheet,
     cr: CellRange,
-    row_start: Optional[int] = None,
-    col_start: Optional[int] = None,
-    group_by_row: Literal[True] = True,
+    *,
+    group_by_row: Literal[True],
+    only_cells: Literal[False] = ...,
 ) -> Iterator[tuple[int, tuple[CellType, ...]]]: ...
 
 
-def getCellRangeIterator(
+@overload
+def _getIteratorForCellRange(
     ws: Worksheet,
     cr: CellRange,
-    row_start: Optional[int] = None,
-    col_start: Optional[int] = None,
-    group_by_row: bool = False,
-) -> Iterator[Union[tuple[int, int, CellType], tuple[int, tuple[CellType, ...]]]]:
-    """Iterates over cells in the given range, supporting both standard and row-grouped modes."""
+    group_by_row: Literal[False] = ...,
+    *,
+    only_cells: Literal[True],
+) -> Iterator[CellType]: ...
 
+
+def _getIteratorForCellRange(
+    ws: Worksheet,
+    cr: CellRange,
+    group_by_row: bool = False,
+    only_cells: bool = False,
+) -> Iterator[tuple[int, int, CellType] | tuple[int, tuple[CellType, ...]] | CellType]:
+    """Iterates over cells in the given range, supporting standard, row-grouped, and cells-only modes."""
+    if group_by_row and only_cells:
+        raise ValueError("group_by_row and only_cells are mutually exclusive.")
     if cr.min_row is None or cr.min_col is None:
         raise OpenPyXlRelatedException(
             f"Cell range bounds expected to be int but actually None {cr=}"
         )
-    actual_row_start: int = row_start if row_start is not None else cr.min_row
     for rnum, row in enumerate(
         ws.iter_rows(
             min_row=cr.min_row,
@@ -286,21 +293,67 @@ def getCellRangeIterator(
             max_row=cr.max_row,
             max_col=cr.max_col,
         ),
-        start=actual_row_start,
+        start=cr.min_row,
     ):
         if group_by_row:
             yield rnum, row
+        elif only_cells:
+            yield from row
         else:
-            actual_col_start: int = col_start if col_start is not None else cr.min_col
-            for cnum, cell in enumerate(row, start=actual_col_start):
+            for cnum, cell in enumerate(row, start=cr.min_col):
                 yield rnum, cnum, cell
 
 
-class CellRangeDimensions(NamedTuple):
-    width: int
-    height: int
+@overload
+def getIteratorForCellRangeMetadata(
+    metadata: CellRangeMetadata,
+    group_by_row: Literal[False] = ...,
+    only_cells: Literal[False] = ...,
+) -> Iterator[tuple[int, int, CellType]]: ...
+
+
+@overload
+def getIteratorForCellRangeMetadata(
+    metadata: CellRangeMetadata,
+    *,
+    group_by_row: Literal[True],
+    only_cells: Literal[False] = ...,
+) -> Iterator[tuple[int, tuple[CellType, ...]]]: ...
+
+
+@overload
+def getIteratorForCellRangeMetadata(
+    metadata: CellRangeMetadata,
+    group_by_row: Literal[False] = ...,
+    *,
+    only_cells: Literal[True],
+) -> Iterator[CellType]: ...
+
+
+def getIteratorForCellRangeMetadata(
+    metadata: CellRangeMetadata,
+    group_by_row: bool = False,
+    only_cells: bool = False,
+) -> Iterator[tuple[int, int, CellType] | tuple[int, tuple[CellType, ...]] | CellType]:
+    """Convenience wrapper around getCellRangeIterator for callers that hold a CellRangeMetadata."""
+    if group_by_row:
+        return _getIteratorForCellRange(
+            metadata.worksheet, metadata.cellRange, group_by_row=True
+        )
+    if only_cells:
+        return _getIteratorForCellRange(
+            metadata.worksheet, metadata.cellRange, only_cells=True
+        )
+    return _getIteratorForCellRange(metadata.worksheet, metadata.cellRange)
+
+
+class _CellRangeDimensions(NamedTuple):
     cellsAccessed: set[tuple[str, int, int]]
     cellsPopulated: set[tuple[str, int, int]]
+    populated_width: int
+    populated_height: int
+    populated_min_col: int
+    populated_min_row: int
 
     @property
     def countAccessed(self) -> int:
@@ -326,11 +379,11 @@ def getDateFromValue(value: object) -> date:
         raise TypeError(f"Unsupported type for date conversion: {type(value).__name__}")
 
 
-def getEffectiveCellRangeDimensions(
+def _getEffectiveCellRangeDimensions(
     ws: Worksheet, cell_range: CellRange
-) -> CellRangeDimensions:
+) -> _CellRangeDimensions:
     cols_not_empty: set[int] = set()
-    cols_empty: set[int] = set()
+    cols_with_none: set[int] = set()
     populated_rows: set[int] = set()
     populatedCellCount: set[tuple[str, int, int]] = set()
     cellCount: set[tuple[str, int, int]] = set()
@@ -338,7 +391,7 @@ def getEffectiveCellRangeDimensions(
     last_rnum = None
     empty_row = True
     sheetName = ws.title
-    for rnum, cnum, cell in getCellRangeIterator(ws, cell_range):
+    for rnum, cnum, cell in _getIteratorForCellRange(ws, cell_range):
         cellCount.add((sheetName, rnum, cnum))
         if last_rnum is None:
             last_rnum = rnum
@@ -354,20 +407,24 @@ def getEffectiveCellRangeDimensions(
             empty_row = False
             cols_not_empty.add(cnum)
         else:
-            cols_empty.add(cnum)
+            cols_with_none.add(cnum)
     else:
         if last_rnum is not None and not empty_row:
             populated_rows.add(last_rnum)
 
-    definitely_empty_cols = cols_empty - cols_not_empty
-    total_cols = len(cols_not_empty.union(cols_empty))
-    width = max(1, total_cols - len(definitely_empty_cols))
-    height = max(1, len(populated_rows))
-    return CellRangeDimensions(
-        width=width,
-        height=height,
+    definitely_empty_cols = cols_with_none - cols_not_empty
+    total_cols = len(cols_not_empty.union(cols_with_none))
+    populated_width = max(1, total_cols - len(definitely_empty_cols))
+    populated_height = max(1, len(populated_rows))
+    populated_min_col = min(cols_not_empty, default=None) or cell_range.min_col
+    populated_min_row = min(populated_rows, default=None) or cell_range.min_row
+    return _CellRangeDimensions(
         cellsAccessed=cellCount,
         cellsPopulated=populatedCellCount,
+        populated_width=populated_width,
+        populated_height=populated_height,
+        populated_min_col=populated_min_col,
+        populated_min_row=populated_min_row,
     )
 
 
@@ -418,18 +475,22 @@ class WorkbookReader:
             # TODO FIXME Temporary fix for the VSME taxonomy
 
             if concept is not None:
-                if (crh := self._getCellRange(dn)) is not None:
-                    concept_map[dn] = CellAndXBRLMetadataHolder.fromCellRangeMetadata(
-                        crh, concept=concept
+                if (crh := self._createCellRangeMetadata(dn)) is not None:
+                    concept_map[dn] = (
+                        XbrlConceptCellRangeMetadata.fromCellRangeMetadata(
+                            crh, concept=concept
+                        )
                     )
             elif "_" in dn.name:
                 conceptName, _, memberName = dn.name.partition("_")
                 if "unit" == memberName:
                     if (
                         concept := taxonomy.getConceptForName(conceptName)
-                    ) is not None and (crh := self._getCellRange(dn)) is not None:
+                    ) is not None and (
+                        crh := self._createCellRangeMetadata(dn)
+                    ) is not None:
                         unit_map[concept] = (
-                            CellAndXBRLMetadataHolder.fromCellRangeMetadata(
+                            XbrlConceptCellRangeMetadata.fromCellRangeMetadata(
                                 crh, concept
                             )
                         )
@@ -437,9 +498,9 @@ class WorkbookReader:
                 else:
                     concept = taxonomy.getConceptForName(conceptName)
                     dimValue = taxonomy.getConceptForName(memberName)
-                    crh = self._getCellRange(dn)
+                    crh = self._createCellRangeMetadata(dn)
                     if crh is not None and concept is not None and dimValue is not None:
-                        b = CellAndXBRLMetadataHolder.fromCellRangeMetadata(
+                        b = XbrlConceptCellRangeMetadata.fromCellRangeMetadata(
                             crh, concept=concept
                         )
                         if (
@@ -507,8 +568,8 @@ class WorkbookReader:
                     MessageType.DevInfo,
                 )
 
-            candidates: list[CellAndXBRLMetadataHolder] = []
-            extras_in_excel: set[CellAndXBRLMetadataHolder] = set()
+            candidates: list[XbrlConceptCellRangeMetadata] = []
+            extras_in_excel: set[XbrlConceptCellRangeMetadata] = set()
             for dn, stuff in concept_map.items():
                 if tableWorksheet is not stuff.worksheet:
                     continue
@@ -554,7 +615,7 @@ class WorkbookReader:
                 units = [
                     u for p in pItems if (u := unit_map.get(p.concept)) is not None
                 ]
-                table_map[table_stuff] = TableXBRLContents(
+                table_map[table_stuff] = XbrlTableCellRangeMetadataHolder(
                     primaryItems=pItems,
                     explicitDimensions=eDims,
                     typedDimensions=tDims,
@@ -579,7 +640,7 @@ class WorkbookReader:
             preset_dims=preset_dims,
         )
 
-    def _getCellRange(self, dn: DefinedName) -> Optional[CellRangeMetadata]:
+    def _createCellRangeMetadata(self, dn: DefinedName) -> Optional[CellRangeMetadata]:
         all_destinations = list(dn.destinations)
         match len(all_destinations):
             case 0:
@@ -612,42 +673,51 @@ class WorkbookReader:
         except Exception as e:
             L.exception("OpenPyXL is sad.", exc_info=e)
             return None
-        dims = getEffectiveCellRangeDimensions(ws, cr)
+        dims = _getEffectiveCellRangeDimensions(ws, cr)
         self._results.addCellQueries(dims.cellsAccessed)
         self._results.addCellsWithData(dims.cellsPopulated)
         return CellRangeMetadata(
             dn,
             ws,
             cr,
-            effectiveHeight=dims.height,
-            effectiveWidth=dims.width,
-            cellsPopulated=len(dims.cellsPopulated),
+            populated_height=dims.populated_height,
+            populated_width=dims.populated_width,
+            populated_min_col=dims.populated_min_col,
+            populated_min_row=dims.populated_min_row,
         )
 
-    def getSingleCell(
+    def _getCellRangeMetadata(
         self,
-        definedName: DefinedName | str | CellAndXBRLMetadataHolder | CellRangeMetadata,
-        *,
-        row: int = -1,
-        column: int = -1,
-    ) -> Optional[CellType]:
+        definedName: DefinedName
+        | str
+        | XbrlConceptCellRangeMetadata
+        | CellRangeMetadata,
+    ) -> Optional[CellRangeMetadata]:
         if isinstance(definedName, str):
             definedName = self._workbook.defined_names.get(definedName)
             if definedName is None:
                 return None
-
         if isinstance(definedName, DefinedName):
-            crh = self._getCellRange(definedName)
-            if crh is None:
+            if (crm := self._createCellRangeMetadata(definedName)) is None:
                 return None
-            self._unused.discard(definedName)
-            stuff = crh
-        elif isinstance(definedName, (CellAndXBRLMetadataHolder, CellRangeMetadata)):
-            stuff = definedName
-        else:
-            return None
+            definedName = crm
+        if isinstance(definedName, (XbrlConceptCellRangeMetadata, CellRangeMetadata)):
+            self._unused.discard(definedName.definedName)
+            return definedName
+        return None
 
-        self._unused.discard(stuff.definedName)
+    def getSingleCell(
+        self,
+        definedName: DefinedName
+        | str
+        | XbrlConceptCellRangeMetadata
+        | CellRangeMetadata,
+        *,
+        row: int = -1,
+        column: int = -1,
+    ) -> Optional[CellType]:
+        if (stuff := self._getCellRangeMetadata(definedName)) is None:
+            return None
 
         cr = stuff.cellRange
         ws = stuff.worksheet
@@ -676,7 +746,7 @@ class WorkbookReader:
         if not (cr.min_row <= row <= cr.max_row):
             self._results.addMessage(
                 f"Row {row} has not been specified correctly.",
-                Severity.ERROR,
+                Severity.WARNING,
                 MessageType.DevInfo,
                 excel_reference=excelCellRangeRef(ws, cr),
             )
@@ -684,42 +754,13 @@ class WorkbookReader:
         if not (cr.min_col <= column <= cr.max_col):
             self._results.addMessage(
                 f"Column {column} has not been specified correctly.",
-                Severity.ERROR,
+                Severity.WARNING,
                 MessageType.DevInfo,
                 excel_reference=excelCellRangeRef(ws, cr),
             )
             column = cr.min_col
 
-        rows = list(
-            ws.iter_rows(min_row=row, max_row=row, min_col=column, max_col=column)
-        )
-        match len(rows):
-            case 0:
-                return None
-            case 1:
-                cells = rows[0]
-            case _:
-                return None
-
-        match len(cells):
-            case 0:
-                cell = None
-                self._results.addMessage(
-                    "No cells found in row of this named range.",
-                    Severity.ERROR,
-                    MessageType.DevInfo,
-                    excel_reference=excelCellRangeRef(ws, cr),
-                )
-            case 1:
-                cell = cells[0]
-            case _:
-                cell = None
-                self._results.addMessage(
-                    f"More than one cell found in range but only expected one cell. {cells}",
-                    Severity.ERROR,
-                    MessageType.DevInfo,
-                    excel_reference=excelCellRangeRef(ws, cr),
-                )
+        cell = ws.cell(row=row, column=column)
 
         if cell is None or cell.value is None:
             return None

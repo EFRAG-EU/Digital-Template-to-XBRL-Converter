@@ -26,13 +26,22 @@ class CellRangeMetadata:
     definedName: DefinedName
     worksheet: Worksheet
     cellRange: CellRange
-    effectiveWidth: int
-    effectiveHeight: int
-    cellsPopulated: int
+    populated_width: int
+    populated_height: int
+    populated_min_col: int
+    populated_min_row: int
+
+    @property
+    def maximumWidth(self) -> int:
+        return self.cellRange.max_col - self.cellRange.min_col + 1
+
+    @property
+    def maximumHeight(self) -> int:
+        return self.cellRange.max_row - self.cellRange.min_row + 1
 
 
 @dataclass(slots=True, eq=True, frozen=True)
-class CellAndXBRLMetadataHolder(CellRangeMetadata):
+class XbrlConceptCellRangeMetadata(CellRangeMetadata):
     concept: Concept
 
     @classmethod
@@ -41,23 +50,24 @@ class CellAndXBRLMetadataHolder(CellRangeMetadata):
             definedName=holder.definedName,
             worksheet=holder.worksheet,
             cellRange=holder.cellRange,
-            effectiveWidth=holder.effectiveWidth,
-            effectiveHeight=holder.effectiveHeight,
+            populated_width=holder.populated_width,
+            populated_height=holder.populated_height,
+            populated_min_col=holder.populated_min_col,
+            populated_min_row=holder.populated_min_row,
             concept=concept,
-            cellsPopulated=holder.cellsPopulated,
         )
 
 
-class TableXBRLContents(NamedTuple):
-    primaryItems: list[CellAndXBRLMetadataHolder]
-    explicitDimensions: list[CellAndXBRLMetadataHolder]
-    typedDimensions: list[CellAndXBRLMetadataHolder]
-    units: list[CellAndXBRLMetadataHolder]
+class XbrlTableCellRangeMetadataHolder(NamedTuple):
+    primaryItems: list[XbrlConceptCellRangeMetadata]
+    explicitDimensions: list[XbrlConceptCellRangeMetadata]
+    typedDimensions: list[XbrlConceptCellRangeMetadata]
+    units: list[XbrlConceptCellRangeMetadata]
 
 
 @dataclass
 class WorkbookBindings:
-    concept_map: dict[DefinedName, CellAndXBRLMetadataHolder]
-    table_map: dict[CellAndXBRLMetadataHolder, TableXBRLContents]
-    unit_map: dict[Concept, CellAndXBRLMetadataHolder]
-    preset_dims: defaultdict[CellAndXBRLMetadataHolder, dict[Concept, Concept]]
+    concept_map: dict[DefinedName, XbrlConceptCellRangeMetadata]
+    table_map: dict[XbrlConceptCellRangeMetadata, XbrlTableCellRangeMetadataHolder]
+    unit_map: dict[Concept, XbrlConceptCellRangeMetadata]
+    preset_dims: defaultdict[XbrlConceptCellRangeMetadata, dict[Concept, Concept]]

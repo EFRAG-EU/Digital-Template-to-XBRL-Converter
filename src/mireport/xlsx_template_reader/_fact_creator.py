@@ -23,9 +23,9 @@ from mireport.report.factbuilder import FactBuilder
 from mireport.stringutil import stripLabelSuffix
 from mireport.typealiases import FactValue
 from mireport.xlsx_template_reader._bindings import (
-    CellAndXBRLMetadataHolder,
     ComplexUnit,
     WorkbookBindings,
+    XbrlConceptCellRangeMetadata,
 )
 from mireport.xlsx_template_reader._reader import (
     EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE,
@@ -34,8 +34,8 @@ from mireport.xlsx_template_reader._reader import (
     excelCellRangeRef,
     excelCellRef,
     get_decimal_places,
-    getCellRangeIterator,
     getDateFromValue,
+    getIteratorForCellRangeMetadata,
 )
 
 L = logging.getLogger(__name__)
@@ -239,8 +239,8 @@ class FactCreator:
             for priItem in primary_items:
                 concept = priItem.concept
                 broken = False
-                for rnum, row in getCellRangeIterator(
-                    priItem.worksheet, priItem.cellRange, group_by_row=True
+                for rnum, row in getIteratorForCellRangeMetadata(
+                    priItem, group_by_row=True
                 ):
                     cells = [cell for cell in row if cell.value is not None]
                     match len(cells):
@@ -388,7 +388,7 @@ class FactCreator:
 
     def addTableFactTypedDimensions(
         self,
-        typed_dimensions: list[CellAndXBRLMetadataHolder],
+        typed_dimensions: list[XbrlConceptCellRangeMetadata],
         rnum: int,
         factBuilder: FactBuilder,
     ) -> bool:
@@ -419,7 +419,7 @@ class FactCreator:
 
     def addTableFactExplicitDimensions(
         self,
-        explicit_dimensions: list[CellAndXBRLMetadataHolder],
+        explicit_dimensions: list[XbrlConceptCellRangeMetadata],
         rnum: int,
         factBuilder: FactBuilder,
     ) -> bool:
@@ -471,7 +471,7 @@ class FactCreator:
         return all(success) and len(success) == len(explicit_dimensions)
 
     def addFactToReport(
-        self, factBuilder: FactBuilder, holder: CellAndXBRLMetadataHolder
+        self, factBuilder: FactBuilder, holder: XbrlConceptCellRangeMetadata
     ) -> bool:
         try:
             self._report.addFact(factBuilder.buildFact())
@@ -486,7 +486,7 @@ class FactCreator:
         return False
 
     def getSimpleUnit(
-        self, unitHolder: CellAndXBRLMetadataHolder, cell: CellType
+        self, unitHolder: XbrlConceptCellRangeMetadata, cell: CellType
     ) -> Optional[QName]:
         if not cell.value:
             return None
@@ -532,15 +532,15 @@ class FactCreator:
 
     def setUnitForName(
         self,
-        conceptHolder: CellAndXBRLMetadataHolder,
+        conceptHolder: XbrlConceptCellRangeMetadata,
         factBuilder: FactBuilder,
         *,
         row: int = -1,
-        specifiedUnitHolder: Optional[CellAndXBRLMetadataHolder] = None,
+        specifiedUnitHolder: Optional[XbrlConceptCellRangeMetadata] = None,
         sharedRange: Optional[bool] = None,
     ) -> bool:
         concept = conceptHolder.concept
-        unitHolder: Optional[CellAndXBRLMetadataHolder]
+        unitHolder: Optional[XbrlConceptCellRangeMetadata]
         if specifiedUnitHolder is not None:
             unitHolder = specifiedUnitHolder
         else:
@@ -678,7 +678,7 @@ class FactCreator:
 
     def processNumeric(
         self,
-        stuff: CellAndXBRLMetadataHolder,
+        stuff: XbrlConceptCellRangeMetadata,
         cell: CellType,
         fb: FactBuilder,
         value: Optional[object] = None,
@@ -872,7 +872,7 @@ class FactCreator:
             self.addFactToReport(fb, stuff)
 
     def createEESetFact(
-        self, stuff: CellAndXBRLMetadataHolder, fb: FactBuilder
+        self, stuff: XbrlConceptCellRangeMetadata, fb: FactBuilder
     ) -> None:
         concept = stuff.concept
         assert concept.isEnumerationSet
@@ -881,18 +881,18 @@ class FactCreator:
         eeDomain = concept.getEEDomain()
         cell = None
 
-        for rnum, cnum, cell in getCellRangeIterator(stuff.worksheet, stuff.cellRange):
+        for rnum, cnum, cell in getIteratorForCellRangeMetadata(stuff):
             v = cell.value
             if v is None or v is False:
                 continue
             if v is True:
                 rindex = rnum - int(stuff.cellRange.min_row or 0)
                 cindex = cnum - int(stuff.cellRange.min_col or 0)
-                if 1 == stuff.effectiveHeight:
+                if 1 == stuff.populated_height:
                     index = cindex
-                elif 1 == stuff.effectiveWidth:
+                elif 1 == stuff.populated_width:
                     index = rindex
-                elif stuff.effectiveHeight < stuff.effectiveWidth:
+                elif stuff.populated_height < stuff.populated_width:
                     index = cindex
                 else:
                     index = rindex
