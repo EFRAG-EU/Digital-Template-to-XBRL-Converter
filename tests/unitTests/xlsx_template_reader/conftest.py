@@ -4,8 +4,8 @@ import pytest
 
 from mireport.conversionresults import ConversionResultsBuilder
 from mireport.taxonomy import loadBuiltInTaxonomyJSON
-from mireport.xlsx_template_reader._reader import loadExcelFromPathOrFileLike
 from mireport.xlsx_template_reader.processor import VSME_DEFAULTS, XlsxProcessor
+from mireport.xlsx_template_reader.util import loadExcelFromPathOrFileLike
 
 SAMPLE = (
     Path(__file__).parent.parent.parent

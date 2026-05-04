@@ -27,15 +27,19 @@ from mireport.xlsx_template_reader._bindings import (
     WorkbookBindings,
     XbrlConceptCellRangeMetadata,
 )
-from mireport.xlsx_template_reader._reader import (
+from mireport.xlsx_template_reader._cell_iteration import (
+    getIteratorForCellRangeMetadata,
+)
+from mireport.xlsx_template_reader._constants import (
     EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE,
+)
+from mireport.xlsx_template_reader.util import (
     conceptsToText,
     excelCellOrCellRangeRef,
     excelCellRangeRef,
     excelCellRef,
     get_decimal_places,
     getDateFromValue,
-    getIteratorForCellRangeMetadata,
 )
 
 L = logging.getLogger(__name__)

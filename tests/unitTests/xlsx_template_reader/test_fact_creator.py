@@ -6,11 +6,9 @@ from mireport.conversionresults import ConversionResultsBuilder
 from mireport.report import InlineReport
 from mireport.taxonomy import getTaxonomy
 from mireport.xlsx_template_reader._fact_creator import FactCreator
-from mireport.xlsx_template_reader._reader import (
-    WorkbookReader,
-    loadExcelFromPathOrFileLike,
-)
+from mireport.xlsx_template_reader._reader import WorkbookReader
 from mireport.xlsx_template_reader.processor import VSME_DEFAULTS, XlsxProcessor
+from mireport.xlsx_template_reader.util import loadExcelFromPathOrFileLike
 
 SAMPLE = (
     Path(__file__).parent.parent.parent

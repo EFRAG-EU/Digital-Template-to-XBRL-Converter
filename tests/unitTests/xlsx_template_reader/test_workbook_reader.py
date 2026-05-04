@@ -4,9 +4,9 @@ from pathlib import Path
 import pytest
 
 from mireport.conversionresults import ConversionResultsBuilder
-from mireport.xlsx_template_reader._reader import (
-    _IGNORED_DEFINED_NAME_PREFIXES,
-    WorkbookReader,
+from mireport.xlsx_template_reader._constants import IGNORED_DEFINED_NAME_PREFIXES
+from mireport.xlsx_template_reader._reader import WorkbookReader
+from mireport.xlsx_template_reader.util import (
     getDateFromValue,
     loadExcelFromPathOrFileLike,
 )
@@ -70,7 +70,7 @@ class TestWorkbookReaderUnusedAPI:
 
     def test_excluded_prefixes_absent(self, reader):
         for dn in reader.unused_defined_names:
-            assert not dn.name.startswith(_IGNORED_DEFINED_NAME_PREFIXES)
+            assert not dn.name.startswith(IGNORED_DEFINED_NAME_PREFIXES)
 
 
 class TestGetDateFromValue:

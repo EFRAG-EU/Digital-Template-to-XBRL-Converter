@@ -5,9 +5,9 @@ from openpyxl import Workbook
 from openpyxl.worksheet.cell_range import CellRange
 from openpyxl.worksheet.worksheet import Worksheet
 
-from mireport.xlsx_template_reader._reader import (
+from mireport.xlsx_template_reader._cell_iteration import (
     _CellRangeDimensions,
-    _getEffectiveCellRangeDimensions,
+    getEffectiveCellRangeDimensions,
 )
 
 
@@ -30,7 +30,7 @@ def sample_worksheet() -> Generator[Worksheet, None, None]:
 
 def test_filled_and_empty_cells(sample_worksheet: Worksheet) -> None:
     cr: CellRange = CellRange("A1:C3")
-    dims: _CellRangeDimensions = _getEffectiveCellRangeDimensions(sample_worksheet, cr)
+    dims: _CellRangeDimensions = getEffectiveCellRangeDimensions(sample_worksheet, cr)
 
     assert dims.countPopulated == 4
     assert dims.populated_width == 2  # Column C is completely empty
@@ -39,7 +39,7 @@ def test_filled_and_empty_cells(sample_worksheet: Worksheet) -> None:
 
 def test_completely_empty_range(sample_worksheet: Worksheet) -> None:
     cr: CellRange = CellRange("D1:E5")
-    dims: _CellRangeDimensions = _getEffectiveCellRangeDimensions(sample_worksheet, cr)
+    dims: _CellRangeDimensions = getEffectiveCellRangeDimensions(sample_worksheet, cr)
 
     assert dims.countPopulated == 0
     assert dims.populated_width == 1  # min width enforced
@@ -49,7 +49,7 @@ def test_completely_empty_range(sample_worksheet: Worksheet) -> None:
 def test_partially_filled_rows(sample_worksheet: Worksheet) -> None:
     sample_worksheet["C2"] = "ExtraData"
     cr: CellRange = CellRange("A1:C3")
-    dims: _CellRangeDimensions = _getEffectiveCellRangeDimensions(sample_worksheet, cr)
+    dims: _CellRangeDimensions = getEffectiveCellRangeDimensions(sample_worksheet, cr)
 
     assert dims.countPopulated == 5
     assert dims.populated_width == 3  # All columns have data now
@@ -58,7 +58,7 @@ def test_partially_filled_rows(sample_worksheet: Worksheet) -> None:
 
 def test_single_cell_range(sample_worksheet: Worksheet) -> None:
     cr: CellRange = CellRange("A1")
-    dims: _CellRangeDimensions = _getEffectiveCellRangeDimensions(sample_worksheet, cr)
+    dims: _CellRangeDimensions = getEffectiveCellRangeDimensions(sample_worksheet, cr)
 
     assert dims.countPopulated == 1
     assert dims.populated_width == 1
