@@ -69,7 +69,7 @@ Follow [the user instructions](#set-up-for-deploying) but make the distribution 
 ### Run auto-redeploying and debug webserver
 
 ```bash
-python -m flask --app efrag_digital_converter run --debug
+python -m flask --app digital_converter_webapp run --debug
 ```
 
 ### Dump the named ranges from an Excel file (for debugging/testing purposes)
