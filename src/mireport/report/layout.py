@@ -366,9 +366,9 @@ class ReportLayoutOrganiser:
                     )
         unused_facts = frozenset(potential_unused_facts)
         if unused_facts:
-            processed: set[Fact] = set()
+            processed_duplicates: set[Fact] = set()
             for u in unused_facts:
-                if u in processed:
+                if u in processed_duplicates:
                     continue
                 others = list(self.report.getFacts(u.concept))
                 others.remove(u)
@@ -378,8 +378,7 @@ class ReportLayoutOrganiser:
                     for f in others
                     if frozenset(f.aspects.items()) == u_aspects and f.value != u.value  # type: ignore[operator]
                 ]
-                processed.add(u)
-                processed.update(inconsistent_duplicates)
+                processed_duplicates.update(inconsistent_duplicates)
                 if inconsistent_duplicates:
                     L.warning(
                         f"Fact has inconsistent duplicates.\nUnused: {u}\nOthers: {inconsistent_duplicates}"
@@ -408,8 +407,6 @@ class ReportLayoutOrganiser:
                     )
                 elif group.style in {PresentationStyle.Hybrid, PresentationStyle.Table}:
                     factsForRel[rel].extend(factsForConcept)
-                else:
-                    pass  # No reportable concepts in this group so nothing to do.
             self.reportSections.append(
                 ReportSection(relationshipToFact=factsForRel, presentation=group)
             )
