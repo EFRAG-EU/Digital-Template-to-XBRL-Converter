@@ -335,15 +335,15 @@ class ReportLayoutOrganiser:
 
     def _move_sections_after(self, source_prefix: str, target_prefix: str) -> None:
         """Move all sections with *source_prefix* to immediately after the last *target_prefix* section."""
-        prefixes = {id(s): self._sectionPrefix(s) for s in self.reportSections}
-        to_move = [s for s in self.reportSections if prefixes[id(s)] == source_prefix]
+        to_move = [s for s in self.reportSections if self._sectionPrefix(s) == source_prefix]
         if not to_move:
             return
-        remaining = [s for s in self.reportSections if prefixes[id(s)] != source_prefix]
-        insert_pos = None
-        for i, s in enumerate(remaining):
-            if prefixes[id(s)] == target_prefix:
-                insert_pos = i + 1
+        remaining = [s for s in self.reportSections if self._sectionPrefix(s) != source_prefix]
+        insert_pos = next(
+            (i + 1 for i in range(len(remaining) - 1, -1, -1)
+             if self._sectionPrefix(remaining[i]) == target_prefix),
+            None,
+        )
         if insert_pos is None:
             return
         self.reportSections = remaining[:insert_pos] + to_move + remaining[insert_pos:]
