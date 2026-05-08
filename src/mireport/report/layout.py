@@ -146,9 +146,6 @@ class TabularReportSection(ReportSection):
         )
 
 
-# ── Module-level pure helpers ─────────────────────────────────────────────────
-
-
 def _table_unit(data: list[list[Fact | None]]) -> str | None:
     units: set[str] = set()
     for row in data:
@@ -310,9 +307,6 @@ def _build_table_rows(
         )
         for rh, raw_row in zip(grid.row_labels, grid.data)
     ]
-
-
-# ── Orchestrator ──────────────────────────────────────────────────────────────
 
 
 class ReportLayoutOrganiser:

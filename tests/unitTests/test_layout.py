@@ -24,8 +24,6 @@ from mireport.taxonomy import (
     Taxonomy,
 )
 
-# ── Test doubles ─────────────────────────────────────────────────────────────
-
 
 def _fact(
     *, numeric=False, unit=None, period=None, concept=None, aspects=None, value="x"
@@ -64,8 +62,6 @@ def _section(definition: str, style=PresentationStyle.List):
 
 _DUR = DurationPeriodHolder(start=date(2024, 1, 1), end=date(2024, 12, 31))
 _INST = InstantPeriodHolder(instant=date(2024, 12, 31))
-
-# ── TableHeadingCell ──────────────────────────────────────────────────────────
 
 
 class TestTableHeadingCell:
@@ -112,9 +108,6 @@ class TestTableHeadingCell:
         assert not cell.isConcept
 
 
-# ── _table_unit ───────────────────────────────────────────────────────────────
-
-
 class TestGetTableUnit:
     def test_empty_data(self):
         assert _table_unit([]) is None
@@ -150,9 +143,6 @@ class TestGetTableUnit:
         assert _table_unit([[f_num, f_text]]) == "EUR"
 
 
-# ── _table_period ─────────────────────────────────────────────────────────────
-
-
 class TestGetTablePeriod:
     def test_empty_data(self):
         assert _table_period([]) is None
@@ -173,9 +163,6 @@ class TestGetTablePeriod:
         f1 = _fact(period=_DUR)
         f2 = _fact(period=_INST)
         assert _table_period([[f1, f2]]) is None
-
-
-# ── _column_units ─────────────────────────────────────────────────────────────
 
 
 class TestGetColumnUnits:
@@ -217,9 +204,6 @@ class TestGetColumnUnits:
         assert result == []
 
 
-# ── _column_periods ───────────────────────────────────────────────────────────
-
-
 class TestGetColumnPeriods:
     def test_empty_data(self):
         assert _column_periods([]) == []
@@ -251,9 +235,6 @@ class TestGetColumnPeriods:
         assert result == [_DUR, None]
 
 
-# ── _sectionPrefix ────────────────────────────────────────────────────────────
-
-
 class TestSectionPrefix:
     def test_extracts_prefix_before_dot(self):
         s = _section("[B02.Group Name")
@@ -270,9 +251,6 @@ class TestSectionPrefix:
     def test_empty_definition(self):
         s = _section("")
         assert ReportLayoutOrganiser._sectionPrefix(s) == ""
-
-
-# ── _move_sections_after ──────────────────────────────────────────────────────
 
 
 class TestMoveSectionsAfter:
@@ -321,9 +299,6 @@ class TestMoveSectionsAfter:
         assert o.reportSections == [a, b, c]
 
 
-# ── checkAllFactsUsed ─────────────────────────────────────────────────────────
-
-
 class TestCheckAllFactsUsed:
     def test_all_facts_in_sections_no_warning(self, caplog):
         fact = _fact()
@@ -355,9 +330,6 @@ class TestCheckAllFactsUsed:
         with caplog.at_level(logging.WARNING, logger="mireport.report.layout"):
             o.checkAllFactsUsed()
         assert any("inconsistent" in r.message.lower() for r in caplog.records)
-
-
-# ── createReportSections ──────────────────────────────────────────────────────
 
 
 class TestCreateReportSections:
@@ -423,9 +395,6 @@ class TestCreateReportSections:
         included = o.reportSections[0].relationshipToFact[rel]
         assert plain in included
         assert dimensional in included
-
-
-# ── _assemble_explicit_dim_as_columns ─────────────────────────────────────────
 
 
 class TestAssembleDimsAsColumnTable:
@@ -517,9 +486,6 @@ class TestAssembleDimsAsColumnTable:
         assert matrix.row_labels == [reportable[1]]
 
 
-# ── _assemble_explicit_dim_as_rows ────────────────────────────────────────────
-
-
 class TestAssembleDimsAsRowsTable:
     def _setup(self):
         dim_qname = object()
@@ -591,9 +557,6 @@ class TestAssembleDimsAsRowsTable:
             "[B01.test", reportable, explicit_dim, domain, None
         )
         assert member_b not in matrix.row_labels
-
-
-# ── _assemble_typed_dim ───────────────────────────────────────────────────────
 
 
 class TestAssembleTypedDimTable:

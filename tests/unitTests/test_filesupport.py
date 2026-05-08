@@ -12,8 +12,6 @@ from mireport.filesupport import (
     zipSafeString,
 )
 
-# ── is_valid_filename ─────────────────────────────────────────────────────────
-
 
 class TestIsValidFilename:
     @pytest.mark.parametrize(
@@ -74,9 +72,6 @@ class TestIsValidFilename:
         assert not is_valid_filename(filename)
 
 
-# ── zipSafeString ─────────────────────────────────────────────────────────────
-
-
 class TestZipSafeString:
     @pytest.mark.parametrize(
         "input_text, expected",
@@ -117,9 +112,6 @@ class TestZipSafeString:
     def test_whitespace_only(self) -> None:
         assert zipSafeString("   ") == "fallback"
         assert zipSafeString("\t\n") == "fallback"
-
-
-# ── FilelikeAndFileName ───────────────────────────────────────────────────────
 
 
 class TestFilelikeAndFileName:
@@ -345,9 +337,6 @@ class TestFilelikeAndFileName:
             assert expected_file.read_bytes() == content
 
 
-# ── ReadOnlyNamedBytesIO ──────────────────────────────────────────────────────
-
-
 class TestReadOnlyNamedBytesIO:
     def test_name_and_content(self) -> None:
         bio = ReadOnlyNamedBytesIO(b"sample data", name="sample.txt")
@@ -413,9 +402,6 @@ class TestReadOnlyNamedBytesIO:
         bio = ReadOnlyNamedBytesIO(b"abc", name="file.txt")
         with pytest.raises(UnsupportedOperation, match="read-only"):
             bio.writelines([b"x"])
-
-
-# ── NamedBytesIO ──────────────────────────────────────────────────────────────
 
 
 class TestNamedBytesIO:

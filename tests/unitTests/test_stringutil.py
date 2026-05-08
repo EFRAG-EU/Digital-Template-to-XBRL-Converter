@@ -10,8 +10,6 @@ from mireport.stringutil import (
     xml_clean,
 )
 
-# ── unicodeDashNormalization ──────────────────────────────────────────────
-
 
 class TestUnicodeDashNormalization:
     @pytest.mark.parametrize(
@@ -41,9 +39,6 @@ class TestUnicodeDashNormalization:
 
     def test_no_dashes_no_whitespace(self) -> None:
         assert unicodeDashNormalization("Revenue") == "Revenue"
-
-
-# ── unicodeSpaceNormalize ─────────────────────────────────────────────────
 
 
 class TestUnicodeSpaceNormalize:
@@ -77,9 +72,6 @@ class TestUnicodeSpaceNormalize:
         assert unicodeSpaceNormalize(text) == "a b c d"
 
 
-# ── normalizeLabelText ────────────────────────────────────────────────────
-
-
 class TestNormalizeLabelText:
     @pytest.mark.parametrize(
         "input_text, expected",
@@ -111,9 +103,6 @@ class TestNormalizeLabelText:
 
     def test_only_whitespace(self) -> None:
         assert normalizeLabelText("   \t\n  ") == ""
-
-
-# ── stripLabelSuffix ─────────────────────────────────────────────────────
 
 
 class TestStripLabelSuffix:
@@ -157,9 +146,6 @@ class TestStripLabelSuffix:
         assert (
             stripLabelSuffix("Revenue [total] and more") == "Revenue [total] and more"
         )
-
-
-# ── format_time_ns ───────────────────────────────────────────────────────
 
 
 class TestFormatTimeNs:
@@ -206,9 +192,6 @@ class TestFormatTimeNs:
         assert format_time_ns(ns) == expected
 
 
-# ── format_bytes ──────────────────────────────────────────────────────────
-
-
 class TestFormatBytes:
     @pytest.mark.parametrize(
         "num_bytes, expected",
@@ -239,9 +222,6 @@ class TestFormatBytes:
     )
     def test_formatting(self, num_bytes: int, expected: str) -> None:
         assert format_bytes(num_bytes) == expected
-
-
-# ── xml_clean ─────────────────────────────────────────────────────────────
 
 
 class TestXmlClean:
