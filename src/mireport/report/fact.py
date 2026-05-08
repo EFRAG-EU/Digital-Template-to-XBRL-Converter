@@ -277,10 +277,7 @@ class Fact:
         return symbol
 
     def hasTaxonomyDimensions(self) -> bool:
-        for name in self.aspects:
-            if isinstance(name, QName):
-                return True
-        return False
+        return any(isinstance(name, QName) for name in self._aspects)
 
     def getTaxonomyDimensions(self) -> dict[QName, QName]:
         dims: dict[QName, QName] = {}
