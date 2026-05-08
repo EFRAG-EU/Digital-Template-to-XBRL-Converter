@@ -526,6 +526,50 @@ class ReportLayoutOrganiser:
             ),
         )
 
+    def _find_explicit_fact(
+        self,
+        concept: Concept,
+        dim: Concept,
+        member: Concept,
+        default_member: Concept | None,
+        debug_info: str,
+    ) -> Fact | None:
+        found: Fact | None = None
+        for fact in self.report.getFacts(concept):
+            e = fact.aspects.get(dim.qname)
+            if (e is None and member is default_member) or (
+                e is not None and e == member.qname
+            ):
+                if found is not None:
+                    L.debug(
+                        "Multiple facts found (handle this better) %s\n%r\n%r",
+                        debug_info,
+                        found,
+                        fact,
+                    )
+                found = fact
+        return found
+
+    def _find_typed_fact(
+        self,
+        concept: Concept,
+        typed_key: str,
+        value: str,
+        debug_info: str,
+    ) -> Fact | None:
+        found: Fact | None = None
+        for fact in self.report.getFacts(concept):
+            if fact.aspects.get(typed_key) == value:
+                if found is not None:
+                    L.debug(
+                        "Multiple facts found (handle this better) %s\n%r\n%r",
+                        debug_info,
+                        found,
+                        fact,
+                    )
+                found = fact
+        return found
+
     def _assemble_explicit_dim_as_columns(
         self,
         roleUri: str,
@@ -536,21 +580,12 @@ class ReportLayoutOrganiser:
     ) -> _FactGrid:
         data: list[list[Fact | None]] = []
         row_labels: list[Concept | str] = []
+        debug_info = f"{roleUri=} style=SingleExplicitDimensionColumn"
         for r in reportable:
-            row: list[Fact | None] = []
-            for c in domain:
-                found: Fact | None = None
-                for fact in self.report.getFacts(r):
-                    eValue = fact.aspects.get(explicitDim.qname)
-                    if (eValue is None and c == defaultMember) or (
-                        eValue is not None and eValue == c.qname
-                    ):
-                        if found is not None:
-                            L.debug(
-                                f"Multiple facts found (handle this better) {roleUri=} style=SingleExplicitDimensionColumn\n{found=}\n{fact=}"
-                            )
-                        found = fact
-                row.append(found)
+            row = [
+                self._find_explicit_fact(r, explicitDim, c, defaultMember, debug_info)
+                for c in domain
+            ]
             if len(row) != len(domain):
                 raise InlineReportException(
                     f"Failed to fill row correctly {r}, with {domain}"
@@ -576,21 +611,12 @@ class ReportLayoutOrganiser:
     ) -> _FactGrid:
         data: list[list[Fact | None]] = []
         row_labels: list[Concept | str] = []
+        debug_info = f"{roleUri=} style=SingleExplicitDimensionRow"
         for r in domain:
-            row: list[Fact | None] = []
-            for c in reportable:
-                found: Fact | None = None
-                for fact in self.report.getFacts(c):
-                    eValue = fact.aspects.get(explicitDim.qname)
-                    if (eValue is None and r == defaultMember) or (
-                        eValue is not None and eValue == r.qname
-                    ):
-                        if found is not None:
-                            L.debug(
-                                f"Multiple facts found (handle this better) {roleUri=} style=SingleExplicitDimensionRow\n{found=}\n{fact=}"
-                            )
-                        found = fact
-                row.append(found)
+            row = [
+                self._find_explicit_fact(c, explicitDim, r, defaultMember, debug_info)
+                for c in reportable
+            ]
             if len(row) != len(reportable):
                 raise InlineReportException(
                     f"Failed to fill row correctly {r}, with {reportable}"
@@ -612,30 +638,24 @@ class ReportLayoutOrganiser:
         typedDims: list[Concept],
         reportable: list[Concept],
     ) -> _FactGrid:
-        typed_qname = f"typed {typedDims[0].qname}"
+        typed_key = f"typed {typedDims[0].qname}"
         td_values = {
-            str(fact.aspects[typed_qname])
+            str(v)
             for r in reportable
             for fact in self.report.getFacts(r)
+            if (v := fact.aspects.get(typed_key)) is not None
         }
         pretty_td_values = [(tidyTdValue(v), v) for v in td_values]
         pretty_td_values.sort(key=lambda x: numeric_string_key(x[0]))
 
         data: list[list[Fact | None]] = []
         row_labels: list[Concept | str] = []
+        debug_info = f"{roleUri=} style=SingleTypedDimensionColumn"
         for heading, r_key in pretty_td_values:
-            row: list[Fact | None] = []
-            for c in reportable:
-                found: Fact | None = None
-                for fact in self.report.getFacts(c):
-                    td_value = fact.aspects.get(typed_qname)
-                    if td_value is not None and td_value == r_key:
-                        if found is not None:
-                            L.debug(
-                                f"Multiple facts found (handle this better) {roleUri=} style=SingleTypedDimensionColumn\n{found=}\n{fact=}"
-                            )
-                        found = fact
-                row.append(found)
+            row = [
+                self._find_typed_fact(c, typed_key, r_key, debug_info)
+                for c in reportable
+            ]
             if len(row) != len(reportable):
                 raise InlineReportException(
                     f"Failed to fill row correctly {heading}, with {reportable}"
