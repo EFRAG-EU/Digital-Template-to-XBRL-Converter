@@ -19,6 +19,9 @@ from mireport.taxonomy import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+    from typing import Any
+
     from mireport.report.inlinereport import InlineReport
 
 L = logging.getLogger(__name__)
@@ -104,6 +107,31 @@ class _FactGrid:
     row_labels: list[Concept | str]
     row_heading_label: Concept | None
     col_labels: list[Concept]
+
+    @classmethod
+    def create(
+        cls,
+        style: TableStyle,
+        row_items: list[Any],
+        col_labels: list[Concept],
+        row_heading_label: Concept | None,
+        find_fact: Callable[[Concept, Any], Fact | None],
+        row_label: Callable[[Any], Concept | str] | None = None,
+    ) -> _FactGrid:
+        data: list[list[Fact | None]] = []
+        labels: list[Concept | str] = []
+        for row_item in row_items:
+            row = [find_fact(col, row_item) for col in col_labels]
+            if any(f is not None for f in row):
+                data.append(row)
+                labels.append(row_item if row_label is None else row_label(row_item))
+        return cls(
+            style=style,
+            data=data,
+            row_labels=labels,
+            row_heading_label=row_heading_label,
+            col_labels=col_labels,
+        )
 
 
 @dataclass(slots=True, frozen=True, eq=True)
@@ -585,27 +613,15 @@ class ReportLayoutOrganiser:
         domain: list[Concept],
         defaultMember: Concept | None,
     ) -> _FactGrid:
-        data: list[list[Fact | None]] = []
-        row_labels: list[Concept | str] = []
-        debug_info = f"{roleUri=} style=SingleExplicitDimensionColumn"
-        for r in reportable:
-            row = [
-                self._find_explicit_fact(r, explicitDim, c, defaultMember, debug_info)
-                for c in domain
-            ]
-            if len(row) != len(domain):
-                raise InlineReportException(
-                    f"Failed to fill row correctly {r}, with {domain}"
-                )
-            if not all(c is None for c in row):
-                data.append(row)
-                row_labels.append(r)
-        return _FactGrid(
+        debug = f"{roleUri=} style=SingleExplicitDimensionColumn"
+        return _FactGrid.create(
             style=TableStyle.SingleExplicitDimensionColumn,
-            data=data,
-            row_labels=row_labels,
-            row_heading_label=None,
+            row_items=reportable,
             col_labels=domain,
+            row_heading_label=None,
+            find_fact=lambda col, row: self._find_explicit_fact(
+                row, explicitDim, col, defaultMember, debug
+            ),
         )
 
     def _assemble_explicit_dim_as_rows(
@@ -616,27 +632,15 @@ class ReportLayoutOrganiser:
         domain: list[Concept],
         defaultMember: Concept | None,
     ) -> _FactGrid:
-        data: list[list[Fact | None]] = []
-        row_labels: list[Concept | str] = []
-        debug_info = f"{roleUri=} style=SingleExplicitDimensionRow"
-        for r in domain:
-            row = [
-                self._find_explicit_fact(c, explicitDim, r, defaultMember, debug_info)
-                for c in reportable
-            ]
-            if len(row) != len(reportable):
-                raise InlineReportException(
-                    f"Failed to fill row correctly {r}, with {reportable}"
-                )
-            if not all(c is None for c in row):
-                data.append(row)
-                row_labels.append(r)
-        return _FactGrid(
+        debug = f"{roleUri=} style=SingleExplicitDimensionRow"
+        return _FactGrid.create(
             style=TableStyle.SingleExplicitDimensionRow,
-            data=data,
-            row_labels=row_labels,
-            row_heading_label=explicitDim,
+            row_items=domain,
             col_labels=reportable,
+            row_heading_label=explicitDim,
+            find_fact=lambda col, row: self._find_explicit_fact(
+                col, explicitDim, row, defaultMember, debug
+            ),
         )
 
     def _assemble_typed_dim(
@@ -652,28 +656,18 @@ class ReportLayoutOrganiser:
             for fact in self.report.getFacts(r)
             if (v := fact.aspects.get(typed_key)) is not None
         }
-        pretty_td_values = [(tidyTdValue(v), v) for v in td_values]
-        pretty_td_values.sort(key=lambda x: numeric_string_key(x[0]))
-
-        data: list[list[Fact | None]] = []
-        row_labels: list[Concept | str] = []
-        debug_info = f"{roleUri=} style=SingleTypedDimensionColumn"
-        for heading, r_key in pretty_td_values:
-            row = [
-                self._find_typed_fact(c, typed_key, r_key, debug_info)
-                for c in reportable
-            ]
-            if len(row) != len(reportable):
-                raise InlineReportException(
-                    f"Failed to fill row correctly {heading}, with {reportable}"
-                )
-            if not all(c is None for c in row):
-                data.append(row)
-                row_labels.append(heading)
-        return _FactGrid(
+        pretty = sorted(
+            [(tidyTdValue(v), v) for v in td_values],
+            key=lambda x: numeric_string_key(x[0]),
+        )
+        debug = f"{roleUri=} style=SingleTypedDimensionColumn"
+        return _FactGrid.create(
             style=TableStyle.SingleTypedDimensionColumn,
-            data=data,
-            row_labels=row_labels,
-            row_heading_label=typedDims[0],
+            row_items=pretty,
             col_labels=reportable,
+            row_heading_label=typedDims[0],
+            find_fact=lambda col, row: self._find_typed_fact(
+                col, typed_key, row[1], debug
+            ),
+            row_label=lambda row: row[0],
         )
