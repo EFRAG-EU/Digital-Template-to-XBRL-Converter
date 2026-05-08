@@ -26,15 +26,15 @@ except ImportError:
     )
     MIGRATION_WORKING = False
 
-    def migrate_workbook_as_bytes(*args, **kwargs):
+    def migrate_workbook_as_bytes(*args, **kwargs) -> tuple[bytes, float, list[str]]:
         raise NotImplementedError("Migration tool not available")
 
 
-from mireport.excelprocessor import (
+from mireport.filesupport import FilelikeAndFileName
+from mireport.xlsx_template_reader.processor import (
     OUR_VERSION_HOLDER,
     ExcelProcessor,
 )
-from mireport.filesupport import FilelikeAndFileName
 
 from .blueprints import convert_bp
 

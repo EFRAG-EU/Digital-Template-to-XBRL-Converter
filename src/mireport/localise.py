@@ -1,8 +1,13 @@
+from __future__ import annotations
+
 import argparse
 import logging
-from collections.abc import Set
 from decimal import Decimal
-from typing import Iterable, Optional
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Set
+    from typing import Optional
 
 from babel import Locale, UnknownLocaleError
 from babel.numbers import format_decimal, get_decimal_symbol, get_group_symbol
@@ -207,8 +212,8 @@ def group_symbol(locale: Optional[Locale] = None) -> str:
 
 def as_xmllang(locale: Locale) -> str:
     xml_lang_parts = [locale.language]
-    if locale.territory:
-        xml_lang_parts.append(locale.territory)
+    if t := locale.territory:
+        xml_lang_parts.append(t)
     return "-".join(xml_lang_parts)
 
 

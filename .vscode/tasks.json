@@ -1,0 +1,17 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Run slow integration tests",
+            "type": "shell",
+            "command": "${workspaceFolder}\\.venv-py311\\Scripts\\python.exe",
+            "args": ["-m", "pytest", "--run-slow", "-v", "tests/integrationTests/"],
+            "group": "test",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        }
+    ]
+}

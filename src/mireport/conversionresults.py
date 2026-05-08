@@ -1,11 +1,17 @@
+from __future__ import annotations
+
 import re
 import uuid
-from collections.abc import Iterable
 from enum import StrEnum
 from functools import lru_cache
 from time import perf_counter_ns
-from types import MappingProxyType, TracebackType
-from typing import Mapping, Optional, Self, Type
+from types import MappingProxyType
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+    from types import TracebackType
+    from typing import Mapping, Optional, Self, Type
 
 from mireport.exceptions import EarlyAbortException
 from mireport.stringutil import format_time_ns

@@ -1,4 +1,3 @@
-import os
 import subprocess
 import sys
 from pathlib import Path
@@ -7,30 +6,15 @@ from typing import Any, Generator
 import pytest
 from lxml import etree
 
-
-def is_main_or_pr_to_main() -> bool:
-    github_ref = os.environ.get("GITHUB_REF", "")
-    github_base_ref = os.environ.get("GITHUB_BASE_REF", "")
-
-    return github_ref.endswith("/main") or github_base_ref == "main"
-
-
-def force_run() -> bool:
-    value = os.environ.get("FORCE_RUN", "").strip().lower()
-    return value in {"1", "true", "yes", "on"}
-
-
-skip_if_not_main_unless_forced = pytest.mark.skipif(
-    not (force_run() or is_main_or_pr_to_main()),
-    reason="Validation tests are slow and only run on main branch or PRs targeting main",
-)
-
 IX_NAMESPACE = "http://www.xbrl.org/2013/inlineXBRL"
 
 TEST_CASES = [
+    ("tests/data/vsme-unit-test-v1.0.0.xlsx", 159),
     ("tests/data/VSME-Digital-Template-Sample-1.0.0.xlsx", 142),
     ("tests/data/VSME-Digital-Template-Sample-1.0.1.xlsx", 142),
-    ("tests/data/vsme-unit-test-v1.0.0.xlsx", 159),
+    ("tests/data/VSME-Digital-Template-Sample-1.1.0.xlsx", 142),
+    ("tests/data/VSME-Digital-Template-Sample-1.1.1.xlsx", 141),
+    ("tests/data/VSME-Digital-Template-Sample-1.2.0.xlsx", 145),
 ]
 
 
@@ -59,7 +43,7 @@ def parsed_reports(
                 str(output_file),
             ],
             capture_output=True,
-            text=True,
+            encoding="utf-8",
         )
 
         assert result.returncode == 0, (
@@ -96,7 +80,7 @@ def test_fact_count(
     )
 
 
-@skip_if_not_main_unless_forced
+@pytest.mark.slow
 @pytest.mark.parametrize("input_file,_", TEST_CASES)
 def test_validation(parsed_reports: dict[str, Path], input_file: str, _: int) -> None:
     output_file = parsed_reports[input_file]
@@ -109,7 +93,7 @@ def test_validation(parsed_reports: dict[str, Path], input_file: str, _: int) ->
             str(output_file),
         ],
         capture_output=True,
-        text=True,
+        encoding="utf-8",
     )
 
     assert validate_result.returncode == 0, (

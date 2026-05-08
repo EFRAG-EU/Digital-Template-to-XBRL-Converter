@@ -22,7 +22,7 @@ from flask import (
 from flask_session import Session  # type: ignore
 
 import mireport
-from mireport import loadTaxonomyJSON
+from mireport import loadBuiltInTaxonomyJSON
 from mireport.arelle.report_info import (
     ARELLE_VERSION_INFORMATION,
     ArelleReportProcessor,
@@ -33,10 +33,6 @@ from mireport.conversionresults import (
     MessageType,
     Severity,
 )
-from mireport.excelprocessor import (
-    VSME_DEFAULTS,
-    ExcelProcessor,
-)
 from mireport.filesupport import FilelikeAndFileName, ImageFileLikeAndFileName
 from mireport.localise import (
     EU_LOCALES,
@@ -45,6 +41,10 @@ from mireport.localise import (
     get_locale_list,
 )
 from mireport.taxonomy import getTaxonomy, listTaxonomies
+from mireport.xlsx_template_reader.processor import (
+    VSME_DEFAULTS,
+    ExcelProcessor,
+)
 
 from .blueprints import convert_bp
 from .migration import (
@@ -75,7 +75,7 @@ def create_app() -> Flask:
     logging.captureWarnings(True)
 
     # Get taxonomy related objects loaded
-    loadTaxonomyJSON()
+    loadBuiltInTaxonomyJSON()
 
     global LOCALE_JSON
     LOCALE_JSON = make_locale_json()
@@ -486,17 +486,24 @@ def doConversion(conversion: dict, id: str) -> ConversionResults:
                 )
                 return resultBuilder.build()
 
-            if "logo" in conversion:
-                logo = ImageFileLikeAndFileName(*conversion["logo"])
-                if logo.can_open_image():
-                    pc.addDevInfoMessage(f"Adding logo to report {logo}")
-                    report.setEntityLogo(logo)
-                else:
-                    resultBuilder.addMessage(
-                        f"Unable to use supplied image file {logo}. Please try a different format.",
-                        Severity.WARNING,
-                        MessageType.Conversion,
+            for key, setter in [
+                ("logo", report.theme.setLogo),
+                ("cover_image", report.theme.setCoverImage),
+                ("watermark", report.theme.setWatermark),
+            ]:
+                if key in conversion:
+                    image, err = ImageFileLikeAndFileName.prepare(
+                        conversion[key].fileContent, conversion[key].filename
                     )
+                    if err:
+                        resultBuilder.addMessage(
+                            err,
+                            Severity.WARNING,
+                            MessageType.Conversion,
+                        )
+                    elif image:
+                        pc.addDevInfoMessage(f"Adding {key} to report {image}")
+                        setter(image)
 
             pc.mark(
                 "Generating Inline Report",

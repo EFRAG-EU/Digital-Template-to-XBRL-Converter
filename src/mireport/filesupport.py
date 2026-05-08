@@ -1,13 +1,19 @@
+from __future__ import annotations
+
 import base64
 import re
-from collections.abc import Iterable
 from io import BytesIO, UnsupportedOperation
 from pathlib import Path
-from typing import BinaryIO, NamedTuple, Optional
+from typing import TYPE_CHECKING, NamedTuple
 
 from PIL import Image, UnidentifiedImageError
 from PIL.Image import Resampling
-from typing_extensions import Buffer
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+    from typing import BinaryIO, Optional
+
+    from typing_extensions import Buffer
 
 from mireport.stringutil import format_bytes
 
@@ -17,6 +23,12 @@ FILE_UNWANTED_RE = re.compile(r'[<>:"/\\|?*]')
 
 def is_valid_filename(filename: str) -> bool:
     """Checks if the filename is valid for Windows."""
+    if not filename:
+        return False
+
+    if filename.endswith((" ", ".")):
+        return False
+
     # Disallowed names (case-insensitive)
     reserved_names = {
         "CON",
@@ -151,19 +163,16 @@ class FilelikeAndFileName(NamedTuple):
         if not parent.exists():
             raise ValueError(f"Parent directory {parent} does not exist")
 
-        with open(path, "wb") as f:
-            f.write(self.fileContent)
-            f.flush()
-        assert f.closed, "File should be closed after writing"
+        path.write_bytes(self.fileContent)
         return
 
     def saveToDirectory(self, directory: Path) -> None:
         """Saves the file content to the specified directory using @self.filename."""
-        if directory.exists() and directory.is_file():
-            raise ValueError(f"Path {directory} is an existing file, not a directory")
-
         if not directory.exists():
             directory.mkdir(parents=True, exist_ok=True)
+        elif directory.is_file():
+            raise ValueError(f"Path {directory} is an existing file, not a directory")
+
         self.saveToFilepath(directory / self.filename)
         return
 
@@ -173,6 +182,34 @@ class ImageFileLikeAndFileName(FilelikeAndFileName):
     Variant of FilelikeAndFileName that has additional methods related to image
     support.
     """
+
+    @classmethod
+    def prepare(
+        cls,
+        source: Path | bytes,
+        filename: str | None = None,
+    ) -> tuple[ImageFileLikeAndFileName, None] | tuple[None, str]:
+        """
+        Validate and wrap an image source into an ImageFileLikeAndFileName.
+
+        Returns (image, None) on success, or (None, error_message) on failure.
+        """
+        if isinstance(source, Path):
+            if not source.is_file():
+                return None, f"Image file not found: {source}"
+            content = source.read_bytes()
+            filename = filename or source.name
+        else:
+            content = source
+            if not filename:
+                return None, "A filename is required when providing image bytes."
+        image = cls(fileContent=content, filename=filename)
+        if not image.can_open_image():
+            return (
+                None,
+                f"Unable to use supplied image {filename}. Please try a different format.",
+            )
+        return image, None
 
     def can_open_image(self) -> bool:
         """
@@ -207,17 +244,17 @@ class ImageFileLikeAndFileName(FilelikeAndFileName):
 
         fio = self.fileLike()
         try:
-            with Image.open(fio) as img:
+            with Image.open(fio) as img_file:
                 # Fill in missing dimensions
-                orig_width, orig_height = img.size
+                orig_width, orig_height = img_file.size
                 target_width = orig_width if max_width is None else max_width
                 target_height = orig_height if max_height is None else max_height
 
-                img = img.convert("RGBA")  # Preserve transparency and unify mode
+                img = img_file.convert("RGBA")  # Preserve transparency and unify mode
                 img.thumbnail((target_width, target_height), Resampling.LANCZOS)
 
                 bio = BytesIO()
-                img.save(bio, format=output_format)
+                img.save(bio, format=output_format, compress_level=9)
                 base64_data = base64.b64encode(bio.getbuffer()).decode("ascii")
                 return f"data:{output_mime_type};base64,{base64_data}"
         except UnidentifiedImageError as e:

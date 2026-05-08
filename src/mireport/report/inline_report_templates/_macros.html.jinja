@@ -1,0 +1,156 @@
+{% macro render_fact_value(fact, unitAlreadyDisplayed) -%}
+    {%- if fact.concept.isMonetary -%}
+        {% if not unitAlreadyDisplayed %}{{- fact.unitSymbol }}{% endif %} {{ fact.as_aoix() -}}
+    {%- elif fact.concept.isNumeric -%}
+        {{- fact.as_aoix() }} {% if not unitAlreadyDisplayed %}{{ fact.unitSymbol -}}{% endif %}
+    {%- else -%}
+        {{- fact.as_aoix() -}}
+    {%- endif -%}
+{%- endmacro %}
+
+{% macro render_fact_period(fact) -%}
+    {%- if fact.concept.periodType.value == "duration" -%}
+        {{ render_duration_period(fact.period) }}
+    {%- else -%}
+        {{ render_instant_period(fact.period) }}
+    {%- endif -%}
+{%- endmacro %}
+
+{% macro render_duration_period(period) -%}
+    {{- period.start }} &#8211; {{ period.end -}}
+{%- endmacro %}
+
+{% macro render_duration_period_endyear(period) -%}
+    {{- period.end.year -}}
+{%- endmacro %}
+
+{% macro render_instant_period(period) -%}
+    {{- period.instant -}}
+{%- endmacro %}
+
+{#- Emit a footnote superscript ref for _fn, tracking it in the page-level accumulators.
+    Mutates fn_counter.num, page_footnotes (list) and page_fn_ids (list) in the caller's scope. -#}
+{% macro footnote_ref(_fn, fn_counter, page_footnotes, page_fn_ids) -%}
+    {%- if _fn and _fn.id not in page_fn_ids -%}
+        {%- set fn_counter.num = fn_counter.num + 1 -%}
+        <a href="#fn-{{ fn_counter.page }}-{{ fn_counter.num }}" id="fnref-{{ fn_counter.page }}-{{ fn_counter.num }}"><sup class="footnote-ref">[{{ fn_counter.num }}]</sup></a>
+        {%- if page_footnotes.append({'fn': _fn, 'num': fn_counter.num, 'page': fn_counter.page}) is none -%}{%- endif -%}
+        {%- if page_fn_ids.append(_fn.id) is none -%}{%- endif -%}
+    {%- elif _fn -%}
+        {%- set _existing_num = page_footnotes | selectattr('fn.id', 'equalto', _fn.id) | map(attribute='num') | first -%}
+        <a href="#fn-{{ fn_counter.page }}-{{ _existing_num }}"><sup class="footnote-ref">[{{ _existing_num }}]</sup></a>
+    {%- endif -%}
+{%- endmacro %}
+
+{#- Emit superscript refs for a list of footnotes. -#}
+{% macro footnote_refs(fn_list, fn_counter, page_footnotes, page_fn_ids) -%}
+    {%- for _fn in fn_list -%}
+        {{ footnote_ref(_fn, fn_counter, page_footnotes, page_fn_ids) }}
+    {%- endfor -%}
+{%- endmacro %}
+
+{% macro create_h2_title(section, loop, _fn=none, fn_counter=none, page_footnotes=none, page_fn_ids=none) -%}
+            <h2 id="section-class{{loop.index}}">
+            {{ section_label(section) | e }}
+            {%- if _fn %} {{ footnote_ref(_fn, fn_counter, page_footnotes, page_fn_ids) }}{% endif %}
+            <a href="#table-of-contents" class="toc-back-link no-print">⮌</a>
+            </h2>
+{%- endmacro %}
+
+{% macro render_symbol(symbol) -%}
+    <code>{{ symbol.symbol | e }}</code> ({{ symbol.name | e }})
+{%- endmacro %}
+
+{% macro render_datetime(dt, iso = False) -%}
+    {%- if iso is true -%}
+        {{- dt.isoformat(timespec="seconds") -}}
+    {%- else -%}
+        {{- dt.strftime("%Y-%m-%d %H:%M:%S %z") -}}
+    {%- endif -%}
+{%- endmacro %}
+
+{#- Return the label override for a concept qname if one exists, otherwise the fallback. -#}
+{% macro _label_or_override(concept, fallback) -%}
+    {{- label_overrides_by_concept.get(concept.qname | string, fallback) -}}
+{%- endmacro %}
+
+{% macro concept_label(concept) -%}
+    {{- _label_or_override(concept, concept.getStandardLabel(labelLanguage, fallbackToAnyLang = true, fallbackToQName = labelQNameFallback, removeSuffix = true)) -}}
+{%- endmacro %}
+
+{% macro relationship_label(rel) -%}
+    {{- _label_or_override(rel.concept, rel.getLabel(labelLanguage, fallbackToAnyLang = true, fallbackToQName = labelQNameFallback, removeSuffix = true)) -}}
+{%- endmacro %}
+
+{% macro section_label(section) -%}
+    {{- section.getLabel(labelLanguage) -}}
+{%- endmacro %}
+
+{#- Extract the section prefix (e.g. "[B01" from "[B01.000] - ...").
+    Uses the definition field which always contains the prefix regardless of language. -#}
+{% macro section_prefix(section) -%}
+    {{- section.presentation.definition.split('.')[0] -}}
+{%- endmacro %}
+
+{#- ToC helpers: parse "[B02.000] - General information - Practices, policies ..." into
+    a short prefix ("B2"), category ("General information"), and subtitle
+    ("Practices, policies ..."). -#}
+
+{#- Short prefix for ToC group headings: "[B02.000]" → "B2", "[D99.000]" → "D99". -#}
+{% macro toc_short_prefix(section) -%}
+    {%- set raw = section.presentation.definition.split('.')[0] | replace('[', '') -%}
+    {{- raw[0] ~ (raw[1:] | int) -}}
+{%- endmacro %}
+
+{#- Category (text between first and second dash): "... - General information - ..." → "General information". -#}
+{% macro toc_category(section) -%}
+    {%- set parts = section_label(section).split(' - ') -%}
+    {%- if parts | length >= 2 -%}
+        {{- parts[1] | trim -}}
+    {%- else -%}
+        {{- section_label(section) -}}
+    {%- endif -%}
+{%- endmacro %}
+
+{#- Subtitle (everything after the second dash): "... - General information - Basis for Preparation" → "Basis for Preparation". -#}
+{% macro toc_subtitle(section) -%}
+    {%- set parts = section_label(section).split(' - ') -%}
+    {%- if parts | length >= 3 -%}
+        {{- parts[2:] | join(' - ') | trim -}}
+    {%- else -%}
+        {%- endif -%}
+{%- endmacro %}
+
+{#- Return the CSS page class for a section based on its orientation needs. -#}
+{% macro page_class_for_section(section) -%}
+    {%- if section.tabular and section.dataColumns | length > 4 -%}
+        page landscape-page
+    {%- else -%}
+        page portrait-page
+    {%- endif -%}
+{%- endmacro %}
+
+{#- Return a page-group key for deciding page breaks.
+    Sections whose prefixes belong to the same affinity group share a key
+    so they are kept on the same page.  Unrecognised prefixes fall back
+    to the raw section_prefix value. -#}
+{% macro page_group(section) -%}
+    {%- set prefix = section_prefix(section) -%}
+    {%- set affinity = {'[C07': '[C06', '[C09': '[C08', '[B07': '[B06'} -%}
+    {{- affinity.get(prefix, prefix) -}}
+{%- endmacro %}
+
+{#- Render collected footnotes at the bottom of a page div.
+    Only emits markup when the list is non-empty.
+    Each entry is a dict with keys: fn (original footnote), num (page-local number), page (page counter). -#}
+{% macro render_page_footnotes(footnote_list) -%}
+    {%- if footnote_list -%}
+            <div class="page-footnotes">
+                <hr class="footnote-separator" />
+                {% for entry in footnote_list %}
+                <p class="footnote" id="fn-{{ entry.page }}-{{ entry.num }}"><a href="#fnref-{{ entry.page }}-{{ entry.num }}"><sup>[{{ entry.num }}]</sup></a> {{ entry.fn | e }}</p>
+                {% endfor %}
+            </div>
+    {%- endif -%}
+{%- endmacro %}
+

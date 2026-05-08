@@ -36,7 +36,7 @@
     "entityIdentifierLabelsToSchemes": {
         "lei": "http://standards.iso.org/iso/17442",
         "duns": "https://www.dnb.co.uk/duns-number",
-        "euid": "https://euid.eu/",
+        "euid": "https://e-justice.europa.eu/topics/registers-business-insolvency-land/business-registers-search-company-eu_en",
         "permid": "https://permid.org/"
     },
     "dataTypesToUnits": {

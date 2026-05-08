@@ -5,11 +5,9 @@ import time
 from pathlib import Path
 from typing import Optional
 
-import rich.traceback
-from rich import print as rich_print
-from rich.logging import RichHandler
-
 from mireport.arelle.report_info import ArelleReportProcessor, getOrCreateReportPackage
+from mireport.cli import configure_rich_output
+from mireport.cli import console_print as print
 from mireport.conversionresults import (
     ConversionResults,
     ConversionResultsBuilder,
@@ -51,12 +49,18 @@ def parse_args() -> argparse.Namespace:
         default=False,
         help="Ignore calculation warnings when validating the XBRL report.",
     )
-    parser.add_argument(
+    verbosity_control = parser.add_mutually_exclusive_group()
+    verbosity_control.add_argument(
         "-v",
         "--verbose",
-        action=argparse.BooleanOptionalAction,
-        default=False,
-        help="Toggle verbose output (default no-verbose).",
+        action="store_true",
+        help="Verbose output.",
+    )
+    verbosity_control.add_argument(
+        "-q",
+        "--quiet",
+        action="store_true",
+        help="Quiet output (overrides verbose if both specified).",
     )
     parser.add_argument(
         "--devinfo",
@@ -77,7 +81,7 @@ def main() -> None:
 
     args = parse_args()
     if args.debug:
-        rich_print("[red]Debugging information will be included in the output.[/red]")
+        print("[red]Debugging information will be included in the output.[/red]")
         logging.root.setLevel(logging.DEBUG)
 
     report_path: Path = args.report_path
@@ -149,10 +153,10 @@ def main() -> None:
         if json_path:
             arelle_result = arp.generateXBRLJson(source)
             arelle_messages.extend(arelle_result.messages)
-            if arelle_result:
+            if arelle_result.has_json:
                 if json_path.is_file():
                     print(f"Overwriting {json_path}.")
-                arelle_result._xbrlJson.saveToFilepath(json_path)
+                arelle_result.xbrl_json.saveToFilepath(json_path)
                 print(f"xBRL-JSON written to {json_path}.")
             else:
                 print("Failed to create xBRL-JSON.")
@@ -178,37 +182,34 @@ def main() -> None:
         for message in results.developerMessages:
             print(f"\t{message}")
 
-    final_word_and_exit(results)
+    final_word_and_exit(results, args.quiet)
 
 
-def final_word_and_exit(results: ConversionResults) -> None:
+def final_word_and_exit(results: ConversionResults, quiet: bool) -> None:
     print()
     match results.getOverallSeverity():
         case Severity.ERROR:
             exitCode = 1
-            rich_print(
-                "[bold red]➡️ The XBRL report is INVALID (has errors). Please check the output above.❌ "
-            )
+            if not quiet:
+                print(
+                    "[bold red]➡️ The XBRL report is INVALID (has errors). Please check the output above.❌"
+                )
         case Severity.WARNING:
             exitCode = 0
-            rich_print(
-                "[bold dark_orange]➡️ The XBRL report is VALID but there are WARNINGS.⚠️ "
-            )
+            if not quiet:
+                print(
+                    "[bold dark_orange]➡️ The XBRL report is VALID but there are WARNINGS.⚠️"
+                )
         case Severity.INFO:
             exitCode = 0
-            rich_print(
-                "[bold green]➡️ The XBRL report is VALID and has no errors or warnings.✅ "
-            )
+            if not quiet:
+                print(
+                    "[bold green]➡️ The XBRL report is VALID and has no errors or warnings.✅"
+                )
     print()
     raise SystemExit(exitCode)
 
 
 if __name__ == "__main__":
-    rich.traceback.install(show_locals=False, locals_max_length=4)
-    logging.basicConfig(
-        format="%(message)s",
-        datefmt="[%Y-%m-%d %H:%M:%S]",
-        handlers=[RichHandler(rich_tracebacks=True)],
-    )
-    logging.captureWarnings(True)
+    configure_rich_output(locals_max_length=4)
     main()

@@ -1,0 +1,1080 @@
+:root {
+    --accent:     {{ colour | default('#ff0000') }};
+    --accent-50:  color-mix(in srgb, var(--accent) 8%, white);
+    --accent-75:  color-mix(in srgb, var(--accent) 14%, white);
+    --accent-100: color-mix(in srgb, var(--accent) 25%, white);
+    --accent-300: color-mix(in srgb, var(--accent) 65%, white);
+}
+
+body {
+    background: #ccc;
+    margin: 0;
+    padding: 20px;
+    font-family: Calibri, 'Gill Sans', 'Gill Sans MT', Arial, sans-serif;
+    font-size: 0.95em;
+}
+
+h1, h2 {
+    margin-top: 0;
+}
+
+/* Section headings */
+.page > h2 {
+    color: var(--accent);
+    border-bottom: 3px solid var(--accent);
+    padding-bottom: 0.3em;
+    margin-top: 2em;
+}
+
+.page > h2:first-child {
+    margin-top: 0;
+}
+
+/* Definition List Styling */
+dl {
+    margin: 0;
+}
+
+dt {
+    margin-top: 1em;
+}
+
+dd {
+    margin-left: 0;
+    margin-bottom: 0.5em;
+}
+
+/* Links */
+a,
+a:link {
+    color: var(--accent);
+    text-decoration: underline;
+    text-decoration-color: var(--accent-100);
+    text-underline-offset: 2px;
+}
+
+a:hover {
+    text-decoration-color: var(--accent);
+}
+
+a:visited {
+    color: var(--accent-300);
+}
+
+/* Table Styling */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    border-spacing: 0;
+    margin: 1em 0;
+    font-size: 1em;
+    color: #333;
+}
+
+th,
+td {
+    padding: 8px;
+    text-align: left;
+    vertical-align: top;
+    border: 1px solid #ddd;
+    background-color: #fff;
+    font-weight: normal;
+}
+
+@media print {
+  /* Define global page settings */
+  @page portrait {
+    size: A4 portrait;
+  }
+
+  /* Override landscape pages */
+  @page landscape {
+    size: A4 landscape;
+  }
+
+  /* Ensure portrait and landscape pages match */
+  .portrait-page {
+    page: portrait;
+  }
+
+  .landscape-page {
+    page: landscape;
+  }
+
+  /* Ensure no margins, padding, or shadows on print */
+  body {
+    margin: 0;
+    padding: 0;
+    background: white;
+  }
+
+  .page {
+    page-break-after: always; /* Force page breaks */
+    page-break-inside: auto;
+    box-shadow: none;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: auto;
+  }
+
+  .toc-list,
+  .fact-list {
+    page-break-inside: auto;
+  }
+
+  .toc-list li,
+  .fact,
+  .thematic-table tbody tr {
+    page-break-inside: avoid;
+  }
+
+  /* Optional: hide screen-only elements */
+  .no-print {
+    display: none;
+  }
+
+}
+
+
+.page {
+    margin: 10mm auto;
+    padding: 10mm;
+    background: white;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+    box-sizing: border-box;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+
+    content-visibility: auto;
+    contain-intrinsic-size: 500mm;
+}
+
+/* Watermark background on every page except the cover */
+{% if watermarkDataUrl %}
+.page:not(.cover-page)::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 40%;
+    height: 40%;
+    background-image: url('{{ watermarkDataUrl }}');
+    background-repeat: no-repeat;
+    background-position: bottom right;
+    background-size: contain;
+    opacity: 0.2;
+    pointer-events: none;
+    z-index: 0;
+}
+{% endif %}
+
+/* Corporate logo on every page except the cover (top-right corner) */
+{% if logoDataUrl %}
+.page:not(.cover-page)::after {
+    content: '';
+    position: absolute;
+    top: 3mm;
+    right: 3mm;
+    width: 25mm;
+    height: 12mm;
+    background-image: url('{{ logoDataUrl }}');
+    background-repeat: no-repeat;
+    background-position: top right;
+    background-size: contain;
+    opacity: 0.4;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.page:not(.cover-page) {
+    padding-top: 18mm;
+}
+{% endif %}
+
+/* Define Portrait Pages */
+.portrait-page {
+    width: 210mm;
+    min-height: 295mm;
+}
+
+/* Define Landscape Pages */
+.landscape-page {
+    width: 297mm;
+    min-height: 208mm;
+}
+
+/* Cover Page */
+.cover-page {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+.cover-top {
+    padding-top: 5%;
+    text-align: center;
+    max-width: 160mm;
+    margin-left: auto;
+    margin-right: auto;
+    overflow-wrap: break-word;
+}
+
+.cover-image {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2em 0;
+}
+
+.cover-image img {
+    max-width: 80%;
+    max-height: 100%;
+    height: auto;
+    border-radius: 12px;
+}
+
+.company-logo {
+    text-align: center;
+    padding-bottom: 2em;
+}
+
+.company-logo img {
+    max-width: 200mm;
+    height: auto;
+}
+
+.cover-headline {
+    text-align: center;
+    line-height: 1.25;
+    font-size: 3.4em;
+    font-weight: bold;
+    max-width: 160mm;
+    margin-left: auto;
+    margin-right: auto;
+    overflow-wrap: break-word;
+}
+
+.cover-headline h1.inline,
+.cover-headline h2.inline,
+.cover-headline h3.inline,
+.cover-headline h4.inline,
+.cover-headline h5.inline,
+.cover-headline h6.inline {
+    display: inline;
+}
+
+.cover-headline h1,
+.cover-headline h2,
+.cover-headline h3,
+.cover-headline h4,
+.cover-headline h5,
+.cover-headline h6 {
+    font-size: inherit;
+}
+
+.report-subtitle {
+    font-size: 1.2em;
+    text-align: center;
+    margin: auto 0;
+    line-height: 1.2;
+    max-width: 160mm; /* keeps text narrow enough for readability */
+    margin-left: auto;
+    margin-right: auto;
+    overflow-wrap: break-word;
+}
+
+
+/* Footer page */
+.footer-page {
+justify-content: flex-end;
+text-align: left;
+}
+
+.copyright {
+margin-bottom: 10mm;
+font-size: 0.9em;
+color: #666;
+}
+
+.fact-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2em; /* Increased spacing between facts */
+    margin: 0;
+    margin-bottom: 2em;
+}
+
+/* Base fact styles */
+.fact {
+    --depth-color: var(--accent); /* Default color for depth 1 */
+    --depth-indent: 0em; /* Default indent */
+
+    display: grid;
+    grid-template-areas:
+        "label"
+        "value"
+        "period"
+        "ref";
+    row-gap: 0.3em;
+
+    border-left: 4px solid var(--depth-color);
+    margin-left: var(--depth-indent);
+    padding: 1em;
+    background: #f9f9f9;
+    border-radius: 6px;
+}
+
+/* Depth 1 styles (default) */
+.fact-depth-1 {
+    --depth-color: var(--accent);
+    --depth-indent: 0em;
+}
+
+/* Depth 2 styles */
+.fact-depth-2 {
+    --depth-color: var(--accent-300);
+    --depth-indent: 1em;
+}
+
+/* Depth 3 styles */
+.fact-depth-3 {
+    --depth-color: #ff9800; /* orange */
+    --depth-indent: 2em;
+}
+
+/* Depth 4 styles */
+.fact-depth-4 {
+    --depth-color: #d32f2f; /* red */
+    --depth-indent: 3em;
+}
+
+/* Example for alternating shades in each depth */
+.fact-depth-1-a {
+    --depth-color: var(--accent-100);
+}
+
+.fact-depth-1-b {
+    --depth-color: var(--accent);
+}
+
+.fact-depth-2-a {
+    --depth-color: var(--accent-75);
+}
+
+.fact-depth-2-b {
+    --depth-color: var(--accent-300);
+}
+
+.fact-depth-3-a {
+    --depth-color: #ffe5b4; /* light orange */
+}
+
+.fact-depth-3-b {
+    --depth-color: #ff9800; /* dark orange */
+}
+
+.fact-depth-4-a {
+    --depth-color: #ffcccb; /* light red */
+}
+
+.fact-depth-4-b {
+    --depth-color: #d32f2f; /* dark red */
+}
+
+.fact-label {
+    grid-area: label;
+    font-size: 1em;
+    color: #333;
+    margin: 0 0 0.2em;
+}
+
+.fact-value {
+    grid-area: value;
+    font-size: 1.2em; /* Normal size for fact values */
+    font-weight: bolder;
+    color: #333;
+    margin: 0;
+}
+
+.fact-period {
+    grid-area: period;
+    font-size: 0.9em;
+    color: #444;
+    margin-top: 0.2em;
+}
+
+.fact-ref {
+    grid-area: ref;
+    font-size: 0.85em;
+    color: #666;
+    margin-top: 0.5em;
+}
+
+.fact-textblock {
+    display: inline-block; /* Allows wrapping inside the dt */
+    max-width: 100%; /* Control the width */
+    padding: 1em 1.5em; /* Adequate padding for a bubble look */
+    margin: 1em 0; /* Space around the bubble */
+    background-color: var(--accent-100);
+    border: 2px solid var(--accent);
+    border-radius: 10px; /* Rounded corners */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow for floating effect */
+    font-size: 1.1em;
+    font-weight: normal;
+    white-space: pre-wrap; /* Handle multiline text correctly */
+    word-wrap: break-word; /* Break long words if needed */
+    position: relative; /* Required for the quote marks positioning */
+    overflow-wrap: anywhere; /* Break long words if needed */
+}
+
+.fact-textblock img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin-top: 0.5em;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.fact-textblock::before {
+    content: '“'; /* Left quotation mark */
+    font-size: 3em;
+    position: absolute;
+    top: -10px;
+    left: -5px;
+    color: var(--accent);
+}
+
+.fact-textblock::after {
+    content: '”'; /* Right quotation mark */
+    font-size: 3em;
+    position: absolute;
+    bottom: -20px;
+    right: 2px;
+    color: var(--accent);
+}
+
+.hover-box {
+  position: relative;
+  cursor: pointer;
+  display: inline-block;
+}
+
+.tooltip {
+  display: none;
+  position: absolute;
+  top: 120%; /* below the text */
+  left: 0;
+  background-color: #333;
+  color: #fff;
+  padding: 0.6em 1em;
+  border-radius: 4px;
+  white-space: pre-line;
+  width: max-content;
+  max-width: 300px;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  font-size: 0.85em;
+}
+
+.hover-box:hover .tooltip {
+  display: block;
+}
+
+/* --- Thematic Table Styling --- */
+.thematic-table {
+    max-width: 100%;
+    width: 100%;
+    box-sizing: border-box; /* Ensures padding doesn't overflow parent */
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    overflow-x: auto;
+    background-color: #fff;
+    font-size: 0.95em;
+    table-layout: auto;
+    word-wrap: break-word;
+    flex-shrink: 1;
+    min-width: 0;
+    margin-bottom: 2em;
+}
+
+/* Header row */
+.thematic-table thead th {
+    background-color: var(--accent-100);
+    color: #333;
+    text-align: left;
+    padding: 12px 16px;
+    border-bottom: 1px solid #ccc;
+    font-weight: bold;
+}
+
+/* Body cells */
+.thematic-table td,
+.thematic-table th {
+    padding: 12px 16px;
+    border-bottom: 1px solid #e0e0e0;
+    text-align: left;
+    vertical-align: top;
+    background-color: #fff;
+    overflow-wrap: break-word;
+}
+
+/* Row striping */
+.thematic-table tbody tr:nth-child(even) {
+    background-color: var(--accent-50);
+}
+
+.thematic-table tbody tr:nth-child(even) td {
+    background-color: transparent;
+}
+
+/* No border on last row */
+.thematic-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Narrow, wrapping row labels in tbody */
+.thematic-table tbody th {
+    background-color: var(--accent-75);
+    font-weight: bold;
+    color: #444;
+    white-space: normal;
+    overflow-wrap: break-word;
+    vertical-align: top;
+}
+
+.thematic-table tbody th.numeric-row {
+    min-width: 10%;
+    width: 55%;
+    max-width: 80%;
+}
+
+.thematic-table tbody th.row {
+    min-width: 10%;
+    width: 25%;
+}
+
+.thematic-table tbody td.numeric {
+    min-width: 5%;
+    max-width: 15%;
+}
+
+.thematic-table td.numeric,
+.thematic-table thead th.numeric {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.thematic-table thead th.center {
+    text-align: center;
+}
+
+/* Table of Contents Styling */
+.toc-page {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+.toc-list {
+  font-size: 1em;
+  line-height: 1.4;                /* Tighten line height */
+  list-style: none;                /* Hide the numbering */
+  padding-left: 0;                 /* Remove default indent */
+  max-width: 180mm;                /* Keep it wider but controlled */
+  margin: 0 auto;
+}
+
+.toc-list li {
+  margin-bottom: 0.3em;            /* Reduce bottom margin */
+  padding-left: 0;                 /* No extra indent for each item */
+}
+
+.toc-list a {
+  text-decoration: none;
+  color: var(--accent);
+}
+
+.toc-list a:hover {
+  text-decoration: underline;
+}
+
+/* Nested ToC: group headers and sub-entries */
+.toc-list > li {
+  margin-bottom: 0.25em;
+}
+
+.toc-list > li > span {
+  font-weight: bold;
+}
+
+.toc-list ul {
+  list-style: none;
+  padding-left: 1.5em;
+  margin-top: 0.15em;
+}
+
+.toc-list ul li {
+  margin-bottom: 0.15em;
+}
+
+/* Back to TOC link */
+.toc-back-link {
+  font-size: 0.6em;
+  vertical-align: baseline;
+  margin-left: 0.4em;
+  text-decoration: none;
+  color: #888;
+}
+
+.toc-back-link:hover {
+  color: #000;
+  text-decoration: underline;
+}
+
+.document-information {
+    margin-top: 20mm;
+    margin-bottom: 20mm;
+    padding: 1.5em;
+    background: var(--accent-100);
+    border: 2px solid var(--accent);
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.document-information h2 {
+    margin-top: 0;
+    font-size: 1.4em;
+    color: var(--accent);
+    text-align: center;
+    margin-bottom: 1em;
+}
+
+.document-info-list {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    row-gap: 0.6em;
+    column-gap: 1em;
+    margin: 0;
+    padding: 0;
+}
+
+.document-info-list dt {
+    font-weight: bold;
+    color: #333;
+    white-space: nowrap;
+    margin: 0;
+}
+
+.document-info-list dd {
+    margin: 0;
+    color: #555;
+    overflow-wrap: break-word;
+}
+
+code {
+    font-family: Consolas, Monaco, 'Courier New', monospace;
+    background-color: var(--accent-100);
+    border: 1.5px solid var(--accent);
+    border-radius: 4px;
+    padding: 0 0.3em;        /* remove vertical padding */
+    font-size: 0.95em;
+    color: var(--accent);
+    white-space: nowrap;
+    line-height: 1;         /* make line height tight */
+    vertical-align: middle; /* align nicely with text */
+}
+
+/* ==========================================================================
+   FOOTNOTES
+   ========================================================================== */
+
+.page-footnotes {
+    margin-top: auto;
+    padding-top: 0;
+}
+
+.footnote-separator {
+    border: none;
+    border-top: 1px solid #aaa;
+    margin: 0 0 0.5em 0;
+    width: 40%;
+}
+
+.footnote {
+    font-size: 0.85em;
+    color: #555;
+    margin: 0.25em 0;
+    line-height: 1.4;
+}
+
+.footnote a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.footnote sup {
+    color: var(--accent);
+    font-weight: bold;
+    margin-right: 0.3em;
+}
+
+sup.footnote-ref {
+    font-size: 0.75em;
+    color: var(--accent);
+    font-weight: bold;
+    margin-left: 0.15em;
+}
+
+a:has(> sup.footnote-ref) {
+    color: inherit;
+    text-decoration: none;
+}
+
+[id^="fnref-"] {
+    scroll-margin-top: 10vh;
+}
+
+[id^="fn-"] {
+    scroll-margin-top: 10vh;
+}
+
+
+/* ==========================================================================
+   DARK MODE THEME
+   Applied when body has class="theme-dark".
+   Page background becomes --green, all text flips to white.
+   ========================================================================== */
+
+body.theme-dark {
+    background: color-mix(in srgb, var(--accent), black 65%);
+    color: #fff;
+}
+
+body.theme-dark .page {
+    background: var(--accent);
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.4);
+    color: #fff;
+}
+
+/* --- Cover page --- */
+body.theme-dark .cover-page h1,
+body.theme-dark .cover-page h2,
+body.theme-dark .cover-page h3 {
+    color: #fff;
+}
+
+/* --- Section headings --- */
+body.theme-dark .page > h2 {
+    color: #fff;
+    border-bottom-color: rgba(255, 255, 255, 0.4);
+}
+
+/* --- General tables --- */
+body.theme-dark table {
+    color: #fff;
+}
+
+body.theme-dark th,
+body.theme-dark td {
+    border-color: rgba(255, 255, 255, 0.2);
+    background-color: transparent;
+}
+
+/* --- Fact list --- */
+body.theme-dark .fact {
+    background: rgba(0, 0, 0, 0.15);
+}
+
+body.theme-dark .fact-label {
+    color: #fff;
+}
+
+body.theme-dark .fact-value {
+    color: #fff;
+}
+
+body.theme-dark .fact-period {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+body.theme-dark .fact-ref {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+body.theme-dark .fact-textblock {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-color: #fff;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    color: #fff;
+}
+
+body.theme-dark .fact-textblock::before,
+body.theme-dark .fact-textblock::after {
+    color: #fff;
+}
+
+/* --- Links --- */
+body.theme-dark a,
+body.theme-dark a:link {
+    color: color-mix(in srgb, var(--accent), white 55%);
+    text-decoration-color: color-mix(in srgb, var(--accent), white 75%);
+}
+
+body.theme-dark a:hover {
+    text-decoration-color: color-mix(in srgb, var(--accent), white 55%);
+}
+
+body.theme-dark a:visited {
+    color: color-mix(in srgb, var(--accent), white 45%);
+}
+
+/* --- Tooltip --- */
+body.theme-dark .tooltip {
+    background-color: #000;
+}
+
+/* --- Thematic table --- */
+body.theme-dark .thematic-table {
+    border-color: rgba(255, 255, 255, 0.2);
+    background-color: transparent;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+body.theme-dark .thematic-table thead th {
+    background-color: rgba(0, 0, 0, 0.2);
+    color: #fff;
+    border-bottom-color: rgba(255, 255, 255, 0.2);
+}
+
+body.theme-dark .thematic-table td,
+body.theme-dark .thematic-table th {
+    border-bottom-color: rgba(255, 255, 255, 0.15);
+    background-color: transparent;
+    color: #fff;
+}
+
+body.theme-dark .thematic-table tbody tr:nth-child(even) {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+body.theme-dark .thematic-table tbody th {
+    background-color: rgba(0, 0, 0, 0.1);
+    color: #fff;
+}
+
+/* --- Table of Contents --- */
+body.theme-dark .toc-page h2 {
+    color: #fff;
+}
+
+body.theme-dark .toc-list a {
+    color: #fff;
+}
+
+body.theme-dark .toc-back-link {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+body.theme-dark .toc-back-link:hover {
+    color: #fff;
+}
+
+/* --- Footnotes --- */
+body.theme-dark .footnote-separator {
+    border-top-color: rgba(255, 255, 255, 0.3);
+}
+
+body.theme-dark .footnote {
+    color: rgba(255, 255, 255, 0.75);
+}
+
+body.theme-dark .footnote sup {
+    color: color-mix(in srgb, var(--accent), white 55%);
+}
+
+body.theme-dark sup.footnote-ref {
+    color: color-mix(in srgb, var(--accent), white 55%);
+}
+
+/* --- Document information --- */
+body.theme-dark .document-information {
+    background: rgba(0, 0, 0, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+body.theme-dark .document-information h2 {
+    color: #fff;
+}
+
+body.theme-dark .document-info-list dt {
+    color: #fff;
+}
+
+body.theme-dark .document-info-list dd {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+/* --- Code --- */
+body.theme-dark code {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: #fff;
+}
+
+/* --- Footer --- */
+body.theme-dark .copyright {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* --- Print: always use light appearance --- */
+@media print {
+    body.theme-dark {
+        background: white;
+        color: #333;
+    }
+
+    body.theme-dark .page {
+        background: white;
+        color: #333;
+        box-shadow: none;
+    }
+
+    body.theme-dark .page > h2 {
+        color: var(--accent);
+        border-bottom-color: var(--accent);
+    }
+
+    body.theme-dark table {
+        color: #333;
+    }
+
+    body.theme-dark th,
+    body.theme-dark td {
+        border-color: #ddd;
+        background-color: #fff;
+    }
+
+    body.theme-dark .fact {
+        background: #f9f9f9;
+    }
+
+    body.theme-dark .fact-label,
+    body.theme-dark .fact-value {
+        color: #333;
+    }
+
+    body.theme-dark .fact-period {
+        color: #444;
+    }
+
+    body.theme-dark .fact-ref {
+        color: #666;
+    }
+
+    body.theme-dark .fact-textblock {
+        background-color: var(--accent-100);
+        border-color: var(--accent);
+        color: #333;
+    }
+
+    body.theme-dark .fact-textblock::before,
+    body.theme-dark .fact-textblock::after {
+        color: var(--accent);
+    }
+
+    body.theme-dark a,
+    body.theme-dark a:link {
+        color: var(--accent);
+        text-decoration-color: var(--accent-100);
+    }
+
+    body.theme-dark a:visited {
+        color: var(--accent-300);
+    }
+
+    body.theme-dark .thematic-table {
+        border-color: #ccc;
+        background-color: #fff;
+    }
+
+    body.theme-dark .thematic-table thead th {
+        background-color: var(--accent-100);
+        color: #333;
+        border-bottom-color: #ccc;
+    }
+
+    body.theme-dark .thematic-table td,
+    body.theme-dark .thematic-table th {
+        border-bottom-color: #e0e0e0;
+        background-color: #fff;
+        color: #333;
+    }
+
+    body.theme-dark .thematic-table tbody tr:nth-child(even) {
+        background-color: var(--accent-100);
+    }
+
+    body.theme-dark .thematic-table tbody th {
+        background-color: #f9f9f9;
+        color: #444;
+    }
+
+    body.theme-dark .toc-page h2 {
+        color: #333;
+    }
+
+    body.theme-dark .toc-list a {
+        color: var(--accent);
+    }
+
+    body.theme-dark .document-information {
+        background: var(--accent-100);
+        border-color: var(--accent);
+    }
+
+    body.theme-dark .document-information h2 {
+        color: var(--accent);
+    }
+
+    body.theme-dark .document-info-list dt {
+        color: #333;
+    }
+
+    body.theme-dark .document-info-list dd {
+        color: #555;
+    }
+
+    body.theme-dark code {
+        background-color: var(--accent-100);
+        border-color: var(--accent);
+        color: var(--accent);
+    }
+
+    body.theme-dark .cover-page h1,
+    body.theme-dark .cover-page h2,
+    body.theme-dark .cover-page h3 {
+        color: #333;
+    }
+
+    body.theme-dark .footnote-separator {
+        border-top-color: #aaa;
+    }
+
+    body.theme-dark .footnote {
+        color: #555;
+    }
+
+    body.theme-dark .footnote sup {
+        color: var(--accent);
+    }
+
+    body.theme-dark sup.footnote-ref {
+        color: var(--accent);
+    }
+}
