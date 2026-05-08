@@ -495,7 +495,7 @@ class ReportLayoutOrganiser:
             return None
 
         col_empty, col_numeric, all_numeric = _column_flags(grid.data)
-        if True in col_empty:
+        if any(col_empty):
             grid, col_numeric = _drop_empty_columns(grid, col_empty, col_numeric)
 
         table_unit = _table_unit(grid.data)
