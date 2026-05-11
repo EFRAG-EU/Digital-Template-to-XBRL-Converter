@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 import ixbrltemplates
 from babel import Locale
-from jinja2 import Environment, PackageLoader
+from jinja2 import Environment, PackageLoader, StrictUndefined, Undefined
 from markupsafe import Markup
 from rcssmin import cssmin
 
@@ -328,6 +328,7 @@ class InlineReport:
             keep_trailing_newline=True,
             trim_blocks=True,
             lstrip_blocks=True,
+            undefined=StrictUndefined if L.isEnabledFor(logging.DEBUG) else Undefined,
         )
         env.globals.update(
             {
