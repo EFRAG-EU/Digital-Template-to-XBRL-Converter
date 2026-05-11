@@ -47,9 +47,9 @@
                 <img src="{{ reportInfo.optionalCoverImage.as_data_url(max_width=500, max_height=500) }}" alt="Cover image" />
             </div>
 {% endif %}
-{% if reportInfo.optionalLogo %}
+{% if reportInfo.optionalLogoImage %}
             <div class="company-logo">
-                <img src="{{ reportInfo.optionalLogo.as_data_url(max_width=400) }}" alt="{{ reportInfo.entityName | e }} logo" />
+                <img src="{{ reportInfo.optionalLogoImage.as_data_url(max_width=400) }}" alt="{{ reportInfo.entityName | e }} logo" />
             </div>
 {% endif %}
         </div>

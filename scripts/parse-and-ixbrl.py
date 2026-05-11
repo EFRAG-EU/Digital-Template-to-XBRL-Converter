@@ -133,10 +133,10 @@ def createArgParser() -> argparse.ArgumentParser:
         help="Path to an image file to use as the cover page image.",
     )
     parser.add_argument(
-        "--image-watermark",
+        "--image-background",
         type=Path,
         default=None,
-        help="Path to an image file to use as a background watermark on report pages.",
+        help="Path to an image file to use as a background image on report pages.",
     )
     parser.add_argument(
         "--extra-data",
@@ -216,9 +216,9 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, ExcelProc
         )
 
         for arg_name, setter in [
-            ("image_logo", report.theme.setLogo),
+            ("image_logo", report.theme.setLogoImage),
             ("image_cover", report.theme.setCoverImage),
-            ("image_watermark", report.theme.setWatermark),
+            ("image_background", report.theme.setBackgroundImage),
         ]:
             if image_path := getattr(args, arg_name):
                 image, err = ImageFileLikeAndFileName.prepare(image_path)

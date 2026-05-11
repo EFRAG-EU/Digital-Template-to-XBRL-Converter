@@ -406,9 +406,9 @@ def upload() -> Response:
     conversion["style_mode"] = style_mode
 
     for field_name, conv_key in [
-        ("logo", "logo"),
-        ("cover", "cover_image"),
-        ("watermark", "watermark"),
+        ("logo", "image_logo"),
+        ("cover", "image_cover"),
+        ("background", "image_background"),
     ]:
         if field_name not in request.files:
             continue
@@ -528,9 +528,9 @@ def doConversion(conversion: dict, id: str) -> ConversionResults:
             report.theme.setColour(palette).setDisplayMode(mode)
 
             for key, setter in [
-                ("logo", report.theme.setLogo),
-                ("cover_image", report.theme.setCoverImage),
-                ("watermark", report.theme.setWatermark),
+                ("image_logo", report.theme.setLogoImage),
+                ("image_cover", report.theme.setCoverImage),
+                ("image_background", report.theme.setBackgroundImage),
             ]:
                 if key in conversion:
                     image, err = ImageFileLikeAndFileName.prepare(conversion[key])

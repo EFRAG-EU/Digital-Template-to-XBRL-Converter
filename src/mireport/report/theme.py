@@ -54,9 +54,9 @@ class ReportTheme:
 
     colour: ColourPalette
     displayMode: DisplayMode
-    logo: Optional[ImageFileLikeAndFileName] = None
+    background_image: Optional[ImageFileLikeAndFileName] = None
     cover_image: Optional[ImageFileLikeAndFileName] = None
-    watermark: Optional[ImageFileLikeAndFileName] = None
+    logo_image: Optional[ImageFileLikeAndFileName] = None
 
     @classmethod
     def default(cls) -> ReportTheme:
@@ -70,14 +70,14 @@ class ReportTheme:
         self.displayMode = mode
         return self
 
-    def setLogo(self, image: ImageFileLikeAndFileName) -> Self:
-        self.logo = image
+    def setLogoImage(self, image: ImageFileLikeAndFileName) -> Self:
+        self.logo_image = image
         return self
 
     def setCoverImage(self, image: ImageFileLikeAndFileName) -> Self:
         self.cover_image = image
         return self
 
-    def setWatermark(self, image: ImageFileLikeAndFileName) -> Self:
-        self.watermark = image
+    def setBackgroundImage(self, image: ImageFileLikeAndFileName) -> Self:
+        self.background_image = image
         return self
