@@ -1,6 +1,6 @@
 import pytest
 
-from efrag_digital_converter import _parse_theme_form_params
+from digital_converter_webapp import _parse_theme_form_params
 from mireport.report.theme import ColourPalette, ReportTheme
 
 

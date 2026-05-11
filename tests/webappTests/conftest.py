@@ -1,6 +1,6 @@
 import pytest
 
-from efrag_digital_converter import create_app
+from digital_converter_webapp import create_app
 
 
 @pytest.fixture(scope="session")
