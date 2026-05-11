@@ -5,8 +5,6 @@ import time
 from pathlib import Path
 from typing import Optional
 
-from rich import print as rich_print
-
 from mireport.arelle.report_info import ArelleReportProcessor, getOrCreateReportPackage
 from mireport.cli import configure_rich_output
 from mireport.cli import console_print as print
@@ -83,7 +81,7 @@ def main() -> None:
 
     args = parse_args()
     if args.debug:
-        rich_print("[red]Debugging information will be included in the output.[/red]")
+        print("[red]Debugging information will be included in the output.[/red]")
         logging.root.setLevel(logging.DEBUG)
 
     report_path: Path = args.report_path
@@ -158,7 +156,7 @@ def main() -> None:
             if arelle_result.has_json:
                 if json_path.is_file():
                     print(f"Overwriting {json_path}.")
-                arelle_result._xbrlJson.saveToFilepath(json_path)
+                arelle_result.xbrl_json.saveToFilepath(json_path)
                 print(f"xBRL-JSON written to {json_path}.")
             else:
                 print("Failed to create xBRL-JSON.")

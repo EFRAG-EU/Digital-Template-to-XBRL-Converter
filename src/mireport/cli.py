@@ -12,37 +12,6 @@ from rich.logging import RichHandler
 _CONSOLE = Console()
 
 
-# Build a translation table for fast emoji deletion.
-# Covers: Emoticons, Alchemical, Misc Symbols, Dingbats, and most of the
-# Supplemental Symbols & Pictographs, Supplemental Arrows-C, etc.
-_EMOJI_DELETE_TABLE = str.maketrans(
-    {
-        i: None
-        for start, end in [
-            (0x1F1E0, 0x1F1FF),  # Regional Indicators
-            (0x1F300, 0x1F5FF),  # Misc Symbols & Pictographs
-            (0x1F600, 0x1F64F),  # Emoticons
-            (0x1F680, 0x1F6FF),  # Transport & Map Symbols
-            (0x1F700, 0x1F77F),  # Alchemical Symbols
-            (0x1F780, 0x1F7FF),  # Geometric Shapes Extended
-            (0x1F800, 0x1F8FF),  # Supplemental Arrows-C
-            (0x1F900, 0x1F9FF),  # Supplemental Symbols & Pictographs
-            (0x1FA00, 0x1FA7F),  # Chess Symbols
-            (0x1FA80, 0x1FAFF),  # Symbols and Pictographs Extended-A
-            (0x2600, 0x26FF),  # Miscellaneous Symbols
-            (0x2700, 0x27BF),  # Dingbats
-        ]
-        for i in range(start, end + 1)
-    }
-    | {0xFE0F: None}  # Add variation selector
-)
-
-
-def _strip_emoji(text: str) -> str:
-    """Remove emoji from text using fast translation table."""
-    return text.translate(_EMOJI_DELETE_TABLE)
-
-
 def getListofPathsFromListOfGlobs(globs: list[str]) -> list[str]:
     paths = [
         glob_result for glob_candidate in globs for glob_result in glob(glob_candidate)
@@ -74,8 +43,6 @@ def get_console() -> Console:
 
 def console_print(*args: Any, **kwargs: Any) -> None:
     console = get_console()
-    if not console.is_terminal:
-        args = tuple(_strip_emoji(arg) if isinstance(arg, str) else arg for arg in args)
     console.print(*args, **kwargs)
 
 
