@@ -64,7 +64,7 @@ def createArgParser() -> argparse.ArgumentParser:
         "--output-locale",
         type=argparse_locale,
         default=None,
-        help=f"Locale to use when formatting the output XBRL report (default: None). Examples:\n{sorted(EU_LOCALES)}",
+        help=f"Locale to use when formatting the output XBRL report. Examples:\n{sorted(EU_LOCALES)}",
     )
     parser.add_argument(
         "--force",
@@ -112,13 +112,13 @@ def createArgParser() -> argparse.ArgumentParser:
         type=DisplayMode,
         choices=list(DisplayMode),
         default=ReportTheme.DEFAULT_DISPLAY_MODE,
-        help=f"Report colour mode (default: {ReportTheme.DEFAULT_DISPLAY_MODE}).",
+        help="Report colour mode (default: %(default)s).",
     )
     parser.add_argument(
         "--style-palette",
         choices=ColourPalette.labels(),
         default=ReportTheme.DEFAULT_COLOUR.label,
-        help=f"Report colour palette (default: {ReportTheme.DEFAULT_COLOUR.label}).",
+        help="Report colour palette (default: %(default)s).",
     )
     parser.add_argument(
         "--image-logo",
