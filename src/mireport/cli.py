@@ -4,6 +4,7 @@ import sys
 from argparse import ArgumentParser
 from glob import glob
 from typing import Any
+import warnings
 
 import rich.traceback
 from rich.console import Console
@@ -57,6 +58,7 @@ def configure_rich_output(*, locals_max_length: int | None = None) -> Console:
         datefmt="[%Y-%m-%d %H:%M:%S]",
         handlers=[RichHandler(rich_tracebacks=True, console=get_console())],
     )
+    warnings.filterwarnings("default", category=DeprecationWarning)
     logging.captureWarnings(True)
     return get_console()
 
