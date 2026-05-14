@@ -81,7 +81,10 @@ class TestColourPaletteStrReprFormat:
         assert str(ColourPalette.AZURE) == CSSHexColour(ColourPalette.AZURE.value)
 
     def test_repr_shows_name_and_value(self):
-        assert repr(ColourPalette.AZURE) == f"<ColourPalette.AZURE: {ColourPalette.AZURE.value!r}>"
+        assert (
+            repr(ColourPalette.AZURE)
+            == f"<ColourPalette.AZURE: {ColourPalette.AZURE.value!r}>"
+        )
 
     def test_format_returns_hex(self):
         assert f"{ColourPalette.AZURE}" == ColourPalette.AZURE.value

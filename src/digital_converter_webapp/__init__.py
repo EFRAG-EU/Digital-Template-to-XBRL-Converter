@@ -328,6 +328,9 @@ def debug_session() -> Response:
     return jsonify(interesting)
 
 
+def _first_str(form: Mapping[str, str], *fields: str) -> str:
+    return next((v for f in fields if (v := form.get(f, "").strip())), "")
+
 
 @convert_bp.route("/upload", methods=["POST"])
 def upload() -> Response:
@@ -377,16 +380,13 @@ def upload() -> Response:
         fileContent=blob.stream.read(), filename=blob.filename
     )
 
-    manualLocale = (
-        request.form.get("localeOption", type=str, default="detect").strip() == "manual"
-    )
-    if manualLocale:
-        conversion["locale_str"] = request.form.get(
-            "locale", type=str, default=""
-        ).strip()
+    if _first_str(request.form, "localeOption") == "manual":
+        conversion["locale_str"] = _first_str(request.form, "locale")
 
-    conversion["style_palette"] = request.form.get("style_colour", "").strip() or request.form.get("style_palette", "")
-    conversion["style_mode"] = request.form.get("style_mode", "")
+    conversion["style_palette"] = _first_str(
+        request.form, "style_colour", "style_palette"
+    )
+    conversion["style_mode"] = _first_str(request.form, "style_mode")
 
     for field_name, conv_key in [
         ("logo", "image_logo"),
