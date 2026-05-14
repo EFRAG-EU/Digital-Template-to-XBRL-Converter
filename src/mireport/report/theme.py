@@ -88,11 +88,22 @@ class DisplayMode(StrEnum):
     LIGHT = "light"
     DARK = "dark"
 
+    @classmethod
+    def default(cls) -> DisplayMode:
+        return cls.LIGHT
+
+    @classmethod
+    def parse(cls, value: str) -> DisplayMode:
+        try:
+            return cls(value)
+        except ValueError:
+            return cls.default()
+
 
 @dataclass
 class ReportTheme:
     DEFAULT_COLOUR: ClassVar[ColourPalette] = ColourPalette.default()
-    DEFAULT_DISPLAY_MODE: ClassVar[DisplayMode] = DisplayMode.LIGHT
+    DEFAULT_DISPLAY_MODE: ClassVar[DisplayMode] = DisplayMode.default()
 
     colour: CSSHexColour
     displayMode: DisplayMode

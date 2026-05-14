@@ -328,19 +328,6 @@ def debug_session() -> Response:
     return jsonify(interesting)
 
 
-def _parse_theme_form_params(form: Mapping[str, str]) -> tuple[str, str]:
-    palette_label = form.get("style_colour", "").strip() or form.get(
-        "style_palette", ""
-    )
-
-    style_mode = form.get("style_mode", ReportTheme.DEFAULT_DISPLAY_MODE.value)
-    try:
-        DisplayMode(style_mode)
-    except ValueError:
-        style_mode = ReportTheme.DEFAULT_DISPLAY_MODE.value
-
-    return palette_label, style_mode
-
 
 @convert_bp.route("/upload", methods=["POST"])
 def upload() -> Response:
@@ -398,9 +385,8 @@ def upload() -> Response:
             "locale", type=str, default=""
         ).strip()
 
-    palette_label, style_mode = _parse_theme_form_params(request.form)
-    conversion["style_palette"] = palette_label
-    conversion["style_mode"] = style_mode
+    conversion["style_palette"] = request.form.get("style_colour", "").strip() or request.form.get("style_palette", "")
+    conversion["style_mode"] = request.form.get("style_mode", "")
 
     for field_name, conv_key in [
         ("logo", "image_logo"),
@@ -520,9 +506,7 @@ def doConversion(conversion: dict, id: str) -> ConversionResults:
                 "style_palette", ReportTheme.DEFAULT_COLOUR.label
             )
             colour = ColourPalette.parse(raw_colour, default=ReportTheme.DEFAULT_COLOUR)
-            mode = DisplayMode(
-                conversion.get("style_mode", ReportTheme.DEFAULT_DISPLAY_MODE.value)
-            )
+            mode = DisplayMode.parse(conversion.get("style_mode", ""))
             report.theme.setColour(colour).setDisplayMode(mode)
 
             for key, setter in [

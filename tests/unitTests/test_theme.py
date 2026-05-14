@@ -3,6 +3,7 @@ import pytest
 from mireport.report.theme import (
     ColourPalette,
     CSSHexColour,
+    DisplayMode,
     InvalidReportThemeException,
 )
 
@@ -62,6 +63,17 @@ class TestCSSHexColour:
     def test_palette_members_are_css_hex_colour(self):
         assert isinstance(ColourPalette.AZURE, CSSHexColour)
         assert CSSHexColour.is_valid(ColourPalette.AZURE)
+
+
+class TestDisplayModeParse:
+    def test_valid_value(self):
+        assert DisplayMode.parse("dark") == DisplayMode.DARK
+
+    def test_invalid_falls_back_to_default(self):
+        assert DisplayMode.parse("blinding") == DisplayMode.default()
+
+    def test_empty_falls_back_to_default(self):
+        assert DisplayMode.parse("") == DisplayMode.default()
 
 
 class TestColourPaletteStrReprFormat:
