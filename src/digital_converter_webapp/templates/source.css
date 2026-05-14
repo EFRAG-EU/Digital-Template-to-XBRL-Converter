@@ -6,7 +6,7 @@
     > npx @tailwindcss/cli -i .\src\digital_converter_webapp\templates\source.css -o .\src\digital_converter_webapp\static\style.css --minify
     See https://tailwindcss.com/docs/installation/tailwind-cli for further information
 */
-@import "tailwindcss";
+@import "tailwindcss" source(none);
 @source "../static/**/*.js";
 @source "../templates/**/*.html.jinja";
 
