@@ -116,16 +116,16 @@ def createArgParser() -> argparse.ArgumentParser:
     )
     palette_group = parser.add_mutually_exclusive_group()
     palette_group.add_argument(
-        "--style-palette",
+        "--style-preset",
         choices=ColourPalette.labels(),
         default=ReportTheme.DEFAULT_COLOUR.label,
-        help="Report colour palette (default: %(default)s).",
+        help="Report colour preset (default: %(default)s).",
     )
     palette_group.add_argument(
-        "--style-colour",
+        "--style-custom",
         metavar="#RRGGBB",
         default=None,
-        help="Custom report accent colour as a 6-digit hex code (e.g. #1a2b3c). Overrides --style-palette.",
+        help="Custom report accent colour as a 6-digit hex code (e.g. #1a2b3c).",
     )
     parser.add_argument(
         "--image-logo",
