@@ -218,7 +218,7 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, ExcelProc
         )
         report = excel.populateReport()
 
-        colour = ColourPalette.parse(args.style_colour or args.style_palette)
+        colour = ColourPalette.parse(args.style_custom or args.style_preset)
         report.theme.setDisplayMode(args.style_mode).setColour(colour)
 
         for arg_name, setter in [
