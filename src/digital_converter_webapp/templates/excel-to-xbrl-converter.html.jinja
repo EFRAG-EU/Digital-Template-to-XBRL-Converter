@@ -117,6 +117,23 @@
                   style="background-color: {{ colour.value }};"></span>
           </label>
           {% endfor %}
+          <!-- Custom colour swatch -->
+          <label class="cursor-pointer" title="Custom colour" id="custom-colour-label">
+            <input type="radio" name="style_palette" value="" id="custom-swatch-radio"
+                   class="sr-only swatch-radio">
+            <span class="block w-7 h-7 rounded-full ring-2 ring-offset-2 transition-all swatch-circle ring-transparent"
+                  id="custom-swatch-circle"
+                  style="background: conic-gradient(red,yellow,lime,aqua,blue,magenta,red);"></span>
+            <input type="color" id="colour-picker-native" value="#007acc"
+                   class="sr-only" tabindex="-1" aria-hidden="true">
+          </label>
+        </div>
+        <!-- Hex text field — shown only when custom swatch is active -->
+        <div id="custom-hex-row" class="hidden mt-2 items-center gap-2">
+          <input type="text" name="style_colour" id="style-colour-hex"
+                 placeholder="#007acc" maxlength="7" pattern="#[0-9A-Fa-f]{6}"
+                 class="w-24 text-sm font-mono border border-gray-300 rounded px-2 py-1">
+          <span class="w-5 h-5 rounded-full border border-gray-300 shrink-0" id="hex-preview"></span>
         </div>
       </fieldset>
 
@@ -331,7 +348,51 @@ document.addEventListener("DOMContentLoaded", () => {
         circle.classList.add("ring-transparent");
       });
       radio.parentElement.querySelector(".swatch-circle").classList.replace("ring-transparent", "ring-gray-600");
+      if (radio !== customSwatchRadio) {
+        hexRow.classList.replace("flex", "hidden");
+        hexInput.value = "";
+      }
     });
+  });
+
+  // Custom colour swatch
+  const customSwatchRadio = document.getElementById("custom-swatch-radio");
+  const customSwatchCircle = document.getElementById("custom-swatch-circle");
+  const nativePicker = document.getElementById("colour-picker-native");
+  const hexRow = document.getElementById("custom-hex-row");
+  const hexInput = document.getElementById("style-colour-hex");
+  const hexPreview = document.getElementById("hex-preview");
+
+  function applyCustomColour(hex) {
+    customSwatchCircle.style.background = hex;
+    hexPreview.style.background = hex;
+    nativePicker.value = hex;
+    hexInput.value = hex;
+  }
+
+  function showCustomHexRow() {
+    hexRow.classList.replace("hidden", "flex");
+  }
+
+  customSwatchRadio.addEventListener("change", () => {
+    showCustomHexRow();
+    nativePicker.click();
+  });
+
+  nativePicker.addEventListener("input", () => {
+    applyCustomColour(nativePicker.value);
+    customSwatchRadio.checked = true;
+    customSwatchCircle.classList.replace("ring-transparent", "ring-gray-600");
+    showCustomHexRow();
+  });
+
+  hexInput.addEventListener("input", () => {
+    const val = hexInput.value.trim();
+    if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+      nativePicker.value = val;
+      customSwatchCircle.style.background = val;
+      hexPreview.style.background = val;
+    }
   });
 
   // Display mode — border-2 border-blue-500 shows selection; backgrounds stay fixed

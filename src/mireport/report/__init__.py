@@ -1,1 +1,3 @@
-from mireport.report.inlinereport import InlineReport  # noqa: F401
+from mireport.report.inlinereport import InlineReport
+
+__all__ = ["InlineReport"]

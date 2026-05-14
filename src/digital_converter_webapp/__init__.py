@@ -328,13 +328,10 @@ def debug_session() -> Response:
     return jsonify(interesting)
 
 
-_VALID_PALETTE_LABELS: frozenset[str] = frozenset(m.label for m in ColourPalette)
-
-
 def _parse_theme_form_params(form: Mapping[str, str]) -> tuple[str, str]:
-    palette_label = form.get("style_palette", ReportTheme.DEFAULT_COLOUR.label)
-    if palette_label not in _VALID_PALETTE_LABELS:
-        palette_label = ReportTheme.DEFAULT_COLOUR.label
+    palette_label = form.get("style_colour", "").strip() or form.get(
+        "style_palette", ""
+    )
 
     style_mode = form.get("style_mode", ReportTheme.DEFAULT_DISPLAY_MODE.value)
     try:
@@ -519,13 +516,14 @@ def doConversion(conversion: dict, id: str) -> ConversionResults:
                 )
                 return resultBuilder.build()
 
-            palette = ColourPalette.from_label(
-                conversion.get("style_palette", ReportTheme.DEFAULT_COLOUR.label)
+            raw_colour = conversion.get(
+                "style_palette", ReportTheme.DEFAULT_COLOUR.label
             )
+            colour = ColourPalette.parse(raw_colour, default=ReportTheme.DEFAULT_COLOUR)
             mode = DisplayMode(
                 conversion.get("style_mode", ReportTheme.DEFAULT_DISPLAY_MODE.value)
             )
-            report.theme.setColour(palette).setDisplayMode(mode)
+            report.theme.setColour(colour).setDisplayMode(mode)
 
             for key, setter in [
                 ("image_logo", report.theme.setLogoImage),

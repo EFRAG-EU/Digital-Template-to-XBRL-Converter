@@ -114,11 +114,18 @@ def createArgParser() -> argparse.ArgumentParser:
         default=ReportTheme.DEFAULT_DISPLAY_MODE,
         help="Report colour mode (default: %(default)s).",
     )
-    parser.add_argument(
+    palette_group = parser.add_mutually_exclusive_group()
+    palette_group.add_argument(
         "--style-palette",
         choices=ColourPalette.labels(),
         default=ReportTheme.DEFAULT_COLOUR.label,
         help="Report colour palette (default: %(default)s).",
+    )
+    palette_group.add_argument(
+        "--style-colour",
+        metavar="#RRGGBB",
+        default=None,
+        help="Custom report accent colour as a 6-digit hex code (e.g. #1a2b3c). Overrides --style-palette.",
     )
     parser.add_argument(
         "--image-logo",
@@ -211,9 +218,8 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, ExcelProc
         )
         report = excel.populateReport()
 
-        report.theme.setDisplayMode(args.style_mode).setColour(
-            ColourPalette.from_label(args.style_palette)
-        )
+        colour = ColourPalette.parse(args.style_colour or args.style_palette)
+        report.theme.setDisplayMode(args.style_mode).setColour(colour)
 
         for arg_name, setter in [
             ("image_logo", report.theme.setLogoImage),
