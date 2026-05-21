@@ -152,8 +152,8 @@ td {
     contain-intrinsic-size: 500mm;
 }
 
-/* Watermark background on every page except the cover */
-{% if watermarkDataUrl %}
+/* Background image on every page except the cover */
+{% if backgroundImageDataUrl %}
 .page:not(.cover-page)::before {
     content: '';
     position: absolute;
@@ -161,7 +161,7 @@ td {
     right: 0;
     width: 40%;
     height: 40%;
-    background-image: url('{{ watermarkDataUrl }}');
+    background-image: url('{{ backgroundImageDataUrl }}');
     background-repeat: no-repeat;
     background-position: bottom right;
     background-size: contain;
@@ -172,7 +172,7 @@ td {
 {% endif %}
 
 /* Corporate logo on every page except the cover (top-right corner) */
-{% if logoDataUrl %}
+{% if logoImageDataUrl %}
 .page:not(.cover-page)::after {
     content: '';
     position: absolute;
@@ -180,7 +180,7 @@ td {
     right: 3mm;
     width: 25mm;
     height: 12mm;
-    background-image: url('{{ logoDataUrl }}');
+    background-image: url('{{ logoImageDataUrl }}');
     background-repeat: no-repeat;
     background-position: top right;
     background-size: contain;

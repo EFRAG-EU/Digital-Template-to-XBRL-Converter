@@ -328,21 +328,8 @@ def debug_session() -> Response:
     return jsonify(interesting)
 
 
-_VALID_PALETTE_LABELS: frozenset[str] = frozenset(m.label for m in ColourPalette)
-
-
-def _parse_theme_form_params(form: Mapping[str, str]) -> tuple[str, str]:
-    palette_label = form.get("style_palette", ReportTheme.DEFAULT_COLOUR.label)
-    if palette_label not in _VALID_PALETTE_LABELS:
-        palette_label = ReportTheme.DEFAULT_COLOUR.label
-
-    style_mode = form.get("style_mode", ReportTheme.DEFAULT_DISPLAY_MODE.value)
-    try:
-        DisplayMode(style_mode)
-    except ValueError:
-        style_mode = ReportTheme.DEFAULT_DISPLAY_MODE.value
-
-    return palette_label, style_mode
+def _first_str(form: Mapping[str, str], *fields: str) -> str:
+    return next((v for f in fields if (v := form.get(f, "").strip())), "")
 
 
 @convert_bp.route("/upload", methods=["POST"])
@@ -393,22 +380,18 @@ def upload() -> Response:
         fileContent=blob.stream.read(), filename=blob.filename
     )
 
-    manualLocale = (
-        request.form.get("localeOption", type=str, default="detect").strip() == "manual"
-    )
-    if manualLocale:
-        conversion["locale_str"] = request.form.get(
-            "locale", type=str, default=""
-        ).strip()
+    if _first_str(request.form, "localeOption") == "manual":
+        conversion["locale_str"] = _first_str(request.form, "locale")
 
-    palette_label, style_mode = _parse_theme_form_params(request.form)
-    conversion["style_palette"] = palette_label
-    conversion["style_mode"] = style_mode
+    conversion["style_palette"] = _first_str(
+        request.form, "style_colour", "style_palette"
+    )
+    conversion["style_mode"] = _first_str(request.form, "style_mode")
 
     for field_name, conv_key in [
-        ("logo", "logo"),
-        ("cover", "cover_image"),
-        ("watermark", "watermark"),
+        ("logo", "image_logo"),
+        ("cover", "image_cover"),
+        ("background", "image_background"),
     ]:
         if field_name not in request.files:
             continue
@@ -519,18 +502,17 @@ def doConversion(conversion: dict, id: str) -> ConversionResults:
                 )
                 return resultBuilder.build()
 
-            palette = ColourPalette.from_label(
-                conversion.get("style_palette", ReportTheme.DEFAULT_COLOUR.label)
+            raw_colour = conversion.get(
+                "style_palette", ReportTheme.DEFAULT_COLOUR.label
             )
-            mode = DisplayMode(
-                conversion.get("style_mode", ReportTheme.DEFAULT_DISPLAY_MODE.value)
-            )
-            report.theme.setColour(palette).setDisplayMode(mode)
+            colour = ColourPalette.parse(raw_colour, default=ReportTheme.DEFAULT_COLOUR)
+            mode = DisplayMode.parse(conversion.get("style_mode", ""))
+            report.theme.setColour(colour).setDisplayMode(mode)
 
             for key, setter in [
-                ("logo", report.theme.setLogo),
-                ("cover_image", report.theme.setCoverImage),
-                ("watermark", report.theme.setWatermark),
+                ("image_logo", report.theme.setLogoImage),
+                ("image_cover", report.theme.setCoverImage),
+                ("image_background", report.theme.setBackgroundImage),
             ]:
                 if key in conversion:
                     image, err = ImageFileLikeAndFileName.prepare(conversion[key])

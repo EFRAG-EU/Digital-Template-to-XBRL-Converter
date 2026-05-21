@@ -64,7 +64,7 @@ def createArgParser() -> argparse.ArgumentParser:
         "--output-locale",
         type=argparse_locale,
         default=None,
-        help=f"Locale to use when formatting the output XBRL report (default: None). Examples:\n{sorted(EU_LOCALES)}",
+        help=f"Locale to use when formatting the output XBRL report. Examples:\n{sorted(EU_LOCALES)}",
     )
     parser.add_argument(
         "--force",
@@ -112,13 +112,20 @@ def createArgParser() -> argparse.ArgumentParser:
         type=DisplayMode,
         choices=list(DisplayMode),
         default=ReportTheme.DEFAULT_DISPLAY_MODE,
-        help=f"Report colour mode (default: {ReportTheme.DEFAULT_DISPLAY_MODE}).",
+        help="Report colour mode (default: %(default)s).",
     )
-    parser.add_argument(
-        "--style-palette",
+    palette_group = parser.add_mutually_exclusive_group()
+    palette_group.add_argument(
+        "--style-preset",
         choices=ColourPalette.labels(),
         default=ReportTheme.DEFAULT_COLOUR.label,
-        help=f"Report colour palette (default: {ReportTheme.DEFAULT_COLOUR.label}).",
+        help="Report colour preset (default: %(default)s).",
+    )
+    palette_group.add_argument(
+        "--style-custom",
+        metavar="#RRGGBB",
+        default=None,
+        help="Custom report accent colour as a 6-digit hex code (e.g. #1a2b3c).",
     )
     parser.add_argument(
         "--image-logo",
@@ -133,10 +140,10 @@ def createArgParser() -> argparse.ArgumentParser:
         help="Path to an image file to use as the cover page image.",
     )
     parser.add_argument(
-        "--image-watermark",
+        "--image-background",
         type=Path,
         default=None,
-        help="Path to an image file to use as a background watermark on report pages.",
+        help="Path to an image file to use as a background image on report pages.",
     )
     parser.add_argument(
         "--extra-data",
@@ -212,14 +219,13 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, list[str]
         )
         report = xl_processor.createReport()
 
-        report.theme.setDisplayMode(args.style_mode).setColour(
-            ColourPalette.from_label(args.style_palette)
-        )
+        colour = ColourPalette.parse(args.style_custom or args.style_preset)
+        report.theme.setDisplayMode(args.style_mode).setColour(colour)
 
         for arg_name, setter in [
-            ("image_logo", report.theme.setLogo),
+            ("image_logo", report.theme.setLogoImage),
             ("image_cover", report.theme.setCoverImage),
-            ("image_watermark", report.theme.setWatermark),
+            ("image_background", report.theme.setBackgroundImage),
         ]:
             if image_path := getattr(args, arg_name):
                 image, err = ImageFileLikeAndFileName.prepare(image_path)
