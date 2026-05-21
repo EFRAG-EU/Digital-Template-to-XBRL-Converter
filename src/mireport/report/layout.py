@@ -4,8 +4,8 @@ import logging
 from collections import defaultdict
 from dataclasses import dataclass
 from enum import Enum, auto
-from itertools import count
-from typing import TYPE_CHECKING, NamedTuple, Optional, cast
+from itertools import compress
+from typing import TYPE_CHECKING, NamedTuple, cast
 
 from mireport.exceptions import InlineReportException
 from mireport.report.fact import Fact, numeric_string_key, tidyTdValue
@@ -27,6 +27,8 @@ _TableHeadingValue = Concept | Relationship | _Period | str | None
 
 
 class TableHeadingCell(NamedTuple):
+    """A single cell in a table header row, carrying its value, span, and numeric flag."""
+
     value: _TableHeadingValue
     colspan: int = 0
     rowspan: int = 0
@@ -54,6 +56,8 @@ class TableHeadingCell(NamedTuple):
 
 
 class TableStyle(Enum):
+    """How a tabular section's rows and columns are derived from taxonomy dimensions."""
+
     SingleTypedDimensionColumn = auto()
     SingleExplicitDimensionColumn = auto()
     SingleExplicitDimensionRow = auto()
@@ -61,8 +65,51 @@ class TableStyle(Enum):
     Other = auto()
 
 
+@dataclass(slots=True, frozen=True)
+class TableCell:
+    """A single data cell: the fact it holds (or None) and whether its unit is already shown elsewhere."""
+
+    fact: Fact | None
+    suppress_unit: bool
+
+
+@dataclass(slots=True, frozen=True)
+class TableRow:
+    """One row of a table: a row-heading cell and the ordered data cells across all columns."""
+
+    heading: TableHeadingCell
+    cells: list[TableCell]
+
+
+@dataclass(slots=True, frozen=True)
+class Table:
+    """The fully assembled table ready for the template: header rows, data rows, and display metadata."""
+
+    style: TableStyle
+    numeric: bool
+    header_rows: list[list[TableHeadingCell]]
+    rows: list[TableRow]
+
+    @property
+    def column_count(self) -> int:
+        return len(self.rows[0].cells) if self.rows else 0
+
+
+@dataclass(frozen=True, slots=True)
+class _FactGrid:
+    """Intermediate representation produced by the assemble methods: facts organised into a row/column grid with labels, before header rows and display metadata are computed."""
+
+    style: TableStyle
+    data: list[list[Fact | None]]
+    row_labels: list[Concept | str]
+    row_heading_label: Concept | None
+    col_labels: list[Concept]
+
+
 @dataclass(slots=True, frozen=True, eq=True)
 class ReportSection:
+    """A presentation group together with the facts assigned to each of its relationships."""
+
     relationshipToFact: dict[Relationship, list[Fact]]
     presentation: PresentationGroup
 
@@ -86,44 +133,186 @@ class ReportSection:
 
 @dataclass(slots=True, frozen=True, eq=True)
 class TabularReportSection(ReportSection):
-    tableStyle: TableStyle
-    dataColumns: list[Concept | None]
-    rowHeadings: list[TableHeadingCell]
-    data: list[list[Fact | None]]
-    columnUnits: list[str | None]
-    newColumnHeadings: list[list[TableHeadingCell]]
-    columnPeriods: list[_Period | None]
-    numeric: bool = False
-    unitSymbol: Optional[str] = None
-    period: Optional[_Period] = None
+    table: Table
 
     @property
     def tabular(self) -> bool:
         return True
 
     @property
-    def rowHeadingsHaveTitle(self) -> bool:
-        if not self.dataColumns:
-            return False
-        firstCol = self.dataColumns[0]
-        if firstCol is None:
-            return False
-        return True
-
-    def columnHasUnit(self, colnum: int) -> bool:
-        try:
-            unit = self.columnUnits[colnum]
-            return unit is not None
-        except IndexError:
-            return False
-
-    @property
     def hasFacts(self) -> bool:
-        for row in self.data:
-            for fact in row:
-                if fact is not None:
-                    return True
-        return False
+        return any(
+            cell.fact is not None for row in self.table.rows for cell in row.cells
+        )
+
+
+# ── Module-level pure helpers ─────────────────────────────────────────────────
+
+
+def _table_unit(data: list[list[Fact | None]]) -> str | None:
+    units: set[str] = set()
+    for row in data:
+        for fact in row:
+            if fact is not None and fact.concept.isNumeric:
+                units.add(fact.unitSymbol)
+    if len(units) == 1:
+        unit = next(iter(units))
+        if unit:
+            return unit
+    return None
+
+
+def _table_period(data: list[list[Fact | None]]) -> _Period | None:
+    periods: set[_Period] = set()
+    for row in data:
+        for fact in row:
+            if fact is not None:
+                periods.add(fact.period)
+    return next(iter(periods)) if len(periods) == 1 else None
+
+
+def _column_units(data: list[list[Fact | None]]) -> list[str | None]:
+    col_units_map: dict[int, set[str]] = defaultdict(set)
+    num_cols = len(data[0]) if data else 0
+    for row in data:
+        for col, fact in enumerate(row):
+            if fact is not None and fact.concept.isNumeric:
+                col_units_map[col].add(fact.unitSymbol)
+    result: list[str | None] = []
+    for c in range(num_cols):
+        units = col_units_map[c]
+        if len(units) == 1:
+            unit = next(iter(units))
+            if unit:
+                result.append(unit)
+                continue
+        result.append(None)
+    if all(u is None for u in result):
+        return []
+    return result
+
+
+def _column_periods(data: list[list[Fact | None]]) -> list[_Period | None]:
+    col_periods_map: dict[int, set[_Period]] = defaultdict(set)
+    num_cols = len(data[0]) if data else 0
+    for row in data:
+        for col, fact in enumerate(row):
+            if fact is not None:
+                col_periods_map[col].add(fact.period)
+    result: list[_Period | None] = []
+    for c in range(num_cols):
+        periods = col_periods_map[c]
+        result.append(next(iter(periods)) if len(periods) == 1 else None)
+    if all(p is None for p in result):
+        return []
+    return result
+
+
+def _column_flags(
+    data: list[list[Fact | None]],
+) -> tuple[list[bool], list[bool], bool]:
+    num_cols = len(data[0]) if data else 0
+    col_empty = [all(row[c] is None for row in data) for c in range(num_cols)]
+    col_numeric = [
+        all(f.concept.isNumeric for row in data if (f := row[c]) is not None)
+        for c in range(num_cols)
+    ]
+    return col_empty, col_numeric, all(col_numeric)
+
+
+def _drop_empty_columns(
+    grid: _FactGrid,
+    col_empty: list[bool],
+    col_numeric: list[bool],
+) -> tuple[_FactGrid, list[bool]]:
+    keep = [not e for e in col_empty]
+    return (
+        _FactGrid(
+            style=grid.style,
+            data=[list(compress(row, keep)) for row in grid.data],
+            row_labels=grid.row_labels,
+            row_heading_label=grid.row_heading_label,
+            col_labels=list(compress(grid.col_labels, keep)),
+        ),
+        list(compress(col_numeric, keep)),
+    )
+
+
+def _build_header_rows(
+    row_heading_label: _TableHeadingValue,
+    col_labels: list[Concept],
+    col_numeric: list[bool],
+    all_numeric: bool,
+    table_unit: str | None,
+    table_period: _Period | None,
+    column_units: list[str | None],
+    column_periods: list[_Period | None],
+) -> list[list[TableHeadingCell]]:
+    max_cols = max(1, len(col_labels))
+    hrows: list[list[TableHeadingCell]] = []
+    if table_period:
+        hrows.append([TableHeadingCell(table_period, colspan=max_cols, rowspan=1)])
+    if table_unit:
+        hrows.append(
+            [TableHeadingCell(table_unit, colspan=max_cols, rowspan=1, numeric=True)]
+        )
+    hrows.append(
+        [
+            TableHeadingCell(
+                col, colspan=1, rowspan=1, numeric=all_numeric or col_numeric[cnum]
+            )
+            for cnum, col in enumerate(col_labels)
+        ]
+    )
+    if not table_period and column_periods:
+        hrows.append(
+            [
+                TableHeadingCell(
+                    cp, colspan=1, rowspan=1, numeric=all_numeric or col_numeric[cnum]
+                )
+                for cnum, cp in enumerate(column_periods)
+            ]
+        )
+    if not table_unit and column_units:
+        hrows.append(
+            [
+                TableHeadingCell(
+                    cu, colspan=1, rowspan=1, numeric=all_numeric or col_numeric[cnum]
+                )
+                for cnum, cu in enumerate(column_units)
+            ]
+        )
+    if hrows:
+        hrows[0].insert(
+            0, TableHeadingCell(row_heading_label, colspan=1, rowspan=len(hrows))
+        )
+    return [hrow for hrow in hrows if not all(c.value is None for c in hrow)]
+
+
+def _build_table_rows(
+    grid: _FactGrid,
+    table_unit: str | None,
+    column_units: list[str | None],
+) -> list[TableRow]:
+    return [
+        TableRow(
+            heading=TableHeadingCell(rh),
+            cells=[
+                TableCell(
+                    fact=fact,
+                    suppress_unit=(
+                        table_unit is not None
+                        or (j < len(column_units) and column_units[j] is not None)
+                    ),
+                )
+                for j, fact in enumerate(raw_row)
+            ],
+        )
+        for rh, raw_row in zip(grid.row_labels, grid.data)
+    ]
+
+
+# ── Orchestrator ──────────────────────────────────────────────────────────────
 
 
 class ReportLayoutOrganiser:
@@ -176,9 +365,11 @@ class ReportLayoutOrganiser:
                 for facts in section.relationshipToFact.values():
                     potential_unused_facts.difference_update(facts)
             else:
-                section = cast(TabularReportSection, section)
-                for row in section.data:
-                    potential_unused_facts.difference_update(row)
+                tabular = cast(TabularReportSection, section)
+                for row in tabular.table.rows:
+                    potential_unused_facts.difference_update(
+                        cell.fact for cell in row.cells if cell.fact is not None
+                    )
         unused_facts = frozenset(potential_unused_facts)
         if unused_facts:
             processed: set[Fact] = set()
@@ -191,7 +382,7 @@ class ReportLayoutOrganiser:
                 inconsistent_duplicates = [
                     f
                     for f in others
-                    if frozenset(f.aspects.items()) == u_aspects and f.value != u.value
+                    if frozenset(f.aspects.items()) == u_aspects and f.value != u.value  # type: ignore[operator]
                 ]
                 processed.add(u)
                 processed.update(inconsistent_duplicates)
@@ -232,280 +423,8 @@ class ReportLayoutOrganiser:
     def createReportTables(self) -> None:
         table_sections: dict[str, TabularReportSection] = {}
         for section in self.reportSections:
-            if section.presentation.style in {
-                PresentationStyle.List,
-                PresentationStyle.Empty,
-            }:
-                # Nothing to do as these don't have tables
-                continue
-
-            if section.presentation.style is PresentationStyle.Hybrid:
-                raise InlineReportException(
-                    f"Presentation group style ({section.presentation.style.name}) of [{section.presentation.roleUri}] is not currently supported."
-                )
-
-            hypercubes = [
-                r for r in section.presentation.relationships if r.concept.isHypercube
-            ]
-            if 1 != len(hypercubes):
-                raise InlineReportException(
-                    f"Presentation structure of [{section.presentation.roleUri}] is not currently supported."
-                )
-
-            typedDims = [
-                r.concept
-                for r in section.presentation.relationships
-                if r.concept.isTypedDimension
-            ]
-            explicitDims = [
-                r.concept
-                for r in section.presentation.relationships
-                if r.concept.isExplicitDimension
-            ]
-            reportable = [
-                r.concept
-                for r in section.presentation.relationships
-                if r.concept.isReportable
-            ]
-
-            tableStyle = TableStyle.Other
-            rowHeadings: list[Concept | Relationship | str | None] = []
-            columnHeadings: list[Concept | None] = []
-            data: list[list[Fact | None]] = []
-            explicitDim = None
-            typedQname = None
-
-            if len(typedDims) == 1 and not explicitDims:
-                tableStyle = TableStyle.SingleTypedDimensionColumn
-                initialColumnHeadings: list[Concept] = reportable
-                typedQname = f"typed {typedDims[0].qname}"
-
-                tdValues = {
-                    str(fact.aspects[typedQname])
-                    for r in reportable
-                    for fact in self.report.getFacts(r)
-                }
-                prettyTdValues = [
-                    (tidyTdValue(typedValue), typedValue) for typedValue in tdValues
-                ]
-                prettyTdValues.sort(key=lambda x: numeric_string_key(x[0]))
-                for heading, rKey in prettyTdValues:
-                    row: list[None | Fact] = []
-                    for c in initialColumnHeadings:
-                        found = None
-                        for fact in self.report.getFacts(c):
-                            tdValue = fact.aspects.get(typedQname)
-                            if tdValue is not None and tdValue == rKey:
-                                if found is not None:
-                                    L.debug(
-                                        f"Multiple facts found (handle this better) {section.presentation.roleUri=} {tableStyle=}\n{found=}\n{fact=}"
-                                    )
-                                found = fact
-                        row.append(found)
-                    if len(row) != len(initialColumnHeadings):
-                        raise InlineReportException(
-                            f"Failed to fill row correctly {heading}, with {initialColumnHeadings}"
-                        )
-                    row_empty = all(c is None for c in row)
-                    if not row_empty:
-                        data.append(row)
-                        rowHeadings.append(heading)
-
-                # Put the Dimension name as the heading above the row headings which are the domain members.
-                columnHeadings.insert(0, typedDims[0])
-                columnHeadings.extend(reportable)
-
-            elif len(explicitDims) == 1 and not typedDims:
-                explicitDim = explicitDims[0]
-                domain_set = self.taxonomy.getDomainMembersForExplicitDimension(
-                    explicitDim
-                )
-                domain: list[Concept] = [
-                    rel.concept
-                    for rel in section.presentation.relationships
-                    if rel.concept in domain_set
-                ]
-                defaultMember = self.taxonomy.getDimensionDefault(explicitDim)
-
-                if len(domain) <= len(reportable):
-                    tableStyle = TableStyle.SingleExplicitDimensionColumn
-                    initialColumnHeadings = domain
-                    initialRowHeadings = reportable
-
-                    for r in initialRowHeadings:
-                        row: list[None | Fact] = []
-                        for c in initialColumnHeadings:
-                            found = None
-                            for fact in self.report.getFacts(r):
-                                eValue = fact.aspects.get(explicitDim.qname)
-                                if (eValue is None and c == defaultMember) or (
-                                    eValue is not None and eValue == c.qname
-                                ):
-                                    if found is not None:
-                                        L.debug(
-                                            f"Multiple facts found (handle this better) {section.presentation.roleUri=} {tableStyle=}\n{found=}\n{fact=}"
-                                        )
-                                    found = fact
-                            row.append(found)
-                        if len(row) != len(initialColumnHeadings):
-                            raise InlineReportException(
-                                f"Failed to fill row correctly {r}, with {initialColumnHeadings}"
-                            )
-                        row_empty = all(c is None for c in row)
-                        if not row_empty:
-                            data.append(row)
-                            rowHeadings.append(r)
-                    # There is no column heading above the row headings
-                    columnHeadings.insert(0, None)
-                    columnHeadings.extend(domain)
-                else:
-                    tableStyle = TableStyle.SingleExplicitDimensionRow
-                    initialColumnHeadings = reportable
-                    initialRowHeadings = domain
-
-                    for r in initialRowHeadings:
-                        row: list[None | Fact] = []
-                        for c in initialColumnHeadings:
-                            found = None
-                            for fact in self.report.getFacts(c):
-                                eValue = fact.aspects.get(explicitDim.qname)
-                                if (
-                                    (eValue is None and r == defaultMember)
-                                    or eValue is not None
-                                    and eValue == r.qname
-                                ):
-                                    if found is not None:
-                                        L.debug(
-                                            f"Multiple facts found (handle this better) {section.presentation.roleUri=} {tableStyle=}\n{found=}\n{fact=}"
-                                        )
-                                    found = fact
-                            row.append(found)
-                        if len(row) != len(initialColumnHeadings):
-                            raise InlineReportException(
-                                f"Failed to fill row correctly {r}, with {initialColumnHeadings}"
-                            )
-                        row_empty = all(c is None for c in row)
-                        if not row_empty:
-                            data.append(row)
-                            rowHeadings.append(r)
-                    # Put the Dimension name as the heading above the row headings which are the domain members.
-                    columnHeadings.insert(0, explicitDim)
-                    columnHeadings.extend(reportable)
-
-            if not data:
-                continue
-
-            tableUnit = self.getTableUnit(data)
-            columnUnits = self.getColumnUnits(data)
-            tablePeriod = self.getTablePeriod(data)
-            columnPeriods = self.getColumnPeriods(data)
-
-            col_empty = [
-                all(row[cnum] is None for row in data)
-                for cnum in range(len(columnHeadings) - 1)
-            ]
-            col_numeric = [
-                all(f.concept.isNumeric for row in data if (f := row[cnum]) is not None)
-                for cnum in range(len(columnHeadings) - 1)
-            ]
-            all_numeric = all(col_numeric)
-
-            if True in col_empty:
-                new_data = [
-                    [row[cnum] for cnum, empty in enumerate(col_empty) if not empty]
-                    for row in data
-                ]
-                new_columnHeadings = [
-                    ch
-                    for cnum, ch in enumerate(columnHeadings[1:])
-                    if not col_empty[cnum]
-                ]
-                assert len(new_columnHeadings) == len(new_data[0]), (
-                    f"Expected number of column headings to match number of columns in data. {len(new_columnHeadings)=} {len(new_data[0])=}"
-                )
-                columnHeadings = [columnHeadings[0]] + new_columnHeadings
-                data = new_data
-
-            newColumnHeadings: list[list[TableHeadingCell]] = []
-            max_cols = max(1, len(columnHeadings) - 1)
-            headerRows: dict[int, list[TableHeadingCell]] = defaultdict(list)
-            rowCounter = count()
-            if tablePeriod:
-                headerRows[next(rowCounter)].append(
-                    TableHeadingCell(tablePeriod, colspan=max_cols, rowspan=1)
-                )
-            if tableUnit:
-                headerRows[next(rowCounter)].append(
-                    TableHeadingCell(
-                        tableUnit, colspan=max_cols, rowspan=1, numeric=True
-                    )
-                )
-            rowNum = next(rowCounter)
-
-            colZeroLabel: _TableHeadingValue = ""
-            if columnHeadings:
-                colZeroLabel = columnHeadings.pop(0)
-
-            for cnum, col in enumerate(columnHeadings):
-                headerRows[rowNum].append(
-                    TableHeadingCell(
-                        col,
-                        colspan=1,
-                        rowspan=1,
-                        numeric=all_numeric or col_numeric[cnum],
-                    )
-                )
-            if not tablePeriod and columnPeriods:
-                rowNum = next(rowCounter)
-                for cnum, cp in enumerate(columnPeriods):
-                    headerRows[rowNum].append(
-                        TableHeadingCell(
-                            cp,
-                            colspan=1,
-                            rowspan=1,
-                            numeric=all_numeric or col_numeric[cnum],
-                        )
-                    )
-            if not tableUnit and columnUnits:
-                rowNum = next(rowCounter)
-                for cnum, cu in enumerate(columnUnits):
-                    headerRows[rowNum].append(
-                        TableHeadingCell(
-                            cu,
-                            colspan=1,
-                            rowspan=1,
-                            numeric=all_numeric or col_numeric[cnum],
-                        )
-                    )
-            if headerRows:
-                headerRows[0].insert(
-                    0,
-                    TableHeadingCell(colZeroLabel, colspan=1, rowspan=len(headerRows)),
-                )
-
-            for hrow in headerRows.values():
-                empty_row = all([c.value is None for c in hrow])
-                if not empty_row:
-                    newColumnHeadings.append(hrow)
-
-            newRowHeadings: list[TableHeadingCell] = [
-                TableHeadingCell(rh) for rh in rowHeadings
-            ]
-
-            table_sections[section.presentation.roleUri] = TabularReportSection(
-                relationshipToFact=section.relationshipToFact,
-                presentation=section.presentation,
-                rowHeadings=newRowHeadings,
-                dataColumns=columnHeadings,
-                tableStyle=tableStyle,
-                data=data,
-                columnUnits=columnUnits,
-                columnPeriods=columnPeriods,
-                numeric=all_numeric,
-                unitSymbol=tableUnit,
-                period=tablePeriod,
-                newColumnHeadings=newColumnHeadings,
-            )
+            if (ts := self._create_table_section(section)) is not None:
+                table_sections[section.presentation.roleUri] = ts
 
         merged_sections: list[ReportSection] = []
         for section in self.reportSections:
@@ -520,78 +439,223 @@ class ReportLayoutOrganiser:
                 merged_sections.append(section)
         self.reportSections = merged_sections
 
-    def getTableUnit(self, data: list[list[Fact | None]]) -> Optional[str]:
-        units: set[str] = set()
-        for row in data:
-            for factOrNone in row:
-                if factOrNone is None:
-                    continue
-                fact: Fact = factOrNone
-                if fact.concept.isNumeric:
-                    units.add(fact.unitSymbol)
-        if 1 == len(units):
-            unit = next(iter(units))
-            if unit:
-                return unit
-        return None
-
-    def getTablePeriod(self, data: list[list[Fact | None]]) -> Optional[_Period]:
-        periods: set[_Period] = set()
-        for row in data:
-            for factOrNone in row:
-                if factOrNone is None:
-                    continue
-                periods.add(factOrNone.period)
-        if 1 == len(periods):
-            return next(iter(periods))
-        else:
+    def _create_table_section(
+        self, section: ReportSection
+    ) -> TabularReportSection | None:
+        """Build a TabularReportSection for one presentation group, or return None if the section has no data or is not a table."""
+        if section.presentation.style in {
+            PresentationStyle.List,
+            PresentationStyle.Empty,
+        }:
             return None
 
-    def getColumnPeriods(self, data: list[list[Fact | None]]) -> list[_Period | None]:
-        colPeriodsMap: dict[int, set[_Period]] = defaultdict(set)
-        totalNumberOfColumns: int = 0
-        for row in data:
-            totalNumberOfColumns = max(totalNumberOfColumns, len(row))
-            for colnum, factOrNone in enumerate(row):
-                if factOrNone is None:
-                    continue
-                fact: Fact = factOrNone
-                colPeriodsMap[colnum].add(fact.period)
-        # assert len(colUnitsMap) == totalNumberOfColumns, f"{len(colUnitsMap)} is not {totalNumberOfColumns}"
-        columnPeriods: list[_Period | None] = []
-        for c in range(totalNumberOfColumns):
-            periods = colPeriodsMap[c]
-            if 1 == len(periods):
-                columnPeriods.append(next(iter(periods)))
-                continue
-            columnPeriods.append(None)
-        assert len(columnPeriods) == totalNumberOfColumns
-        if all(x is None for x in columnPeriods):
-            return []
-        return columnPeriods
+        if section.presentation.style is PresentationStyle.Hybrid:
+            raise InlineReportException(
+                f"Presentation group style ({section.presentation.style.name}) of [{section.presentation.roleUri}] is not currently supported."
+            )
 
-    def getColumnUnits(self, data: list[list[Fact | None]]) -> list[str | None]:
-        colUnitsMap: dict[int, set[str]] = defaultdict(set)
-        totalNumberOfColumns: int = 0
-        for row in data:
-            totalNumberOfColumns = max(totalNumberOfColumns, len(row))
-            for colnum, factOrNone in enumerate(row):
-                if factOrNone is None:
-                    continue
-                fact: Fact = factOrNone
-                if fact.concept.isNumeric:
-                    colUnitsMap[colnum].add(fact.unitSymbol)
-        # assert len(colUnitsMap) == totalNumberOfColumns, f"{len(colUnitsMap)} is not {totalNumberOfColumns}"
-        columnUnits: list[str | None] = []
-        for c in range(totalNumberOfColumns):
-            units = colUnitsMap[c]
-            if 1 == len(units):
-                unit = next(iter(units))
-                if unit:
-                    columnUnits.append(unit)
-                    continue
-            columnUnits.append(None)
-        assert len(columnUnits) == totalNumberOfColumns
-        if all(x is None for x in columnUnits):
-            return []
-        return columnUnits
+        hypercubes = [
+            r for r in section.presentation.relationships if r.concept.isHypercube
+        ]
+        if len(hypercubes) != 1:
+            raise InlineReportException(
+                f"Presentation structure of [{section.presentation.roleUri}] is not currently supported."
+            )
+
+        typedDims = [
+            r.concept
+            for r in section.presentation.relationships
+            if r.concept.isTypedDimension
+        ]
+        explicitDims = [
+            r.concept
+            for r in section.presentation.relationships
+            if r.concept.isExplicitDimension
+        ]
+        reportable = [
+            r.concept
+            for r in section.presentation.relationships
+            if r.concept.isReportable
+        ]
+        roleUri = section.presentation.roleUri
+
+        grid: _FactGrid | None = None
+        if len(typedDims) == 1 and not explicitDims:
+            grid = self._assemble_typed_dim(roleUri, typedDims, reportable)
+        elif len(explicitDims) == 1 and not typedDims:
+            explicitDim = explicitDims[0]
+            domain_set = self.taxonomy.getDomainMembersForExplicitDimension(explicitDim)
+            domain: list[Concept] = [
+                rel.concept
+                for rel in section.presentation.relationships
+                if rel.concept in domain_set
+            ]
+            defaultMember = self.taxonomy.getDimensionDefault(explicitDim)
+            if len(domain) <= len(reportable):
+                grid = self._assemble_explicit_dim_as_columns(
+                    roleUri, reportable, explicitDim, domain, defaultMember
+                )
+            else:
+                grid = self._assemble_explicit_dim_as_rows(
+                    roleUri, reportable, explicitDim, domain, defaultMember
+                )
+
+        if grid is None or not grid.data:
+            return None
+
+        col_empty, col_numeric, all_numeric = _column_flags(grid.data)
+        if True in col_empty:
+            grid, col_numeric = _drop_empty_columns(grid, col_empty, col_numeric)
+
+        table_unit = _table_unit(grid.data)
+        table_period = _table_period(grid.data)
+        col_units = _column_units(grid.data)
+        col_periods = _column_periods(grid.data)
+
+        header_rows = _build_header_rows(
+            grid.row_heading_label,
+            grid.col_labels,
+            col_numeric,
+            all_numeric,
+            table_unit,
+            table_period,
+            col_units,
+            col_periods,
+        )
+        table_rows = _build_table_rows(grid, table_unit, col_units)
+
+        return TabularReportSection(
+            relationshipToFact=section.relationshipToFact,
+            presentation=section.presentation,
+            table=Table(
+                style=grid.style,
+                numeric=all_numeric,
+                header_rows=header_rows,
+                rows=table_rows,
+            ),
+        )
+
+    def _assemble_explicit_dim_as_columns(
+        self,
+        roleUri: str,
+        reportable: list[Concept],
+        explicitDim: Concept,
+        domain: list[Concept],
+        defaultMember: Concept | None,
+    ) -> _FactGrid:
+        data: list[list[Fact | None]] = []
+        row_labels: list[Concept | str] = []
+        for r in reportable:
+            row: list[Fact | None] = []
+            for c in domain:
+                found: Fact | None = None
+                for fact in self.report.getFacts(r):
+                    eValue = fact.aspects.get(explicitDim.qname)
+                    if (eValue is None and c == defaultMember) or (
+                        eValue is not None and eValue == c.qname
+                    ):
+                        if found is not None:
+                            L.debug(
+                                f"Multiple facts found (handle this better) {roleUri=} style=SingleExplicitDimensionColumn\n{found=}\n{fact=}"
+                            )
+                        found = fact
+                row.append(found)
+            if len(row) != len(domain):
+                raise InlineReportException(
+                    f"Failed to fill row correctly {r}, with {domain}"
+                )
+            if not all(c is None for c in row):
+                data.append(row)
+                row_labels.append(r)
+        return _FactGrid(
+            style=TableStyle.SingleExplicitDimensionColumn,
+            data=data,
+            row_labels=row_labels,
+            row_heading_label=None,
+            col_labels=domain,
+        )
+
+    def _assemble_explicit_dim_as_rows(
+        self,
+        roleUri: str,
+        reportable: list[Concept],
+        explicitDim: Concept,
+        domain: list[Concept],
+        defaultMember: Concept | None,
+    ) -> _FactGrid:
+        data: list[list[Fact | None]] = []
+        row_labels: list[Concept | str] = []
+        for r in domain:
+            row: list[Fact | None] = []
+            for c in reportable:
+                found: Fact | None = None
+                for fact in self.report.getFacts(c):
+                    eValue = fact.aspects.get(explicitDim.qname)
+                    if (eValue is None and r == defaultMember) or (
+                        eValue is not None and eValue == r.qname
+                    ):
+                        if found is not None:
+                            L.debug(
+                                f"Multiple facts found (handle this better) {roleUri=} style=SingleExplicitDimensionRow\n{found=}\n{fact=}"
+                            )
+                        found = fact
+                row.append(found)
+            if len(row) != len(reportable):
+                raise InlineReportException(
+                    f"Failed to fill row correctly {r}, with {reportable}"
+                )
+            if not all(c is None for c in row):
+                data.append(row)
+                row_labels.append(r)
+        return _FactGrid(
+            style=TableStyle.SingleExplicitDimensionRow,
+            data=data,
+            row_labels=row_labels,
+            row_heading_label=explicitDim,
+            col_labels=reportable,
+        )
+
+    def _assemble_typed_dim(
+        self,
+        roleUri: str,
+        typedDims: list[Concept],
+        reportable: list[Concept],
+    ) -> _FactGrid:
+        typed_qname = f"typed {typedDims[0].qname}"
+        td_values = {
+            str(fact.aspects[typed_qname])
+            for r in reportable
+            for fact in self.report.getFacts(r)
+        }
+        pretty_td_values = [(tidyTdValue(v), v) for v in td_values]
+        pretty_td_values.sort(key=lambda x: numeric_string_key(x[0]))
+
+        data: list[list[Fact | None]] = []
+        row_labels: list[Concept | str] = []
+        for heading, r_key in pretty_td_values:
+            row: list[Fact | None] = []
+            for c in reportable:
+                found: Fact | None = None
+                for fact in self.report.getFacts(c):
+                    td_value = fact.aspects.get(typed_qname)
+                    if td_value is not None and td_value == r_key:
+                        if found is not None:
+                            L.debug(
+                                f"Multiple facts found (handle this better) {roleUri=} style=SingleTypedDimensionColumn\n{found=}\n{fact=}"
+                            )
+                        found = fact
+                row.append(found)
+            if len(row) != len(reportable):
+                raise InlineReportException(
+                    f"Failed to fill row correctly {heading}, with {reportable}"
+                )
+            if not all(c is None for c in row):
+                data.append(row)
+                row_labels.append(heading)
+        return _FactGrid(
+            style=TableStyle.SingleTypedDimensionColumn,
+            data=data,
+            row_labels=row_labels,
+            row_heading_label=typedDims[0],
+            col_labels=reportable,
+        )

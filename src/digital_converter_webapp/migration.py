@@ -1,6 +1,7 @@
 import logging
 from enum import StrEnum
 from pathlib import PurePath
+from typing import Any
 
 from flask import (
     Response,
@@ -26,7 +27,7 @@ except ImportError:
     )
     MIGRATION_WORKING = False
 
-    def migrate_workbook_as_bytes(*args, **kwargs) -> tuple[bytes, float, list[str]]:
+    def migrate_workbook_as_bytes(old_wb: Any) -> tuple[bytes, float, list[str]]:
         raise NotImplementedError("Migration tool not available")
 
 

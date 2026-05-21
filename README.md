@@ -55,7 +55,7 @@ python ./scripts/parse-and-ixbrl.py example.xlsx  output.html
 ### Run webserver locally
 
 ```bash
-python -m flask --app efrag_digital_converter run
+python -m flask --app digital_converter_webapp run
 ```
 
 ## Developers

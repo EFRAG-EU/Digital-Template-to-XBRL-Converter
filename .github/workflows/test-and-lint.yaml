@@ -25,7 +25,7 @@ jobs:
           args: format --check .
 
   test:
-    name: Unit and Integration Tests
+    name: Tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -56,5 +56,10 @@ jobs:
 
       - name: Run Integration Tests
         run: pytest tests/integrationTests --tb=short --color=yes
+        env:
+          PYTEST_GITHUB_ACTIONS_ANNOTATE: "true"
+
+      - name: Run WebApp Tests
+        run: pytest tests/webappTests --tb=short --color=yes
         env:
           PYTEST_GITHUB_ACTIONS_ANNOTATE: "true"

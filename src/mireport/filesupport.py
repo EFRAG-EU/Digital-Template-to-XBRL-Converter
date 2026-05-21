@@ -127,6 +127,20 @@ class FilelikeAndFileName(NamedTuple):
     fileContent: bytes
     filename: str
 
+    @classmethod
+    def from_tuple(cls, source: FilelikeAndFileName | list) -> FilelikeAndFileName:
+        """Reconstruct from a sequence — handles msgpack-deserialised NamedTuples as lists."""
+        if isinstance(source, cls):
+            return source
+        if len(source) != 2:
+            raise ValueError(f"Expected a 2-element sequence, got {len(source)}")
+        content, filename = source[0], source[1]
+        if not isinstance(content, bytes):
+            raise TypeError(f"fileContent must be bytes, got {type(content).__name__}")
+        if not isinstance(filename, str):
+            raise TypeError(f"filename must be str, got {type(filename).__name__}")
+        return cls(fileContent=content, filename=filename)
+
     def __str__(self) -> str:
         return f'"{self.filename}" [{format_bytes(len(self.fileContent))}]'
 
@@ -186,7 +200,7 @@ class ImageFileLikeAndFileName(FilelikeAndFileName):
     @classmethod
     def prepare(
         cls,
-        source: Path | bytes,
+        source: Path | bytes | FilelikeAndFileName | list,
         filename: str | None = None,
     ) -> tuple[ImageFileLikeAndFileName, None] | tuple[None, str]:
         """
@@ -194,7 +208,9 @@ class ImageFileLikeAndFileName(FilelikeAndFileName):
 
         Returns (image, None) on success, or (None, error_message) on failure.
         """
-        if isinstance(source, Path):
+        if isinstance(source, (list, tuple)):
+            content, filename = source[0], source[1]
+        elif isinstance(source, Path):
             if not source.is_file():
                 return None, f"Image file not found: {source}"
             content = source.read_bytes()

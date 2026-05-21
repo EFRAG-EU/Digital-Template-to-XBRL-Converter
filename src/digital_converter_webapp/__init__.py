@@ -1,4 +1,5 @@
 import logging
+from collections.abc import Mapping
 from datetime import datetime, timedelta, timezone
 from random import randint
 from secrets import token_hex
@@ -40,6 +41,7 @@ from mireport.localise import (
     get_locale_from_str,
     get_locale_list,
 )
+from mireport.report.theme import ColourPalette, DisplayMode, ReportTheme
 from mireport.taxonomy import getTaxonomy, listTaxonomies
 from mireport.xlsx_template_reader.processor import (
     VSME_DEFAULTS,
@@ -57,11 +59,12 @@ ENABLE_CAPTCHA = False
 ENABLE_MIGRATION = False
 MAX_FILE_SIZE = 16 * 2**20  # 16 MiB
 DEPLOYMENT_DATETIME = datetime.now(timezone.utc)
+LOCALE_JSON: list[dict[str, str]]
 
 L = logging.getLogger(__name__)
 
 
-def create_app() -> Flask:
+def create_app(test_config: Mapping[str, Any] | None = None) -> Flask:
     # Regardless of how we are invoked, make sure to load configuration from any
     # ".env" file
     load_dotenv()
@@ -236,6 +239,8 @@ def index() -> Response:
             "excel-to-xbrl-converter.html.jinja",
             existing_conversions=hasConversions(),
             ENABLE_CAPTCHA=ENABLE_CAPTCHA,
+            colour_palettes=list(ColourPalette),
+            default_palette=ReportTheme.DEFAULT_COLOUR,
         )
     )
 
@@ -323,6 +328,10 @@ def debug_session() -> Response:
     return jsonify(interesting)
 
 
+def _first_str(form: Mapping[str, str], *fields: str) -> str:
+    return next((v for f in fields if (v := form.get(f, "").strip())), "")
+
+
 @convert_bp.route("/upload", methods=["POST"])
 def upload() -> Response:
     if "file" not in request.files:
@@ -371,23 +380,30 @@ def upload() -> Response:
         fileContent=blob.stream.read(), filename=blob.filename
     )
 
-    manualLocale = (
-        request.form.get("localeOption", type=str, default="detect").strip() == "manual"
-    )
-    if manualLocale:
-        conversion["locale_str"] = request.form.get(
-            "locale", type=str, default=""
-        ).strip()
+    if _first_str(request.form, "localeOption") == "manual":
+        conversion["locale_str"] = _first_str(request.form, "locale")
 
-    if "logo" in request.files:
-        logo_file = request.files.getlist("logo")
-        if 1 != len(logo_file):
-            return make_response({"error": "Too many logo files"}, 400)
-        logo_file = logo_file[0]
-        if logo_file and logo_file.filename != "":
-            conversion["logo"] = FilelikeAndFileName(
-                fileContent=logo_file.stream.read(), filename=logo_file.filename
+    conversion["style_palette"] = _first_str(
+        request.form, "style_colour", "style_palette"
+    )
+    conversion["style_mode"] = _first_str(request.form, "style_mode")
+
+    for field_name, conv_key in [
+        ("logo", "image_logo"),
+        ("cover", "image_cover"),
+        ("background", "image_background"),
+    ]:
+        if field_name not in request.files:
+            continue
+        img_files = request.files.getlist(field_name)
+        if len(img_files) > 1:
+            return make_response({"error": f"Too many {field_name} files"}, 400)
+        img_file = img_files[0]
+        if img_file.filename:
+            conversion[conv_key] = FilelikeAndFileName(
+                fileContent=img_file.stream.read(), filename=img_file.filename
             )
+
     return make_response(
         redirect(url_for("basic.convert", id=result.conversionId), code=303)
     )
@@ -451,7 +467,7 @@ def getUploadFilename(id: str) -> str:
     if not (conversion and "excel" in conversion):
         return ""
 
-    excel = FilelikeAndFileName(*conversion["excel"])
+    excel = FilelikeAndFileName.from_tuple(conversion["excel"])
     return excel.filename
 
 
@@ -459,7 +475,7 @@ def doConversion(conversion: dict, id: str) -> ConversionResults:
     resultBuilder = ConversionResultsBuilder(conversionId=id)
     try:
         with resultBuilder.processingContext(f"Conversion {id}") as pc:
-            upload = FilelikeAndFileName(*conversion["excel"])
+            upload = FilelikeAndFileName.from_tuple(conversion["excel"])
 
             pc.mark(
                 "Extracting data from Excel",
@@ -486,15 +502,20 @@ def doConversion(conversion: dict, id: str) -> ConversionResults:
                 )
                 return resultBuilder.build()
 
+            raw_colour = conversion.get(
+                "style_palette", ReportTheme.DEFAULT_COLOUR.label
+            )
+            colour = ColourPalette.parse(raw_colour, default=ReportTheme.DEFAULT_COLOUR)
+            mode = DisplayMode.parse(conversion.get("style_mode", ""))
+            report.theme.setColour(colour).setDisplayMode(mode)
+
             for key, setter in [
-                ("logo", report.theme.setLogo),
-                ("cover_image", report.theme.setCoverImage),
-                ("watermark", report.theme.setWatermark),
+                ("image_logo", report.theme.setLogoImage),
+                ("image_cover", report.theme.setCoverImage),
+                ("image_background", report.theme.setBackgroundImage),
             ]:
                 if key in conversion:
-                    image, err = ImageFileLikeAndFileName.prepare(
-                        conversion[key].fileContent, conversion[key].filename
-                    )
+                    image, err = ImageFileLikeAndFileName.prepare(conversion[key])
                     if err:
                         resultBuilder.addMessage(
                             err,
@@ -553,7 +574,7 @@ def downloadFile(id: str, ftype: str) -> Response:
         )
 
     if ftype not in session_data:
-        reportPackage = FilelikeAndFileName(*session_data["zip"])
+        reportPackage = FilelikeAndFileName.from_tuple(session_data["zip"])
         arelle = getArelle()
         if ftype == "json":
             session_data[ftype] = arelle.generateXBRLJson(reportPackage).xBRL_JSON
@@ -565,7 +586,7 @@ def downloadFile(id: str, ftype: str) -> Response:
     if request.method == "HEAD":
         return Response(status=200, headers={"X-File-Ready": "true"})
 
-    stuff = FilelikeAndFileName(*session[id][ftype])
+    stuff = FilelikeAndFileName.from_tuple(session[id][ftype])
     return send_file(
         stuff.fileLike(),
         as_attachment=True,
@@ -622,10 +643,12 @@ def delete_all() -> Response:
 @convert_bp.route("/viewer/<string:id>/", methods=["GET", "HEAD"])
 def viewer(id: str) -> Response:
     conversion = session[id]
-    if (stuff := conversion.get("viewer")) is None:
+    if (existing := conversion.get("viewer")) is not None:
+        stuff = FilelikeAndFileName.from_tuple(existing)
+    else:
         stuff = (
             getArelle()
-            .generateInlineViewer(FilelikeAndFileName(*conversion["zip"]))
+            .generateInlineViewer(FilelikeAndFileName.from_tuple(conversion["zip"]))
             .viewer
         )
         conversion["viewer"] = stuff

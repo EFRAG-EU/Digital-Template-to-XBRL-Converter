@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 import ixbrltemplates
 from babel import Locale
-from jinja2 import Environment, PackageLoader
+from jinja2 import Environment, PackageLoader, StrictUndefined, Undefined
 from markupsafe import Markup
 from rcssmin import cssmin
 
@@ -328,6 +328,7 @@ class InlineReport:
             keep_trailing_newline=True,
             trim_blocks=True,
             lstrip_blocks=True,
+            undefined=StrictUndefined if L.isEnabledFor(logging.DEBUG) else Undefined,
         )
         env.globals.update(
             {
@@ -347,11 +348,15 @@ class InlineReport:
         )
         template = env.get_template("inline-report-presentation.html.jinja")
 
-        watermark_data_url = (
-            self.theme.watermark.as_data_url() if self.theme.watermark else ""
+        background_image_data_url = (
+            self.theme.background_image.as_data_url(max_width=200)
+            if self.theme.background_image
+            else ""
         )
-        logo_data_url = (
-            self.theme.logo.as_data_url(max_width=200) if self.theme.logo else ""
+        logo_image_data_url = (
+            self.theme.logo_image.as_data_url(max_width=200)
+            if self.theme.logo_image
+            else ""
         )
 
         html_content = template.render(
@@ -367,7 +372,7 @@ class InlineReport:
                 "factCount": self.factCount,
                 "title": self._reportTitle,
                 "subtitle": self._reportSubtitle,
-                "optionalLogo": self.theme.logo,
+                "optionalLogoImage": self.theme.logo_image,
                 "optionalCoverImage": self.theme.cover_image,
                 "language": self.language,
             },
@@ -381,8 +386,8 @@ class InlineReport:
             uniqueFactCount=len(frozenset(self._facts)),
             theme=self.theme.displayMode,
             colour=self.theme.colour,
-            watermarkDataUrl=watermark_data_url,
-            logoDataUrl=logo_data_url,
+            backgroundImageDataUrl=background_image_data_url,
+            logoImageDataUrl=logo_image_data_url,
             introduction=self._introduction,
             backCoverMatter=self._backCoverMatter,
             footnotes_by_group=self._footnotesByGroup,
