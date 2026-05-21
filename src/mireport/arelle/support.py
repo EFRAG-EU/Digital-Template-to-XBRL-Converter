@@ -123,7 +123,13 @@ class ArelleProcessingResult:
     def viewer(self) -> FilelikeAndFileName:
         if self._viewer is not None:
             return self._viewer
-        raise ArelleRelatedException("No viewer stored/retrieved.")
+        raise ArelleRelatedException("No viewer available.")
+
+    @property
+    def xbrl_json(self) -> FilelikeAndFileName:
+        if self._xbrlJson is not None:
+            return self._xbrlJson
+        raise ArelleRelatedException("No JSON available")
 
     @property
     def has_viewer(self) -> bool:
