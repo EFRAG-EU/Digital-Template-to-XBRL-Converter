@@ -5,6 +5,7 @@ from random import randint
 from secrets import token_hex
 from typing import Any
 
+import mammoth
 from dotenv import load_dotenv
 from flask import (
     Flask,
@@ -21,6 +22,7 @@ from flask import (
     url_for,
 )
 from flask_session import Session  # type: ignore
+from markupsafe import Markup
 
 import mireport
 from mireport import loadBuiltInTaxonomyJSON
@@ -432,6 +434,13 @@ def convert(id: str) -> Response:
                 return migrationResponse
 
             results = doConversion(conversion, id)
+            if (
+                "partial_fact_concepts" in conversion
+                and "external_values" not in conversion
+            ):
+                return make_response(
+                    redirect(url_for("basic.partial_facts", id=id), code=303)
+                )
             conversion["results"] = results.toDict()
             conversion["successful"] = results.conversionSuccessful
 
@@ -494,6 +503,52 @@ def doConversion(conversion: dict, id: str) -> ConversionResults:
             )
 
             report = xl_processor.createReport()
+
+            if report.hasPartialFacts and "external_values" not in conversion:
+                label_lang = report.taxonomy.getBestSupportedLanguage(report.language)
+                concept_infos = [
+                    {
+                        "qname": str(c.qname),
+                        "label": c.getStandardLabel(
+                            lang=label_lang,
+                            fallbackToAnyLang=True,
+                            fallbackToQName=True,
+                        )
+                        or str(c.qname),
+                    }
+                    for c in report.partialFactsByConcept
+                ]
+                conversion["partial_fact_concepts"] = concept_infos
+                labels = ", ".join(info["label"] for info in concept_infos)
+                resultBuilder.addMessage(
+                    f"Conversion paused: {len(concept_infos)} disclosure field(s) require supplementary Word documents ({labels}).",
+                    Severity.INFO,
+                    MessageType.Conversion,
+                )
+                return resultBuilder.build()
+
+            if report.hasPartialFacts and "external_values" in conversion:
+                for concept in report.partialFactsByConcept:
+                    qname_str = str(concept.qname)
+                    if qname_str in conversion["external_values"]:
+                        docx_data = FilelikeAndFileName.from_tuple(
+                            conversion["external_values"][qname_str]
+                        )
+                        mammoth_result = mammoth.convert_to_html(docx_data.fileLike())
+                        report.completePartialFact(
+                            concept, Markup(mammoth_result.value)
+                        )
+                if report.hasPartialFacts:
+                    missing = ", ".join(
+                        str(c.qname) for c in report.partialFactsByConcept
+                    )
+                    resultBuilder.addMessage(
+                        f"Conversion failed: no Word document was provided for the following disclosure field(s): {missing}.",
+                        Severity.ERROR,
+                        MessageType.Conversion,
+                    )
+                    return resultBuilder.build()
+
             if not report.hasFacts:
                 resultBuilder.addMessage(
                     "No facts found in InlineReport (likely due to earlier errors). Stopping here.",
@@ -556,6 +611,51 @@ def doConversion(conversion: dict, id: str) -> ConversionResults:
         L.exception("Exception encountered", exc_info=e)
 
     return resultBuilder.build()
+
+
+@convert_bp.route("/conversions/<string:id>/partial-facts", methods=["GET"])
+def partial_facts(id: str) -> Response:
+    if id not in session:
+        return make_response(redirect(url_for("basic.index")))
+    conversion = session[id]
+    concepts = conversion.get("partial_fact_concepts", [])
+    if not concepts:
+        return make_response(redirect(url_for("basic.convert", id=id), code=303))
+    return Response(
+        render_template(
+            "partial-facts.html.jinja",
+            conversion_id=id,
+            concepts=concepts,
+            upload_filename=getUploadFilename(id),
+        )
+    )
+
+
+@convert_bp.route("/conversions/<string:id>/partial-facts", methods=["POST"])
+def partial_facts_submit(id: str) -> Response:
+    if id not in session:
+        return make_response(redirect(url_for("basic.index")))
+    conversion = session[id]
+    concepts = conversion.get("partial_fact_concepts", [])
+    external_values: dict[str, Any] = {}
+    for concept_info in concepts:
+        qname = concept_info["qname"]
+        field_name = f"docx_{qname}"
+        files = request.files.getlist(field_name)
+        if not files or not files[0].filename:
+            flash(
+                f"Please upload a Word document for: {concept_info['label']}",
+                category="error",
+            )
+            return make_response(
+                redirect(url_for("basic.partial_facts", id=id), code=303)
+            )
+        docx_file = files[0]
+        external_values[qname] = FilelikeAndFileName(
+            fileContent=docx_file.stream.read(), filename=docx_file.filename
+        )
+    conversion["external_values"] = external_values
+    return make_response(redirect(url_for("basic.convert", id=id), code=303))
 
 
 @convert_bp.route("/downloadFile/<string:id>/<string:ftype>/", methods=["GET", "HEAD"])

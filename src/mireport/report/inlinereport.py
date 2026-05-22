@@ -4,9 +4,11 @@ import logging
 import time
 import zipfile
 from collections import defaultdict
+from collections.abc import Mapping
 from datetime import date, datetime, timezone
 from io import BytesIO
 from itertools import count
+from types import MappingProxyType
 from typing import TYPE_CHECKING
 from unicodedata import name as unicode_name
 
@@ -250,6 +252,14 @@ class InlineReport:
     @property
     def hasFacts(self) -> bool:
         return bool(self._facts)
+
+    @property
+    def hasPartialFacts(self) -> bool:
+        return bool(self._partial_facts)
+
+    @property
+    def partialFactsByConcept(self) -> Mapping[Concept, FactBuilder]:
+        return MappingProxyType(self._partial_facts)
 
     @property
     def factCount(self) -> int:

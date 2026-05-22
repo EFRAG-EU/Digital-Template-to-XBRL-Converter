@@ -1,0 +1,94 @@
+{% extends "base.html.jinja" %}
+
+{% block title %}Additional Documents Required — VSME XBRL Converter{% endblock %}
+
+{% block content %}
+
+<div class="text-sm text-gray-700 space-y-2">
+    <p class="font-medium">Your report contains disclosure fields whose content must be provided as Word documents
+        (.docx). Please upload a Word document for each field listed below.</p>
+    {% if upload_filename %}
+    <p class="text-xs text-gray-500">Continuing conversion for: <strong>{{ upload_filename }}</strong></p>
+    {% endif %}
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+{% for category, message in messages %}
+{% if category == 'error' %}
+<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+    <span class="block sm:inline">{{ message }}</span>
+</div>
+{% endif %}
+{% endfor %}
+{% endif %}
+{% endwith %}
+
+<div id="loadingSpinner" class="hidden fixed inset-0 items-center justify-center z-50">
+    <div class="flex items-center text-white text-lg font-bold border-4 border-white p-4 rounded-lg bg-black">
+        <svg class="mr-3 h-5 w-5 animate-spin text-white" viewBox="0 0 24 24" fill="none"
+            xmlns="http://www.w3.org/2000/svg">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 008 8V4a8 8 0 00-8 8z"></path>
+        </svg>
+        <span id="spinner-text">Converting... Please wait.</span>
+    </div>
+</div>
+
+<form id="partialFactsForm"
+    action="{{ url_for('basic.partial_facts_submit', id=conversion_id) }}"
+    method="post"
+    enctype="multipart/form-data"
+    class="space-y-6">
+
+    {% for concept in concepts %}
+    <div class="bg-gray-50 border border-gray-200 rounded-xl p-6 space-y-3">
+        <label class="block text-sm font-semibold text-gray-800"
+            for="field_{{ loop.index }}">{{ concept.label }}</label>
+        <input
+            id="field_{{ loop.index }}"
+            type="file"
+            name="docx_{{ concept.qname }}"
+            accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            required
+            class="block w-full text-sm text-gray-700 border border-gray-300 rounded-lg cursor-pointer bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 p-2"
+        >
+    </div>
+    {% endfor %}
+
+    <div class="flex justify-center">
+        <button type="submit"
+            class="submit-handler bg-blue-600 hover:bg-blue-700 focus-visible:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-600 text-white font-medium py-2 px-6 rounded-lg transition"
+            style="min-width: 200px;"
+            data-spinner-text="Converting...">
+            Continue Conversion
+        </button>
+    </div>
+</form>
+
+<div class="flex justify-center">
+    <a href="{{ url_for('basic.index') }}"
+        class="inline-block px-6 py-2 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition"
+        style="min-width: 200px; text-align: center;">
+        Start Over
+    </a>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const button = document.querySelector('.submit-handler');
+        if (button) {
+            button.addEventListener('click', () => {
+                const spinner = document.getElementById('loadingSpinner');
+                const spinnerText = document.getElementById('spinner-text');
+                if (spinner && spinnerText) {
+                    spinnerText.textContent = button.dataset.spinnerText || 'Converting...';
+                    spinner.classList.remove('hidden');
+                    spinner.classList.add('flex');
+                }
+            });
+        }
+    });
+</script>
+
+{% endblock %}
