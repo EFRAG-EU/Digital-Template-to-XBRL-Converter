@@ -1,0 +1,75 @@
+.logo {
+    position: absolute;
+    top: -60px;
+    right: 10px;
+    width: 300px;
+    height: auto;
+}
+
+/* Styles for images (GIFs) */
+img {
+  max-width: 60%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+
+/* Font for all text */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  margin-left: 300px;  /* Make room for sidebar */
+  text-align: justify;  /* Justify text */
+}
+
+/* Heading sizes */
+h1 {
+  font-size: 2.5rem;  /* Large for main title */
+}
+
+h2 {
+  font-size: 2rem;    /* Medium for sections */
+  margin-bottom: 0.5rem;  /* Reduce space below h2 */
+}
+
+h3 {
+  font-size: 1rem;  /* Smaller for subsections */
+  font-weight: normal;  /* Remove bold */
+  margin-top: 0.5rem;   /* Reduce space above h3 */
+}
+
+/* Sidebar styles */
+#sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 250px;
+  height: 100%;
+  background: #f0f0f0;  /* Light grey background */
+  padding: 10px;
+  overflow-y: auto;
+  border-right: 1px solid #ccc;
+}
+
+#sidebar h2 {
+  font-size: 1.2rem;
+  margin-top: 0;
+}
+
+#sidebar ul {
+  list-style: none;
+  padding: 0;
+}
+
+#sidebar li {
+  margin: 5px 0;
+}
+
+#sidebar a {
+  text-decoration: none;
+  color: #333;
+  font-weight: 600;  /* Slightly bold */
+}
+
+#sidebar a:hover {
+  color: #007acc;
+}
