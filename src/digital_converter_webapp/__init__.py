@@ -410,8 +410,10 @@ def upload() -> Response:
 
 
 @convert_bp.route("/conversions/<string:id>", methods=["GET"])
-def convert(id: str) -> Response:
+def convert(id: str, skip_migration: bool = False) -> Response:
     try:
+        skip_migration = request.args.get("skip_migration") == "True"
+
         if id not in session:
             return make_response(
                 render_template(
@@ -425,7 +427,8 @@ def convert(id: str) -> Response:
         conversion = session[id]
         if "results" not in conversion:
             if (
-                ENABLE_MIGRATION
+                not skip_migration
+                and ENABLE_MIGRATION
                 and (migrationResponse := checkMigration(conversion)) is not None
             ):
                 # Migration deemed to be required so no conversion done at this stage.

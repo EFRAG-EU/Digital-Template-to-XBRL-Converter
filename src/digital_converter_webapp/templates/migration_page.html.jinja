@@ -4,6 +4,14 @@
 
 {% block content %}
 
+<!-- Back to Home button -->
+<div class="text-left">
+    <a href="{{url_for('basic.index')}}"
+        class="inline-block px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition">
+        ← Back to Home
+    </a>
+</div>
+
 <!-- Info Section -->
 <div class="text-sm text-gray-700 space-y-2">
     <p class="font-medium">Your VSME Template is of an older version. Please use this tool to migrate your data to the
@@ -158,10 +166,10 @@
 </script>
 
 <div class="flex justify-center">
-    <a href="{{ url_for('basic.index') }}"
+    <a href="{{ url_for('basic.convert', id=conversion_id, skip_migration=True) }}"
         class="inline-block px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition"
-        style="min-width: 200px; text-align: center;">
-        Back to Converter
+        style="min-width: 200px; text-align: center;" data-spinner-text="Converting... Please wait.">
+        Convert with old version
     </a>
 </div>
 
