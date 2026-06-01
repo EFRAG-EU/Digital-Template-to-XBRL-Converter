@@ -1,6 +1,6 @@
 [project]
 name = "EFRAG-DigitalTemplateToXBRL-Converter"
-version = "1.2.0"
+version = "1.3.0"
 description = "Converts a filled-in Excel template into an Inline XBRL Report"
 authors = [
     {name = "Stuart Rowan", email = "stuart.rowan@efrag.org"},
