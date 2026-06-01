@@ -79,7 +79,7 @@
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 008 8V4a8 8 0 00-8 8z"></path>
         </svg>
-        Migrating... Please wait.
+        <span id="spinner-text">Migrating... Please wait.</span>
     </div>
 </div>
 
@@ -168,7 +168,7 @@
 <div class="flex justify-center">
     <a href="{{ url_for('basic.convert', id=conversion_id, skip_migration=True) }}"
         class="inline-block px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition"
-        style="min-width: 200px; text-align: center;" data-spinner-text="Converting... Please wait.">
+        style="min-width: 200px; text-align: center;" onclick="showSpinner('Converting... Please wait.')">
         Convert with old version
     </a>
 </div>

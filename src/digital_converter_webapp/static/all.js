@@ -6,10 +6,17 @@
     document.getElementById('termsModal').classList.add('hidden');
     document.getElementById('termsModal').classList.remove('flex');
   }
-  function showSpinner() {
-    document.getElementById('loadingSpinner').classList.remove('hidden');
-    document.getElementById('loadingSpinner').classList.add('flex');
-  }
+    function showSpinner(message) {
+        const spinner = document.getElementById('loadingSpinner');
+        const spinnerText = document.getElementById('spinner-text');
+
+        if (spinnerText && typeof message === 'string' && message.trim()) {
+            spinnerText.textContent = message;
+        }
+
+        spinner.classList.remove('hidden');
+        spinner.classList.add('flex');
+    }
 
 function showErrorModal(message) {
     document.getElementById("errorMessage").textContent = message;
