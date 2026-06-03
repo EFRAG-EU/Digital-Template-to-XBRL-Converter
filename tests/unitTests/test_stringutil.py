@@ -4,13 +4,12 @@ from mireport.stringutil import (
     format_bytes,
     format_time_ns,
     normalizeLabelText,
+    stripLabelPrefix,
     stripLabelSuffix,
     unicodeDashNormalization,
     unicodeSpaceNormalize,
     xml_clean,
 )
-
-# ── unicodeDashNormalization ──────────────────────────────────────────────
 
 
 class TestUnicodeDashNormalization:
@@ -41,9 +40,6 @@ class TestUnicodeDashNormalization:
 
     def test_no_dashes_no_whitespace(self) -> None:
         assert unicodeDashNormalization("Revenue") == "Revenue"
-
-
-# ── unicodeSpaceNormalize ─────────────────────────────────────────────────
 
 
 class TestUnicodeSpaceNormalize:
@@ -77,9 +73,6 @@ class TestUnicodeSpaceNormalize:
         assert unicodeSpaceNormalize(text) == "a b c d"
 
 
-# ── normalizeLabelText ────────────────────────────────────────────────────
-
-
 class TestNormalizeLabelText:
     @pytest.mark.parametrize(
         "input_text, expected",
@@ -111,9 +104,6 @@ class TestNormalizeLabelText:
 
     def test_only_whitespace(self) -> None:
         assert normalizeLabelText("   \t\n  ") == ""
-
-
-# ── stripLabelSuffix ─────────────────────────────────────────────────────
 
 
 class TestStripLabelSuffix:
@@ -159,7 +149,58 @@ class TestStripLabelSuffix:
         )
 
 
-# ── format_time_ns ───────────────────────────────────────────────────────
+class TestStripLabelPrefix:
+    @pytest.mark.parametrize(
+        "input_text, expected",
+        [
+            ("[total] Revenue", "Revenue"),
+            ("[abstract] Cost of sales", "Cost of sales"),
+            ("Revenue", "Revenue"),
+            ("[sub] [total] Revenue", "[total] Revenue"),
+            ("[only prefix]", "[only prefix]"),
+            ("", ""),
+            ("  [tag] Label", "Label"),
+        ],
+        ids=[
+            "simple-prefix",
+            "prefix-with-abstract",
+            "no-bracket-unchanged",
+            "strips-first-bracket-only",
+            "entire-text-is-bracket-unchanged",
+            "empty-string",
+            "leading-space-strips-first-bracket",
+        ],
+    )
+    def test_prefix_stripping(self, input_text: str, expected: str) -> None:
+        assert stripLabelPrefix(input_text) == expected
+
+    def test_bracket_at_end_unchanged(self) -> None:
+        assert stripLabelPrefix("Revenue [suffix]") == "Revenue [suffix]"
+
+    def test_nested_brackets(self) -> None:
+        assert stripLabelPrefix("[A] B [C]") == "B [C]"
+
+    def test_unclosed_bracket_unchanged(self) -> None:
+        assert stripLabelPrefix("[unclosed Revenue") == "[unclosed Revenue"
+
+    def test_bracket_not_at_start_unchanged(self) -> None:
+        assert (
+            stripLabelPrefix("Revenue [total] and more") == "Revenue [total] and more"
+        )
+
+
+class TestStripLabelRoundTrip:
+    def test_prefix_then_suffix(self) -> None:
+        assert (
+            stripLabelSuffix(stripLabelPrefix("[abstract] Revenue [total]"))
+            == "Revenue"
+        )
+
+    def test_suffix_then_prefix(self) -> None:
+        assert (
+            stripLabelPrefix(stripLabelSuffix("[abstract] Revenue [total]"))
+            == "Revenue"
+        )
 
 
 class TestFormatTimeNs:
@@ -206,9 +247,6 @@ class TestFormatTimeNs:
         assert format_time_ns(ns) == expected
 
 
-# ── format_bytes ──────────────────────────────────────────────────────────
-
-
 class TestFormatBytes:
     @pytest.mark.parametrize(
         "num_bytes, expected",
@@ -239,9 +277,6 @@ class TestFormatBytes:
     )
     def test_formatting(self, num_bytes: int, expected: str) -> None:
         assert format_bytes(num_bytes) == expected
-
-
-# ── xml_clean ─────────────────────────────────────────────────────────────
 
 
 class TestXmlClean:
