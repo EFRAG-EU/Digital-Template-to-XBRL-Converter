@@ -841,11 +841,19 @@ class Taxonomy:
             )
             if not possible:
                 normalized = normalizeLabelText(text)
-                possible = self._lookupConceptsByPretendLabel.get(normalized, frozenset())
+                possible = self._lookupConceptsByPretendLabel.get(
+                    normalized, frozenset()
+                )
                 if not possible:
-                    possible = self._lookupConceptsByPretendLabel.get(
-                        normalized.lower(), frozenset()
-                    )
+                    no_suffix = stripLabelSuffix(normalized)
+                    if no_suffix != normalized:
+                        possible = self._lookupConceptsByPretendLabel.get(
+                            no_suffix, frozenset()
+                        )
+                    if not possible:
+                        possible = self._lookupConceptsByPretendLabel.get(
+                            no_suffix.lower(), frozenset()
+                        )
             candidates.update(possible)
 
         if only_reportable:
@@ -863,10 +871,14 @@ class Taxonomy:
                 )
 
     def getConceptForName(self, name: str) -> Concept | None:
-        return self.resolveConcept(name, by_name=True, by_label=False, by_qname=False, only_reportable=False)
+        return self.resolveConcept(
+            name, by_name=True, by_label=False, by_qname=False, only_reportable=False
+        )
 
     def getConceptForLabel(self, label: str) -> Optional[Concept]:
-        return self.resolveConcept(label, by_label=True, by_name=False, by_qname=False, only_reportable=False)
+        return self.resolveConcept(
+            label, by_label=True, by_name=False, by_qname=False, only_reportable=False
+        )
 
     @cached_property
     def concepts(self) -> frozenset[Concept]:
