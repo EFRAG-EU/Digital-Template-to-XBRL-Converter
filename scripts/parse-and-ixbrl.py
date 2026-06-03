@@ -250,7 +250,7 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, ExcelProc
                     )
                     is not None
                 ]
-                report.addFootnote(
+                report.addFootnoteForConcepts(
                     Markup(fn.get("content", "")), concepts, group=fn.get("group")
                 )
 

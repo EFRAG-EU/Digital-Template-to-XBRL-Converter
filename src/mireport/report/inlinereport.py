@@ -205,24 +205,38 @@ class InlineReport:
     def _createFootnote(self, content: Markup) -> Footnote:
         return Footnote(id=next(self._footnoteCounter), content=content)
 
-    def addFootnote(
+    def addFootnoteToFacts(
+        self,
+        content: str | Markup,
+        facts: list[Fact],
+        *,
+        group: str | None = None,
+    ) -> Footnote:
+        """Create a footnote and attach it to the given facts directly."""
+        if isinstance(content, str):
+            content = Markup.escape(content)
+        footnote = self._createFootnote(content)
+        for fact in facts:
+            fact.footnotes.append(footnote)
+            footnote._facts.append(fact)
+        if group is not None:
+            self._footnotesByGroup[group] = footnote
+        return footnote
+
+    def addFootnoteForConcepts(
         self,
         content: str | Markup,
         concepts: list[Concept],
         *,
         group: str | None = None,
     ) -> Footnote:
-        """Create a footnote and attach it to facts for each concept."""
-        if isinstance(content, str):
-            content = Markup.escape(content)
-        footnote = self._createFootnote(content)
-        for concept in concepts:
-            for fact in self.getFacts(concept):
-                fact.footnotes.append(footnote)
-                footnote._facts.append(fact)
-        if group is not None:
-            self._footnotesByGroup[group] = footnote
-        return footnote
+        """Create a footnote and attach it to all existing facts for each
+        specified concept. If no facts exist for a concept, the footnote will
+        not be attached to any facts for that concept.
+
+        See also addFootnoteToFacts for attaching footnotes directly to specific facts."""
+        facts = [f for c in concepts for f in self.getFacts(c)]
+        return self.addFootnoteToFacts(content, facts, group=group)
 
     def replaceFactValue(self, concept_qname: str | QName, value: FactValue) -> None:
         """

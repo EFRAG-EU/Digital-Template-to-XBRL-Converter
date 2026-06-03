@@ -37,6 +37,7 @@ from mireport.exceptions import (
 )
 from mireport.localise import as_xmllang, get_locale_from_str
 from mireport.report import InlineReport
+from mireport.report.fact import Fact
 from mireport.report.factbuilder import FactBuilder
 from mireport.stringutil import str_to_markupsafe, stripLabelSuffix
 from mireport.taxonomy import (
@@ -1953,16 +1954,43 @@ class ExcelProcessor:
         self._report.addDurationPeriod(name, start, end)
         return name
 
+    def _validate_sub_ranges(
+        self,
+        table: CellRangeMetadata,
+        table_name: str,
+        sub_ranges: list[tuple[str, CellRangeMetadata]],
+        context: str,
+    ) -> bool:
+        """Return False (and emit a warning) if any sub-range is outside the table or if any two overlap."""
+        for name, crm in sub_ranges:
+            if not table.contains(crm):
+                self._results.addMessage(
+                    f"'{name}' is not fully contained within '{table_name}'. {context}",
+                    Severity.WARNING,
+                    MessageType.ExcelParsing,
+                )
+                return False
+        for (n1, c1), (n2, c2) in combinations(sub_ranges, 2):
+            if c1.overlaps(c2):
+                self._results.addMessage(
+                    f"'{n1}' and '{n2}' overlap. {context}",
+                    Severity.WARNING,
+                    MessageType.ExcelParsing,
+                )
+                return False
+        return True
+
     def _iter_footnote_rows(
         self,
         ws: Worksheet,
         tcr: CellRange,
         text_col_indices: range,
         ref_col_indices: range,
-    ) -> Iterator[tuple[str, list[tuple[str, CellType]]]]:
-        """Yields (footnote_text, [(label, cell), ...]) for each footnote in the table."""
+        dim_col_indices: range | None = None,
+    ) -> Iterator[tuple[str, list[tuple[str, str | None, CellType]]]]:
+        """Yields (footnote_text, [(label, dim_text_or_None, cell), ...]) for each footnote."""
         current_text: str | None = None
-        current_label_cells: list[tuple[str, CellType]] = []
+        current_label_cells: list[tuple[str, str | None, CellType]] = []
 
         for _, row_cells in getCellRangeIterator(ws, tcr, group_by_row=True):
             for ci in text_col_indices:
@@ -1980,24 +2008,34 @@ class ExcelProcessor:
                     current_text = None
                 break
 
+            dim_text: str | None = None
+            if dim_col_indices is not None:
+                for ci in dim_col_indices:
+                    cell = row_cells[ci]
+                    if not isinstance(cell, MergedCell) and cell.value is not None:
+                        raw = str(cell.value).strip()
+                        if raw:
+                            dim_text = raw
+                            break
+
             for ci in ref_col_indices:
                 cell = row_cells[ci]
                 if not isinstance(cell, MergedCell) and cell.value is not None:
                     label = str(cell.value).strip()
                     if label:
-                        current_label_cells.append((label, cell))
+                        current_label_cells.append((label, dim_text, cell))
 
         if current_text is not None:
             yield current_text, current_label_cells
 
-    def _resolve_footnote_concepts(
+    def _resolve_footnote_refs(
         self,
-        label_cells: list[tuple[str, CellType]],
+        label_cells: list[tuple[str, str | None, CellType]],
         warn: Callable[[str, CellType | None], object],
-    ) -> list[Concept]:
-        """Resolve concept labels to Concept objects, calling warn(msg, cell) for each failure."""
-        resolved: list[Concept] = []
-        for label, cell in label_cells:
+    ) -> list[tuple[Concept, Concept | None]]:
+        """Resolve (label, dim_text, cell) rows to (concept, optional member concept) pairs."""
+        resolved: list[tuple[Concept, Concept | None]] = []
+        for label, dim_text, cell in label_cells:
             try:
                 concept = self.taxonomy.resolveConcept(
                     label, by_label=True, by_name=True, by_qname=True
@@ -2010,18 +2048,41 @@ class ExcelProcessor:
                     f"Footnote reference '{label}' could not be matched to a reportable taxonomy concept.",
                     cell,
                 )
-            else:
-                resolved.append(concept)
+                continue
+
+            member: Concept | None = None
+            if dim_text:
+                try:
+                    member = self.taxonomy.resolveConcept(
+                        dim_text,
+                        by_label=True,
+                        by_name=True,
+                        by_qname=True,
+                        only_reportable=False,
+                    )
+                except AmbiguousComponentException as exc:
+                    warn(f"Footnote dimension '{dim_text}' is ambiguous: {exc}", cell)
+                else:
+                    if member is None:
+                        warn(
+                            f"Footnote dimension '{dim_text}' could not be resolved; "
+                            f"attaching to all facts for '{label}'.",
+                            cell,
+                        )
+
+            resolved.append((concept, member))
         return resolved
 
     def _processFootnotes(self) -> None:
         TABLE_NAME = "footnote_table"
         TEXT_NAME = "footnote_text"
-        REF_NAME = "footnote_reference"
+        REF_NAME = "footnote_ref_concept"
+        REF_DIM_NAME = "footnote_ref_dimension"
 
         table_dn = self.getDefinedNameForString(TABLE_NAME)
         text_dn = self.getDefinedNameForString(TEXT_NAME)
         ref_dn = self.getDefinedNameForString(REF_NAME)
+        ref_dim_dn = self.getDefinedNameForString(REF_DIM_NAME)
 
         if table_dn is None and text_dn is None and ref_dn is None:
             return
@@ -2047,34 +2108,19 @@ class ExcelProcessor:
         table_crm = self._getCellRange(table_dn)
         text_crm = self._getCellRange(text_dn)
         ref_crm = self._getCellRange(ref_dn)
+        ref_dim_crm = self._getCellRange(ref_dim_dn) if ref_dim_dn is not None else None
         if table_crm is None or text_crm is None or ref_crm is None:
             return
 
         ws = table_crm.worksheet
         tcr = table_crm.cellRange
 
-        if not table_crm.contains(text_crm):
-            self._results.addMessage(
-                f"'{TEXT_NAME}' is not fully contained within '{TABLE_NAME}'. "
-                "Footnotes cannot be processed.",
-                Severity.WARNING,
-                MessageType.ExcelParsing,
-            )
-            return
-        if not table_crm.contains(ref_crm):
-            self._results.addMessage(
-                f"'{REF_NAME}' is not fully contained within '{TABLE_NAME}'. "
-                "Footnotes cannot be processed.",
-                Severity.WARNING,
-                MessageType.ExcelParsing,
-            )
-            return
-        if text_crm.overlaps(ref_crm):
-            self._results.addMessage(
-                f"'{TEXT_NAME}' and '{REF_NAME}' overlap. Footnotes cannot be processed.",
-                Severity.WARNING,
-                MessageType.ExcelParsing,
-            )
+        sub_ranges = [(TEXT_NAME, text_crm), (REF_NAME, ref_crm)]
+        if ref_dim_crm is not None:
+            sub_ranges.append((REF_DIM_NAME, ref_dim_crm))
+        if not self._validate_sub_ranges(
+            table_crm, TABLE_NAME, sub_ranges, "Footnotes cannot be processed."
+        ):
             return
 
         origin = tcr.min_col
@@ -2084,6 +2130,12 @@ class ExcelProcessor:
         ref_col_indices = range(
             ref_crm.cellRange.min_col - origin, ref_crm.cellRange.max_col - origin + 1
         )
+        dim_col_indices: range | None = None
+        if ref_dim_crm is not None:
+            dim_col_indices = range(
+                ref_dim_crm.cellRange.min_col - origin,
+                ref_dim_crm.cellRange.max_col - origin + 1,
+            )
 
         def warn_ref(msg: str, cell: CellType | None = None) -> None:
             self._results.addMessage(
@@ -2094,7 +2146,7 @@ class ExcelProcessor:
             )
 
         for text_value, label_cells in self._iter_footnote_rows(
-            ws, tcr, text_col_indices, ref_col_indices
+            ws, tcr, text_col_indices, ref_col_indices, dim_col_indices
         ):
             if not label_cells:
                 self._results.addMessage(
@@ -2104,8 +2156,8 @@ class ExcelProcessor:
                     excel_reference=excelCellRangeRef(ws, tcr),
                 )
                 continue
-            resolved = self._resolve_footnote_concepts(label_cells, warn_ref)
-            if not resolved:
+            resolved_refs = self._resolve_footnote_refs(label_cells, warn_ref)
+            if not resolved_refs:
                 self._results.addMessage(
                     f"Footnote ('{text_value[:60]}') has no resolvable concept references; skipping.",
                     Severity.WARNING,
@@ -2113,7 +2165,22 @@ class ExcelProcessor:
                     excel_reference=excelCellRangeRef(ws, tcr),
                 )
                 continue
-            self._report.addFootnote(str_to_markupsafe(text_value), resolved)
+            target_facts: list[Fact] = []
+            for concept, member in resolved_refs:
+                facts = self._report.getFacts(concept)
+                if member is not None:
+                    # TODO: typed dimensions store a string value under "typed {axis_qname}"
+                    # rather than a QName member — if typed domain filtering is ever needed, extend here.
+                    filtered = [f for f in facts if member.qname in f.aspects.values()]
+                    if not filtered:
+                        warn_ref(
+                            f"Dimension member '{member.qname}' not found among facts for "
+                            f"'{concept.qname}'; attaching to all facts for that concept.",
+                        )
+                        filtered = facts
+                    facts = filtered
+                target_facts.extend(facts)
+            self._report.addFootnoteToFacts(str_to_markupsafe(text_value), target_facts)
 
     def checkForUnhandledItems(self) -> None:
         """
