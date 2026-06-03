@@ -28,6 +28,7 @@ from mireport.localise import (
     get_locale_from_str,
     group_symbol,
 )
+from mireport.report.disclosure_layout import DisclosureLayoutStrategy
 from mireport.report.fact import Fact, Footnote, Symbol, tidyTdValue
 from mireport.report.factbuilder import FactBuilder
 from mireport.report.layout import ReportLayoutOrganiser, TableStyle
@@ -315,10 +316,14 @@ class InlineReport:
         if self._generatedReport is not None:
             return self._generatedReport
 
-        rl = ReportLayoutOrganiser(self._taxonomy, self)
-        sections = rl.organise()
-
         label_language = self._taxonomy.getBestSupportedLanguage(self.language)
+        lang = label_language or ""
+
+        layout = DisclosureLayoutStrategy.for_entry_point(self._taxonomy.entryPoint)
+        rl = ReportLayoutOrganiser(self._taxonomy, self)
+        sections = rl.organise(layout)
+        sections_with_idx = [(i + 1, s) for i, s in enumerate(sections) if s.hasFacts]
+        toc = layout.build_toc(sections_with_idx, lang)
 
         env = Environment(
             loader=PackageLoader("mireport.report", "inline_report_templates"),
@@ -335,6 +340,8 @@ class InlineReport:
                 "labelLanguage": label_language,
                 "labelQNameFallback": label_language is None,
                 "label_overrides_by_concept": self._labelOverrides,
+                "section_label": lambda s: layout.section_label(s, lang),
+                "page_group_key": lambda s: layout.page_group_key(s, lang),
             }
         )
         env.filters.update(
@@ -380,6 +387,7 @@ class InlineReport:
             documentInfo=self.getDocumentInformation(),
             facts=self.facts,
             sections=sections,
+            toc=toc,
             uniqueFactCount=len(frozenset(self._facts)),
             theme=self.theme.displayMode,
             colour=self.theme.colour,

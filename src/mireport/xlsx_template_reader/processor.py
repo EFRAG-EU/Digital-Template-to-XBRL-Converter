@@ -29,13 +29,12 @@ from mireport.conversionresults import (
     MessageType,
     Severity,
 )
-from mireport.data import disclosures
+from mireport.data.disclosures import VSME_DEFAULTS
 from mireport.exceptions import (
     AmbiguousComponentException,
     EarlyAbortException,
     InlineReportException,
 )
-from mireport.json import getObject, getResource
 from mireport.localise import as_xmllang, get_locale_from_str
 from mireport.report import InlineReport
 from mireport.report.factbuilder import FactBuilder
@@ -68,8 +67,6 @@ L = logging.getLogger(__name__)
 EE_SET_DESIRED_EMPTY_PLACEHOLDER_VALUE = "None"
 
 EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE = ("-", EXCEL_PLACEHOLDER_VALUE)
-
-VSME_DEFAULTS: dict = getObject(getResource(disclosures, "vsme.json"))
 
 
 def cleanUnitTextFromExcel(unitTest: str, replacements: dict[str, str]) -> str:

@@ -85,37 +85,23 @@
 {% endif %}
         <div class="page portrait-page toc-page" id="table-of-contents">
             <h2>Table of contents</h2>
-            {#- Build ToC entries with their body-loop indices, then sort alphabetically -#}
-            {% set toc_entries = [] %}
-            {% for section in sections if section.hasFacts %}
-                {% if toc_entries.append({'idx': loop.index, 'section': section}) %}{% endif %}
-            {% endfor %}
             <ol class="toc-list">
-{% set toc = namespace(current_prefix='') %}
-{% for entry in toc_entries | sort(attribute='section.presentation.definition') %}
-    {% set section = entry.section %}
-    {% set prefix = macros.section_prefix(section) %}
-    {% if prefix != toc.current_prefix %}
-        {% if toc.current_prefix != '' %}
-                    </ul>
-                </li>
-        {% endif %}
-        {% set toc.current_prefix = prefix %}
+{% for group in toc %}
+    {% if group.heading is not none %}
                 <li>
-                    <span>[{{ macros.toc_short_prefix(section) }}] &#8212; {{ macros.toc_category(section) | e }}</span>
+                    <span>{{ group.heading | e }}</span>
                     <ul>
-    {% endif %}
-    {% set subtitle = macros.toc_subtitle(section) %}
-                        <li>
-                            <a href="#section-class{{ entry.idx }}">
-                                {{ (subtitle if subtitle else macros.toc_category(section)) | e }}
-                            </a>
-                        </li>
-{% endfor %}
-{% if toc.current_prefix != '' %}
+        {% for item in group.items %}
+                        <li><a href="#section-class{{ item.idx }}">{{ item.label | e }}</a></li>
+        {% endfor %}
                     </ul>
                 </li>
-{% endif %}
+    {% else %}
+        {% for item in group.items %}
+                <li><a href="#section-class{{ item.idx }}">{{ item.label | e }}</a></li>
+        {% endfor %}
+    {% endif %}
+{% endfor %}
             </ol>
         </div>
 {% set page = namespace(open=false, prefix='', css_class='') %}
@@ -125,7 +111,7 @@
 {% set fn_counter = namespace(num=0, page=0) %}
 {% for section in sections if section.hasFacts %}
         {#- Compute this section's page-group key and page class -#}
-        {% set current_prefix = macros.page_group(section) %}
+        {% set current_prefix = page_group_key(section) %}
         {% set current_class = macros.page_class_for_section(section) %}
 
         {% if section.style is sameas PresentationStyle.List %}
@@ -261,7 +247,7 @@
                 {% set page.open = false %}
             {% endif %}
         <div class="page portrait-page">
-            <h2>{{ macros.section_label(section) | e }}</h2>
+            <h2>{{ section_label(section) | e }}</h2>
             <pre>Unsupported presentation style. [{{section.style.name}}{% if section.tabular %}, {{ section.table.style.name }}{% endif %}]</pre>
         </div>
             {% set page.prefix = '' %}
