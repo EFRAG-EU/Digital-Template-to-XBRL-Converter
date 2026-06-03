@@ -411,9 +411,13 @@ def upload() -> Response:
 
 
 @convert_bp.route("/conversions/<string:id>", methods=["GET"])
-def convert(id: str, skip_migration: bool = False) -> Response:
+def convert(id: str) -> Response:
     try:
-        skip_migration = request.args.get("skip_migration") == "True"
+        skip_migration = request.args.get("skip_migration", "").lower() in (
+            "1",
+            "true",
+            "yes",
+        )
 
         if id not in session:
             return make_response(
