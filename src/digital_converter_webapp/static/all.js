@@ -1,7 +1,9 @@
+// eslint-disable-next-line no-unused-vars
 function openModal() {
     document.getElementById("termsModal").classList.replace("hidden", "flex");
 }
 
+// eslint-disable-next-line no-unused-vars
 function closeModal() {
     document.getElementById("termsModal").classList.replace("flex", "hidden");
 }
@@ -54,57 +56,55 @@ document.addEventListener("DOMContentLoaded", () => {
         downloadLink.addEventListener("click", async (event) => {
             event.preventDefault();
 
+            const MAX_WAIT_MS      = 60000;
+            const INITIAL_POLL_MS  = 500;
+            const MAX_POLL_MS      = 5000;
+            const POLL_BACKOFF     = 1.5;
+            const SPINNER_DELAY_MS = 300;
+
             const fileUrl = downloadLink.href;
             const spinnerTimeout = setTimeout(
                 () => showSpinner(downloadLink.dataset.spinnerText || "Downloading..."),
-                300
+                SPINNER_DELAY_MS
             );
 
-            let pollingInterval = 500;
-            let fileReady = false;
+            let pollingInterval = INITIAL_POLL_MS;
             const startTime = Date.now();
 
             try {
-                while (Date.now() - startTime < 60000) {
+                while (Date.now() - startTime < MAX_WAIT_MS) {
                     const response = await fetch(fileUrl, { method: "HEAD" });
 
                     if (response.status === 200 && response.headers.get("X-File-Ready") === "true") {
-                        fileReady = true;
-                        break;
+                        window.location.href = fileUrl;
+                        return;
                     }
 
                     if (response.status >= 400) {
                         let errorBody;
-                        const fallBackResponse = response.clone();
+                        const rawText = await response.text();
                         try {
-                            const jsonResponse = await response.json();
-                            errorBody = jsonResponse.error ? jsonResponse.error : JSON.stringify(jsonResponse, null, 2);
+                            const jsonResponse = JSON.parse(rawText);
+                            errorBody = jsonResponse.error ?? JSON.stringify(jsonResponse, null, 2);
                         } catch (e) {
-                            const fallbackText = await fallBackResponse.text();
-                            errorBody = `Failed to parse JSON: ${e.message}. Response body: ${fallbackText}`;
+                            errorBody = `Failed to parse JSON: ${e.message}. Response body: ${rawText}`;
                         }
 
                         throw new Error(`Server error ${response.status}: ${errorBody}`);
                     }
 
                     await new Promise(resolve => setTimeout(resolve, pollingInterval));
-                    pollingInterval = Math.min(pollingInterval * 1.5, 5000);
+                    pollingInterval = Math.min(pollingInterval * POLL_BACKOFF, MAX_POLL_MS);
                 }
 
-                clearTimeout(spinnerTimeout);
-                hideSpinner();
-
-                if (fileReady) {
-                    window.location.href = fileUrl;
-                } else {
-                    showErrorModal("The file could not be generated in time.");
-                }
+                showErrorModal("The file could not be generated in time.");
 
             } catch (error) {
-                clearTimeout(spinnerTimeout);
-                hideSpinner();
                 console.error("Error waiting for file:", error);
                 showErrorModal(`Error: ${error.message}`);
+            } finally {
+                clearTimeout(spinnerTimeout);
+                hideSpinner();
             }
         });
     });
