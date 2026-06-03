@@ -171,6 +171,7 @@ def create_app(test_config: Mapping[str, Any] | None = None) -> Flask:
             Severity.__name__: Severity,
             MessageType.__name__: MessageType,
             "deployment_datetime": DEPLOYMENT_DATETIME,
+            "mireport_version": mireport.__version__,
             format_timedelta.__name__: format_timedelta,
             getUploadFilename.__name__: getUploadFilename,
         }
@@ -412,6 +413,12 @@ def upload() -> Response:
 @convert_bp.route("/conversions/<string:id>", methods=["GET"])
 def convert(id: str) -> Response:
     try:
+        skip_migration = request.args.get("skip_migration", "").lower() in (
+            "1",
+            "true",
+            "yes",
+        )
+
         if id not in session:
             return make_response(
                 render_template(
@@ -425,7 +432,8 @@ def convert(id: str) -> Response:
         conversion = session[id]
         if "results" not in conversion:
             if (
-                ENABLE_MIGRATION
+                not skip_migration
+                and ENABLE_MIGRATION
                 and (migrationResponse := checkMigration(conversion)) is not None
             ):
                 # Migration deemed to be required so no conversion done at this stage.

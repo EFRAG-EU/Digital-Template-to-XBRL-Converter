@@ -6,7 +6,6 @@ from typing import Any
 from flask import (
     Response,
     flash,
-    json,
     jsonify,
     make_response,
     redirect,
@@ -145,23 +144,7 @@ def migrationPage(id: str) -> Response:
         )
         excel = FilelikeAndFileName(*conversion["excel"])
 
-        # Parse migration results from query parameters
-        elapsed = request.args.get("elapsed", type=float)
-        issues_json = request.args.get("issues", "[]")
-        migration_issues: list | dict = []
-        if issues_json:
-            try:
-                parsed_issues = json.loads(issues_json)
-                if isinstance(parsed_issues, (list, dict)):
-                    migration_issues = parsed_issues
-                else:
-                    L.warning(
-                        "Invalid type for migration issues: %s",
-                        type(parsed_issues),
-                    )
-            except (TypeError, ValueError) as parse_err:
-                L.warning("Failed to parse migration issues JSON: %s", parse_err)
-
+        has_migration_results = "migrated_excel" in conversion
         return Response(
             render_template(
                 "migration_page.html.jinja",
@@ -169,8 +152,9 @@ def migrationPage(id: str) -> Response:
                 filename=excel.filename,
                 version=version,
                 newest_version=OUR_VERSION_HOLDER,
-                elapsed=elapsed,
-                migration_issues=migration_issues,
+                has_migration_results=has_migration_results,
+                elapsed=conversion.get("migration_elapsed"),
+                migration_issues=conversion.get("migration_issues", []),
             )
         )
     except Exception as e:
@@ -213,29 +197,20 @@ def migrationButton(id: str) -> Response:
                 jsonify({"error": "Migration produced empty file"}), 500
             )
 
-        # Store migrated file temporarily in session and redirect with results
+        # Store migrated file and results in session, then redirect to results view
         conversion["migrated_excel"] = migrated_excel
+        conversion["migration_elapsed"] = elapsed
+        conversion["migration_issues"] = list(migration_issues)
         session.modified = True
 
-        # Redirect to migration page with results as query parameters
-        return make_response(
-            redirect(
-                url_for(
-                    "basic.migrationPage",
-                    id=id,
-                    elapsed=elapsed,
-                    issues=json.dumps(migration_issues),
-                ),
-                code=303,
-            )
-        )
+        return make_response(redirect(url_for("basic.migrationPage", id=id), code=303))
 
     except Exception as e:
         L.exception("Exception during migration", exc_info=e)
         return make_response(jsonify({"error": str(e)}), 500)
 
 
-@convert_bp.route("/downloadMigrated/<id>", methods=["GET"])
+@convert_bp.route("/downloadMigrated/<id>", methods=["GET", "HEAD"])
 def downloadMigrated(id: str) -> Response:
     """Download the migrated file from the session."""
     if id not in session:
@@ -245,6 +220,9 @@ def downloadMigrated(id: str) -> Response:
 
     if "migrated_excel" not in conversion:
         return make_response({"error": "No migrated file found"}, 404)
+
+    if request.method == "HEAD":
+        return Response(status=200, headers={"X-File-Ready": "true"})
 
     migrated_excel = FilelikeAndFileName(*conversion.get("migrated_excel"))
     return send_file(
