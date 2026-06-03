@@ -37,6 +37,58 @@ function showErrorModal(message) {
     document.getElementById("errorModal").classList.replace("hidden", "flex");
 }
 
+async function downloadWhenReady(fileUrl, spinnerText) {
+    const MAX_WAIT_MS      = 60000;
+    const INITIAL_POLL_MS  = 500;
+    const MAX_POLL_MS      = 5000;
+    const POLL_BACKOFF     = 1.5;
+    const SPINNER_DELAY_MS = 300;
+
+    const spinnerTimeout = setTimeout(
+        () => showSpinner(spinnerText || "Downloading..."),
+        SPINNER_DELAY_MS
+    );
+
+    let pollingInterval = INITIAL_POLL_MS;
+    const startTime = Date.now();
+
+    try {
+        while (Date.now() - startTime < MAX_WAIT_MS) {
+            const response = await fetch(fileUrl, { method: "HEAD" });
+
+            if (response.status === 200 && response.headers.get("X-File-Ready") === "true") {
+                window.location.href = fileUrl;
+                return;
+            }
+
+            if (response.status >= 400) {
+                let errorBody;
+                const rawText = await response.text();
+                try {
+                    const jsonResponse = JSON.parse(rawText);
+                    errorBody = jsonResponse.error ?? JSON.stringify(jsonResponse, null, 2);
+                } catch (e) {
+                    errorBody = `Failed to parse JSON: ${e.message}. Response body: ${rawText}`;
+                }
+
+                throw new Error(`Server error ${response.status}: ${errorBody}`);
+            }
+
+            await new Promise(resolve => setTimeout(resolve, pollingInterval));
+            pollingInterval = Math.min(pollingInterval * POLL_BACKOFF, MAX_POLL_MS);
+        }
+
+        showErrorModal("The file could not be generated in time.");
+
+    } catch (error) {
+        console.error("Error waiting for file:", error);
+        showErrorModal(`Error: ${error.message}`);
+    } finally {
+        clearTimeout(spinnerTimeout);
+        hideSpinner();
+    }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     const closeBtn = document.getElementById("closeModal");
     if (closeBtn) {
@@ -55,57 +107,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         downloadLink.addEventListener("click", async (event) => {
             event.preventDefault();
-
-            const MAX_WAIT_MS      = 60000;
-            const INITIAL_POLL_MS  = 500;
-            const MAX_POLL_MS      = 5000;
-            const POLL_BACKOFF     = 1.5;
-            const SPINNER_DELAY_MS = 300;
-
-            const fileUrl = downloadLink.href;
-            const spinnerTimeout = setTimeout(
-                () => showSpinner(downloadLink.dataset.spinnerText || "Downloading..."),
-                SPINNER_DELAY_MS
-            );
-
-            let pollingInterval = INITIAL_POLL_MS;
-            const startTime = Date.now();
-
-            try {
-                while (Date.now() - startTime < MAX_WAIT_MS) {
-                    const response = await fetch(fileUrl, { method: "HEAD" });
-
-                    if (response.status === 200 && response.headers.get("X-File-Ready") === "true") {
-                        window.location.href = fileUrl;
-                        return;
-                    }
-
-                    if (response.status >= 400) {
-                        let errorBody;
-                        const rawText = await response.text();
-                        try {
-                            const jsonResponse = JSON.parse(rawText);
-                            errorBody = jsonResponse.error ?? JSON.stringify(jsonResponse, null, 2);
-                        } catch (e) {
-                            errorBody = `Failed to parse JSON: ${e.message}. Response body: ${rawText}`;
-                        }
-
-                        throw new Error(`Server error ${response.status}: ${errorBody}`);
-                    }
-
-                    await new Promise(resolve => setTimeout(resolve, pollingInterval));
-                    pollingInterval = Math.min(pollingInterval * POLL_BACKOFF, MAX_POLL_MS);
-                }
-
-                showErrorModal("The file could not be generated in time.");
-
-            } catch (error) {
-                console.error("Error waiting for file:", error);
-                showErrorModal(`Error: ${error.message}`);
-            } finally {
-                clearTimeout(spinnerTimeout);
-                hideSpinner();
-            }
+            await downloadWhenReady(downloadLink.href, downloadLink.dataset.spinnerText);
         });
     });
 });
