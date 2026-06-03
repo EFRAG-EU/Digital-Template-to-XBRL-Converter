@@ -1,33 +1,48 @@
-  function openModal() {
-    document.getElementById('termsModal').classList.remove('hidden');
-    document.getElementById('termsModal').classList.add('flex');
-  }
-  function closeModal() {
-    document.getElementById('termsModal').classList.add('hidden');
-    document.getElementById('termsModal').classList.remove('flex');
-  }
-    function showSpinner(message) {
-        const spinner = document.getElementById('loadingSpinner');
-        const spinnerText = document.getElementById('spinner-text');
+function openModal() {
+    document.getElementById("termsModal").classList.replace("hidden", "flex");
+}
 
-        if (spinnerText && typeof message === 'string' && message.trim()) {
-            spinnerText.textContent = message;
-        }
+function closeModal() {
+    document.getElementById("termsModal").classList.replace("flex", "hidden");
+}
 
-        spinner.classList.remove('hidden');
-        spinner.classList.add('flex');
+function showSpinner(message) {
+    const spinner = document.getElementById("loadingSpinner");
+    const spinnerText = document.getElementById("spinner-text");
+
+    if (!spinner || !spinnerText) {
+        console.warn("Spinner not found! Proceeding without showing spinner.");
+        return;
     }
+
+    if (typeof message === "string" && message.trim()) {
+        spinnerText.textContent = message;
+    }
+
+    spinner.classList.replace("hidden", "flex");
+}
+
+function hideSpinner() {
+    const spinner = document.getElementById("loadingSpinner");
+    if (!spinner) {
+        return;
+    }
+    spinner.classList.replace("flex", "hidden");
+}
 
 function showErrorModal(message) {
     document.getElementById("errorMessage").textContent = message;
     document.getElementById("errorModal").classList.replace("hidden", "flex");
 }
 
-document.getElementById("closeModal").addEventListener("click", () => {
-    document.getElementById("errorModal").classList.replace("flex", "hidden");
-});
-
 document.addEventListener("DOMContentLoaded", () => {
+    const closeBtn = document.getElementById("closeModal");
+    if (closeBtn) {
+        closeBtn.addEventListener("click", () => {
+            document.getElementById("errorModal").classList.replace("flex", "hidden");
+        });
+    }
+
     const links = document.querySelectorAll(".download-handler");
 
     links.forEach(downloadLink => {
@@ -36,26 +51,14 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-
         downloadLink.addEventListener("click", async (event) => {
             event.preventDefault();
 
             const fileUrl = downloadLink.href;
-            const spinner = document.getElementById("loadingSpinner");
-            const spinnerText = document.getElementById("spinner-text");
-
-            let spinnerTimeout;
-
-            // Timer to show spinner after 300ms delay
-            const showSpinner = () => {
-                if (spinner && spinnerText) {
-                    spinnerText.textContent = downloadLink.dataset.spinnerText || "Downloading...";
-                    spinner.classList.replace("hidden", "flex");
-                } else {
-                    console.warn("Spinner not found! Proceeding without showing spinner.");
-                }
-            };
-            spinnerTimeout = setTimeout(showSpinner, 300);
+            const spinnerTimeout = setTimeout(
+                () => showSpinner(downloadLink.dataset.spinnerText || "Downloading..."),
+                300
+            );
 
             let pollingInterval = 500;
             let fileReady = false;
@@ -88,13 +91,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     pollingInterval = Math.min(pollingInterval * 1.5, 5000);
                 }
 
-                // Cancel spinner timeout if not yet shown
                 clearTimeout(spinnerTimeout);
-
-                // Hide spinner if visible
-                if (spinner) {
-                    spinner.classList.replace("flex", "hidden");
-                }
+                hideSpinner();
 
                 if (fileReady) {
                     window.location.href = fileUrl;
@@ -104,9 +102,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             } catch (error) {
                 clearTimeout(spinnerTimeout);
-                if (spinner) {
-                    spinner.classList.replace("flex", "hidden");
-                }
+                hideSpinner();
                 console.error("Error waiting for file:", error);
                 showErrorModal(`Error: ${error.message}`);
             }
