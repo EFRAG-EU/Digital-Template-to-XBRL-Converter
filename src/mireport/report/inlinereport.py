@@ -201,25 +201,22 @@ class InlineReport:
         self._facts.append(fact)
         self._factsByConcept[fact.concept].append(fact)
 
-    def _createFootnote(self, content: str) -> Footnote:
-        return Footnote(id=next(self._footnoteCounter), content=Markup(content))
+    def _createFootnote(self, content: Markup) -> Footnote:
+        return Footnote(id=next(self._footnoteCounter), content=content)
 
     def addFootnote(
         self,
-        content: str,
+        content: str | Markup,
+        concepts: list[Concept],
         *,
         group: str | None = None,
-        concept: str | None = None,
-        concepts: list[str] | None = None,
     ) -> Footnote:
-        """Create a footnote and attach it to facts by concept and/or group."""
-        all_concepts = list(concepts or [])
-        if concept is not None:
-            all_concepts.append(concept)
+        """Create a footnote and attach it to facts for each concept."""
+        if isinstance(content, str):
+            content = Markup.escape(content)
         footnote = self._createFootnote(content)
-        for qname in all_concepts:
-            tax_concept = self._taxonomy.getConcept(qname)
-            for fact in self.getFacts(tax_concept):
+        for concept in concepts:
+            for fact in self.getFacts(concept):
                 fact.footnotes.append(footnote)
                 footnote._facts.append(fact)
         if group is not None:

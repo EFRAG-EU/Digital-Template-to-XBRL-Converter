@@ -10,7 +10,7 @@ from markupsafe import Markup, escape
 from mireport.exceptions import InlineReportException
 from mireport.localise import localise_and_format_number
 from mireport.report.periods import DurationPeriodHolder, InstantPeriodHolder
-from mireport.stringutil import unicodeSpaceNormalize
+from mireport.stringutil import str_to_markupsafe, unicodeSpaceNormalize
 from mireport.taxonomy import Concept, QName
 from mireport.typealiases import DecimalPlaces, FactValue
 
@@ -156,7 +156,7 @@ class Fact:
         if hasattr(self.value, "__html__"):
             output = Markup(self.value)
         elif isinstance(self.value, str):
-            output = Markup("<br />").join(escape(p) for p in self.value.splitlines())
+            output = str_to_markupsafe(self.value)
         else:
             output = escape(self.value)
         return output

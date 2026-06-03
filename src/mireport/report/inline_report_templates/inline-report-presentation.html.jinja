@@ -121,6 +121,7 @@
 {% set page = namespace(open=false, prefix='', css_class='') %}
 {% set page_footnotes = [] %}
 {% set page_fn_ids = [] %}
+{% set doc_fn_ids = [] %}
 {% set fn_counter = namespace(num=0, page=0) %}
 {% for section in sections if section.hasFacts %}
         {#- Compute this section's page-group key and page class -#}
@@ -130,7 +131,7 @@
         {% if section.style is sameas PresentationStyle.List %}
         {#- LIST SECTIONS: merge into same page when prefix and orientation match -#}
             {% if page.open and (current_prefix != page.prefix or current_class != page.css_class) %}
-            {{ macros.render_page_footnotes(page_footnotes) }}
+            {{ macros.render_page_footnotes(page_footnotes, doc_fn_ids) }}
             {% if page_footnotes.clear() is none %}{% endif %}
             {% if page_fn_ids.clear() is none %}{% endif %}
         </div>
@@ -180,7 +181,7 @@
         {% elif section.style is sameas PresentationStyle.Table %}
         {#- TABLE SECTIONS: merge into same page when prefix and orientation match -#}
             {% if page.open and (current_prefix != page.prefix or current_class != page.css_class) %}
-            {{ macros.render_page_footnotes(page_footnotes) }}
+            {{ macros.render_page_footnotes(page_footnotes, doc_fn_ids) }}
             {% if page_footnotes.clear() is none %}{% endif %}
             {% if page_fn_ids.clear() is none %}{% endif %}
         </div>
@@ -253,7 +254,7 @@
         {% else %}
         {#- UNSUPPORTED STYLES: always get their own page -#}
             {% if page.open %}
-            {{ macros.render_page_footnotes(page_footnotes) }}
+            {{ macros.render_page_footnotes(page_footnotes, doc_fn_ids) }}
             {% if page_footnotes.clear() is none %}{% endif %}
             {% if page_fn_ids.clear() is none %}{% endif %}
         </div>
@@ -269,7 +270,7 @@
 {% endfor %}
         {#- Close the last page div if still open -#}
         {% if page.open %}
-        {{ macros.render_page_footnotes(page_footnotes) }}
+        {{ macros.render_page_footnotes(page_footnotes, doc_fn_ids) }}
         </div>
         {% endif %}
   <!-- Final Page -->

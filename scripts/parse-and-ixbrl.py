@@ -237,11 +237,21 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, ExcelProc
             extra = json.loads(extra_file.read_text(encoding="utf-8"))
 
             for fn in extra.get("footnotes", []):
+                concept_strs: list[str] = list(fn.get("concepts") or [])
+                if single := fn.get("concept"):
+                    concept_strs.append(single)
+                concepts = [
+                    c
+                    for s in concept_strs
+                    if (
+                        c := report.taxonomy.resolveConcept(
+                            s, by_qname=True, by_label=True
+                        )
+                    )
+                    is not None
+                ]
                 report.addFootnote(
-                    fn.get("content", ""),
-                    group=fn.get("group"),
-                    concept=fn.get("concept"),
-                    concepts=fn.get("concepts"),
+                    Markup(fn.get("content", "")), concepts, group=fn.get("group")
                 )
 
             label_overrides = {
