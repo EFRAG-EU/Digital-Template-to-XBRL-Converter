@@ -41,7 +41,7 @@ document.addEventListener("DOMContentLoaded", () => {
             event.preventDefault();
 
             const fileUrl = downloadLink.href;
-            const spinner = document.getElementById("spinner");
+            const spinner = document.getElementById("loadingSpinner");
             const spinnerText = document.getElementById("spinner-text");
 
             let spinnerTimeout;

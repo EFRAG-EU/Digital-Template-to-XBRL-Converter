@@ -31,21 +31,8 @@
 {% endwith %}
 
 
-<!-- Loading Spinner -->
-<div id="loadingSpinner" class="hidden fixed inset-0 bg-black/80 items-center justify-center z-50">
-  <div class="flex items-center text-white text-lg font-bold border-4 border-white p-4 rounded-lg bg-black">
-    <!-- Animated Spinner -->
-    <svg class="mr-3 h-5 w-5 animate-spin text-white" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 008 8V4a8 8 0 00-8 8z"></path>
-    </svg>
-    Converting... Please wait.
-  </div>
-</div>
-
-
 <!-- Upload Form -->
-<form action="{{ url_for('basic.upload') }}" method="post" enctype="multipart/form-data" class="space-y-4" onsubmit="showSpinner()">
+<form action="{{ url_for('basic.upload') }}" method="post" enctype="multipart/form-data" class="space-y-4" onsubmit="showSpinner('Converting... Please wait.')">
 
   <!-- Digital Template File -->
   <div>
