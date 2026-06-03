@@ -26,7 +26,6 @@
         <p class="text-center font-semibold">No conversion results available.</p>
     </div>
 {% else %}
-    {% include "_svg.html.jinja" %}
     {% set conv_rag = conversion_result.getRAG(withoutXBRLValidation=true) %}
     <!-- Title -->
     <h2 class="text-3xl font-bold text-center text-gray-800">Conversion Results</h2>
