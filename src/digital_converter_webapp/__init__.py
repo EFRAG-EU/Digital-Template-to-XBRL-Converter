@@ -171,6 +171,7 @@ def create_app(test_config: Mapping[str, Any] | None = None) -> Flask:
             Severity.__name__: Severity,
             MessageType.__name__: MessageType,
             "deployment_datetime": DEPLOYMENT_DATETIME,
+            "mireport_version": mireport.__version__,
             format_timedelta.__name__: format_timedelta,
             getUploadFilename.__name__: getUploadFilename,
         }
