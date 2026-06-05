@@ -98,8 +98,6 @@ class FootnoteManager:
         Must be called once before rendering begins.
         """
         for section in sections:
-            if not section.hasFacts:
-                continue
             if grp_fn := footnotes_by_group.get(section.presentation.roleUri):
                 self._register_one(grp_fn)
             if section.tabular:

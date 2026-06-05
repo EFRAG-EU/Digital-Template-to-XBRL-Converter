@@ -88,7 +88,7 @@ class DisclosureLayoutStrategy(ABC):
     @abstractmethod
     def build_toc(
         self,
-        sections_with_idx: list[tuple[int, ReportSection]],
+        sections: list[ReportSection],
         language: str,
     ) -> list[TocGroup]: ...
 
@@ -119,17 +119,12 @@ class OldVsmeLayoutStrategy(DisclosureLayoutStrategy, strategy_name="old_vsme"):
 
     def build_toc(
         self,
-        sections_with_idx: list[tuple[int, ReportSection]],
+        sections: list[ReportSection],
         language: str,
     ) -> list[TocGroup]:
-        sorted_sections = sorted(
-            sections_with_idx,
-            key=lambda t: t[1].presentation.definition,
-        )
-
         groups: list[TocGroup] = []
         for prefix, group_iter in groupby(
-            sorted_sections,
+            enumerate(sections, start=1),
             key=lambda t: t[1].presentation.definition.split(".")[0],
         ):
             items_list = list(group_iter)
@@ -171,17 +166,12 @@ class VsmeLayoutStrategy(DisclosureLayoutStrategy, strategy_name="vsme"):
 
     def build_toc(
         self,
-        sections_with_idx: list[tuple[int, ReportSection]],
+        sections: list[ReportSection],
         language: str,
     ) -> list[TocGroup]:
-        sorted_sections = sorted(
-            sections_with_idx,
-            key=lambda t: t[1].presentation.definition,
-        )
-
         groups: list[TocGroup] = []
         for _, group_iter in groupby(
-            sorted_sections,
+            enumerate(sections, start=1),
             key=lambda t: self._toc_group_key(t[1], language),
         ):
             items_list = list(group_iter)
@@ -214,7 +204,7 @@ class DefaultLayoutStrategy(DisclosureLayoutStrategy, strategy_name="default"):
 
     def build_toc(
         self,
-        sections_with_idx: list[tuple[int, ReportSection]],
+        sections: list[ReportSection],
         language: str,
     ) -> list[TocGroup]:
         return [
@@ -222,5 +212,5 @@ class DefaultLayoutStrategy(DisclosureLayoutStrategy, strategy_name="default"):
                 heading=None,
                 items=[TocItem(idx=idx, label=s.getLabel(language))],
             )
-            for idx, s in sections_with_idx
+            for idx, s in enumerate(sections, start=1)
         ]

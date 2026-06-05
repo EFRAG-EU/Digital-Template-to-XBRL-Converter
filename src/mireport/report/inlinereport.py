@@ -340,8 +340,7 @@ class InlineReport:
         layout = DisclosureLayoutStrategy.for_entry_point(self._taxonomy.entryPoint)
         rl = ReportLayoutOrganiser(self._taxonomy, self)
         sections = rl.organise(layout)
-        sections_with_idx = [(i + 1, s) for i, s in enumerate(sections) if s.hasFacts]
-        toc = layout.build_toc(sections_with_idx, lang)
+        toc = layout.build_toc(sections, lang)
 
         env = Environment(
             loader=PackageLoader("mireport.report", "inline_report_templates"),

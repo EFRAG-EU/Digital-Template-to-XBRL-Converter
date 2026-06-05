@@ -105,7 +105,7 @@
             </ol>
         </div>
 {% set page = namespace(open=false, prefix='', css_class='') %}
-{% for section in sections if section.hasFacts %}
+{% for section in sections %}
         {#- Compute this section's page-group key and page class -#}
         {% set current_prefix = page_group_key(section) %}
         {% set current_class = macros.page_class_for_section(section) %}

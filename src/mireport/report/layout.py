@@ -329,7 +329,7 @@ class ReportLayoutOrganiser:
         self.reportSections.sort(key=lambda x: x.presentation)
         self.reportSections = layout.organise_sections(self.reportSections)
         self.checkAllFactsUsed()
-        return self.reportSections
+        return [s for s in self.reportSections if s.hasFacts]
 
     def checkAllFactsUsed(self) -> None:
         """
