@@ -105,10 +105,6 @@
             </ol>
         </div>
 {% set page = namespace(open=false, prefix='', css_class='') %}
-{% set page_footnotes = [] %}
-{% set page_fn_ids = [] %}
-{% set doc_fn_ids = [] %}
-{% set fn_counter = namespace(num=0, page=0) %}
 {% for section in sections if section.hasFacts %}
         {#- Compute this section's page-group key and page class -#}
         {% set current_prefix = page_group_key(section) %}
@@ -117,9 +113,7 @@
         {% if section.style is sameas PresentationStyle.List %}
         {#- LIST SECTIONS: merge into same page when prefix and orientation match -#}
             {% if page.open and (current_prefix != page.prefix or current_class != page.css_class) %}
-            {{ macros.render_page_footnotes(page_footnotes, doc_fn_ids) }}
-            {% if page_footnotes.clear() is none %}{% endif %}
-            {% if page_fn_ids.clear() is none %}{% endif %}
+            {{ macros.render_page_footnotes(footnote_manager) }}
         </div>
                 {% set page.open = false %}
             {% endif %}
@@ -128,11 +122,10 @@
                 {% set page.open = true %}
                 {% set page.prefix = current_prefix %}
                 {% set page.css_class = current_class %}
-                {% set fn_counter.page = fn_counter.page + 1 %}
             {% endif %}
 
             {% set _grp_fn = footnotes_by_group.get(section.presentation.roleUri) %}
-            {{ macros.create_h2_title(section, loop, _grp_fn, fn_counter, page_footnotes, page_fn_ids) }}
+            {{ macros.create_h2_title(section, loop, footnote_manager, _grp_fn) }}
 
             <div class="fact-list">
             {% for rel, factList in section.relationshipToFact.items() %}
@@ -141,7 +134,7 @@
                 {% for fact in factList %}
                     {% set documentation = rel.concept.getDocumentationLabel() %}
                     <dl class="fact fact-depth-{{ rel.depth if rel.depth <= 4 else 4 }} fact-depth-{{ rel.depth if rel.depth <= 4 else 4 }}-{{ shade }}">
-                        <dt class="fact-value {% if fact.concept.isTextblock %}fact-textblock{% endif %}" title="{{ rel.concept.qname }}">{{ macros.render_fact_value(fact) }}{{ macros.footnote_refs(fact.footnotes, fn_counter, page_footnotes, page_fn_ids) }}{% set ns.fact_count = ns.fact_count + 1 %}</dt>
+                        <dt class="fact-value {% if fact.concept.isTextblock %}fact-textblock{% endif %}" title="{{ rel.concept.qname }}">{{ macros.render_fact_value(fact) }}{{ macros.footnote_refs(fact.footnotes, footnote_manager) }}{% set ns.fact_count = ns.fact_count + 1 %}</dt>
                         <dd class="fact-label">
                             <span {% if documentation != none %}class="hover-box"{% endif %}>
                                 {{ macros.relationship_label(rel) | e }}
@@ -167,9 +160,7 @@
         {% elif section.style is sameas PresentationStyle.Table %}
         {#- TABLE SECTIONS: merge into same page when prefix and orientation match -#}
             {% if page.open and (current_prefix != page.prefix or current_class != page.css_class) %}
-            {{ macros.render_page_footnotes(page_footnotes, doc_fn_ids) }}
-            {% if page_footnotes.clear() is none %}{% endif %}
-            {% if page_fn_ids.clear() is none %}{% endif %}
+            {{ macros.render_page_footnotes(footnote_manager) }}
         </div>
                 {% set page.open = false %}
             {% endif %}
@@ -178,11 +169,10 @@
                 {% set page.open = true %}
                 {% set page.prefix = current_prefix %}
                 {% set page.css_class = current_class %}
-                {% set fn_counter.page = fn_counter.page + 1 %}
             {% endif %}
 
             {% set _grp_fn = footnotes_by_group.get(section.presentation.roleUri) %}
-            {{ macros.create_h2_title(section, loop, _grp_fn, fn_counter, page_footnotes, page_fn_ids) }}
+            {{ macros.create_h2_title(section, loop, footnote_manager, _grp_fn) }}
 
             <table class="thematic-table">
                 <thead>
@@ -229,7 +219,7 @@
                         <td></td>
                             {% else %}
                         <td {% if cell.fact.concept.isNumeric %}class="numeric"{% endif %}>
-                        {{ macros.render_fact_value(cell.fact, cell.suppress_unit) }}{{ macros.footnote_refs(cell.fact.footnotes, fn_counter, page_footnotes, page_fn_ids) }}{% set ns.fact_count = ns.fact_count + 1 %}
+                        {{ macros.render_fact_value(cell.fact, cell.suppress_unit) }}{{ macros.footnote_refs(cell.fact.footnotes, footnote_manager) }}{% set ns.fact_count = ns.fact_count + 1 %}
                         </td>
                             {% endif %}
                         {% endfor %}
@@ -240,9 +230,7 @@
         {% else %}
         {#- UNSUPPORTED STYLES: always get their own page -#}
             {% if page.open %}
-            {{ macros.render_page_footnotes(page_footnotes, doc_fn_ids) }}
-            {% if page_footnotes.clear() is none %}{% endif %}
-            {% if page_fn_ids.clear() is none %}{% endif %}
+            {{ macros.render_page_footnotes(footnote_manager) }}
         </div>
                 {% set page.open = false %}
             {% endif %}
@@ -256,7 +244,7 @@
 {% endfor %}
         {#- Close the last page div if still open -#}
         {% if page.open %}
-        {{ macros.render_page_footnotes(page_footnotes, doc_fn_ids) }}
+        {{ macros.render_page_footnotes(footnote_manager) }}
         </div>
         {% endif %}
   <!-- Final Page -->

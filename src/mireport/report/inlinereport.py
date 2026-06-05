@@ -29,8 +29,9 @@ from mireport.localise import (
     group_symbol,
 )
 from mireport.report.disclosure_layout import DisclosureLayoutStrategy
-from mireport.report.fact import Fact, Footnote, Symbol, tidyTdValue
+from mireport.report.fact import Fact, Symbol, tidyTdValue
 from mireport.report.factbuilder import FactBuilder
+from mireport.report.footnote import Footnote, FootnoteManager
 from mireport.report.layout import ReportLayoutOrganiser, TableStyle
 from mireport.report.periods import DurationPeriodHolder, PeriodHolder
 from mireport.report.theme import ReportTheme
@@ -58,6 +59,7 @@ class InlineReport:
         self._facts: list[Fact] = []
         self._factsByConcept: dict[Concept, list[Fact]] = defaultdict(list)
         self._footnoteCounter: count = count(1)
+        self._footnotes: dict[int, Footnote] = {}
         self._taxonomy: Taxonomy = taxonomy
         self._periods: dict[str, DurationPeriodHolder] = {}
         self._entityName: str = "Sample"
@@ -203,7 +205,9 @@ class InlineReport:
         self._factsByConcept[fact.concept].append(fact)
 
     def _createFootnote(self, content: Markup) -> Footnote:
-        return Footnote(id=next(self._footnoteCounter), content=content)
+        fn = Footnote(id=next(self._footnoteCounter), content=content)
+        self._footnotes[fn.id] = fn
+        return fn
 
     def addFootnoteToFacts(
         self,
@@ -365,6 +369,9 @@ class InlineReport:
             }
         )
         template = env.get_template("inline-report-presentation.html.jinja")
+        fn_manager = FootnoteManager(self._footnotes).register_refs(
+            sections, self._footnotesByGroup
+        )
 
         background_image_data_url = (
             self.theme.background_image.as_data_url(max_width=200)
@@ -410,6 +417,7 @@ class InlineReport:
             introduction=self._introduction,
             backCoverMatter=self._backCoverMatter,
             footnotes_by_group=self._footnotesByGroup,
+            footnote_manager=fn_manager,
         )
 
         try:
