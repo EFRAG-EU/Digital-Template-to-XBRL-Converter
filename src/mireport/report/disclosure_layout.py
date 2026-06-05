@@ -24,37 +24,6 @@ class TocGroup:
     items: list[TocItem]
 
 
-def _old_vsme_prefix(section: ReportSection) -> str:
-    return section.presentation.definition.split(".")[0]
-
-
-def _move_sections_after(
-    sections: list[ReportSection], source_prefix: str, target_prefix: str
-) -> list[ReportSection]:
-    prefixes = {id(s): _old_vsme_prefix(s) for s in sections}
-    to_move = [s for s in sections if prefixes[id(s)] == source_prefix]
-    if not to_move:
-        return sections
-    remaining = [s for s in sections if prefixes[id(s)] != source_prefix]
-    insert_pos = next(
-        (i + 1 for i, s in enumerate(remaining) if prefixes[id(s)] == target_prefix),
-        None,
-    )
-    if insert_pos is None:
-        return sections
-    return remaining[:insert_pos] + to_move + remaining[insert_pos:]
-
-
-def _split_label(label: str) -> list[str]:
-    return [p.strip() for p in label.split(" - ")]
-
-
-def _item_label(parts: list[str]) -> str:
-    if len(parts) >= 3:
-        return " - ".join(parts[2:])
-    return parts[1] if len(parts) >= 2 else parts[0]
-
-
 class DisclosureLayoutStrategy(ABC):
     _STRATEGY_MAP: ClassVar[dict[str, type[DisclosureLayoutStrategy]]] = {}
 
@@ -99,11 +68,62 @@ class DisclosureLayoutStrategy(ABC):
     def page_group_key(self, section: ReportSection, language: str) -> str: ...
 
 
+class DefaultLayoutStrategy(DisclosureLayoutStrategy, strategy_name="default"):
+    """Generic strategy: flat TOC, one section per page, labels unchanged."""
+
+    def page_group_key(self, section: ReportSection, language: str) -> str:
+        return section.presentation.roleUri
+
+    def build_toc(
+        self,
+        sections: list[ReportSection],
+        language: str,
+    ) -> list[TocGroup]:
+        return [
+            TocGroup(
+                heading=None,
+                items=[TocItem(idx=idx, label=s.getLabel(language))],
+            )
+            for idx, s in enumerate(sections, start=1)
+        ]
+
+
 _VSME_SECTION_AFFINITY: dict[str, str] = {
     "B7": "B6",
     "C7": "C6",
     "C9": "C8",
 }
+
+
+def _old_vsme_prefix(section: ReportSection) -> str:
+    return section.presentation.definition.split(".")[0]
+
+
+def _move_sections_after(
+    sections: list[ReportSection], source_prefix: str, target_prefix: str
+) -> list[ReportSection]:
+    prefixes = {id(s): _old_vsme_prefix(s) for s in sections}
+    to_move = [s for s in sections if prefixes[id(s)] == source_prefix]
+    if not to_move:
+        return sections
+    remaining = [s for s in sections if prefixes[id(s)] != source_prefix]
+    insert_pos = next(
+        (i + 1 for i, s in enumerate(remaining) if prefixes[id(s)] == target_prefix),
+        None,
+    )
+    if insert_pos is None:
+        return sections
+    return remaining[:insert_pos] + to_move + remaining[insert_pos:]
+
+
+def _split_label(label: str) -> list[str]:
+    return [p.strip() for p in label.split(" - ")]
+
+
+def _item_label(parts: list[str]) -> str:
+    if len(parts) >= 3:
+        return " - ".join(parts[2:])
+    return parts[1] if len(parts) >= 2 else parts[0]
 
 
 class OldVsmeLayoutStrategy(DisclosureLayoutStrategy, strategy_name="old_vsme"):
@@ -194,23 +214,3 @@ class VsmeLayoutStrategy(DisclosureLayoutStrategy, strategy_name="vsme"):
             groups.append(TocGroup(heading=heading, items=items))
 
         return groups
-
-
-class DefaultLayoutStrategy(DisclosureLayoutStrategy, strategy_name="default"):
-    """Generic strategy: flat TOC, one section per page, labels unchanged."""
-
-    def page_group_key(self, section: ReportSection, language: str) -> str:
-        return section.presentation.roleUri
-
-    def build_toc(
-        self,
-        sections: list[ReportSection],
-        language: str,
-    ) -> list[TocGroup]:
-        return [
-            TocGroup(
-                heading=None,
-                items=[TocItem(idx=idx, label=s.getLabel(language))],
-            )
-            for idx, s in enumerate(sections, start=1)
-        ]
