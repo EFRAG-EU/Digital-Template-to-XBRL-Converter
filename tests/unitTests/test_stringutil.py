@@ -1,9 +1,11 @@
 import pytest
+from markupsafe import Markup
 
 from mireport.stringutil import (
     format_bytes,
     format_time_ns,
     normalizeLabelText,
+    str_to_markupsafe,
     stripLabelPrefix,
     stripLabelSuffix,
     unicodeDashNormalization,
@@ -312,3 +314,50 @@ class TestXmlClean:
 
     def test_plain_text_unchanged(self) -> None:
         assert xml_clean("hello world") == "hello world"
+
+
+class TestStrToMarkupsafe:
+    def test_returns_markup_type(self) -> None:
+        result = str_to_markupsafe("hello")
+        assert isinstance(result, Markup)
+
+    def test_plain_text(self) -> None:
+        assert str_to_markupsafe("hello world") == Markup("hello world")
+
+    def test_empty_string(self) -> None:
+        assert str_to_markupsafe("") == Markup("")
+
+    @pytest.mark.parametrize(
+        "input_text, expected",
+        [
+            ("<b>bold</b>", "&lt;b&gt;bold&lt;/b&gt;"),
+            ("a & b", "a &amp; b"),
+            ('"quoted"', "&#34;quoted&#34;"),
+            ("it's", "it&#39;s"),
+        ],
+        ids=["html-tags", "ampersand", "double-quote", "apostrophe"],
+    )
+    def test_html_escaping(self, input_text: str, expected: str) -> None:
+        assert str_to_markupsafe(input_text) == Markup(expected)
+
+    def test_newline_becomes_br(self) -> None:
+        assert str_to_markupsafe("line1\nline2") == Markup("line1<br />line2")
+
+    def test_multiple_newlines(self) -> None:
+        assert str_to_markupsafe("a\nb\nc") == Markup("a<br />b<br />c")
+
+    def test_newline_with_html_chars_escaped(self) -> None:
+        assert str_to_markupsafe("<a>\n<b>") == Markup("&lt;a&gt;<br />&lt;b&gt;")
+
+    def test_crlf_treated_as_two_lines(self) -> None:
+        # str.splitlines() splits on \r\n as a single line ending
+        assert str_to_markupsafe("line1\r\nline2") == Markup("line1<br />line2")
+
+    def test_blank_line_produces_double_br(self) -> None:
+        assert str_to_markupsafe("line1\n\nline2\nline3") == Markup(
+            "line1<br /><br />line2<br />line3"
+        )
+
+    def test_trailing_newline_omitted(self) -> None:
+        # splitlines() does not produce an empty trailing element for a final newline
+        assert str_to_markupsafe("line1\n") == Markup("line1")
