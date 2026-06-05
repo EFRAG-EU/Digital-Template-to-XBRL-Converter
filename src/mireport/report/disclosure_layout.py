@@ -144,7 +144,7 @@ class OldVsmeLayoutStrategy(DisclosureLayoutStrategy, strategy_name="old_vsme"):
             first_parts = _split_label(first_label)
             category = first_parts[1] if len(first_parts) >= 2 else first_label
 
-            heading = f"[{short_prefix}] — {category}"
+            heading = f"[{short_prefix}] - {category}"
             items = [
                 TocItem(idx=idx, label=_item_label(_split_label(s.getLabel(language))))
                 for idx, s in items_list
