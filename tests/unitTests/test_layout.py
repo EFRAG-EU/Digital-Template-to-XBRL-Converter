@@ -4,6 +4,7 @@ import logging
 from datetime import date
 from unittest.mock import MagicMock
 
+from mireport.report.disclosure_layout import _move_sections_after, _old_vsme_prefix
 from mireport.report.fact import Fact
 from mireport.report.layout import (
     ReportLayoutOrganiser,
@@ -257,19 +258,19 @@ class TestGetColumnPeriods:
 class TestSectionPrefix:
     def test_extracts_prefix_before_dot(self):
         s = _section("[B02.Group Name")
-        assert ReportLayoutOrganiser._sectionPrefix(s) == "[B02"
+        assert _old_vsme_prefix(s) == "[B02"
 
     def test_multiple_dots_only_first_split(self):
         s = _section("[C02.foo.bar.baz")
-        assert ReportLayoutOrganiser._sectionPrefix(s) == "[C02"
+        assert _old_vsme_prefix(s) == "[C02"
 
     def test_no_dot_returns_whole_string(self):
         s = _section("[B02]")
-        assert ReportLayoutOrganiser._sectionPrefix(s) == "[B02]"
+        assert _old_vsme_prefix(s) == "[B02]"
 
     def test_empty_definition(self):
         s = _section("")
-        assert ReportLayoutOrganiser._sectionPrefix(s) == ""
+        assert _old_vsme_prefix(s) == ""
 
 
 # ── _move_sections_after ──────────────────────────────────────────────────────
@@ -280,14 +281,14 @@ class TestMoveSectionsAfter:
         o = _organiser()
         sections = [_section("[A01.x"), _section("[B02.x")]
         o.reportSections = sections[:]
-        o._move_sections_after("[C02", "[B02")
+        o.reportSections = _move_sections_after(o.reportSections, "[C02", "[B02")
         assert o.reportSections == sections
 
     def test_target_not_present_leaves_sections_unchanged(self):
         o = _organiser()
         sections = [_section("[A01.x"), _section("[C02.x")]
         o.reportSections = sections[:]
-        o._move_sections_after("[C02", "[B02")
+        o.reportSections = _move_sections_after(o.reportSections, "[C02", "[B02")
         assert o.reportSections == sections
 
     def test_moves_source_after_last_target(self):
@@ -297,7 +298,7 @@ class TestMoveSectionsAfter:
         c = _section("[C02.x")
         d = _section("[D03.x")
         o.reportSections = [a, c, b, d]
-        o._move_sections_after("[C02", "[B02")
+        o.reportSections = _move_sections_after(o.reportSections, "[C02", "[B02")
         assert o.reportSections == [a, b, c, d]
 
     def test_multiple_source_sections_all_move_together(self):
@@ -308,7 +309,7 @@ class TestMoveSectionsAfter:
         c2 = _section("[C02.x2")
         d = _section("[D03.x")
         o.reportSections = [a, c1, c2, b, d]
-        o._move_sections_after("[C02", "[B02")
+        o.reportSections = _move_sections_after(o.reportSections, "[C02", "[B02")
         assert o.reportSections == [a, b, c1, c2, d]
 
     def test_source_already_after_target_stays_in_place(self):
@@ -317,7 +318,7 @@ class TestMoveSectionsAfter:
         b = _section("[B02.x")
         c = _section("[C02.x")
         o.reportSections = [a, b, c]
-        o._move_sections_after("[C02", "[B02")
+        o.reportSections = _move_sections_after(o.reportSections, "[C02", "[B02")
         assert o.reportSections == [a, b, c]
 
 
