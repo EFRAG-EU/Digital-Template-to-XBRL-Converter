@@ -1,3 +1,3 @@
 from mireport.report.inlinereport import InlineReport
 
-__all__ = [InlineReport.__name__]
+__all__ = ["InlineReport"]
