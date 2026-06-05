@@ -19,6 +19,7 @@ from mireport.taxonomy import (
 )
 
 if TYPE_CHECKING:
+    from mireport.report.disclosure_layout import DisclosureLayoutStrategy
     from mireport.report.inlinereport import InlineReport
 
 L = logging.getLogger(__name__)
@@ -322,37 +323,13 @@ class ReportLayoutOrganiser:
         self.presentation = self.taxonomy.presentation
         self.reportSections: list[ReportSection] = []
 
-    @staticmethod
-    def _sectionPrefix(section: ReportSection) -> str:
-        """Extract the group prefix (e.g. '[B02') from a section's definition."""
-        return section.presentation.definition.split(".")[0]
-
-    def organise(self) -> list[ReportSection]:
+    def organise(self, layout: DisclosureLayoutStrategy) -> list[ReportSection]:
         self.createReportSections()
         self.createReportTables()
         self.reportSections.sort(key=lambda x: x.presentation)
-        self._vsme_move_hacks_for_efrag_report()
+        self.reportSections = layout.organise_sections(self.reportSections)
         self.checkAllFactsUsed()
-        return self.reportSections
-
-    def _vsme_move_hacks_for_efrag_report(self) -> None:
-        """Reorder sections: [C02] after [B02]."""
-        self._move_sections_after("[C02", "[B02")
-
-    def _move_sections_after(self, source_prefix: str, target_prefix: str) -> None:
-        """Move all sections with *source_prefix* to immediately after the last *target_prefix* section."""
-        prefixes = {id(s): self._sectionPrefix(s) for s in self.reportSections}
-        to_move = [s for s in self.reportSections if prefixes[id(s)] == source_prefix]
-        if not to_move:
-            return
-        remaining = [s for s in self.reportSections if prefixes[id(s)] != source_prefix]
-        insert_pos = None
-        for i, s in enumerate(remaining):
-            if prefixes[id(s)] == target_prefix:
-                insert_pos = i + 1
-        if insert_pos is None:
-            return
-        self.reportSections = remaining[:insert_pos] + to_move + remaining[insert_pos:]
+        return [s for s in self.reportSections if s.hasFacts]
 
     def checkAllFactsUsed(self) -> None:
         """

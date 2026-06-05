@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import TYPE_CHECKING, NamedTuple, cast
 
@@ -10,13 +9,14 @@ from markupsafe import Markup, escape
 from mireport.exceptions import InlineReportException
 from mireport.localise import localise_and_format_number
 from mireport.report.periods import DurationPeriodHolder, InstantPeriodHolder
-from mireport.stringutil import unicodeSpaceNormalize
+from mireport.stringutil import str_to_markupsafe, unicodeSpaceNormalize
 from mireport.taxonomy import Concept, QName
 from mireport.typealiases import DecimalPlaces, FactValue
 
 if TYPE_CHECKING:
     from typing import Optional
 
+    from mireport.report.footnote import Footnote
     from mireport.report.inlinereport import InlineReport
 
 TD_VALUE_RE = re.compile(r">(.*?)</")
@@ -48,25 +48,6 @@ class CoreDimension(StrEnum):
 class Symbol(NamedTuple):
     symbol: str
     name: str
-
-
-@dataclass(slots=True, frozen=True, eq=True)
-class Footnote:
-    """An immutable footnote that can be shared across many facts."""
-
-    id: int
-    content: Markup
-    _facts: list[Fact] = field(
-        default_factory=list, compare=False, hash=False, repr=False
-    )
-
-    def __html__(self) -> Markup:
-        if self._facts:
-            return self.as_aoix()
-        return self.content
-
-    def as_aoix(self) -> Markup:
-        return Markup(f"{{{{ footnote {self.id} }}}}{self.content}{{{{ end }}}}")
 
 
 class Fact:
@@ -156,7 +137,7 @@ class Fact:
         if hasattr(self.value, "__html__"):
             output = Markup(self.value)
         elif isinstance(self.value, str):
-            output = Markup("<br />").join(escape(p) for p in self.value.splitlines())
+            output = str_to_markupsafe(self.value)
         else:
             output = escape(self.value)
         return output

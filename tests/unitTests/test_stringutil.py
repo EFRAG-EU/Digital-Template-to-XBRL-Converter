@@ -1,16 +1,17 @@
 import pytest
+from markupsafe import Markup
 
 from mireport.stringutil import (
     format_bytes,
     format_time_ns,
     normalizeLabelText,
+    str_to_markupsafe,
+    stripLabelPrefix,
     stripLabelSuffix,
     unicodeDashNormalization,
     unicodeSpaceNormalize,
     xml_clean,
 )
-
-# ── unicodeDashNormalization ──────────────────────────────────────────────
 
 
 class TestUnicodeDashNormalization:
@@ -41,9 +42,6 @@ class TestUnicodeDashNormalization:
 
     def test_no_dashes_no_whitespace(self) -> None:
         assert unicodeDashNormalization("Revenue") == "Revenue"
-
-
-# ── unicodeSpaceNormalize ─────────────────────────────────────────────────
 
 
 class TestUnicodeSpaceNormalize:
@@ -77,9 +75,6 @@ class TestUnicodeSpaceNormalize:
         assert unicodeSpaceNormalize(text) == "a b c d"
 
 
-# ── normalizeLabelText ────────────────────────────────────────────────────
-
-
 class TestNormalizeLabelText:
     @pytest.mark.parametrize(
         "input_text, expected",
@@ -111,9 +106,6 @@ class TestNormalizeLabelText:
 
     def test_only_whitespace(self) -> None:
         assert normalizeLabelText("   \t\n  ") == ""
-
-
-# ── stripLabelSuffix ─────────────────────────────────────────────────────
 
 
 class TestStripLabelSuffix:
@@ -159,7 +151,58 @@ class TestStripLabelSuffix:
         )
 
 
-# ── format_time_ns ───────────────────────────────────────────────────────
+class TestStripLabelPrefix:
+    @pytest.mark.parametrize(
+        "input_text, expected",
+        [
+            ("[total] Revenue", "Revenue"),
+            ("[abstract] Cost of sales", "Cost of sales"),
+            ("Revenue", "Revenue"),
+            ("[sub] [total] Revenue", "[total] Revenue"),
+            ("[only prefix]", "[only prefix]"),
+            ("", ""),
+            ("  [tag] Label", "Label"),
+        ],
+        ids=[
+            "simple-prefix",
+            "prefix-with-abstract",
+            "no-bracket-unchanged",
+            "strips-first-bracket-only",
+            "entire-text-is-bracket-unchanged",
+            "empty-string",
+            "leading-space-strips-first-bracket",
+        ],
+    )
+    def test_prefix_stripping(self, input_text: str, expected: str) -> None:
+        assert stripLabelPrefix(input_text) == expected
+
+    def test_bracket_at_end_unchanged(self) -> None:
+        assert stripLabelPrefix("Revenue [suffix]") == "Revenue [suffix]"
+
+    def test_nested_brackets(self) -> None:
+        assert stripLabelPrefix("[A] B [C]") == "B [C]"
+
+    def test_unclosed_bracket_unchanged(self) -> None:
+        assert stripLabelPrefix("[unclosed Revenue") == "[unclosed Revenue"
+
+    def test_bracket_not_at_start_unchanged(self) -> None:
+        assert (
+            stripLabelPrefix("Revenue [total] and more") == "Revenue [total] and more"
+        )
+
+
+class TestStripLabelRoundTrip:
+    def test_prefix_then_suffix(self) -> None:
+        assert (
+            stripLabelSuffix(stripLabelPrefix("[abstract] Revenue [total]"))
+            == "Revenue"
+        )
+
+    def test_suffix_then_prefix(self) -> None:
+        assert (
+            stripLabelPrefix(stripLabelSuffix("[abstract] Revenue [total]"))
+            == "Revenue"
+        )
 
 
 class TestFormatTimeNs:
@@ -206,9 +249,6 @@ class TestFormatTimeNs:
         assert format_time_ns(ns) == expected
 
 
-# ── format_bytes ──────────────────────────────────────────────────────────
-
-
 class TestFormatBytes:
     @pytest.mark.parametrize(
         "num_bytes, expected",
@@ -239,9 +279,6 @@ class TestFormatBytes:
     )
     def test_formatting(self, num_bytes: int, expected: str) -> None:
         assert format_bytes(num_bytes) == expected
-
-
-# ── xml_clean ─────────────────────────────────────────────────────────────
 
 
 class TestXmlClean:
@@ -277,3 +314,50 @@ class TestXmlClean:
 
     def test_plain_text_unchanged(self) -> None:
         assert xml_clean("hello world") == "hello world"
+
+
+class TestStrToMarkupsafe:
+    def test_returns_markup_type(self) -> None:
+        result = str_to_markupsafe("hello")
+        assert isinstance(result, Markup)
+
+    def test_plain_text(self) -> None:
+        assert str_to_markupsafe("hello world") == Markup("hello world")
+
+    def test_empty_string(self) -> None:
+        assert str_to_markupsafe("") == Markup("")
+
+    @pytest.mark.parametrize(
+        "input_text, expected",
+        [
+            ("<b>bold</b>", "&lt;b&gt;bold&lt;/b&gt;"),
+            ("a & b", "a &amp; b"),
+            ('"quoted"', "&#34;quoted&#34;"),
+            ("it's", "it&#39;s"),
+        ],
+        ids=["html-tags", "ampersand", "double-quote", "apostrophe"],
+    )
+    def test_html_escaping(self, input_text: str, expected: str) -> None:
+        assert str_to_markupsafe(input_text) == Markup(expected)
+
+    def test_newline_becomes_br(self) -> None:
+        assert str_to_markupsafe("line1\nline2") == Markup("line1<br />line2")
+
+    def test_multiple_newlines(self) -> None:
+        assert str_to_markupsafe("a\nb\nc") == Markup("a<br />b<br />c")
+
+    def test_newline_with_html_chars_escaped(self) -> None:
+        assert str_to_markupsafe("<a>\n<b>") == Markup("&lt;a&gt;<br />&lt;b&gt;")
+
+    def test_crlf_treated_as_two_lines(self) -> None:
+        # str.splitlines() splits on \r\n as a single line ending
+        assert str_to_markupsafe("line1\r\nline2") == Markup("line1<br />line2")
+
+    def test_blank_line_produces_double_br(self) -> None:
+        assert str_to_markupsafe("line1\n\nline2\nline3") == Markup(
+            "line1<br /><br />line2<br />line3"
+        )
+
+    def test_trailing_newline_omitted(self) -> None:
+        # splitlines() does not produce an empty trailing element for a final newline
+        assert str_to_markupsafe("line1\n") == Markup("line1")

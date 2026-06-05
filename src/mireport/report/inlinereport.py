@@ -28,8 +28,10 @@ from mireport.localise import (
     get_locale_from_str,
     group_symbol,
 )
-from mireport.report.fact import Fact, Footnote, Symbol, tidyTdValue
+from mireport.report.disclosure_layout import DisclosureLayoutStrategy
+from mireport.report.fact import Fact, Symbol, tidyTdValue
 from mireport.report.factbuilder import FactBuilder
+from mireport.report.footnote import Footnote, FootnoteManager
 from mireport.report.layout import ReportLayoutOrganiser, TableStyle
 from mireport.report.periods import DurationPeriodHolder, PeriodHolder
 from mireport.report.theme import ReportTheme
@@ -57,6 +59,7 @@ class InlineReport:
         self._facts: list[Fact] = []
         self._factsByConcept: dict[Concept, list[Fact]] = defaultdict(list)
         self._footnoteCounter: count = count(1)
+        self._footnotes: dict[int, Footnote] = {}
         self._taxonomy: Taxonomy = taxonomy
         self._periods: dict[str, DurationPeriodHolder] = {}
         self._entityName: str = "Sample"
@@ -201,30 +204,43 @@ class InlineReport:
         self._facts.append(fact)
         self._factsByConcept[fact.concept].append(fact)
 
-    def _createFootnote(self, content: str) -> Footnote:
-        return Footnote(id=next(self._footnoteCounter), content=Markup(content))
+    def _createFootnote(self, content: Markup) -> Footnote:
+        fn = Footnote(id=next(self._footnoteCounter), content=content)
+        self._footnotes[fn.id] = fn
+        return fn
 
-    def addFootnote(
+    def addFootnoteToFacts(
         self,
-        content: str,
+        content: str | Markup,
+        facts: list[Fact],
         *,
         group: str | None = None,
-        concept: str | None = None,
-        concepts: list[str] | None = None,
     ) -> Footnote:
-        """Create a footnote and attach it to facts by concept and/or group."""
-        all_concepts = list(concepts or [])
-        if concept is not None:
-            all_concepts.append(concept)
+        """Create a footnote and attach it to the given facts directly."""
+        if isinstance(content, str):
+            content = Markup.escape(content)
         footnote = self._createFootnote(content)
-        for qname in all_concepts:
-            tax_concept = self._taxonomy.getConcept(qname)
-            for fact in self.getFacts(tax_concept):
-                fact.footnotes.append(footnote)
-                footnote._facts.append(fact)
+        for fact in facts:
+            fact.footnotes.append(footnote)
+            footnote._facts.append(fact)
         if group is not None:
             self._footnotesByGroup[group] = footnote
         return footnote
+
+    def addFootnoteForConcepts(
+        self,
+        content: str | Markup,
+        concepts: list[Concept],
+        *,
+        group: str | None = None,
+    ) -> Footnote:
+        """Create a footnote and attach it to all existing facts for each
+        specified concept. If no facts exist for a concept, the footnote will
+        not be attached to any facts for that concept.
+
+        See also addFootnoteToFacts for attaching footnotes directly to specific facts."""
+        facts = [f for c in concepts for f in self.getFacts(c)]
+        return self.addFootnoteToFacts(content, facts, group=group)
 
     def replaceFactValue(self, concept_qname: str | QName, value: FactValue) -> None:
         """
@@ -318,10 +334,13 @@ class InlineReport:
         if self._generatedReport is not None:
             return self._generatedReport
 
-        rl = ReportLayoutOrganiser(self._taxonomy, self)
-        sections = rl.organise()
-
         label_language = self._taxonomy.getBestSupportedLanguage(self.language)
+        lang = label_language or ""
+
+        layout = DisclosureLayoutStrategy.for_entry_point(self._taxonomy.entryPoint)
+        rl = ReportLayoutOrganiser(self._taxonomy, self)
+        sections = rl.organise(layout)
+        toc = layout.build_toc(sections, lang)
 
         env = Environment(
             loader=PackageLoader("mireport.report", "inline_report_templates"),
@@ -338,6 +357,8 @@ class InlineReport:
                 "labelLanguage": label_language,
                 "labelQNameFallback": label_language is None,
                 "label_overrides_by_concept": self._labelOverrides,
+                "section_label": lambda s: layout.section_label(s, lang),
+                "page_group_key": lambda s: layout.page_group_key(s, lang),
             }
         )
         env.filters.update(
@@ -347,6 +368,9 @@ class InlineReport:
             }
         )
         template = env.get_template("inline-report-presentation.html.jinja")
+        fn_manager = FootnoteManager(self._footnotes).register_refs(
+            sections, self._footnotesByGroup
+        )
 
         background_image_data_url = (
             self.theme.background_image.as_data_url(max_width=200)
@@ -383,6 +407,7 @@ class InlineReport:
             documentInfo=self.getDocumentInformation(),
             facts=self.facts,
             sections=sections,
+            toc=toc,
             uniqueFactCount=len(frozenset(self._facts)),
             theme=self.theme.displayMode,
             colour=self.theme.colour,
@@ -391,6 +416,7 @@ class InlineReport:
             introduction=self._introduction,
             backCoverMatter=self._backCoverMatter,
             footnotes_by_group=self._footnotesByGroup,
+            footnote_manager=fn_manager,
         )
 
         try:

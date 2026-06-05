@@ -679,7 +679,7 @@ class Taxonomy:
             for roleUri, bits in presentation.items()
         )
 
-        self._lookupConceptsByName = defaultdict(list)
+        self._lookupConceptsByName: dict[str, list[Concept]] = defaultdict(list)
         for concept in concepts.values():
             self._lookupConceptsByName[concept.qname.localName].append(concept)
 
@@ -799,37 +799,86 @@ class Taxonomy:
             qname = self._qnameMaker.fromString(qname)
         return self._concepts[qname]
 
-    def getConceptForName(self, name: str) -> Concept | None:
-        possible = self._lookupConceptsByName.get(name, [])
-        match len(possible):
+    def resolveConcept(
+        self,
+        text: str,
+        *,
+        by_label: bool = False,
+        by_name: bool = False,
+        by_qname: bool = False,
+        only_reportable: bool = True,
+    ) -> Optional[Concept]:
+        """Resolve a string to a Concept using one or more strategies.
+
+        Strategies are tried in specificity order: qname → name → label.
+        When only_reportable=True (the default), non-reportable (abstract) candidates are
+        filtered out before ambiguity checking — so a label shared by one reportable and
+        several abstract concepts resolves unambiguously rather than raising.
+        Returns the first match, or None if all enabled strategies find nothing.
+        Raises AmbiguousComponentException if any strategy finds multiple candidates.
+        Raises ValueError if no strategy is enabled.
+        """
+        if not (by_label or by_name or by_qname):
+            raise ValueError(
+                "resolveConcept requires at least one strategy to be enabled"
+            )
+        if by_qname:
+            try:
+                concept = self.getConcept(text)
+                if not only_reportable or concept.isReportable:
+                    return concept
+            except Exception:
+                pass  # not a valid QName format or concept not present
+
+        candidates: set[Concept] = set()
+
+        if by_name:
+            candidates.update(self._lookupConceptsByName.get(text, []))
+
+        if by_label:
+            possible: frozenset[Concept] = self._lookupConceptsByStandardLabel.get(
+                text, frozenset()
+            )
+            if not possible:
+                normalized = normalizeLabelText(text)
+                possible = self._lookupConceptsByPretendLabel.get(
+                    normalized, frozenset()
+                )
+                if not possible:
+                    no_suffix = stripLabelSuffix(normalized)
+                    if no_suffix != normalized:
+                        possible = self._lookupConceptsByPretendLabel.get(
+                            no_suffix, frozenset()
+                        )
+                    if not possible:
+                        possible = self._lookupConceptsByPretendLabel.get(
+                            no_suffix.lower(), frozenset()
+                        )
+            candidates.update(possible)
+
+        if only_reportable:
+            candidates = {c for c in candidates if c.isReportable}
+
+        match len(candidates):
             case 0:
                 return None
             case 1:
-                return possible[0]
+                return next(iter(candidates))
             case _:
                 raise AmbiguousComponentException(
-                    f"Ambiguous name specified. Candidates concepts: {', '.join(str(concept.qname) for concept in possible)}"
+                    f"Ambiguous concept specified. Candidate concepts: "
+                    f"{', '.join(str(c.qname) for c in sorted(candidates))}"
                 )
 
-    def getConceptForLabel(self, label: str) -> Optional[Concept]:
-        possible: frozenset[Concept] = self._lookupConceptsByStandardLabel.get(
-            label, frozenset()
+    def getConceptForName(self, name: str) -> Concept | None:
+        return self.resolveConcept(
+            name, by_name=True, by_label=False, by_qname=False, only_reportable=False
         )
-        if not possible:
-            label = normalizeLabelText(label)
-            possible = self._lookupConceptsByPretendLabel.get(label, frozenset())
-        if not possible:
-            label = label.lower()
-            possible = self._lookupConceptsByPretendLabel.get(label, frozenset())
-        match len(possible):
-            case 0:
-                return None
-            case 1:
-                return next(iter(possible))
-            case _:
-                raise AmbiguousComponentException(
-                    f"Ambiguous label specified. Candidate concepts: {', '.join(str(concept.qname) for concept in sorted(possible))}"
-                )
+
+    def getConceptForLabel(self, label: str) -> Optional[Concept]:
+        return self.resolveConcept(
+            label, by_label=True, by_name=False, by_qname=False, only_reportable=False
+        )
 
     @cached_property
     def concepts(self) -> frozenset[Concept]:
