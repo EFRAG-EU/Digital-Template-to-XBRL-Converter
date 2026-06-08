@@ -927,8 +927,7 @@ class ExcelProcessor:
                 else:
                     concept = self._report.taxonomy.getConceptForName(conceptName)
                     dimValue = self._report.taxonomy.getConceptForName(memberName)
-                    crh = self._getCellRange(dn)
-                    if crh is not None and concept is not None and dimValue is not None:
+                    if concept is not None and dimValue is not None and (crh := self._getCellRange(dn)) is not None:
                         b = CellAndXBRLMetadataHolder.fromCellRangeMetadata(
                             crh, concept=concept
                         )
