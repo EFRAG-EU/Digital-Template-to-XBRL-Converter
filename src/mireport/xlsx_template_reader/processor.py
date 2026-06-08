@@ -628,7 +628,8 @@ class ExcelProcessor:
         except Exception:
             return None
         finally:
-            processor._workbook.close()
+            if hasattr(processor, "_workbook"):
+                processor._workbook.close()
 
     def checkMigrationStatus(self) -> bool | None:
         """
