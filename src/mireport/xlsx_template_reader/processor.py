@@ -2177,18 +2177,37 @@ class ExcelProcessor:
             target_facts: list[Fact] = []
             for concept, member in resolved_refs:
                 facts = self._report.getFacts(concept)
-                if member is not None:
+                if not facts:
+                    warn_ref(
+                        f"No facts found for concept '{concept.qname}'; footnote will not be attached.",
+                    )
+                elif member is not None:
                     # TODO: typed dimensions store a string value under "typed {axis_qname}"
                     # rather than a QName member — if typed domain filtering is ever needed, extend here.
-                    filtered = [f for f in facts if member.qname in f.aspects.values()]
-                    if not filtered:
+                    facts = [f for f in facts if member.qname in f.aspects.values()]
+                    if not facts:
                         warn_ref(
                             f"Dimension member '{member.qname}' not found among facts for "
-                            f"'{concept.qname}'; attaching to all facts for that concept.",
+                            f"'{concept.qname}'; footnote will not be attached.",
                         )
-                        filtered = facts
-                    facts = filtered
+                else:
+                    # No member specified — restrict to facts that carry no taxonomy-defined
+                    # dimension context (no explicit QName key, no typed-dimension string key).
+                    facts = [
+                        f for f in facts
+                        if not any(
+                            isinstance(k, QName) or (isinstance(k, str) and k.startswith("typed "))
+                            for k in f.aspects
+                        )
+                    ]
+                    if not facts:
+                        warn_ref(
+                            f"All facts for concept '{concept.qname}' have dimensional context; "
+                            f"footnote will not be attached.",
+                        )
                 target_facts.extend(facts)
+            if not target_facts:
+                continue
             self._report.addFootnoteToFacts(str_to_markupsafe(text_value), target_facts)
 
     def checkForUnhandledItems(self) -> None:
