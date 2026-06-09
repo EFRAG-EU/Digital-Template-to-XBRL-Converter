@@ -2203,9 +2203,11 @@ class ExcelProcessor:
                     # No member specified — restrict to facts that carry no taxonomy-defined
                     # dimension context (no explicit QName key, no typed-dimension string key).
                     facts = [
-                        f for f in facts
+                        f
+                        for f in facts
                         if not any(
-                            isinstance(k, QName) or (isinstance(k, str) and k.startswith("typed "))
+                            isinstance(k, QName)
+                            or (isinstance(k, str) and k.startswith("typed "))
                             for k in f.aspects
                         )
                     ]
