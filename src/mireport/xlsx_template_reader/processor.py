@@ -927,7 +927,11 @@ class ExcelProcessor:
                 else:
                     concept = self._report.taxonomy.getConceptForName(conceptName)
                     dimValue = self._report.taxonomy.getConceptForName(memberName)
-                    if concept is not None and dimValue is not None and (crh := self._getCellRange(dn)) is not None:
+                    if (
+                        concept is not None
+                        and dimValue is not None
+                        and (crh := self._getCellRange(dn)) is not None
+                    ):
                         b = CellAndXBRLMetadataHolder.fromCellRangeMetadata(
                             crh, concept=concept
                         )
@@ -962,7 +966,9 @@ class ExcelProcessor:
                 Severity.ERROR,
                 MessageType.DevInfo,
             )
-            L.exception(f"OpenPyXL error processing named range definition {dn.name=} {dn.attr_text=!r}.")
+            L.exception(
+                f"OpenPyXL error processing named range definition {dn.name=} {dn.attr_text=!r}."
+            )
             return None
         match len(all_destinations):
             case 0:
@@ -993,7 +999,10 @@ class ExcelProcessor:
             ws = self._workbook[sheetName]
             cr = CellRange(cell_range)
         except Exception as e:
-            L.exception(f"OpenPyXL error processing cell range. {dn.name=} {sheetName=} {cell_range=}", exc_info=e)
+            L.exception(
+                f"OpenPyXL error processing cell range. {dn.name=} {sheetName=} {cell_range=}",
+                exc_info=e,
+            )
             return None
         dims = getEffectiveCellRangeDimensions(ws, cr)
         self._results.addCellQueries(dims.cellsAccessed)
