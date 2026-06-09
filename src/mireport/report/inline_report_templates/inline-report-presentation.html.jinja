@@ -29,16 +29,16 @@
             <div class="cover-top">
                 <div class="cover-headline">
 {% if reportInfo.entityName %}
-                    <h2 class="inline">{{ reportInfo.entityName | e }} </h2>
+                    <h2 class="entity-name">{{ reportInfo.entityName | e }} </h2>
 {% endif %}
 {% if reportInfo.title %}
-                    <h1 class="inline">{{ reportInfo.title | e }} </h1>
+                    <h1 class="report-title">{{ reportInfo.title | e }} </h1>
 {% endif %}
 {% if reportInfo.subtitle %}
-                    <h2>{{ reportInfo.subtitle | e }}</h2>
+                    <h2 class="report-subtitle">{{ reportInfo.subtitle | e }}</h2>
 {% endif %}
 {% if reportInfo.defaultPeriod %}
-                    <h2>{{ macros.render_duration_period_endyear(reportInfo.defaultPeriod) }}</h2>
+                    <h2 class="report-date">{{ macros.render_duration_period_endyear(reportInfo.defaultPeriod) }}</h2>
 {% endif %}
                 </div>
             </div>
