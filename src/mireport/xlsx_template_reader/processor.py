@@ -954,7 +954,16 @@ class ExcelProcessor:
         )
 
     def _getCellRange(self, dn: DefinedName) -> Optional[CellRangeMetadata]:
-        all_destinations = list(dn.destinations)
+        try:
+            all_destinations = list(dn.destinations)
+        except AttributeError:
+            self._results.addMessage(
+                f"Named range {dn.name} has an unreadable destination: {dn.attr_text!r}. \nSomething has modified the digital template's structure. \nPlease try a fresh copy of the template and check that it has not been modified in unsupported ways.",
+                Severity.ERROR,
+                MessageType.DevInfo,
+            )
+            L.exception(f"OpenPyXL error processing named range definition {dn.name=} {dn.attr_text=!r}.")
+            return None
         match len(all_destinations):
             case 0:
                 self._results.addMessage(
@@ -984,7 +993,7 @@ class ExcelProcessor:
             ws = self._workbook[sheetName]
             cr = CellRange(cell_range)
         except Exception as e:
-            L.exception("OpenPyXL is sad.", exc_info=e)
+            L.exception(f"OpenPyXL error processing cell range. {dn.name=} {sheetName=} {cell_range=}", exc_info=e)
             return None
         dims = getEffectiveCellRangeDimensions(ws, cr)
         self._results.addCellQueries(dims.cellsAccessed)
