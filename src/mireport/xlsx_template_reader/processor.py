@@ -628,7 +628,8 @@ class ExcelProcessor:
         except Exception:
             return None
         finally:
-            processor._workbook.close()
+            if hasattr(processor, "_workbook"):
+                processor._workbook.close()
 
     def checkMigrationStatus(self) -> bool | None:
         """
@@ -926,8 +927,11 @@ class ExcelProcessor:
                 else:
                     concept = self._report.taxonomy.getConceptForName(conceptName)
                     dimValue = self._report.taxonomy.getConceptForName(memberName)
-                    crh = self._getCellRange(dn)
-                    if crh is not None and concept is not None and dimValue is not None:
+                    if (
+                        concept is not None
+                        and dimValue is not None
+                        and (crh := self._getCellRange(dn)) is not None
+                    ):
                         b = CellAndXBRLMetadataHolder.fromCellRangeMetadata(
                             crh, concept=concept
                         )
@@ -954,7 +958,18 @@ class ExcelProcessor:
         )
 
     def _getCellRange(self, dn: DefinedName) -> Optional[CellRangeMetadata]:
-        all_destinations = list(dn.destinations)
+        try:
+            all_destinations = list(dn.destinations)
+        except AttributeError:
+            self._results.addMessage(
+                f"Named range {dn.name} has an unreadable destination: {dn.attr_text!r}. \nSomething has modified the digital template's structure. \nPlease try a fresh copy of the template and check that it has not been modified in unsupported ways.",
+                Severity.ERROR,
+                MessageType.DevInfo,
+            )
+            L.exception(
+                f"OpenPyXL error processing named range definition {dn.name=} {dn.attr_text=!r}."
+            )
+            return None
         match len(all_destinations):
             case 0:
                 self._results.addMessage(
@@ -984,7 +999,10 @@ class ExcelProcessor:
             ws = self._workbook[sheetName]
             cr = CellRange(cell_range)
         except Exception as e:
-            L.exception("OpenPyXL is sad.", exc_info=e)
+            L.exception(
+                f"OpenPyXL error processing cell range. {dn.name=} {sheetName=} {cell_range=}",
+                exc_info=e,
+            )
             return None
         dims = getEffectiveCellRangeDimensions(ws, cr)
         self._results.addCellQueries(dims.cellsAccessed)
@@ -2168,18 +2186,39 @@ class ExcelProcessor:
             target_facts: list[Fact] = []
             for concept, member in resolved_refs:
                 facts = self._report.getFacts(concept)
-                if member is not None:
+                if not facts:
+                    warn_ref(
+                        f"No facts found for concept '{concept.qname}'; footnote will not be attached.",
+                    )
+                elif member is not None:
                     # TODO: typed dimensions store a string value under "typed {axis_qname}"
                     # rather than a QName member — if typed domain filtering is ever needed, extend here.
-                    filtered = [f for f in facts if member.qname in f.aspects.values()]
-                    if not filtered:
+                    facts = [f for f in facts if member.qname in f.aspects.values()]
+                    if not facts:
                         warn_ref(
                             f"Dimension member '{member.qname}' not found among facts for "
-                            f"'{concept.qname}'; attaching to all facts for that concept.",
+                            f"'{concept.qname}'; footnote will not be attached.",
                         )
-                        filtered = facts
-                    facts = filtered
+                else:
+                    # No member specified — restrict to facts that carry no taxonomy-defined
+                    # dimension context (no explicit QName key, no typed-dimension string key).
+                    facts = [
+                        f
+                        for f in facts
+                        if not any(
+                            isinstance(k, QName)
+                            or (isinstance(k, str) and k.startswith("typed "))
+                            for k in f.aspects
+                        )
+                    ]
+                    if not facts:
+                        warn_ref(
+                            f"All facts for concept '{concept.qname}' have dimensional context; "
+                            f"footnote will not be attached.",
+                        )
                 target_facts.extend(facts)
+            if not target_facts:
+                continue
             self._report.addFootnoteToFacts(str_to_markupsafe(text_value), target_facts)
 
     def checkForUnhandledItems(self) -> None:

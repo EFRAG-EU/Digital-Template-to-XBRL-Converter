@@ -258,35 +258,21 @@ td {
     overflow-wrap: break-word;
 }
 
-.cover-headline h1.inline,
-.cover-headline h2.inline,
-.cover-headline h3.inline,
-.cover-headline h4.inline,
-.cover-headline h5.inline,
-.cover-headline h6.inline {
-    display: inline;
-}
-
 .cover-headline h1,
-.cover-headline h2,
-.cover-headline h3,
-.cover-headline h4,
-.cover-headline h5,
-.cover-headline h6 {
+.cover-headline h2 {
     font-size: inherit;
+    color: var(--accent);
 }
 
-.report-subtitle {
-    font-size: 1.2em;
-    text-align: center;
-    margin: auto 0;
+.cover-headline h1.report-title {
+    margin-bottom: 0.1em;
+}
+
+.cover-headline h2.report-subtitle {
+    font-size: 0.5em;
     line-height: 1.2;
-    max-width: 160mm; /* keeps text narrow enough for readability */
-    margin-left: auto;
-    margin-right: auto;
-    overflow-wrap: break-word;
+    margin-bottom: 0.5em;
 }
-
 
 /* Footer page */
 .footer-page {
