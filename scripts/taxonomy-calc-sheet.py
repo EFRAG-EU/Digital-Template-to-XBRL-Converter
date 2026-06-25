@@ -158,8 +158,8 @@ _CROSS_KINDS: frozenset[CalcKind] = frozenset(
 
 def _label(rel_or_concept: PresentationRelationship | Concept) -> str:
     if isinstance(rel_or_concept, PresentationRelationship):
-        return rel_or_concept.getLabel(fallbackToQName=True)
-    return rel_or_concept.getStandardLabel(fallbackToQName=True)
+        return rel_or_concept.getLabel(removeSuffix = False, fallbackToQName=True)
+    return rel_or_concept.getStandardLabel(removeSuffix = False, fallbackToQName=True)
 
 
 def _sanitise_sheet_name(name: str, used: set[str]) -> str:
