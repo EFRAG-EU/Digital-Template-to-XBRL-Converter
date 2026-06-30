@@ -5,6 +5,7 @@ import re
 import sys
 from types import MappingProxyType
 from typing import TYPE_CHECKING, NamedTuple
+from weakref import WeakValueDictionary
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -109,7 +110,7 @@ class QName:
     :meth:`myQnameMaker.fromString(qname_string)`.
     """
 
-    __slots__ = ("localName", "namespace", "prefix")
+    __slots__ = ("localName", "namespace", "prefix", "__weakref__")
 
     def __init__(
         self,
@@ -152,6 +153,9 @@ class QName:
 class QNameMaker:
     def __init__(self, nsManager: NamespaceManager):
         self._nsManager = nsManager
+        self._activeQNames: WeakValueDictionary[str | tuple[str, str], QName] = (
+            WeakValueDictionary()
+        )
 
     def _getAndValidateParts(self, /, qname: str) -> _QNameTuple:
         if not (qname and len(parts := qname.split(":", 1)) == 2):
@@ -186,14 +190,28 @@ class QNameMaker:
             return False
 
     def fromString(self, /, qname: str) -> QName:
+        if (qn := self._activeQNames.get(qname)) is not None:
+            return qn
         q = self._getAndValidateParts(qname)
-        return QName(q)
+        qn = QName(q)
+        self._activeQNames[qname] = qn
+        return qn
 
     def fromNamespaceAndLocalName(self, /, namespace: str, localName: str) -> QName:
+        qcache = self._activeQNames
+        qname_parts = (localName, namespace)
+        if (qn := qcache.get(qname_parts)) is not None:
+            return qn
         prefix = self._nsManager.getOrGeneratePrefixForNamespace(namespace)
+        qname_str = f"{prefix}:{localName}"
+        if (qn := qcache.get(qname_str)) is not None:
+            qcache[qname_parts] = qn
+            return qn
         q = _QNameTuple(prefix=prefix, localName=localName, namespace=namespace)
         self._partsValidator(q)
-        return QName(q)
+        qn = QName(q)
+        qcache[qname_str] = qcache[qname_parts] = qn
+        return qn
 
     def addNamespacePrefix(self, prefix: str, namespace: str) -> None:
         self._nsManager.add(prefix, namespace)
