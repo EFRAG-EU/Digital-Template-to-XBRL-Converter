@@ -40,7 +40,7 @@
                     {% set conversion = conversions[id] %}
                     <tr class="hover:bg-gray-50">
                         <td class="border border-gray-300 px-4 py-2 text-sm text-gray-800 max-w-xs overflow-hidden text-ellipsis">
-                            <span class="font-medium text-gray-900 block">{{ getUploadFilename(id) }}</span>
+                            <span class="font-medium text-gray-900 block">{{ get_upload_filename(id) }}</span>
                             <br>
                             <span class="text-gray-600 text-xs block">Uploaded on: {{ conversion.date }}</span>
                         </td>

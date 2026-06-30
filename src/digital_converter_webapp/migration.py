@@ -38,6 +38,7 @@ from mireport.xlsx_template_reader.processor import (
 )
 
 from .blueprints import convert_bp
+from .conversion import Conversion, ConversionStore
 
 L = logging.getLogger(__name__)
 
@@ -52,100 +53,67 @@ class MigrationOutcome(StrEnum):
     MIGRATION_REQUIRED = "migration_required"
 
 
-def doMigrationChecks(conversion: dict) -> tuple[MigrationOutcome, str]:
-    upload = FilelikeAndFileName(*conversion["excel"])
+def do_migration_checks(conv: Conversion) -> tuple[MigrationOutcome, str]:
+    upload = conv.excel
+    assert upload is not None, "do_migration_checks requires an uploaded Excel"
     check_results = XlsxProcessor.checkReport(upload.fileLike())
     version = str(check_results.reported_version) if check_results else "unknown"
 
     if check_results is None:
-        return (
-            MigrationOutcome.MISSING,
-            version,
-        )  # can't do anything if we can't read the report
-    elif version == "0.0.0":
-        return (
-            MigrationOutcome.INVALID_FORMAT,
-            version,
-        )  # can't determine version, likely invalid report
-    elif check_results.migration_status is False:
-        return (
-            MigrationOutcome.NOT_REFRESHED,
-            version,
-        )  # report not refreshed after migration
-    elif check_results.version_is_same:
-        return (
-            MigrationOutcome.SUCCESS,
-            version,
-        )  # up-to-date version
-    elif check_results.version_major_minor_same:
-        return (
-            MigrationOutcome.MIGRATION_OPTIONAL,
-            version,
-        )  # optional migration offered
-    else:
-        # Definitely an old report that we want to force migrate to the latest version
-        if check_results.validation_is_incomplete:
-            # invalid report, migration cannot proceed.
-            return MigrationOutcome.NOT_COMPLETE, version
-        else:
-            # older (major) version, must migrate
-            return (
-                MigrationOutcome.MIGRATION_REQUIRED,
-                version,
-            )
+        return MigrationOutcome.MISSING, version
+    if version == "0.0.0":
+        return MigrationOutcome.INVALID_FORMAT, version
+    if check_results.migration_status is False:
+        return MigrationOutcome.NOT_REFRESHED, version
+    if check_results.version_is_same:
+        return MigrationOutcome.SUCCESS, version
+    if check_results.version_major_minor_same:
+        return MigrationOutcome.MIGRATION_OPTIONAL, version
+    if check_results.validation_is_incomplete:
+        return MigrationOutcome.NOT_COMPLETE, version
+    return MigrationOutcome.MIGRATION_REQUIRED, version
 
 
-def checkMigration(conversion: dict) -> Response | None:
-    outcome, conversion["template_version"] = doMigrationChecks(conversion)
-    response = None
+def check_migration(conv: Conversion) -> Response | None:
+    """Run migration checks and return a redirect response if conversion must stop."""
+    outcome, conv.template_version = do_migration_checks(conv)
+    conv.migration_outcome = outcome
     match outcome:
         case MigrationOutcome.NOT_REFRESHED:
             flash("Open the migrated file and save it before conversion", "error")
-            response = make_response(redirect(url_for("basic.index")))
+            return make_response(redirect(url_for("basic.index")))
         case MigrationOutcome.MIGRATION_REQUIRED:
-            response = make_response(
-                redirect(
-                    url_for(
-                        "basic.migrationPage",
-                        id=conversion["id"],
-                    ),
-                    code=303,
-                )
+            return make_response(
+                redirect(url_for("basic.migrationPage", id=conv.id), code=303)
             )
         case MigrationOutcome.NOT_COMPLETE:
             flash("Report validation is not complete", "error")
-            response = make_response(redirect(url_for("basic.index")))
+            return make_response(redirect(url_for("basic.index")))
         case MigrationOutcome.INVALID_FORMAT:
             flash("Invalid report format", "error")
-            response = make_response(redirect(url_for("basic.index")))
+            return make_response(redirect(url_for("basic.index")))
         case MigrationOutcome.MISSING:
             flash(
                 "The uploaded file is not recognised as a valid digital template.",
                 "error",
             )
-            response = make_response(redirect(url_for("basic.index")))
-        case MigrationOutcome.MIGRATION_OPTIONAL:
-            pass  # Continue with conversion
-        case MigrationOutcome.SUCCESS:
-            pass  # Continue with conversion
-    conversion["migration_outcome"] = str(outcome)
-    return response
+            return make_response(redirect(url_for("basic.index")))
+        case MigrationOutcome.MIGRATION_OPTIONAL | MigrationOutcome.SUCCESS:
+            return None
+    return None
 
 
 @convert_bp.route("/migrationPage/<id>", methods=["GET"])
 def migrationPage(id: str) -> Response:
     try:
-        if id not in session:
+        if (conv := ConversionStore.from_flask().get(id)) is None:
             flash("Conversion session expired", "error")
             return make_response(redirect(url_for("basic.index")))
 
-        conversion = session[id]
-        version = request.args.get(
-            "version", conversion.get("template_version", "unknown")
-        )
-        excel = FilelikeAndFileName(*conversion["excel"])
+        version = request.args.get("version", conv.template_version or "unknown")
+        excel = conv.excel
+        assert excel is not None
 
-        # Parse migration results from query parameters
         elapsed = request.args.get("elapsed", type=float)
         issues_json = request.args.get("issues", "[]")
         migration_issues: list | dict = []
@@ -181,20 +149,15 @@ def migrationPage(id: str) -> Response:
 
 @convert_bp.route("/migrationButton/<id>", methods=["POST"])
 def migrationButton(id: str) -> Response:
-    """Handle migration of old VSME templates to new version."""
+    """Migrate an old VSME template to the current version."""
     try:
-        # Get the file from session
-        if id not in session:
+        if (conv := ConversionStore.from_flask().get(id)) is None:
             L.warning("MigrationButton: session expired or missing id=%s", id)
             return make_response(jsonify({"error": "Conversion session expired"}), 401)
-
-        conversion = session[id]
-
-        if "excel" not in conversion:
+        if (original_excel := conv.excel) is None:
             L.warning("MigrationButton: no excel in session for id=%s", id)
             return make_response(jsonify({"error": "No file found in session"}), 400)
 
-        original_excel = FilelikeAndFileName(*conversion["excel"])
         migrated_bytes, elapsed, migration_issues = migrate_workbook_as_bytes(
             original_excel.fileLike()
         )
@@ -204,7 +167,6 @@ def migrationButton(id: str) -> Response:
             fileContent=migrated_bytes, filename=m_name
         )
 
-        # Guard against empty output
         size = len(migrated_excel.fileContent)
         L.info("MigrationButton: generated workbook size=%d bytes for id=%s", size, id)
         if not size:
@@ -213,11 +175,9 @@ def migrationButton(id: str) -> Response:
                 jsonify({"error": "Migration produced empty file"}), 500
             )
 
-        # Store migrated file temporarily in session and redirect with results
-        conversion["migrated_excel"] = migrated_excel
+        conv.migrated_excel = migrated_excel
         session.modified = True
 
-        # Redirect to migration page with results as query parameters
         return make_response(
             redirect(
                 url_for(
@@ -229,7 +189,6 @@ def migrationButton(id: str) -> Response:
                 code=303,
             )
         )
-
     except Exception as e:
         L.exception("Exception during migration", exc_info=e)
         return make_response(jsonify({"error": str(e)}), 500)
@@ -238,15 +197,10 @@ def migrationButton(id: str) -> Response:
 @convert_bp.route("/downloadMigrated/<id>", methods=["GET"])
 def downloadMigrated(id: str) -> Response:
     """Download the migrated file from the session."""
-    if id not in session:
+    if (conv := ConversionStore.from_flask().get(id)) is None:
         return make_response({"error": "Conversion session expired / not found"}, 404)
-
-    conversion = session[id]
-
-    if "migrated_excel" not in conversion:
+    if (migrated_excel := conv.migrated_excel) is None:
         return make_response({"error": "No migrated file found"}, 404)
-
-    migrated_excel = FilelikeAndFileName(*conversion.get("migrated_excel"))
     return send_file(
         migrated_excel.fileLike(),
         as_attachment=True,
