@@ -1,7 +1,9 @@
+import sys
+
 import pytest
 
 from mireport.exceptions import BrokenNamespacePrefixException, BrokenQNameException
-from mireport.xml import NamespaceManager, QNameMaker
+from mireport.xml import XBRLI_NS, NamespaceManager, QNameMaker
 
 
 @pytest.fixture
@@ -120,3 +122,44 @@ def test_valid_qname_all_test_ns(qname_maker: QNameMaker) -> None:
     assert qname_maker.isValidQName("test:ValidName")
     assert qname_maker.isValidQName("data:another_one")
     assert qname_maker.isValidQName("data:another_one.two")
+
+
+class TestQNameFlyweight:
+    def test_flyweight_identity_fromString(self, qmaker: QNameMaker) -> None:
+        assert qmaker.fromString("xbrli:pure") is qmaker.fromString("xbrli:pure")
+
+    def test_flyweight_identity_cross_factory(self, qmaker: QNameMaker) -> None:
+        # fromString and fromNamespaceAndLocalName must return the same cached
+        # object for an equivalent QName.
+        from_str = qmaker.fromString("xbrli:pure")
+        from_parts = qmaker.fromNamespaceAndLocalName(XBRLI_NS, "pure")
+        assert from_str is from_parts
+
+    def test_localName_is_interned(self, qmaker: QNameMaker) -> None:
+        qn = qmaker.fromString("xbrli:pure")
+        assert qn.localName is sys.intern("pure"), "localName has not been interned."
+
+    def test_cross_maker_value_equality(self, xbrli_and_utr: NamespaceManager) -> None:
+        # Two independent makers (separate flyweight caches) produce distinct
+        # instances that nonetheless compare equal and hash equal, because
+        # sys.intern is global.
+        a = QNameMaker(xbrli_and_utr).fromString("xbrli:pure")
+        other_ns = NamespaceManager()
+        other_ns.add("xbrli", "http://www.xbrl.org/2003/instance")
+        b = QNameMaker(other_ns).fromString("xbrli:pure")
+        assert a is not b
+        assert a == b
+        assert hash(a) == hash(b)
+
+    def test_hash_is_lazy_then_cached(self, qmaker: QNameMaker) -> None:
+        qn = qmaker.fromString("xbrli:pure")
+        assert qn._hash is None, "Hash should not be computed until first use."
+        first = hash(qn)
+        assert qn._hash == first, "Hash should be cached after first use."
+        assert hash(qn) == first, "Cached hash should be stable."
+
+    def test_eq_consistency(self, qmaker: QNameMaker) -> None:
+        a = qmaker.fromString("xbrli:pure")
+        b = qmaker.fromString("xbrli:pure")
+        assert a == b and hash(a) == hash(b)
+        assert a != "xbrli:pure"  # non-QName -> NotImplemented -> False

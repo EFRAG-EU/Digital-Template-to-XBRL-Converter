@@ -110,7 +110,7 @@ class QName:
     :meth:`myQnameMaker.fromString(qname_string)`.
     """
 
-    __slots__ = ("localName", "namespace", "prefix", "__weakref__")
+    __slots__ = ("localName", "namespace", "prefix", "_hash", "__weakref__")
 
     def __init__(
         self,
@@ -118,7 +118,8 @@ class QName:
     ):
         self.namespace = sys.intern(q.namespace)
         self.prefix = sys.intern(q.prefix)
-        self.localName = q.localName
+        self.localName = sys.intern(q.localName)
+        self._hash: int | None = None
 
     def __key(self) -> tuple[str, str, str]:
         # compare on localname first for speed
@@ -129,12 +130,16 @@ class QName:
         return (self.prefix, self.localName, self.namespace)
 
     def __hash__(self) -> int:
-        return hash(self.__key())
+        if (h := self._hash) is None:
+            self._hash = h = hash(self.__key())
+        return h
 
     def __eq__(self, other: object) -> bool:
         if self is other:
             return True
         if isinstance(other, QName):
+            # __init__ sys.intern()s all 3 fields, so this tuple == compares
+            # them by identity (== short-circuits per element).
             return self.__key() == other.__key()
         return NotImplemented
 
