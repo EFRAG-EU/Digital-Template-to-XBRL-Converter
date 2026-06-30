@@ -3,6 +3,17 @@
 
 {% block title %}VSME Digital Template Migration Tool{% endblock %}
 
+{% macro convert_with_old_version() %}
+<div class="flex justify-center mt-3">
+    <a href="{{ url_for('basic.convert', id=conversion_id, skip_migration=True) }}"
+        onclick="showSpinner('Converting... Please wait.')"
+        class="inline-block px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-center rounded-lg transition"
+        style="min-width: 200px;">
+        Convert with old version
+    </a>
+</div>
+{% endmacro %}
+
 {% block content %}
 
 <!-- Back to Home -->
@@ -49,19 +60,6 @@
     </ul>
 </section>
 
-<!-- Flash Messages -->
-{% with messages = get_flashed_messages(with_categories=true) %}
-{% for category, message in messages %}
-{% if category in ('error', 'success') %}
-{% set palette = {'error': 'bg-red-100 border-red-400 text-red-700',
-                  'success': 'bg-green-100 border-green-400 text-green-700'}[category] %}
-<div class="{{ palette }} border px-4 py-3 rounded mb-4" role="alert">
-    <span class="block sm:inline">{{ message }}</span>
-</div>
-{% endif %}
-{% endfor %}
-{% endwith %}
-
 <!-- File Loaded Info -->
 <p class="bg-blue-50 border border-blue-300 rounded-lg p-4 mb-4 text-sm text-blue-800">
     <strong>File loaded:</strong> {{ filename }}
@@ -80,14 +78,18 @@
         </button>
     </div>
 </form>
-<div class="flex justify-center mt-3">
-    <a href="{{ url_for('basic.convert', id=conversion_id, skip_migration=True) }}"
-        onclick="showSpinner('Converting... Please wait.')"
-        class="inline-block px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-center rounded-lg transition"
-        style="min-width: 200px;">
-        Convert with old version
-    </a>
-</div>
+{{ convert_with_old_version() }}
+
+{% elif migration_error %}
+
+<!-- Migration failed: show error and allow retry -->
+<section id="migrationResults" class="space-y-4 mb-6" tabindex="-1">
+    <div class="bg-red-50 border border-red-300 rounded-lg p-4">
+        <h3 class="font-semibold text-red-900 mb-2">Migration Failed</h3>
+        <p class="text-sm text-red-800">{{ migration_error | e }}</p>
+    </div>
+</section>
+{{ convert_with_old_version() }}
 
 {% else %}
 
@@ -138,13 +140,8 @@
 
 <div class="flex flex-wrap justify-center items-center gap-4">
     {{ download_button('migrated', url_for('basic.downloadMigrated', id=conversion_id)) }}
-    <a href="{{ url_for('basic.convert', id=conversion_id, skip_migration=True) }}"
-        onclick="showSpinner('Converting... Please wait.')"
-        class="inline-block px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-center rounded-lg transition"
-        style="min-width: 200px;">
-        Convert with old version
-    </a>
 </div>
+{{ convert_with_old_version() }}
 
 <script>
     (function () {

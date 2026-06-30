@@ -21,6 +21,16 @@
 
       <!-- Title -->
       <h1 class="text-2xl font-bold text-center text-gray-800">VSME Digital Template to XBRL Converter</h1>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+      {% set palette = {'error': 'bg-red-100 border-red-400 text-red-700', 'success': 'bg-green-100 border-green-400 text-green-700'}.get(category, 'bg-gray-100 border-gray-400 text-gray-700') %}
+      <div class="{{ palette }} border px-4 py-3 rounded" role="alert">
+        <span class="block sm:inline">{{ message }}</span>
+      </div>
+      {% endfor %}
+      {% endwith %}
+
       {% block content %}{% endblock %}
     </div>
   </main>

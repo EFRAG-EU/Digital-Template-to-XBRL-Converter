@@ -22,7 +22,7 @@ try:
     MIGRATION_WORKING = True
 except ImportError:
     logging.getLogger(__name__).warning(
-        "Migration tool not available, migration functionality will be disabled"
+        "Migration tool not available, migration functionality will be disabled", exc_info=True
     )
     MIGRATION_WORKING = False
 
@@ -144,17 +144,19 @@ def migrationPage(id: str) -> Response:
         )
         excel = FilelikeAndFileName(*conversion["excel"])
 
-        has_migration_results = "migrated_excel" in conversion
+        has_migration_results = "migrated_excel" in conversion or "migration_error" in conversion
+        migration_error = conversion.get("migration_error")
         return Response(
             render_template(
                 "migration_page.html.jinja",
                 conversion_id=id,
                 filename=excel.filename,
                 version=version,
-                newest_version=OUR_VERSION_HOLDER,
+                newest_version=OUR_VERSION_HOLDER.strip_build_metadata,
                 has_migration_results=has_migration_results,
                 elapsed=conversion.get("migration_elapsed"),
                 migration_issues=conversion.get("migration_issues", []),
+                migration_error=migration_error,
             )
         )
     except Exception as e:
@@ -179,23 +181,33 @@ def migrationButton(id: str) -> Response:
             return make_response(jsonify({"error": "No file found in session"}), 400)
 
         original_excel = FilelikeAndFileName(*conversion["excel"])
-        migrated_bytes, elapsed, migration_issues = migrate_workbook_as_bytes(
-            original_excel.fileLike()
-        )
+
+        # Clear any stale error from a previous failed attempt
+        conversion.pop("migration_error", None)
+        conversion.pop("migrated_excel", None)
+
+        try:
+            migrated_bytes, elapsed, migration_issues = migrate_workbook_as_bytes(
+                original_excel.fileLike()
+            )
+        except NotImplementedError:
+            L.error("Migration tool not available for id=%s", id)
+            flash("Migration functionality is not available on this server.", "error")
+            return make_response(redirect(url_for("basic.index")))
+        except Exception as e:
+            L.exception("Migration failed for id=%s", id)
+            conversion["migration_error"] = f"Migration failed: {e}"
+            conversion["migration_elapsed"] = None
+            session.modified = True
+            return make_response(redirect(url_for("basic.migrationPage", id=id), code=303))
+
         o_path = PurePath(original_excel.filename)
         m_name = o_path.with_stem(f"{o_path.stem}_migrated_to_latest_version").name
         migrated_excel = FilelikeAndFileName(
             fileContent=migrated_bytes, filename=m_name
         )
 
-        # Guard against empty output
-        size = len(migrated_excel.fileContent)
-        L.info("MigrationButton: generated workbook size=%d bytes for id=%s", size, id)
-        if not size:
-            L.error("MigrationButton: empty workbook output for id=%s", id)
-            return make_response(
-                jsonify({"error": "Migration produced empty file"}), 500
-            )
+        L.info("MigrationButton: generated workbook size=%d bytes for id=%s", len(migrated_bytes), id)
 
         # Store migrated file and results in session, then redirect to results view
         conversion["migrated_excel"] = migrated_excel
@@ -206,8 +218,9 @@ def migrationButton(id: str) -> Response:
         return make_response(redirect(url_for("basic.migrationPage", id=id), code=303))
 
     except Exception as e:
-        L.exception("Exception during migration", exc_info=e)
-        return make_response(jsonify({"error": str(e)}), 500)
+        L.exception("Unexpected error in migrationButton for id=%s", id)
+        flash(f"An unexpected error occurred: {e}", "error")
+        return make_response(redirect(url_for("basic.index")))
 
 
 @convert_bp.route("/downloadMigrated/<id>", methods=["GET", "HEAD"])
