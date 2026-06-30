@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, NamedTuple
+from typing import TYPE_CHECKING, NamedTuple, Optional
 
 if TYPE_CHECKING:
     from typing import Self
@@ -77,6 +77,15 @@ class XbrlTableCellRangeMetadataHolder(NamedTuple):
     units: list[XbrlConceptCellRangeMetadata]
 
 
+class FootnoteBinding(NamedTuple):
+    """The validated footnote named ranges: a container table plus its sub-ranges."""
+
+    table: CellRangeMetadata
+    text: CellRangeMetadata
+    ref: CellRangeMetadata
+    ref_dimension: Optional[CellRangeMetadata]
+
+
 @dataclass
 class WorkbookBindings:
     concept_map: dict[DefinedName, XbrlConceptCellRangeMetadata]
@@ -84,3 +93,4 @@ class WorkbookBindings:
     unit_map: dict[Concept, XbrlConceptCellRangeMetadata]
     preset_dims: defaultdict[XbrlConceptCellRangeMetadata, dict[Concept, Concept]]
     has_external_value: frozenset[Concept]
+    footnote: Optional[FootnoteBinding]

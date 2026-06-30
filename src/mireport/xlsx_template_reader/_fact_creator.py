@@ -6,7 +6,6 @@ import difflib
 import logging
 import re
 from functools import lru_cache
-from itertools import combinations
 from typing import TYPE_CHECKING, Callable, Iterator, Optional
 
 if TYPE_CHECKING:
@@ -1029,32 +1028,6 @@ class FactCreator:
             ).setValue("\n".join(value))
             self.addFactToReport(fb, stuff)
 
-    def _validate_sub_ranges(
-        self,
-        table: CellRangeMetadata,
-        table_name: str,
-        sub_ranges: list[tuple[str, CellRangeMetadata]],
-        context: str,
-    ) -> bool:
-        """Return False (and emit a warning) if any sub-range is outside the table or if any two overlap."""
-        for name, crm in sub_ranges:
-            if not table.contains(crm):
-                self._results.addMessage(
-                    f"'{name}' is not fully contained within '{table_name}'. {context}",
-                    Severity.WARNING,
-                    MessageType.ExcelParsing,
-                )
-                return False
-        for (n1, c1), (n2, c2) in combinations(sub_ranges, 2):
-            if c1.overlaps(c2):
-                self._results.addMessage(
-                    f"'{n1}' and '{n2}' overlap. {context}",
-                    Severity.WARNING,
-                    MessageType.ExcelParsing,
-                )
-                return False
-        return True
-
     def _iter_footnote_rows(
         self,
         table_crm: CellRangeMetadata,
@@ -1150,58 +1123,17 @@ class FactCreator:
         return resolved
 
     def _processFootnotes(self) -> None:
-        TABLE_NAME = "footnote_table"
-        TEXT_NAME = "footnote_text"
-        REF_NAME = "footnote_ref_concept"
-        REF_DIM_NAME = "footnote_ref_dimension"
-
-        table_dn = self._reader.getDefinedName(TABLE_NAME)
-        text_dn = self._reader.getDefinedName(TEXT_NAME)
-        ref_dn = self._reader.getDefinedName(REF_NAME)
-        ref_dim_dn = self._reader.getDefinedName(REF_DIM_NAME)
-
-        if table_dn is None and text_dn is None and ref_dn is None:
+        binding = self._bindings.footnote
+        if binding is None:
             return
 
-        if table_dn is None or text_dn is None or ref_dn is None:
-            missing = [
-                n
-                for n, d in (
-                    (TABLE_NAME, table_dn),
-                    (TEXT_NAME, text_dn),
-                    (REF_NAME, ref_dn),
-                )
-                if d is None
-            ]
-            self._results.addMessage(
-                f"Footnote named ranges are incomplete; missing: {', '.join(missing)}. "
-                "Footnotes cannot be processed.",
-                Severity.WARNING,
-                MessageType.ExcelParsing,
-            )
-            return
-
-        table_crm = self._reader._getCellRangeMetadata(table_dn)
-        text_crm = self._reader._getCellRangeMetadata(text_dn)
-        ref_crm = self._reader._getCellRangeMetadata(ref_dn)
-        ref_dim_crm = (
-            self._reader._getCellRangeMetadata(ref_dim_dn)
-            if ref_dim_dn is not None
-            else None
-        )
-        if table_crm is None or text_crm is None or ref_crm is None:
-            return
+        table_crm = binding.table
+        text_crm = binding.text
+        ref_crm = binding.ref
+        ref_dim_crm = binding.ref_dimension
 
         ws = table_crm.worksheet
         tcr = table_crm.cellRange
-
-        sub_ranges = [(TEXT_NAME, text_crm), (REF_NAME, ref_crm)]
-        if ref_dim_crm is not None:
-            sub_ranges.append((REF_DIM_NAME, ref_dim_crm))
-        if not self._validate_sub_ranges(
-            table_crm, TABLE_NAME, sub_ranges, "Footnotes cannot be processed."
-        ):
-            return
 
         origin = tcr.min_col
         text_col_indices = range(

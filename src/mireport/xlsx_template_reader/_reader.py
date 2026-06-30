@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 from collections import defaultdict
 from datetime import date
-from itertools import combinations
 from typing import (
     TYPE_CHECKING,
     Optional,
@@ -21,7 +20,6 @@ from mireport.xlsx_template_reader._bindings import (
     CellRangeMetadata,
     WorkbookBindings,
     XbrlConceptCellRangeMetadata,
-    XbrlTableCellRangeMetadataHolder,
 )
 from mireport.xlsx_template_reader._cell_iteration import (
     getEffectiveCellRangeDimensions,
@@ -35,8 +33,11 @@ from mireport.xlsx_template_reader._constants import (
     CellType,
     CellValueType,
 )
+from mireport.xlsx_template_reader._resolvers import (
+    FootnoteTableResolver,
+    XBRLNamedRangeTableResolver,
+)
 from mireport.xlsx_template_reader.util import (
-    conceptsToText,
     excelCellRangeRef,
     excelCellRef,
     excelDefinedNameRef,
@@ -143,113 +144,9 @@ class WorkbookReader:
             MessageType.ExcelParsing,
         )
 
-        table_map: dict = {}
-
-        tables = [
-            (dn, stuff)
-            for dn, stuff in concept_map.items()
-            if stuff.concept in taxonomy.hypercubes
-        ]
-        concepts_in_excel = frozenset(stuff.concept for stuff in concept_map.values())
-        hc_concepts_in_excel = frozenset(c for c in concepts_in_excel if c.isHypercube)
-        used_empty_hypercubes = taxonomy.emptyHypercubes.intersection(
-            hc_concepts_in_excel
-        )
-        if used_empty_hypercubes:
-            results.addMessage(
-                f"The following hypercubes exist and have corresponding named ranges but they cannot be used due to missing taxonomy definitions: {conceptsToText(used_empty_hypercubes)}.",
-                Severity.ERROR,
-                MessageType.DevInfo,
-            )
-
-        for table, table_stuff in tables:
-            tableCr = table_stuff.cellRange
-            tableWorksheet = table_stuff.worksheet
-            table_concept = table_stuff.concept
-
-            allPermittedConceptsForTable = taxonomy.getDimensionsForHypercube(
-                table_concept
-            ).union(
-                {
-                    concept
-                    for concept in taxonomy.getPrimaryItemsForHypercube(table_concept)
-                    if concept.isReportable or concept.isDimension
-                }
-            )
-            missing_from_excel = allPermittedConceptsForTable.difference(
-                concepts_in_excel
-            )
-            if missing_from_excel:
-                results.addMessage(
-                    f"Expected Dimensions or Primary Items for hypercube {table.name} have not been found: {conceptsToText(missing_from_excel)}.",
-                    Severity.WARNING,
-                    MessageType.DevInfo,
-                )
-
-            candidates: list[XbrlConceptCellRangeMetadata] = []
-            extras_in_excel: set[XbrlConceptCellRangeMetadata] = set()
-            for dn, stuff in concept_map.items():
-                if tableWorksheet is not stuff.worksheet:
-                    continue
-                concept = stuff.concept
-                if not (concept.isReportable or concept.isDimension):
-                    continue
-                if tableCr.issuperset(stuff.cellRange):
-                    if concept in allPermittedConceptsForTable:
-                        candidates.append(stuff)
-                    else:
-                        extras_in_excel.add(stuff)
-                elif not tableCr.isdisjoint(stuff.cellRange):
-                    extras_in_excel.add(stuff)
-
-            if extras_in_excel:
-                results.addMessage(
-                    f"Extra named ranges found within/overlapping bounds of {table.name} named range but not supported by Hypercube {table_stuff.concept.qname}: {extras_in_excel}.",
-                    Severity.WARNING,
-                    MessageType.DevInfo,
-                )
-
-            fishy = False
-            for c1, c2 in combinations(candidates, 2):
-                disjoint = c1.cellRange.isdisjoint(c2.cellRange)
-                same = (
-                    c1.concept.isReportable
-                    and c2.concept.isReportable
-                    and (c1.cellRange.bounds == c2.cellRange.bounds)
-                )
-                if not (disjoint or same):
-                    fishy = True
-                    results.addMessage(
-                        f"Named range (table) {table.name} has named ranges (primary items or dimensions) {c1.definedName.name} and {c2.definedName.name} that are neither the same nor disjoint. Ignoring table.",
-                        Severity.ERROR,
-                        MessageType.ExcelParsing,
-                    )
-                    break
-
-            if not fishy:
-                pItems = [c for c in candidates if c.concept.isReportable]
-                eDims = [c for c in candidates if c.concept.isExplicitDimension]
-                tDims = [c for c in candidates if c.concept.isTypedDimension]
-                units = [
-                    u for p in pItems if (u := unit_map.get(p.concept)) is not None
-                ]
-                table_map[table_stuff] = XbrlTableCellRangeMetadataHolder(
-                    primaryItems=pItems,
-                    explicitDimensions=eDims,
-                    typedDimensions=tDims,
-                    units=units,
-                )
-
-        # Remove table entries from concept_map (they're now in table_map)
-        for tableStuff, table_contents in table_map.items():
-            concept_map.pop(tableStuff.definedName, None)
-            table_dict = table_contents._asdict()
-            for name, part_list in table_dict.items():
-                for holder in part_list:
-                    if "units" == name:
-                        unit_map.pop(holder.concept, None)
-                    else:
-                        concept_map.pop(holder.definedName, None)
+        table_map = XBRLNamedRangeTableResolver(
+            self, results, taxonomy, concept_map, unit_map
+        ).resolve()
 
         has_external_value: set[Concept] = set()
         if (ext_dn := self._workbook.defined_names.get(EXTERNAL_VALUES_RANGE)) and (
@@ -283,6 +180,7 @@ class WorkbookReader:
             unit_map=unit_map,
             preset_dims=preset_dims,
             has_external_value=frozenset(has_external_value),
+            footnote=FootnoteTableResolver(self, results).resolve(),
         )
 
     def _createCellRangeMetadata(self, dn: DefinedName) -> Optional[CellRangeMetadata]:
