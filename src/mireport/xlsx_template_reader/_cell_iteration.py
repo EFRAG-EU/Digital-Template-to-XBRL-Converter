@@ -1,65 +1,29 @@
+"""Low-level iteration over openpyxl cell ranges.
+
+Callers holding a CellRangeMetadata should use its rows()/cells()/cellsWithCoords()
+methods rather than these functions.
+"""
+
 from __future__ import annotations
 
-from typing import (
-    Iterator,
-    Literal,
-    NamedTuple,
-    overload,
-)
+from typing import Iterator, NamedTuple
 
 from openpyxl.worksheet.cell_range import CellRange
 from openpyxl.worksheet.worksheet import Worksheet
 
 from mireport.exceptions import OpenPyXlRelatedException
-from mireport.xlsx_template_reader._bindings import (
-    CellRangeMetadata,
-)
 from mireport.xlsx_template_reader._constants import CellType
 
 
-@overload
-def _getIteratorForCellRange(
-    ws: Worksheet,
-    cr: CellRange,
-    group_by_row: Literal[False] = ...,
-    only_cells: Literal[False] = ...,
-) -> Iterator[tuple[int, int, CellType]]: ...
-
-
-@overload
-def _getIteratorForCellRange(
-    ws: Worksheet,
-    cr: CellRange,
-    *,
-    group_by_row: Literal[True],
-    only_cells: Literal[False] = ...,
-) -> Iterator[tuple[int, tuple[CellType, ...]]]: ...
-
-
-@overload
-def _getIteratorForCellRange(
-    ws: Worksheet,
-    cr: CellRange,
-    group_by_row: Literal[False] = ...,
-    *,
-    only_cells: Literal[True],
-) -> Iterator[CellType]: ...
-
-
-def _getIteratorForCellRange(
-    ws: Worksheet,
-    cr: CellRange,
-    group_by_row: bool = False,
-    only_cells: bool = False,
-) -> Iterator[tuple[int, int, CellType] | tuple[int, tuple[CellType, ...]] | CellType]:
-    """Iterates over cells in the given range, supporting standard, row-grouped, and cells-only modes."""
-    if group_by_row and only_cells:
-        raise ValueError("group_by_row and only_cells are mutually exclusive.")
+def iterRows(
+    ws: Worksheet, cr: CellRange
+) -> Iterator[tuple[int, tuple[CellType, ...]]]:
+    """Yield (row_number, cells) for each row of the range."""
     if cr.min_row is None or cr.min_col is None:
         raise OpenPyXlRelatedException(
             f"Cell range bounds expected to be int but actually None {cr=}"
         )
-    for rnum, row in enumerate(
+    yield from enumerate(
         ws.iter_rows(
             min_row=cr.min_row,
             min_col=cr.min_col,
@@ -67,57 +31,22 @@ def _getIteratorForCellRange(
             max_col=cr.max_col,
         ),
         start=cr.min_row,
-    ):
-        if group_by_row:
-            yield rnum, row
-        elif only_cells:
-            yield from row
-        else:
-            for cnum, cell in enumerate(row, start=cr.min_col):
-                yield rnum, cnum, cell
+    )
 
 
-@overload
-def getIteratorForCellRangeMetadata(
-    metadata: CellRangeMetadata,
-    group_by_row: Literal[False] = ...,
-    only_cells: Literal[False] = ...,
-) -> Iterator[tuple[int, int, CellType]]: ...
+def iterCells(ws: Worksheet, cr: CellRange) -> Iterator[CellType]:
+    """Yield every cell of the range, row by row."""
+    for _, row in iterRows(ws, cr):
+        yield from row
 
 
-@overload
-def getIteratorForCellRangeMetadata(
-    metadata: CellRangeMetadata,
-    *,
-    group_by_row: Literal[True],
-    only_cells: Literal[False] = ...,
-) -> Iterator[tuple[int, tuple[CellType, ...]]]: ...
-
-
-@overload
-def getIteratorForCellRangeMetadata(
-    metadata: CellRangeMetadata,
-    group_by_row: Literal[False] = ...,
-    *,
-    only_cells: Literal[True],
-) -> Iterator[CellType]: ...
-
-
-def getIteratorForCellRangeMetadata(
-    metadata: CellRangeMetadata,
-    group_by_row: bool = False,
-    only_cells: bool = False,
-) -> Iterator[tuple[int, int, CellType] | tuple[int, tuple[CellType, ...]] | CellType]:
-    """Convenience wrapper around getCellRangeIterator for callers that hold a CellRangeMetadata."""
-    if group_by_row:
-        return _getIteratorForCellRange(
-            metadata.worksheet, metadata.cellRange, group_by_row=True
-        )
-    if only_cells:
-        return _getIteratorForCellRange(
-            metadata.worksheet, metadata.cellRange, only_cells=True
-        )
-    return _getIteratorForCellRange(metadata.worksheet, metadata.cellRange)
+def iterCellsWithCoords(
+    ws: Worksheet, cr: CellRange
+) -> Iterator[tuple[int, int, CellType]]:
+    """Yield (row_number, column_number, cell) for every cell of the range."""
+    for rnum, row in iterRows(ws, cr):
+        for cnum, cell in enumerate(row, start=cr.min_col):
+            yield rnum, cnum, cell
 
 
 class _CellRangeDimensions(NamedTuple):
@@ -149,7 +78,7 @@ def getEffectiveCellRangeDimensions(
     last_rnum = None
     empty_row = True
     sheetName = ws.title
-    for rnum, cnum, cell in _getIteratorForCellRange(ws, cell_range):
+    for rnum, cnum, cell in iterCellsWithCoords(ws, cell_range):
         cellCount.add((sheetName, rnum, cnum))
         if last_rnum is None:
             last_rnum = rnum

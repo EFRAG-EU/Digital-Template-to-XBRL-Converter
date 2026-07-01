@@ -41,8 +41,6 @@ from mireport.xlsx_template_reader._resolvers import (
 )
 from mireport.xlsx_template_reader.util import (
     conceptsToText,
-    excelCellRangeRef,
-    excelCellRef,
     excelDefinedNameRef,
     getDateFromValue,
 )
@@ -300,7 +298,7 @@ class WorkbookReader:
                     f"Named range {stuff.definedName.name} has {stuff.populated_height} populated rows but no row was specified; using the first.",
                     Severity.WARNING,
                     MessageType.DevInfo,
-                    excel_reference=excelCellRangeRef(ws, cr),
+                    excel_reference=stuff.excelRef(),
                 )
 
         if shouldOverrideColumn:
@@ -310,7 +308,7 @@ class WorkbookReader:
                     f"Named range {stuff.definedName.name} has {stuff.populated_width} populated columns but no column was specified; using the first.",
                     Severity.WARNING,
                     MessageType.DevInfo,
-                    excel_reference=excelCellRangeRef(ws, cr),
+                    excel_reference=stuff.excelRef(),
                 )
 
         if not (cr.min_row <= row <= cr.max_row):
@@ -318,7 +316,7 @@ class WorkbookReader:
                 f"Row {row} has not been specified correctly.",
                 Severity.WARNING,
                 MessageType.DevInfo,
-                excel_reference=excelCellRangeRef(ws, cr),
+                excel_reference=stuff.excelRef(),
             )
             row = cr.min_row
         if not (cr.min_col <= column <= cr.max_col):
@@ -326,7 +324,7 @@ class WorkbookReader:
                 f"Column {column} has not been specified correctly.",
                 Severity.WARNING,
                 MessageType.DevInfo,
-                excel_reference=excelCellRangeRef(ws, cr),
+                excel_reference=stuff.excelRef(),
             )
             column = cr.min_col
 
@@ -340,7 +338,7 @@ class WorkbookReader:
                 f"Excel cell has an invalid stored value {EXCEL_PLACEHOLDER_VALUE}. Please check the Excel formula for this specific cell.",
                 Severity.ERROR,
                 MessageType.ExcelParsing,
-                excel_reference=excelCellRef(ws, cell),
+                excel_reference=stuff.excelRef(cell),
             )
             return None
         return cell
@@ -390,9 +388,9 @@ def index_xbrl_candidates(
     hypercubes = taxonomy.hypercubes
     hypercube_ranges: list[XbrlConceptCellRangeMetadata] = []
     concepts_in_excel: list[Concept] = []
-    candidates_by_ws: defaultdict[
-        Worksheet, list[XbrlConceptCellRangeMetadata]
-    ] = defaultdict(list)
+    candidates_by_ws: defaultdict[Worksheet, list[XbrlConceptCellRangeMetadata]] = (
+        defaultdict(list)
+    )
     for stuff in concept_map.values():
         concept = stuff.concept
         concepts_in_excel.append(concept)

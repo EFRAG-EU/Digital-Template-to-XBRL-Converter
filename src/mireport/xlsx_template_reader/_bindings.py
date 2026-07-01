@@ -4,16 +4,24 @@ from __future__ import annotations
 
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, NamedTuple, Optional
+from typing import TYPE_CHECKING, Iterator, NamedTuple, Optional
 
 if TYPE_CHECKING:
     from typing import Self
+
+    from mireport.xlsx_template_reader._constants import CellType
 
 from openpyxl.workbook.defined_name import DefinedName
 from openpyxl.worksheet.cell_range import CellRange
 from openpyxl.worksheet.worksheet import Worksheet
 
 from mireport.taxonomy import Concept, QName
+from mireport.xlsx_template_reader._cell_iteration import (
+    iterCells,
+    iterCellsWithCoords,
+    iterRows,
+)
+from mireport.xlsx_template_reader.util import excelCellRangeRef, excelCellRef
 
 
 class ComplexUnit(NamedTuple):
@@ -50,6 +58,28 @@ class CellRangeMetadata:
         return self.worksheet is other.worksheet and not self.cellRange.isdisjoint(
             other.cellRange
         )
+
+    def excelRef(self, cell: Optional[CellType] = None) -> str:
+        """Excel reference for this range, or for a specific cell within it.
+
+        e.g. 'Example sheet'!$A$5:$B$10 for the range, 'Example sheet'!$A$5
+        when a cell is given.
+        """
+        if cell is not None:
+            return excelCellRef(self.worksheet, cell)
+        return excelCellRangeRef(self.worksheet, self.cellRange)
+
+    def rows(self) -> Iterator[tuple[int, tuple[CellType, ...]]]:
+        """Yield (row_number, cells) for each row of the range."""
+        return iterRows(self.worksheet, self.cellRange)
+
+    def cells(self) -> Iterator[CellType]:
+        """Yield every cell of the range, row by row."""
+        return iterCells(self.worksheet, self.cellRange)
+
+    def cellsWithCoords(self) -> Iterator[tuple[int, int, CellType]]:
+        """Yield (row_number, column_number, cell) for every cell of the range."""
+        return iterCellsWithCoords(self.worksheet, self.cellRange)
 
 
 @dataclass(slots=True, eq=True, frozen=True)

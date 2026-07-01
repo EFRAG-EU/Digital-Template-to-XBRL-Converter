@@ -30,14 +30,11 @@ from mireport.xlsx_template_reader._bindings import (
     TableBinding,
     XbrlConceptCellRangeMetadata,
 )
-from mireport.xlsx_template_reader._cell_iteration import (
-    getIteratorForCellRangeMetadata,
-)
 from mireport.xlsx_template_reader._constants import (
     EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE,
     EXTERNAL_VALUES_RANGE,
 )
-from mireport.xlsx_template_reader.util import conceptsToText, excelCellRef
+from mireport.xlsx_template_reader.util import conceptsToText
 
 L = logging.getLogger(__name__)
 
@@ -153,7 +150,10 @@ class SimpleNamedRangeTableResolver(BindingResolver):
             )
             return None
 
-        if container_dn is None or (container_crm := reader._getCellRangeMetadata(container_dn)) is None:
+        if (
+            container_dn is None
+            or (container_crm := reader._getCellRangeMetadata(container_dn)) is None
+        ):
             return None
 
         sub_crms: dict[str, CellRangeMetadata] = {}
@@ -271,7 +271,7 @@ class ExternalValuesResolver(BindingResolver):
             return frozenset()
 
         has_external_value: set[Concept] = set()
-        for cell in getIteratorForCellRangeMetadata(crh, only_cells=True):
+        for cell in crh.cells():
             if not isinstance(cell.value, str):
                 continue
             name_or_label = cell.value.strip()
@@ -288,7 +288,7 @@ class ExternalValuesResolver(BindingResolver):
                     f"External value specified in {EXTERNAL_VALUES_RANGE} named range but no matching concept found for name or label '{name_or_label}'.",
                     Severity.WARNING,
                     MessageType.DevInfo,
-                    excel_reference=excelCellRef(crh.worksheet, cell),
+                    excel_reference=crh.excelRef(cell),
                 )
                 continue
             has_external_value.add(concept)
