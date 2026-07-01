@@ -31,6 +31,7 @@ from mireport.xlsx_template_reader._bindings import (
 )
 from mireport.xlsx_template_reader._constants import (
     EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE,
+    UNHANDLED_NAMES_TO_IGNORE,
 )
 from mireport.xlsx_template_reader._messages import Messenger
 from mireport.xlsx_template_reader._ranges import (
@@ -1133,12 +1134,8 @@ class FactCreator:
 
     def checkForUnhandledItems(self) -> None:
         unHandled = list(self._bindings.concept_map.values())
-        # FIXME: temporary workaround for VSME taxonomy.
-        ignore_dns = {"BreakdownOfEnergyConsumptionAxis"}
-        # FIXME: temporary workaround for VSME taxonomy.
-
         for stuff in unHandled:
-            if stuff.definedName.name in ignore_dns:
+            if stuff.definedName.name in UNHANDLED_NAMES_TO_IGNORE:
                 continue
             self._msg.error(
                 f"Failed to handle XBRL related Excel named range {stuff.definedName.name}.",

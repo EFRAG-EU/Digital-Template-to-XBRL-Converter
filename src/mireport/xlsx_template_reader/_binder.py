@@ -20,13 +20,14 @@ if TYPE_CHECKING:
 
 from mireport.conversionresults import ConversionResultsBuilder, MessageType
 from mireport.xlsx_template_reader._bindings import TableBinding, WorkbookBindings
+from mireport.xlsx_template_reader._constants import TAXONOMY_NAME_ALIASES
 from mireport.xlsx_template_reader._messages import Messenger
 from mireport.xlsx_template_reader._ranges import XbrlConceptCellRangeMetadata
 from mireport.xlsx_template_reader._resolvers import (
     ExcelCellBindingContext,
-    ExternalValuesResolver,
-    FootnoteTableResolver,
     XBRLTableResolver,
+    resolveExternalValues,
+    resolveFootnoteBinding,
 )
 from mireport.xlsx_template_reader.util import conceptsToText
 
@@ -58,12 +59,9 @@ class WorkbookBinder:
         preset_dims = defaultdict(dict)
 
         for dn in reader.unused_defined_names:
-            concept = taxonomy.getConceptForName(dn.name)
-
-            # TODO FIXME Temporary fix for the VSME taxonomy
-            if dn.name == "IdentifierOfSitesInBiodiversitySensitiveAreasTypedAxis":
-                concept = taxonomy.getConceptForName("IdentifierOfSiteTypedAxis")
-            # TODO FIXME Temporary fix for the VSME taxonomy
+            concept = taxonomy.getConceptForName(
+                TAXONOMY_NAME_ALIASES.get(dn.name, dn.name)
+            )
 
             if concept is not None:
                 if (crh := reader.peekRange(dn)) is not None:
@@ -125,17 +123,14 @@ class WorkbookBinder:
 
         ctx = ExcelCellBindingContext(reader, self._msg, taxonomy)
 
-        tables: list[TableBinding] = []
-        for table_range in hypercube_ranges:
-            binding = XBRLTableResolver(
-                ctx,
-                unit_map,
-                table_range,
-                candidates_by_ws.get(table_range.worksheet, ()),
-                concepts_in_excel,
-            ).resolve()
-            if binding is not None:
-                tables.append(binding)
+        table_resolver = XBRLTableResolver(
+            ctx, unit_map, candidates_by_ws, concepts_in_excel
+        )
+        tables: list[TableBinding] = [
+            binding
+            for table_range in hypercube_ranges
+            if (binding := table_resolver.resolve(table_range)) is not None
+        ]
         self._consumeTableBindings(concept_map, unit_map, tables)
 
         return WorkbookBindings(
@@ -143,8 +138,8 @@ class WorkbookBinder:
             tables=tables,
             unit_map=unit_map,
             preset_dims=preset_dims,
-            has_external_value=ExternalValuesResolver(ctx).resolve(),
-            footnote=FootnoteTableResolver(ctx).resolve(),
+            has_external_value=resolveExternalValues(ctx),
+            footnote=resolveFootnoteBinding(ctx),
         )
 
     def _indexXbrlCandidates(
