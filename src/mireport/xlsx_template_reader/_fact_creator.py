@@ -248,10 +248,10 @@ class FactCreator:
 
             for priItem in primary_items:
                 concept = priItem.concept
-                broken = False
                 for rnum, row in getIteratorForCellRangeMetadata(
                     priItem, group_by_row=True
                 ):
+                    broken = False
                     cells = [cell for cell in row if cell.value is not None]
                     match len(cells):
                         case 0:
@@ -259,6 +259,7 @@ class FactCreator:
                         case 1:
                             cell = cells[0]
                             value = cell.value
+                            values = [value]
                         case _:
                             values = [c.value for c in cells]
                             cell = cells[0]
@@ -370,7 +371,7 @@ class FactCreator:
                             else:
                                 broken = True
                                 self._results.addMessage(
-                                    f"Unable to find EE concept for cell value '{value}'",
+                                    f"Unable to find EE concept for cell value '{v}'",
                                     Severity.ERROR,
                                     MessageType.Conversion,
                                     taxonomy_concept=priItem.concept,
