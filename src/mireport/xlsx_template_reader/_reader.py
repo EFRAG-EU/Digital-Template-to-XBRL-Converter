@@ -1,29 +1,18 @@
 from __future__ import annotations
 
 import logging
-from collections import defaultdict
+from dataclasses import dataclass
 from datetime import date
-from typing import (
-    TYPE_CHECKING,
-    Optional,
-)
-
-if TYPE_CHECKING:
-    from openpyxl.worksheet.worksheet import Worksheet
-
-    from mireport.taxonomy import Concept, Taxonomy
+from typing import Optional
 
 from openpyxl import Workbook
 from openpyxl.workbook.defined_name import DefinedName
 from openpyxl.worksheet.cell_range import CellRange
 
 from mireport.conversionresults import ConversionResultsBuilder, MessageType
-from mireport.xlsx_template_reader._bindings import (
-    TableBinding,
-    WorkbookBindings,
-)
 from mireport.xlsx_template_reader._constants import (
     EXCEL_PLACEHOLDER_VALUE,
+    EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE,
     IGNORED_DEFINED_NAME_PREFIXES,
     CellType,
     CellValueType,
@@ -31,22 +20,57 @@ from mireport.xlsx_template_reader._constants import (
 from mireport.xlsx_template_reader._messages import Messenger
 from mireport.xlsx_template_reader._ranges import (
     CellRangeMetadata,
-    XbrlConceptCellRangeMetadata,
     getEffectiveCellRangeDimensions,
 )
-from mireport.xlsx_template_reader._resolvers import (
-    ExcelCellBindingContext,
-    ExternalValuesResolver,
-    FootnoteTableResolver,
-    XBRLTableResolver,
-)
 from mireport.xlsx_template_reader.util import (
-    conceptsToText,
     excelDefinedNameRef,
     getDateFromValue,
 )
 
 L = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True, slots=True)
+class CellValue:
+    """A single cell value from a named range, with typed accessors."""
+
+    raw: CellValueType
+
+    @classmethod
+    def fromCell(cls, cell: Optional[CellType]) -> CellValue:
+        """Wrap a cell's value, stringifying rich objects (e.g. rich text) that
+        aren't plain cell value types. A missing cell yields a blank CellValue."""
+        if cell is None:
+            return cls(None)
+        v = cell.value
+        if not isinstance(v, CellValueType):
+            v = str(v)
+        return cls(v)
+
+    @property
+    def hasValue(self) -> bool:
+        """True if the cell holds any value at all (even a placeholder like '-').
+
+        Use isBlank for the wider "nothing usable here" check.
+        """
+        return self.raw is not None
+
+    @property
+    def isBlank(self) -> bool:
+        """True for empty cells and for Excel placeholder values ('-', '#VALUE!')."""
+        if self.raw is None:
+            return True
+        if isinstance(self.raw, str):
+            stripped = self.raw.strip()
+            return not stripped or stripped in EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE
+        return False
+
+    def asString(self, *, fallback: str = "") -> str:
+        return str(self.raw) if self.raw is not None else fallback
+
+    def asDate(self) -> date:
+        """Interpret the value as a date. Raises ValueError/TypeError if it isn't one."""
+        return getDateFromValue(self.raw)
 
 
 class WorkbookReader:
@@ -80,107 +104,16 @@ class WorkbookReader:
     def unused_defined_names(self) -> frozenset[DefinedName]:
         return frozenset(self._unused)
 
-    def build_bindings(self, taxonomy: Taxonomy, defaults: dict) -> WorkbookBindings:
-        """Scrape named ranges from the workbook and return a WorkbookBindings."""
-        concept_map: dict = {}
-        unit_map: dict = {}
-        preset_dims: defaultdict = defaultdict(dict)
+    def markUsed(self, dn: DefinedName) -> None:
+        """Record that this defined name has been consumed by the conversion."""
+        self._unused.discard(dn)
 
-        results = self._results
+    def peekRange(self, dn: DefinedName) -> Optional[CellRangeMetadata]:
+        """Resolve a defined name to its cell range without marking it used.
 
-        for dn in self.unused_defined_names:
-            concept = taxonomy.getConceptForName(dn.name)
-
-            # TODO FIXME Temporary fix for the VSME taxonomy
-            if dn.name == "IdentifierOfSitesInBiodiversitySensitiveAreasTypedAxis":
-                concept = taxonomy.getConceptForName("IdentifierOfSiteTypedAxis")
-            # TODO FIXME Temporary fix for the VSME taxonomy
-
-            if concept is not None:
-                if (crh := self._createCellRangeMetadata(dn)) is not None:
-                    concept_map[dn] = (
-                        XbrlConceptCellRangeMetadata.fromCellRangeMetadata(
-                            crh, concept=concept
-                        )
-                    )
-            elif "_" in dn.name:
-                conceptName, _, memberName = dn.name.partition("_")
-                if "unit" == memberName:
-                    if (
-                        concept := taxonomy.getConceptForName(conceptName)
-                    ) is not None and (
-                        crh := self._createCellRangeMetadata(dn)
-                    ) is not None:
-                        unit_map[concept] = (
-                            XbrlConceptCellRangeMetadata.fromCellRangeMetadata(
-                                crh, concept
-                            )
-                        )
-                        self._unused.discard(dn)
-                else:
-                    concept = taxonomy.getConceptForName(conceptName)
-                    dimValue = taxonomy.getConceptForName(memberName)
-                    crh = self._createCellRangeMetadata(dn)
-                    if crh is not None and concept is not None and dimValue is not None:
-                        b = XbrlConceptCellRangeMetadata.fromCellRangeMetadata(
-                            crh, concept=concept
-                        )
-                        if (
-                            dim := taxonomy.getExplicitDimensionForDomainMember(
-                                concept, dimValue
-                            )
-                        ) is not None:
-                            concept_map[dn] = b
-                            preset_dims[b][dim] = dimValue
-                        else:
-                            self._msg.error(
-                                f"Domain member qualification set in named range {dn.name} but no dimension can be found for member.",
-                                MessageType.DevInfo,
-                            )
-            if dn in concept_map:
-                self._unused.discard(dn)
-
-        self._msg.info(
-            f"Excel file parsed ({results.numCellsPopulated} cells had data, with {results.numCellQueries} cells accessed).",
-            MessageType.ExcelParsing,
-        )
-
-        hypercube_ranges, concepts_in_excel, candidates_by_ws = index_xbrl_candidates(
-            concept_map, taxonomy
-        )
-        if empty := taxonomy.emptyHypercubes.intersection(
-            c for c in concepts_in_excel if c.isHypercube
-        ):
-            self._msg.error(
-                f"The following hypercubes exist and have corresponding named ranges but they cannot be used due to missing taxonomy definitions: {conceptsToText(empty)}.",
-                MessageType.DevInfo,
-            )
-
-        ctx = ExcelCellBindingContext(self, self._msg, taxonomy)
-
-        tables: list[TableBinding] = []
-        for table_stuff in hypercube_ranges:
-            binding = XBRLTableResolver(
-                ctx,
-                unit_map,
-                table_stuff,
-                candidates_by_ws.get(table_stuff.worksheet, ()),
-                concepts_in_excel,
-            ).resolve()
-            if binding is not None:
-                tables.append(binding)
-        consume_table_bindings(concept_map, unit_map, tables)
-
-        return WorkbookBindings(
-            concept_map=concept_map,
-            tables=tables,
-            unit_map=unit_map,
-            preset_dims=preset_dims,
-            has_external_value=ExternalValuesResolver(ctx).resolve(),
-            footnote=FootnoteTableResolver(ctx).resolve(),
-        )
-
-    def _createCellRangeMetadata(self, dn: DefinedName) -> Optional[CellRangeMetadata]:
+        Emits an error message and returns None when the defined name is
+        damaged (unreadable, zero or multiple destinations, broken reference).
+        """
         try:
             all_destinations = list(dn.destinations)
         except AttributeError:
@@ -236,37 +169,36 @@ class WorkbookReader:
             populated_min_row=dims.populated_min_row,
         )
 
-    def _getCellRangeMetadata(
+    def resolveRange(
         self,
-        definedName: DefinedName
-        | str
-        | XbrlConceptCellRangeMetadata
-        | CellRangeMetadata,
+        definedName: DefinedName | str | CellRangeMetadata,
     ) -> Optional[CellRangeMetadata]:
+        """Resolve a defined name (or its string name) to its cell range,
+        marking it as used. Returns None if the name is missing or damaged.
+
+        An already-resolved CellRangeMetadata passes through unchanged (and is
+        marked used), so callers can accept either form.
+        """
         if isinstance(definedName, str):
-            definedName = self._workbook.defined_names.get(definedName)
-            if definedName is None:
+            dn = self.getDefinedName(definedName)
+            if dn is None:
                 return None
+            definedName = dn
         if isinstance(definedName, DefinedName):
-            if (crm := self._createCellRangeMetadata(definedName)) is None:
+            if (crm := self.peekRange(definedName)) is None:
                 return None
             definedName = crm
-        if isinstance(definedName, (XbrlConceptCellRangeMetadata, CellRangeMetadata)):
-            self._unused.discard(definedName.definedName)
-            return definedName
-        return None
+        self.markUsed(definedName.definedName)
+        return definedName
 
     def getSingleCell(
         self,
-        definedName: DefinedName
-        | str
-        | XbrlConceptCellRangeMetadata
-        | CellRangeMetadata,
+        definedName: DefinedName | str | CellRangeMetadata,
         *,
         row: int = -1,
         column: int = -1,
     ) -> Optional[CellType]:
-        if (stuff := self._getCellRangeMetadata(definedName)) is None:
+        if (stuff := self.resolveRange(definedName)) is None:
             return None
 
         cr = stuff.cellRange
@@ -332,72 +264,17 @@ class WorkbookReader:
             return None
         return cell
 
-    def getSingleValue(
+    def value(
         self,
-        definedName: DefinedName | str,
+        definedName: DefinedName | str | CellRangeMetadata,
         *,
         row: int = -1,
         column: int = -1,
-    ) -> CellValueType:
-        if (
-            cell := self.getSingleCell(definedName, row=row, column=column)
-        ) is not None:
-            value = cell.value
-            if not isinstance(value, CellValueType):
-                value = str(value)
-            return value
-        return None
+    ) -> CellValue:
+        """The value of a (single-cell) named range, as a CellValue.
 
-    def getSingleStringValue(
-        self,
-        definedName: DefinedName | str,
-        *,
-        row: int = -1,
-        column: int = -1,
-        fallbackValue: str = "",
-    ) -> str:
-        value = self.getSingleValue(definedName, row=row, column=column)
-        return str(value) if value is not None else str(fallbackValue)
-
-    def getSingleDateValue(self, definedName: DefinedName | str) -> date:
-        value = self.getSingleValue(definedName)
-        return getDateFromValue(value)
-
-
-def index_xbrl_candidates(
-    concept_map: dict,
-    taxonomy: Taxonomy,
-) -> tuple[
-    list[XbrlConceptCellRangeMetadata],
-    frozenset[Concept],
-    dict[Worksheet, list[XbrlConceptCellRangeMetadata]],
-]:
-    """Single pass over concept_map: the hypercube table ranges, every concept
-    present, and a worksheet-keyed index of reportable/dimension candidate ranges."""
-    hypercubes = taxonomy.hypercubes
-    hypercube_ranges: list[XbrlConceptCellRangeMetadata] = []
-    concepts_in_excel: list[Concept] = []
-    candidates_by_ws: defaultdict[Worksheet, list[XbrlConceptCellRangeMetadata]] = (
-        defaultdict(list)
-    )
-    for stuff in concept_map.values():
-        concept = stuff.concept
-        concepts_in_excel.append(concept)
-        if concept in hypercubes:
-            hypercube_ranges.append(stuff)
-        if concept.isReportable or concept.isDimension:
-            candidates_by_ws[stuff.worksheet].append(stuff)
-    return hypercube_ranges, frozenset(concepts_in_excel), candidates_by_ws
-
-
-def consume_table_bindings(
-    concept_map: dict,
-    unit_map: dict,
-    bindings: list[TableBinding],
-) -> None:
-    """Remove resolved table entries from concept_map/unit_map (now held in bindings)."""
-    for binding in bindings:
-        for crm in binding.conceptRanges:
-            concept_map.pop(crm.definedName, None)
-        for u in binding.units:
-            unit_map.pop(u.concept, None)
+        A missing or damaged name yields a blank CellValue rather than an error.
+        """
+        return CellValue.fromCell(
+            self.getSingleCell(definedName, row=row, column=column)
+        )

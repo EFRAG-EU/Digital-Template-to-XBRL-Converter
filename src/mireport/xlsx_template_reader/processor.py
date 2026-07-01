@@ -25,6 +25,7 @@ from mireport.taxonomy import (
     listTaxonomies,
 )
 from mireport.version import OUR_VERSION_HOLDER, VersionHolder
+from mireport.xlsx_template_reader._binder import WorkbookBinder
 from mireport.xlsx_template_reader._bindings import WorkbookBindings
 from mireport.xlsx_template_reader._constants import (
     EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE,
@@ -118,9 +119,9 @@ class XlsxProcessor:
             self.checkTemplate()
             self.abortEarlyIfErrors()
 
-            bindings: WorkbookBindings = self._reader.build_bindings(
-                self._report.taxonomy, self._defaults
-            )
+            bindings: WorkbookBindings = WorkbookBinder(
+                self._reader, self._report.taxonomy, self._results
+            ).bind()
             FactCreator(
                 bindings, self._reader, self._report, self._results, self._defaults
             ).create_all_facts()
@@ -154,10 +155,10 @@ class XlsxProcessor:
 
         # No one specified a locale ... let's see if Excel has one.
         name = "template_reporting_language"
-        excelOutputLanguage = self._reader.getSingleStringValue(name).strip()
+        excelOutputLanguage = self._reader.value(name).asString().strip()
         if not excelOutputLanguage:
             name = "template_selected_display_language"
-            excelOutputLanguage = self._reader.getSingleStringValue(name).strip()
+            excelOutputLanguage = self._reader.value(name).asString().strip()
         if not excelOutputLanguage:
             return
 
@@ -197,7 +198,7 @@ class XlsxProcessor:
 
     def _verifyEntryPoint(self) -> None:
         name = self._defaults.get("entryPoint", "")
-        entryPoint = self._reader.getSingleStringValue(name)
+        entryPoint = self._reader.value(name).asString()
         validEntryPoints = set(listTaxonomies())
         if not entryPoint:
             self._msg.error(
@@ -233,16 +234,15 @@ class XlsxProcessor:
                     continue
                 if aoixName == "entity-scheme":
                     lookup_key = (
-                        self._reader.getSingleStringValue(namedRangeName)
+                        self._reader.value(namedRangeName)
+                        .asString()
                         .strip()
                         .replace(" ", "")
                         .lower()
                     )
                     aoixValue = entityIdentifierSchemeLabelToURIs.get(lookup_key)
                 else:
-                    aoixValue = self._reader.getSingleStringValue(
-                        namedRangeName
-                    ).strip()
+                    aoixValue = self._reader.value(namedRangeName).asString().strip()
 
                 if (
                     not aoixValue
@@ -264,7 +264,7 @@ class XlsxProcessor:
                 startName = period["start"]
                 startDate = None
                 try:
-                    startDate = self._reader.getSingleDateValue(startName)
+                    startDate = self._reader.value(startName).asDate()
                 except Exception as e:
                     self._msg.error(
                         f"Excel report must have a valid date for named range {startName}. Exception: {e}",
@@ -275,7 +275,7 @@ class XlsxProcessor:
                 endName = period["end"]
                 endDate = None
                 try:
-                    endDate = self._reader.getSingleDateValue(endName)
+                    endDate = self._reader.value(endName).asDate()
                 except Exception as e:
                     self._msg.error(
                         f"Excel report must have a valid date for named range {endName}. Exception: {e}",
@@ -330,7 +330,7 @@ class XlsxProcessor:
         fallback = config.get("fallback")
 
         if self._reader.getDefinedName(named_range) is not None:
-            value = self._reader.getSingleStringValue(named_range)
+            value = self._reader.value(named_range).asString()
             method(value)
         elif fallback is not None:
             method(fallback)
@@ -345,10 +345,10 @@ class XlsxProcessor:
         template_validation_name = "template_overall_validation_status"
         template_validation_fail_name = "template_label_incomplete"
 
-        validation_failed_expected_value = self._reader.getSingleStringValue(
-            template_validation_fail_name, fallbackValue="INCOMPLETE"
-        )
-        validation_status = self._reader.getSingleStringValue(template_validation_name)
+        validation_failed_expected_value = self._reader.value(
+            template_validation_fail_name
+        ).asString(fallback="INCOMPLETE")
+        validation_status = self._reader.value(template_validation_name).asString()
         is_incomplete = bool(
             validation_failed_expected_value
             and validation_status
@@ -365,9 +365,7 @@ class XlsxProcessor:
 
         # warn if template version is not the current version
         template_version_name = "template_reporting_template_version"
-        template_version_string = self._reader.getSingleStringValue(
-            template_version_name
-        )
+        template_version_string = self._reader.value(template_version_name).asString()
         excel_version = VersionHolder.parse_safe(template_version_string)
         converter_version = OUR_VERSION_HOLDER.strip_build_metadata
 
@@ -452,13 +450,9 @@ class XlsxProcessor:
         If report has not been opened and saved (so, refreshed), formula cells return None.
         template_migration_status is a formula cell.
         """
-        if self._reader.getDefinedName("template_migration_status") is not None:
-            if self._reader.getSingleValue("template_migration_status") is None:
-                return False  # not refreshed
-            else:
-                return True  # okay
-        else:
+        if self._reader.getDefinedName("template_migration_status") is None:
             return None
+        return self._reader.value("template_migration_status").hasValue
 
     def abortEarlyIfErrors(self) -> None:
         if self._results.hasErrors():

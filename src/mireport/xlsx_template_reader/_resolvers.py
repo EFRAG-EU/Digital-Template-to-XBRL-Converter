@@ -152,20 +152,18 @@ class SimpleNamedRangeTableResolver(BindingResolver):
 
         if (
             container_dn is None
-            or (container_crm := reader._getCellRangeMetadata(container_dn)) is None
+            or (container_crm := reader.resolveRange(container_dn)) is None
         ):
             return None
 
         sub_crms: dict[str, CellRangeMetadata] = {}
         for name, dn in required_dns.items():
-            if dn is None or (crm := reader._getCellRangeMetadata(dn)) is None:
+            if dn is None or (crm := reader.resolveRange(dn)) is None:
                 return None
             sub_crms[name] = crm
 
         for name in self._optional_sub_names:
-            if (dn := reader.getDefinedName(name)) is not None and (
-                crm := reader._getCellRangeMetadata(dn)
-            ) is not None:
+            if (crm := reader.resolveRange(name)) is not None:
                 sub_crms[name] = crm
 
         if not self._validate_sub_ranges(
@@ -260,10 +258,8 @@ class ExternalValuesResolver(BindingResolver):
     values are supplied externally rather than from the spreadsheet."""
 
     def resolve(self) -> frozenset[Concept]:
-        reader = self._reader
         taxonomy = self._taxonomy
-        ext_dn = reader.getDefinedName(EXTERNAL_VALUES_RANGE)
-        if ext_dn is None or (crh := reader._createCellRangeMetadata(ext_dn)) is None:
+        if (crh := self._reader.resolveRange(EXTERNAL_VALUES_RANGE)) is None:
             return frozenset()
 
         has_external_value: set[Concept] = set()

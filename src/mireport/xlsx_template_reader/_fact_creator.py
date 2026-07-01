@@ -183,10 +183,11 @@ class FactCreator:
         for periodHolder in periodHolders:
             dimValueDN = periodHolder.definedName
             namedPeriod = dimValueDN.name or ""
-            year = self._reader.getSingleValue(dimValueDN)
-            if year is None or year in EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE:
+            yearValue = self._reader.value(dimValueDN)
+            if yearValue.isBlank:
                 concept_map.pop(dimValueDN)
                 continue
+            year = yearValue.raw
 
             if isinstance(year, bool) or not isinstance(year, float | int | str):
                 self._msg.error(
