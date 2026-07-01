@@ -14,7 +14,6 @@ from openpyxl import Workbook
 from mireport.conversionresults import (
     ConversionResultsBuilder,
     MessageType,
-    Severity,
 )
 from mireport.data.disclosures import VSME_DEFAULTS
 from mireport.exceptions import EarlyAbortException
@@ -32,6 +31,7 @@ from mireport.xlsx_template_reader._constants import (
     is_error_value,
 )
 from mireport.xlsx_template_reader._fact_creator import FactCreator
+from mireport.xlsx_template_reader._messages import Messenger
 from mireport.xlsx_template_reader._reader import WorkbookReader
 from mireport.xlsx_template_reader.util import (
     excelDefinedNameRef,
@@ -64,6 +64,7 @@ class XlsxProcessor:
                 "Use XlsxProcessor.from_file() or XlsxProcessor.from_bytes() to load from a file."
             )
         self._results = results
+        self._msg = Messenger(results)
         self._defaults = defaults
 
         # For passing through to inline report
@@ -125,16 +126,14 @@ class XlsxProcessor:
             ).create_all_facts()
             return self._report
         except EarlyAbortException as eae:
-            self._results.addMessage(
+            self._msg.error(
                 f"Excel conversion aborted early. {eae}",
-                Severity.ERROR,
                 MessageType.ExcelParsing,
             )
             raise
         except Exception as e:
-            self._results.addMessage(
+            self._msg.error(
                 f"Exception encountered during processing. {e}",
-                Severity.ERROR,
                 MessageType.ExcelParsing,
             )
             L.exception("Exception encountered", exc_info=e)
@@ -147,9 +146,8 @@ class XlsxProcessor:
             return
 
         if self._outputLocale:
-            self._results.addMessage(
+            self._msg.info(
                 f"Chosen output locale: '{as_xmllang(self._outputLocale)}'. Ignoring any language specified in Excel.",
-                Severity.INFO,
                 MessageType.Conversion,
             )
             return
@@ -170,11 +168,10 @@ class XlsxProcessor:
         ):
             excelOutputLocale = codeMatch.group(1)
         else:
-            self._results.addMessage(
+            self._msg.error(
                 f"Unable to determine desired report output language from value '{excelOutputLanguage}'",
-                Severity.ERROR,
                 MessageType.ExcelParsing,
-                excel_reference=languageCellReference,
+                ref=languageCellReference,
             )
             return
 
@@ -184,18 +181,16 @@ class XlsxProcessor:
         )
 
         if excelOutputLocale != bestOutputLocale:
-            self._results.addMessage(
+            self._msg.info(
                 f"Excel language specified as '{excelOutputLocale}'. Using closest match supported by the taxonomy, '{bestOutputLocale}'",
-                Severity.INFO,
                 MessageType.Conversion,
-                excel_reference=languageCellReference,
+                ref=languageCellReference,
             )
         else:
-            self._results.addMessage(
+            self._msg.info(
                 f"Using output language specified in Excel and supported by the taxonomy: '{bestOutputLocale}'",
-                Severity.INFO,
                 MessageType.DevInfo,
-                excel_reference=languageCellReference,
+                ref=languageCellReference,
             )
 
         self._outputLocale = get_locale_from_str(bestOutputLocale)
@@ -205,18 +200,16 @@ class XlsxProcessor:
         entryPoint = self._reader.getSingleStringValue(name)
         validEntryPoints = set(listTaxonomies())
         if not entryPoint:
-            self._results.addMessage(
+            self._msg.error(
                 "Excel template does not specify taxonomy entry point. Please use a supported template.",
-                Severity.ERROR,
                 MessageType.ExcelParsing,
-                excel_reference=excelDefinedNameRef(self._reader.getDefinedName(name)),
+                ref=excelDefinedNameRef(self._reader.getDefinedName(name)),
             )
         elif entryPoint not in validEntryPoints:
-            self._results.addMessage(
+            self._msg.error(
                 f"Excel report is for an unsupported taxonomy. Excel wants: {entryPoint=}. We support: {sorted(validEntryPoints)}",
-                Severity.ERROR,
                 MessageType.ExcelParsing,
-                excel_reference=excelDefinedNameRef(self._reader.getDefinedName(name)),
+                ref=excelDefinedNameRef(self._reader.getDefinedName(name)),
             )
 
         self.abortEarlyIfErrors()
@@ -233,9 +226,8 @@ class XlsxProcessor:
         if "aoix" in defaults:
             for aoixName, namedRangeName in defaults["aoix"].items():
                 if self._reader.getDefinedName(namedRangeName) is None:
-                    self._results.addMessage(
+                    self._msg.error(
                         f"Excel report must have a value for named range {namedRangeName}.",
-                        Severity.ERROR,
                         MessageType.ExcelParsing,
                     )
                     continue
@@ -257,11 +249,10 @@ class XlsxProcessor:
                     or aoixValue in EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE
                     or is_error_value(aoixValue)
                 ):
-                    self._results.addMessage(
+                    self._msg.error(
                         f"Excel report must have a valid value for named range {namedRangeName}.",
-                        Severity.ERROR,
                         MessageType.ExcelParsing,
-                        excel_reference=excelDefinedNameRef(
+                        ref=excelDefinedNameRef(
                             self._reader.getDefinedName(namedRangeName)
                         ),
                     )
@@ -275,13 +266,10 @@ class XlsxProcessor:
                 try:
                     startDate = self._reader.getSingleDateValue(startName)
                 except Exception as e:
-                    self._results.addMessage(
+                    self._msg.error(
                         f"Excel report must have a valid date for named range {startName}. Exception: {e}",
-                        Severity.ERROR,
                         MessageType.ExcelParsing,
-                        excel_reference=excelDefinedNameRef(
-                            self._reader.getDefinedName(startName)
-                        ),
+                        ref=excelDefinedNameRef(self._reader.getDefinedName(startName)),
                     )
 
                 endName = period["end"]
@@ -289,24 +277,20 @@ class XlsxProcessor:
                 try:
                     endDate = self._reader.getSingleDateValue(endName)
                 except Exception as e:
-                    self._results.addMessage(
+                    self._msg.error(
                         f"Excel report must have a valid date for named range {endName}. Exception: {e}",
-                        Severity.ERROR,
                         MessageType.ExcelParsing,
-                        excel_reference=excelDefinedNameRef(
-                            self._reader.getDefinedName(endName)
-                        ),
+                        ref=excelDefinedNameRef(self._reader.getDefinedName(endName)),
                     )
 
                 if startDate is None or endDate is None:
                     continue
 
                 if startDate > endDate:
-                    self._results.addMessage(
+                    self._msg.error(
                         f"Start date {startDate} is after end date {endDate}.",
-                        Severity.ERROR,
                         MessageType.ExcelParsing,
-                        excel_reference=excelDefinedNameRef(
+                        ref=excelDefinedNameRef(
                             self._reader.getDefinedName(period["start"])
                         ),
                     )
@@ -336,9 +320,8 @@ class XlsxProcessor:
     ) -> None:
         config = report_defaults.get(key)
         if not isinstance(config, dict) or "named-range" not in config:
-            self._results.addMessage(
+            self._msg.error(
                 f"Missing or invalid named range for report metadata key '{key}'.",
-                Severity.ERROR,
                 MessageType.ExcelParsing,
             )
             return
@@ -352,9 +335,8 @@ class XlsxProcessor:
         elif fallback is not None:
             method(fallback)
         else:
-            self._results.addMessage(
+            self._msg.error(
                 f"Excel report must have a value for named range '{named_range}'.",
-                Severity.ERROR,
                 MessageType.ExcelParsing,
             )
 
@@ -373,11 +355,10 @@ class XlsxProcessor:
             and validation_status == validation_failed_expected_value
         )
         if is_incomplete:
-            self._results.addMessage(
+            self._msg.warning(
                 "The Digital Template reports that it is incomplete (missing mandatory items).",
-                Severity.WARNING,
                 MessageType.ExcelParsing,
-                excel_reference=excelDefinedNameRef(
+                ref=excelDefinedNameRef(
                     self._reader.getDefinedName(template_validation_name)
                 ),
             )
@@ -397,48 +378,43 @@ class XlsxProcessor:
         )
 
         if not template_version_string.strip():
-            self._results.addMessage(
+            self._msg.error(
                 "The Digital Template has no version recorded. Please use a supported template (the latest version is {converter_version}).",
-                Severity.ERROR,
                 MessageType.ExcelParsing,
-                excel_reference=excelDefinedNameRef(
+                ref=excelDefinedNameRef(
                     self._reader.getDefinedName(template_version_name)
                 ),
             )
         elif not excel_version:
-            self._results.addMessage(
+            self._msg.error(
                 f"The Digital Template does not have a valid version identifier: '{template_version_string}'. Please use a supported template (the latest version is {converter_version}).",
-                Severity.ERROR,
                 MessageType.ExcelParsing,
-                excel_reference=excelDefinedNameRef(
+                ref=excelDefinedNameRef(
                     self._reader.getDefinedName(template_version_name)
                 ),
             )
         elif excel_version == converter_version:
-            self._results.addMessage(
+            self._msg.info(
                 f"The Digital Template is the same version as the converter {converter_version}.",
-                Severity.INFO,
                 MessageType.DevInfo,
-                excel_reference=excelDefinedNameRef(
+                ref=excelDefinedNameRef(
                     self._reader.getDefinedName(template_version_name)
                 ),
             )
         elif excel_version != converter_version:
             if major_minor_match:
-                self._results.addMessage(
+                self._msg.info(
                     f"The Digital Template is based on version {excel_version}. The latest version available is {converter_version}, consider updating the template to the latest version.",
-                    Severity.INFO,
                     MessageType.ExcelParsing,
-                    excel_reference=excelDefinedNameRef(
+                    ref=excelDefinedNameRef(
                         self._reader.getDefinedName(template_version_name)
                     ),
                 )
             else:
-                self._results.addMessage(
+                self._msg.warning(
                     f"The Digital Template is based on version {excel_version}. The latest version available is {converter_version}, please update/migrate to the latest version of the Digital Template, in order to avoid any error message and data loss.",
-                    Severity.WARNING,
                     MessageType.ExcelParsing,
-                    excel_reference=excelDefinedNameRef(
+                    ref=excelDefinedNameRef(
                         self._reader.getDefinedName(template_version_name)
                     ),
                 )

@@ -17,21 +17,22 @@ from openpyxl import Workbook
 from openpyxl.workbook.defined_name import DefinedName
 from openpyxl.worksheet.cell_range import CellRange
 
-from mireport.conversionresults import ConversionResultsBuilder, MessageType, Severity
+from mireport.conversionresults import ConversionResultsBuilder, MessageType
 from mireport.xlsx_template_reader._bindings import (
-    CellRangeMetadata,
     TableBinding,
     WorkbookBindings,
-    XbrlConceptCellRangeMetadata,
-)
-from mireport.xlsx_template_reader._cell_iteration import (
-    getEffectiveCellRangeDimensions,
 )
 from mireport.xlsx_template_reader._constants import (
     EXCEL_PLACEHOLDER_VALUE,
     IGNORED_DEFINED_NAME_PREFIXES,
     CellType,
     CellValueType,
+)
+from mireport.xlsx_template_reader._messages import Messenger
+from mireport.xlsx_template_reader._ranges import (
+    CellRangeMetadata,
+    XbrlConceptCellRangeMetadata,
+    getEffectiveCellRangeDimensions,
 )
 from mireport.xlsx_template_reader._resolvers import (
     ExcelCellBindingContext,
@@ -67,6 +68,7 @@ class WorkbookReader:
             if (name := dn.name) and not name.startswith(IGNORED_DEFINED_NAME_PREFIXES)
         }
         self._results = results
+        self._msg = Messenger(results)
 
     def close(self) -> None:
         self._workbook.close()
@@ -131,17 +133,15 @@ class WorkbookReader:
                             concept_map[dn] = b
                             preset_dims[b][dim] = dimValue
                         else:
-                            results.addMessage(
+                            self._msg.error(
                                 f"Domain member qualification set in named range {dn.name} but no dimension can be found for member.",
-                                Severity.ERROR,
                                 MessageType.DevInfo,
                             )
             if dn in concept_map:
                 self._unused.discard(dn)
 
-        results.addMessage(
+        self._msg.info(
             f"Excel file parsed ({results.numCellsPopulated} cells had data, with {results.numCellQueries} cells accessed).",
-            Severity.INFO,
             MessageType.ExcelParsing,
         )
 
@@ -151,13 +151,12 @@ class WorkbookReader:
         if empty := taxonomy.emptyHypercubes.intersection(
             c for c in concepts_in_excel if c.isHypercube
         ):
-            results.addMessage(
+            self._msg.error(
                 f"The following hypercubes exist and have corresponding named ranges but they cannot be used due to missing taxonomy definitions: {conceptsToText(empty)}.",
-                Severity.ERROR,
                 MessageType.DevInfo,
             )
 
-        ctx = ExcelCellBindingContext(self, results, taxonomy)
+        ctx = ExcelCellBindingContext(self, self._msg, taxonomy)
 
         tables: list[TableBinding] = []
         for table_stuff in hypercube_ranges:
@@ -185,9 +184,8 @@ class WorkbookReader:
         try:
             all_destinations = list(dn.destinations)
         except AttributeError:
-            self._results.addMessage(
+            self._msg.error(
                 f"Named range {dn.name} has an unreadable destination: {dn.attr_text!r}. \nSomething has modified the digital template's structure. \nPlease try a fresh copy of the template and check that it has not been modified in unsupported ways.",
-                Severity.ERROR,
                 MessageType.DevInfo,
             )
             L.exception(
@@ -196,26 +194,23 @@ class WorkbookReader:
             return None
         match len(all_destinations):
             case 0:
-                self._results.addMessage(
+                self._msg.error(
                     f"Named range {dn.name} has no destinations specified. Ignoring.",
-                    Severity.ERROR,
                     MessageType.DevInfo,
                 )
                 return None
             case 1:
                 pass
             case _:
-                self._results.addMessage(
+                self._msg.error(
                     f"Table {dn.name} has multiple destinations. Ignoring table.",
-                    Severity.ERROR,
                     MessageType.DevInfo,
                 )
                 return None
         sheetName, cell_range = all_destinations[0]
         if not sheetName or not cell_range:
-            self._results.addMessage(
+            self._msg.error(
                 f"Named range {dn.name} has damaged cell reference {sheetName=} {cell_range=}",
-                Severity.ERROR,
                 MessageType.ExcelParsing,
             )
             return None
@@ -280,11 +275,10 @@ class WorkbookReader:
         if not all(
             x is not None for x in (cr.min_row, cr.max_row, cr.min_col, cr.max_col)
         ):
-            self._results.addMessage(
+            self._msg.error(
                 f"Named range {stuff.definedName.name} has an invalid cell range {cr.bounds}.",
-                Severity.ERROR,
                 MessageType.DevInfo,
-                excel_reference=excelDefinedNameRef(stuff.definedName),
+                ref=excelDefinedNameRef(stuff.definedName),
             )
             return None
 
@@ -294,37 +288,33 @@ class WorkbookReader:
         if shouldOverrideRow:
             row = cr.min_row
             if stuff.populated_height > 1:
-                self._results.addMessage(
+                self._msg.warning(
                     f"Named range {stuff.definedName.name} has {stuff.populated_height} populated rows but no row was specified; using the first.",
-                    Severity.WARNING,
                     MessageType.DevInfo,
-                    excel_reference=stuff.excelRef(),
+                    ref=stuff,
                 )
 
         if shouldOverrideColumn:
             column = cr.min_col
             if stuff.populated_width > 1:
-                self._results.addMessage(
+                self._msg.warning(
                     f"Named range {stuff.definedName.name} has {stuff.populated_width} populated columns but no column was specified; using the first.",
-                    Severity.WARNING,
                     MessageType.DevInfo,
-                    excel_reference=stuff.excelRef(),
+                    ref=stuff,
                 )
 
         if not (cr.min_row <= row <= cr.max_row):
-            self._results.addMessage(
+            self._msg.warning(
                 f"Row {row} has not been specified correctly.",
-                Severity.WARNING,
                 MessageType.DevInfo,
-                excel_reference=stuff.excelRef(),
+                ref=stuff,
             )
             row = cr.min_row
         if not (cr.min_col <= column <= cr.max_col):
-            self._results.addMessage(
+            self._msg.warning(
                 f"Column {column} has not been specified correctly.",
-                Severity.WARNING,
                 MessageType.DevInfo,
-                excel_reference=stuff.excelRef(),
+                ref=stuff,
             )
             column = cr.min_col
 
@@ -334,11 +324,10 @@ class WorkbookReader:
             return None
 
         if cell.value == EXCEL_PLACEHOLDER_VALUE:
-            self._results.addMessage(
+            self._msg.error(
                 f"Excel cell has an invalid stored value {EXCEL_PLACEHOLDER_VALUE}. Please check the Excel formula for this specific cell.",
-                Severity.ERROR,
                 MessageType.ExcelParsing,
-                excel_reference=stuff.excelRef(cell),
+                ref=stuff.excelRef(cell),
             )
             return None
         return cell

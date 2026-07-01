@@ -1,6 +1,6 @@
 """Resolvers that turn workbook named ranges into validated binding holders.
 
-Every resolver takes an `ExcelCellBindingContext` (reader, results, taxonomy) built
+Every resolver takes an `ExcelCellBindingContext` (reader, msg, taxonomy) built
 once in `build_bindings`, and extends the `BindingResolver` ABC:
 
 * SimpleNamedRangeTableResolver  -- container range + fixed-named sub-ranges
@@ -23,16 +23,19 @@ if TYPE_CHECKING:
     from mireport.taxonomy import Concept, Taxonomy
     from mireport.xlsx_template_reader._reader import WorkbookReader
 
-from mireport.conversionresults import ConversionResultsBuilder, MessageType, Severity
+from mireport.conversionresults import MessageType
 from mireport.xlsx_template_reader._bindings import (
-    CellRangeMetadata,
     FootnoteBinding,
     TableBinding,
-    XbrlConceptCellRangeMetadata,
 )
 from mireport.xlsx_template_reader._constants import (
     EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE,
     EXTERNAL_VALUES_RANGE,
+)
+from mireport.xlsx_template_reader._messages import Messenger
+from mireport.xlsx_template_reader._ranges import (
+    CellRangeMetadata,
+    XbrlConceptCellRangeMetadata,
 )
 from mireport.xlsx_template_reader.util import conceptsToText
 
@@ -50,7 +53,7 @@ class ExcelCellBindingContext:
     """The ambient dependencies every resolver needs, built once in build_bindings."""
 
     reader: WorkbookReader
-    results: ConversionResultsBuilder
+    msg: Messenger
     taxonomy: Taxonomy
 
 
@@ -60,7 +63,7 @@ class BindingResolver(ABC):
     def __init__(self, ctx: ExcelCellBindingContext) -> None:
         self._ctx = ctx
         self._reader = ctx.reader
-        self._results = ctx.results
+        self._msg = ctx.msg
         self._taxonomy = ctx.taxonomy
 
     @abstractmethod
@@ -98,18 +101,16 @@ class SimpleNamedRangeTableResolver(BindingResolver):
         """Return False (and emit a warning) if any sub-range is outside the table or if any two overlap."""
         for crm in sub_ranges:
             if not table.contains(crm):
-                self._results.addMessage(
+                self._msg.warning(
                     f"'{crm.definedName.name}' is not fully contained within "
                     f"'{table.definedName.name}'. {context}",
-                    Severity.WARNING,
                     MessageType.ExcelParsing,
                 )
                 return False
         for c1, c2 in combinations(sub_ranges, 2):
             if c1.overlaps(c2):
-                self._results.addMessage(
+                self._msg.warning(
                     f"'{c1.definedName.name}' and '{c2.definedName.name}' overlap. {context}",
-                    Severity.WARNING,
                     MessageType.ExcelParsing,
                 )
                 return False
@@ -142,10 +143,9 @@ class SimpleNamedRangeTableResolver(BindingResolver):
             if dn is None
         ]
         if missing:
-            self._results.addMessage(
+            self._msg.warning(
                 f"{self._label} named ranges are incomplete; missing: "
                 f"{', '.join(missing)}. {self._context}",
-                Severity.WARNING,
                 MessageType.ExcelParsing,
             )
             return None
@@ -196,7 +196,6 @@ class XBRLTableResolver(BindingResolver):
 
     def resolve(self) -> Optional[TableBinding]:
         """Return the TableBinding, or None if an overlap conflict makes it unusable."""
-        results = self._results
         taxonomy = self._taxonomy
         table = self._table
         table_name = table.definedName.name
@@ -207,9 +206,8 @@ class XBRLTableResolver(BindingResolver):
             if concept.isReportable or concept.isDimension
         )
         if missing := permitted - self._concepts_in_excel:
-            results.addMessage(
+            self._msg.warning(
                 f"Expected Dimensions or Primary Items for hypercube {table_name} have not been found: {conceptsToText(missing)}.",
-                Severity.WARNING,
                 MessageType.DevInfo,
             )
 
@@ -225,9 +223,8 @@ class XBRLTableResolver(BindingResolver):
                 extras.add(stuff)
 
         if extras:
-            results.addMessage(
+            self._msg.warning(
                 f"Extra named ranges found within/overlapping bounds of {table_name} named range but not supported by Hypercube {table.concept.qname}: {extras}.",
-                Severity.WARNING,
                 MessageType.DevInfo,
             )
 
@@ -237,12 +234,11 @@ class XBRLTableResolver(BindingResolver):
         )
         if conflict is not None:
             c1, c2 = conflict
-            results.addMessage(
+            self._msg.error(
                 f"Named range (table) {table_name} has named ranges "
                 f"(primary items or dimensions) {c1.definedName.name} and "
                 f"{c2.definedName.name} that are neither the same nor disjoint. "
                 "Ignoring table.",
-                Severity.ERROR,
                 MessageType.ExcelParsing,
             )
             return None
@@ -284,11 +280,10 @@ class ExternalValuesResolver(BindingResolver):
                 name_or_label
             ) or taxonomy.getConceptForLabel(name_or_label)
             if concept is None or not concept.isTextblock:
-                self._results.addMessage(
+                self._msg.warning(
                     f"External value specified in {EXTERNAL_VALUES_RANGE} named range but no matching concept found for name or label '{name_or_label}'.",
-                    Severity.WARNING,
                     MessageType.DevInfo,
-                    excel_reference=crh.excelRef(cell),
+                    ref=crh.excelRef(cell),
                 )
                 continue
             has_external_value.add(concept)

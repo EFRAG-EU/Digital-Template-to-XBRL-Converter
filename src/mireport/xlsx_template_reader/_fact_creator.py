@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 from dateutil.relativedelta import relativedelta
 from openpyxl.cell import MergedCell
 
-from mireport.conversionresults import ConversionResultsBuilder, MessageType, Severity
+from mireport.conversionresults import ConversionResultsBuilder, MessageType
 from mireport.exceptions import AmbiguousComponentException, InlineReportException
 from mireport.report import InlineReport
 from mireport.report.factbuilder import FactBuilder
@@ -26,13 +26,16 @@ from mireport.stringutil import str_to_markupsafe, stripLabelSuffix
 from mireport.taxonomy import QName
 from mireport.typealiases import FactValue
 from mireport.xlsx_template_reader._bindings import (
-    CellRangeMetadata,
     ComplexUnit,
     WorkbookBindings,
-    XbrlConceptCellRangeMetadata,
 )
 from mireport.xlsx_template_reader._constants import (
     EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE,
+)
+from mireport.xlsx_template_reader._messages import Messenger
+from mireport.xlsx_template_reader._ranges import (
+    CellRangeMetadata,
+    XbrlConceptCellRangeMetadata,
 )
 from mireport.xlsx_template_reader.util import (
     conceptsToText,
@@ -104,7 +107,7 @@ class FactCreator:
         self._bindings = bindings
         self._reader = reader
         self._report = report
-        self._results = results
+        self._msg = Messenger(results)
 
         taxonomy = report.taxonomy
         self._configDataTypeToUnitMap: dict = {}
@@ -186,12 +189,11 @@ class FactCreator:
                 continue
 
             if isinstance(year, bool) or not isinstance(year, float | int | str):
-                self._results.addMessage(
+                self._msg.error(
                     f"Unable to extract year for {dimValueDN.name}. Cell value '{year}'",
-                    Severity.ERROR,
                     MessageType.ExcelParsing,
-                    taxonomy_concept=periodHolder.concept,
-                    excel_reference=periodHolder.excelRef(),
+                    concept=periodHolder.concept,
+                    ref=periodHolder,
                 )
                 concept_map.pop(dimValueDN)
                 continue
@@ -201,12 +203,11 @@ class FactCreator:
                 self.getOrAddNamedPeriodForYear(namedPeriod, yearInt)
                 concept_map.pop(dimValueDN)
             except ValueError:
-                self._results.addMessage(
+                self._msg.error(
                     f"Unable to convert value '{year}' to an integer.",
-                    Severity.ERROR,
                     MessageType.ExcelParsing,
-                    taxonomy_concept=periodHolder.concept,
-                    excel_reference=periodHolder.excelRef(),
+                    concept=periodHolder.concept,
+                    ref=periodHolder,
                 )
 
     def getOrAddNamedPeriodForYear(self, name: str, year: int) -> str:
@@ -226,11 +227,10 @@ class FactCreator:
             explicit_dimensions = table_binding.explicitDimensions
             typed_dimensions = table_binding.typedDimensions
             if not primary_items:
-                self._results.addMessage(
+                self._msg.error(
                     f"Table {tableDn.name} has no primary items defined. Skipping.",
-                    Severity.ERROR,
                     MessageType.ExcelParsing,
-                    excel_reference=tableStuff.excelRef(),
+                    ref=tableStuff,
                 )
                 continue
 
@@ -252,12 +252,11 @@ class FactCreator:
                             if concept.isEnumerationSet:
                                 value = " ".join(str(v) for v in values)
                             else:
-                                self._results.addMessage(
+                                self._msg.error(
                                     f"Primary item {priItem.definedName.name} spans multiple columns and has multiple values ({values}). Skipping.",
-                                    Severity.ERROR,
                                     MessageType.ExcelParsing,
-                                    taxonomy_concept=priItem.concept,
-                                    excel_reference=priItem.excelRef(cell),
+                                    concept=priItem.concept,
+                                    ref=priItem.excelRef(cell),
                                 )
                                 broken = True
                                 break
@@ -289,12 +288,11 @@ class FactCreator:
                     )
                     if not all_dims_set:
                         if value:
-                            self._results.addMessage(
+                            self._msg.warning(
                                 f"Unable to add fact with value '{value}' due to missing dimension values.",
-                                Severity.WARNING,
                                 MessageType.Conversion,
-                                taxonomy_concept=priItem.concept,
-                                excel_reference=priItem.excelRef(cell),
+                                concept=priItem.concept,
+                                ref=priItem.excelRef(cell),
                             )
                         continue
 
@@ -332,12 +330,11 @@ class FactCreator:
                             factBuilder.setHiddenValue(eeValue.expandedName)
                         else:
                             broken = True
-                            self._results.addMessage(
+                            self._msg.error(
                                 f"Unable to find EE concept for cell value '{value}'",
-                                Severity.ERROR,
                                 MessageType.Conversion,
-                                taxonomy_concept=priItem.concept,
-                                excel_reference=priItem.excelRef(cell),
+                                concept=priItem.concept,
+                                ref=priItem.excelRef(cell),
                             )
                     elif concept.isEnumerationSet:
                         eeValues: list[Concept] = []
@@ -350,24 +347,22 @@ class FactCreator:
                                 eeValues.append(eeValue)
                             else:
                                 broken = True
-                                self._results.addMessage(
+                                self._msg.error(
                                     f"Unable to find EE concept for cell value '{v}'",
-                                    Severity.ERROR,
                                     MessageType.Conversion,
-                                    taxonomy_concept=priItem.concept,
-                                    excel_reference=priItem.excelRef(cell),
+                                    concept=priItem.concept,
+                                    ref=priItem.excelRef(cell),
                                 )
                         factBuilder.setHiddenValue(
                             " ".join(sorted(set(e.expandedName for e in eeValues)))
                         )
 
                     if broken:
-                        self._results.addMessage(
+                        self._msg.warning(
                             f"Unable to add fact with value '{value}'",
-                            Severity.WARNING,
                             MessageType.Conversion,
-                            taxonomy_concept=priItem.concept,
-                            excel_reference=priItem.excelRef(cell),
+                            concept=priItem.concept,
+                            ref=priItem.excelRef(cell),
                         )
                         continue
                     else:
@@ -394,11 +389,10 @@ class FactCreator:
                     tdValue = str(tdValue)
                 factBuilder.setTypedDimension(tdConcept, tdValue)
             else:
-                self._results.addMessage(
+                self._msg.error(
                     f"Required typed dimension {tdConcept.qname} not set",
-                    Severity.ERROR,
                     MessageType.Conversion,
-                    excel_reference=td.excelRef(tdCell),
+                    ref=td.excelRef(tdCell),
                 )
         return all(success) and len(success) == len(typed_dimensions)
 
@@ -419,11 +413,10 @@ class FactCreator:
             if not edCell:
                 continue
             elif (edValue := edCell.value) is None:
-                self._results.addMessage(
+                self._msg.error(
                     f"Required explicit dimension {edConcept.qname} not set. Cell value '{edValue}'",
-                    Severity.ERROR,
                     MessageType.Conversion,
-                    excel_reference=ed.excelRef(edCell),
+                    ref=ed.excelRef(edCell),
                 )
                 continue
 
@@ -443,11 +436,10 @@ class FactCreator:
                 factBuilder.setExplicitDimension(edConcept, memberConcept)
                 success.append(True)
             else:
-                self._results.addMessage(
+                self._msg.error(
                     f"Required explicit dimension {edConcept.qname} not set. Cell value '{edValue}'",
-                    Severity.ERROR,
                     MessageType.Conversion,
-                    excel_reference=ed.excelRef(edCell),
+                    ref=ed.excelRef(edCell),
                 )
         return all(success) and len(success) == len(explicit_dimensions)
 
@@ -458,11 +450,10 @@ class FactCreator:
             self._report.addFact(factBuilder.buildFact())
             return True
         except InlineReportException as i:
-            self._results.addMessage(
+            self._msg.warning(
                 f"Unable to add fact. Encountered error: {i}",
-                Severity.WARNING,
                 MessageType.Conversion,
-                excel_reference=holder.excelRef(),
+                ref=holder,
             )
         return False
 
@@ -490,12 +481,11 @@ class FactCreator:
                 if (unit := self.taxonomy.UTR.getQNameForUnitId(c)) is not None
             ]
             if possible_units:
-                self._results.addMessage(
+                self._msg.warning(
                     f"Workaround performed for mislabelled unit for {unitHolder.concept.qname}. Cell value '{cellValue}'. Unit ids now guessed: [{', '.join(str(qname) for qname in possible_units)}]",
-                    Severity.WARNING,
                     MessageType.DevInfo,
-                    taxonomy_concept=unitHolder.concept,
-                    excel_reference=unitHolder.excelRef(cell),
+                    concept=unitHolder.concept,
+                    ref=unitHolder.excelRef(cell),
                 )
         match len(possible_units):
             case 1:
@@ -503,11 +493,10 @@ class FactCreator:
             case 0:
                 return None
             case _:
-                self._results.addMessage(
+                self._msg.error(
                     f"Ambiguous unit specified in cell '{cellValue}'. Identified possible units: {possible_units}",
-                    Severity.ERROR,
                     MessageType.ExcelParsing,
-                    excel_reference=unitHolder.excelRef(cell),
+                    ref=unitHolder.excelRef(cell),
                 )
                 return None
 
@@ -530,11 +519,10 @@ class FactCreator:
         if unitHolder:
             cell = self._reader.getSingleCell(unitHolder, row=row)
             if cell is None or cell.value is None:
-                self._results.addMessage(
+                self._msg.error(
                     f"Unable to find unit in expected part of {unitHolder.definedName.name}. Related concept {conceptHolder.definedName.name} has coordinates {conceptHolder.excelRef()}.",
-                    Severity.ERROR,
                     MessageType.DevInfo,
-                    excel_reference=unitHolder.excelRef(),
+                    ref=unitHolder,
                 )
                 return False
             if (unit := self.getSimpleUnit(unitHolder, cell)) is not None:
@@ -543,47 +531,42 @@ class FactCreator:
                     return True
                 elif specifiedUnitHolder:
                     if not sharedRange:
-                        self._results.addMessage(
+                        self._msg.warning(
                             f"Unable to create fact due to specified cell value '{cell.value}' not matching data type '{concept.dataType}'.",
-                            Severity.WARNING,
                             MessageType.Conversion,
-                            taxonomy_concept=concept,
-                            excel_reference=unitHolder.excelRef(cell),
+                            concept=concept,
+                            ref=unitHolder.excelRef(cell),
                         )
                     return False
                 else:
-                    self._results.addMessage(
+                    self._msg.error(
                         f"Found unit {unit} for {unitHolder.definedName.name} but it is not valid for {concept.qname} with dataType {concept.dataType}. Attempting fallback unit. Cell value '{cell.value}'.",
-                        Severity.ERROR,
                         MessageType.DevInfo,
-                        excel_reference=unitHolder.excelRef(cell),
+                        ref=unitHolder.excelRef(cell),
                     )
                     return self.setFallbackUnitForName(
                         conceptHolder.definedName, concept, factBuilder
                     )
             elif (unitQname := self._configConceptToUnitMap.get(concept)) is not None:
                 if self.taxonomy.UTR.valid(concept.dataType, unitQname):
-                    self._results.addMessage(
+                    self._msg.error(
                         f"Using configured unit {unitQname} for {concept} as unit cell value could not be translated in to a unit. Cell value '{cell.value}'.",
-                        Severity.ERROR,
                         MessageType.DevInfo,
-                        excel_reference=unitHolder.excelRef(cell),
+                        ref=unitHolder.excelRef(cell),
                     )
                     factBuilder.setSimpleUnit(unitQname)
                     return True
                 else:
-                    self._results.addMessage(
+                    self._msg.error(
                         f"Unit override in config is broken. Unit {unitQname} is not valid for {concept} with dataType {concept.dataType}.",
-                        Severity.ERROR,
                         MessageType.DevInfo,
-                        excel_reference=conceptHolder.excelRef(),
+                        ref=conceptHolder,
                     )
             else:
-                self._results.addMessage(
+                self._msg.error(
                     f"Unable to find unit for {unitHolder.definedName.name} using named range. Attempting to find unit via taxonomy. Cell value '{cell.value}'.",
-                    Severity.ERROR,
                     MessageType.DevInfo,
-                    excel_reference=unitHolder.excelRef(cell),
+                    ref=unitHolder.excelRef(cell),
                 )
 
         if (units := concept.getRequiredUnitQNames()) is not None:
@@ -591,12 +574,11 @@ class FactCreator:
                 factBuilder.setSimpleUnit(next(iter(units)))
                 return True
             else:
-                self._results.addMessage(
+                self._msg.warning(
                     f"No unit found in Excel for {conceptHolder.definedName.name}. More than one unit specified as possible in the taxonomy. {units=}",
-                    Severity.WARNING,
                     MessageType.Conversion,
-                    taxonomy_concept=concept,
-                    excel_reference=conceptHolder.excelRef(),
+                    concept=concept,
+                    ref=conceptHolder,
                 )
                 return False
 
@@ -635,17 +617,15 @@ class FactCreator:
 
         if units := self.taxonomy.UTR.getUnitsForDataType(concept.dataType):
             chosen = next(iter(units))
-            self._results.addMessage(
+            self._msg.warning(
                 f"Picked fallback unit (from UTR) {chosen} for {dn.name}",
-                Severity.WARNING,
                 MessageType.DevInfo,
             )
             factBuilder.setSimpleUnit(chosen)
         else:
             ultimateFallback = self.taxonomy.QNameMaker.fromString("xbrli:pure")
-            self._results.addMessage(
+            self._msg.warning(
                 f"Used ultimate fallback unit {ultimateFallback} for {dn.name}",
-                Severity.WARNING,
                 MessageType.DevInfo,
             )
             factBuilder.setSimpleUnit(ultimateFallback)
@@ -660,22 +640,20 @@ class FactCreator:
     ) -> None:
         if value is None:
             if cell.value is None:
-                self._results.addMessage(
+                self._msg.error(
                     f"Cell value is None for {stuff.definedName.name}. Unable to process numeric value.",
-                    Severity.ERROR,
                     MessageType.DevInfo,
-                    excel_reference=stuff.excelRef(cell),
+                    ref=stuff.excelRef(cell),
                 )
                 return
             else:
                 value = cell.value
 
         if isinstance(value, bool) or not isinstance(value, int | float):
-            self._results.addMessage(
+            self._msg.error(
                 f"Cell value {value=} {type(value)} is not numeric for {stuff.definedName.name}. Unable to process numeric value.",
-                Severity.ERROR,
                 MessageType.DevInfo,
-                excel_reference=stuff.excelRef(cell),
+                ref=stuff.excelRef(cell),
             )
             return
 
@@ -685,12 +663,11 @@ class FactCreator:
         if fb.concept is not None:
             concept_is_percentage = "percentItemType" == fb.concept.dataType.localName
             if cell_is_percentage != concept_is_percentage:
-                self._results.addMessage(
+                self._msg.warning(
                     f"Cell number format and XBRL Taxonomy data type disagree about percentages. Cell number format '{cell.number_format}'. Concept data type {fb.concept.dataType}.",
-                    Severity.WARNING,
                     MessageType.DevInfo,
-                    taxonomy_concept=fb.concept,
-                    excel_reference=stuff.excelRef(cell),
+                    concept=fb.concept,
+                    ref=stuff.excelRef(cell),
                 )
 
         if cell_is_percentage:
@@ -717,9 +694,8 @@ class FactCreator:
                 self.taxonomy.defaultedDimensions, preset
             )
             if unset_dims:
-                self._results.addMessage(
+                self._msg.error(
                     f"The named range {dn.name} has required dimensions that have not been set.\n The required dimensions {conceptsToText(required_dims)}.\n Missing: {conceptsToText(unset_dims)}.",
-                    Severity.ERROR,
                     MessageType.DevInfo,
                 )
                 reportable.pop(dn)
@@ -752,12 +728,11 @@ class FactCreator:
                 try:
                     value = getDateFromValue(value)
                 except Exception:
-                    self._results.addMessage(
+                    self._msg.error(
                         f"Unable to parse date from cell value '{value}' for {concept.qname}.",
-                        Severity.ERROR,
                         MessageType.ExcelParsing,
-                        taxonomy_concept=concept,
-                        excel_reference=stuff.excelRef(cell),
+                        concept=concept,
+                        ref=stuff.excelRef(cell),
                     )
                     concept_map.pop(dn)
                     continue
@@ -767,12 +742,11 @@ class FactCreator:
                 if isinstance(value, FactValue):
                     fb.setValue(value)
                 else:
-                    self._results.addMessage(
+                    self._msg.warning(
                         f"Rich object '{value}' {type(value).__name__} encountered as fact value for {concept}. Converting to string.",
-                        Severity.WARNING,
                         MessageType.ExcelParsing,
-                        taxonomy_concept=concept,
-                        excel_reference=stuff.excelRef(cell),
+                        concept=concept,
+                        ref=stuff.excelRef(cell),
                     )
                     fb.setValue(str(value))
 
@@ -801,27 +775,24 @@ class FactCreator:
                 if eeValue is not None:
                     fb.setHiddenValue(eeValue.expandedName)
                     if warn:
-                        self._results.addMessage(
+                        self._msg.warning(
                             f"Workaround performed for EE member label mismatch when reporting {concept.qname}. Cell value '{value}'. Concept label '{eeValue.getStandardLabel()}'",
-                            Severity.WARNING,
                             MessageType.DevInfo,
-                            taxonomy_concept=concept,
-                            excel_reference=stuff.excelRef(cell),
+                            concept=concept,
+                            ref=stuff.excelRef(cell),
                         )
                 elif result := getClosestEEMemberMatch(concept, s_value):
                     eeMember, label_matched = result
                     fb.setHiddenValue(eeMember.expandedName)
-                    self._results.addMessage(
+                    self._msg.warning(
                         f"Using closest match EE concept when reporting {concept.qname}. Cell value '{value}'. Chosen EE domain member: {eeMember.qname} with label: '{label_matched}'",
-                        Severity.WARNING,
                         MessageType.Conversion,
-                        taxonomy_concept=concept,
-                        excel_reference=stuff.excelRef(cell),
+                        concept=concept,
+                        ref=stuff.excelRef(cell),
                     )
                 else:
-                    self._results.addMessage(
+                    self._msg.error(
                         f"Unable to find EE concept when reporting {concept.qname}. Cell value '{value}'.",
-                        Severity.ERROR,
                         MessageType.Conversion,
                     )
 
@@ -878,12 +849,11 @@ class FactCreator:
                 if 0 <= index < len(eeDomain):
                     eeMember = eeDomain[index]
                 else:
-                    self._results.addMessage(
+                    self._msg.error(
                         "Failed to process enumeration value",
-                        Severity.ERROR,
                         MessageType.ExcelParsing,
-                        taxonomy_concept=stuff.concept,
-                        excel_reference=stuff.excelRef(cell),
+                        concept=stuff.concept,
+                        ref=stuff.excelRef(cell),
                     )
                     L.error(
                         f"Trying to access cell in named range {stuff.definedName.name} {rnum=} {cnum=} {stuff.cellRange.bounds=} {index=} {len(eeDomain)}"
@@ -922,39 +892,35 @@ class FactCreator:
                     value.append(v)
                     eeSetValue.add(eeConcept)
                     if warn:
-                        self._results.addMessage(
+                        self._msg.warning(
                             f"Workaround performed for EE member label mismatch when reporting {concept.qname}. Cell value '{v}'. Concept label '{eeConcept.getStandardLabel()}'",
-                            Severity.WARNING,
                             MessageType.DevInfo,
-                            taxonomy_concept=concept,
-                            excel_reference=stuff.excelRef(cell),
+                            concept=concept,
+                            ref=stuff.excelRef(cell),
                         )
                 elif result := getClosestEEMemberMatch(concept, v):
                     eeConcept, label_matched = result
                     value.append(v)
                     eeSetValue.add(eeConcept)
-                    self._results.addMessage(
+                    self._msg.warning(
                         f"Using closest match EE concept when reporting {concept.qname}. Cell value '{v}'. Chosen EE domain member: {eeConcept.qname} with label: '{label_matched}'",
-                        Severity.WARNING,
                         MessageType.Conversion,
-                        taxonomy_concept=concept,
-                        excel_reference=stuff.excelRef(cell),
+                        concept=concept,
+                        ref=stuff.excelRef(cell),
                     )
                 else:
-                    self._results.addMessage(
+                    self._msg.error(
                         f"Unable to find EE member when reporting {concept.qname}. Cell value '{v}'.",
-                        Severity.ERROR,
                         MessageType.ExcelParsing,
-                        taxonomy_concept=concept,
-                        excel_reference=stuff.excelRef(cell),
+                        concept=concept,
+                        ref=stuff.excelRef(cell),
                     )
             else:
-                self._results.addMessage(
+                self._msg.error(
                     f"Unable to find EE domain member when reporting {concept.qname}. Cell value '{v}'",
-                    Severity.ERROR,
                     MessageType.Conversion,
-                    taxonomy_concept=concept,
-                    excel_reference=stuff.excelRef(cell),
+                    concept=concept,
+                    ref=stuff.excelRef(cell),
                 )
         if EE_SET_DESIRED_EMPTY_PLACEHOLDER_VALUE in value:
             onlyPlaceholder = {EE_SET_DESIRED_EMPTY_PLACEHOLDER_VALUE}
@@ -962,12 +928,11 @@ class FactCreator:
                 onlyPlaceholder
             )
             if otherValues:
-                self._results.addMessage(
+                self._msg.error(
                     f"Inconsistent values found for EE set {concept.qname}. Not creating an XBRL fact. Cell values '{value}'",
-                    Severity.ERROR,
                     MessageType.Conversion,
-                    taxonomy_concept=concept,
-                    excel_reference=stuff.excelRef(),
+                    concept=concept,
+                    ref=stuff,
                 )
             else:
                 fb.setConcept(concept).setHiddenValue("").setValue(
@@ -975,12 +940,11 @@ class FactCreator:
                 )
                 self.addFactToReport(fb, stuff)
         elif not eeSetValue:
-            self._results.addMessage(
+            self._msg.info(
                 f"No values found for {concept.qname} so not creating an empty XBRL fact. Cell value '{value}'",
-                Severity.INFO,
                 MessageType.DevInfo,
-                taxonomy_concept=concept,
-                excel_reference=stuff.excelRef(cell),
+                concept=concept,
+                ref=stuff.excelRef(cell),
             )
         else:
             fb.setConcept(concept).setHiddenValue(
@@ -1104,31 +1068,28 @@ class FactCreator:
             )
 
         def warn_ref(msg: str, cell: CellType | None = None) -> None:
-            self._results.addMessage(
+            self._msg.warning(
                 msg,
-                Severity.WARNING,
                 MessageType.ExcelParsing,
-                excel_reference=ref_crm.excelRef(cell),
+                ref=ref_crm.excelRef(cell),
             )
 
         for text_value, label_cells in self._iter_footnote_rows(
             table_crm, text_col_indices, ref_col_indices, dim_col_indices
         ):
             if not label_cells:
-                self._results.addMessage(
+                self._msg.warning(
                     f"Footnote ('{text_value[:60]}') has no concept references; skipping.",
-                    Severity.WARNING,
                     MessageType.ExcelParsing,
-                    excel_reference=table_crm.excelRef(),
+                    ref=table_crm,
                 )
                 continue
             resolved_refs = self._resolve_footnote_refs(label_cells, warn_ref)
             if not resolved_refs:
-                self._results.addMessage(
+                self._msg.warning(
                     f"Footnote ('{text_value[:60]}') has no resolvable concept references; skipping.",
-                    Severity.WARNING,
                     MessageType.ExcelParsing,
-                    excel_reference=table_crm.excelRef(),
+                    ref=table_crm,
                 )
                 continue
             target_facts: list[Fact] = []
@@ -1178,8 +1139,7 @@ class FactCreator:
         for stuff in unHandled:
             if stuff.definedName.name in ignore_dns:
                 continue
-            self._results.addMessage(
+            self._msg.error(
                 f"Failed to handle XBRL related Excel named range {stuff.definedName.name}.",
-                Severity.ERROR,
                 MessageType.Conversion,
             )
