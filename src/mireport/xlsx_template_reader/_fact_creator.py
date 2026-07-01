@@ -163,7 +163,7 @@ class FactCreator:
         self._createNamedPeriods()
         self.createSimpleFacts()
         self.createTableFacts()
-        self._processFootnotes()
+        self._createFootnotes()
         self.checkForUnhandledItems()
 
     def _createNamedPeriods(self) -> None:
@@ -229,11 +229,12 @@ class FactCreator:
         return name
 
     def createTableFacts(self) -> None:
-        for tableStuff, table_contents in self._bindings.table_map.items():
+        for table_binding in self._bindings.tables:
+            tableStuff = table_binding.table
             tableDn = tableStuff.definedName
-            primary_items = table_contents.primaryItems
-            explicit_dimensions = table_contents.explicitDimensions
-            typed_dimensions = table_contents.typedDimensions
+            primary_items = table_binding.primaryItems
+            explicit_dimensions = table_binding.explicitDimensions
+            typed_dimensions = table_binding.typedDimensions
             if not primary_items:
                 self._results.addMessage(
                     f"Table {tableDn.name} has no primary items defined. Skipping.",
@@ -317,7 +318,7 @@ class FactCreator:
                     if concept.isNumeric:
                         unitHolder = None
                         sharedRange = False
-                        for candidate in table_contents.units:
+                        for candidate in table_binding.units:
                             if candidate.concept == concept:
                                 unitHolder = candidate
                                 break
@@ -325,7 +326,7 @@ class FactCreator:
                         if unitHolder:
                             sharedRange = any(
                                 u.cellRange == unitHolder.cellRange
-                                for u in table_contents.units
+                                for u in table_binding.units
                                 if u is not unitHolder
                             )
 
@@ -1122,9 +1123,8 @@ class FactCreator:
             resolved.append((concept, member))
         return resolved
 
-    def _processFootnotes(self) -> None:
-        binding = self._bindings.footnote
-        if binding is None:
+    def _createFootnotes(self) -> None:
+        if (binding := self._bindings.footnote) is None:
             return
 
         table_crm = binding.table

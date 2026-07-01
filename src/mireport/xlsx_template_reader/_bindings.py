@@ -69,12 +69,43 @@ class XbrlConceptCellRangeMetadata(CellRangeMetadata):
             concept=concept,
         )
 
+    def conflictsWith(self, other: XbrlConceptCellRangeMetadata) -> bool:
+        """True if the two ranges overlap in a way a hypercube table can't allow.
 
-class XbrlTableCellRangeMetadataHolder(NamedTuple):
+        Within a table, two concept ranges must be either disjoint or the exact
+        same range shared by two reportable primary items. Any other overlap
+        (partial, or a same range involving a dimension) is a conflict.
+        """
+        if not self.overlaps(other):
+            return False
+        shares_reportable_range = (
+            self.concept.isReportable
+            and other.concept.isReportable
+            and self.cellRange.bounds == other.cellRange.bounds
+        )
+        return not shares_reportable_range
+
+
+class TableBinding(NamedTuple):
+    """A resolved hypercube table: its range plus the concept ranges within it."""
+
+    table: XbrlConceptCellRangeMetadata
     primaryItems: list[XbrlConceptCellRangeMetadata]
     explicitDimensions: list[XbrlConceptCellRangeMetadata]
     typedDimensions: list[XbrlConceptCellRangeMetadata]
     units: list[XbrlConceptCellRangeMetadata]
+
+    @property
+    def conceptRanges(self) -> list[XbrlConceptCellRangeMetadata]:
+        """The table range plus all its primary-item/dimension ranges — i.e. the
+        entries this table occupies in the concept_map. Excludes units, which
+        live in the unit_map keyed by concept rather than by defined name."""
+        return [
+            self.table,
+            *self.primaryItems,
+            *self.explicitDimensions,
+            *self.typedDimensions,
+        ]
 
 
 class FootnoteBinding(NamedTuple):
@@ -89,7 +120,7 @@ class FootnoteBinding(NamedTuple):
 @dataclass
 class WorkbookBindings:
     concept_map: dict[DefinedName, XbrlConceptCellRangeMetadata]
-    table_map: dict[XbrlConceptCellRangeMetadata, XbrlTableCellRangeMetadataHolder]
+    tables: list[TableBinding]
     unit_map: dict[Concept, XbrlConceptCellRangeMetadata]
     preset_dims: defaultdict[XbrlConceptCellRangeMetadata, dict[Concept, Concept]]
     has_external_value: frozenset[Concept]

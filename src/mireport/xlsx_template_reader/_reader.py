@@ -9,6 +9,8 @@ from typing import (
 )
 
 if TYPE_CHECKING:
+    from openpyxl.worksheet.worksheet import Worksheet
+
     from mireport.taxonomy import Concept, Taxonomy
 
 from openpyxl import Workbook
@@ -18,26 +20,27 @@ from openpyxl.worksheet.cell_range import CellRange
 from mireport.conversionresults import ConversionResultsBuilder, MessageType, Severity
 from mireport.xlsx_template_reader._bindings import (
     CellRangeMetadata,
+    TableBinding,
     WorkbookBindings,
     XbrlConceptCellRangeMetadata,
 )
 from mireport.xlsx_template_reader._cell_iteration import (
     getEffectiveCellRangeDimensions,
-    getIteratorForCellRangeMetadata,
 )
 from mireport.xlsx_template_reader._constants import (
     EXCEL_PLACEHOLDER_VALUE,
-    EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE,
-    EXTERNAL_VALUES_RANGE,
     IGNORED_DEFINED_NAME_PREFIXES,
     CellType,
     CellValueType,
 )
 from mireport.xlsx_template_reader._resolvers import (
+    ExcelCellBindingContext,
+    ExternalValuesResolver,
     FootnoteTableResolver,
-    XBRLNamedRangeTableResolver,
+    XBRLTableResolver,
 )
 from mireport.xlsx_template_reader.util import (
+    conceptsToText,
     excelCellRangeRef,
     excelCellRef,
     excelDefinedNameRef,
@@ -144,43 +147,40 @@ class WorkbookReader:
             MessageType.ExcelParsing,
         )
 
-        table_map = XBRLNamedRangeTableResolver(
-            self, results, taxonomy, concept_map, unit_map
-        ).resolve()
-
-        has_external_value: set[Concept] = set()
-        if (ext_dn := self._workbook.defined_names.get(EXTERNAL_VALUES_RANGE)) and (
-            crh := self._createCellRangeMetadata(ext_dn)
+        hypercube_ranges, concepts_in_excel, candidates_by_ws = index_xbrl_candidates(
+            concept_map, taxonomy
+        )
+        if empty := taxonomy.emptyHypercubes.intersection(
+            c for c in concepts_in_excel if c.isHypercube
         ):
-            for cell in getIteratorForCellRangeMetadata(crh, only_cells=True):
-                if not isinstance(cell.value, str):
-                    continue
-                name_or_label = cell.value.strip()
-                if (
-                    not name_or_label
-                    or name_or_label in EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE
-                ):
-                    continue
-                concept = taxonomy.getConceptForName(
-                    name_or_label
-                ) or taxonomy.getConceptForLabel(name_or_label)
-                if concept is None or not concept.isTextblock:
-                    self._results.addMessage(
-                        f"External value specified in {EXTERNAL_VALUES_RANGE} named range but no matching concept found for name or label '{name_or_label}'.",
-                        Severity.WARNING,
-                        MessageType.DevInfo,
-                        excel_reference=excelCellRef(crh.worksheet, cell),
-                    )
-                    continue
-                has_external_value.add(concept)
+            results.addMessage(
+                f"The following hypercubes exist and have corresponding named ranges but they cannot be used due to missing taxonomy definitions: {conceptsToText(empty)}.",
+                Severity.ERROR,
+                MessageType.DevInfo,
+            )
+
+        ctx = ExcelCellBindingContext(self, results, taxonomy)
+
+        tables: list[TableBinding] = []
+        for table_stuff in hypercube_ranges:
+            binding = XBRLTableResolver(
+                ctx,
+                unit_map,
+                table_stuff,
+                candidates_by_ws.get(table_stuff.worksheet, ()),
+                concepts_in_excel,
+            ).resolve()
+            if binding is not None:
+                tables.append(binding)
+        consume_table_bindings(concept_map, unit_map, tables)
 
         return WorkbookBindings(
             concept_map=concept_map,
-            table_map=table_map,
+            tables=tables,
             unit_map=unit_map,
             preset_dims=preset_dims,
-            has_external_value=frozenset(has_external_value),
-            footnote=FootnoteTableResolver(self, results).resolve(),
+            has_external_value=ExternalValuesResolver(ctx).resolve(),
+            footnote=FootnoteTableResolver(ctx).resolve(),
         )
 
     def _createCellRangeMetadata(self, dn: DefinedName) -> Optional[CellRangeMetadata]:
@@ -375,3 +375,42 @@ class WorkbookReader:
     def getSingleDateValue(self, definedName: DefinedName | str) -> date:
         value = self.getSingleValue(definedName)
         return getDateFromValue(value)
+
+
+def index_xbrl_candidates(
+    concept_map: dict,
+    taxonomy: Taxonomy,
+) -> tuple[
+    list[XbrlConceptCellRangeMetadata],
+    frozenset[Concept],
+    dict[Worksheet, list[XbrlConceptCellRangeMetadata]],
+]:
+    """Single pass over concept_map: the hypercube table ranges, every concept
+    present, and a worksheet-keyed index of reportable/dimension candidate ranges."""
+    hypercubes = taxonomy.hypercubes
+    hypercube_ranges: list[XbrlConceptCellRangeMetadata] = []
+    concepts_in_excel: list[Concept] = []
+    candidates_by_ws: defaultdict[
+        Worksheet, list[XbrlConceptCellRangeMetadata]
+    ] = defaultdict(list)
+    for stuff in concept_map.values():
+        concept = stuff.concept
+        concepts_in_excel.append(concept)
+        if concept in hypercubes:
+            hypercube_ranges.append(stuff)
+        if concept.isReportable or concept.isDimension:
+            candidates_by_ws[stuff.worksheet].append(stuff)
+    return hypercube_ranges, frozenset(concepts_in_excel), candidates_by_ws
+
+
+def consume_table_bindings(
+    concept_map: dict,
+    unit_map: dict,
+    bindings: list[TableBinding],
+) -> None:
+    """Remove resolved table entries from concept_map/unit_map (now held in bindings)."""
+    for binding in bindings:
+        for crm in binding.conceptRanges:
+            concept_map.pop(crm.definedName, None)
+        for u in binding.units:
+            unit_map.pop(u.concept, None)

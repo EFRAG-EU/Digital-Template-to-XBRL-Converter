@@ -1,33 +1,43 @@
 """Resolvers that turn workbook named ranges into validated binding holders.
 
-A "named range table" is a container range (a hypercube table, or the footnote
-table) that holds a number of sub-ranges which must sit within it. The shared
-geometry validation (containment + non-overlap) lives on the base class; the two
-concrete resolvers differ in how they discover sub-ranges:
+Every resolver takes an `ExcelCellBindingContext` (reader, results, taxonomy) built
+once in `build_bindings`, and extends the `BindingResolver` ABC:
 
-* SimpleNamedRangeTableResolver  -- sub-ranges named by fixed defined names (footnotes).
-* XBRLNamedRangeTableResolver    -- sub-ranges discovered geometrically (hypercubes).
+* SimpleNamedRangeTableResolver  -- container range + fixed-named sub-ranges
+                                    (containment + non-overlap validation).
+* FootnoteTableResolver          -- composes the above into a FootnoteBinding.
+* XBRLTableResolver              -- resolves one hypercube table into a TableBinding
+                                    (build_bindings handles discovery and cleanup).
+* ExternalValuesResolver         -- the template_external_values range.
 """
 
 from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from itertools import combinations
 from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
-    from mireport.taxonomy import Taxonomy
+    from mireport.taxonomy import Concept, Taxonomy
     from mireport.xlsx_template_reader._reader import WorkbookReader
 
 from mireport.conversionresults import ConversionResultsBuilder, MessageType, Severity
 from mireport.xlsx_template_reader._bindings import (
     CellRangeMetadata,
     FootnoteBinding,
+    TableBinding,
     XbrlConceptCellRangeMetadata,
-    XbrlTableCellRangeMetadataHolder,
 )
-from mireport.xlsx_template_reader.util import conceptsToText
+from mireport.xlsx_template_reader._cell_iteration import (
+    getIteratorForCellRangeMetadata,
+)
+from mireport.xlsx_template_reader._constants import (
+    EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE,
+    EXTERNAL_VALUES_RANGE,
+)
+from mireport.xlsx_template_reader.util import conceptsToText, excelCellRef
 
 L = logging.getLogger(__name__)
 
@@ -38,19 +48,49 @@ _FOOTNOTE_REF = "footnote_ref_concept"
 _FOOTNOTE_REF_DIMENSION = "footnote_ref_dimension"
 
 
-class NamedRangeTableResolver(ABC):
-    """Base: a container named range plus sub-ranges that must sit within it."""
+@dataclass(frozen=True, slots=True)
+class ExcelCellBindingContext:
+    """The ambient dependencies every resolver needs, built once in build_bindings."""
 
-    def __init__(
-        self, reader: WorkbookReader, results: ConversionResultsBuilder
-    ) -> None:
-        self._reader = reader
-        self._results = results
+    reader: WorkbookReader
+    results: ConversionResultsBuilder
+    taxonomy: Taxonomy
+
+
+class BindingResolver(ABC):
+    """Base: resolves something from the workbook into a binding, given the context."""
+
+    def __init__(self, ctx: ExcelCellBindingContext) -> None:
+        self._ctx = ctx
+        self._reader = ctx.reader
+        self._results = ctx.results
+        self._taxonomy = ctx.taxonomy
 
     @abstractmethod
     def resolve(self) -> object:
         """Resolve and validate this resolver's named ranges into a binding holder."""
         ...
+
+
+class SimpleNamedRangeTableResolver(BindingResolver):
+    """Resolves a container named range plus fixed-named sub-ranges (e.g. footnotes)."""
+
+    def __init__(
+        self,
+        ctx: ExcelCellBindingContext,
+        *,
+        label: str,
+        container_name: str,
+        required_sub_names: tuple[str, ...],
+        optional_sub_names: tuple[str, ...] = (),
+        context: str,
+    ) -> None:
+        super().__init__(ctx)
+        self._label = label
+        self._container_name = container_name
+        self._required_sub_names = required_sub_names
+        self._optional_sub_names = optional_sub_names
+        self._context = context
 
     def _validate_sub_ranges(
         self,
@@ -77,28 +117,6 @@ class NamedRangeTableResolver(ABC):
                 )
                 return False
         return True
-
-
-class SimpleNamedRangeTableResolver(NamedRangeTableResolver):
-    """Resolves a container named range plus fixed-named sub-ranges (e.g. footnotes)."""
-
-    def __init__(
-        self,
-        reader: WorkbookReader,
-        results: ConversionResultsBuilder,
-        *,
-        label: str,
-        container_name: str,
-        required_sub_names: tuple[str, ...],
-        optional_sub_names: tuple[str, ...] = (),
-        context: str,
-    ) -> None:
-        super().__init__(reader, results)
-        self._label = label
-        self._container_name = container_name
-        self._required_sub_names = required_sub_names
-        self._optional_sub_names = optional_sub_names
-        self._context = context
 
     def resolve(
         self,
@@ -135,14 +153,12 @@ class SimpleNamedRangeTableResolver(NamedRangeTableResolver):
             )
             return None
 
-        container_crm = reader._getCellRangeMetadata(container_dn)
-        if container_crm is None:
+        if container_dn is None or (container_crm := reader._getCellRangeMetadata(container_dn)) is None:
             return None
 
         sub_crms: dict[str, CellRangeMetadata] = {}
         for name, dn in required_dns.items():
-            crm = reader._getCellRangeMetadata(dn)
-            if crm is None:
+            if dn is None or (crm := reader._getCellRangeMetadata(dn)) is None:
                 return None
             sub_crms[name] = crm
 
@@ -160,151 +176,131 @@ class SimpleNamedRangeTableResolver(NamedRangeTableResolver):
         return container_crm, sub_crms
 
 
-class XBRLNamedRangeTableResolver(NamedRangeTableResolver):
-    """Resolves hypercube tables: a table range plus the concept ranges within it.
-
-    Sub-ranges are discovered geometrically (concept ranges that fall within the
-    table range) rather than by fixed names, then classified into primary items,
-    dimensions and units.
-    """
+class XBRLTableResolver(BindingResolver):
+    """Resolves a single hypercube table: the concept ranges within its bounds,
+    classified into primary items, dimensions and units."""
 
     def __init__(
         self,
-        reader: WorkbookReader,
-        results: ConversionResultsBuilder,
-        taxonomy: Taxonomy,
-        concept_map: dict,
+        ctx: ExcelCellBindingContext,
         unit_map: dict,
+        table: XbrlConceptCellRangeMetadata,
+        ws_candidates: list[XbrlConceptCellRangeMetadata] | tuple[()],
+        concepts_in_excel: frozenset[Concept],
     ) -> None:
-        super().__init__(reader, results)
-        self._taxonomy = taxonomy
-        self._concept_map = concept_map
+        super().__init__(ctx)
         self._unit_map = unit_map
+        self._table = table
+        self._ws_candidates = ws_candidates
+        self._concepts_in_excel = concepts_in_excel
 
-    def resolve(
-        self,
-    ) -> dict[XbrlConceptCellRangeMetadata, XbrlTableCellRangeMetadataHolder]:
-        """Build the table_map, popping consumed entries out of concept_map/unit_map."""
+    def resolve(self) -> Optional[TableBinding]:
+        """Return the TableBinding, or None if an overlap conflict makes it unusable."""
         results = self._results
         taxonomy = self._taxonomy
-        concept_map = self._concept_map
-        unit_map = self._unit_map
-        table_map: dict = {}
+        table = self._table
+        table_name = table.definedName.name
 
-        tables = [
-            (dn, stuff)
-            for dn, stuff in concept_map.items()
-            if stuff.concept in taxonomy.hypercubes
-        ]
-        concepts_in_excel = frozenset(stuff.concept for stuff in concept_map.values())
-        hc_concepts_in_excel = frozenset(c for c in concepts_in_excel if c.isHypercube)
-        used_empty_hypercubes = taxonomy.emptyHypercubes.intersection(
-            hc_concepts_in_excel
+        permitted = taxonomy.getDimensionsForHypercube(table.concept).union(
+            concept
+            for concept in taxonomy.getPrimaryItemsForHypercube(table.concept)
+            if concept.isReportable or concept.isDimension
         )
-        if used_empty_hypercubes:
+        if missing := permitted - self._concepts_in_excel:
             results.addMessage(
-                f"The following hypercubes exist and have corresponding named ranges but they cannot be used due to missing taxonomy definitions: {conceptsToText(used_empty_hypercubes)}.",
-                Severity.ERROR,
+                f"Expected Dimensions or Primary Items for hypercube {table_name} have not been found: {conceptsToText(missing)}.",
+                Severity.WARNING,
                 MessageType.DevInfo,
             )
 
-        for table, table_stuff in tables:
-            table_concept = table_stuff.concept
+        candidates: list[XbrlConceptCellRangeMetadata] = []
+        extras: set[XbrlConceptCellRangeMetadata] = set()
+        for stuff in self._ws_candidates:
+            if table.contains(stuff):
+                if stuff.concept in permitted:
+                    candidates.append(stuff)
+                else:
+                    extras.add(stuff)
+            elif table.overlaps(stuff):
+                extras.add(stuff)
 
-            allPermittedConceptsForTable = taxonomy.getDimensionsForHypercube(
-                table_concept
-            ).union(
-                {
-                    concept
-                    for concept in taxonomy.getPrimaryItemsForHypercube(table_concept)
-                    if concept.isReportable or concept.isDimension
-                }
+        if extras:
+            results.addMessage(
+                f"Extra named ranges found within/overlapping bounds of {table_name} named range but not supported by Hypercube {table.concept.qname}: {extras}.",
+                Severity.WARNING,
+                MessageType.DevInfo,
             )
-            missing_from_excel = allPermittedConceptsForTable.difference(
-                concepts_in_excel
+
+        conflict = next(
+            ((a, b) for a, b in combinations(candidates, 2) if a.conflictsWith(b)),
+            None,
+        )
+        if conflict is not None:
+            c1, c2 = conflict
+            results.addMessage(
+                f"Named range (table) {table_name} has named ranges "
+                f"(primary items or dimensions) {c1.definedName.name} and "
+                f"{c2.definedName.name} that are neither the same nor disjoint. "
+                "Ignoring table.",
+                Severity.ERROR,
+                MessageType.ExcelParsing,
             )
-            if missing_from_excel:
-                results.addMessage(
-                    f"Expected Dimensions or Primary Items for hypercube {table.name} have not been found: {conceptsToText(missing_from_excel)}.",
+            return None
+
+        unit_map = self._unit_map
+        # Independent filters: a non-abstract dimension can be both reportable and a dimension.
+        pItems = [c for c in candidates if c.concept.isReportable]
+        return TableBinding(
+            table=table,
+            primaryItems=pItems,
+            explicitDimensions=[c for c in candidates if c.concept.isExplicitDimension],
+            typedDimensions=[c for c in candidates if c.concept.isTypedDimension],
+            units=[u for p in pItems if (u := unit_map.get(p.concept)) is not None],
+        )
+
+
+class ExternalValuesResolver(BindingResolver):
+    """Resolves the template_external_values range into the set of concepts whose
+    values are supplied externally rather than from the spreadsheet."""
+
+    def resolve(self) -> frozenset[Concept]:
+        reader = self._reader
+        taxonomy = self._taxonomy
+        ext_dn = reader.getDefinedName(EXTERNAL_VALUES_RANGE)
+        if ext_dn is None or (crh := reader._createCellRangeMetadata(ext_dn)) is None:
+            return frozenset()
+
+        has_external_value: set[Concept] = set()
+        for cell in getIteratorForCellRangeMetadata(crh, only_cells=True):
+            if not isinstance(cell.value, str):
+                continue
+            name_or_label = cell.value.strip()
+            if (
+                not name_or_label
+                or name_or_label in EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE
+            ):
+                continue
+            concept = taxonomy.getConceptForName(
+                name_or_label
+            ) or taxonomy.getConceptForLabel(name_or_label)
+            if concept is None or not concept.isTextblock:
+                self._results.addMessage(
+                    f"External value specified in {EXTERNAL_VALUES_RANGE} named range but no matching concept found for name or label '{name_or_label}'.",
                     Severity.WARNING,
                     MessageType.DevInfo,
+                    excel_reference=excelCellRef(crh.worksheet, cell),
                 )
-
-            candidates: list[XbrlConceptCellRangeMetadata] = []
-            extras_in_excel: set[XbrlConceptCellRangeMetadata] = set()
-            for dn, stuff in concept_map.items():
-                if table_stuff.worksheet is not stuff.worksheet:
-                    continue
-                concept = stuff.concept
-                if not (concept.isReportable or concept.isDimension):
-                    continue
-                if table_stuff.contains(stuff):
-                    if concept in allPermittedConceptsForTable:
-                        candidates.append(stuff)
-                    else:
-                        extras_in_excel.add(stuff)
-                elif table_stuff.overlaps(stuff):
-                    extras_in_excel.add(stuff)
-
-            if extras_in_excel:
-                results.addMessage(
-                    f"Extra named ranges found within/overlapping bounds of {table.name} named range but not supported by Hypercube {table_stuff.concept.qname}: {extras_in_excel}.",
-                    Severity.WARNING,
-                    MessageType.DevInfo,
-                )
-
-            fishy = False
-            for c1, c2 in combinations(candidates, 2):
-                disjoint = not c1.overlaps(c2)
-                same = (
-                    c1.concept.isReportable
-                    and c2.concept.isReportable
-                    and (c1.cellRange.bounds == c2.cellRange.bounds)
-                )
-                if not (disjoint or same):
-                    fishy = True
-                    results.addMessage(
-                        f"Named range (table) {table.name} has named ranges (primary items or dimensions) {c1.definedName.name} and {c2.definedName.name} that are neither the same nor disjoint. Ignoring table.",
-                        Severity.ERROR,
-                        MessageType.ExcelParsing,
-                    )
-                    break
-
-            if not fishy:
-                pItems = [c for c in candidates if c.concept.isReportable]
-                eDims = [c for c in candidates if c.concept.isExplicitDimension]
-                tDims = [c for c in candidates if c.concept.isTypedDimension]
-                units = [
-                    u for p in pItems if (u := unit_map.get(p.concept)) is not None
-                ]
-                table_map[table_stuff] = XbrlTableCellRangeMetadataHolder(
-                    primaryItems=pItems,
-                    explicitDimensions=eDims,
-                    typedDimensions=tDims,
-                    units=units,
-                )
-
-        # Remove table entries from concept_map (they're now in table_map)
-        for tableStuff, table_contents in table_map.items():
-            concept_map.pop(tableStuff.definedName, None)
-            table_dict = table_contents._asdict()
-            for name, part_list in table_dict.items():
-                for holder in part_list:
-                    if "units" == name:
-                        unit_map.pop(holder.concept, None)
-                    else:
-                        concept_map.pop(holder.definedName, None)
-
-        return table_map
+                continue
+            has_external_value.add(concept)
+        return frozenset(has_external_value)
 
 
-class FootnoteTableResolver(NamedRangeTableResolver):
+class FootnoteTableResolver(BindingResolver):
     """Resolves the footnote named ranges into a FootnoteBinding."""
 
     def resolve(self) -> Optional[FootnoteBinding]:
         resolved = SimpleNamedRangeTableResolver(
-            self._reader,
-            self._results,
+            self._ctx,
             label="Footnote",
             container_name=_FOOTNOTE_TABLE,
             required_sub_names=(_FOOTNOTE_TEXT, _FOOTNOTE_REF),
