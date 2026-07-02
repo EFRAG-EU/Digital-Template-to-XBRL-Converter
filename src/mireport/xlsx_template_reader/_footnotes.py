@@ -109,7 +109,9 @@ class FootnoteFactCreator:
                 # Non-MergedCell in text column = boundary between footnotes
                 if current_text is not None:
                     yield current_text, current_label_cells
-                    current_label_cells = []
+                # Refs accumulated under a blank text block belong to no
+                # footnote — drop them at every boundary, not just yielded ones.
+                current_label_cells = []
                 if cell.value is not None:
                     raw = str(cell.value).strip()
                     current_text = raw or None
