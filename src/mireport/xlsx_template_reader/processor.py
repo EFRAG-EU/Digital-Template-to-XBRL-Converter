@@ -372,7 +372,7 @@ class XlsxProcessor:
 
         if not template_version_string.strip():
             self._msg.error(
-                "The Digital Template has no version recorded. Please use a supported template (the latest version is {converter_version}).",
+                f"The Digital Template has no version recorded. Please use a supported template (the latest version is {converter_version}).",
                 MessageType.ExcelParsing,
                 ref=excelDefinedNameRef(
                     self._reader.getDefinedName(template_version_name)
