@@ -66,18 +66,6 @@ def excelCellRangeRef(worksheet: Worksheet, cellRange: CellRange) -> str:
     return ref
 
 
-def excelCellOrCellRangeRef(
-    worksheet: Worksheet, cellRange: CellRange, cell: CellType | None
-) -> str:
-    """Make an Excel cell reference such as 'Example sheet'!$A$5"""
-    if cell is not None:
-        return excelCellRef(worksheet, cell)
-    elif cellRange is not None:
-        return excelCellRangeRef(worksheet, cellRange)
-    else:
-        return None
-
-
 def excelDefinedNameRef(
     definedName: Optional[DefinedName], cell: Optional[CellType] = None
 ) -> Optional[str]:
