@@ -8,16 +8,11 @@ from typing import NamedTuple, Optional
 
 from openpyxl.workbook.defined_name import DefinedName
 
-from mireport.taxonomy import Concept, QName
+from mireport.taxonomy import Concept
 from mireport.xlsx_template_reader._ranges import (
     CellRangeMetadata,
     XbrlConceptCellRangeMetadata,
 )
-
-
-class ComplexUnit(NamedTuple):
-    numerator: list[QName]
-    denominator: list[QName]
 
 
 class TableBinding(NamedTuple):

@@ -13,6 +13,7 @@ from __future__ import annotations
 import json
 from collections import Counter
 from pathlib import Path
+from typing import NamedTuple
 
 import pytest
 
@@ -21,13 +22,18 @@ from mireport.data.disclosures import VSME_DEFAULTS
 from mireport.report import InlineReport
 from mireport.taxonomy import getTaxonomy, loadBuiltInTaxonomyJSON
 from mireport.xlsx_template_reader._binder import WorkbookBinder
-from mireport.xlsx_template_reader._fact_creator import (
-    FactCreator,
-    cleanUnitTextFromExcel,
+from mireport.xlsx_template_reader._config import ConverterConfig
+from mireport.xlsx_template_reader._enumerations import (
+    LabelMatch,
     eeDomainByLabel,
     getClosestEEMemberMatch,
+    resolveMemberByLabel,
 )
+from mireport.xlsx_template_reader._fact_creator import FactCreator
+from mireport.xlsx_template_reader._fact_support import processNumeric
+from mireport.xlsx_template_reader._messages import Messenger
 from mireport.xlsx_template_reader._reader import WorkbookReader
+from mireport.xlsx_template_reader._units import UnitResolver, cleanUnitTextFromExcel
 from mireport.xlsx_template_reader.processor import XlsxProcessor
 from mireport.xlsx_template_reader.util import loadExcelFromPathOrFileLike
 
@@ -116,6 +122,15 @@ class TestFactSnapshot:
 # ---------------------------------------------------------------------------
 
 
+class CreatorEnv(NamedTuple):
+    creator: FactCreator
+    report: InlineReport
+    bindings: object
+    taxonomy: object
+    reader: WorkbookReader
+    results: ConversionResultsBuilder
+
+
 @pytest.fixture(scope="module")
 def creator_env():
     wb = loadExcelFromPathOrFileLike(SAMPLE_1_3_0)
@@ -135,13 +150,25 @@ def creator_env():
 
     bindings = WorkbookBinder(reader, taxonomy, results).bind()
     creator = FactCreator(bindings, reader, report, results, VSME_DEFAULTS)
-    yield creator, report, bindings, taxonomy
+    yield CreatorEnv(creator, report, bindings, taxonomy, reader, results)
     wb.close()
 
 
 @pytest.fixture(scope="module")
 def taxonomy(creator_env):
-    return creator_env[3]
+    return creator_env.taxonomy
+
+
+@pytest.fixture(scope="module")
+def unit_resolver(creator_env):
+    config = ConverterConfig.fromDefaults(VSME_DEFAULTS, creator_env.taxonomy)
+    return UnitResolver(
+        creator_env.report,
+        config,
+        Messenger(creator_env.results),
+        creator_env.reader,
+        creator_env.bindings.unit_map,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -200,6 +227,64 @@ class TestGetClosestEEMemberMatch:
         assert getClosestEEMemberMatch(ee_concept, "zzz qqq 12345 xyzzy") is None
 
 
+class TestResolveMemberByLabel:
+    """The one implementation of the exact -> configured-alias -> closest-match
+    label chain that used to be pasted across FactCreator."""
+
+    @pytest.fixture(scope="class")
+    def config(self, taxonomy):
+        return ConverterConfig.fromDefaults(VSME_DEFAULTS, taxonomy)
+
+    @pytest.fixture(scope="class")
+    def ee_concept(self, taxonomy):
+        return next(
+            c
+            for c in sorted(taxonomy.concepts, key=str)
+            if c.isEnumerationSingle and c.getEEDomain()
+        )
+
+    def test_exact_label(self, taxonomy, config, ee_concept):
+        member = ee_concept.getEEDomain()[0]
+        label = member.getStandardLabel()
+        match = resolveMemberByLabel(taxonomy, config, label)
+        assert match == LabelMatch(member, False, None)
+
+    def test_configured_alias(self, taxonomy, config):
+        # Find an alias whose cell value doesn't resolve directly but whose
+        # target label does (some configured aliases target older taxonomy
+        # labels that no longer exist).
+        usable = next(
+            (
+                (cell_value, target)
+                for cell_value, label in config.cellValuesToTaxonomyLabels.items()
+                if taxonomy.getConceptForLabel(cell_value) is None
+                and (target := taxonomy.getConceptForLabel(label)) is not None
+            ),
+            None,
+        )
+        if usable is None:
+            pytest.skip("no configured alias resolves against this taxonomy")
+        cell_value, expected = usable
+        match = resolveMemberByLabel(taxonomy, config, cell_value)
+        assert match is not None
+        assert match.concept == expected
+        assert match.viaConfiguredAlias is True
+
+    def test_closest_match_needs_ee_concept(self, taxonomy, config, ee_concept):
+        member = ee_concept.getEEDomain()[0]
+        label = member.getStandardLabel()
+        typo = label + " x"
+        # Without the EE concept there is no fuzzy fallback.
+        assert resolveMemberByLabel(taxonomy, config, typo) is None
+        match = resolveMemberByLabel(taxonomy, config, typo, ee_concept=ee_concept)
+        assert match is not None
+        assert match.concept == member
+        assert match.closestLabel is not None
+
+    def test_no_match_returns_none(self, taxonomy, config):
+        assert resolveMemberByLabel(taxonomy, config, "zzz qqq 12345") is None
+
+
 # ---------------------------------------------------------------------------
 # Unit resolution chain
 # ---------------------------------------------------------------------------
@@ -219,60 +304,62 @@ def _makeCell(value, number_format=None):
 class TestGetSimpleUnit:
     @pytest.fixture(scope="class")
     def any_holder(self, creator_env):
-        _, _, bindings, _ = creator_env
-        return next(iter(bindings.concept_map.values()))
+        return next(iter(creator_env.bindings.concept_map.values()))
 
-    def test_direct_unit_id(self, creator_env, any_holder):
-        creator = creator_env[0]
-        unit = creator.getSimpleUnit(any_holder, _makeCell("MWh"))
+    def test_direct_unit_id(self, unit_resolver, any_holder):
+        unit = unit_resolver.getSimpleUnit(any_holder, _makeCell("MWh"))
         assert unit is not None and str(unit).endswith("MWh")
 
-    def test_parenthesised_unit_id(self, creator_env, any_holder):
-        creator = creator_env[0]
-        unit = creator.getSimpleUnit(any_holder, _makeCell("Megawatt hours (MWh)"))
+    def test_parenthesised_unit_id(self, unit_resolver, any_holder):
+        unit = unit_resolver.getSimpleUnit(
+            any_holder, _makeCell("Megawatt hours (MWh)")
+        )
         assert unit is not None and str(unit).endswith("MWh")
 
-    def test_unknown_unit_returns_none(self, creator_env, any_holder):
-        creator = creator_env[0]
+    def test_unknown_unit_returns_none(self, unit_resolver, any_holder):
         assert (
-            creator.getSimpleUnit(any_holder, _makeCell("wibbles per parsec")) is None
+            unit_resolver.getSimpleUnit(any_holder, _makeCell("wibbles per parsec"))
+            is None
         )
 
-    def test_empty_cell_returns_none(self, creator_env, any_holder):
-        creator = creator_env[0]
-        assert creator.getSimpleUnit(any_holder, _makeCell(None)) is None
+    def test_empty_cell_returns_none(self, unit_resolver, any_holder):
+        assert unit_resolver.getSimpleUnit(any_holder, _makeCell(None)) is None
 
 
 class TestSetFallbackUnitForName:
-    def test_non_numeric_concept_returns_false(self, creator_env, taxonomy):
-        creator, report, _, _ = creator_env
+    def test_non_numeric_concept_returns_false(
+        self, creator_env, unit_resolver, taxonomy
+    ):
         concept = next(
             c
             for c in sorted(taxonomy.concepts, key=str)
             if c.isReportable and not c.isNumeric
         )
-        fb = report.getFactBuilder().setConcept(concept)
-        assert creator.setFallbackUnitForName(None, concept, fb) is False
+        fb = creator_env.report.getFactBuilder().setConcept(concept)
+        assert unit_resolver.setFallbackUnitForName(None, concept, fb) is False
 
-    def test_numeric_concept_gets_a_unit(self, creator_env, taxonomy):
-        creator, report, _, _ = creator_env
+    def test_numeric_concept_gets_a_unit(self, creator_env, unit_resolver, taxonomy):
         concept = next(
             c
             for c in sorted(taxonomy.concepts, key=str)
             if c.isReportable and c.isNumeric and not c.isMonetary
         )
-        fb = report.getFactBuilder().setConcept(concept)
+        fb = creator_env.report.getFactBuilder().setConcept(concept)
 
         class FakeDn:
             name = "test_range"
 
-        assert creator.setFallbackUnitForName(FakeDn(), concept, fb) is True
+        assert unit_resolver.setFallbackUnitForName(FakeDn(), concept, fb) is True
         assert "units" in fb._aspects
 
 
 class TestProcessNumeric:
     def test_decimals_from_number_format(self, creator_env, taxonomy):
-        creator, report, bindings, _ = creator_env
+        creator, report, bindings = (
+            creator_env.creator,
+            creator_env.report,
+            creator_env.bindings,
+        )
         holder = next(iter(bindings.concept_map.values()))
         concept = next(
             c
@@ -282,11 +369,17 @@ class TestProcessNumeric:
             and c.dataType.localName != "percentItemType"
         )
         fb = report.getFactBuilder().setConcept(concept)
-        creator.processNumeric(holder, _makeCell(12.345, "0.00"), fb, 12.345)
+        processNumeric(
+            Messenger(creator_env.results), holder, _makeCell(12.345, "0.00"), fb, 12.345
+        )
         assert fb._aspects.get("decimals") == "2"
 
     def test_plain_format_means_inf_decimals(self, creator_env, taxonomy):
-        creator, report, bindings, _ = creator_env
+        creator, report, bindings = (
+            creator_env.creator,
+            creator_env.report,
+            creator_env.bindings,
+        )
         holder = next(iter(bindings.concept_map.values()))
         concept = next(
             c
@@ -296,7 +389,9 @@ class TestProcessNumeric:
             and c.dataType.localName != "percentItemType"
         )
         fb = report.getFactBuilder().setConcept(concept)
-        creator.processNumeric(holder, _makeCell(12, "General"), fb, 12)
+        processNumeric(
+            Messenger(creator_env.results), holder, _makeCell(12, "General"), fb, 12
+        )
         assert fb._aspects.get("decimals") == "INF"
 
 

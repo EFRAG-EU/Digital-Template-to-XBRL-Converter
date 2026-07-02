@@ -122,7 +122,8 @@ class WorkbookReader:
                 MessageType.DevInfo,
             )
             L.debug(
-                f"OpenPyXL error processing named range definition {dn.name=} {dn.attr_text=!r}.", exc_info=True
+                f"OpenPyXL error processing named range definition {dn.name=} {dn.attr_text=!r}.",
+                exc_info=True,
             )
             return None
         match len(all_destinations):
