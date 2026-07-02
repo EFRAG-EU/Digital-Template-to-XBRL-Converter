@@ -121,8 +121,8 @@ class WorkbookReader:
                 f"Named range {dn.name} has an unreadable destination: {dn.attr_text!r}. \nSomething has modified the digital template's structure. \nPlease try a fresh copy of the template and check that it has not been modified in unsupported ways.",
                 MessageType.DevInfo,
             )
-            L.exception(
-                f"OpenPyXL error processing named range definition {dn.name=} {dn.attr_text=!r}."
+            L.debug(
+                f"OpenPyXL error processing named range definition {dn.name=} {dn.attr_text=!r}.", exc_info=True
             )
             return None
         match len(all_destinations):
@@ -151,7 +151,7 @@ class WorkbookReader:
             ws = self._workbook[sheetName]
             cr = CellRange(cell_range)
         except Exception as e:
-            L.exception(
+            L.debug(
                 f"OpenPyXL error processing cell range. {dn.name=} {sheetName=} {cell_range=}",
                 exc_info=e,
             )
