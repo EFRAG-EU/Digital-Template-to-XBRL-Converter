@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Mapping
 
 if TYPE_CHECKING:
     from openpyxl.workbook.defined_name import DefinedName
@@ -62,7 +62,7 @@ class FactCreator:
         reader: WorkbookReader,
         report: InlineReport,
         results: ConversionResultsBuilder,
-        defaults: dict,
+        defaults: Mapping[str, Any],
     ) -> None:
         self._bindings = bindings
         self._reader = reader

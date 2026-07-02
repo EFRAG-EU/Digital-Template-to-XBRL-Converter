@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, NamedTuple
+from typing import TYPE_CHECKING, Any, Mapping, NamedTuple
 
 if TYPE_CHECKING:
     from mireport.taxonomy import Concept, QName, Taxonomy
@@ -25,7 +25,9 @@ class ConverterConfig:
     cellUnitReplacements: dict[str, str] = field(default_factory=dict)
 
     @classmethod
-    def fromDefaults(cls, defaults: dict, taxonomy: Taxonomy) -> ConverterConfig:
+    def fromDefaults(
+        cls, defaults: Mapping[str, Any], taxonomy: Taxonomy
+    ) -> ConverterConfig:
         qname = taxonomy.QNameMaker.fromString
 
         dataTypesToUnits = {

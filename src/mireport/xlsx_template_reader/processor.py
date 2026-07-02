@@ -3,9 +3,10 @@ from __future__ import annotations
 import logging
 import re
 from pathlib import Path
-from typing import TYPE_CHECKING, NamedTuple
+from typing import TYPE_CHECKING, Any, Mapping, NamedTuple
 
 if TYPE_CHECKING:
+    from datetime import date
     from typing import BinaryIO, Callable, Optional, Self
 
 from babel import Locale
@@ -55,7 +56,7 @@ class XlsxProcessor:
         self,
         workbook: Workbook,
         results: ConversionResultsBuilder,
-        defaults: dict,
+        defaults: Mapping[str, Any],
         /,
         outputLocale: Optional[Locale] = None,
     ):
@@ -80,7 +81,7 @@ class XlsxProcessor:
         cls,
         data: bytes,
         results: ConversionResultsBuilder,
-        defaults: dict,
+        defaults: Mapping[str, Any],
         /,
         outputLocale: Optional[Locale] = None,
     ) -> Self:
@@ -94,7 +95,7 @@ class XlsxProcessor:
         cls,
         path_or_filelike: Path | BinaryIO,
         results: ConversionResultsBuilder,
-        defaults: dict,
+        defaults: Mapping[str, Any],
         /,
         outputLocale: Optional[Locale] = None,
     ) -> Self:
@@ -220,103 +221,97 @@ class XlsxProcessor:
         self._report.addSchemaRef(entryPoint)
 
     def getAndValidateRequiredMetadata(self) -> None:
-        defaults = self._defaults
-        entityIdentifierSchemeLabelToURIs: dict[str, str] = {
-            k: v for k, v in defaults["entityIdentifierLabelsToSchemes"].items()
-        }
-        if "aoix" in defaults:
-            for aoixName, namedRangeName in defaults["aoix"].items():
-                if self._reader.getDefinedName(namedRangeName) is None:
-                    self._msg.error(
-                        f"Excel report must have a value for named range {namedRangeName}.",
-                        MessageType.ExcelParsing,
-                    )
-                    continue
-                if aoixName == "entity-scheme":
-                    lookup_key = (
-                        self._reader.value(namedRangeName)
-                        .asString()
-                        .strip()
-                        .replace(" ", "")
-                        .lower()
-                    )
-                    aoixValue = entityIdentifierSchemeLabelToURIs.get(lookup_key)
-                else:
-                    aoixValue = self._reader.value(namedRangeName).asString().strip()
+        self._setDefaultAspectsFromExcel()
+        self._addReportingPeriods()
+        self._setReportMetadata()
 
-                if (
-                    not aoixValue
-                    or aoixValue in EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE
-                    or is_error_value(aoixValue)
-                ):
-                    self._msg.error(
-                        f"Excel report must have a valid value for named range {namedRangeName}.",
-                        MessageType.ExcelParsing,
-                        ref=excelDefinedNameRef(
-                            self._reader.getDefinedName(namedRangeName)
-                        ),
-                    )
-                    continue
-                self._report.setDefaultAspect(aoixName, aoixValue)
+    def _setDefaultAspectsFromExcel(self) -> None:
+        """Read the aoix default aspects (entity id, currency, ...) from their
+        named ranges into the report."""
+        schemeLabelToURI: dict[str, str] = dict(
+            self._defaults["entityIdentifierLabelsToSchemes"]
+        )
+        for aoixName, namedRangeName in self._defaults.get("aoix", {}).items():
+            if self._reader.getDefinedName(namedRangeName) is None:
+                self._msg.error(
+                    f"Excel report must have a value for named range {namedRangeName}.",
+                    MessageType.ExcelParsing,
+                )
+                continue
+            if aoixName == "entity-scheme":
+                lookup_key = (
+                    self._reader.value(namedRangeName)
+                    .asString()
+                    .strip()
+                    .replace(" ", "")
+                    .lower()
+                )
+                aoixValue = schemeLabelToURI.get(lookup_key)
+            else:
+                aoixValue = self._reader.value(namedRangeName).asString().strip()
 
-        if "periods" in defaults:
-            for period in defaults["periods"]:
-                startName = period["start"]
-                startDate = None
-                try:
-                    startDate = self._reader.value(startName).asDate()
-                except Exception as e:
-                    self._msg.error(
-                        f"Excel report must have a valid date for named range {startName}. Exception: {e}",
-                        MessageType.ExcelParsing,
-                        ref=excelDefinedNameRef(self._reader.getDefinedName(startName)),
-                    )
+            if (
+                not aoixValue
+                or aoixValue in EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE
+                or is_error_value(aoixValue)
+            ):
+                self._msg.error(
+                    f"Excel report must have a valid value for named range {namedRangeName}.",
+                    MessageType.ExcelParsing,
+                    ref=excelDefinedNameRef(
+                        self._reader.getDefinedName(namedRangeName)
+                    ),
+                )
+                continue
+            self._report.setDefaultAspect(aoixName, aoixValue)
 
-                endName = period["end"]
-                endDate = None
-                try:
-                    endDate = self._reader.value(endName).asDate()
-                except Exception as e:
-                    self._msg.error(
-                        f"Excel report must have a valid date for named range {endName}. Exception: {e}",
-                        MessageType.ExcelParsing,
-                        ref=excelDefinedNameRef(self._reader.getDefinedName(endName)),
-                    )
+    def _addReportingPeriods(self) -> None:
+        for period in self._defaults.get("periods", []):
+            startDate = self._readPeriodDate(period["start"])
+            endDate = self._readPeriodDate(period["end"])
+            if startDate is None or endDate is None:
+                continue
 
-                if startDate is None or endDate is None:
-                    continue
+            if startDate > endDate:
+                self._msg.error(
+                    f"Start date {startDate} is after end date {endDate}.",
+                    MessageType.ExcelParsing,
+                    ref=excelDefinedNameRef(
+                        self._reader.getDefinedName(period["start"])
+                    ),
+                )
 
-                if startDate > endDate:
-                    self._msg.error(
-                        f"Start date {startDate} is after end date {endDate}.",
-                        MessageType.ExcelParsing,
-                        ref=excelDefinedNameRef(
-                            self._reader.getDefinedName(period["start"])
-                        ),
-                    )
+            name = period["name"]
+            if self._report.addDurationPeriod(name, startDate, endDate):
+                self._report.setDefaultPeriodName(name)
 
-                name = period["name"]
-                if self._report.addDurationPeriod(
-                    name,
-                    startDate,
-                    endDate,
-                ):
-                    self._report.setDefaultPeriodName(name)
-
-        if "report" in defaults:
-            report_defaults = defaults["report"]
-            self.setReportMetadata(
-                report_defaults, "entity-name", self._report.setEntityName
+    def _readPeriodDate(self, name: str) -> Optional[date]:
+        try:
+            return self._reader.value(name).asDate()
+        except Exception as e:
+            self._msg.error(
+                f"Excel report must have a valid date for named range {name}. Exception: {e}",
+                MessageType.ExcelParsing,
+                ref=excelDefinedNameRef(self._reader.getDefinedName(name)),
             )
-            self.setReportMetadata(
-                report_defaults, "report-title", self._report.setReportTitle
-            )
-            self.setReportMetadata(
-                report_defaults, "report-subtitle", self._report.setReportSubtitle
-            )
+            return None
+
+    def _setReportMetadata(self) -> None:
+        report_defaults = self._defaults.get("report")
+        if report_defaults is None:
+            return
+        for key, method in (
+            ("entity-name", self._report.setEntityName),
+            ("report-title", self._report.setReportTitle),
+            ("report-subtitle", self._report.setReportSubtitle),
+        ):
+            self.setReportMetadata(report_defaults, key, method)
 
     def setReportMetadata(
-        self, report_defaults: dict, key: str, method: Callable[[str], None]
+        self,
+        report_defaults: Mapping[str, Any],
+        key: str,
+        method: Callable[[str], None],
     ) -> None:
         config = report_defaults.get(key)
         if not isinstance(config, dict) or "named-range" not in config:

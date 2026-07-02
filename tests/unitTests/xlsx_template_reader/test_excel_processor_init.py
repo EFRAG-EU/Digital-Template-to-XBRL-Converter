@@ -17,6 +17,20 @@ def _builder() -> ConversionResultsBuilder:
     return ConversionResultsBuilder(consoleOutput=False)
 
 
+class TestPackageExports:
+    def test_processor_importable_from_package_root(self):
+        import mireport.xlsx_template_reader as pkg
+
+        assert pkg.XlsxProcessor is XlsxProcessor
+        assert "XlsxProcessor" in pkg.__all__
+
+    def test_template_check_result_exported(self):
+        import mireport.xlsx_template_reader as pkg
+        from mireport.xlsx_template_reader.processor import TemplateCheckResult
+
+        assert pkg.TemplateCheckResult is TemplateCheckResult
+
+
 class TestFromBytes:
     def test_from_bytes_exists(self):
         assert callable(XlsxProcessor.from_bytes)
