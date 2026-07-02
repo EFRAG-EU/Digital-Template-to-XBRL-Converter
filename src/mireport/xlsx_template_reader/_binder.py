@@ -58,7 +58,9 @@ class WorkbookBinder:
         preset_dims: defaultdict[XbrlConceptCellRangeMetadata, dict[Concept, Concept]]
         preset_dims = defaultdict(dict)
 
-        for dn in reader.unused_defined_names:
+        # unused_defined_names is a set of identity-hashed DefinedNames; sort so
+        # binding (and hence fact/message) order is stable across runs.
+        for dn in sorted(reader.unused_defined_names, key=lambda dn: dn.name or ""):
             concept = taxonomy.getConceptForName(
                 TAXONOMY_NAME_ALIASES.get(dn.name, dn.name)
             )
