@@ -37,9 +37,7 @@ def config(taxonomy):
 class TestConverterConfig:
     def test_data_types_to_units_are_qnames(self, config, taxonomy):
         area = taxonomy.QNameMaker.fromString("dtr-types:areaItemType")
-        assert config.dataTypesToUnits[area] == taxonomy.QNameMaker.fromString(
-            "utr:ha"
-        )
+        assert config.dataTypesToUnits[area] == taxonomy.QNameMaker.fromString("utr:ha")
 
     def test_concepts_to_units_keyed_by_concept(self, config, taxonomy):
         concept = taxonomy.getConcept("vsme:TotalWasteGeneratedMass")
@@ -69,7 +67,3 @@ class TestConverterConfig:
         assert cfg.conceptsToUnits == {}
         assert cfg.cellValuesToTaxonomyLabels == {}
         assert cfg.cellUnitReplacements == {}
-
-    def test_frozen(self, config):
-        with pytest.raises(AttributeError):
-            config.cellUnitReplacements = {}

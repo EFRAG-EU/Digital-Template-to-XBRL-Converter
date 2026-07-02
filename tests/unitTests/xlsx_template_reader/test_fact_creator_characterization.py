@@ -355,11 +355,7 @@ class TestSetFallbackUnitForName:
 
 class TestProcessNumeric:
     def test_decimals_from_number_format(self, creator_env, taxonomy):
-        creator, report, bindings = (
-            creator_env.creator,
-            creator_env.report,
-            creator_env.bindings,
-        )
+        report, bindings = creator_env.report, creator_env.bindings
         holder = next(iter(bindings.concept_map.values()))
         concept = next(
             c
@@ -370,16 +366,16 @@ class TestProcessNumeric:
         )
         fb = report.getFactBuilder().setConcept(concept)
         processNumeric(
-            Messenger(creator_env.results), holder, _makeCell(12.345, "0.00"), fb, 12.345
+            Messenger(creator_env.results),
+            holder,
+            _makeCell(12.345, "0.00"),
+            fb,
+            12.345,
         )
         assert fb._aspects.get("decimals") == "2"
 
     def test_plain_format_means_inf_decimals(self, creator_env, taxonomy):
-        creator, report, bindings = (
-            creator_env.creator,
-            creator_env.report,
-            creator_env.bindings,
-        )
+        report, bindings = creator_env.report, creator_env.bindings
         holder = next(iter(bindings.concept_map.values()))
         concept = next(
             c

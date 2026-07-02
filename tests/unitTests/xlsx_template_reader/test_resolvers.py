@@ -4,15 +4,16 @@ functions, and the VSME taxonomy name aliases."""
 from pathlib import Path
 
 import pytest
+from openpyxl import Workbook
+from openpyxl.utils.cell import absolute_coordinate, quote_sheetname
+from openpyxl.workbook.defined_name import DefinedName
 
-import mireport.xlsx_template_reader._resolvers as resolvers_module
-from mireport.conversionresults import ConversionResultsBuilder
+from mireport.conversionresults import ConversionResultsBuilder, Severity
 from mireport.data.disclosures import VSME_DEFAULTS
 from mireport.taxonomy import getTaxonomy
 from mireport.xlsx_template_reader._binder import WorkbookBinder
-from mireport.xlsx_template_reader._bindings import TableBinding
-from mireport.xlsx_template_reader._constants import TAXONOMY_NAME_ALIASES
 from mireport.xlsx_template_reader._messages import Messenger
+from mireport.xlsx_template_reader._ranges import XbrlConceptCellRangeMetadata
 from mireport.xlsx_template_reader._reader import WorkbookReader
 from mireport.xlsx_template_reader._resolvers import (
     ExcelCellBindingContext,
@@ -64,37 +65,133 @@ def bound(taxonomy):
         wb.close()
 
 
-class TestResolverModuleShape:
-    def test_binding_resolver_abc_removed(self):
-        assert not hasattr(resolvers_module, "BindingResolver")
+@pytest.fixture(scope="module")
+def rich_hypercube(taxonomy):
+    """A hypercube with at least two reportable primary items and a dimension,
+    plus those items — the raw material for classification scenarios."""
+    for hc in sorted(taxonomy.hypercubes, key=str):
+        pris = [c for c in taxonomy.getPrimaryItemsForHypercube(hc) if c.isReportable]
+        dims = sorted(taxonomy.getDimensionsForHypercube(hc), key=str)
+        if len(pris) >= 2 and dims:
+            return hc, sorted(pris, key=str), dims
+    pytest.skip("no hypercube with >=2 reportable primary items and a dimension")
 
-    def test_one_shot_resolvers_are_functions(self):
-        assert callable(resolveExternalValues)
-        assert callable(resolveFootnoteBinding)
-        assert callable(resolveNamedRangeTable)
+
+def _classify(taxonomy, hypercube, placements, unit_map=None):
+    """Build a synthetic worksheet with a table range (A1:F6) for the hypercube
+    and one named range per (concept, cell_ref) placement, then resolve it.
+
+    Returns (TableBinding | None, results).
+    """
+    wb = Workbook()
+    ws = wb.active
+    assert ws is not None
+    ws.title = "S"
+
+    def crm(name, ref, concept):
+        attr = f"{quote_sheetname('S')}!{absolute_coordinate(ref)}"
+        wb.defined_names[name] = DefinedName(name, attr_text=attr)
+        resolved = reader.peekRange(wb.defined_names[name])
+        assert resolved is not None
+        return XbrlConceptCellRangeMetadata.fromCellRangeMetadata(resolved, concept)
+
+    results = _results()
+    reader = WorkbookReader(wb, results)
+    table_crm = crm("tbl", "A1:F6", hypercube)
+    candidates = [
+        crm(f"r{i}", ref, concept) for i, (concept, ref) in enumerate(placements)
+    ]
+    resolver = XBRLTableResolver(
+        ExcelCellBindingContext(reader, Messenger(results), taxonomy),
+        unit_map=unit_map or {},
+        candidates_by_ws={table_crm.worksheet: candidates},
+        concepts_in_excel=frozenset(
+            [hypercube, *(concept for concept, _ in placements)]
+        ),
+    )
+    return resolver.resolve(table_crm), results
 
 
-class TestXbrlTableResolverPerTable:
-    def test_one_instance_resolves_multiple_tables(self, ctx, bound):
-        resolver = XBRLTableResolver(
-            ctx, unit_map={}, candidates_by_ws={}, concepts_in_excel=frozenset()
+def _messages(results, severity):
+    return [str(m.messageText) for m in results.messages if m.severity is severity]
+
+
+class TestXBRLTableResolverClassification:
+    def test_partitions_primary_items_dimensions_and_units(
+        self, taxonomy, rich_hypercube
+    ):
+        hc, pris, dims = rich_hypercube
+        pri, dim = pris[0], dims[0]
+        binding, _ = _classify(taxonomy, hc, [(pri, "B2"), (dim, "C2")])
+        assert binding is not None
+        assert [c.concept for c in binding.primaryItems] == [pri]
+        expected_typed = [dim] if dim.isTypedDimension else []
+        expected_explicit = [dim] if dim.isExplicitDimension else []
+        assert [c.concept for c in binding.typedDimensions] == expected_typed
+        assert [c.concept for c in binding.explicitDimensions] == expected_explicit
+
+    def test_unit_map_entry_for_primary_item_lands_in_units(
+        self, taxonomy, rich_hypercube
+    ):
+        hc, pris, _dims = rich_hypercube
+        pri = pris[0]
+        # Any resolved range works as the unit holder; reuse a placement helper
+        # by classifying once to get hold of a crm for the unit map.
+        first, _ = _classify(taxonomy, hc, [(pri, "B2")])
+        assert first is not None
+        unit_holder = first.primaryItems[0]
+        binding, _ = _classify(taxonomy, hc, [(pri, "B2")], unit_map={pri: unit_holder})
+        assert binding is not None
+        assert binding.units == [unit_holder]
+
+    def test_partially_overlapping_ranges_reject_the_table(
+        self, taxonomy, rich_hypercube
+    ):
+        hc, pris, _ = rich_hypercube
+        binding, results = _classify(
+            taxonomy, hc, [(pris[0], "B2:C2"), (pris[1], "C2:D2")]
         )
-        assert len(bound.tables) >= 2, "sample should have several hypercube tables"
-        for table_binding in bound.tables[:3]:
-            out = resolver.resolve(table_binding.table)
-            assert isinstance(out, TableBinding)
-            assert out.table is table_binding.table
-            # No candidate ranges supplied, so nothing to classify.
-            assert out.primaryItems == []
-            assert out.explicitDimensions == []
-            assert out.typedDimensions == []
-            assert out.units == []
+        assert binding is None
+        assert any(
+            "neither the same nor disjoint" in e
+            for e in _messages(results, Severity.ERROR)
+        )
+
+    def test_identical_ranges_for_two_reportables_are_allowed(
+        self, taxonomy, rich_hypercube
+    ):
+        hc, pris, _ = rich_hypercube
+        binding, _ = _classify(taxonomy, hc, [(pris[0], "B2:C2"), (pris[1], "B2:C2")])
+        assert binding is not None
+        assert {c.concept for c in binding.primaryItems} == {pris[0], pris[1]}
+
+    def test_unpermitted_concept_inside_table_is_extra(self, taxonomy, rich_hypercube):
+        hc, pris, _dims = rich_hypercube
+        permitted = taxonomy.getDimensionsForHypercube(hc).union(
+            taxonomy.getPrimaryItemsForHypercube(hc)
+        )
+        outsider = next(
+            c
+            for c in sorted(taxonomy.concepts, key=str)
+            if c.isReportable and c not in permitted
+        )
+        binding, results = _classify(taxonomy, hc, [(pris[0], "B2"), (outsider, "C3")])
+        assert binding is not None
+        assert outsider not in {c.concept for c in binding.primaryItems}
+        assert any(
+            "Extra named ranges" in w for w in _messages(results, Severity.WARNING)
+        )
+
+    def test_missing_permitted_concepts_warn(self, taxonomy, rich_hypercube):
+        hc, pris, _ = rich_hypercube
+        # Only one of the >=2 primary items is placed, so the rest are missing.
+        _, results = _classify(taxonomy, hc, [(pris[0], "B2")])
+        assert any(
+            "have not been found" in w for w in _messages(results, Severity.WARNING)
+        )
 
 
 class TestOneShotResolvers:
-    def test_external_values_returns_frozenset(self, ctx):
-        assert isinstance(resolveExternalValues(ctx), frozenset)
-
     def test_footnotes_none_when_unconfigured(self, ctx):
         # The 1.2.0 sample has no footnote named ranges: silently nothing.
         assert resolveFootnoteBinding(ctx) is None
@@ -142,14 +239,10 @@ def _warnings(results):
 class TestResolveExternalValues:
     @pytest.fixture(scope="class")
     def textblock(self, taxonomy):
-        return next(
-            c for c in sorted(taxonomy.concepts, key=str) if c.isTextblock
-        )
+        return next(c for c in sorted(taxonomy.concepts, key=str) if c.isTextblock)
 
     def test_known_concept_name_resolved(self, taxonomy, textblock):
-        ctx, results = _external_values_ctx(
-            [textblock.qname.localName], taxonomy
-        )
+        ctx, results = _external_values_ctx([textblock.qname.localName], taxonomy)
         assert resolveExternalValues(ctx) == frozenset({textblock})
         assert not _warnings(results)
 
@@ -182,10 +275,16 @@ class TestResolveExternalValues:
         assert len(_warnings(results)) == 1
 
 
-class TestTaxonomyNameAliases:
-    def test_known_vsme_alias_registered(self):
-        assert TAXONOMY_NAME_ALIASES[ALIASED_NAME] == ALIAS_TARGET
+class TestBindOrderIsDeterministic:
+    def test_concept_map_keys_are_name_sorted(self, bound):
+        """DefinedName hashes by identity, so iterating the reader's unused-name
+        set directly gives a different order every run — which leaks into fact
+        and message ordering. bind() must impose a stable (name-sorted) order."""
+        names = [dn.name for dn in bound.concept_map]
+        assert names == sorted(names)
 
+
+class TestTaxonomyNameAliases:
     def test_bind_applies_alias(self, bound):
         """The aliased defined name must bind to the alias-target concept,
         whether it ended up in the concept_map or inside a table binding."""
