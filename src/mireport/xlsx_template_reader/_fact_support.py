@@ -8,15 +8,60 @@ from typing import TYPE_CHECKING, Optional
 if TYPE_CHECKING:
     from mireport.report import InlineReport
     from mireport.report.factbuilder import FactBuilder
+    from mireport.taxonomy import Concept, Taxonomy
+    from mireport.xlsx_template_reader._config import ConverterConfig
     from mireport.xlsx_template_reader._constants import CellType
     from mireport.xlsx_template_reader._messages import Messenger
     from mireport.xlsx_template_reader._ranges import XbrlConceptCellRangeMetadata
 
 from mireport.conversionresults import MessageType
 from mireport.exceptions import InlineReportException
+from mireport.xlsx_template_reader._enumerations import resolveMemberByLabel
 from mireport.xlsx_template_reader.util import get_decimal_places
 
 L = logging.getLogger(__name__)
+
+
+def resolveMemberWithMessages(
+    msg: Messenger,
+    taxonomy: Taxonomy,
+    config: ConverterConfig,
+    text: str,
+    eeConcept: Concept,
+    holder: XbrlConceptCellRangeMetadata,
+    cell: Optional[CellType],
+    *,
+    displayValue: Optional[str] = None,
+    warnOnExactMatch: bool = False,
+) -> Optional[Concept]:
+    """Resolve cell text to an EE domain member via the full label chain
+    (exact -> configured alias -> closest match), emitting the standard
+    workaround warnings.
+
+    Returns None silently when nothing matches: the not-found messages differ
+    per call site, so callers emit their own. displayValue is what messages
+    quote when the resolved text was preprocessed (e.g. a stripped prefix);
+    warnOnExactMatch forces the workaround warning for such preprocessed hits.
+    """
+    match = resolveMemberByLabel(taxonomy, config, text, ee_concept=eeConcept)
+    if match is None:
+        return None
+    shown = displayValue if displayValue is not None else text
+    if match.closestLabel is not None:
+        msg.warning(
+            f"Using closest match EE concept when reporting {eeConcept.qname}. Cell value '{shown}'. Chosen EE domain member: {match.concept.qname} with label: '{match.closestLabel}'",
+            MessageType.Conversion,
+            concept=eeConcept,
+            ref=holder.excelRef(cell),
+        )
+    elif match.viaConfiguredAlias or warnOnExactMatch:
+        msg.warning(
+            f"Workaround performed for EE member label mismatch when reporting {eeConcept.qname}. Cell value '{shown}'. Concept label '{match.concept.getStandardLabel()}'",
+            MessageType.DevInfo,
+            concept=eeConcept,
+            ref=holder.excelRef(cell),
+        )
+    return match.concept
 
 
 def addFactToReport(

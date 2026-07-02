@@ -31,6 +31,7 @@ from mireport.xlsx_template_reader._enumerations import resolveMemberByLabel
 from mireport.xlsx_template_reader._fact_support import (
     addFactToReport,
     processNumeric,
+    resolveMemberWithMessages,
 )
 
 L = logging.getLogger(__name__)
@@ -71,9 +72,29 @@ class TableFactCreator:
                 continue
 
             for priItem in table_binding.primaryItems:
+                unitHolder, sharedRange = self._unitHolderFor(priItem, table_binding)
                 for rnum, row in priItem.rows():
-                    if not self._processRow(table_binding, priItem, rnum, row):
+                    if not self._processRow(
+                        table_binding, priItem, rnum, row, unitHolder, sharedRange
+                    ):
                         break
+
+    @staticmethod
+    def _unitHolderFor(
+        priItem: XbrlConceptCellRangeMetadata,
+        table_binding: TableBinding,
+    ) -> tuple[XbrlConceptCellRangeMetadata | None, bool]:
+        """The table unit range for this primary item, and whether that range
+        is shared with another primary item's unit range."""
+        unitHolder = next(
+            (u for u in table_binding.units if u.concept == priItem.concept), None
+        )
+        sharedRange = unitHolder is not None and any(
+            u.cellRange == unitHolder.cellRange
+            for u in table_binding.units
+            if u is not unitHolder
+        )
+        return unitHolder, sharedRange
 
     def _processRow(
         self,
@@ -81,6 +102,8 @@ class TableFactCreator:
         priItem: XbrlConceptCellRangeMetadata,
         rnum: int,
         row: tuple[CellType, ...],
+        unitHolder: XbrlConceptCellRangeMetadata | None,
+        sharedRange: bool,
     ) -> bool:
         """Create at most one fact from this row. Returns False when the
         primary item is unusable and its remaining rows should be skipped."""
@@ -139,20 +162,6 @@ class TableFactCreator:
             return True
 
         if concept.isNumeric:
-            unitHolder = None
-            sharedRange = False
-            for candidate in table_binding.units:
-                if candidate.concept == concept:
-                    unitHolder = candidate
-                    break
-
-            if unitHolder:
-                sharedRange = any(
-                    u.cellRange == unitHolder.cellRange
-                    for u in table_binding.units
-                    if u is not unitHolder
-                )
-
             processNumeric(self._msg, priItem, cell, factBuilder, value)
             if not self._units.setUnitForName(
                 priItem,
@@ -164,8 +173,17 @@ class TableFactCreator:
                 return True
 
         if concept.isEnumerationSingle:
-            if (eeValue := self.taxonomy.getConceptForLabel(str(value))) is not None:
-                factBuilder.setHiddenValue(eeValue.expandedName)
+            member = resolveMemberWithMessages(
+                self._msg,
+                self.taxonomy,
+                self._config,
+                str(value),
+                concept,
+                priItem,
+                cell,
+            )
+            if member is not None:
+                factBuilder.setHiddenValue(member.expandedName)
             else:
                 broken = True
                 self._msg.error(
@@ -177,8 +195,17 @@ class TableFactCreator:
         elif concept.isEnumerationSet:
             eeValues: list[Concept] = []
             for v in values:
-                if (eeValue := self.taxonomy.getConceptForLabel(str(v))) is not None:
-                    eeValues.append(eeValue)
+                member = resolveMemberWithMessages(
+                    self._msg,
+                    self.taxonomy,
+                    self._config,
+                    str(v),
+                    concept,
+                    priItem,
+                    cell,
+                )
+                if member is not None:
+                    eeValues.append(member)
                 else:
                     broken = True
                     self._msg.error(
@@ -211,14 +238,14 @@ class TableFactCreator:
         if not typed_dimensions:
             return True
 
-        success: list[bool] = []
+        dims_set = 0
         for td in typed_dimensions:
             tdConcept = td.concept
             tdCell = self._reader.getSingleCell(td, row=rnum)
             if not tdCell:
                 continue
             elif (tdValue := tdCell.value) is not None:
-                success.append(True)
+                dims_set += 1
                 if not isinstance(tdValue, FactValue):
                     tdValue = str(tdValue)
                 factBuilder.setTypedDimension(tdConcept, tdValue)
@@ -228,7 +255,7 @@ class TableFactCreator:
                     MessageType.Conversion,
                     ref=td.excelRef(tdCell),
                 )
-        return all(success) and len(success) == len(typed_dimensions)
+        return dims_set == len(typed_dimensions)
 
     def _addExplicitDimensions(
         self,
@@ -239,7 +266,7 @@ class TableFactCreator:
         if not explicit_dimensions:
             return True
 
-        success: list[bool] = []
+        dims_set = 0
         for ed in explicit_dimensions:
             edConcept = ed.concept
             edCell = self._reader.getSingleCell(ed, row=rnum)
@@ -257,11 +284,11 @@ class TableFactCreator:
             match = resolveMemberByLabel(self.taxonomy, self._config, str(edValue))
             if match is not None:
                 factBuilder.setExplicitDimension(edConcept, match.concept)
-                success.append(True)
+                dims_set += 1
             else:
                 self._msg.error(
                     f"Required explicit dimension {edConcept.qname} not set. Cell value '{edValue}'",
                     MessageType.Conversion,
                     ref=ed.excelRef(edCell),
                 )
-        return all(success) and len(success) == len(explicit_dimensions)
+        return dims_set == len(explicit_dimensions)

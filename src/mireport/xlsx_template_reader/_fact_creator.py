@@ -23,10 +23,10 @@ from mireport.xlsx_template_reader._constants import (
     EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE,
     UNHANDLED_NAMES_TO_IGNORE,
 )
-from mireport.xlsx_template_reader._enumerations import resolveMemberByLabel
 from mireport.xlsx_template_reader._fact_support import (
     addFactToReport,
     processNumeric,
+    resolveMemberWithMessages,
 )
 from mireport.xlsx_template_reader._footnotes import FootnoteFactCreator
 from mireport.xlsx_template_reader._messages import Messenger
@@ -43,16 +43,6 @@ from mireport.xlsx_template_reader.util import (
 L = logging.getLogger(__name__)
 
 EE_SET_DESIRED_EMPTY_PLACEHOLDER_VALUE = "None"
-
-
-# ---------------------------------------------------------------------------
-# Module-level helpers (moved from processor.py)
-# ---------------------------------------------------------------------------
-
-
-# ---------------------------------------------------------------------------
-# FactCreator
-# ---------------------------------------------------------------------------
 
 
 class FactCreator:
@@ -109,7 +99,7 @@ class FactCreator:
         for periodHolder in periodHolders:
             dimValueDN = periodHolder.definedName
             namedPeriod = dimValueDN.name or ""
-            yearValue = self._reader.value(dimValueDN)
+            yearValue = self._reader.value(periodHolder)
             if yearValue.isBlank:
                 self._pending.pop(dimValueDN)
                 continue
@@ -191,7 +181,7 @@ class FactCreator:
                 self._pending.pop(dn)
                 continue
 
-            cell = self._reader.getSingleCell(dn)
+            cell = self._reader.getSingleCell(stuff)
             if cell is None:
                 self._pending.pop(dn)
                 continue
@@ -238,30 +228,22 @@ class FactCreator:
             elif concept.isMonetary:
                 pass
             elif concept.isEnumerationSingle:
-                match = resolveMemberByLabel(
-                    self.taxonomy, self._config, str(value), ee_concept=concept
+                member = resolveMemberWithMessages(
+                    self._msg,
+                    self.taxonomy,
+                    self._config,
+                    str(value),
+                    concept,
+                    stuff,
+                    cell,
                 )
-                if match is None:
+                if member is None:
                     self._msg.error(
                         f"Unable to find EE concept when reporting {concept.qname}. Cell value '{value}'.",
                         MessageType.Conversion,
                     )
                 else:
-                    fb.setHiddenValue(match.concept.expandedName)
-                    if match.viaConfiguredAlias:
-                        self._msg.warning(
-                            f"Workaround performed for EE member label mismatch when reporting {concept.qname}. Cell value '{value}'. Concept label '{match.concept.getStandardLabel()}'",
-                            MessageType.DevInfo,
-                            concept=concept,
-                            ref=stuff.excelRef(cell),
-                        )
-                    elif match.closestLabel is not None:
-                        self._msg.warning(
-                            f"Using closest match EE concept when reporting {concept.qname}. Cell value '{value}'. Chosen EE domain member: {match.concept.qname} with label: '{match.closestLabel}'",
-                            MessageType.Conversion,
-                            concept=concept,
-                            ref=stuff.excelRef(cell),
-                        )
+                    fb.setHiddenValue(member.expandedName)
 
             if (presetDimensions := preset_dims.get(stuff)) is not None:
                 for dim, dimValue in presetDimensions.items():
@@ -269,16 +251,10 @@ class FactCreator:
                     if defaultValue is None or dimValue != defaultValue:
                         fb.setExplicitDimension(dim, dimValue)
 
-                    dimValueDN = None
-                    if (
-                        dimValueDN := self._reader._workbook.defined_names.get(
-                            dimValue.qname.localName
-                        )
-                    ) is None:
-                        continue
-
-                    namedPeriod: str = dimValueDN.name
-                    if self._report.hasNamedPeriod(namedPeriod):
+                    namedPeriod = dimValue.qname.localName
+                    if self._reader.getDefinedName(
+                        namedPeriod
+                    ) is not None and self._report.hasNamedPeriod(namedPeriod):
                         fb.setNamedPeriod(namedPeriod)
 
             self._pending.pop(dn)
@@ -340,35 +316,27 @@ class FactCreator:
             elif isinstance(v, str):
                 nace_stripped = v.startswith("NACE ")
                 e_label = v.replace("NACE ", "") if nace_stripped else v
-                match = resolveMemberByLabel(
-                    self.taxonomy, self._config, e_label, ee_concept=concept
+                member = resolveMemberWithMessages(
+                    self._msg,
+                    self.taxonomy,
+                    self._config,
+                    e_label,
+                    concept,
+                    stuff,
+                    cell,
+                    displayValue=v,
+                    warnOnExactMatch=nace_stripped,
                 )
-                if match is None:
+                if member is None:
                     self._msg.error(
                         f"Unable to find EE member when reporting {concept.qname}. Cell value '{v}'.",
                         MessageType.ExcelParsing,
                         concept=concept,
                         ref=stuff.excelRef(cell),
                     )
-                elif match.closestLabel is not None:
-                    value.append(v)
-                    eeSetValue.add(match.concept)
-                    self._msg.warning(
-                        f"Using closest match EE concept when reporting {concept.qname}. Cell value '{v}'. Chosen EE domain member: {match.concept.qname} with label: '{match.closestLabel}'",
-                        MessageType.Conversion,
-                        concept=concept,
-                        ref=stuff.excelRef(cell),
-                    )
                 else:
                     value.append(v)
-                    eeSetValue.add(match.concept)
-                    if nace_stripped or match.viaConfiguredAlias:
-                        self._msg.warning(
-                            f"Workaround performed for EE member label mismatch when reporting {concept.qname}. Cell value '{v}'. Concept label '{match.concept.getStandardLabel()}'",
-                            MessageType.DevInfo,
-                            concept=concept,
-                            ref=stuff.excelRef(cell),
-                        )
+                    eeSetValue.add(member)
             else:
                 self._msg.error(
                     f"Unable to find EE domain member when reporting {concept.qname}. Cell value '{v}'",
@@ -377,10 +345,7 @@ class FactCreator:
                     ref=stuff.excelRef(cell),
                 )
         if EE_SET_DESIRED_EMPTY_PLACEHOLDER_VALUE in value:
-            onlyPlaceholder = {EE_SET_DESIRED_EMPTY_PLACEHOLDER_VALUE}
-            otherValues = {x for x in value if x is not None}.difference(
-                onlyPlaceholder
-            )
+            otherValues = set(value) - {EE_SET_DESIRED_EMPTY_PLACEHOLDER_VALUE}
             if otherValues:
                 self._msg.error(
                     f"Inconsistent values found for EE set {concept.qname}. Not creating an XBRL fact. Cell values '{value}'",
