@@ -182,14 +182,20 @@ class FactCreator:
                 continue
 
             cell = self._reader.getSingleCell(stuff)
-            if cell is None:
-                self._pending.pop(dn)
-                continue
-
-            value = cell.value
             external_value = concept in self._bindings.has_external_value
+            value = None if cell is None else cell.value
+
+            # Skip ladder: a fact needs a usable cell value unless the
+            # concept's value is supplied externally. Externally-valued
+            # concepts (always text blocks — resolveExternalValues enforces
+            # this) are registered as partial facts even when their cell is
+            # missing or empty; the value arrives later via
+            # InlineReport.completePartialFact(). Everything else is skipped
+            # unless the cell exists and holds a real, non-placeholder value.
             if not external_value and (
-                value is None or value in EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE
+                cell is None
+                or value is None
+                or value in EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE
             ):
                 self._pending.pop(dn)
                 continue
@@ -221,6 +227,9 @@ class FactCreator:
                     fb.setValue(str(value))
 
             if concept.isNumeric:
+                # Externally-valued concepts are text blocks, never numeric,
+                # so a missing cell cannot reach here.
+                assert cell is not None
                 processNumeric(self._msg, stuff, cell, fb, value)
 
             if concept.isNumeric and not concept.isMonetary:
