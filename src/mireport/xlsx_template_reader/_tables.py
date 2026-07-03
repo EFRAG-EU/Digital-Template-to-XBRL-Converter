@@ -23,6 +23,7 @@ if TYPE_CHECKING:
     from mireport.xlsx_template_reader._units import UnitResolver
 
 from mireport.conversionresults import MessageType
+from mireport.exceptions import AmbiguousComponentException
 from mireport.typealiases import FactValue
 from mireport.xlsx_template_reader._constants import (
     EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE,
@@ -281,7 +282,19 @@ class TableFactCreator:
                 )
                 continue
 
-            match = resolveMemberByLabel(self.taxonomy, self._config, str(edValue))
+            try:
+                match = resolveMemberByLabel(
+                    self.taxonomy, self._config, str(edValue), dimension=edConcept
+                )
+            except AmbiguousComponentException as exc:
+                match = None
+                self._msg.error(
+                    f"Ambiguous value '{edValue}' for explicit dimension "
+                    f"{edConcept.qname}. Candidate members: "
+                    f"{', '.join(str(c.qname) for c in exc.candidates)}.",
+                    MessageType.Conversion,
+                    ref=ed.excelRef(edCell),
+                )
             if match is not None:
                 factBuilder.setExplicitDimension(edConcept, match.concept)
                 dims_set += 1

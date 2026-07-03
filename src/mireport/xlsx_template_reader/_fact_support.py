@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from mireport.xlsx_template_reader._ranges import XbrlConceptCellRangeMetadata
 
 from mireport.conversionresults import MessageType
-from mireport.exceptions import InlineReportException
+from mireport.exceptions import AmbiguousComponentException, InlineReportException
 from mireport.xlsx_template_reader._enumerations import resolveMemberByLabel
 from mireport.xlsx_template_reader.util import get_decimal_places
 
@@ -43,10 +43,21 @@ def resolveMemberWithMessages(
     quote when the resolved text was preprocessed (e.g. a stripped prefix);
     warnOnExactMatch forces the workaround warning for such preprocessed hits.
     """
-    match = resolveMemberByLabel(taxonomy, config, text, ee_concept=eeConcept)
+    shown = displayValue if displayValue is not None else text
+    try:
+        match = resolveMemberByLabel(taxonomy, config, text, ee_concept=eeConcept)
+    except AmbiguousComponentException as exc:
+        msg.warning(
+            f"Ambiguous cell value '{shown}' when reporting {eeConcept.qname}; "
+            f"matching domain members: "
+            f"{', '.join(str(c.qname) for c in exc.candidates)}.",
+            MessageType.Conversion,
+            concept=eeConcept,
+            ref=holder.excelRef(cell),
+        )
+        return None
     if match is None:
         return None
-    shown = displayValue if displayValue is not None else text
     if match.closestLabel is not None:
         msg.warning(
             f"Using closest match EE concept when reporting {eeConcept.qname}. Cell value '{shown}'. Chosen EE domain member: {match.concept.qname} with label: '{match.closestLabel}'",

@@ -17,8 +17,9 @@ from typing import NamedTuple
 
 import pytest
 
-from mireport.conversionresults import ConversionResultsBuilder
+from mireport.conversionresults import ConversionResultsBuilder, Severity
 from mireport.data.disclosures import VSME_DEFAULTS
+from mireport.exceptions import AmbiguousComponentException
 from mireport.report import InlineReport
 from mireport.taxonomy import getTaxonomy, loadBuiltInTaxonomyJSON
 from mireport.xlsx_template_reader._binder import WorkbookBinder
@@ -30,7 +31,10 @@ from mireport.xlsx_template_reader._enumerations import (
     resolveMemberByLabel,
 )
 from mireport.xlsx_template_reader._fact_creator import FactCreator
-from mireport.xlsx_template_reader._fact_support import processNumeric
+from mireport.xlsx_template_reader._fact_support import (
+    processNumeric,
+    resolveMemberWithMessages,
+)
 from mireport.xlsx_template_reader._messages import Messenger
 from mireport.xlsx_template_reader._reader import WorkbookReader
 from mireport.xlsx_template_reader._units import UnitResolver, cleanUnitTextFromExcel
@@ -291,6 +295,271 @@ class TestResolveMemberByLabel:
 
     def test_no_match_returns_none(self, taxonomy, config):
         assert resolveMemberByLabel(taxonomy, config, "zzz qqq 12345") is None
+
+
+class TestResolveMemberByLabelDomainScoping:
+    """ee_concept / dimension scope the exact and alias lookups to the
+    relevant domain (via a resolveConcept predicate), so an exact label match
+    outside the domain can no longer beat the in-domain candidates.
+
+    Two routes to a domain: an enumeration concept carries its domain
+    intrinsically (getEEDomain); an explicit dimension's maximum permitted
+    domain comes from taxonomy.getDomainMembersForExplicitDimension."""
+
+    @pytest.fixture(scope="class")
+    def config(self, taxonomy):
+        return ConverterConfig.fromDefaults(VSME_DEFAULTS, taxonomy)
+
+    @pytest.fixture(scope="class")
+    def ee_concept(self, taxonomy):
+        return next(
+            c
+            for c in sorted(taxonomy.concepts, key=str)
+            if c.isEnumerationSingle and c.getEEDomain()
+        )
+
+    @pytest.fixture(scope="class")
+    def dimension(self, taxonomy):
+        dim = next(
+            (
+                c
+                for c in sorted(taxonomy.concepts, key=str)
+                if c.isExplicitDimension
+                and taxonomy.getDomainMembersForExplicitDimension(c)
+            ),
+            None,
+        )
+        if dim is None:
+            pytest.skip("vsme taxonomy has no explicit dimension with domain members")
+        return dim
+
+    def test_in_domain_exact_match_survives_scoping(self, taxonomy, config, ee_concept):
+        member = ee_concept.getEEDomain()[0]
+        match = resolveMemberByLabel(
+            taxonomy, config, member.getStandardLabel(), ee_concept=ee_concept
+        )
+        assert match == LabelMatch(member, False, None)
+
+    def test_out_of_domain_exact_match_is_excluded(self, taxonomy, config):
+        """A label whose exact match lies outside the EE domain must not win;
+        the scoped chain either finds an in-domain member or nothing."""
+
+        def probe():
+            ees = [
+                c
+                for c in sorted(taxonomy.concepts, key=str)
+                if c.isEnumerationSingle and c.getEEDomain()
+            ]
+            for scope_ee in ees:
+                domain = set(scope_ee.getEEDomain())
+                for other in ees:
+                    for foreign in other.getEEDomain():
+                        if foreign in domain:
+                            continue
+                        label = foreign.getStandardLabel()
+                        if label is None:
+                            continue
+                        try:
+                            unscoped = resolveMemberByLabel(taxonomy, config, label)
+                        except AmbiguousComponentException:
+                            continue
+                        if unscoped is not None and unscoped.concept == foreign:
+                            return scope_ee, foreign, label
+            return None
+
+        found = probe()
+        if found is None:
+            pytest.skip("vsme has no out-of-domain exact-label pair to probe")
+        scope_ee, foreign, label = found
+        match = resolveMemberByLabel(taxonomy, config, label, ee_concept=scope_ee)
+        assert match is None or (
+            match.concept != foreign and match.concept in set(scope_ee.getEEDomain())
+        )
+
+    def test_dimension_scoping_resolves_domain_member(
+        self, taxonomy, config, dimension
+    ):
+        domain = taxonomy.getDomainMembersForExplicitDimension(dimension)
+        for member in sorted(domain):
+            label = member.getStandardLabel()
+            if label is None:
+                continue
+            try:
+                match = resolveMemberByLabel(
+                    taxonomy, config, label, dimension=dimension
+                )
+            except AmbiguousComponentException:
+                continue
+            if match is not None:
+                # The label belongs to member, so a unique survivor IS member.
+                assert match == LabelMatch(member, False, None)
+                return
+        pytest.skip("no domain-member label resolves for this dimension")
+
+    def test_dimension_scoping_excludes_out_of_domain(
+        self, taxonomy, config, dimension
+    ):
+        """No fuzzy fallback for dimensions: an outsider's label finds nothing."""
+        domain = taxonomy.getDomainMembersForExplicitDimension(dimension)
+
+        def probe():
+            for concept in sorted(taxonomy.concepts, key=str):
+                if concept in domain:
+                    continue
+                for label in concept.getAllStandardLabels():
+                    try:
+                        unscoped = resolveMemberByLabel(taxonomy, config, label)
+                    except AmbiguousComponentException:
+                        continue
+                    if unscoped is not None and unscoped.concept == concept:
+                        return label
+            return None
+
+        outsider_label = probe()
+        if outsider_label is None:
+            pytest.skip("no out-of-domain label resolves unscoped")
+        assert (
+            resolveMemberByLabel(taxonomy, config, outsider_label, dimension=dimension)
+            is None
+        )
+
+
+class TestResolveMemberByLabelScopePlumbing:
+    """Stub-level guarantees for the scoping mechanics that must hold
+    regardless of the vsme taxonomy's shape."""
+
+    class _Config:
+        cellValuesToTaxonomyLabels: dict = {}
+
+    class _RecordingTaxonomy:
+        def __init__(self, domain_members=frozenset()):
+            self.calls = []
+            self._domain_members = frozenset(domain_members)
+
+        def getDomainMembersForExplicitDimension(self, dimension):
+            return self._domain_members
+
+        def resolveConcept(self, text, **kwargs):
+            self.calls.append((text, kwargs))
+            return None
+
+    def test_ambiguity_propagates_out_of_the_chain(self):
+        """The chain stays message-silent: ambiguity reaches the callers, who
+        catch and report (resolveMemberWithMessages / _addExplicitDimensions)."""
+
+        class AmbiguousTaxonomy:
+            def resolveConcept(self, text, **kwargs):
+                raise AmbiguousComponentException(f"'{text}' is ambiguous")
+
+        with pytest.raises(AmbiguousComponentException):
+            resolveMemberByLabel(AmbiguousTaxonomy(), self._Config(), "SharedLabel")
+
+    def test_ee_and_dimension_are_mutually_exclusive(self):
+        with pytest.raises(ValueError):
+            resolveMemberByLabel(
+                self._RecordingTaxonomy(),
+                self._Config(),
+                "Anything",
+                ee_concept=object(),
+                dimension=object(),
+            )
+
+    def test_ee_scope_predicate_is_passed(self):
+        class _FakeMember:
+            def getAllStandardLabels(self):
+                return ["completely unrelated zzz"]
+
+        in_domain = _FakeMember()
+        out_of_domain = _FakeMember()
+
+        class _FakeEE:
+            isEnumerationSingle = True
+            isEnumerationSet = False
+
+            def getEEDomain(self):
+                return (in_domain,)
+
+        stub = self._RecordingTaxonomy()
+        assert (
+            resolveMemberByLabel(stub, self._Config(), "Anything", ee_concept=_FakeEE())
+            is None
+        )
+        assert stub.calls
+        predicate = stub.calls[0][1]["predicate"]
+        assert predicate(in_domain)
+        assert not predicate(out_of_domain)
+
+    def test_dimension_scope_predicate_is_passed(self):
+        in_domain = object()
+        out_of_domain = object()
+        stub = self._RecordingTaxonomy(domain_members={in_domain})
+        assert (
+            resolveMemberByLabel(stub, self._Config(), "Anything", dimension=object())
+            is None
+        )
+        assert stub.calls
+        predicate = stub.calls[0][1]["predicate"]
+        assert predicate(in_domain)
+        assert not predicate(out_of_domain)
+
+    def test_empty_dimension_domain_rejects_everything(self):
+        stub = self._RecordingTaxonomy(domain_members=frozenset())
+        assert (
+            resolveMemberByLabel(stub, self._Config(), "Anything", dimension=object())
+            is None
+        )
+        predicate = stub.calls[0][1]["predicate"]
+        assert not predicate(object())
+
+
+class TestResolveMemberWithMessagesAmbiguity:
+    """Ambiguity escaping the label chain must surface as a warning + None at
+    the message layer, not crash the conversion."""
+
+    def test_ambiguous_member_warns_and_returns_none(self, taxonomy, monkeypatch):
+        import mireport.xlsx_template_reader._fact_support as fact_support
+
+        class _Candidate:
+            def __init__(self, qname):
+                self.qname = qname
+
+        def raiser(*args, **kwargs):
+            raise AmbiguousComponentException(
+                "ambiguous",
+                candidates=(_Candidate("vsme:One"), _Candidate("vsme:Two")),
+            )
+
+        monkeypatch.setattr(fact_support, "resolveMemberByLabel", raiser)
+
+        ee_concept = next(
+            c
+            for c in sorted(taxonomy.concepts, key=str)
+            if c.isEnumerationSingle and c.getEEDomain()
+        )
+
+        class _Holder:
+            def excelRef(self, cell):
+                return None
+
+        results = ConversionResultsBuilder(consoleOutput=False)
+        member = resolveMemberWithMessages(
+            Messenger(results),
+            taxonomy,
+            None,
+            "Shared label",
+            ee_concept,
+            _Holder(),
+            None,
+        )
+        assert member is None
+        warnings = [
+            str(m.messageText)
+            for m in results.messages
+            if m.severity is Severity.WARNING
+        ]
+        assert len(warnings) == 1
+        assert "vsme:One" in warnings[0] and "vsme:Two" in warnings[0]
+        assert "Shared label" in warnings[0]
 
 
 # ---------------------------------------------------------------------------
