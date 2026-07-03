@@ -55,8 +55,9 @@ class WorkbookBinder:
 
         concept_map: dict[DefinedName, XbrlConceptCellRangeMetadata] = {}
         unit_map: dict[Concept, XbrlConceptCellRangeMetadata] = {}
-        preset_dims: defaultdict[XbrlConceptCellRangeMetadata, dict[Concept, Concept]]
-        preset_dims = defaultdict(dict)
+        preset_dims: defaultdict[
+            XbrlConceptCellRangeMetadata, dict[Concept, Concept]
+        ] = defaultdict(dict)
 
         # unused_defined_names is a set of identity-hashed DefinedNames; sort so
         # binding (and hence fact/message) order is stable across runs.
