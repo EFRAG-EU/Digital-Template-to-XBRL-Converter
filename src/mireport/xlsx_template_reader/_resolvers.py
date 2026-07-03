@@ -175,7 +175,7 @@ def resolveExternalValues(ctx: ExcelCellBindingContext) -> frozenset[Concept]:
     for cell in crh.cells():
         if (value := CellValue.fromCell(cell)).isBlank:
             continue
-        name_or_label = value.asString().strip()
+        name_or_label = value.as_str_stripped()
         try:
             concept = taxonomy.resolveConcept(
                 name_or_label, by_label=True, by_name=True, only_reportable=True

@@ -137,14 +137,14 @@ def creator_env():
     results = _results()
     reader = WorkbookReader(wb, results)
 
-    entry_point = reader.value(VSME_DEFAULTS["entryPoint"]).asString()
+    entry_point = reader.value(VSME_DEFAULTS["entryPoint"]).as_str()
     taxonomy = getTaxonomy(entry_point)
     report = InlineReport(taxonomy, None)
     report.addSchemaRef(entry_point)
 
     for period in VSME_DEFAULTS.get("periods", []):
-        start = reader.value(period["start"]).asDate()
-        end = reader.value(period["end"]).asDate()
+        start = reader.value(period["start"]).as_date()
+        end = reader.value(period["end"]).as_date()
         if report.addDurationPeriod(period["name"], start, end):
             report.setDefaultPeriodName(period["name"])
 

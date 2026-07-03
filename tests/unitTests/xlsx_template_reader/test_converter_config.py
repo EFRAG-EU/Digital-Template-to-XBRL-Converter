@@ -24,7 +24,7 @@ def taxonomy():
     wb = loadExcelFromPathOrFileLike(SAMPLE)
     try:
         reader = WorkbookReader(wb, ConversionResultsBuilder(consoleOutput=False))
-        return getTaxonomy(reader.value(VSME_DEFAULTS["entryPoint"]).asString())
+        return getTaxonomy(reader.value(VSME_DEFAULTS["entryPoint"]).as_str())
     finally:
         wb.close()
 

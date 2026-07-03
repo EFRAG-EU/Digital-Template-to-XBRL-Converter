@@ -47,7 +47,7 @@ def reader():
 
 @pytest.fixture(scope="module")
 def taxonomy(reader):
-    return getTaxonomy(reader.value(VSME_DEFAULTS["entryPoint"]).asString())
+    return getTaxonomy(reader.value(VSME_DEFAULTS["entryPoint"]).as_str())
 
 
 @pytest.fixture(scope="module")

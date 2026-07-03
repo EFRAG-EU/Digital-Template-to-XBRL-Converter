@@ -65,10 +65,15 @@ class CellValue:
             return not stripped or stripped in EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE
         return False
 
-    def asString(self, *, fallback: str = "") -> str:
+    def as_str(self, *, fallback: str = "") -> str:
         return str(self.raw) if self.raw is not None else fallback
 
-    def asDate(self) -> date:
+    def as_str_stripped(self, *, fallback: str = "") -> str:
+        """as_str() with surrounding whitespace removed. The fallback is for
+        missing values only; a whitespace-only cell strips to ''."""
+        return str(self.raw).strip() if self.raw is not None else fallback
+
+    def as_date(self) -> date:
         """Interpret the value as a date. Raises ValueError/TypeError if it isn't one."""
         return getDateFromValue(self.raw)
 

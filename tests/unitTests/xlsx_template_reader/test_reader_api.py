@@ -46,7 +46,7 @@ def fresh_reader():
 
 @pytest.fixture(scope="module")
 def taxonomy(reader):
-    entry_point = reader.value(VSME_DEFAULTS["entryPoint"]).asString()
+    entry_point = reader.value(VSME_DEFAULTS["entryPoint"]).as_str()
     return getTaxonomy(entry_point)
 
 
@@ -110,11 +110,29 @@ class TestCellValue:
     def test_text_is_not_blank(self):
         assert not CellValue("hello").isBlank
 
-    def test_as_string_returns_value(self):
-        assert CellValue("hello").asString() == "hello"
+    def test_as_str_returns_value(self):
+        assert CellValue("hello").as_str() == "hello"
 
-    def test_as_string_stringifies_numbers(self):
-        assert CellValue(42).asString() == "42"
+    def test_as_str_stringifies_numbers(self):
+        assert CellValue(42).as_str() == "42"
+
+    def test_as_str_does_not_strip(self):
+        assert CellValue("  hello  ").as_str() == "  hello  "
+
+    def test_as_str_stripped_strips_whitespace(self):
+        assert CellValue("  hello  ").as_str_stripped() == "hello"
+
+    def test_as_str_stripped_stringifies_numbers(self):
+        assert CellValue(42).as_str_stripped() == "42"
+
+    def test_as_str_stripped_fallback_for_none(self):
+        assert CellValue(None).as_str_stripped() == ""
+        assert CellValue(None).as_str_stripped(fallback="FB") == "FB"
+
+    def test_as_str_stripped_whitespace_only_is_empty_not_fallback(self):
+        # fallback is for missing values only; a whitespace-only cell has a
+        # value, it just strips to nothing (use isBlank to detect that case).
+        assert CellValue("   ").as_str_stripped(fallback="FB") == ""
 
     def test_none_has_no_value(self):
         assert not CellValue(None).hasValue
@@ -127,23 +145,23 @@ class TestCellValue:
     def test_zero_has_value(self):
         assert CellValue(0).hasValue
 
-    def test_as_string_fallback_for_none(self):
-        assert CellValue(None).asString() == ""
-        assert CellValue(None).asString(fallback="FB") == "FB"
+    def test_as_str_fallback_for_none(self):
+        assert CellValue(None).as_str() == ""
+        assert CellValue(None).as_str(fallback="FB") == "FB"
 
     def test_as_date_from_date(self):
         d = date(2024, 12, 31)
-        assert CellValue(d).asDate() == d
+        assert CellValue(d).as_date() == d
 
     def test_as_date_from_datetime(self):
-        assert CellValue(datetime(2024, 6, 15, 10, 30)).asDate() == date(2024, 6, 15)
+        assert CellValue(datetime(2024, 6, 15, 10, 30)).as_date() == date(2024, 6, 15)
 
     def test_as_date_from_iso_string(self):
-        assert CellValue("2024-03-01").asDate() == date(2024, 3, 1)
+        assert CellValue("2024-03-01").as_date() == date(2024, 3, 1)
 
     def test_as_date_from_none_raises(self):
         with pytest.raises(TypeError):
-            CellValue(None).asDate()
+            CellValue(None).as_date()
 
     def test_from_cell_none_is_blank(self):
         assert CellValue.fromCell(None) == CellValue(None)
@@ -165,17 +183,17 @@ class TestReaderValue:
     def test_known_name_yields_value(self, reader):
         v = reader.value("template_reporting_template_version")
         assert isinstance(v, CellValue)
-        assert v.asString() != ""
+        assert v.as_str() != ""
 
     def test_missing_name_yields_blank(self, reader):
         v = reader.value("this_does_not_exist_xyz")
         assert v.raw is None
         assert v.isBlank
-        assert v.asString(fallback="FB") == "FB"
+        assert v.as_str(fallback="FB") == "FB"
 
     def test_period_start_as_date(self, reader):
         start_name = VSME_DEFAULTS["periods"][0]["start"]
-        assert isinstance(reader.value(start_name).asDate(), date)
+        assert isinstance(reader.value(start_name).as_date(), date)
 
 
 class TestUnusedDefinedNames:
