@@ -72,13 +72,20 @@ def resolveMemberByLabel(
     """Resolve cell text to a concept: exact standard label, then the
     configured cell-value alias, then (when ee_concept is given) the closest
     EE domain-member label. None if nothing matches."""
-    if (concept := taxonomy.getConceptForLabel(text)) is not None:
+    if (
+        concept := taxonomy.resolveConcept(text, by_label=True, only_reportable=False)
+    ) is not None:
         return LabelMatch(concept, viaConfiguredAlias=False, closestLabel=None)
 
     alias = config.cellValuesToTaxonomyLabels.get(text)
     if (
         alias is not None
-        and (concept := taxonomy.getConceptForLabel(alias)) is not None
+        and (
+            concept := taxonomy.resolveConcept(
+                alias, by_label=True, only_reportable=False
+            )
+        )
+        is not None
     ):
         return LabelMatch(concept, viaConfiguredAlias=True, closestLabel=None)
 

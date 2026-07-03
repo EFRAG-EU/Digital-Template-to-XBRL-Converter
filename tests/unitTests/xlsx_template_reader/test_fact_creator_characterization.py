@@ -257,8 +257,16 @@ class TestResolveMemberByLabel:
             (
                 (cell_value, target)
                 for cell_value, label in config.cellValuesToTaxonomyLabels.items()
-                if taxonomy.getConceptForLabel(cell_value) is None
-                and (target := taxonomy.getConceptForLabel(label)) is not None
+                if taxonomy.resolveConcept(
+                    cell_value, by_label=True, only_reportable=False
+                )
+                is None
+                and (
+                    target := taxonomy.resolveConcept(
+                        label, by_label=True, only_reportable=False
+                    )
+                )
+                is not None
             ),
             None,
         )

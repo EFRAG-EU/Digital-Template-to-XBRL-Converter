@@ -336,6 +336,42 @@ class TestResolveExternalValues:
         assert resolveExternalValues(ctx) == frozenset()
         assert len(_warnings(results)) == 1
 
+    def test_non_textblock_concept_warns_and_is_excluded(self, taxonomy):
+        non_textblock = next(
+            c
+            for c in sorted(taxonomy.concepts, key=str)
+            if c.isReportable and not c.isTextblock
+        )
+        ctx, results = _external_values_ctx([non_textblock.qname.localName], taxonomy)
+        assert resolveExternalValues(ctx) == frozenset()
+        assert len(_warnings(results)) == 1
+
+    def test_textblock_predicate_drives_resolution(self):
+        """The textblock requirement is passed into resolveConcept as a
+        predicate so it participates in disambiguation, rather than being a
+        post-check that only sees the ambiguity exception."""
+
+        class _FakeConcept:
+            def __init__(self, isTextblock):
+                self.isTextblock = isTextblock
+
+        class RecordingTaxonomy:
+            def __init__(self):
+                self.calls = []
+
+            def resolveConcept(self, text, **kwargs):
+                self.calls.append((text, kwargs))
+                return None
+
+        stub = RecordingTaxonomy()
+        ctx, _ = _external_values_ctx(["Anything"], stub)
+        resolveExternalValues(ctx)
+        assert len(stub.calls) == 1
+        _, kwargs = stub.calls[0]
+        predicate = kwargs["predicate"]
+        assert predicate(_FakeConcept(isTextblock=True))
+        assert not predicate(_FakeConcept(isTextblock=False))
+
 
 class TestBindOrderIsDeterministic:
     def test_concept_map_keys_are_name_sorted(self, bound):

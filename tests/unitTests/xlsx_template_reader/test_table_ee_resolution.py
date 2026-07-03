@@ -1,8 +1,9 @@
 """Table EE cells must use the same label-resolution chain as simple facts:
 exact standard label -> configured cell-value alias -> closest EE-domain match.
 
-Historically the table path used a bare getConceptForLabel, so table cells
-with slightly-off labels errored where simple-fact cells resolved.
+Historically the table path used a bare label lookup (the since-removed
+getConceptForLabel), so table cells with slightly-off labels errored where
+simple-fact cells resolved.
 """
 
 from collections import defaultdict

@@ -193,7 +193,11 @@ def resolveExternalValues(ctx: ExcelCellBindingContext) -> frozenset[Concept]:
         name_or_label = value.as_str_stripped()
         try:
             concept = taxonomy.resolveConcept(
-                name_or_label, by_label=True, by_name=True, only_reportable=True
+                name_or_label,
+                by_label=True,
+                by_name=True,
+                only_reportable=True,
+                predicate=lambda c: c.isTextblock,
             )
         except AmbiguousComponentException as exc:
             ctx.msg.warning(
@@ -202,7 +206,7 @@ def resolveExternalValues(ctx: ExcelCellBindingContext) -> frozenset[Concept]:
                 ref=crh.excelRef(cell),
             )
             continue
-        if concept is None or not concept.isTextblock:
+        if concept is None:
             ctx.msg.warning(
                 f"External value specified in {_EXTERNAL_VALUES_RANGE} named range but no matching concept found for name or label '{name_or_label}'.",
                 MessageType.DevInfo,

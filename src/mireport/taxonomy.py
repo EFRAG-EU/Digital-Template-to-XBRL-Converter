@@ -9,7 +9,7 @@ import logging
 import re
 import warnings
 from collections import Counter, defaultdict
-from collections.abc import Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from enum import Enum, StrEnum, auto
 from functools import cache, cached_property
 from typing import TYPE_CHECKING, NamedTuple, overload
@@ -55,6 +55,8 @@ MEASUREMENT_GUIDANCE_LABEL_ROLE = "http://www.xbrl.org/2003/role/measurementGuid
 
 
 LABEL_SUFFIX_PATTERN = re.compile(r"\s*\[[A-Z]?[a-z ]+\]\s*$")
+
+ConceptPredicate = Callable[["Concept"], bool]
 
 
 class PeriodType(StrEnum):
@@ -807,28 +809,40 @@ class Taxonomy:
         by_name: bool = False,
         by_qname: bool = False,
         only_reportable: bool = True,
+        predicate: Optional[ConceptPredicate] = None,
     ) -> Optional[Concept]:
         """Resolve a string to a Concept using one or more strategies.
 
         Strategies are tried in specificity order: qname → name → label.
-        When only_reportable=True (the default), non-reportable (abstract) candidates are
-        filtered out before ambiguity checking — so a label shared by one reportable and
-        several abstract concepts resolves unambiguously rather than raising.
+        Candidates are filtered before ambiguity checking, so filters
+        participate in disambiguation: when only_reportable=True (the default),
+        non-reportable (abstract) candidates are dropped — a label shared by
+        one reportable and several abstract concepts resolves unambiguously
+        rather than raising — and a caller-supplied predicate narrows the
+        candidates the same way (both filters compose). Exceptions raised by
+        the predicate itself propagate to the caller.
         Returns the first match, or None if all enabled strategies find nothing.
-        Raises AmbiguousComponentException if any strategy finds multiple candidates.
+        Raises AmbiguousComponentException if multiple candidates survive filtering.
         Raises ValueError if no strategy is enabled.
         """
         if not (by_label or by_name or by_qname):
             raise ValueError(
                 "resolveConcept requires at least one strategy to be enabled"
             )
+
+        def passes(c: Concept) -> bool:
+            return (not only_reportable or c.isReportable) and (
+                predicate is None or predicate(c)
+            )
+
         if by_qname:
             try:
                 concept = self.getConcept(text)
-                if not only_reportable or concept.isReportable:
-                    return concept
             except Exception:
                 pass  # not a valid QName format or concept not present
+            else:
+                if passes(concept):
+                    return concept
 
         candidates: set[Concept] = set()
 
@@ -856,8 +870,7 @@ class Taxonomy:
                         )
             candidates.update(possible)
 
-        if only_reportable:
-            candidates = {c for c in candidates if c.isReportable}
+        candidates = {c for c in candidates if passes(c)}
 
         match len(candidates):
             case 0:
@@ -865,20 +878,12 @@ class Taxonomy:
             case 1:
                 return next(iter(candidates))
             case _:
+                ordered = sorted(candidates)
                 raise AmbiguousComponentException(
                     f"Ambiguous concept specified. Candidate concepts: "
-                    f"{', '.join(str(c.qname) for c in sorted(candidates))}"
+                    f"{', '.join(str(c.qname) for c in ordered)}",
+                    candidates=ordered,
                 )
-
-    def getConceptForName(self, name: str) -> Concept | None:
-        return self.resolveConcept(
-            name, by_name=True, by_label=False, by_qname=False, only_reportable=False
-        )
-
-    def getConceptForLabel(self, label: str) -> Optional[Concept]:
-        return self.resolveConcept(
-            label, by_label=True, by_name=False, by_qname=False, only_reportable=False
-        )
 
     @cached_property
     def concepts(self) -> frozenset[Concept]:
@@ -992,8 +997,11 @@ class Taxonomy:
             case 1:
                 return next(iter(possible))
             case _:
+                ordered = sorted(possible)
                 raise AmbiguousComponentException(
-                    f"Ambiguous domain member specified. Candidate dimensions: {', '.join(str(concept.qname) for concept in possible)}"
+                    f"Ambiguous domain member specified. Candidate dimensions: "
+                    f"{', '.join(str(concept.qname) for concept in ordered)}",
+                    candidates=ordered,
                 )
 
     def getDomainMembersForExplicitDimension(
