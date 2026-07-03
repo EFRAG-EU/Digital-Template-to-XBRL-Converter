@@ -191,6 +191,68 @@ class TestXBRLTableResolverClassification:
         )
 
 
+def _footnote_ctx(taxonomy, ranges):
+    """Build a tiny in-memory workbook holding the given footnote named ranges
+    (name -> Excel coords), plus its resolver context."""
+    wb = Workbook()
+    ws = wb.active
+    assert ws is not None
+    for name, coords in ranges.items():
+        attr = f"{quote_sheetname(ws.title)}!{absolute_coordinate(coords)}"
+        wb.defined_names.add(DefinedName(name, attr_text=attr))
+    results = _results()
+    reader = WorkbookReader(wb, results)
+    return ExcelCellBindingContext(reader, Messenger(results), taxonomy), results
+
+
+class TestResolveFootnoteBindingColumnWidths:
+    """The footnote reader only supports single-column text/ref/dimension
+    ranges; wider ranges must warn up front and fall back to the first column."""
+
+    def test_single_column_ranges_bind_without_warning(self, taxonomy):
+        ctx, results = _footnote_ctx(
+            taxonomy,
+            {
+                "footnote_table": "B1:D2",
+                "footnote_text": "B1:B2",
+                "footnote_ref_dimension": "C1:C2",
+                "footnote_ref_concept": "D1:D2",
+            },
+        )
+        assert resolveFootnoteBinding(ctx) is not None
+        assert not _messages(results, Severity.WARNING)
+
+    def test_wide_ref_range_warns_and_still_binds(self, taxonomy):
+        ctx, results = _footnote_ctx(
+            taxonomy,
+            {
+                "footnote_table": "B1:D2",
+                "footnote_text": "B1:B2",
+                "footnote_ref_concept": "C1:D2",
+            },
+        )
+        assert resolveFootnoteBinding(ctx) is not None
+        warnings = _messages(results, Severity.WARNING)
+        assert any(
+            "footnote_ref_concept" in w and "first column" in w for w in warnings
+        ), warnings
+
+    def test_wide_text_and_dimension_ranges_each_warn(self, taxonomy):
+        ctx, results = _footnote_ctx(
+            taxonomy,
+            {
+                "footnote_table": "B1:F2",
+                "footnote_text": "B1:C2",
+                "footnote_ref_dimension": "D1:E2",
+                "footnote_ref_concept": "F1:F2",
+            },
+        )
+        assert resolveFootnoteBinding(ctx) is not None
+        warnings = _messages(results, Severity.WARNING)
+        assert any("footnote_text" in w for w in warnings), warnings
+        assert any("footnote_ref_dimension" in w for w in warnings), warnings
+
+
 class TestOneShotResolvers:
     def test_footnotes_none_when_unconfigured(self, ctx):
         # The 1.2.0 sample has no footnote named ranges: silently nothing.

@@ -14,7 +14,6 @@ CellValueType: TypeAlias = bool | float | int | str | datetime | date | time | N
 EXCEL_PLACEHOLDER_VALUE = "#VALUE!"
 EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE = frozenset({"-", EXCEL_PLACEHOLDER_VALUE})
 IGNORED_DEFINED_NAME_PREFIXES = ("enum_", "template_")
-EXTERNAL_VALUES_RANGE = "template_external_values"
 
 # TODO FIXME Temporary workarounds for the VSME taxonomy.
 # Template named ranges whose name doesn't match the taxonomy concept local

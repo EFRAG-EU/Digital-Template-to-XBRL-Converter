@@ -8,7 +8,7 @@ the matching facts in the report.
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Callable, Iterator, Optional
+from typing import TYPE_CHECKING, Callable, Iterator, NamedTuple, Optional
 
 if TYPE_CHECKING:
     from mireport.report import InlineReport
@@ -25,6 +25,7 @@ from mireport.conversionresults import MessageType
 from mireport.exceptions import AmbiguousComponentException
 from mireport.stringutil import str_to_markupsafe
 from mireport.taxonomy import QName
+from mireport.xlsx_template_reader._reader import CellValue
 
 L = logging.getLogger(__name__)
 
@@ -52,11 +53,11 @@ class FootnoteFactCreator:
         ref_crm = binding.ref
 
         origin = table_crm.cellRange.min_col
-        text_col_indices = _columnIndices(binding.text, origin)
-        ref_col_indices = _columnIndices(ref_crm, origin)
-        dim_col_indices: range | None = None
+        text_col = _columnIndex(binding.text, origin)
+        ref_col = _columnIndex(ref_crm, origin)
+        dim_col: int | None = None
         if binding.ref_dimension is not None:
-            dim_col_indices = _columnIndices(binding.ref_dimension, origin)
+            dim_col = _columnIndex(binding.ref_dimension, origin)
 
         def warn_ref(msg: str, cell: Optional[CellType] = None) -> None:
             self._msg.warning(
@@ -65,8 +66,8 @@ class FootnoteFactCreator:
                 ref=ref_crm.excelRef(cell),
             )
 
-        for text_value, label_cells in self._iterFootnoteRows(
-            table_crm, text_col_indices, ref_col_indices, dim_col_indices
+        for text_value, label_cells in _iterFootnoteRows(
+            table_crm, text_col, ref_col, dim_col
         ):
             if not label_cells:
                 self._msg.warning(
@@ -89,55 +90,6 @@ class FootnoteFactCreator:
             if not target_facts:
                 continue
             self._report.addFootnoteToFacts(str_to_markupsafe(text_value), target_facts)
-
-    def _iterFootnoteRows(
-        self,
-        table_crm: CellRangeMetadata,
-        text_col_indices: range,
-        ref_col_indices: range,
-        dim_col_indices: range | None = None,
-    ) -> Iterator[tuple[str, list[tuple[str, str | None, CellType]]]]:
-        """Yields (footnote_text, [(label, dim_text_or_None, cell), ...]) for each footnote."""
-        current_text: str | None = None
-        current_label_cells: list[tuple[str, str | None, CellType]] = []
-
-        for _, row_cells in table_crm.rows():
-            for ci in text_col_indices:
-                cell = row_cells[ci]
-                if isinstance(cell, MergedCell):
-                    continue
-                # Non-MergedCell in text column = boundary between footnotes
-                if current_text is not None:
-                    yield current_text, current_label_cells
-                # Refs accumulated under a blank text block belong to no
-                # footnote — drop them at every boundary, not just yielded ones.
-                current_label_cells = []
-                if cell.value is not None:
-                    raw = str(cell.value).strip()
-                    current_text = raw or None
-                else:
-                    current_text = None
-                break
-
-            dim_text: str | None = None
-            if dim_col_indices is not None:
-                for ci in dim_col_indices:
-                    cell = row_cells[ci]
-                    if not isinstance(cell, MergedCell) and cell.value is not None:
-                        raw = str(cell.value).strip()
-                        if raw:
-                            dim_text = raw
-                            break
-
-            for ci in ref_col_indices:
-                cell = row_cells[ci]
-                if not isinstance(cell, MergedCell) and cell.value is not None:
-                    label = str(cell.value).strip()
-                    if label:
-                        current_label_cells.append((label, dim_text, cell))
-
-        if current_text is not None:
-            yield current_text, current_label_cells
 
     def _resolveFootnoteRefs(
         self,
@@ -226,9 +178,78 @@ class FootnoteFactCreator:
         return facts
 
 
-def _columnIndices(crm: CellRangeMetadata, origin: int) -> range:
-    """Column offsets of a sub-range relative to its container's first column."""
-    return range(
-        crm.cellRange.min_col - origin,
-        crm.cellRange.max_col - origin + 1,
-    )
+def _columnIndex(crm: CellRangeMetadata, origin: int) -> int:
+    """Column offset of a sub-range's first column relative to its container's
+    first column. Footnote sub-ranges are single-column; the binding resolver
+    warns about wider ones, which fall back to their first column here."""
+    return crm.cellRange.min_col - origin
+
+
+class _FootnoteRow(NamedTuple):
+    """One physical row of the footnote table, parsed to plain values."""
+
+    is_boundary: bool
+    text: str | None
+    dim_text: str | None
+    ref: tuple[str, CellType] | None
+
+
+def _readFootnoteRow(
+    row_cells: tuple[CellType, ...],
+    text_col: int,
+    ref_col: int,
+    dim_col: int | None,
+) -> _FootnoteRow:
+    """Parse one physical row of the footnote table.
+
+    A real (non-merged) cell in the text column marks a boundary between
+    footnote blocks; a MergedCell continues the block above. The dimension and
+    reference columns need no merged-cell handling: a MergedCell never holds a
+    value, so it reads as blank like any other empty cell.
+    """
+    is_boundary = False
+    text: str | None = None
+    cell = row_cells[text_col]
+    if not isinstance(cell, MergedCell):
+        is_boundary = True
+        if not (value := CellValue.fromCell(cell)).isBlank:
+            text = value.as_str_stripped()
+
+    dim_text: str | None = None
+    if dim_col is not None:
+        if not (value := CellValue.fromCell(row_cells[dim_col])).isBlank:
+            dim_text = value.as_str_stripped()
+
+    ref: tuple[str, CellType] | None = None
+    cell = row_cells[ref_col]
+    if not (value := CellValue.fromCell(cell)).isBlank:
+        ref = (value.as_str_stripped(), cell)
+
+    return _FootnoteRow(is_boundary, text, dim_text, ref)
+
+
+def _iterFootnoteRows(
+    table_crm: CellRangeMetadata,
+    text_col: int,
+    ref_col: int,
+    dim_col: int | None = None,
+) -> Iterator[tuple[str, list[tuple[str, str | None, CellType]]]]:
+    """Yields (footnote_text, [(label, dim_text_or_None, cell), ...]) for each footnote."""
+    current_text: str | None = None
+    current_label_cells: list[tuple[str, str | None, CellType]] = []
+
+    for _, row_cells in table_crm.rows():
+        row = _readFootnoteRow(row_cells, text_col, ref_col, dim_col)
+        if row.is_boundary:
+            if current_text is not None:
+                yield current_text, current_label_cells
+            # Refs accumulated under a blank text block belong to no
+            # footnote — drop them at every boundary, not just yielded ones.
+            current_label_cells = []
+            current_text = row.text
+        if row.ref is not None:
+            label, cell = row.ref
+            current_label_cells.append((label, row.dim_text, cell))
+
+    if current_text is not None:
+        yield current_text, current_label_cells
