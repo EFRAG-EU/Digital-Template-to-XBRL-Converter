@@ -75,19 +75,24 @@ def resolveMemberByLabel(
     ee_concept: Optional[Concept] = None,
     dimension: Optional[Concept] = None,
 ) -> Optional[LabelMatch]:
-    """Resolve cell text to a concept: exact standard label, then the
-    configured cell-value alias, then (when ee_concept is given) the closest
-    domain-member label. None if nothing matches.
+    """Resolve cell text to a concept by trying, in order: exact standard
+    label, the configured cell-value alias, and — only when ee_concept is
+    given — the closest domain-member label. None if nothing matches.
 
     ee_concept and dimension are mutually exclusive routes to a domain that
-    scopes the exact and alias lookups: an enumeration concept carries its
-    domain of allowed fact values intrinsically (getEEDomain), while an
-    explicit dimension's domain is defined per hypercube, so
-    getDomainMembersForExplicitDimension supplies the maximum permitted
-    member set (cube-specific validity stays a fact-building concern).
-    Unscoped when neither is given. AmbiguousComponentException propagates:
-    post-scoping it means several members of the same domain share the text,
-    which callers must report rather than have fuzzy matching pick one."""
+    scopes the exact-label and alias lookups (the closest-match fallback is
+    only defined for enumeration domains, so it never runs for a plain
+    dimension): an enumeration concept's domain comes from its own allowed
+    fact values (getEEDomain), while an explicit dimension's domain is the
+    union of members declared for it across every hypercube that uses it
+    (getDomainMembersForExplicitDimension) — which of those are actually
+    valid in a given cube is left to fact building. Unscoped when neither is
+    given.
+
+    Raises AmbiguousComponentException when, even after scoping, several
+    domain members share the text — callers must report this rather than
+    have fuzzy matching pick one.
+    """
     if ee_concept is not None and dimension is not None:
         raise ValueError("Specify at most one of ee_concept and dimension")
 
