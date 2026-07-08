@@ -50,28 +50,34 @@ class MigrationOutcome(StrEnum):
     NOT_REFRESHED = "report_not_refreshed"
     MIGRATION_OPTIONAL = "migration_optional"
     MIGRATION_REQUIRED = "migration_required"
+    VERSION_TOO_NEW = "version_too_new"
 
 
 def doMigrationChecks(conversion: dict) -> tuple[MigrationOutcome, str]:
     upload = FilelikeAndFileName(*conversion["excel"])
     check_results = XlsxProcessor.checkReport(upload.fileLike())
-    version = str(check_results.reported_version) if check_results else "unknown"
+    version = str(check_results.version) if check_results else "unknown"
 
     if check_results is None:
         return (
             MigrationOutcome.MISSING,
             version,
         )  # can't do anything if we can't read the report
-    elif version == "0.0.0":
+    elif not check_results.version.is_valid:
         return (
             MigrationOutcome.INVALID_FORMAT,
             version,
-        )  # can't determine version, likely invalid report
+        )  # missing/unparseable version, likely invalid report
     elif check_results.migration_status is False:
         return (
             MigrationOutcome.NOT_REFRESHED,
             version,
         )  # report not refreshed after migration
+    elif check_results.version_is_newer:
+        return (
+            MigrationOutcome.VERSION_TOO_NEW,
+            version,
+        )  # template is newer than this tool; cannot migrate forward
     elif check_results.version_is_same:
         return (
             MigrationOutcome.SUCCESS,
@@ -117,6 +123,12 @@ def checkMigration(conversion: dict) -> Response | None:
             response = make_response(redirect(url_for("basic.index")))
         case MigrationOutcome.INVALID_FORMAT:
             flash("Invalid report format", "error")
+            response = make_response(redirect(url_for("basic.index")))
+        case MigrationOutcome.VERSION_TOO_NEW:
+            flash(
+                "This template was created with a newer version than this tool supports.",
+                "error",
+            )
             response = make_response(redirect(url_for("basic.index")))
         case MigrationOutcome.MISSING:
             flash(

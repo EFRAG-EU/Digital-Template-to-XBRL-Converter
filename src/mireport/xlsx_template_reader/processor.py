@@ -44,11 +44,24 @@ L = logging.getLogger(__name__)
 
 
 class TemplateCheckResult(NamedTuple):
+    version: VersionHolder
+    converter_version: VersionHolder
     validation_is_incomplete: bool
-    version_is_same: bool
-    version_major_minor_same: bool
-    reported_version: VersionHolder
     migration_status: bool | None
+
+    @property
+    def version_is_same(self) -> bool:
+        return self.version.is_valid and self.version == self.converter_version
+
+    @property
+    def version_major_minor_same(self) -> bool:
+        return self.version.is_valid and self.version.same_major_minor(
+            self.converter_version
+        )
+
+    @property
+    def version_is_newer(self) -> bool:
+        return self.version.is_valid and self.version > self.converter_version
 
 
 class XlsxProcessor:
@@ -360,13 +373,11 @@ class XlsxProcessor:
         # warn if template version is not the current version
         template_version_name = "template_reporting_template_version"
         template_version_string = self._reader.value(template_version_name).as_str()
-        excel_version = VersionHolder.parse_safe(template_version_string)
+        version = VersionHolder.parse_or_invalid(template_version_string)
         converter_version = OUR_VERSION_HOLDER.strip_build_metadata
 
-        major_minor_match = (
-            excel_version is not None
-            and converter_version.major == excel_version.major
-            and converter_version.minor == excel_version.minor
+        major_minor_match = version.is_valid and version.same_major_minor(
+            converter_version
         )
 
         if not template_version_string.strip():
@@ -377,7 +388,7 @@ class XlsxProcessor:
                     self._reader.getDefinedName(template_version_name)
                 ),
             )
-        elif not excel_version:
+        elif not version.is_valid:
             self._msg.error(
                 f"The Digital Template does not have a valid version identifier: '{template_version_string}'. Please use a supported template (the latest version is {converter_version}).",
                 MessageType.ExcelParsing,
@@ -385,7 +396,7 @@ class XlsxProcessor:
                     self._reader.getDefinedName(template_version_name)
                 ),
             )
-        elif excel_version == converter_version:
+        elif version == converter_version:
             self._msg.info(
                 f"The Digital Template is the same version as the converter {converter_version}.",
                 MessageType.DevInfo,
@@ -393,10 +404,20 @@ class XlsxProcessor:
                     self._reader.getDefinedName(template_version_name)
                 ),
             )
-        elif excel_version != converter_version:
+        elif version > converter_version:
+            self._msg.error(
+                f"The Digital Template is based on version {version}, which is newer "
+                f"than this converter ({converter_version}). This template version is not "
+                f"supported — please use a more recent converter that supports it.",
+                MessageType.ExcelParsing,
+                ref=excelDefinedNameRef(
+                    self._reader.getDefinedName(template_version_name)
+                ),
+            )
+        else:
             if major_minor_match:
                 self._msg.info(
-                    f"The Digital Template is based on version {excel_version}. The latest version available is {converter_version}, consider updating the template to the latest version.",
+                    f"The Digital Template is based on version {version}. The latest version available is {converter_version}, consider updating the template to the latest version.",
                     MessageType.ExcelParsing,
                     ref=excelDefinedNameRef(
                         self._reader.getDefinedName(template_version_name)
@@ -404,21 +425,16 @@ class XlsxProcessor:
                 )
             else:
                 self._msg.warning(
-                    f"The Digital Template is based on version {excel_version}. The latest version available is {converter_version}, please update/migrate to the latest version of the Digital Template, in order to avoid any error message and data loss.",
+                    f"The Digital Template is based on version {version}. The latest version available is {converter_version}, please update/migrate to the latest version of the Digital Template, in order to avoid any error message and data loss.",
                     MessageType.ExcelParsing,
                     ref=excelDefinedNameRef(
                         self._reader.getDefinedName(template_version_name)
                     ),
                 )
         return TemplateCheckResult(
+            version=version,
+            converter_version=converter_version,
             validation_is_incomplete=is_incomplete,
-            version_is_same=excel_version == converter_version
-            if excel_version
-            else False,
-            version_major_minor_same=major_minor_match,
-            reported_version=excel_version
-            if excel_version
-            else VersionHolder(0, 0, 0, template_version_string),
             migration_status=self.checkMigrationStatus(),
         )
 

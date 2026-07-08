@@ -9,6 +9,7 @@ hardcoded.
 
 from io import BytesIO
 
+import pytest
 from openpyxl import Workbook
 from openpyxl.utils.cell import absolute_coordinate, quote_sheetname
 from openpyxl.workbook.defined_name import DefinedName
@@ -44,39 +45,85 @@ class TestVersionComparison:
         )
         assert check.version_is_same is True
         assert check.version_major_minor_same is True
-        assert check.reported_version == CONVERTER_VERSION
+        assert check.version == CONVERTER_VERSION
+        assert check.version.is_valid is True
 
-    def test_same_major_minor_different_patch(self):
-        older = VersionHolder(
-            CONVERTER_VERSION.major,
-            CONVERTER_VERSION.minor,
-            CONVERTER_VERSION.patch + 1,
-            CONVERTER_VERSION.suffix,
-        )
-        check, _ = _check({"template_reporting_template_version": str(older)})
+    def test_older_same_major_minor_is_supported(self):
+        # An older version within the same major.minor: still supported, non-error path.
+        if CONVERTER_VERSION.patch > 0:
+            older = VersionHolder(
+                CONVERTER_VERSION.major,
+                CONVERTER_VERSION.minor,
+                CONVERTER_VERSION.patch - 1,
+                CONVERTER_VERSION.suffix,
+            )
+        else:
+            # patch 0: a prerelease of the same core is older than the release (semver §11.3)
+            older = VersionHolder(
+                CONVERTER_VERSION.major,
+                CONVERTER_VERSION.minor,
+                CONVERTER_VERSION.patch,
+                "-alpha",
+            )
+        if older >= CONVERTER_VERSION:
+            pytest.skip("no strictly-older same-major.minor version to construct")
+        check, results = _check({"template_reporting_template_version": str(older)})
         assert check.version_is_same is False
         assert check.version_major_minor_same is True
+        assert check.version_is_newer is False
+        assert check.version.is_valid is True
+        assert not any(m.severity is Severity.ERROR for m in results.messages)
 
-    def test_different_major_warns(self):
-        other = VersionHolder(CONVERTER_VERSION.major + 1, 0, 0, "")
-        check, results = _check({"template_reporting_template_version": str(other)})
+    def test_older_different_major_warns(self):
+        older = VersionHolder(max(CONVERTER_VERSION.major - 1, 0), 0, 0, "")
+        check, results = _check({"template_reporting_template_version": str(older)})
         assert check.version_is_same is False
         assert check.version_major_minor_same is False
+        assert check.version_is_newer is False
         assert any(
             m.severity is Severity.WARNING and "migrate" in str(m.messageText)
             for m in results.messages
         )
 
+    def test_newer_major_is_an_error(self):
+        newer = VersionHolder(CONVERTER_VERSION.major + 1, 0, 0, "")
+        check, results = _check({"template_reporting_template_version": str(newer)})
+        assert check.version_is_newer is True
+        assert check.version_is_same is False
+        assert any(m.severity is Severity.ERROR for m in results.messages)
+
+    def test_newer_patch_same_major_minor_is_an_error(self):
+        newer = VersionHolder(
+            CONVERTER_VERSION.major,
+            CONVERTER_VERSION.minor,
+            CONVERTER_VERSION.patch + 1,
+            "",
+        )
+        check, results = _check({"template_reporting_template_version": str(newer)})
+        assert check.version_is_newer is True
+        assert check.version_major_minor_same is True
+        assert any(m.severity is Severity.ERROR for m in results.messages)
+
+    def test_version_is_newer_false_for_older_and_same(self):
+        same, _ = _check(
+            {"template_reporting_template_version": str(CONVERTER_VERSION)}
+        )
+        assert same.version_is_newer is False
+
     def test_invalid_version_string(self):
         check, _ = _check({"template_reporting_template_version": "not-a-version"})
         assert check.version_is_same is False
         assert check.version_major_minor_same is False
-        assert check.reported_version == VersionHolder(0, 0, 0, "not-a-version")
+        assert check.version.is_valid is False
+        # the invalid sentinel carries the raw string but never == a real version
+        assert check.version == VersionHolder.parse_or_invalid("not-a-version")
+        assert str(check.version) == "not-a-version"
 
     def test_missing_version_is_an_error(self):
         check, results = _check({})
         assert check.version_is_same is False
         assert check.version_major_minor_same is False
+        assert check.version.is_valid is False
         assert any(m.severity is Severity.ERROR for m in results.messages)
 
 
