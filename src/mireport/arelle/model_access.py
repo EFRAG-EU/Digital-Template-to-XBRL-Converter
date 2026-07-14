@@ -34,7 +34,13 @@ from arelle.ModelDtsObject import (
 from arelle.ModelValue import QName
 from arelle.ModelXbrl import ModelXbrl
 
+from mireport.arelle.diagnostics import Diagnostic
 from mireport.arelle.support import ArelleModelInconsistency
+
+_NO_NAMESPACE_HINT = (
+    'check that the taxonomy schemas have elementFormDefault="qualified" set '
+    "(without it, locally declared elements end up in no namespace)"
+)
 
 
 def _requireFullyQualified(qname: QName, context: str) -> QName:
@@ -42,14 +48,21 @@ def _requireFullyQualified(qname: QName, context: str) -> QName:
     they cannot be canonicalised (see ArelleQNameCanonicaliser)."""
     if qname.namespaceURI is None:
         raise ArelleModelInconsistency(
-            f"QName {qname!r} {context} has no namespace defined. Check that "
-            'the taxonomy schemas have elementFormDefault="qualified" set '
-            "(without it, locally declared elements end up in no namespace)."
+            Diagnostic.error(
+                "QName has no namespace defined",
+                qname=repr(qname),
+                context=context,
+                hint=_NO_NAMESPACE_HINT,
+            )
         )
     if qname.prefix is None:
         raise ArelleModelInconsistency(
-            f"QName {qname!r} {context} has no namespace prefix defined "
-            f"(namespace: {qname.namespaceURI!r})"
+            Diagnostic.error(
+                "QName has no namespace prefix defined",
+                qname=repr(qname),
+                namespace=qname.namespaceURI,
+                context=context,
+            )
         )
     return qname
 
@@ -58,14 +71,16 @@ def qnameOf(concept: ModelConcept) -> QName:
     """Return the concept's QName, which our extraction requires to exist and
     be fully qualified (prefix and namespace)."""
     if (qname := concept.qname) is None:
-        raise ArelleModelInconsistency(f"Concept {concept!r} has no QName")
+        raise ArelleModelInconsistency(
+            Diagnostic.error("Concept has no QName", concept=repr(concept))
+        )
     return _requireFullyQualified(qname, f"of concept {concept!r}")
 
 
 def _asConcept(obj: object, context: str) -> ModelConcept:
     if not isinstance(obj, ModelConcept):
         raise ArelleModelInconsistency(
-            f"Expected a ModelConcept {context} but got {obj!r}"
+            Diagnostic.error("Expected a ModelConcept", context=context, got=repr(obj))
         )
     return obj
 
@@ -90,7 +105,11 @@ class ConceptRelationship:
         )
         if (consecutiveLinkrole := rel.consecutiveLinkrole) is None:
             raise ArelleModelInconsistency(
-                f"Relationship to {qnameOf(target)} in {rel.linkrole} has no linkrole"
+                Diagnostic.error(
+                    "Relationship has no linkrole",
+                    elr=rel.linkrole,
+                    concepts=(qnameOf(target),),
+                )
             )
         return cls(
             target=target,
@@ -130,8 +149,11 @@ class ConceptRelationshipSet:
         linkrole = self._relSet.linkrole
         if not isinstance(linkrole, str):
             raise ArelleModelInconsistency(
-                f"Relationship set for {self._arcroles} has no single linkrole "
-                f"(got {linkrole!r})"
+                Diagnostic.error(
+                    "Relationship set has no single linkrole",
+                    arcroles=self._arcroles,
+                    got=repr(linkrole),
+                )
             )
         return linkrole
 
@@ -191,8 +213,12 @@ class ValidatedModel:
             resource = rel.toModelObject
             if not isinstance(resource, ModelResource):
                 raise ArelleModelInconsistency(
-                    f"Expected a ModelResource as target of {arcrole} relationship "
-                    f"from {source!r} but got {resource!r}"
+                    Diagnostic.error(
+                        "Expected a ModelResource as relationship target",
+                        arcrole=arcrole,
+                        source=repr(source),
+                        got=repr(resource),
+                    )
                 )
             yield ResourceRelationship(
                 resource=resource,
@@ -228,7 +254,7 @@ class ValidatedModel:
             return self._modelXbrl.qnameConcepts[qname]
         except KeyError:
             raise ArelleModelInconsistency(
-                f"No concept found for QName {qname}"
+                Diagnostic.error("No concept found for QName", concepts=(qname,))
             ) from None
 
     def typeQNamesOf(self, concept: ModelConcept) -> tuple[QName, QName]:
@@ -243,11 +269,15 @@ class ValidatedModel:
         """
         if (conceptType := concept.type) is None or conceptType.qname is None:
             raise ArelleModelInconsistency(
-                f"Concept {qnameOf(concept)} has no named type"
+                Diagnostic.error(
+                    "Concept has no named type", concepts=(qnameOf(concept),)
+                )
             )
         if (baseQName := concept.baseXbrliTypeQname) is None:
             raise ArelleModelInconsistency(
-                f"Concept {qnameOf(concept)} has no base xbrli type"
+                Diagnostic.error(
+                    "Concept has no base xbrli type", concepts=(qnameOf(concept),)
+                )
             )
         return (
             _requireFullyQualified(conceptType.qname, f"of type of {qnameOf(concept)}"),
@@ -259,7 +289,10 @@ class ValidatedModel:
         element = concept.typedDomainElement
         if element is None or element.qname is None:
             raise ArelleModelInconsistency(
-                f"Typed dimension {qnameOf(concept)} has no typed domain element"
+                Diagnostic.error(
+                    "Typed dimension has no typed domain element",
+                    concepts=(qnameOf(concept),),
+                )
             )
         return element.qname
 
@@ -267,6 +300,10 @@ class ValidatedModel:
         matching = self._modelXbrl.roleTypes.get(roleUri, [])
         if (num := len(matching)) != 1:
             raise ArelleModelInconsistency(
-                f"Wrong number {num} of role type objects found for {roleUri=} (expected 1)"
+                Diagnostic.error(
+                    "Wrong number of role type objects found (expected 1)",
+                    elr=roleUri,
+                    found=num,
+                )
             )
         return matching[0]

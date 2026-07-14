@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import logging
 import time
 from collections import defaultdict
 from collections.abc import Iterable
@@ -21,6 +20,11 @@ from arelle.RuntimeOptions import RuntimeOptions, RuntimeOptionValue
 from arelle.utils.PluginData import PluginData
 from arelle.ValidateUtr import UtrEntry
 
+from mireport.arelle.diagnostics import (
+    Diagnostic,
+    DiagnosticCollector,
+    DiagnosticEmitter,
+)
 from mireport.arelle.model_access import (
     ConceptRelationship,
     ConceptRelationshipSet,
@@ -44,37 +48,16 @@ def unique_list(i: Iterable[T]) -> list[T]:
     return list(dict.fromkeys(i))
 
 
-def concepts_to_qnames(
-    concept_list: Iterable[ModelConcept], should_sort: bool = True
-) -> list[QName]:
-    """
-    Convert an iterable of ModelConcept objects to a list of their qualified names.
-
-    Args:
-        concept_list: An iterable of ModelConcept objects to convert.
-        should_sort: If True, sorts the qualified names alphabetically before joining. Defaults to True.
-
-    Returns:
-        A list of qualified names (QNames).
-    """
-    qname_list = [qnameOf(concept) for concept in concept_list]
-    if should_sort:
-        qname_list.sort()
-    return qname_list
-
-
-def qnames_to_str(qname_list: Iterable[QName], sep: str = ", ") -> str:
-    return sep.join(str(qname) for qname in qname_list)
-
-
 def callArelleForTaxonomyInfo(
     entry_point: str,
     taxonomy_zips: list[str],
     taxonomy_json_path: str,
     utr_json_path: str | None = None,
 ) -> ArelleProcessingResult:
+    diagnosticsToken = DiagnosticCollector.open()
     pluginOptions: dict[str, RuntimeOptionValue] = {
-        "taxonomyDataFile": taxonomy_json_path
+        "taxonomyDataFile": taxonomy_json_path,
+        "diagnosticsToken": diagnosticsToken,
     }
     utrValidation = False
     if utr_json_path is not None:
@@ -96,12 +79,16 @@ def callArelleForTaxonomyInfo(
         validate=True,
         utrValidate=utrValidation,
     )
-    with Session() as session:
-        session.run(
-            options,
-            logFilters=[],
-        )
-        results = ArelleProcessingResult.fromSession(session)
+    try:
+        with Session() as session:
+            session.run(
+                options,
+                logFilters=[],
+            )
+            results = ArelleProcessingResult.fromSession(session)
+    finally:
+        diagnostics = DiagnosticCollector.close(diagnosticsToken)
+    results.addDiagnostics(diagnostics)
     return results
 
 
@@ -207,6 +194,9 @@ class TaxonomyInfoExtractor:
         self.options: RuntimeOptions = options
         self.modelXbrl: ModelXbrl = modelXbrl
         self.model: ValidatedModel = ValidatedModel(modelXbrl)
+        self.diagnostics: DiagnosticEmitter = DiagnosticEmitter(
+            cntlr, getattr(options, "diagnosticsToken", None)
+        )
         self.taxonomyJson: dict[str, Any] = defaultdict(dict)
         self.qnameConverter: ArelleQNameCanonicaliser = (
             ArelleQNameCanonicaliser.bootstrap(modelXbrl)
@@ -294,9 +284,12 @@ class TaxonomyInfoExtractor:
         # N.B. domainHeadConcept does not have to be a root concept
 
         if not relSet.hasRelationshipsFrom(domainHeadConcept):
-            self.cntlr.addToLog(
-                f"WARNING: {elrUri} has no primary items attached to hypercube beyond {domainHeadQName} (no outgoing domain-member relationships).",
-                level=logging.WARNING,
+            self.diagnostics.emit(
+                Diagnostic.warning(
+                    "Hypercube has no primary items beyond the domain head (no outgoing domain-member relationships)",
+                    elr=elrUri,
+                    concepts=(domainHeadQName,),
+                ),
             )
             return [(0, domainHeadQName)]
 
@@ -311,22 +304,33 @@ class TaxonomyInfoExtractor:
 
         if not roots:
             if hypercubeIsClosed:
-                self.cntlr.addToLog(
-                    f"WARNING: {elrUri} contains a closed hypercube '{hypercube.qname}' with no dimensions (no outgoing hypercube-dimension relationships).",
-                    level=logging.WARNING,
+                self.diagnostics.emit(
+                    Diagnostic.warning(
+                        "Closed hypercube has no dimensions (no outgoing hypercube-dimension relationships)",
+                        elr=elrUri,
+                        concepts=(qnameOf(hypercube),),
+                    ),
                 )
             return []
 
         if len(roots) > 1 and elrUri not in self.elr_hypercube_dimension_seen:
             self.elr_hypercube_dimension_seen.add(elrUri)
-            self.cntlr.addToLog(
-                f"INFO: {elrUri} has {len(roots)} hypercubes: {qnames_to_str(concepts_to_qnames(roots))}.",
-                level=logging.INFO,
+            self.diagnostics.emit(
+                Diagnostic.info(
+                    f"Extended link role has {len(roots)} hypercubes",
+                    elr=elrUri,
+                    concepts=sorted(qnameOf(root) for root in roots),
+                ),
             )
 
         if hypercube not in roots:
             raise ArelleModelInconsistency(
-                f"{hypercube.qname} should be in {qnames_to_str(concepts_to_qnames(roots))}"
+                Diagnostic.error(
+                    "Hypercube is not a root of the hypercube-dimension relationship set",
+                    elr=elrUri,
+                    concepts=(qnameOf(hypercube),),
+                    roots=sorted(qnameOf(root) for root in roots),
+                )
             )
         return relSet.relationshipsFrom(hypercube)
 
@@ -339,9 +343,15 @@ class TaxonomyInfoExtractor:
             XbrlConst.dimensionDomain, elrUri
         )
 
-        if explicitDimension not in dimensionDomainRelSet.rootConcepts():
+        dimensionDomainRoots = dimensionDomainRelSet.rootConcepts()
+        if explicitDimension not in dimensionDomainRoots:
             raise ArelleModelInconsistency(
-                f"Dimension {explicitDimension.qname} should be in {concepts_to_qnames(dimensionDomainRelSet.rootConcepts())}"
+                Diagnostic.error(
+                    "Dimension is not a root of the dimension-domain relationship set",
+                    elr=elrUri,
+                    concepts=(qnameOf(explicitDimension),),
+                    roots=sorted(qnameOf(root) for root in dimensionDomainRoots),
+                )
             )
         dimensionDomainRels = dimensionDomainRelSet.relationshipsFrom(explicitDimension)
         domainMemberTrees: list[tuple[ModelConcept, bool, ConceptRelationshipSet]] = [
@@ -359,14 +369,23 @@ class TaxonomyInfoExtractor:
 
         if not domainMemberTrees:
             if hasDefaultedDomainMember:
-                self.cntlr.addToLog(
-                    f"WARNING: {elrUri} Dimension {explicitDimension.qname} has a defaulted domain member {self.dimensionDefaults[explicitDimension].qname} but no domain relationships",
-                    level=logging.WARNING,
+                self.diagnostics.emit(
+                    Diagnostic.warning(
+                        "Dimension has a defaulted domain member but no domain relationships",
+                        elr=elrUri,
+                        concepts=(qnameOf(explicitDimension),),
+                        defaultMember=qnameOf(
+                            self.dimensionDefaults[explicitDimension]
+                        ),
+                    ),
                 )
             else:
-                self.cntlr.addToLog(
-                    f"WARNING: {elrUri} Dimension {explicitDimension.qname} has no domain relationships",
-                    level=logging.WARNING,
+                self.diagnostics.emit(
+                    Diagnostic.warning(
+                        "Dimension has no domain relationships",
+                        elr=elrUri,
+                        concepts=(qnameOf(explicitDimension),),
+                    ),
                 )
             return []
 
@@ -414,15 +433,23 @@ class TaxonomyInfoExtractor:
                 # modelling but technically OK.
                 pass
             else:
-                self.cntlr.addToLog(
-                    f"WARNING: {elrUri} Dimension {explicitDimension.qname} has domain head {domainHeadConcept.qname} with no outgoing domain-member relationships",
-                    level=logging.WARNING,
+                self.diagnostics.emit(
+                    Diagnostic.warning(
+                        "Dimension has a domain head with no outgoing domain-member relationships",
+                        elr=elrUri,
+                        concepts=(qnameOf(explicitDimension),),
+                        domainHead=qnameOf(domainHeadConcept),
+                    ),
                 )
 
         if incoming:
-            self.cntlr.addToLog(
-                f"WARNING: {elrUri} Dimension {explicitDimension.qname} has domain head {domainHeadConcept.qname} with incoming domain-member relationships. How exciting!",
-                level=logging.WARNING,
+            self.diagnostics.emit(
+                Diagnostic.warning(
+                    "Dimension has a domain head with incoming domain-member relationships. How exciting!",
+                    elr=elrUri,
+                    concepts=(qnameOf(explicitDimension),),
+                    domainHead=qnameOf(domainHeadConcept),
+                ),
             )
 
     def getDomainMembersForEE(
@@ -456,20 +483,36 @@ class TaxonomyInfoExtractor:
                 defaultRels = dimensionDefaultRelSet.relationshipsFrom(d)
                 if len(defaultRels) != 1:
                     raise ArelleModelInconsistency(
-                        f"More than one default for dimension {d.qname} in {elrUri}, {[rel.targetQName for rel in defaultRels]}."
+                        Diagnostic.error(
+                            "More than one default member for dimension",
+                            elr=elrUri,
+                            concepts=(qnameOf(d),),
+                            members=[rel.targetQName for rel in defaultRels],
+                        )
                     )
                 m = defaultRels[0].target
                 if (m0 := self.dimensionDefaults.get(d)) is not None:
                     otherElrs = dimToElrMap[d][:-1]
                     if m0 != m:
-                        self.cntlr.addToLog(
-                            f"WARNING: Inconsistent duplicate definition of dimension default for dimension {d.qname}, member {m.qname=} {m0.qname=} in {elrUri=}. {otherElrs=}",
-                            level=logging.WARNING,
+                        self.diagnostics.emit(
+                            Diagnostic.warning(
+                                "Inconsistent duplicate definition of dimension default",
+                                elr=elrUri,
+                                concepts=(qnameOf(d),),
+                                member=qnameOf(m),
+                                previousMember=qnameOf(m0),
+                                otherElrs=otherElrs,
+                            ),
                         )
                     else:
-                        self.cntlr.addToLog(
-                            f"INFO: Consistent duplicate definition of dimension default for dimension {d.qname}, member {m.qname} in {elrUri}. {otherElrs=}",
-                            level=logging.INFO,
+                        self.diagnostics.emit(
+                            Diagnostic.info(
+                                "Consistent duplicate definition of dimension default",
+                                elr=elrUri,
+                                concepts=(qnameOf(d),),
+                                member=qnameOf(m),
+                                otherElrs=otherElrs,
+                            ),
                         )
                 self.dimensionDefaults[d] = m
 
@@ -501,16 +544,25 @@ class TaxonomyInfoExtractor:
                 # BCP47 says that xml:lang is case insensitive
                 label = label_resource.stringValue.strip()
                 if (label0 := jconcept["labels"][lang].get(role)) and label0 != label:
-                    self.cntlr.addToLog(
-                        f"WARNING: Inconsistent duplicate labels found for [{concept.qname}]: {label0=} {label=} {lang=} {role=}",
-                        level=logging.WARNING,
+                    self.diagnostics.emit(
+                        Diagnostic.warning(
+                            "Inconsistent duplicate labels found; keeping the longer label",
+                            concepts=(qnameOf(concept),),
+                            lang=lang,
+                            role=role,
+                            label=label,
+                            otherLabel=label0,
+                        ),
                     )
                     label = max(label0, label, key=len)
                 jconcept["labels"][lang][role] = label
             else:
-                self.cntlr.addToLog(
-                    f"WARNING: Label for {concept.qname} ({role=}) has no xml:lang so is being ignored.",
-                    level=logging.WARNING,
+                self.diagnostics.emit(
+                    Diagnostic.warning(
+                        "Label has no xml:lang so is being ignored",
+                        concepts=(qnameOf(concept),),
+                        role=role,
+                    ),
                 )
 
     def addReferences(
@@ -526,7 +578,11 @@ class TaxonomyInfoExtractor:
             ref_resource = refRel.resource
             if not refRel.role:
                 raise ArelleModelInconsistency(
-                    f"Reference {ref_resource} should have a role"
+                    Diagnostic.error(
+                        "Reference resource has no role",
+                        concepts=(qnameOf(concept),),
+                        resource=repr(ref_resource),
+                    )
                 )
             role: str = str(refRel.role)
 
@@ -557,9 +613,12 @@ class TaxonomyInfoExtractor:
             all_order1 = all(r["order"] == 1 for r in refs)
 
             if not all_order1:
-                self.cntlr.addToLog(
-                    f"INFO: {concept.qname} uses references with order values other than 1. Orders found: {sorted({r['order'] for r in refs})}. References will be sorted by order.",
-                    level=logging.INFO,
+                self.diagnostics.emit(
+                    Diagnostic.info(
+                        "References use order values other than 1 and will be sorted by order",
+                        concepts=(qnameOf(concept),),
+                        orders=sorted(set(r["order"] for r in refs)),
+                    ),
                 )
 
             refs.sort(key=lambda r: r["sort_key"])
@@ -581,9 +640,11 @@ class TaxonomyInfoExtractor:
             self.addReferences(concept, jconcept)
 
             if concept.isEnumeration and not concept.isEnumeration2Item:
-                self.cntlr.addToLog(
-                    f"WARNING: Extensible enumerations other than 2.0 are not supported. {concept.qname}",
-                    level=logging.WARN,
+                self.diagnostics.emit(
+                    Diagnostic.warning(
+                        "Extensible enumerations other than 2.0 are not supported",
+                        concepts=(qname,),
+                    ),
                 )
             if concept.isEnumeration2Item:
                 headUsable = concept.isEnumDomainUsable
@@ -591,7 +652,10 @@ class TaxonomyInfoExtractor:
                 domainQName = concept.enumDomainQname
                 if linkrole is None or domainQName is None:
                     raise ArelleModelInconsistency(
-                        f"Extensible enumeration {qname} has no enumeration domain/linkrole"
+                        Diagnostic.error(
+                            "Extensible enumeration has no enumeration domain or linkrole",
+                            concepts=(qname,),
+                        )
                     )
                 jconcept.setdefault("other", {})["ee20DomainMembers"] = (
                     self.getDomainMembersForEE(
@@ -617,13 +681,20 @@ class TaxonomyInfoExtractor:
                 for rel in relSet.relationshipsFrom(root_concept):
                     concept = rel.target
                     if not concept.isHypercubeItem:
-                        raise ArelleRelatedException(
-                            f"Found a {concept} but expected a hypercube."
+                        raise ArelleModelInconsistency(
+                            Diagnostic.error(
+                                "Expected a hypercube as the target of an all/notAll relationship",
+                                elr=elrUri,
+                                concepts=(rel.targetQName,),
+                            )
                         )
                     if not rel.isClosed:
-                        self.cntlr.addToLog(
-                            f"INFO: {elrUri} hypercube '{concept.qname}' is open.",
-                            level=logging.INFO,
+                        self.diagnostics.emit(
+                            Diagnostic.info(
+                                "Hypercube is open",
+                                elr=elrUri,
+                                concepts=(rel.targetQName,),
+                            ),
                         )
                     cube: dict[str, Any] = {
                         "primaryItems": self.getPrimaryItems(
@@ -665,9 +736,15 @@ class TaxonomyInfoExtractor:
                 lang = lang.lower()
                 label = label_resource.stringValue.strip()
                 if (label0 := labels.get(lang)) and label0 != label:
-                    self.cntlr.addToLog(
-                        f"Inconsistent duplicate labels found for roleType [{roleType.roleURI}]: {label0=} {label=} {lang=} {roleType.definition=}",
-                        level=logging.WARNING,
+                    self.diagnostics.emit(
+                        Diagnostic.warning(
+                            "Inconsistent duplicate labels found for role type; keeping the longer label",
+                            elr=roleType.roleURI,
+                            lang=lang,
+                            label=label,
+                            otherLabel=label0,
+                            definition=roleType.definition,
+                        ),
                     )
                     label = max(label0, label, key=len)
                 labels[lang] = label
@@ -687,19 +764,19 @@ class TaxonomyInfoExtractor:
             roots = relSet.rootConcepts()
             match len(roots):
                 case 0:
-                    self.cntlr.addToLog(
-                        f"WARNING: {elrUri} presentation is empty",
-                        level=logging.WARNING,
+                    self.diagnostics.emit(
+                        Diagnostic.warning("Presentation is empty", elr=elrUri),
                     )
                 case 1:
                     pass
                 case _:
-                    roots_qnames = concepts_to_qnames(roots, should_sort=False)
-                    roots_qnames_str = qnames_to_str(roots_qnames, sep="\n")
-                    message = f"WARNING: {elrUri} has multiple ({len(roots_qnames)}) roots. Presentation order will be arbitrary. Roots:\n{roots_qnames_str}"
-                    self.cntlr.addToLog(
-                        message,
-                        level=logging.WARNING,
+                    self.diagnostics.emit(
+                        Diagnostic.warning(
+                            f"Presentation has multiple ({len(roots)}) roots so presentation order will be arbitrary",
+                            elr=elrUri,
+                            # document order, deliberately not sorted
+                            concepts=(qnameOf(root) for root in roots),
+                        ),
                     )
             rows: list[tuple[int, QName, str] | tuple[int, QName]] = []
             for root in roots:

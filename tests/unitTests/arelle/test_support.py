@@ -1,13 +1,62 @@
-"""Unit tests for support.py's Arelle QName canonicalisation."""
+"""Unit tests for support.py's Arelle session/QName support classes."""
+
+import json
 
 import pytest
 from arelle.ModelValue import QName
 
+from mireport.arelle.diagnostics import Diagnostic
 from mireport.arelle.support import (
     ArelleModelInconsistency,
+    ArelleProcessingResult,
     ArelleQNameCanonicaliser,
 )
 from mireport.xml import getBootstrapQNameMaker
+
+
+def makeJsonLog(*records: tuple[str, str, str]) -> str:
+    """Build an Arelle JSON log from (code, level, text) tuples."""
+    return json.dumps(
+        {
+            "log": [
+                {"code": code, "level": level, "message": {"text": text}}
+                for code, level, text in records
+            ]
+        }
+    )
+
+
+class TestArelleProcessingResultDiagnostics:
+    def test_no_diagnostics_by_default(self) -> None:
+        result = ArelleProcessingResult(makeJsonLog(), [])
+        assert result.diagnostics == []
+
+    def test_add_diagnostics_accumulates_in_order(self) -> None:
+        result = ArelleProcessingResult(makeJsonLog(), [])
+        first = Diagnostic.warning("first")
+        second = Diagnostic.info("second")
+        result.addDiagnostics([first])
+        result.addDiagnostics([second])
+        assert result.diagnostics == [first, second]
+
+    def test_diagnostics_property_returns_copy(self) -> None:
+        result = ArelleProcessingResult(makeJsonLog(), [])
+        result.addDiagnostics([Diagnostic.warning("only")])
+        result.diagnostics.clear()
+        assert len(result.diagnostics) == 1
+
+
+class TestArelleModelInconsistency:
+    def test_from_string(self) -> None:
+        exc = ArelleModelInconsistency("plain message")
+        assert str(exc) == "plain message"
+        assert exc.diagnostic is None
+
+    def test_from_diagnostic(self) -> None:
+        diagnostic = Diagnostic.error("Bad shape", elr="https://elr")
+        exc = ArelleModelInconsistency(diagnostic)
+        assert str(exc) == "Bad shape\n  elr: https://elr"
+        assert exc.diagnostic is diagnostic
 
 
 def makeCanonicaliser() -> ArelleQNameCanonicaliser:

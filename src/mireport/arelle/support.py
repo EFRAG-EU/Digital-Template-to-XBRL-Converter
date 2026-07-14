@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import logging
 from collections import Counter
-from collections.abc import Mapping, MutableMapping
+from collections.abc import Iterable, Mapping, MutableMapping
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
@@ -14,6 +14,7 @@ from arelle.api.Session import Session
 from arelle.ModelValue import QName
 from arelle.ModelXbrl import ModelXbrl
 
+from mireport.arelle.diagnostics import Diagnostic
 from mireport.conversionresults import Message, MessageType, Severity
 from mireport.exceptions import MIReportException
 from mireport.filesupport import FilelikeAndFileName
@@ -30,6 +31,14 @@ class ArelleRelatedException(MIReportException):
 
 class ArelleModelInconsistency(ArelleRelatedException):
     """The loaded DTS violates a structural assumption we rely on."""
+
+    def __init__(self, message: str | Diagnostic):
+        self.diagnostic: Optional[Diagnostic] = (
+            message if isinstance(message, Diagnostic) else None
+        )
+        super().__init__(
+            message.format() if isinstance(message, Diagnostic) else message
+        )
 
 
 @dataclass
@@ -62,6 +71,7 @@ class ArelleProcessingResult:
         self._xbrlJson: FilelikeAndFileName | None = None
         self.__importArelleMessages(jsonMessages)
         self._exceptions: list[Exception] = []
+        self._diagnostics: list[Diagnostic] = []
 
     def __importArelleMessages(self, json_str: str) -> None:
         wantDebug = L.isEnabledFor(logging.DEBUG)
@@ -158,7 +168,14 @@ class ArelleProcessingResult:
     def logLines(self) -> list[str]:
         return list(self._textLogLines)
 
-    def addException(self, exception: Exception, message: str | None = None) -> None:
+    def addDiagnostics(self, diagnostics: Iterable[Diagnostic]) -> None:
+        self._diagnostics.extend(diagnostics)
+
+    @property
+    def diagnostics(self) -> list[Diagnostic]:
+        return list(self._diagnostics)
+
+    def addException(self, exception: Exception, message: Optional[str] = None) -> None:
         self._exceptions.append(exception)
         text = f"{exception.__class__.__name__}: {exception}"
         if message:
@@ -261,7 +278,10 @@ class ArelleQNameCanonicaliser:
     def convert(self, qname: QName) -> MireportQName:
         if qname.prefix is None or qname.namespaceURI is None:
             raise ArelleModelInconsistency(
-                f"QName should have a prefix and namespace {qname=}"
+                Diagnostic.error(
+                    "QName should have a prefix and namespace",
+                    qname=repr(qname),
+                )
             )
         wanted_prefix = qname.prefix
         namespace = qname.namespaceURI
