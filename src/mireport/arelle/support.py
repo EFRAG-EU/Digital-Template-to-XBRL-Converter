@@ -28,6 +28,10 @@ class ArelleRelatedException(MIReportException):
     """Exception to wrap any exception that come from calling in to Arelle."""
 
 
+class ArelleModelInconsistency(ArelleRelatedException):
+    """The loaded DTS violates a structural assumption we rely on."""
+
+
 @dataclass
 class ArelleVersionHolder:
     arelle: VersionInformationTuple
@@ -255,9 +259,10 @@ class ArelleQNameCanonicaliser:
         return cls(qnameMaker)
 
     def convert(self, qname: QName) -> MireportQName:
-        assert qname.prefix is not None and qname.namespaceURI is not None, (
-            f"QName should have a prefix and namespace {qname=}"
-        )
+        if qname.prefix is None or qname.namespaceURI is None:
+            raise ArelleModelInconsistency(
+                f"QName should have a prefix and namespace {qname=}"
+            )
         wanted_prefix = qname.prefix
         namespace = qname.namespaceURI
 
