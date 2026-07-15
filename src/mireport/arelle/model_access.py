@@ -20,7 +20,7 @@ The layering rule:
 
 from __future__ import annotations
 
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from dataclasses import dataclass
 from typing import NamedTuple, Self
 
@@ -43,17 +43,20 @@ _NO_NAMESPACE_HINT = (
 )
 
 
-def _requireNamespaced(qname: QName, context: str) -> QName:
+def _requireNamespaced(qname: QName, context: Callable[[], str]) -> QName:
     """All QNames we extract must have a namespace, otherwise they cannot be
     canonicalised (see ArelleQNameCanonicaliser). A missing *prefix* is fine:
     it just means the source document used a default namespace declaration,
-    and canonicalisation assigns a prefix per namespace anyway."""
+    and canonicalisation assigns a prefix per namespace anyway.
+
+    `context` is a callable so the (comparatively expensive) diagnostic text
+    is only built on failure — this runs on every extracted QName."""
     if qname.namespaceURI is None:
         raise ArelleModelInconsistency(
             Diagnostic.error(
                 "QName has no namespace defined",
                 qname=repr(qname),
-                context=context,
+                context=context(),
                 hint=_NO_NAMESPACE_HINT,
             )
         )
@@ -67,13 +70,17 @@ def qnameOf(concept: ModelConcept) -> QName:
         raise ArelleModelInconsistency(
             Diagnostic.error("Concept has no QName", concept=repr(concept))
         )
-    return _requireNamespaced(qname, f"of concept {concept!r}")
+    return _requireNamespaced(qname, lambda: f"of concept {concept!r}")
 
 
-def _asConcept(obj: object, context: str) -> ModelConcept:
+def _asConcept(obj: object, context: Callable[[], str]) -> ModelConcept:
+    """`context` is a callable so the diagnostic text is only built on
+    failure — this runs on every extracted relationship target."""
     if not isinstance(obj, ModelConcept):
         raise ArelleModelInconsistency(
-            Diagnostic.error("Expected a ModelConcept", context=context, got=repr(obj))
+            Diagnostic.error(
+                "Expected a ModelConcept", context=context(), got=repr(obj)
+            )
         )
     return obj
 
@@ -94,7 +101,7 @@ class ConceptRelationship:
     def fromArelle(cls, rel: ModelRelationship) -> Self:
         target = _asConcept(
             rel.toModelObject,
-            f"as target of {rel.arcrole} relationship in {rel.linkrole}",
+            lambda: f"as target of {rel.arcrole} relationship in {rel.linkrole}",
         )
         if (consecutiveLinkrole := rel.consecutiveLinkrole) is None:
             raise ArelleModelInconsistency(
@@ -152,7 +159,7 @@ class ConceptRelationshipSet:
 
     def rootConcepts(self) -> list[ModelConcept]:
         return [
-            _asConcept(root, f"as root of {self.linkrole}")
+            _asConcept(root, lambda: f"as root of {self.linkrole}")
             for root in self._relSet.rootConcepts
         ]
 
@@ -273,8 +280,12 @@ class ValidatedModel:
                 )
             )
         return (
-            _requireNamespaced(conceptType.qname, f"of type of {qnameOf(concept)}"),
-            _requireNamespaced(baseQName, f"of base type of {qnameOf(concept)}"),
+            _requireNamespaced(
+                conceptType.qname, lambda: f"of type of {qnameOf(concept)}"
+            ),
+            _requireNamespaced(
+                baseQName, lambda: f"of base type of {qnameOf(concept)}"
+            ),
         )
 
     def typedDomainQNameOf(self, concept: ModelConcept) -> QName:

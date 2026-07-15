@@ -18,6 +18,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from pathlib import Path
     from typing import Any
 
 from arelle.api.Session import Session
@@ -43,17 +44,20 @@ PLUGIN_NAME = "Taxonomy Information Extractor"
 def callArelleForTaxonomyInfo(
     entry_point: str,
     taxonomy_zips: list[str],
-    taxonomy_json_path: str,
-    utr_json_path: str | None = None,
+    taxonomy_json_path: Path | str,
+    utr_json_path: Path | str | None = None,
 ) -> ArelleProcessingResult:
     diagnosticsToken = DiagnosticCollector.open()
+    # N.B. paths must cross the Arelle boundary as str: RuntimeOptions applies
+    # pluginOptions with a bare setattr() so a Path would survive today, but
+    # RuntimeOptionValue does not admit Path so that is not contractual.
     pluginOptions: dict[str, RuntimeOptionValue] = {
-        "taxonomyDataFile": taxonomy_json_path,
+        "taxonomyDataFile": str(taxonomy_json_path),
         "diagnosticsToken": diagnosticsToken,
     }
     utrValidation = False
     if utr_json_path is not None:
-        pluginOptions["utrDataFile"] = utr_json_path
+        pluginOptions["utrDataFile"] = str(utr_json_path)
         utrValidation = True
 
     options = RuntimeOptions(

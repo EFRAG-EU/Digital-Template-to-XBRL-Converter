@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 from collections import defaultdict
 from collections.abc import Iterable, Iterator
+from pathlib import Path
 from typing import TYPE_CHECKING, NamedTuple, TypeVar
 
 if TYPE_CHECKING:
@@ -84,7 +85,7 @@ class PresentationRow(NamedTuple):
 
 def writeDataFile(
     cntlr: Cntlr,
-    jsonPath: str,
+    jsonPath: str | Path,
     dataName: str,
     data: dict,
 ) -> None:
@@ -92,10 +93,12 @@ def writeDataFile(
         cntlr.addToLog(f"No {dataName} data to write")
         return
 
-    with open(jsonPath, "w", encoding="UTF-8") as f:
-        tidied = ArelleObjectJSONEncoder.tidyKeys(data)
-        json.dump(tidied, f, indent=2, sort_keys=True, cls=ArelleObjectJSONEncoder)
-        cntlr.addToLog(f"{dataName} data written to {jsonPath}")
+    # N.B. dumps() rather than dump(): only the one-shot dumps()/encode()
+    # path can use the C-accelerated encoder, and from Python 3.14 that
+    # extends to indented output. Streaming via dump() never gets it.
+    payload = json.dumps(data, indent=2, sort_keys=True, cls=ArelleObjectJSONEncoder)
+    Path(jsonPath).write_text(payload, encoding="UTF-8")
+    cntlr.addToLog(f"{dataName} data written to {jsonPath}")
 
 
 class UTRInfoExtractor:
@@ -155,7 +158,6 @@ class TaxonomyInfoExtractor:
     def extract(self) -> dict[str, Any]:
         """Extract the taxonomy information and return it as a JSON-ready
         dict with all QNames canonicalised to strings."""
-        self.verifyConceptQNamesHavePrefixes()
         self.taxonomyJson["entryPoint"] = self.options.entrypointFile
 
         self.extractPresentation()
@@ -167,20 +169,6 @@ class TaxonomyInfoExtractor:
         self.taxonomyJson = self.qnameConverter.convertRecursive(self.taxonomyJson)
         self.taxonomyJson["namespaces"] = self.qnameConverter.getNamespacePrefixMap()
         return self.taxonomyJson
-
-    def verifyConceptQNamesHavePrefixes(self) -> None:
-        """Fail early if Arelle has given us broken QNames.
-
-        itemConcepts() and typeQNamesOf() raise ArelleModelInconsistency for
-        any QName without a prefix and namespace, which the QName
-        canonicalisation at the end of extract() relies on.
-        """
-        self.cntlr.addToLog("Verifying all concepts have QNames with prefixes defined")
-        for _, concept in self.model.itemConcepts():
-            self.model.typeQNamesOf(concept)
-        self.cntlr.addToLog(
-            f"... All {self.model.conceptCount:,} concepts (and their data-types) have QNames with prefixes defined"
-        )
 
     def walkDefinitionChildren(
         self,

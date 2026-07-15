@@ -187,29 +187,16 @@ class ArelleProcessingResult:
 
 
 class ArelleObjectJSONEncoder(json.JSONEncoder):
+    """Serialises Arelle QName *values* as strings. QName mapping *keys* are
+    not handled (json.dump raises TypeError): the Taxonomy payload has its
+    keys stringified by ArelleQNameCanonicaliser.convertRecursive, and
+    anything else slipping through is a bug that must fail loudly."""
+
     def default(self, o: Any) -> Any:
         if isinstance(o, QName):
             return str(o)
         # Let the base class default method raise the TypeError
         return super().default(o)
-
-    @staticmethod
-    def tidyKeys(obj: Any) -> Any:
-        """Return a copy of `obj` with QName mapping keys converted to str
-        keys (default(obj) only works on values, not keys).
-
-        This is belt-and-braces for the Taxonomy payload, whose QNames have
-        already been stringified by ArelleQNameCanonicaliser.convertRecursive,
-        but is kept so any payload with QName keys serialises correctly.
-        """
-        tidy = ArelleObjectJSONEncoder.tidyKeys
-        if isinstance(obj, Mapping):
-            return {
-                str(k) if isinstance(k, QName) else k: tidy(v) for k, v in obj.items()
-            }
-        if isinstance(obj, (list, tuple)):
-            return [tidy(item) for item in obj]
-        return obj
 
 
 class ArelleQNameCanonicaliser:
@@ -227,6 +214,10 @@ class ArelleQNameCanonicaliser:
 
     def __init__(self, qnameMaker: QNameMaker) -> None:
         self.qnameMaker = qnameMaker
+        # (namespaceURI, localName) -> converted QName. The prefix plays no
+        # part in the key: once a namespace is bound, every conversion for it
+        # uses that binding regardless of the source document's prefix.
+        self._converted: dict[tuple[str, str], MireportQName] = {}
 
     @classmethod
     def bootstrap(cls, arelle_model: ModelXbrl) -> Self:
@@ -282,6 +273,10 @@ class ArelleQNameCanonicaliser:
         wanted_prefix = qname.prefix
         namespace = qname.namespaceURI
 
+        cacheKey = (namespace, qname.localName)
+        if (converted := self._converted.get(cacheKey)) is not None:
+            return converted
+
         # Use our own vanity prefixes in preference to the taxonomy defined
         # prefixes.
         #
@@ -294,7 +289,7 @@ class ArelleQNameCanonicaliser:
         # Anything we don't know about in VANITY_NAMESPACE_PREFIX_MAP will
         # either have its taxonomy defined prefix or get a generated ns0, ns1
         # prefix
-        if namespace not in self.qnameMaker.namespacePrefixesMap.values():
+        if not self.qnameMaker.hasNamespace(namespace):
             if vanity_prefix := self.VANITY_NAMESPACE_PREFIX_MAP.get(namespace):
                 wanted_prefix = vanity_prefix
 
@@ -304,7 +299,11 @@ class ArelleQNameCanonicaliser:
             ):
                 self.qnameMaker.addNamespacePrefix(wanted_prefix, namespace)
 
-        return self.qnameMaker.fromNamespaceAndLocalName(namespace, qname.localName)
+        converted = self.qnameMaker.fromNamespaceAndLocalName(
+            namespace, qname.localName
+        )
+        self._converted[cacheKey] = converted
+        return converted
 
     def getNamespacePrefixMap(self) -> MutableMapping[str, str]:
         """Get a mapping of prefix to namespace URI."""
@@ -313,6 +312,10 @@ class ArelleQNameCanonicaliser:
 
     def convertRecursive(self, obj: Any) -> Any:
         """Recursively convert all QNames in a data structure to MireportQNames."""
+        if type(obj) is str:
+            # Strings are by far the most common leaf; skip the (compara-
+            # tively expensive) ABC isinstance checks below for them.
+            return obj
         if isinstance(obj, QName):
             return str(self.convert(obj))
         elif isinstance(obj, Mapping):

@@ -42,18 +42,18 @@ class NamespaceManager:
     def __init__(self) -> None:
         self.__prefixCounter = itertools.count(0)
         self._prefixToNamespaces: dict[str, str] = {}
+        # Reverse lookup. A namespace may gain further prefixes via add();
+        # only the first binding is kept here (first prefix wins).
+        self._namespaceToPrefix: dict[str, str] = {}
 
     def getNamespaceForPrefix(self, prefix: str) -> str:
         return self._prefixToNamespaces[prefix]
 
     def getPrefixForNamespace(self, namespace: str) -> str:
-        return next(
-            (
-                prefix
-                for prefix, n in self._prefixToNamespaces.items()
-                if n == namespace
-            ),
-        )
+        return self._namespaceToPrefix[namespace]
+
+    def hasNamespace(self, namespace: str) -> bool:
+        return namespace in self._namespaceToPrefix
 
     def _validate(self, prefix: str, namespace: str) -> _NSPrefixTuple:
         """Validates the namespace and prefix and intern()s them."""
@@ -85,12 +85,13 @@ class NamespaceManager:
                 f"Unable to add namespace prefix binding for '{prefix}': already bound to existing namespace: '{old_ns}'; attempted namespace '{namespace}'."
             )
         self._prefixToNamespaces[prefix] = namespace
+        self._namespaceToPrefix.setdefault(namespace, prefix)
         return prefix
 
     def getOrGeneratePrefixForNamespace(self, namespace: str) -> str:
         try:
             return self.getPrefixForNamespace(namespace)
-        except StopIteration:
+        except KeyError:
             while (
                 new_prefix := f"ns{next(self.__prefixCounter)}"
             ) in self._prefixToNamespaces:
@@ -197,6 +198,9 @@ class QNameMaker:
 
     def addNamespacePrefix(self, prefix: str, namespace: str) -> None:
         self._nsManager.add(prefix, namespace)
+
+    def hasNamespace(self, namespace: str) -> bool:
+        return self._nsManager.hasNamespace(namespace)
 
     @property
     def namespacePrefixesMap(self) -> Mapping[str, str]:

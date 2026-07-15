@@ -8,9 +8,12 @@ test_model_access.py for the same approach).
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, cast
 
+import pytest
 from arelle import XbrlConst
 from arelle.Cntlr import Cntlr
 from arelle.ModelDtsObject import ModelConcept
@@ -29,6 +32,7 @@ from mireport.arelle.taxonomy_extraction import (
     DefinitionRow,
     PresentationRow,
     TaxonomyInfoExtractor,
+    writeDataFile,
 )
 
 
@@ -98,6 +102,43 @@ def makeExtractor(
 
 def collectedDiagnostics(token: str) -> list[Diagnostic]:
     return DiagnosticCollector.close(token)
+
+
+class TestWriteDataFile:
+    def write(self, tmp_path: Path, data: dict, **kwargs: Any) -> str:
+        jsonPath = tmp_path / "out.json"
+        writeDataFile(cast(Cntlr, StubCntlr()), jsonPath, "Test", data, **kwargs)
+        return jsonPath.read_text(encoding="UTF-8")
+
+    def test_str_path_also_accepted(self, tmp_path: Path) -> None:
+        # The plugin receives the path as a str via Arelle RuntimeOptions
+        # (RuntimeOptionValue does not admit Path).
+        jsonPath = tmp_path / "out.json"
+        writeDataFile(cast(Cntlr, StubCntlr()), str(jsonPath), "Test", {"a": 1})
+        assert jsonPath.exists()
+
+    def test_output_is_pretty_printed_with_sorted_keys(self, tmp_path: Path) -> None:
+        data = {"b": [1, 2], "a": {"y": 1, "x": 2}}
+        written = self.write(tmp_path, data)
+        assert written == json.dumps(data, indent=2, sort_keys=True)
+
+    def test_arelle_qname_value_serialises_to_string(self, tmp_path: Path) -> None:
+        written = self.write(tmp_path, {"concept": qn("Thing")})
+        assert json.loads(written) == {"concept": "vsme:Thing"}
+
+    def test_qname_key_raises(self, tmp_path: Path) -> None:
+        # The Taxonomy payload has its QName keys stringified by
+        # convertRecursive before it gets here; anything else slipping
+        # through is a bug and must fail loudly, not be silently tidied.
+        with pytest.raises(TypeError):
+            self.write(tmp_path, {qn("Thing"): "value"})
+
+    def test_empty_data_writes_no_file(self, tmp_path: Path) -> None:
+        jsonPath = tmp_path / "out.json"
+        cntlr = StubCntlr()
+        writeDataFile(cast(Cntlr, cntlr), jsonPath, "Test", {})
+        assert not jsonPath.exists()
+        assert cntlr.logMessages == ["No Test data to write"]
 
 
 class TestAddLabels:

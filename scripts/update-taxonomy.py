@@ -2,6 +2,7 @@ import argparse
 import logging
 import time
 from collections import Counter
+from pathlib import Path
 
 from rich.markup import escape
 from rich.table import Table
@@ -38,7 +39,7 @@ def parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "taxonomy_json_path",
-        type=str,
+        type=Path,
         help="Path to the taxonomy JSON file to be created.",
     )
     parser.add_argument(
@@ -49,7 +50,7 @@ def parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--utr-output",
-        type=str,
+        type=Path,
         default=None,
         help="Path to the UTR JSON file to be used.",
     )

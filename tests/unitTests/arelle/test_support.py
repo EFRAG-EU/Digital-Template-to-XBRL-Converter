@@ -151,6 +151,23 @@ def makeCanonicaliser() -> ArelleQNameCanonicaliser:
     return ArelleQNameCanonicaliser(getBootstrapQNameMaker())
 
 
+class TestConvertRecursive:
+    def test_strings_and_scalars_pass_through_unchanged(self) -> None:
+        canonicaliser = makeCanonicaliser()
+        payload = {"key": ["value", 1, 1.5, True, None], "other": "text"}
+        converted = canonicaliser.convertRecursive(payload)
+        assert converted == payload
+        assert converted["key"][0] is payload["key"][0]
+
+    def test_qnames_become_strings_everywhere(self) -> None:
+        canonicaliser = makeCanonicaliser()
+        qname = QName("vsme", "https://example.com/vsme", "Thing")
+        converted = canonicaliser.convertRecursive(
+            {qname: {"nested": [qname, "plain"]}}
+        )
+        assert converted == {"vsme:Thing": {"nested": ["vsme:Thing", "plain"]}}
+
+
 class TestConvert:
     def test_converts_fully_qualified_qname(self) -> None:
         canonicaliser = makeCanonicaliser()
@@ -179,6 +196,23 @@ class TestConvert:
             QName(None, "http://www.xbrl.org/dtr/type/2024-01-31", "noteTextBlockItemType")
         )
         assert str(converted) == "dtr-types:noteTextBlockItemType"
+
+    def test_repeated_conversion_returns_cached_object(self) -> None:
+        canonicaliser = makeCanonicaliser()
+        first = canonicaliser.convert(QName("vsme", "https://example.com/vsme", "Thing"))
+        second = canonicaliser.convert(
+            QName("vsme", "https://example.com/vsme", "Thing")
+        )
+        assert first is second
+
+    def test_first_seen_prefix_wins_for_namespace(self) -> None:
+        # The same namespace bound to a different prefix in another source
+        # document must still convert using the first-seen binding.
+        canonicaliser = makeCanonicaliser()
+        first = canonicaliser.convert(QName("vsme", "https://example.com/vsme", "One"))
+        second = canonicaliser.convert(QName("other", "https://example.com/vsme", "Two"))
+        assert str(first) == "vsme:One"
+        assert str(second) == "vsme:Two"
 
     def test_prefixless_qname_reuses_existing_binding(self) -> None:
         canonicaliser = makeCanonicaliser()

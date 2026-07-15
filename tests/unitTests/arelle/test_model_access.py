@@ -138,6 +138,10 @@ class TestQnameOf:
         ):
             qnameOf(cast(ModelConcept, StubConcept(QName("vsme", None, "Thing"))))
 
+    def test_error_includes_concept_context(self) -> None:
+        with pytest.raises(ArelleModelInconsistency, match="of concept"):
+            qnameOf(cast(ModelConcept, StubConcept(QName("vsme", None, "Thing"))))
+
 
 class TestConceptRelationship:
     def test_raises_on_none_target(self) -> None:
