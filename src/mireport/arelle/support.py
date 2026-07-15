@@ -199,7 +199,7 @@ class ArelleObjectJSONEncoder(json.JSONEncoder):
         keys (default(obj) only works on values, not keys).
 
         This is belt-and-braces for the Taxonomy payload, whose QNames have
-        already been stringified by ArelleQNameCanonicaliser.convert_recursive,
+        already been stringified by ArelleQNameCanonicaliser.convertRecursive,
         but is kept so any payload with QName keys serialises correctly.
         """
         tidy = ArelleObjectJSONEncoder.tidyKeys
@@ -313,16 +313,16 @@ class ArelleQNameCanonicaliser:
         # needs to be mutable so JSON encoder can work with it
         return dict(self.qnameMaker.namespacePrefixesMap)
 
-    def convert_recursive(self, obj: Any) -> Any:
+    def convertRecursive(self, obj: Any) -> Any:
         """Recursively convert all QNames in a data structure to MireportQNames."""
         if isinstance(obj, QName):
             return str(self.convert(obj))
         elif isinstance(obj, Mapping):
             return {
-                self.convert_recursive(k): self.convert_recursive(v)
+                self.convertRecursive(k): self.convertRecursive(v)
                 for k, v in obj.items()
             }
         elif isinstance(obj, (list, tuple)):
-            return type(obj)(self.convert_recursive(item) for item in obj)
+            return type(obj)(self.convertRecursive(item) for item in obj)
         else:
             return obj
