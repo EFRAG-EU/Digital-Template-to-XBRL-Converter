@@ -43,9 +43,11 @@ _NO_NAMESPACE_HINT = (
 )
 
 
-def _requireFullyQualified(qname: QName, context: str) -> QName:
-    """All QNames we extract must have a prefix and a namespace, otherwise
-    they cannot be canonicalised (see ArelleQNameCanonicaliser)."""
+def _requireNamespaced(qname: QName, context: str) -> QName:
+    """All QNames we extract must have a namespace, otherwise they cannot be
+    canonicalised (see ArelleQNameCanonicaliser). A missing *prefix* is fine:
+    it just means the source document used a default namespace declaration,
+    and canonicalisation assigns a prefix per namespace anyway."""
     if qname.namespaceURI is None:
         raise ArelleModelInconsistency(
             Diagnostic.error(
@@ -55,26 +57,17 @@ def _requireFullyQualified(qname: QName, context: str) -> QName:
                 hint=_NO_NAMESPACE_HINT,
             )
         )
-    if qname.prefix is None:
-        raise ArelleModelInconsistency(
-            Diagnostic.error(
-                "QName has no namespace prefix defined",
-                qname=repr(qname),
-                namespace=qname.namespaceURI,
-                context=context,
-            )
-        )
     return qname
 
 
 def qnameOf(concept: ModelConcept) -> QName:
     """Return the concept's QName, which our extraction requires to exist and
-    be fully qualified (prefix and namespace)."""
+    have a namespace."""
     if (qname := concept.qname) is None:
         raise ArelleModelInconsistency(
             Diagnostic.error("Concept has no QName", concept=repr(concept))
         )
-    return _requireFullyQualified(qname, f"of concept {concept!r}")
+    return _requireNamespaced(qname, f"of concept {concept!r}")
 
 
 def _asConcept(obj: object, context: str) -> ModelConcept:
@@ -280,8 +273,8 @@ class ValidatedModel:
                 )
             )
         return (
-            _requireFullyQualified(conceptType.qname, f"of type of {qnameOf(concept)}"),
-            _requireFullyQualified(baseQName, f"of base type of {qnameOf(concept)}"),
+            _requireNamespaced(conceptType.qname, f"of type of {qnameOf(concept)}"),
+            _requireNamespaced(baseQName, f"of base type of {qnameOf(concept)}"),
         )
 
     def typedDomainQNameOf(self, concept: ModelConcept) -> QName:

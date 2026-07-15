@@ -159,15 +159,33 @@ class TestConvert:
         )
         assert str(converted) == "vsme:Thing"
 
-    @pytest.mark.parametrize(
-        "qname",
-        [
-            QName(None, "https://example.com/vsme", "Thing"),
-            QName("vsme", None, "Thing"),
-        ],
-        ids=["no-prefix", "no-namespace"],
-    )
-    def test_raises_on_incomplete_qname(self, qname: QName) -> None:
+    def test_raises_on_missing_namespace(self) -> None:
         canonicaliser = makeCanonicaliser()
         with pytest.raises(ArelleModelInconsistency):
-            canonicaliser.convert(qname)
+            canonicaliser.convert(QName("vsme", None, "Thing"))
+
+    def test_prefixless_qname_gets_generated_prefix(self) -> None:
+        # No prefix in the source document (default namespace declaration)
+        # and no existing binding for the namespace: generate one.
+        canonicaliser = makeCanonicaliser()
+        converted = canonicaliser.convert(
+            QName(None, "https://example.com/vsme", "Thing")
+        )
+        assert str(converted) == "ns0:Thing"
+
+    def test_prefixless_qname_gets_vanity_prefix(self) -> None:
+        canonicaliser = makeCanonicaliser()
+        converted = canonicaliser.convert(
+            QName(None, "http://www.xbrl.org/dtr/type/2024-01-31", "noteTextBlockItemType")
+        )
+        assert str(converted) == "dtr-types:noteTextBlockItemType"
+
+    def test_prefixless_qname_reuses_existing_binding(self) -> None:
+        canonicaliser = makeCanonicaliser()
+        canonicaliser.qnameMaker.addNamespacePrefix(
+            "vsme", "https://example.com/vsme"
+        )
+        converted = canonicaliser.convert(
+            QName(None, "https://example.com/vsme", "Thing")
+        )
+        assert str(converted) == "vsme:Thing"

@@ -126,9 +126,11 @@ class TestQnameOf:
         with pytest.raises(ArelleModelInconsistency):
             qnameOf(cast(ModelConcept, StubConcept(None)))
 
-    def test_raises_on_missing_prefix(self) -> None:
-        with pytest.raises(ArelleModelInconsistency):
-            qnameOf(cast(ModelConcept, StubConcept(QName(None, "https://ns", "Thing"))))
+    def test_accepts_missing_prefix(self) -> None:
+        # A prefix-less QName just means the source document used a default
+        # namespace declaration; canonicalisation assigns a prefix later.
+        q = QName(None, "https://ns", "Thing")
+        assert qnameOf(cast(ModelConcept, StubConcept(q))) is q
 
     def test_raises_on_missing_namespace(self) -> None:
         with pytest.raises(
@@ -329,14 +331,22 @@ class TestValidatedModel:
             baseQName,
         )
 
+    def test_type_qnames_of_accepts_missing_prefix(self) -> None:
+        typeQName = QName(None, "https://ns", "myType")
+        concept = StubConcept(
+            qn(), type=StubType(typeQName), baseXbrliTypeQname=qn("base")
+        )
+        model = makeModel(StubModelXbrl())
+        assert model.typeQNamesOf(cast(ModelConcept, concept))[0] is typeQName
+
     @pytest.mark.parametrize(
         "type_,base",
         [
             (None, qn("base")),
             (StubType(None), qn("base")),
             (StubType(qn("myType")), None),
-            # all QNames must be fully qualified: prefix and namespace required
-            (StubType(QName(None, "https://ns", "myType")), qn("base")),
+            # all QNames must have a namespace (prefixes are optional; they
+            # get assigned during canonicalisation)
             (StubType(qn("myType")), QName("xbrli", None, "stringItemType")),
         ],
     )

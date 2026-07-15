@@ -262,25 +262,23 @@ class ArelleQNameCanonicaliser:
             prefix for prefix, _ in all_existing_used_prefixes_set
         )
 
-        consistent_and_used_prefix_map: dict[str, str] = {
-            prefix: namespace
-            for prefix, namespace in all_existing_used_prefixes_set
-            if prefix_namespace_count[prefix] == 1
-        }
-
-        for prefix, namespace in consistent_and_used_prefix_map.items():
-            qnameMaker.addNamespacePrefix(prefix, namespace)
+        for prefix, namespace in all_existing_used_prefixes_set:
+            if prefix_namespace_count[prefix] == 1:
+                qnameMaker.addNamespacePrefix(prefix, namespace)
 
         return cls(qnameMaker)
 
     def convert(self, qname: QName) -> MireportQName:
-        if qname.prefix is None or qname.namespaceURI is None:
+        if qname.namespaceURI is None:
             raise ArelleModelInconsistency(
                 Diagnostic.error(
-                    "QName should have a prefix and namespace",
+                    "QName should have a namespace",
                     qname=repr(qname),
                 )
             )
+        # A None prefix (default namespace declaration in the source document)
+        # is fine: fromNamespaceAndLocalName() generates a prefix if the
+        # namespace has no binding yet.
         wanted_prefix = qname.prefix
         namespace = qname.namespaceURI
 
