@@ -33,7 +33,7 @@ class ArelleModelInconsistency(ArelleRelatedException):
     """The loaded DTS violates a structural assumption we rely on."""
 
     def __init__(self, message: str | Diagnostic):
-        self.diagnostic: Optional[Diagnostic] = (
+        self.diagnostic: Diagnostic | None = (
             message if isinstance(message, Diagnostic) else None
         )
         super().__init__(
@@ -64,16 +64,28 @@ class ArelleProcessingResult:
         "Option ",
     )
 
-    def __init__(self, jsonMessages: str, textLogLines: list[str]):
+    def __init__(self) -> None:
         self._validationMessages: list[Message] = []
-        self._textLogLines: list[str] = textLogLines
+        self._textLogLines: list[str] = []
         self._viewer: FilelikeAndFileName | None = None
         self._xbrlJson: FilelikeAndFileName | None = None
-        self.__importArelleMessages(jsonMessages)
         self._exceptions: list[Exception] = []
         self._diagnostics: list[Diagnostic] = []
 
-    def __importArelleMessages(self, json_str: str) -> None:
+    @classmethod
+    def fromSession(cls, session: Session) -> Self:
+        jsonLog = session.get_logs("json", clear_logs=False)
+        textLog = session.get_logs("text", clear_logs=True)
+        return cls.fromArelleLogs(jsonLog, textLog.split("\n"))
+
+    @classmethod
+    def fromArelleLogs(cls, jsonMessages: str, textLogLines: list[str]) -> Self:
+        result = cls()
+        result._textLogLines = list(textLogLines)
+        result._importArelleMessages(jsonMessages)
+        return result
+
+    def _importArelleMessages(self, json_str: str) -> None:
         wantDebug = L.isEnabledFor(logging.DEBUG)
         records: list[dict] = json.loads(json_str)["log"]
         for r in records:
@@ -85,51 +97,41 @@ class ArelleProcessingResult:
             if wantDebug:
                 L.debug(f"Record: {r=}")
 
-            match code:
-                case "info" | "":
-                    if "" == code or any(
-                        a in text for a in self._INTERESTING_LOG_MESSAGE_FRAGMENTS
-                    ):
-                        self._validationMessages.append(
-                            Message(
-                                messageText=text,
-                                severity=Severity.INFO,
-                                messageType=MessageType.DevInfo,
-                            )
-                        )
-                    elif text.startswith(self._UNINTERESTING_LOG_MESSAGE_PREFIXES):
-                        if wantDebug:
-                            L.debug(
-                                f"Ignoring uninteresting Arelle log message: {code=} {level=} {text=} {fact=}"
-                            )
-                    else:
-                        L.warning(
-                            f"Unexpected Arelle log message: {code=} {level=} {text=} {fact=}"
-                        )
-                case _:
-                    messageText = f"[{code}] {text}"
-                    level_severity = Severity.fromLogLevelString(
-                        level, default=Severity.WARNING
+            if code not in ("", "info"):
+                # A coded record is an XBRL validation message. Its severity
+                # is the worse of the log level and any level embedded in the
+                # code itself.
+                level_severity = Severity.fromLogLevelString(
+                    level, default=Severity.WARNING
+                )
+                code_severity = Severity.fromLogLevelString(code, default=Severity.INFO)
+                self._validationMessages.append(
+                    Message(
+                        messageText=f"[{code}] {text}",
+                        severity=max(level_severity, code_severity, key=Severity.key),
+                        messageType=MessageType.XbrlValidation,
+                        conceptQName=fact,
                     )
-                    code_severity = Severity.fromLogLevelString(
-                        code, default=Severity.INFO
+                )
+            elif code == "" or any(
+                fragment in text for fragment in self._INTERESTING_LOG_MESSAGE_FRAGMENTS
+            ):
+                self._validationMessages.append(
+                    Message(
+                        messageText=text,
+                        severity=Severity.INFO,
+                        messageType=MessageType.DevInfo,
                     )
-                    severity = max(level_severity, code_severity, key=Severity.key)
-                    self._validationMessages.append(
-                        Message(
-                            messageText=messageText,
-                            severity=severity,
-                            messageType=MessageType.XbrlValidation,
-                            conceptQName=fact,
-                        )
+                )
+            elif text.startswith(self._UNINTERESTING_LOG_MESSAGE_PREFIXES):
+                if wantDebug:
+                    L.debug(
+                        f"Ignoring uninteresting Arelle log message: {code=} {level=} {text=} {fact=}"
                     )
-
-    @classmethod
-    def fromSession(cls, session: Session) -> Self:
-        json = session.get_logs("json", clear_logs=False)
-        text = session.get_logs("text", clear_logs=True)
-        logLines = text.split("\n")
-        return cls(json, logLines)
+            else:
+                L.warning(
+                    f"Unexpected Arelle log message: {code=} {level=} {text=} {fact=}"
+                )
 
     @property
     def viewer(self) -> FilelikeAndFileName:
@@ -160,7 +162,7 @@ class ArelleProcessingResult:
         return list(self._validationMessages)
 
     @property
-    def logLines(self) -> list[str]:
+    def log_lines(self) -> list[str]:
         return list(self._textLogLines)
 
     def addDiagnostics(self, diagnostics: Iterable[Diagnostic]) -> None:
@@ -170,7 +172,7 @@ class ArelleProcessingResult:
     def diagnostics(self) -> list[Diagnostic]:
         return list(self._diagnostics)
 
-    def addException(self, exception: Exception, message: Optional[str] = None) -> None:
+    def addException(self, exception: Exception, message: str | None = None) -> None:
         self._exceptions.append(exception)
         text = f"{exception.__class__.__name__}: {exception}"
         if message:
@@ -193,19 +195,20 @@ class ArelleObjectJSONEncoder(json.JSONEncoder):
 
     @staticmethod
     def tidyKeys(obj: Any) -> Any:
-        """default(obj) only works on objects not keys so use this method to
-        preprocess your JSON payload and convert QName keys to str keys."""
-        if isinstance(obj, MutableMapping):
-            keys = list(obj.keys())
-            for k in keys:
-                new_k = k
-                if isinstance(k, QName):
-                    new_k = str(k)
-                new_value = ArelleObjectJSONEncoder.tidyKeys(obj.pop(k))
-                obj[new_k] = new_value
-        elif isinstance(obj, (list, tuple)):
-            for item in obj:
-                ArelleObjectJSONEncoder.tidyKeys(item)
+        """Return a copy of `obj` with QName mapping keys converted to str
+        keys (default(obj) only works on values, not keys).
+
+        This is belt-and-braces for the Taxonomy payload, whose QNames have
+        already been stringified by ArelleQNameCanonicaliser.convert_recursive,
+        but is kept so any payload with QName keys serialises correctly.
+        """
+        tidy = ArelleObjectJSONEncoder.tidyKeys
+        if isinstance(obj, Mapping):
+            return {
+                str(k) if isinstance(k, QName) else k: tidy(v) for k, v in obj.items()
+            }
+        if isinstance(obj, (list, tuple)):
+            return [tidy(item) for item in obj]
         return obj
 
 

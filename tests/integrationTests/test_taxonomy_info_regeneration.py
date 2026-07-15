@@ -44,7 +44,7 @@ def test_taxonomy_json_regeneration(json_name: str, tmp_path: Path) -> None:
     )
 
     assert output_path.exists(), (
-        "Taxonomy JSON was not written. Arelle log:\n" + "\n".join(results.logLines)
+        "Taxonomy JSON was not written. Arelle log:\n" + "\n".join(results.log_lines)
     )
     actual = json.loads(output_path.read_text(encoding="utf-8"))
 

@@ -42,6 +42,37 @@ def _singleFileFromResponseZip(stream: BytesIO, what: str) -> bytes:
         return zf.read(entries[0])
 
 
+def _determineViewerUrl() -> str:
+    try:
+        viewer_version = version("ixbrl-viewer")
+    except PackageNotFoundError:
+        viewer_version = "1.4.60"
+    return f"https://cdn.jsdelivr.net/npm/ixbrl-viewer@{viewer_version}/iXBRLViewerPlugin/viewer/dist/ixbrlviewer.js"
+
+
+def _makeVersionInformation(distribution: str) -> VersionInformationTuple:
+    try:
+        meta = metadata(distribution)
+        name = meta["Name"]
+        distVersion = meta["Version"]
+        if name and distVersion:
+            return VersionInformationTuple(name=name, version=distVersion)
+    except Exception as e:
+        L.exception(f"Failed to read metadata for {distribution}", exc_info=e)
+    return VersionInformationTuple(distribution, "<unknown>")
+
+
+def _determineVersionInformation() -> ArelleVersionHolder:
+    return ArelleVersionHolder(
+        arelle=_makeVersionInformation("arelle-release"),
+        ixbrlViewer=_makeVersionInformation("ixbrl-viewer"),
+    )
+
+
+ARELLE_VERSION_INFORMATION = _determineVersionInformation()
+ARELLE_VIEWER_URL = _determineViewerUrl()
+
+
 class ArelleReportProcessor:
     """Wrapper around the Arelle Session() API for the various validations and plugins wanted."""
 
@@ -130,8 +161,8 @@ class ArelleReportProcessor:
         self,
         *,
         calcs: str = "c11r",
-        plugins: Optional[str] = None,
-        pluginOptions: Optional[dict] = None,
+        plugins: str | None = None,
+        pluginOptions: dict | None = None,
     ) -> RuntimeOptions:
         """RuntimeOptions shared by all report processing: validation on
         (calcs 1.1 round-to-nearest unless overridden, UTR, inconsistent
@@ -216,62 +247,15 @@ class ArelleReportProcessor:
         if taxonomyPackageDir is None:
             return []
 
-        if isinstance(taxonomyPackageDir, (str, Path)):
-            tdir = Path(taxonomyPackageDir)
-        else:
-            raise ArelleRelatedException(
-                f"Supplied {taxonomyPackageDir=} needs to be a string or Path."
-            )
-
-        taxonomyPackages: list[Path] = []
-        for candidate in tdir.glob("**/*.zip"):
-            if candidate.is_file():
-                taxonomyPackages.append(candidate)
+        tdir = Path(taxonomyPackageDir)
+        taxonomyPackages = [
+            candidate for candidate in tdir.rglob("*.zip") if candidate.is_file()
+        ]
         if not taxonomyPackages:
             raise ArelleRelatedException(
                 f"Supplied {taxonomyPackageDir=} does not contain any taxonomy packages."
             )
         return taxonomyPackages
-
-    @staticmethod
-    def _determineViewerUrl() -> str:
-        try:
-            viewer_version = version("ixbrl-viewer")
-            viewer_url_cdn_base = r"https://cdn.jsdelivr.net/npm/ixbrl-viewer@<version>/iXBRLViewerPlugin/viewer/dist/ixbrlviewer.js"
-            viewer_url = viewer_url_cdn_base.replace("<version>", viewer_version)
-            return viewer_url
-        except PackageNotFoundError:
-            an_old_viewer_url = r"https://cdn.jsdelivr.net/npm/ixbrl-viewer@1.4.60/iXBRLViewerPlugin/viewer/dist/ixbrlviewer.js"
-            return an_old_viewer_url
-
-    @staticmethod
-    def _versionInformation() -> ArelleVersionHolder:
-        def makeVersionInformation(distribution: str) -> VersionInformationTuple:
-            fallback = VersionInformationTuple(distribution, "<unknown>")
-            try:
-                meta = metadata(distribution)
-                a = meta.get_all("Name")
-                b = meta.get_all("Version")
-                if a and b:
-                    return VersionInformationTuple(
-                        name=next(iter(meta.get_all("Name", []))),
-                        version=next(iter(meta.get_all("Version", []))),
-                    )
-            except Exception as e:
-                L.exception(
-                    "Failed to parse Arelle and Arelle ixbrl-viewer metadata",
-                    exc_info=e,
-                )
-            return fallback
-
-        return ArelleVersionHolder(
-            arelle=makeVersionInformation("arelle-release"),
-            ixbrlViewer=makeVersionInformation("ixbrl-viewer"),
-        )
-
-
-ARELLE_VERSION_INFORMATION = ArelleReportProcessor._versionInformation()
-ARELLE_VIEWER_URL = ArelleReportProcessor._determineViewerUrl()
 
 
 def getOrCreateReportPackage(reportPackage: Path) -> FilelikeAndFileName:
@@ -284,8 +268,7 @@ def getOrCreateReportPackage(reportPackage: Path) -> FilelikeAndFileName:
 
     zipName = reportPackage.name
     if zipfile.is_zipfile(reportPackage):
-        with open(reportPackage, "rb") as zin:
-            bytes = zin.read()
+        zipBytes = reportPackage.read_bytes()
     elif reportPackage.suffix in {".xhtml", ".html", ".htm"}:
         with BytesIO() as write_bio:
             with zipfile.ZipFile(write_bio, "w") as z:
@@ -294,10 +277,10 @@ def getOrCreateReportPackage(reportPackage: Path) -> FilelikeAndFileName:
                     zinfo_or_arcname="a/META-INF/reportPackage.json",
                     data=UNCONSTRAINED_REPORT_PACKAGE_JSON,
                 )
-            bytes = write_bio.getvalue()
+            zipBytes = write_bio.getvalue()
         zipName = reportPackage.with_suffix(".zip").name
     else:
         raise ArelleRelatedException(
             f"Passed a {reportPackage=} that has an unrecognised file type."
         )
-    return FilelikeAndFileName(fileContent=bytes, filename=zipName)
+    return FilelikeAndFileName(fileContent=zipBytes, filename=zipName)

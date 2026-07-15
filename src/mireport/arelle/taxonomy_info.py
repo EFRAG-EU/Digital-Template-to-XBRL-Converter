@@ -42,6 +42,23 @@ from mireport.arelle.support import (
 PLUGIN_NAME = "Taxonomy Information Extractor"
 T = TypeVar("T")
 
+# The UtrEntry attributes worth serialising (the UTR schema's primary key is
+# status + unitId).
+_UTR_INTERESTING_KEYS = (
+    "unitId",
+    "unitName",
+    "nsUnit",
+    "itemType",
+    "nsItemType",
+    "numeratorItemType",
+    "nsNumeratorItemType",
+    "definition",
+    "denominatorItemType",
+    "nsDenominatorItemType",
+    "symbol",
+    "status",
+)
+
 
 def unique_list(i: Iterable[T]) -> list[T]:
     # N.B. This maintains insertion order where list(set()) does not.
@@ -113,18 +130,17 @@ def pluginData(cntlr: Cntlr) -> TaxonomyInfoPluginData:
 def writeDataFile(
     cntlr: Cntlr,
     jsonPath: str,
-    dataType: str,
+    dataName: str,
+    data: dict,
 ) -> None:
-    pdata = pluginData(cntlr)
-    data = getattr(pdata, dataType, None)
     if not data:
-        cntlr.addToLog(f"No {dataType} data to write")
+        cntlr.addToLog(f"No {dataName} data to write")
         return
 
     with open(jsonPath, "w", encoding="UTF-8") as f:
         tidied = ArelleObjectJSONEncoder.tidyKeys(data)
         json.dump(tidied, f, indent=2, sort_keys=True, cls=ArelleObjectJSONEncoder)
-        cntlr.addToLog(f"{dataType} data written to {jsonPath}")
+        cntlr.addToLog(f"{dataName} data written to {jsonPath}")
 
 
 class UTRInfoExtractor:
@@ -158,28 +174,14 @@ class UTRInfoExtractor:
         """Get the UTR entries from the modelXbrl."""
         # N.B. UTR schema primary key is the status and unitId
         jUTR: list[dict] = []
-        interestingKeys = [
-            "unitId",
-            "unitName",
-            "nsUnit",
-            "itemType",
-            "nsItemType",
-            "numeratorItemType",
-            "nsNumeratorItemType",
-            "definition",
-            "denominatorItemType",
-            "nsDenominatorItemType",
-            "symbol",
-            "status",
-        ]
         utrEntries = [
-            u
-            for dataTypeIsh in self.utrModel
-            for u in self.utrModel[dataTypeIsh].values()
+            entry
+            for entriesByUnitId in self.utrModel.values()
+            for entry in entriesByUnitId.values()
         ]
         for entry in sorted(utrEntries, key=lambda e: e.unitId or ""):
             jEntry = {}
-            for key in interestingKeys:
+            for key in _UTR_INTERESTING_KEYS:
                 if (value := getattr(entry, key)) is not None and value.strip() != "":
                     jEntry[key] = value
             jUTR.append(jEntry)
@@ -450,7 +452,7 @@ class TaxonomyInfoExtractor:
                 ),
             )
 
-    def getDomainMembersForEE(
+    def getDomainMembersForEnumeration(
         self, elrUri: str, headUsable: bool, domainHeadConcept: ModelConcept
     ) -> list[QName]:
         """Deliberately over simplified for now."""
@@ -528,10 +530,10 @@ class TaxonomyInfoExtractor:
 
     def keepLongerLabel(
         self,
-        existing: Optional[str],
+        existing: str | None,
         label: str,
         *,
-        elr: Optional[str] = None,
+        elr: str | None = None,
         concepts: Iterable[QName] = (),
         **details: Any,
     ) -> str:
@@ -558,7 +560,8 @@ class TaxonomyInfoExtractor:
         jconcept: dict,
     ) -> None:
         """Add labels to the concept JSON."""
-        jconcept["labels"] = defaultdict(dict)
+        labels: dict[str, dict[str, str]] = {}
+        jconcept["labels"] = labels
         for labelRel in self.model.resourceRelationshipsFrom(
             concept, XbrlConst.conceptLabel
         ):
@@ -566,8 +569,9 @@ class TaxonomyInfoExtractor:
             role: str = label_resource.role or XbrlConst.standardLabel
             if (lang := label_resource.xmlLang) and (lang := lang.strip().lower()):
                 # BCP47 says that xml:lang is case insensitive
-                jconcept["labels"][lang][role] = self.keepLongerLabel(
-                    jconcept["labels"][lang].get(role),
+                langLabels = labels.setdefault(lang, {})
+                langLabels[role] = self.keepLongerLabel(
+                    langLabels.get(role),
                     label_resource.stringValue.strip(),
                     concepts=(qnameOf(concept),),
                     lang=lang,
@@ -675,7 +679,7 @@ class TaxonomyInfoExtractor:
                         )
                     )
                 jconcept.setdefault("other", {})["ee20DomainMembers"] = (
-                    self.getDomainMembersForEE(
+                    self.getDomainMembersForEnumeration(
                         linkrole,
                         headUsable,
                         self.model.concept(domainQName),
@@ -807,10 +811,11 @@ def runTaxonomyInfo(
     cntlr.addToLog(f"{PLUGIN_NAME} starting.")
     extractor = TaxonomyInfoExtractor(cntlr, options, modelXbrl)
     extractor.extract()
+    pdata = pluginData(cntlr)
     if (jsonPath := getattr(options, "taxonomyDataFile", None)) is not None:
-        writeDataFile(cntlr, jsonPath, "Taxonomy")
+        writeDataFile(cntlr, jsonPath, "Taxonomy", pdata.Taxonomy)
     if (jsonPath := getattr(options, "utrDataFile", None)) is not None:
-        writeDataFile(cntlr, jsonPath, "UTR")
+        writeDataFile(cntlr, jsonPath, "UTR", pdata.UTR)
     elapsed = (time.perf_counter_ns() - start) / 1_000_000_000
     cntlr.addToLog(f"{PLUGIN_NAME} completed ({elapsed:,.2f} seconds elapsed).")
 
