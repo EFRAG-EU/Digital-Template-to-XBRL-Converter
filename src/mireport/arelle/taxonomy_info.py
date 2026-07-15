@@ -94,8 +94,6 @@ def callArelleForTaxonomyInfo(
 
 @dataclass
 class TaxonomyInfoPluginData(PluginData):
-    # N.B. per-instance dicts. Plain class attributes would be shared by every
-    # Cntlr that loads this plugin.
     Taxonomy: dict = field(default_factory=dict)
     UTR: dict = field(default_factory=dict)
 
@@ -539,7 +537,7 @@ class TaxonomyInfoExtractor:
             concept, XbrlConst.conceptLabel
         ):
             label_resource = labelRel.resource
-            role: str = str(label_resource.role) or XbrlConst.standardLabel
+            role: str = label_resource.role or XbrlConst.standardLabel
             if (lang := label_resource.xmlLang) and (lang := lang.strip().lower()):
                 # BCP47 says that xml:lang is case insensitive
                 label = label_resource.stringValue.strip()

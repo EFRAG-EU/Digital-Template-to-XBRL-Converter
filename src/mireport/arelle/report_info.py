@@ -173,9 +173,10 @@ class ArelleReportProcessor:
         try:
             with zipfile.ZipFile(jsonBytesIO, "r") as zf:
                 a = zf.infolist()
-                assert len(a) == 1, (
-                    f"Arelle xBRL JSON generation has gone wrong. Zip contents: {zf.namelist()}"
-                )
+                if len(a) != 1:
+                    raise ArelleRelatedException(
+                        f"Arelle xBRL JSON generation has gone wrong. Zip contents: {zf.namelist()}"
+                    )
                 json = zf.read(a[0])
             jsonFilename = PurePath(source.filename).with_suffix(".json").name
             result._xbrlJson = FilelikeAndFileName(
@@ -225,9 +226,10 @@ class ArelleReportProcessor:
         try:
             with zipfile.ZipFile(viewerBytesIO, "r") as zf:
                 a = zf.infolist()
-                assert len(a) == 1, (
-                    f"Arelle & inline-viewer has gone wrong. Zip contents: {zf.namelist()}"
-                )
+                if len(a) != 1:
+                    raise ArelleRelatedException(
+                        f"Arelle & inline-viewer has gone wrong. Zip contents: {zf.namelist()}"
+                    )
                 viewer = zf.read(a[0])
             viewerFilename = f"{PurePath(source.filename).stem}_viewer.html"
             result._viewer = FilelikeAndFileName(

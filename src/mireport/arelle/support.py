@@ -311,7 +311,7 @@ class ArelleQNameCanonicaliser:
         return self.qnameMaker.fromNamespaceAndLocalName(namespace, qname.localName)
 
     def getNamespacePrefixMap(self) -> MutableMapping[str, str]:
-        """Get a mapping of namespace URI to prefix."""
+        """Get a mapping of prefix to namespace URI."""
         # needs to be mutable so JSON encoder can work with it
         return dict(self.qnameMaker.namespacePrefixesMap)
 
