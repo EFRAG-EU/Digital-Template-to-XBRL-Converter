@@ -526,6 +526,32 @@ class TaxonomyInfoExtractor:
             if concept_property is True:
                 jconcept[json_key] = concept_property
 
+    def keepLongerLabel(
+        self,
+        existing: Optional[str],
+        label: str,
+        *,
+        elr: Optional[str] = None,
+        concepts: Iterable[QName] = (),
+        **details: Any,
+    ) -> str:
+        """Resolve an inconsistent duplicate label by keeping the longer
+        text, emitting a diagnostic. Returns `label` unchanged when there is
+        no conflicting existing label."""
+        if existing and existing != label:
+            self.diagnostics.emit(
+                Diagnostic.warning(
+                    "Inconsistent duplicate labels found; keeping the longer label",
+                    elr=elr,
+                    concepts=concepts,
+                    label=label,
+                    otherLabel=existing,
+                    **details,
+                ),
+            )
+            label = max(existing, label, key=len)
+        return label
+
     def addLabels(
         self,
         concept: ModelConcept,
@@ -540,20 +566,13 @@ class TaxonomyInfoExtractor:
             role: str = label_resource.role or XbrlConst.standardLabel
             if (lang := label_resource.xmlLang) and (lang := lang.strip().lower()):
                 # BCP47 says that xml:lang is case insensitive
-                label = label_resource.stringValue.strip()
-                if (label0 := jconcept["labels"][lang].get(role)) and label0 != label:
-                    self.diagnostics.emit(
-                        Diagnostic.warning(
-                            "Inconsistent duplicate labels found; keeping the longer label",
-                            concepts=(qnameOf(concept),),
-                            lang=lang,
-                            role=role,
-                            label=label,
-                            otherLabel=label0,
-                        ),
-                    )
-                    label = max(label0, label, key=len)
-                jconcept["labels"][lang][role] = label
+                jconcept["labels"][lang][role] = self.keepLongerLabel(
+                    jconcept["labels"][lang].get(role),
+                    label_resource.stringValue.strip(),
+                    concepts=(qnameOf(concept),),
+                    lang=lang,
+                    role=role,
+                )
             else:
                 self.diagnostics.emit(
                     Diagnostic.warning(
@@ -732,20 +751,13 @@ class TaxonomyInfoExtractor:
             if lang := label_resource.xmlLang:
                 # BCP47 says that xml:lang is case insensitive
                 lang = lang.lower()
-                label = label_resource.stringValue.strip()
-                if (label0 := labels.get(lang)) and label0 != label:
-                    self.diagnostics.emit(
-                        Diagnostic.warning(
-                            "Inconsistent duplicate labels found for role type; keeping the longer label",
-                            elr=roleType.roleURI,
-                            lang=lang,
-                            label=label,
-                            otherLabel=label0,
-                            definition=roleType.definition,
-                        ),
-                    )
-                    label = max(label0, label, key=len)
-                labels[lang] = label
+                labels[lang] = self.keepLongerLabel(
+                    labels.get(lang),
+                    label_resource.stringValue.strip(),
+                    elr=roleType.roleURI,
+                    lang=lang,
+                    definition=roleType.definition,
+                )
         return labels
 
     def extractPresentation(self) -> None:

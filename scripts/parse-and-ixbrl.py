@@ -343,7 +343,7 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, ExcelProc
                 resultsBuilder.addMessages(arelleResults.messages)
 
                 if arelleResults.has_json:
-                    json_output = arelleResults.xBRL_JSON
+                    json_output = arelleResults.xbrl_json
                     if not dir_specified:
                         json_path = output_path.with_suffix(".json")
                         json_output.saveToFilepath(json_path)

@@ -48,17 +48,22 @@ class StubLabelResource:
         self.stringValue = value
 
 
+class StubRoleType:
+    def __init__(self, roleURI: str = "https://example.com/role") -> None:
+        self.roleURI = roleURI
+        self.definition = "A role"
+
+
 class StubValidatedModel:
     """Stands in for ValidatedModel; serves canned ResourceRelationships."""
 
-    def __init__(self, labelRels: list[ResourceRelationship]) -> None:
-        self._labelRels = labelRels
+    def __init__(self, relsByArcrole: dict[str, list[ResourceRelationship]]) -> None:
+        self._relsByArcrole = relsByArcrole
 
     def resourceRelationshipsFrom(
         self, source: Any, arcrole: str
     ) -> list[ResourceRelationship]:
-        assert arcrole == XbrlConst.conceptLabel
-        return self._labelRels
+        return self._relsByArcrole[arcrole]
 
 
 def labelRel(resource: StubLabelResource) -> ResourceRelationship:
@@ -68,7 +73,7 @@ def labelRel(resource: StubLabelResource) -> ResourceRelationship:
 
 
 def makeExtractor(
-    labelRels: list[ResourceRelationship],
+    relsByArcrole: dict[str, list[ResourceRelationship]],
 ) -> tuple[TaxonomyInfoExtractor, str]:
     """Build an extractor over stubs, with a diagnostics collector attached."""
     token = DiagnosticCollector.open()
@@ -79,7 +84,7 @@ def makeExtractor(
         cast(RuntimeOptions, options),
         cast(ModelXbrl, stubModel),
     )
-    extractor.model = cast(ValidatedModel, StubValidatedModel(labelRels))
+    extractor.model = cast(ValidatedModel, StubValidatedModel(relsByArcrole))
     return extractor, token
 
 
@@ -91,7 +96,7 @@ class TestAddLabels:
     def addLabels(
         self, labelRels: list[ResourceRelationship]
     ) -> tuple[dict, list[Diagnostic]]:
-        extractor, token = makeExtractor(labelRels)
+        extractor, token = makeExtractor({XbrlConst.conceptLabel: labelRels})
         jconcept: dict[str, Any] = {}
         extractor.addLabels(cast(ModelConcept, StubConcept(qn())), jconcept)
         return jconcept, collectedDiagnostics(token)
@@ -153,6 +158,44 @@ class TestAddLabels:
         )
         assert jconcept["labels"]["en"] == {role: "Assets"}
         assert diagnostics == []
+
+
+class TestGetLabelsForRoleType:
+    def getLabels(
+        self, labelRels: list[ResourceRelationship]
+    ) -> tuple[dict[str, str], list[Diagnostic]]:
+        extractor, token = makeExtractor({XbrlConst.elementLabel: labelRels})
+        labels = extractor.getLabelsForRoleType(cast(Any, StubRoleType()))
+        return labels, collectedDiagnostics(token)
+
+    def test_labels_keyed_by_lower_cased_lang(self) -> None:
+        labels, diagnostics = self.getLabels(
+            [
+                labelRel(StubLabelResource(XbrlConst.standardLabel, "en-GB", "Energy")),
+                labelRel(StubLabelResource(XbrlConst.standardLabel, "fr", "Énergie")),
+            ]
+        )
+        assert labels == {"en-gb": "Energy", "fr": "Énergie"}
+        assert diagnostics == []
+
+    def test_label_without_lang_is_skipped(self) -> None:
+        labels, diagnostics = self.getLabels(
+            [labelRel(StubLabelResource(XbrlConst.standardLabel, None, "Energy"))]
+        )
+        assert labels == {}
+
+    def test_inconsistent_duplicate_labels_keep_longer_with_diagnostic(self) -> None:
+        labels, diagnostics = self.getLabels(
+            [
+                labelRel(StubLabelResource(XbrlConst.standardLabel, "en", "Energy")),
+                labelRel(
+                    StubLabelResource(XbrlConst.standardLabel, "en", "Energy usage")
+                ),
+            ]
+        )
+        assert labels == {"en": "Energy usage"}
+        assert len(diagnostics) == 1
+        assert "duplicate labels" in diagnostics[0].text
 
 
 class TestTaxonomyInfoPluginData:

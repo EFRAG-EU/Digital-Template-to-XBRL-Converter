@@ -148,15 +148,10 @@ class ArelleProcessingResult:
         return self._viewer is not None
 
     @property
-    def xBRL_JSON(self) -> FilelikeAndFileName:
-        if self._xbrlJson is not None:
-            return self._xbrlJson
-        raise ArelleRelatedException("No JSON stored/retrieved.")
-
-    @property
     def has_json(self) -> bool:
         return self._xbrlJson is not None
 
+    @property
     def has_exceptions(self) -> bool:
         return bool(self._exceptions)
 

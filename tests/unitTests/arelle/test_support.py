@@ -10,7 +10,9 @@ from mireport.arelle.support import (
     ArelleModelInconsistency,
     ArelleProcessingResult,
     ArelleQNameCanonicaliser,
+    ArelleRelatedException,
 )
+from mireport.filesupport import FilelikeAndFileName
 from mireport.xml import getBootstrapQNameMaker
 
 
@@ -44,6 +46,38 @@ class TestArelleProcessingResultDiagnostics:
         result.addDiagnostics([Diagnostic.warning("only")])
         result.diagnostics.clear()
         assert len(result.diagnostics) == 1
+
+
+class TestArelleProcessingResultOutputs:
+    def test_xbrl_json_raises_when_absent(self) -> None:
+        result = ArelleProcessingResult(makeJsonLog(), [])
+        assert result.has_json is False
+        with pytest.raises(ArelleRelatedException):
+            _ = result.xbrl_json
+
+    def test_xbrl_json_returns_stored_file(self) -> None:
+        result = ArelleProcessingResult(makeJsonLog(), [])
+        stored = FilelikeAndFileName(fileContent=b"{}", filename="report.json")
+        result._xbrlJson = stored
+        assert result.has_json is True
+        assert result.xbrl_json is stored
+
+    def test_duplicate_xBRL_JSON_property_is_gone(self) -> None:
+        result = ArelleProcessingResult(makeJsonLog(), [])
+        assert not hasattr(result, "xBRL_JSON")
+
+    def test_viewer_raises_when_absent(self) -> None:
+        result = ArelleProcessingResult(makeJsonLog(), [])
+        assert result.has_viewer is False
+        with pytest.raises(ArelleRelatedException):
+            _ = result.viewer
+
+    def test_has_exceptions_is_a_property(self) -> None:
+        result = ArelleProcessingResult(makeJsonLog(), [])
+        assert result.has_exceptions is False
+        result.addException(ValueError("boom"), message="Context")
+        assert result.has_exceptions is True
+        assert any("boom" in m.messageText for m in result.messages)
 
 
 class TestArelleModelInconsistency:
