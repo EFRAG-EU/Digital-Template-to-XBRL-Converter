@@ -193,13 +193,17 @@ class TestConvert:
     def test_prefixless_qname_gets_vanity_prefix(self) -> None:
         canonicaliser = makeCanonicaliser()
         converted = canonicaliser.convert(
-            QName(None, "http://www.xbrl.org/dtr/type/2024-01-31", "noteTextBlockItemType")
+            QName(
+                None, "http://www.xbrl.org/dtr/type/2024-01-31", "noteTextBlockItemType"
+            )
         )
         assert str(converted) == "dtr-types:noteTextBlockItemType"
 
     def test_repeated_conversion_returns_cached_object(self) -> None:
         canonicaliser = makeCanonicaliser()
-        first = canonicaliser.convert(QName("vsme", "https://example.com/vsme", "Thing"))
+        first = canonicaliser.convert(
+            QName("vsme", "https://example.com/vsme", "Thing")
+        )
         second = canonicaliser.convert(
             QName("vsme", "https://example.com/vsme", "Thing")
         )
@@ -210,15 +214,15 @@ class TestConvert:
         # document must still convert using the first-seen binding.
         canonicaliser = makeCanonicaliser()
         first = canonicaliser.convert(QName("vsme", "https://example.com/vsme", "One"))
-        second = canonicaliser.convert(QName("other", "https://example.com/vsme", "Two"))
+        second = canonicaliser.convert(
+            QName("other", "https://example.com/vsme", "Two")
+        )
         assert str(first) == "vsme:One"
         assert str(second) == "vsme:Two"
 
     def test_prefixless_qname_reuses_existing_binding(self) -> None:
         canonicaliser = makeCanonicaliser()
-        canonicaliser.qnameMaker.addNamespacePrefix(
-            "vsme", "https://example.com/vsme"
-        )
+        canonicaliser.qnameMaker.addNamespacePrefix("vsme", "https://example.com/vsme")
         converted = canonicaliser.convert(
             QName(None, "https://example.com/vsme", "Thing")
         )

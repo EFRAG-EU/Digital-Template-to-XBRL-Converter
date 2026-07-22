@@ -17,16 +17,13 @@ import time
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from pathlib import Path
-    from typing import Any
-
 from arelle.api.Session import Session
 from arelle.Cntlr import Cntlr
 from arelle.ModelXbrl import ModelXbrl
 from arelle.RuntimeOptions import RuntimeOptions, RuntimeOptionValue
 from arelle.utils.PluginData import PluginData
 
+import mireport
 from mireport.arelle.diagnostics import DiagnosticCollector
 from mireport.arelle.support import (
     ArelleProcessingResult,
@@ -37,8 +34,16 @@ from mireport.arelle.taxonomy_extraction import (
     UTRInfoExtractor,
     writeDataFile,
 )
+from mireport.version import VersionInformationTuple
+
+if TYPE_CHECKING:
+    from pathlib import Path
+    from typing import Any
+
 
 PLUGIN_NAME = "Taxonomy Information Extractor"
+PLUGIN_VERSION = mireport.__version__
+PLUGIN_INFO = VersionInformationTuple(PLUGIN_NAME, PLUGIN_VERSION)
 
 
 def callArelleForTaxonomyInfo(
@@ -114,7 +119,7 @@ def runTaxonomyInfo(
     **kwargs: Any,
 ) -> None:
     start_ns = time.perf_counter_ns()
-    cntlr.addToLog(f"{PLUGIN_NAME} starting.")
+    cntlr.addToLog(f"{PLUGIN_INFO} starting.")
     pdata = pluginData(cntlr)
     extractor = TaxonomyInfoExtractor(cntlr, options, modelXbrl)
     pdata.Taxonomy.update(extractor.extract())
@@ -132,9 +137,9 @@ def runTaxonomyInfo(
 __pluginInfo__ = {
     "name": PLUGIN_NAME,
     "description": "Extracts information from a taxonomy",
-    "license": "Apache-2.0",
-    "version": "0.7",
+    "license": "MIT",
+    "version": PLUGIN_VERSION,
     "author": "Stuart Rowan",
-    "copyright": " Copyright :; EFRAG :: 2025",
+    "copyright": " Copyright :: EFRAG :: 2026",
     "CntlrCmdLine.Xbrl.Run": runTaxonomyInfo,
 }
