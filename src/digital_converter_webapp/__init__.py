@@ -1,6 +1,6 @@
 import logging
 from collections.abc import Mapping
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from random import randint
 from secrets import token_hex
 from typing import Any
