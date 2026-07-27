@@ -1,13 +1,18 @@
+import json
 import operator
 import re
+import subprocess
+from importlib.metadata import PackageNotFoundError
 
 import pytest
 
+import mireport.version as version_module
 from mireport.version import (
     OUR_VERSION,
     OUR_VERSION_HOLDER,
     VersionHolder,
     VersionInformationTuple,
+    _editable_suffix,
 )
 
 _PACKAGE_INSTALLED = OUR_VERSION != "(unknown version)"
@@ -282,6 +287,177 @@ class TestVersionHolderOrdering:
         assert [
             str(v) for v in sorted(VersionHolder.parse(s) for s in unsorted)
         ] == expected
+
+
+def _install_fake_distribution(
+    monkeypatch: pytest.MonkeyPatch,
+    *,
+    payload: str | None = None,
+    read_error: Exception | None = None,
+    from_name_error: Exception | None = None,
+) -> None:
+    """Replace version.Distribution so from_name() yields a stub direct_url.json."""
+
+    class FakeDist:
+        def read_text(self, filename: str) -> str | None:
+            assert filename == "direct_url.json"
+            if read_error is not None:
+                raise read_error
+            return payload
+
+    class FakeDistribution:
+        @staticmethod
+        def from_name(name: str) -> FakeDist:
+            if from_name_error is not None:
+                raise from_name_error
+            return FakeDist()
+
+    monkeypatch.setattr(version_module, "Distribution", FakeDistribution)
+
+
+def _install_fake_git(
+    monkeypatch: pytest.MonkeyPatch,
+    *,
+    stdout: str = "",
+    error: Exception | None = None,
+) -> None:
+    """Replace subprocess.run so `git describe` returns stdout (or raises)."""
+
+    def fake_run(args: list[str], **kwargs: object) -> subprocess.CompletedProcess:
+        if error is not None:
+            raise error
+        return subprocess.CompletedProcess(args=args, returncode=0, stdout=stdout)
+
+    monkeypatch.setattr(version_module.subprocess, "run", fake_run)
+
+
+def _editable_payload(url: str = "file:///src/project") -> str:
+    return json.dumps({"dir_info": {"editable": True}, "url": url})
+
+
+class TestEditableSuffix:
+    @pytest.fixture(autouse=True)
+    def _clear_cache(self):
+        # _editable_suffix is @cache'd, so every test needs a clean slate.
+        _editable_suffix.cache_clear()
+        yield
+        _editable_suffix.cache_clear()
+
+    @pytest.mark.parametrize(
+        "payload",
+        [
+            pytest.param(None, id="no-direct_url.json"),
+            pytest.param("", id="empty-file"),
+            pytest.param("{not json", id="invalid-json"),
+            pytest.param("[1, 2, 3]", id="json-is-a-list"),
+            pytest.param('"hello"', id="json-is-a-string"),
+            pytest.param("null", id="json-is-null"),
+            pytest.param("{}", id="no-dir_info"),
+            pytest.param('{"dir_info": true}', id="dir_info-not-an-object"),
+            pytest.param('{"dir_info": {"editable": false}}', id="editable-false"),
+            pytest.param('{"dir_info": {}}', id="editable-absent"),
+            pytest.param('{"dir_info": {"editable": true}}', id="url-absent"),
+            pytest.param(
+                '{"dir_info": {"editable": true}, "url": 42}', id="url-not-a-string"
+            ),
+            pytest.param(
+                '{"dir_info": {"editable": true}, "url": "https://example.com/x"}',
+                id="url-not-a-file-url",
+            ),
+        ],
+    )
+    def test_returns_empty_for_non_editable_or_malformed_metadata(
+        self, monkeypatch, payload
+    ):
+        """Anything unexpected in direct_url.json is an early return, not an exception.
+
+        Guards these paths against a regression to `data.get(...)` on a non-dict,
+        which would raise AttributeError out of module import.
+        """
+        _install_fake_distribution(monkeypatch, payload=payload)
+        assert _editable_suffix() == ""
+
+    def test_returns_empty_when_package_not_installed(self, monkeypatch):
+        _install_fake_distribution(
+            monkeypatch, from_name_error=PackageNotFoundError("nope")
+        )
+        assert _editable_suffix() == ""
+
+    def test_returns_empty_when_direct_url_json_is_not_utf8(self, monkeypatch):
+        # Distribution.read_text() suppresses missing/unreadable files but lets
+        # UnicodeDecodeError through.
+        _install_fake_distribution(
+            monkeypatch,
+            read_error=UnicodeDecodeError("utf-8", b"\xff", 0, 1, "invalid start byte"),
+        )
+        assert _editable_suffix() == ""
+
+    @pytest.mark.parametrize(
+        "git_output,expected",
+        [
+            # Long form "tag-N-ghash" is reduced to just the hash.
+            ("version/1.3.0-22-g4c86c9f", "+git.4c86c9f"),
+            ("version/1.3.0-22-g4c86c9f.dirty", "+git.4c86c9f.dirty"),
+            # Sitting exactly on a tag: the whole tag is used, sanitised.
+            ("version/1.3.0", "+git.version-1.3.0"),
+            ("1.3.0", "+git.1.3.0"),
+            # No tags reachable, so --always gives a bare hash.
+            ("4c86c9f", "+git.4c86c9f"),
+            ("4c86c9f.dirty", "+git.4c86c9f.dirty"),
+            # Characters semver forbids in build metadata become '-'.
+            ("release/v1.0_rc1", "+git.release-v1.0-rc1"),
+            ("feature/oh~no", "+git.feature-oh-no"),
+            # Surrounding whitespace from git is stripped.
+            ("  4c86c9f\n", "+git.4c86c9f"),
+        ],
+    )
+    def test_git_describe_output_becomes_suffix(
+        self, monkeypatch, git_output, expected
+    ):
+        _install_fake_distribution(monkeypatch, payload=_editable_payload())
+        _install_fake_git(monkeypatch, stdout=git_output)
+        assert _editable_suffix() == expected
+
+    @pytest.mark.parametrize(
+        "git_output",
+        [
+            "version/1.3.0-22-g4c86c9f.dirty",
+            "version/1.3.0",
+            "release/v1.0_rc1",
+            "feature/oh~no",
+            "4c86c9f",
+        ],
+    )
+    def test_suffix_is_valid_semver_build_metadata(self, monkeypatch, git_output):
+        """The sanitising regex exists so the result is appendable to a semver core."""
+        _install_fake_distribution(monkeypatch, payload=_editable_payload())
+        _install_fake_git(monkeypatch, stdout=git_output)
+        assert _SEMVER_RE.match(f"1.2.3{_editable_suffix()}") is not None
+
+    @pytest.mark.parametrize(
+        "error",
+        [
+            pytest.param(subprocess.CalledProcessError(128, "git"), id="non-zero-exit"),
+            pytest.param(subprocess.TimeoutExpired("git", 5), id="timeout"),
+            pytest.param(FileNotFoundError("git"), id="git-not-on-path"),
+            pytest.param(PermissionError("git"), id="not-executable"),
+            pytest.param(NotADirectoryError("cwd"), id="source-dir-gone"),
+        ],
+    )
+    def test_returns_empty_when_git_fails(self, monkeypatch, error):
+        _install_fake_distribution(monkeypatch, payload=_editable_payload())
+        _install_fake_git(monkeypatch, error=error)
+        assert _editable_suffix() == ""
+
+    def test_unexpected_exception_is_not_swallowed(self, monkeypatch):
+        """The except clause is deliberately narrow.
+
+        Anything outside the handled categories is a bug in this function (a typo,
+        say) and must surface rather than be hidden behind an empty suffix.
+        """
+        _install_fake_distribution(monkeypatch, read_error=RuntimeError("boom"))
+        with pytest.raises(RuntimeError, match="boom"):
+            _editable_suffix()
 
 
 class TestModuleExports:

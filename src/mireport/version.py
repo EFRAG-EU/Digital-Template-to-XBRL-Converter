@@ -116,38 +116,52 @@ def _editable_suffix() -> str:
         # editable (type: boolean): true if the distribution was/is to be
         # installed in editable mode, false otherwise. If absent, default to
         # false.
-        editable = bool(data.get("dir_info", {}).get("editable", False))
-        if not editable:
+        #
+        # N.B. JSON can hold any type, so each field is type checked before use.
+        # That keeps a malformed direct_url.json an early return rather than an
+        # AttributeError we would have to catch (and which would also mask any
+        # genuine typo in this function).
+        if not isinstance(data, dict):
             return ""
-        if (url := data.get("url", "")).startswith("file://"):
-            source_dir = Path(url2pathname(urlparse(url).path))
-            _git = partial(
-                subprocess.run,
-                capture_output=True,
-                stdin=subprocess.DEVNULL,
-                encoding="utf-8",
-                timeout=5,
-                check=True,
-                cwd=source_dir,
-            )
-            result = _git(
-                [
-                    "git",
-                    "-c",
-                    "i18n.logOutputEncoding=utf-8",
-                    "describe",
-                    "--tags",
-                    "--always",
-                    "--dirty=.dirty",
-                ]
-            )
-            output = result.stdout.strip()
-            # Long form "tag-N-ghash[.dirty]" → extract just hash[.dirty]
-            if m := re.match(r"^.+-\d+-g([0-9a-f]+)(\.dirty)?$", output):
-                output = m.group(1) + (m.group(2) or "")
-            return f"+git.{_BUILD_METADATA_SAFE_RE.sub('-', output)}"
-        return ""
-    except Exception:
+        dir_info = data.get("dir_info")
+        if not isinstance(dir_info, dict) or not dir_info.get("editable", False):
+            return ""
+        url = data.get("url")
+        if not (isinstance(url, str) and url.startswith("file://")):
+            return ""
+
+        source_dir = Path(url2pathname(urlparse(url).path))
+        _git = partial(
+            subprocess.run,
+            capture_output=True,
+            stdin=subprocess.DEVNULL,
+            encoding="utf-8",
+            timeout=5,
+            check=True,
+            cwd=source_dir,
+        )
+        result = _git(
+            [
+                "git",
+                "-c",
+                "i18n.logOutputEncoding=utf-8",
+                "describe",
+                "--tags",
+                "--always",
+                "--dirty=.dirty",
+            ]
+        )
+        output = result.stdout.strip()
+        # Long form "tag-N-ghash[.dirty]" → extract just hash[.dirty]
+        if m := re.match(r"^.+-\d+-g([0-9a-f]+)(\.dirty)?$", output):
+            output = m.group(1) + (m.group(2) or "")
+        return f"+git.{_BUILD_METADATA_SAFE_RE.sub('-', output)}"
+    except (
+        PackageNotFoundError,  # we are not installed at all
+        ValueError,  # bad JSON, non-UTF-8 direct_url.json, NUL in path
+        OSError,  # git absent, unreadable cwd, URLError from url2pathname
+        subprocess.SubprocessError,  # git returned non-zero or timed out
+    ):
         L.warning(
             "Failed to determine editable version suffix, falling back to no suffix",
             exc_info=True,
