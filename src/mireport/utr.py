@@ -57,7 +57,9 @@ class UTR:
 
         return cls(unitToNamespaces, dataTypeToUnit, unitQNamesToEntries, qnameMaker)
 
-    @cache
+    # N.B. B019 (cache keeps `self` alive) is not a concern: a UTR belongs to a
+    # Taxonomy which is kept in a module level registry for the life of the process.
+    @cache  # noqa: B019
     def getQNameForUnitId(self, unitId: str) -> QName | None:
         if self._qnameMaker.isValidQName(unitId):
             return self._qnameMaker.fromString(unitId)
@@ -72,7 +74,7 @@ class UTR:
             namespace=namespaces[0], localName=unitId
         )
 
-    @cache
+    @cache  # noqa: B019 - UTR lives for the life of the process. See above.
     def getUnitsForDataType(self, dataType: QName) -> frozenset[QName]:
         """Get the unit IDs for a given data type."""
         possible = self._lookupUnitIdByDataType.get(dataType)
@@ -86,7 +88,7 @@ class UTR:
             )
         return frozenset()
 
-    @cache
+    @cache  # noqa: B019 - UTR lives for the life of the process. See above.
     def getUnitIdsForDataType(self, dataType: QName) -> frozenset[str]:
         """Get the unit ID for a given data type."""
         possible: list[str] = []

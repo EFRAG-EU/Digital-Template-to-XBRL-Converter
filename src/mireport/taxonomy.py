@@ -357,7 +357,9 @@ class Concept:
             for role_uri in lang_labels
         )
 
-    @cache
+    # N.B. B019 (cache keeps `self` alive) is not a concern: Concepts belong to a
+    # Taxonomy which is kept in a module level registry for the life of the process.
+    @cache  # noqa: B019
     def getRequiredUnitQNames(self) -> frozenset[QName] | None:
         """If there is a valid UTR unitId or a valid unit QName in the
         measurement guidance label of the concept, return the first one found.
@@ -928,7 +930,7 @@ class Taxonomy:
         }
         return frozenset(explicit)
 
-    @cache
+    @cache  # noqa: B019 - Taxonomy lives for the life of the process. See above.
     def getDimensionsForHypercube(self, hypercube: Concept) -> frozenset[Concept]:
         baseSets = self._lookupBaseSetByCube.get(hypercube)
         if baseSets is None:
@@ -973,7 +975,7 @@ class Taxonomy:
         tds = {td for hc in hcs for td in self.getTypedDimensionsForHypercube(hc)}
         return frozenset(tds)
 
-    @cache
+    @cache  # noqa: B019 - Taxonomy lives for the life of the process. See above.
     def getExplicitDimensionForDomainMember(
         self, primaryItem: Concept, dimensionValue: Concept
     ) -> Concept | None:

@@ -24,7 +24,7 @@ class CSSHexColour(str):
 
     _HEX_RE: ClassVar[re.Pattern[str]] = re.compile(r"#[0-9A-Fa-f]{6}")
 
-    def __new__(cls, value: str) -> CSSHexColour:
+    def __new__(cls, value: str) -> Self:
         if not cls.is_valid(value):
             raise InvalidReportThemeException(
                 f"Colour must be a 6-digit hex code (e.g. #1a2b3c), got '{value}'."

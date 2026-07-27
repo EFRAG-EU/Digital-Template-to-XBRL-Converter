@@ -5,6 +5,7 @@ import logging
 import time
 from collections import defaultdict
 from collections.abc import Iterable, MutableMapping
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, TypeVar
 
 if TYPE_CHECKING:
@@ -94,9 +95,12 @@ def callArelleForTaxonomyInfo(
     return results
 
 
+@dataclass
 class TaxonomyInfoPluginData(PluginData):
-    Taxonomy: dict = {}
-    UTR: dict = {}
+    # N.B. per-instance dicts. Plain class attributes would be shared by every
+    # Cntlr that loads this plugin.
+    Taxonomy: dict = field(default_factory=dict)
+    UTR: dict = field(default_factory=dict)
 
 
 def pluginData(cntlr: Cntlr) -> TaxonomyInfoPluginData:
