@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from openpyxl.workbook.defined_name import DefinedName
 
-    from mireport.taxonomy import Taxonomy
+    from mireport.report.fact import Fact
+    from mireport.taxonomy import Concept, Taxonomy
     from mireport.xlsx_template_reader._reader import WorkbookReader
 
 from dateutil.relativedelta import relativedelta
@@ -78,8 +79,37 @@ class FactCreator:
         self._createNamedPeriods()
         self.createSimpleFacts()
         self.createTableFacts()
+        self._report.reportInconsistentDuplicateFacts(
+            self._reportInconsistentDuplicateFacts
+        )
         self._createFootnotes()
         self.checkForUnhandledItems()
+
+    def _reportInconsistentDuplicateFacts(
+        self, concept: Concept, facts: Sequence[Fact]
+    ) -> None:
+        """Surface inconsistent duplicate facts to the report preparer as an error.
+
+        These are facts with the same concept and dimensions but different values
+        (e.g. the same waste type appearing twice with different amounts). Only one
+        value can be rendered, so the conflict must be fixed in the template."""
+        details = "; ".join(
+            f"'{fact.value}' ({fact.provenance})"
+            if fact.provenance is not None
+            else f"'{fact.value}'"
+            for fact in facts
+        )
+        first_provenance = next(
+            (str(fact.provenance) for fact in facts if fact.provenance is not None),
+            None,
+        )
+        self._msg.error(
+            f"Conflicting duplicate values for {concept.qname} with the same "
+            f"dimensions. Only one will appear in the report. Values: {details}.",
+            MessageType.Conversion,
+            ref=first_provenance,
+            concept=concept,
+        )
 
     def _createNamedPeriods(self) -> None:
         preset_dims = self._bindings.preset_dims

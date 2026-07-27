@@ -388,7 +388,10 @@ class TestCheckAllFactsUsed:
         o.report.getFacts.return_value = [unused]
         o.checkAllFactsUsed()  # must not raise
 
-    def test_unused_fact_with_inconsistent_duplicate_logs_warning(self, caplog):
+    def test_unused_fact_with_inconsistent_duplicate_logs_debug(self, caplog):
+        # User-facing surfacing now happens via
+        # InlineReport.reportInconsistentDuplicateFacts; this is kept only as a
+        # debug-level developer safety net.
         concept = MagicMock(spec=Concept)
         aspects_dict = {"period": "2024"}
         unused = _fact(value="v1", concept=concept, aspects=aspects_dict)
@@ -396,7 +399,7 @@ class TestCheckAllFactsUsed:
         o = _organiser(facts_by_concept={concept: [unused, duplicate]})
         o.reportSections = []
         o.report.getFacts.return_value = [unused, duplicate]
-        with caplog.at_level(logging.WARNING, logger="mireport.report.layout"):
+        with caplog.at_level(logging.DEBUG, logger="mireport.report.layout"):
             o.checkAllFactsUsed()
         assert any("inconsistent" in r.message.lower() for r in caplog.records)
 
