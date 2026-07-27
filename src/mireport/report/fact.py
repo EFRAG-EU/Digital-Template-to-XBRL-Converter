@@ -198,11 +198,7 @@ class Fact:
 
     @property
     def hasNonDefaultPeriod(self) -> bool:
-        if (
-            period := self.aspects.get("period")
-        ) is not None and period != self._report._defaultPeriodName:
-            return True
-        return False
+        return bool((period := self.aspects.get("period")) is not None and period != self._report._defaultPeriodName)
 
     @property
     def period(self) -> DurationPeriodHolder | InstantPeriodHolder:

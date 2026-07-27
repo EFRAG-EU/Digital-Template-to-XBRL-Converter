@@ -6,7 +6,8 @@ from decimal import Decimal
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Set
+    from collections.abc import Iterable
+    from collections.abc import Set as AbstractSet
 
 from babel import Locale, UnknownLocaleError
 from babel.numbers import format_decimal, get_decimal_symbol, get_group_symbol
@@ -98,7 +99,7 @@ def extract_base_languages(languages: Iterable) -> frozenset[str]:
 
 
 def get_locale_list(
-    requestedCodes: Iterable[str], supportedLanguages: Set[str] | None = None
+    requestedCodes: Iterable[str], supportedLanguages: AbstractSet[str] | None = None
 ) -> list[dict[str, str]]:
     locales: list[dict[str, str]] = []
 

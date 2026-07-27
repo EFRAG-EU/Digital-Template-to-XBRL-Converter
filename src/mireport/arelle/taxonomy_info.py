@@ -95,8 +95,8 @@ def callArelleForTaxonomyInfo(
 
 
 class TaxonomyInfoPluginData(PluginData):
-    Taxonomy: dict = dict()
-    UTR: dict = dict()
+    Taxonomy: dict = {}
+    UTR: dict = {}
 
 
 def pluginData(cntlr: Cntlr) -> TaxonomyInfoPluginData:
@@ -171,7 +171,7 @@ class UTRInfoExtractor:
         ]
         utrEntries = [
             u
-            for dataTypeIsh in self.utrModel.keys()
+            for dataTypeIsh in self.utrModel
             for u in self.utrModel[dataTypeIsh].values()
         ]
         for entry in sorted(utrEntries, key=lambda e: e.unitId):
@@ -459,7 +459,7 @@ class TaxonomyInfoExtractor:
 
     def extractDimensionDefaults(self) -> None:
         elrsWithDefaults = set()
-        for arcroleUri, elrUri, linkqname, arcqname in self.modelXbrl.baseSets.keys():
+        for arcroleUri, elrUri, linkqname, arcqname in self.modelXbrl.baseSets:
             if arcroleUri == XbrlConst.dimensionDefault and elrUri is not None:
                 elrsWithDefaults.add(elrUri)
 
@@ -560,15 +560,13 @@ class TaxonomyInfoExtractor:
                         "role": role,
                         "order": r.order,
                         "parts": ref_parts,
-                        "sort_key": tuple(
-                            (
+                        "sort_key": (
                                 r.order,
                                 role,
                                 tuple(
                                     (str(name), str(value)) for name, value in ref_parts
                                 ),
-                            )
-                        ),
+                            ),
                     }
                 )
 
@@ -577,7 +575,7 @@ class TaxonomyInfoExtractor:
 
             if not all_order1:
                 self.cntlr.addToLog(
-                    f"INFO: {concept.qname} uses references with order values other than 1. Orders found: {sorted(set(r['order'] for r in refs))}. References will be sorted by order.",
+                    f"INFO: {concept.qname} uses references with order values other than 1. Orders found: {sorted({r['order'] for r in refs})}. References will be sorted by order.",
                     level=logging.INFO,
                 )
 
@@ -636,7 +634,7 @@ class TaxonomyInfoExtractor:
         self.taxonomyJson["dimensions"] = defaultdict(dict)
         # Get the hypercubes and primary items
         hypercubeArcRoles = (XbrlConst.all, XbrlConst.notAll)
-        for arcroleUri, elrUri, linkqname, arcqname in self.modelXbrl.baseSets.keys():
+        for arcroleUri, elrUri, linkqname, arcqname in self.modelXbrl.baseSets:
             if linkqname is None or arcqname is None:
                 continue
             if arcroleUri in hypercubeArcRoles and elrUri is not None:
@@ -712,7 +710,7 @@ class TaxonomyInfoExtractor:
 
     def extractPresentation(self) -> None:
         self.cntlr.addToLog("Processing presentation network")
-        for arcroleUri, elrUri, linkqname, arcqname in self.modelXbrl.baseSets.keys():
+        for arcroleUri, elrUri, linkqname, arcqname in self.modelXbrl.baseSets:
             # cntlr.addToLog(f"{arcroleUri}, {elrUri}, {linkqname}, {arcqname}")
             if linkqname is None or arcqname is None:
                 continue

@@ -104,10 +104,10 @@ def main() -> None:
         )
         print("Zip files to use  ", " ".join(str(t) for t in taxonomy_packages))
 
-        if not all([taxonomy_zip.is_file() for taxonomy_zip in taxonomy_packages]):
+        if not all(taxonomy_zip.is_file() for taxonomy_zip in taxonomy_packages):
             raise SystemExit(f"Not all specified files found: {taxonomy_packages}")
         elif not all(
-            [".zip" == taxonomy_zip.suffix for taxonomy_zip in taxonomy_packages]
+            ".zip" == taxonomy_zip.suffix for taxonomy_zip in taxonomy_packages
         ):
             raise SystemExit(
                 f"Not all specified files are Zip files: {taxonomy_packages}"

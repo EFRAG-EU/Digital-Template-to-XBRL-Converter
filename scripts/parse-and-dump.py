@@ -65,7 +65,7 @@ def dump_data(candidates: list, verbose: bool) -> None:
         print(f"{name}: ({num} cells in range)")
         print("\t", end="")
 
-        if all([x is None for x in cells]):
+        if all(x is None for x in cells):
             print("(all cells empty)")
             continue
 

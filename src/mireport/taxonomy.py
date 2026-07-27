@@ -380,9 +380,8 @@ class Concept:
         # Perhaps the label is just a unitId
         if (
             qname := self._taxonomy.UTR.getQNameForUnitId(measurementLabel)
-        ) is not None:
-            if qname in allValidUnitQNames:
-                return frozenset({qname})
+        ) is not None and qname in allValidUnitQNames:
+            return frozenset({qname})
 
         # Perhaps the label is just a unit QNAME
         if self._qnameMaker.isValidQName(measurementLabel):
@@ -697,17 +696,17 @@ class Taxonomy:
                 cByPretend[norm_label_no_suffix].append(concept)
                 cByPretend[norm_label_no_suffix_all_lc].append(concept)
 
-        self._lookupConceptsByStandardLabel: dict[str, frozenset[Concept]] = dict(
-            (k, frozenset(v)) for k, v in cByStdLbl.items()
-        )
-        self._lookupConceptsByPretendLabel: dict[str, frozenset[Concept]] = dict(
-            (k, frozenset(v)) for k, v in cByPretend.items()
-        )
+        self._lookupConceptsByStandardLabel: dict[str, frozenset[Concept]] = {
+            k: frozenset(v) for k, v in cByStdLbl.items()
+        }
+        self._lookupConceptsByPretendLabel: dict[str, frozenset[Concept]] = {
+            k: frozenset(v) for k, v in cByPretend.items()
+        }
 
-        self._dimensionDefaults: Mapping[Concept, Concept] = dict(
-            (self.getConcept(dimension), self.getConcept(domainMember))
+        self._dimensionDefaults: Mapping[Concept, Concept] = {
+            self.getConcept(dimension): self.getConcept(domainMember)
             for dimension, domainMember in dimensions.pop("_defaults", {}).items()
-        )
+        }
 
         self._baseSets: dict[BaseSet, list[dict]] = defaultdict(list)
         self._lookupBaseSetByCube: dict[Concept, list[BaseSet]] = defaultdict(list)
@@ -719,7 +718,7 @@ class Taxonomy:
         domainByDimension: dict[Concept, list[Concept]] = defaultdict(list)
 
         for role, cubes in dimensions.items():
-            cubeConcepts = frozenset(concepts[c] for c in cubes.keys())
+            cubeConcepts = frozenset(concepts[c] for c in cubes)
             baseSet = BaseSet(role, cubeConcepts)
             for cubeQname, cubeDetails in cubes.items():
                 hc_concept = concepts[cubeQname]
@@ -766,7 +765,7 @@ class Taxonomy:
             for dimension, domainlist in domainByDimension.items()
         }
         self._hypercubes = frozenset(
-            c for x in self._baseSets.keys() for c in x.hyperCubes
+            c for x in self._baseSets for c in x.hyperCubes
         )
 
         if open_hcs:
@@ -924,7 +923,7 @@ class Taxonomy:
             ed
             for b in baseSets
             for cube in self._baseSets[b]
-            for ed in cube["explicitDimensions"].keys()
+            for ed in cube["explicitDimensions"]
         }
         return frozenset(explicit)
 
@@ -936,7 +935,7 @@ class Taxonomy:
         dims: list[Concept] = []
         for b in baseSets:
             for cube in self._baseSets[b]:
-                dims.extend(ed for ed in cube["explicitDimensions"].keys())
+                dims.extend(ed for ed in cube["explicitDimensions"])
                 dims.extend(td for td in cube["typedDimensions"])
         return frozenset(dims)
 
@@ -1033,7 +1032,7 @@ class Taxonomy:
         counts.update(
             lang.lower()
             for concept in self._concepts.values()
-            for lang in concept._labels.keys()
+            for lang in concept._labels
         )
         return counts
 

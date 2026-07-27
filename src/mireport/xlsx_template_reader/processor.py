@@ -97,7 +97,7 @@ def eeDomainByLabel(eeConcept: Concept) -> dict[str, tuple[Concept, str]]:
             f"Concept {eeConcept} with data-type {eeConcept.dataType} is not of enumeration type."
         )
 
-    eeDomainLabels: dict[str, tuple[Concept, str]] = dict()
+    eeDomainLabels: dict[str, tuple[Concept, str]] = {}
     for eeConcept in eeConcept.getEEDomain():
         all_labels = eeConcept.getAllStandardLabels()
         for actual_label in all_labels:
@@ -1071,7 +1071,7 @@ class ExcelProcessor:
 
             candidates: list[CellAndXBRLMetadataHolder] = []
             extras_in_excel: set[CellAndXBRLMetadataHolder] = set()
-            for _, stuff in self._definedNameToXBRLMap.items():
+            for stuff in self._definedNameToXBRLMap.values():
                 concept = stuff.concept
                 if not (concept.isReportable or concept.isDimension):
                     continue
@@ -1341,7 +1341,7 @@ class ExcelProcessor:
                                     ),
                                 )
                         factBuilder.setHiddenValue(
-                            " ".join(sorted(set(e.expandedName for e in eeValues)))
+                            " ".join(sorted({e.expandedName for e in eeValues}))
                         )
 
                     if broken:
@@ -1830,8 +1830,8 @@ class ExcelProcessor:
                     excel_reference=excelCellRef(stuff.worksheet, cell),
                 )
         if EE_SET_DESIRED_EMPTY_PLACEHOLDER_VALUE in value:
-            onlyPlaceholder = set([EE_SET_DESIRED_EMPTY_PLACEHOLDER_VALUE])
-            otherValues = set(x for x in value if x is not None).difference(
+            onlyPlaceholder = {EE_SET_DESIRED_EMPTY_PLACEHOLDER_VALUE}
+            otherValues = {x for x in value if x is not None}.difference(
                 onlyPlaceholder
             )
             if otherValues:

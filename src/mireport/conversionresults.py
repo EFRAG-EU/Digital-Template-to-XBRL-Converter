@@ -289,7 +289,7 @@ class ConversionResultsBuilder(ConversionResults):
             self.conversionId = conversionId
         else:
             self.conversionId = str(uuid.uuid4())
-        self.messages: list[Message] = list()
+        self.messages: list[Message] = []
         self.cellsQueriedBuilder: set[tuple[str, int, int]] = set()
         self.cellsPopulatedBuilder: set[tuple[str, int, int]] = set()
         self.consoleOutput = consoleOutput

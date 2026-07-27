@@ -48,10 +48,7 @@ def is_valid_filename(filename: str) -> bool:
         return False
 
     # Ensure filename does not contain invalid characters
-    if FILE_UNWANTED_RE.search(filename):
-        return False
-
-    return True
+    return not FILE_UNWANTED_RE.search(filename)
 
 
 def zipSafeString(original: str, fallback: str = "fallback") -> str:

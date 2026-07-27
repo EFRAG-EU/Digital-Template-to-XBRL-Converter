@@ -615,7 +615,7 @@ class TestAssembleDimsAsRowsTable:
         assert member_a in matrix.row_labels
 
     def test_empty_rows_excluded(self):
-        explicit_dim, domain, reportable, _, member_a, member_b = self._setup()
+        explicit_dim, domain, reportable, _, _, member_b = self._setup()
         # member_b has no facts
         concept_x = reportable[0]
         concept_y = reportable[1]
@@ -671,7 +671,7 @@ class TestAssembleTypedDimTable:
         assert matrix.row_heading_label is typed_dim
 
     def test_rows_sorted_numerically(self):
-        typed_dim, reportable, facts_map, val_2, val_10 = self._setup()
+        typed_dim, reportable, facts_map, _, _ = self._setup()
         o = _organiser(facts_by_concept=facts_map)
         matrix = o._assemble_typed_dim("[B01.test", [typed_dim], reportable)
         assert len(matrix.data) == 2
@@ -679,7 +679,7 @@ class TestAssembleTypedDimTable:
         assert matrix.row_labels[1] == "10"
 
     def test_empty_rows_excluded(self):
-        typed_dim, reportable, facts_map, val_2, val_10 = self._setup()
+        typed_dim, reportable, facts_map, val_2, _ = self._setup()
         concept_x, concept_y = reportable
         typed_qname = f"typed {typed_dim.qname}"
         fact_x2 = _fact(aspects={typed_qname: val_2}, concept=concept_x)
