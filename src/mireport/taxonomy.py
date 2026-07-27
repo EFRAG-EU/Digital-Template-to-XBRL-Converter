@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING, NamedTuple, overload
 from mireport.data import registries, taxonomies
 from mireport.exceptions import (
     AmbiguousComponentException,
+    BrokenQNameException,
     TaxonomyException,
     UnknownTaxonomyException,
 )
@@ -37,6 +38,8 @@ from mireport.xml import (
 
 if TYPE_CHECKING:
     from typing import Any, Self
+
+L = logging.getLogger(__name__)
 
 MEASUREMENT_GUIDANCE_LABEL_ROLE = "http://www.xbrl.org/2003/role/measurementGuidance"
 STANDARD_LABEL_ROLE = "http://www.xbrl.org/2003/role/label"
@@ -824,7 +827,7 @@ class Taxonomy:
                 concept = self.getConcept(text)
                 if not only_reportable or concept.isReportable:
                     return concept
-            except Exception:
+            except (BrokenQNameException, KeyError):
                 pass  # not a valid QName format or concept not present
 
         candidates: set[Concept] = set()
@@ -1086,8 +1089,8 @@ def loadBuiltInTaxonomyJSON() -> None:
     for f in getJsonFiles(taxonomies):
         try:
             _createTaxonomyFromJSON(getObject(f))
-        except Exception as e:
-            logging.error(f"Error loading taxonomy from {f.name}", exc_info=e)
+        except Exception as e:  # noqa: BLE001 - one bad file must not lose the rest
+            L.error(f"Error loading taxonomy from {f.name}", exc_info=e)
 
 
 def _createTaxonomyFromJSON(bits: dict) -> None:

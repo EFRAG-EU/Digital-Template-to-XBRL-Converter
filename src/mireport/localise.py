@@ -125,7 +125,7 @@ def get_locale_list(
             label = f"{language} ({territory}) [{display_code}]"
 
             locales.append({"code": normalized_code, "label": label})
-        except Exception:
+        except Exception:  # noqa: BLE001 - one bad locale must not lose the rest
             L.exception("Error parsing locale")
             continue
     locales.sort(key=lambda x: x["label"].casefold())

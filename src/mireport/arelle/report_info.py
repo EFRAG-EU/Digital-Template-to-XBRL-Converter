@@ -94,7 +94,7 @@ class ArelleReportProcessor:
                     PluginManager.reset()
                     PluginManager.close()
                 except Exception:
-                    pass
+                    L.exception("Failed to reset Arelle package and plugin managers")
                 with (
                     Session() as session,
                     reportPackage.fileLike() as requestZipStream,
@@ -309,7 +309,8 @@ ARELLE_VIEWER_URL = ArelleReportProcessor._determineViewerUrl()
 
 
 def getOrCreateReportPackage(reportPackage: Path) -> FilelikeAndFileName:
-    """"""
+    """Return the given zip as-is, or wrap a single inline report document in an
+    unconstrained report package."""
     if not isinstance(reportPackage, Path):
         raise ArelleRelatedException(
             f"Passed a report package {reportPackage=} that is not a Path"

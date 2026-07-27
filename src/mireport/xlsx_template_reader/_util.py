@@ -48,7 +48,7 @@ def checkExcelFilePath(path: Path) -> None:
     if not path.is_file():
         raise FileNotFoundError(f'"{path}" is not a file.')
     elif path.suffix != ".xlsx":
-        raise Exception(f'"{path}" is not a supported (.xlsx) Excel file')
+        raise ValueError(f'"{path}" is not a supported (.xlsx) Excel file')
 
 
 def loadExcelFromPathOrFileLike(
