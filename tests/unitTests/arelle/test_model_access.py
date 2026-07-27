@@ -211,7 +211,7 @@ class TestConceptRelationshipSet:
         assert crs.hasRelationshipsTo(cast(ModelConcept, source)) is False
 
     def test_consecutive_set_same_linkrole_returns_self(self) -> None:
-        crs, stub = self.makeSet(StubRelSet(linkrole=self.ELR))
+        crs, _stub = self.makeSet(StubRelSet(linkrole=self.ELR))
         rel = ConceptRelationship(
             target=cast(ModelConcept, StubConcept(qn())),
             targetQName=qn(),

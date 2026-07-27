@@ -549,14 +549,10 @@ class TaxonomyInfoExtractor:
                         "role": role,
                         "order": refRel.order,
                         "parts": ref_parts,
-                        "sort_key": tuple(
-                            (
-                                refRel.order,
-                                role,
-                                tuple(
-                                    (str(name), str(value)) for name, value in ref_parts
-                                ),
-                            )
+                        "sort_key": (
+                            refRel.order,
+                            role,
+                            tuple((str(name), str(value)) for name, value in ref_parts),
                         ),
                     }
                 )
@@ -569,7 +565,7 @@ class TaxonomyInfoExtractor:
                     Diagnostic.info(
                         "References use order values other than 1 and will be sorted by order",
                         concepts=(qnameOf(concept),),
-                        orders=sorted(set(r["order"] for r in refs)),
+                        orders=sorted({r["order"] for r in refs}),
                     ),
                 )
 

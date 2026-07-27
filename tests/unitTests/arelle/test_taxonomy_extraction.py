@@ -319,7 +319,7 @@ class TestGetLabelsForRoleType:
         assert diagnostics == []
 
     def test_label_without_lang_is_skipped(self) -> None:
-        labels, diagnostics = self.getLabels(
+        labels, _diagnostics = self.getLabels(
             [labelRel(StubLabelResource(XbrlConst.standardLabel, None, "Energy"))]
         )
         assert labels == {}
