@@ -28,7 +28,6 @@ class ArelleRelatedException(MIReportException):
     """Exception to wrap any exception that come from calling in to Arelle."""
 
 
-
 @dataclass
 class ArelleVersionHolder:
     arelle: VersionInformationTuple

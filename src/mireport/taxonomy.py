@@ -764,9 +764,7 @@ class Taxonomy:
             dimension: frozenset(domainlist)
             for dimension, domainlist in domainByDimension.items()
         }
-        self._hypercubes = frozenset(
-            c for x in self._baseSets for c in x.hyperCubes
-        )
+        self._hypercubes = frozenset(c for x in self._baseSets for c in x.hyperCubes)
 
         if open_hcs:
             # Not supported by mireport (aoix doesn't care)

@@ -409,9 +409,7 @@ class ProcessingContext:
     def addDevInfoMessage(self, message: str) -> None:
         self._resultsBuilder.addMessage(message, Severity.INFO, MessageType.DevInfo)
 
-    def mark(
-        self, newSectionName: str | None = None, additionalInfo: str = ""
-    ) -> None:
+    def mark(self, newSectionName: str | None = None, additionalInfo: str = "") -> None:
         now = perf_counter_ns()
         if self.current_section_name is not None:
             execution_time_ns = now - self.current_section_start_time

@@ -14,7 +14,6 @@ from mireport.taxonomy import Concept, QName
 from mireport.typealiases import DecimalPlaces, FactValue
 
 if TYPE_CHECKING:
-
     from mireport.report.footnote import Footnote
     from mireport.report.inlinereport import InlineReport
 
@@ -198,7 +197,10 @@ class Fact:
 
     @property
     def hasNonDefaultPeriod(self) -> bool:
-        return bool((period := self.aspects.get("period")) is not None and period != self._report._defaultPeriodName)
+        return bool(
+            (period := self.aspects.get("period")) is not None
+            and period != self._report._defaultPeriodName
+        )
 
     @property
     def period(self) -> DurationPeriodHolder | InstantPeriodHolder:

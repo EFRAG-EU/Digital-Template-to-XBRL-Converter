@@ -561,12 +561,10 @@ class TaxonomyInfoExtractor:
                         "order": r.order,
                         "parts": ref_parts,
                         "sort_key": (
-                                r.order,
-                                role,
-                                tuple(
-                                    (str(name), str(value)) for name, value in ref_parts
-                                ),
-                            ),
+                            r.order,
+                            role,
+                            tuple((str(name), str(value)) for name, value in ref_parts),
+                        ),
                     }
                 )
 
