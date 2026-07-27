@@ -328,9 +328,11 @@ class TestFilelikeAndFileName:
 
     def test_saveToFilepath_invalid_filename(self) -> None:
         file_obj = FilelikeAndFileName(b"data", "valid.txt")
-        with tempfile.TemporaryDirectory() as temp_dir:
-            with pytest.raises(ValueError, match="is not valid"):
-                file_obj.saveToFilepath(Path(temp_dir) / "CON")
+        with (
+            tempfile.TemporaryDirectory() as temp_dir,
+            pytest.raises(ValueError, match="is not valid"),
+        ):
+            file_obj.saveToFilepath(Path(temp_dir) / "CON")
 
     def test_saveToDirectory_file_extension_in_path(self) -> None:
         content = b"Extension test"

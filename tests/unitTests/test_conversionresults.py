@@ -290,9 +290,11 @@ def test_console_processing_context_early_abort_is_swallowed(builder_with_consol
 
 
 def test_processing_context_unexpected_exception(builder_with_console):
-    with pytest.raises(ValueError):
-        with builder_with_console.processingContext("Fails Hard") as ctx:
-            raise ValueError("Unexpected")
+    with (
+        pytest.raises(ValueError),
+        builder_with_console.processingContext("Fails Hard") as ctx,
+    ):
+        raise ValueError("Unexpected")
 
     # Message should be logged with Severity.ERROR
     messages = builder_with_console.getMessages()
