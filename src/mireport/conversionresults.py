@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Mapping
+    from collections.abc import Set as AbstractSet
     from types import TracebackType
     from typing import Self
 
@@ -95,6 +96,12 @@ class MessageType(StrEnum):
     @lru_cache(1)
     def maxValueWidth(cls) -> int:
         return max(len(s.value) for s in cls.__members__.values())
+
+
+# N.B. frozen so they are safe to use as argument defaults, which are evaluated
+# once and then shared by every call.
+ALL_MESSAGE_TYPES: frozenset[MessageType] = frozenset(MessageType.all())
+ALL_SEVERITIES: frozenset[Severity] = frozenset(Severity.all())
 
 
 class Message:
@@ -234,8 +241,8 @@ class ConversionResults:
     def getMessages(
         self,
         *,
-        wantedMessageTypes: set[MessageType] = MessageType.all(),
-        wantedMessageSeverities: set[Severity] = Severity.all(),
+        wantedMessageTypes: AbstractSet[MessageType] = ALL_MESSAGE_TYPES,
+        wantedMessageSeverities: AbstractSet[Severity] = ALL_SEVERITIES,
     ) -> list[Message]:
         messages = [
             m
@@ -255,7 +262,6 @@ class ConversionResults:
             wantedMessageTypes=MessageType.allExcept(
                 MessageType.DevInfo, MessageType.Progress
             ),
-            wantedMessageSeverities=Severity.all(),
         )
 
     @property
