@@ -22,7 +22,8 @@ try:
     MIGRATION_WORKING = True
 except ImportError:
     logging.getLogger(__name__).warning(
-        "Migration tool not available, migration functionality will be disabled", exc_info=True
+        "Migration tool not available, migration functionality will be disabled",
+        exc_info=True,
     )
     MIGRATION_WORKING = False
 
@@ -144,7 +145,9 @@ def migrationPage(id: str) -> Response:
         )
         excel = FilelikeAndFileName(*conversion["excel"])
 
-        has_migration_results = "migrated_excel" in conversion or "migration_error" in conversion
+        has_migration_results = (
+            "migrated_excel" in conversion or "migration_error" in conversion
+        )
         migration_error = conversion.get("migration_error")
         return Response(
             render_template(
@@ -199,7 +202,9 @@ def migrationButton(id: str) -> Response:
             conversion["migration_error"] = f"Migration failed: {e}"
             conversion["migration_elapsed"] = None
             session.modified = True
-            return make_response(redirect(url_for("basic.migrationPage", id=id), code=303))
+            return make_response(
+                redirect(url_for("basic.migrationPage", id=id), code=303)
+            )
 
         o_path = PurePath(original_excel.filename)
         m_name = o_path.with_stem(f"{o_path.stem}_migrated_to_latest_version").name
@@ -207,7 +212,11 @@ def migrationButton(id: str) -> Response:
             fileContent=migrated_bytes, filename=m_name
         )
 
-        L.info("MigrationButton: generated workbook size=%d bytes for id=%s", len(migrated_bytes), id)
+        L.info(
+            "MigrationButton: generated workbook size=%d bytes for id=%s",
+            len(migrated_bytes),
+            id,
+        )
 
         # Store migrated file and results in session, then redirect to results view
         conversion["migrated_excel"] = migrated_excel
