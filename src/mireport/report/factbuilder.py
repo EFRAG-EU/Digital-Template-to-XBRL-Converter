@@ -4,7 +4,7 @@ import logging
 from typing import TYPE_CHECKING
 
 from mireport.exceptions import InlineReportException
-from mireport.report.fact import Fact
+from mireport.report.fact import Fact, Provenance
 from mireport.stringutil import xml_clean
 from mireport.taxonomy import Concept, QName, Taxonomy
 from mireport.typealiases import DecimalPlaces, FactValue
@@ -28,6 +28,7 @@ class FactBuilder:
         self._concept: Concept | None = None
         self._aspects: dict[str | QName, str | QName] = {}
         self._value: FactValue | None = None
+        self._provenance: Provenance | None = None
 
     def __repr__(self) -> str:
         bits = (self._concept, self._aspects, self._value)
@@ -119,6 +120,11 @@ class FactBuilder:
         if not value.startswith('"') and not value.endswith('"'):
             value = f'"{value}"'
         self._aspects["hidden-value"] = value
+        return self
+
+    def setProvenance(self, provenance: Provenance) -> Self:
+        """Record where this fact originated (e.g. a source cell reference)."""
+        self._provenance = provenance
         return self
 
     def setConcept(self, concept: Concept) -> Self:
@@ -360,4 +366,10 @@ class FactBuilder:
 
         self.validateTaxonomyDimensions()
         # TODO: check aspect validity before creating fact and raise Exception if invalid
-        return Fact(self._concept, self._value, self._report, self._aspects)
+        return Fact(
+            self._concept,
+            self._value,
+            self._report,
+            self._aspects,
+            self._provenance,
+        )

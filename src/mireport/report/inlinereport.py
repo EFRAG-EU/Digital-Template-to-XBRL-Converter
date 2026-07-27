@@ -7,7 +7,11 @@ from collections import defaultdict
 from datetime import UTC, date, datetime
 from io import BytesIO
 from itertools import count
+from typing import TYPE_CHECKING, Protocol
 from unicodedata import name as unicode_name
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 import ixbrltemplates
 from babel import Locale
@@ -48,6 +52,15 @@ INLINE_REPORT_PACKAGE_JSON = b"""{
         "documentType": "https://xbrl.org/report-package/2023/xbri"
     }
 }"""
+
+
+class InconsistentDuplicateHandler(Protocol):
+    """
+    Callback invoked once per set of inconsistent duplicate facts (facts sharing
+    a concept and all aspects but holding different values).
+    """
+
+    def __call__(self, concept: Concept, facts: Sequence[Fact]) -> None: ...
 
 
 class InlineReport:
@@ -199,6 +212,27 @@ class InlineReport:
         """
         self._facts.append(fact)
         self._factsByConcept[fact.concept].append(fact)
+
+    def reportInconsistentDuplicateFacts(
+        self, handler: InconsistentDuplicateHandler
+    ) -> None:
+        """
+        Find inconsistent duplicate facts and report each set via handler.
+
+        Facts are inconsistent duplicates when they share a concept and all
+        aspects (dimensions, period, unit, ...) but hold different values. Such
+        facts cannot both be rendered, so one is silently dropped downstream;
+        this surfaces the conflict so the caller can warn the report preparer.
+        """
+        for concept, facts in self._factsByConcept.items():
+            if len(facts) < 2:
+                continue
+            byAspects: dict[frozenset[tuple], list[Fact]] = defaultdict(list)
+            for fact in facts:
+                byAspects[frozenset(fact.aspects.items())].append(fact)
+            for group in byAspects.values():
+                if len({fact.value for fact in group}) > 1:
+                    handler(concept, group)
 
     def _createFootnote(self, content: Markup) -> Footnote:
         fn = Footnote(id=next(self._footnoteCounter), content=content)

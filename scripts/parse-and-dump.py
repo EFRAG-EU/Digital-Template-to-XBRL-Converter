@@ -119,7 +119,7 @@ def main() -> None:
     start = time.perf_counter_ns()
     excel_file = Path(args.excel)
     checkExcelFilePath(excel_file)
-    with closing(loadExcelFromPathOrFileLike(excel_file)) as wb:
+    with closing(loadExcelFromPathOrFileLike(excel_file, read_only=True)) as wb:
         if args.verbose:
             print(f"Opened {excel_file}")
             print("Found sheets:", *wb.sheetnames, sep="\n\t")
