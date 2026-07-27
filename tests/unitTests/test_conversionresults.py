@@ -46,9 +46,8 @@ def test_processing_context_failure(builder):
     class TestError(Exception):
         pass
 
-    with pytest.raises(TestError):
-        with builder.processingContext("Fail Test"):
-            raise TestError("Fail")
+    with pytest.raises(TestError), builder.processingContext("Fail Test"):
+        raise TestError("Fail")
     msgs = [m for m in builder.messages if m.severity == Severity.ERROR]
     assert any("finished abnormally" in m.messageText for m in msgs)
 
@@ -291,9 +290,11 @@ def test_console_processing_context_early_abort_is_swallowed(builder_with_consol
 
 
 def test_processing_context_unexpected_exception(builder_with_console):
-    with pytest.raises(ValueError):
-        with builder_with_console.processingContext("Fails Hard") as ctx:
-            raise ValueError("Unexpected")
+    with (
+        pytest.raises(ValueError),
+        builder_with_console.processingContext("Fails Hard") as ctx,
+    ):
+        raise ValueError("Unexpected")
 
     # Message should be logged with Severity.ERROR
     messages = builder_with_console.getMessages()

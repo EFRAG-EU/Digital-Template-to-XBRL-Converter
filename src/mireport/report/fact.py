@@ -14,8 +14,6 @@ from mireport.taxonomy import Concept, QName
 from mireport.typealiases import DecimalPlaces, FactValue
 
 if TYPE_CHECKING:
-    from typing import Optional
-
     from mireport.report.footnote import Footnote
     from mireport.report.inlinereport import InlineReport
 
@@ -75,7 +73,7 @@ class Fact:
                     dimvalue = self._aspects.pop(key)
                     self._aspects[f"typed {keyConcept.qname}"] = dimvalue
 
-        self._decimals: Optional[DecimalPlaces]
+        self._decimals: DecimalPlaces | None
         if aspect_value := str(self._aspects.get("decimals", "")):
             if aspect_value == "INF":
                 self._decimals = "INF"
@@ -85,7 +83,7 @@ class Fact:
         else:
             self._decimals = None
 
-        self._numeric_scale: Optional[int] = None
+        self._numeric_scale: int | None = None
         if aspect_value := str(self._aspects.get("numeric-scale", "")):
             self._numeric_scale = int(aspect_value)
             self._aspects["numeric-scale"] = f'"{aspect_value}"'
@@ -199,11 +197,10 @@ class Fact:
 
     @property
     def hasNonDefaultPeriod(self) -> bool:
-        if (
-            period := self.aspects.get("period")
-        ) is not None and period != self._report._defaultPeriodName:
-            return True
-        return False
+        return bool(
+            (period := self.aspects.get("period")) is not None
+            and period != self._report._defaultPeriodName
+        )
 
     @property
     def period(self) -> DurationPeriodHolder | InstantPeriodHolder:

@@ -1,7 +1,8 @@
 import subprocess
 import sys
+from collections.abc import Generator
 from pathlib import Path
-from typing import Any, Generator
+from typing import Any
 
 import pytest
 from lxml import etree
@@ -44,6 +45,7 @@ def parsed_reports(
             ],
             capture_output=True,
             encoding="utf-8",
+            check=False,
         )
 
         assert result.returncode == 0, (
@@ -94,6 +96,7 @@ def test_validation(parsed_reports: dict[str, Path], input_file: str, _: int) ->
         ],
         capture_output=True,
         encoding="utf-8",
+        check=False,
     )
 
     assert validate_result.returncode == 0, (

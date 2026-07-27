@@ -11,7 +11,7 @@ from PIL.Image import Resampling
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
-    from typing import BinaryIO, Optional
+    from typing import BinaryIO
 
     from typing_extensions import Buffer
 
@@ -48,10 +48,7 @@ def is_valid_filename(filename: str) -> bool:
         return False
 
     # Ensure filename does not contain invalid characters
-    if FILE_UNWANTED_RE.search(filename):
-        return False
-
-    return True
+    return not FILE_UNWANTED_RE.search(filename)
 
 
 def zipSafeString(original: str, fallback: str = "fallback") -> str:
@@ -99,7 +96,7 @@ class ReadOnlyNamedBytesIO(NamedBytesIO):
         """Get a read-only view over the contents of the BytesIO object."""
         return super().getbuffer().toreadonly()
 
-    def truncate(self, _: Optional[int] = None) -> int:
+    def truncate(self, _: int | None = None) -> int:
         raise UnsupportedOperation("This BytesIO is read-only")
 
     def writable(self) -> bool:
@@ -178,7 +175,6 @@ class FilelikeAndFileName(NamedTuple):
             raise ValueError(f"Parent directory {parent} does not exist")
 
         path.write_bytes(self.fileContent)
-        return
 
     def saveToDirectory(self, directory: Path) -> None:
         """Saves the file content to the specified directory using @self.filename."""
@@ -188,7 +184,6 @@ class FilelikeAndFileName(NamedTuple):
             raise ValueError(f"Path {directory} is an existing file, not a directory")
 
         self.saveToFilepath(directory / self.filename)
-        return
 
 
 class ImageFileLikeAndFileName(FilelikeAndFileName):
@@ -243,8 +238,8 @@ class ImageFileLikeAndFileName(FilelikeAndFileName):
 
     def as_data_url(
         self,
-        max_width: Optional[int] = None,
-        max_height: Optional[int] = None,
+        max_width: int | None = None,
+        max_height: int | None = None,
     ) -> str:
         """
         Resize and convert a logo image to a base64 data URL suitable for XHTML embedding.

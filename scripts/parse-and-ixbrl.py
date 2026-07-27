@@ -388,7 +388,6 @@ def outputMessages(
             *unused,
             sep="\n\t",
         )
-    return
 
 
 def main() -> None:
@@ -396,7 +395,6 @@ def main() -> None:
     args = parseArgs(parser)
     result, excel = doConversion(args)
     outputMessages(args, result, excel)
-    return
 
 
 if __name__ == "__main__":

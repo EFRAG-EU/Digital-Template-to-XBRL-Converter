@@ -159,7 +159,7 @@ def migrationPage(id: str) -> Response:
         )
     except Exception as e:
         L.exception("Exception during migration page display", exc_info=e)
-        flash(f"Migration page failed to load: {str(e)}", "error")
+        flash(f"Migration page failed to load: {e!s}", "error")
         return make_response(redirect(url_for("basic.index")))
 
 

@@ -4,7 +4,7 @@ import logging
 import re
 from dataclasses import dataclass
 from enum import ReprEnum, StrEnum
-from typing import TYPE_CHECKING, ClassVar, Optional
+from typing import TYPE_CHECKING, ClassVar
 
 if TYPE_CHECKING:
     from typing import Self
@@ -24,7 +24,7 @@ class CSSHexColour(str):
 
     _HEX_RE: ClassVar[re.Pattern[str]] = re.compile(r"#[0-9A-Fa-f]{6}")
 
-    def __new__(cls, value: str) -> CSSHexColour:
+    def __new__(cls, value: str) -> Self:
         if not cls.is_valid(value):
             raise InvalidReportThemeException(
                 f"Colour must be a 6-digit hex code (e.g. #1a2b3c), got '{value}'."
@@ -107,9 +107,9 @@ class ReportTheme:
 
     colour: CSSHexColour
     displayMode: DisplayMode
-    background_image: Optional[ImageFileLikeAndFileName] = None
-    cover_image: Optional[ImageFileLikeAndFileName] = None
-    logo_image: Optional[ImageFileLikeAndFileName] = None
+    background_image: ImageFileLikeAndFileName | None = None
+    cover_image: ImageFileLikeAndFileName | None = None
+    logo_image: ImageFileLikeAndFileName | None = None
 
     @classmethod
     def default(cls) -> ReportTheme:

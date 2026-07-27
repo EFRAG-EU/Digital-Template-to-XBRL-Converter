@@ -13,7 +13,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING, NamedTuple
 
 if TYPE_CHECKING:
-    from typing import BinaryIO, Callable, Optional, Self
+    from collections.abc import Callable
+    from typing import BinaryIO, Self
 
 from babel import Locale
 from dateutil.parser import parse as parse_datetime
@@ -96,11 +97,11 @@ def eeDomainByLabel(eeConcept: Concept) -> dict[str, tuple[Concept, str]]:
             f"Concept {eeConcept} with data-type {eeConcept.dataType} is not of enumeration type."
         )
 
-    eeDomainLabels: dict[str, tuple[Concept, str]] = dict()
-    for eeConcept in eeConcept.getEEDomain():
-        all_labels = eeConcept.getAllStandardLabels()
+    eeDomainLabels: dict[str, tuple[Concept, str]] = {}
+    for member in eeConcept.getEEDomain():
+        all_labels = member.getAllStandardLabels()
         for actual_label in all_labels:
-            result = (eeConcept, actual_label)
+            result = (member, actual_label)
             eeDomainLabels[actual_label] = result
 
             # difflib matching works better if we strip the [member] suffix
@@ -111,7 +112,7 @@ def eeDomainByLabel(eeConcept: Concept) -> dict[str, tuple[Concept, str]]:
 
 def getClosestEEMemberMatch(
     eeConcept: Concept, text: str
-) -> Optional[tuple[Concept, str]]:
+) -> tuple[Concept, str] | None:
     eeDomainLabels = eeDomainByLabel(eeConcept)
     closest_matches = difflib.get_close_matches(
         text, eeDomainLabels.keys(), n=1, cutoff=0.6
@@ -194,7 +195,7 @@ class ExcelProcessor:
         results: ConversionResultsBuilder,
         defaults: dict,
         /,
-        outputLocale: Optional[Locale] = None,
+        outputLocale: Locale | None = None,
     ):
         self._results = results
         self._defaults = defaults
@@ -217,8 +218,8 @@ class ExcelProcessor:
         self._tableRelatedNames: dict[CellAndXBRLMetadataHolder, TableXBRLContents] = {}
 
         # For passing through to inline report
-        self._outputLocale: Optional[Locale] = outputLocale
-        self._coverImage: Optional[bytes] = None
+        self._outputLocale: Locale | None = outputLocale
+        self._coverImage: bytes | None = None
 
         # Not yet initialised. Need setting early
         self._workbook: Workbook
@@ -289,7 +290,7 @@ class ExcelProcessor:
             if dn.name and not dn.name.startswith(("enum_", "footnote_", "template_"))
         )
 
-    def getDefinedNameForString(self, name: str) -> Optional[DefinedName]:
+    def getDefinedNameForString(self, name: str) -> DefinedName | None:
         """
         Get the DefinedName for a given name string or None if it is not present.
         """
@@ -612,7 +613,7 @@ class ExcelProcessor:
         )
 
     @classmethod
-    def checkReport(cls, excelBlob: BinaryIO) -> Optional[TemplateCheckResult]:
+    def checkReport(cls, excelBlob: BinaryIO) -> TemplateCheckResult | None:
         """
         Check the report template for internal validation and version information.
         """
@@ -637,13 +638,11 @@ class ExcelProcessor:
         If report has not been opened and saved (so, refreshed), formula cells return None.
         template_migration_status is a formula cell.
         """
-        if self._workbook.defined_names.get("template_migration_status") is not None:
-            if self.getSingleValue("template_migration_status") is None:
-                return False  # not refreshed
-            else:
-                return True  # okay
-        else:
+        if self._workbook.defined_names.get("template_migration_status") is None:
             return None
+        # No value means the formula cell has not been recalculated, i.e. the
+        # workbook has not been opened and saved since being migrated.
+        return self.getSingleValue("template_migration_status") is not None
 
     def abortEarlyIfErrors(self) -> None:
         if self._results.hasErrors():
@@ -695,7 +694,7 @@ class ExcelProcessor:
         *,
         row: int = -1,
         column: int = -1,
-    ) -> Optional[CellType]:
+    ) -> CellType | None:
         if isinstance(definedName, str):
             definedName = self._workbook.defined_names.get(definedName)
             if definedName is None:
@@ -842,7 +841,7 @@ class ExcelProcessor:
 
     def getSimpleUnit(
         self, unitHolder: CellAndXBRLMetadataHolder, cell: CellType
-    ) -> Optional[QName]:
+    ) -> QName | None:
         if not cell.value:
             return None
         cellValue = str(cell.value).strip()
@@ -957,7 +956,7 @@ class ExcelProcessor:
             MessageType.ExcelParsing,
         )
 
-    def _getCellRange(self, dn: DefinedName) -> Optional[CellRangeMetadata]:
+    def _getCellRange(self, dn: DefinedName) -> CellRangeMetadata | None:
         try:
             all_destinations = list(dn.destinations)
         except AttributeError:
@@ -1070,7 +1069,7 @@ class ExcelProcessor:
 
             candidates: list[CellAndXBRLMetadataHolder] = []
             extras_in_excel: set[CellAndXBRLMetadataHolder] = set()
-            for _, stuff in self._definedNameToXBRLMap.items():
+            for stuff in self._definedNameToXBRLMap.values():
                 concept = stuff.concept
                 if not (concept.isReportable or concept.isDimension):
                     continue
@@ -1186,7 +1185,6 @@ class ExcelProcessor:
                         periodHolder.worksheet, periodHolder.cellRange
                     ),
                 )
-        return
 
     def createTableFacts(self) -> None:
         for tableStuff, table_contents in self._tableRelatedNames.items():
@@ -1341,7 +1339,7 @@ class ExcelProcessor:
                                     ),
                                 )
                         factBuilder.setHiddenValue(
-                            " ".join(sorted(set(e.expandedName for e in eeValues)))
+                            " ".join(sorted({e.expandedName for e in eeValues}))
                         )
 
                     if broken:
@@ -1463,13 +1461,13 @@ class ExcelProcessor:
         factBuilder: FactBuilder,
         *,
         row: int = -1,
-        specifiedUnitHolder: Optional[CellAndXBRLMetadataHolder] = None,
-        sharedRange: Optional[bool] = None,
+        specifiedUnitHolder: CellAndXBRLMetadataHolder | None = None,
+        sharedRange: bool | None = None,
     ) -> bool:
         concept = conceptHolder.concept
         # See if we have a {conceptName}_unit named range with a cell value that
         # is a valid unit.
-        unitHolder: Optional[CellAndXBRLMetadataHolder]
+        unitHolder: CellAndXBRLMetadataHolder | None
         if specifiedUnitHolder is not None:
             unitHolder = specifiedUnitHolder
         else:
@@ -1707,7 +1705,7 @@ class ExcelProcessor:
                     if defaultValue is None or dimValue != defaultValue:
                         fb.setExplicitDimension(dim, dimValue)
 
-                    dimValueDN: Optional[DefinedName] = None
+                    dimValueDN: DefinedName | None = None
                     if (
                         dimValueDN := self._workbook.defined_names.get(
                             dimValue.qname.localName
@@ -1830,8 +1828,8 @@ class ExcelProcessor:
                     excel_reference=excelCellRef(stuff.worksheet, cell),
                 )
         if EE_SET_DESIRED_EMPTY_PLACEHOLDER_VALUE in value:
-            onlyPlaceholder = set([EE_SET_DESIRED_EMPTY_PLACEHOLDER_VALUE])
-            otherValues = set(x for x in value if x is not None).difference(
+            onlyPlaceholder = {EE_SET_DESIRED_EMPTY_PLACEHOLDER_VALUE}
+            otherValues = {x for x in value if x is not None}.difference(
                 onlyPlaceholder
             )
             if otherValues:
@@ -1863,7 +1861,6 @@ class ExcelProcessor:
                 " ".join(sorted(e.expandedName for e in eeSetValue))
             ).setValue("\n".join(value))
             self.addFactToReport(fb, stuff)
-        return None
 
     def setFallbackUnitForName(
         self, dn: DefinedName, concept: Concept, factBuilder: FactBuilder
@@ -1873,10 +1870,11 @@ class ExcelProcessor:
             return False
 
         # If we have a default unit for the data type, use it iff UTR valid.
-        if (unit := self._configDataTypeToUnitMap.get(concept.dataType)) is not None:
-            if self.taxonomy.UTR.valid(concept.dataType, unit):
-                factBuilder.setSimpleUnit(unit)
-                return True
+        if (
+            unit := self._configDataTypeToUnitMap.get(concept.dataType)
+        ) is not None and self.taxonomy.UTR.valid(concept.dataType, unit):
+            factBuilder.setSimpleUnit(unit)
+            return True
 
         # Otherwise pick the first unit from the UTR that is valid.
         if units := self.taxonomy.UTR.getUnitsForDataType(concept.dataType):
@@ -1906,7 +1904,7 @@ class ExcelProcessor:
         stuff: CellAndXBRLMetadataHolder,
         cell: CellType,
         fb: FactBuilder,
-        value: Optional[object] = None,
+        value: object | None = None,
     ) -> None:
         if value is None:
             if cell.value is None:

@@ -1,9 +1,10 @@
+from collections.abc import Generator
 from importlib.resources import Package, files
 from importlib.resources.abc import Traversable
 from json import loads
-from typing import Any, Generator
+from typing import Any
 
-__all__ = ["getResource", "getObject", "getJsonFiles"]
+__all__ = ["getJsonFiles", "getObject", "getResource"]
 
 
 def getResource(module: Package, filename: str) -> Traversable:

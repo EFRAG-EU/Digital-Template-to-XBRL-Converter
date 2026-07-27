@@ -3,7 +3,6 @@ import glob
 import logging
 import time
 from pathlib import Path
-from typing import Optional
 
 from mireport.arelle.report_info import ArelleReportProcessor, getOrCreateReportPackage
 from mireport.cli import configure_rich_output
@@ -86,8 +85,8 @@ def main() -> None:
 
     report_path: Path = args.report_path
     taxonomy_package_globs: list[str] = args.taxonomy_packages
-    viewer_path: Optional[Path] = args.viewer_path
-    json_path: Optional[Path] = args.json_path
+    viewer_path: Path | None = args.viewer_path
+    json_path: Path | None = args.json_path
 
     taxonomy_packages: list[Path] = []
     if taxonomy_package_globs:
@@ -105,10 +104,10 @@ def main() -> None:
         )
         print("Zip files to use  ", " ".join(str(t) for t in taxonomy_packages))
 
-        if not all([taxonomy_zip.is_file() for taxonomy_zip in taxonomy_packages]):
+        if not all(taxonomy_zip.is_file() for taxonomy_zip in taxonomy_packages):
             raise SystemExit(f"Not all specified files found: {taxonomy_packages}")
         elif not all(
-            [".zip" == taxonomy_zip.suffix for taxonomy_zip in taxonomy_packages]
+            ".zip" == taxonomy_zip.suffix for taxonomy_zip in taxonomy_packages
         ):
             raise SystemExit(
                 f"Not all specified files are Zip files: {taxonomy_packages}"

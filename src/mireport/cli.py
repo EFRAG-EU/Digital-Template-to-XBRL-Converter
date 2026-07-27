@@ -68,8 +68,8 @@ def validateTaxonomyPackages(globList: list[str], parser: ArgumentParser) -> lis
     taxonomy_zips: list[str] = getListofPathsFromListOfGlobs(globList)
     console_print("Zip files to use  ", " ".join(taxonomy_zips))
 
-    if not all([os.path.exists(taxonomy_zip) for taxonomy_zip in taxonomy_zips]):
+    if not all(os.path.exists(taxonomy_zip) for taxonomy_zip in taxonomy_zips):
         raise parser.error(f"Not all specified files found: {taxonomy_zips}")
-    elif not all([taxonomy_zip.endswith(".zip") for taxonomy_zip in taxonomy_zips]):
+    elif not all(taxonomy_zip.endswith(".zip") for taxonomy_zip in taxonomy_zips):
         raise parser.error(f"Not all specified files are Zip files: {taxonomy_zips}")
     return taxonomy_zips

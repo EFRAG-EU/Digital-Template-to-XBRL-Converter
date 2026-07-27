@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Any, ClassVar, Optional, Self
+    from typing import Any, ClassVar, Self
 
 from arelle.api.Session import Session
 from arelle.ModelValue import QName
@@ -26,8 +26,6 @@ L = logging.getLogger(__name__)
 
 class ArelleRelatedException(MIReportException):
     """Exception to wrap any exception that come from calling in to Arelle."""
-
-    pass
 
 
 @dataclass
@@ -56,8 +54,8 @@ class ArelleProcessingResult:
     def __init__(self, jsonMessages: str, textLogLines: list[str]):
         self._validationMessages: list[Message] = []
         self._textLogLines: list[str] = textLogLines
-        self._viewer: Optional[FilelikeAndFileName] = None
-        self._xbrlJson: Optional[FilelikeAndFileName] = None
+        self._viewer: FilelikeAndFileName | None = None
+        self._xbrlJson: FilelikeAndFileName | None = None
         self.__importArelleMessages(jsonMessages)
         self._exceptions: list[Exception] = []
 
@@ -68,7 +66,7 @@ class ArelleProcessingResult:
             code: str = r.get("code", "")
             level: str = r.get("level", "")
             text: str = r.get("message", {}).get("text", "")
-            fact: Optional[str] = r.get("message", {}).get("fact")
+            fact: str | None = r.get("message", {}).get("fact")
 
             if wantDebug:
                 L.debug(f"Record: {r=}")
@@ -156,7 +154,7 @@ class ArelleProcessingResult:
     def logLines(self) -> list[str]:
         return list(self._textLogLines)
 
-    def addException(self, exception: Exception, message: Optional[str] = None) -> None:
+    def addException(self, exception: Exception, message: str | None = None) -> None:
         self._exceptions.append(exception)
         text = f"{exception.__class__.__name__}: {exception}"
         if message:

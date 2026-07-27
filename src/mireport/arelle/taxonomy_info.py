@@ -5,10 +5,11 @@ import logging
 import time
 from collections import defaultdict
 from collections.abc import Iterable, MutableMapping
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, TypeVar
 
 if TYPE_CHECKING:
-    from typing import Any, Optional
+    from typing import Any
 
 from arelle import XbrlConst
 from arelle.api.Session import Session
@@ -60,7 +61,7 @@ def callArelleForTaxonomyInfo(
     entry_point: str,
     taxonomy_zips: list[str],
     taxonomy_json_path: str,
-    utr_json_path: Optional[str] = None,
+    utr_json_path: str | None = None,
 ) -> ArelleProcessingResult:
     pluginOptions: dict[str, RuntimeOptionValue] = {
         "taxonomyDataFile": taxonomy_json_path
@@ -94,9 +95,12 @@ def callArelleForTaxonomyInfo(
     return results
 
 
+@dataclass
 class TaxonomyInfoPluginData(PluginData):
-    Taxonomy: dict = dict()
-    UTR: dict = dict()
+    # N.B. per-instance dicts. Plain class attributes would be shared by every
+    # Cntlr that loads this plugin.
+    Taxonomy: dict = field(default_factory=dict)
+    UTR: dict = field(default_factory=dict)
 
 
 def pluginData(cntlr: Cntlr) -> TaxonomyInfoPluginData:
@@ -171,7 +175,7 @@ class UTRInfoExtractor:
         ]
         utrEntries = [
             u
-            for dataTypeIsh in self.utrModel.keys()
+            for dataTypeIsh in self.utrModel
             for u in self.utrModel[dataTypeIsh].values()
         ]
         for entry in sorted(utrEntries, key=lambda e: e.unitId):
@@ -459,7 +463,7 @@ class TaxonomyInfoExtractor:
 
     def extractDimensionDefaults(self) -> None:
         elrsWithDefaults = set()
-        for arcroleUri, elrUri, linkqname, arcqname in self.modelXbrl.baseSets.keys():
+        for arcroleUri, elrUri, linkqname, arcqname in self.modelXbrl.baseSets:
             if arcroleUri == XbrlConst.dimensionDefault and elrUri is not None:
                 elrsWithDefaults.add(elrUri)
 
@@ -560,14 +564,10 @@ class TaxonomyInfoExtractor:
                         "role": role,
                         "order": r.order,
                         "parts": ref_parts,
-                        "sort_key": tuple(
-                            (
-                                r.order,
-                                role,
-                                tuple(
-                                    (str(name), str(value)) for name, value in ref_parts
-                                ),
-                            )
+                        "sort_key": (
+                            r.order,
+                            role,
+                            tuple((str(name), str(value)) for name, value in ref_parts),
                         ),
                     }
                 )
@@ -577,7 +577,7 @@ class TaxonomyInfoExtractor:
 
             if not all_order1:
                 self.cntlr.addToLog(
-                    f"INFO: {concept.qname} uses references with order values other than 1. Orders found: {sorted(set(r['order'] for r in refs))}. References will be sorted by order.",
+                    f"INFO: {concept.qname} uses references with order values other than 1. Orders found: {sorted({r['order'] for r in refs})}. References will be sorted by order.",
                     level=logging.INFO,
                 )
 
@@ -613,7 +613,7 @@ class TaxonomyInfoExtractor:
                 if concept.isEnumeration and not concept.isEnumeration2Item:
                     self.cntlr.addToLog(
                         f"WARNING: Extensible enumerations other than 2.0 are not supported. {concept.qname}",
-                        level=logging.WARN,
+                        level=logging.WARNING,
                     )
                 if concept.isEnumeration2Item:
                     headUsable = concept.isEnumDomainUsable
@@ -636,7 +636,7 @@ class TaxonomyInfoExtractor:
         self.taxonomyJson["dimensions"] = defaultdict(dict)
         # Get the hypercubes and primary items
         hypercubeArcRoles = (XbrlConst.all, XbrlConst.notAll)
-        for arcroleUri, elrUri, linkqname, arcqname in self.modelXbrl.baseSets.keys():
+        for arcroleUri, elrUri, linkqname, arcqname in self.modelXbrl.baseSets:
             if linkqname is None or arcqname is None:
                 continue
             if arcroleUri in hypercubeArcRoles and elrUri is not None:
@@ -712,7 +712,7 @@ class TaxonomyInfoExtractor:
 
     def extractPresentation(self) -> None:
         self.cntlr.addToLog("Processing presentation network")
-        for arcroleUri, elrUri, linkqname, arcqname in self.modelXbrl.baseSets.keys():
+        for arcroleUri, elrUri, linkqname, arcqname in self.modelXbrl.baseSets:
             # cntlr.addToLog(f"{arcroleUri}, {elrUri}, {linkqname}, {arcqname}")
             if linkqname is None or arcqname is None:
                 continue
