@@ -9,9 +9,9 @@ from types import MappingProxyType
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Iterable, Mapping
     from types import TracebackType
-    from typing import Mapping, Optional, Self, Type
+    from typing import Self
 
 from mireport.exceptions import EarlyAbortException
 from mireport.stringutil import format_time_ns
@@ -35,7 +35,7 @@ class Severity(StrEnum):
 
     @classmethod
     @lru_cache(32)
-    def fromLogLevelString(cls, level: str, *, default: Optional[Self] = None) -> Self:
+    def fromLogLevelString(cls, level: str, *, default: Self | None = None) -> Self:
         # return cls.__members__.get(level.title(), cls(cls.WARNING.value))
         lower_lookup = {k.lower(): v for k, v in cls.__members__.items()}
         level_lower = level.lower()
@@ -103,14 +103,14 @@ class Message:
         messageText: str,
         severity: Severity,
         messageType: MessageType,
-        conceptQName: Optional[str] = None,
-        excelReference: Optional[str] = None,
+        conceptQName: str | None = None,
+        excelReference: str | None = None,
     ):
         self.messageText: str = messageText
         self.severity: Severity = severity
         self.messageType: MessageType = messageType
-        self.conceptQName: Optional[str] = conceptQName
-        self.excelReference: Optional[str] = excelReference
+        self.conceptQName: str | None = conceptQName
+        self.excelReference: str | None = excelReference
 
     def __str__(self) -> str:
         bits = [
@@ -283,7 +283,7 @@ class ConversionResults:
 
 class ConversionResultsBuilder(ConversionResults):
     def __init__(
-        self, conversionId: Optional[str] = None, consoleOutput: bool = False
+        self, conversionId: str | None = None, consoleOutput: bool = False
     ) -> None:
         if conversionId is not None:
             self.conversionId = conversionId
@@ -316,10 +316,10 @@ class ConversionResultsBuilder(ConversionResults):
         severity: Severity,
         message_type: MessageType,
         *,
-        taxonomy_concept: Optional[QName | Concept] = None,
-        excel_reference: Optional[str] = None,
+        taxonomy_concept: QName | Concept | None = None,
+        excel_reference: str | None = None,
     ) -> Self:
-        concept_str_or_none: Optional[str]
+        concept_str_or_none: str | None
         if taxonomy_concept is None:
             concept_str_or_none = taxonomy_concept
         else:
@@ -335,7 +335,7 @@ class ConversionResultsBuilder(ConversionResults):
         )
         return self
 
-    def processingContext(self, name: str) -> "ProcessingContext":
+    def processingContext(self, name: str) -> ProcessingContext:
         return ProcessingContext(self, name)
 
     def addMessages(self, messages: Iterable[Message]) -> Self:
@@ -363,7 +363,7 @@ class ProcessingContext:
         self.succeeded: bool = False
         self.start_time: int
         self.current_section_start_time: int
-        self.current_section_name: Optional[str] = None
+        self.current_section_name: str | None = None
         self.console = self._resultsBuilder.consoleOutput
 
     def __enter__(self) -> Self:
@@ -373,9 +373,9 @@ class ProcessingContext:
 
     def __exit__(
         self,
-        exc_type: Optional[Type[BaseException]],
-        exc_value: Optional[BaseException],
-        traceback: Optional[TracebackType],
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
     ) -> bool:
         self.mark()
         execution_time_ns = perf_counter_ns() - self.start_time
@@ -410,7 +410,7 @@ class ProcessingContext:
         self._resultsBuilder.addMessage(message, Severity.INFO, MessageType.DevInfo)
 
     def mark(
-        self, newSectionName: Optional[str] = None, additionalInfo: str = ""
+        self, newSectionName: str | None = None, additionalInfo: str = ""
     ) -> None:
         now = perf_counter_ns()
         if self.current_section_name is not None:
@@ -425,4 +425,3 @@ class ProcessingContext:
             self._logProgress(
                 f"Starting: [{self.current_section_name}]. {additionalInfo}"
             )
-        return

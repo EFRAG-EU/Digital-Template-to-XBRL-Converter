@@ -11,7 +11,7 @@ from mireport.typealiases import DecimalPlaces, FactValue
 
 if TYPE_CHECKING:
     from collections.abc import Collection
-    from typing import Optional, Self
+    from typing import Self
 
     from mireport.report.inlinereport import InlineReport
 
@@ -25,9 +25,9 @@ class FactBuilder:
 
     def __init__(self, report: InlineReport):
         self._report: InlineReport = report
-        self._concept: Optional[Concept] = None
+        self._concept: Concept | None = None
         self._aspects: dict[str | QName, str | QName] = {}
-        self._value: Optional[FactValue] = None
+        self._value: FactValue | None = None
 
     def __repr__(self) -> str:
         bits = (self._concept, self._aspects, self._value)
@@ -71,7 +71,7 @@ class FactBuilder:
 
     def setPercentageValue(
         self,
-        value: int | float,
+        value: float,
         decimals: DecimalPlaces,
         *,
         inputIsDecimalForm: bool = True,
@@ -264,7 +264,6 @@ class FactBuilder:
                     explicitDims[dimension] = taxonomy.getConcept(value)
         self.validateTypedDimensions(taxonomy, typedDims)
         self.validateExplicitDimensions(taxonomy, explicitDims)
-        return
 
     def validateTypedDimensions(
         self, taxonomy: Taxonomy, typedDims: dict[Concept, str]

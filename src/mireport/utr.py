@@ -5,7 +5,7 @@ from functools import cache, cached_property
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Optional, Self
+    from typing import Self
 
 from mireport.exceptions import UnitException
 from mireport.xml import ISO4217_NS, XBRLI_NS, QName, QNameMaker
@@ -58,7 +58,7 @@ class UTR:
         return cls(unitToNamespaces, dataTypeToUnit, unitQNamesToEntries, qnameMaker)
 
     @cache
-    def getQNameForUnitId(self, unitId: str) -> Optional[QName]:
+    def getQNameForUnitId(self, unitId: str) -> QName | None:
         if self._qnameMaker.isValidQName(unitId):
             return self._qnameMaker.fromString(unitId)
         namespaces = self._lookupNamespacesByUnitId.get(unitId)

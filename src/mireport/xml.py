@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING, NamedTuple
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
-    from typing import Any
 
 from mireport.exceptions import BrokenNamespacePrefixException, BrokenQNameException
 
@@ -131,7 +130,7 @@ class QName:
     def __hash__(self) -> int:
         return hash(self.__key())
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         if self is other:
             return True
         if isinstance(other, QName):
@@ -178,7 +177,6 @@ class QNameMaker:
             raise BrokenQNameException(
                 f"QName local name {q.localName} does not look like an NCName."
             )
-        return None
 
     def isValidQName(self, /, qname: str) -> bool:
         try:

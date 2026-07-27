@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Set
-    from typing import Optional
 
 from babel import Locale, UnknownLocaleError
 from babel.numbers import format_decimal, get_decimal_symbol, get_group_symbol
@@ -65,7 +64,7 @@ def babelIdentifier_to_xmlLang(babelId: str) -> str:
     return babelId.replace("_", "-")
 
 
-def split_base_territory(locale_str: str) -> tuple[str, Optional[str]]:
+def split_base_territory(locale_str: str) -> tuple[str, str | None]:
     """Split a locale string into base language and territory components."""
     locale_str = babelIdentifier_to_xmlLang(locale_str)
     baseLang, _, territory = locale_str.partition("-")
@@ -80,7 +79,7 @@ def argparse_locale(s: str) -> Locale:
         raise argparse.ArgumentTypeError(f"Invalid locale: {s}")
 
 
-def get_locale_from_str(s: str) -> Optional[Locale]:
+def get_locale_from_str(s: str) -> Locale | None:
     """Parse a locale string into a Locale object, normalizing to underscore format. Fallback to None on error."""
     try:
         s = s.replace("-", "_")
@@ -99,7 +98,7 @@ def extract_base_languages(languages: Iterable) -> frozenset[str]:
 
 
 def get_locale_list(
-    requestedCodes: Iterable[str], supportedLanguages: Optional[Set[str]] = None
+    requestedCodes: Iterable[str], supportedLanguages: Set[str] | None = None
 ) -> list[dict[str, str]]:
     locales: list[dict[str, str]] = []
 
@@ -133,9 +132,9 @@ def get_locale_list(
 
 
 def localise_and_format_number(
-    number: float | int | str | Decimal,
+    number: float | str | Decimal,
     decimal_places: DecimalPlaces,
-    locale: Optional[Locale] = None,
+    locale: Locale | None = None,
 ) -> str:
     """
     Format a number with optional locale, supporting 'INF' for unlimited precision.
@@ -180,8 +179,7 @@ def localise_and_format_number(
         return f"{value:,}"
 
     # Handle negative decimal places (fallback to 0)
-    if decimal_places < 0:
-        decimal_places = 0
+    decimal_places = max(decimal_places, 0)
 
     # Normal finite case
     if locale:
@@ -194,7 +192,7 @@ def localise_and_format_number(
         return f"{value:,.{decimal_places}f}"
 
 
-def decimal_symbol(locale: Optional[Locale] = None) -> str:
+def decimal_symbol(locale: Locale | None = None) -> str:
     """Return the decimal symbol for the given locale."""
     if locale:
         return get_decimal_symbol(locale)
@@ -202,7 +200,7 @@ def decimal_symbol(locale: Optional[Locale] = None) -> str:
         return "."
 
 
-def group_symbol(locale: Optional[Locale] = None) -> str:
+def group_symbol(locale: Locale | None = None) -> str:
     """Return the decimal symbol for the given locale."""
     if locale:
         return get_group_symbol(locale)

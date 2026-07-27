@@ -4,14 +4,10 @@ import logging
 import time
 import zipfile
 from collections import defaultdict
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from io import BytesIO
 from itertools import count
-from typing import TYPE_CHECKING
 from unicodedata import name as unicode_name
-
-if TYPE_CHECKING:
-    from typing import Optional
 
 import ixbrltemplates
 from babel import Locale
@@ -41,21 +37,21 @@ from mireport.typealiases import FactValue
 
 L = logging.getLogger(__name__)
 
-UNCONSTRAINED_REPORT_PACKAGE_JSON = """{
+UNCONSTRAINED_REPORT_PACKAGE_JSON = b"""{
     "documentInfo": {
         "documentType": "https://xbrl.org/report-package/2023"
     }
-}""".encode("UTF-8")
+}"""
 
-INLINE_REPORT_PACKAGE_JSON = """{
+INLINE_REPORT_PACKAGE_JSON = b"""{
     "documentInfo": {
         "documentType": "https://xbrl.org/report-package/2023/xbri"
     }
-}""".encode("UTF-8")
+}"""
 
 
 class InlineReport:
-    def __init__(self, taxonomy: Taxonomy, outputLocale: Optional[Locale] = None):
+    def __init__(self, taxonomy: Taxonomy, outputLocale: Locale | None = None):
         self._facts: list[Fact] = []
         self._factsByConcept: dict[Concept, list[Fact]] = defaultdict(list)
         self._footnoteCounter: count = count(1)
@@ -63,13 +59,13 @@ class InlineReport:
         self._taxonomy: Taxonomy = taxonomy
         self._periods: dict[str, DurationPeriodHolder] = {}
         self._entityName: str = "Sample"
-        self._generatedReport: Optional[str] = None
+        self._generatedReport: str | None = None
         self._defaultPeriodName: str = ""
         self._schemaRefs: set[str] = set()
         self._reportTitle: str = ""
         self._reportSubtitle: str = ""
-        self._introduction: Optional[str] = None
-        self._backCoverMatter: Optional[str] = None
+        self._introduction: str | None = None
+        self._backCoverMatter: str | None = None
         self._theme: ReportTheme = ReportTheme.default()
         self._footnotesByGroup: dict[str, Footnote] = {}
         self._labelOverrides: dict[str, str] = {}
@@ -259,7 +255,6 @@ class InlineReport:
             )
 
         candidates[0].value = value
-        return
 
     @property
     def hasFacts(self) -> bool:
@@ -299,7 +294,7 @@ class InlineReport:
         def addDict(
             key: str,
             value: str | PeriodHolder | Symbol,
-            format_macro: Optional[str] = None,
+            format_macro: str | None = None,
         ) -> None:
             d: dict[str, str | PeriodHolder | Symbol] = {"key": key, "value": value}
             if format_macro is not None:
@@ -353,7 +348,7 @@ class InlineReport:
             {
                 PresentationStyle.__name__: PresentationStyle,
                 TableStyle.__name__: TableStyle,
-                "now_utc": lambda: datetime.now(timezone.utc),
+                "now_utc": lambda: datetime.now(UTC),
                 "labelLanguage": label_language,
                 "labelQNameFallback": label_language is None,
                 "label_overrides_by_concept": self._labelOverrides,

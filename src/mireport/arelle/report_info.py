@@ -9,7 +9,7 @@ from pathlib import Path, PurePath
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import BinaryIO, Optional
+    from typing import BinaryIO
 
 from arelle import PackageManager, PluginManager
 from arelle.api.Session import Session
@@ -35,7 +35,7 @@ class ArelleReportProcessor:
     def __init__(
         self,
         *,
-        taxonomyPackages: Optional[list[Path]] = None,
+        taxonomyPackages: list[Path] | None = None,
         workOffline: bool = True,
     ):
         self.workOffline = bool(workOffline)
@@ -47,7 +47,7 @@ class ArelleReportProcessor:
         self,
         reportPackage: FilelikeAndFileName,
         options: RuntimeOptions,
-        responseZipStream: Optional[BinaryIO] = None,
+        responseZipStream: BinaryIO | None = None,
     ) -> ArelleProcessingResult:
         ###############################
         #  Arelle is _NOT_ thread safe.
@@ -245,7 +245,7 @@ class ArelleReportProcessor:
 
     @staticmethod
     def getTaxonomyPackagesFromDir(
-        taxonomyPackageDir: Optional[str | Path],
+        taxonomyPackageDir: str | Path | None,
     ) -> list[Path]:
         if taxonomyPackageDir is None:
             return []

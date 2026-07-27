@@ -46,9 +46,8 @@ def test_processing_context_failure(builder):
     class TestError(Exception):
         pass
 
-    with pytest.raises(TestError):
-        with builder.processingContext("Fail Test"):
-            raise TestError("Fail")
+    with pytest.raises(TestError), builder.processingContext("Fail Test"):
+        raise TestError("Fail")
     msgs = [m for m in builder.messages if m.severity == Severity.ERROR]
     assert any("finished abnormally" in m.messageText for m in msgs)
 

@@ -4,7 +4,7 @@ import logging
 import re
 from dataclasses import dataclass
 from enum import ReprEnum, StrEnum
-from typing import TYPE_CHECKING, ClassVar, Optional
+from typing import TYPE_CHECKING, ClassVar
 
 if TYPE_CHECKING:
     from typing import Self
@@ -107,9 +107,9 @@ class ReportTheme:
 
     colour: CSSHexColour
     displayMode: DisplayMode
-    background_image: Optional[ImageFileLikeAndFileName] = None
-    cover_image: Optional[ImageFileLikeAndFileName] = None
-    logo_image: Optional[ImageFileLikeAndFileName] = None
+    background_image: ImageFileLikeAndFileName | None = None
+    cover_image: ImageFileLikeAndFileName | None = None
+    logo_image: ImageFileLikeAndFileName | None = None
 
     @classmethod
     def default(cls) -> ReportTheme:

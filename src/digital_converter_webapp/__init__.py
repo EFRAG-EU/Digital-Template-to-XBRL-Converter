@@ -1,6 +1,6 @@
 import logging
 from collections.abc import Mapping
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from random import randint
 from secrets import token_hex
 from typing import Any
@@ -60,7 +60,7 @@ from .migration import (
 
 MAX_LIVE_CAPTCHAS = 20  # answers kept per session (multiple tabs/reloads)
 MAX_FILE_SIZE = 16 * 2**20  # 16 MiB
-DEPLOYMENT_DATETIME = datetime.now(timezone.utc)
+DEPLOYMENT_DATETIME = datetime.now(UTC)
 
 L = logging.getLogger(__name__)
 
@@ -419,7 +419,7 @@ def upload() -> Response:
         )
     result = ConversionResultsBuilder()
     conversion = session.setdefault(result.conversionId, {"id": result.conversionId})
-    conversion["date"] = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+    conversion["date"] = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")
     conversion["excel"] = FilelikeAndFileName(
         fileContent=blob.stream.read(), filename=blob.filename
     )

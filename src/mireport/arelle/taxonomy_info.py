@@ -8,7 +8,7 @@ from collections.abc import Iterable, MutableMapping
 from typing import TYPE_CHECKING, TypeVar
 
 if TYPE_CHECKING:
-    from typing import Any, Optional
+    from typing import Any
 
 from arelle import XbrlConst
 from arelle.api.Session import Session
@@ -60,7 +60,7 @@ def callArelleForTaxonomyInfo(
     entry_point: str,
     taxonomy_zips: list[str],
     taxonomy_json_path: str,
-    utr_json_path: Optional[str] = None,
+    utr_json_path: str | None = None,
 ) -> ArelleProcessingResult:
     pluginOptions: dict[str, RuntimeOptionValue] = {
         "taxonomyDataFile": taxonomy_json_path
@@ -613,7 +613,7 @@ class TaxonomyInfoExtractor:
                 if concept.isEnumeration and not concept.isEnumeration2Item:
                     self.cntlr.addToLog(
                         f"WARNING: Extensible enumerations other than 2.0 are not supported. {concept.qname}",
-                        level=logging.WARN,
+                        level=logging.WARNING,
                     )
                 if concept.isEnumeration2Item:
                     headUsable = concept.isEnumDomainUsable

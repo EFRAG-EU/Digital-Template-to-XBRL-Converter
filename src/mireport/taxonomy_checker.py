@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Callable, Sequence
+from collections.abc import Callable, Sequence
 
 from mireport.stringutil import normalizeLabelText, stripLabelSuffix
 from mireport.taxonomy import STANDARD_LABEL_ROLE, Concept, Taxonomy

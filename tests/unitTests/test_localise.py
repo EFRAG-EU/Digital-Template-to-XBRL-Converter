@@ -31,7 +31,7 @@ def test_finite_decimal_places_no_locale(number, decimal_places, expected):
         (Decimal("1234.5678900"), "1,234.5678900"),
         ("1234.5678900", "1,234.5678900"),
         (1234, "1,234"),  # integer
-        (Decimal("1234"), "1,234"),
+        (Decimal(1234), "1,234"),
         (0.000123, "0.000123"),
         ("1e-6", "0.000001"),  # scientific notation expanded
         (Decimal("1e-6"), "0.000001"),

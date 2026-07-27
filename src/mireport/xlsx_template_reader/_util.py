@@ -1,15 +1,13 @@
 import re
 import warnings
+from collections.abc import Iterator
 from datetime import date, datetime, time
 from pathlib import Path
 from typing import (
     BinaryIO,
-    Iterator,
     Literal,
     NamedTuple,
-    Optional,
     TypeAlias,
-    Union,
     overload,
 )
 
@@ -96,8 +94,8 @@ def excelCellOrCellRangeRef(
 
 
 def excelDefinedNameRef(
-    definedName: Optional[DefinedName], cell: Optional[CellType] = None
-) -> Optional[str]:
+    definedName: DefinedName | None, cell: CellType | None = None
+) -> str | None:
     """Make an Excel cell reference such as 'Example sheet'!$A$5"""
     if definedName is None:
         return None
@@ -235,8 +233,8 @@ def get_decimal_places(cell: CellType) -> DecimalPlaces:
 def getCellRangeIterator(
     ws: Worksheet,
     cr: CellRange,
-    row_start: Optional[int] = None,
-    col_start: Optional[int] = None,
+    row_start: int | None = None,
+    col_start: int | None = None,
     group_by_row: Literal[False] = False,
 ) -> Iterator[tuple[int, int, CellType]]: ...
 
@@ -245,8 +243,8 @@ def getCellRangeIterator(
 def getCellRangeIterator(
     ws: Worksheet,
     cr: CellRange,
-    row_start: Optional[int] = None,
-    col_start: Optional[int] = None,
+    row_start: int | None = None,
+    col_start: int | None = None,
     group_by_row: Literal[True] = True,
 ) -> Iterator[tuple[int, tuple[CellType, ...]]]: ...
 
@@ -254,10 +252,10 @@ def getCellRangeIterator(
 def getCellRangeIterator(
     ws: Worksheet,
     cr: CellRange,
-    row_start: Optional[int] = None,
-    col_start: Optional[int] = None,
+    row_start: int | None = None,
+    col_start: int | None = None,
     group_by_row: bool = False,
-) -> Iterator[Union[tuple[int, int, CellType], tuple[int, tuple[CellType, ...]]]]:
+) -> Iterator[tuple[int, int, CellType] | tuple[int, tuple[CellType, ...]]]:
     """Iterates over cells in the given range, supporting both standard and row-grouped modes."""
 
     if cr.min_row is None or cr.min_col is None:
@@ -332,9 +330,8 @@ def getEffectiveCellRangeDimensions(
             cols_not_empty.add(cnum)
         else:
             cols_empty.add(cnum)
-    else:
-        if not empty_row:
-            populated_rows.add(rnum)
+    if not empty_row:
+        populated_rows.add(rnum)
 
     definitely_empty_cols = cols_empty - cols_not_empty
     total_cols = len(cols_not_empty.union(cols_empty))

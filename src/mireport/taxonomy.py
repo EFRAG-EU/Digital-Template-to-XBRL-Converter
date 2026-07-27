@@ -36,7 +36,7 @@ from mireport.xml import (
 )
 
 if TYPE_CHECKING:
-    from typing import Any, Optional, Self
+    from typing import Any, Self
 
 MEASUREMENT_GUIDANCE_LABEL_ROLE = "http://www.xbrl.org/2003/role/measurementGuidance"
 STANDARD_LABEL_ROLE = "http://www.xbrl.org/2003/role/label"
@@ -95,21 +95,21 @@ class Concept:
     """
 
     __slots__ = (
-        "qname",
-        "periodType",
-        "dataType",
-        "baseDataType",
-        "typedElement",
-        "_labels",
+        "_eeDomainMemberStrings",
+        "_eeDomainMembers",
         "_isAbstract",
         "_isDimension",
         "_isHypercube",
         "_isNillable",
         "_isNumeric",
-        "_eeDomainMembers",
-        "_eeDomainMemberStrings",
+        "_labels",
         "_qnameMaker",
         "_taxonomy",
+        "baseDataType",
+        "dataType",
+        "periodType",
+        "qname",
+        "typedElement",
     )
 
     def __init__(self, qnameMaker: QNameMaker, s_qname: str, details: dict):
@@ -151,8 +151,8 @@ class Concept:
         if (tElem := other.get("typedElement")) is not None:
             self.typedElement = self._qnameMaker.fromString(tElem)
 
-        self._eeDomainMembers: Optional[tuple[Concept, ...]] = None
-        self._eeDomainMemberStrings: Optional[list[str]] = None
+        self._eeDomainMembers: tuple[Concept, ...] | None = None
+        self._eeDomainMemberStrings: list[str] | None = None
         if (eeDom := other.get("ee20DomainMembers")) is not None:
             self._eeDomainMemberStrings = eeDom
 
@@ -193,12 +193,12 @@ class Concept:
     def getLabelForRole(
         self,
         roleUri: str,
-        requestedLanguage: Optional[str] = None,
-        fallbackLabel: Optional[str] = None,
+        requestedLanguage: str | None = None,
+        fallbackLabel: str | None = None,
         fallbackToAnyLang: bool = False,
         fallbackToQName: bool = False,
         removeSuffix: bool = False,
-    ) -> Optional[str]:
+    ) -> str | None:
         """Return the label for *roleUri* in the requested language."""
         if (defaultLanguage := self._taxonomy.defaultLanguage) is None:
             return None
@@ -251,7 +251,7 @@ class Concept:
     @overload
     def getStandardLabel(
         self,
-        lang: Optional[str] = None,
+        lang: str | None = None,
         *,
         fallbackIfMissing: str,
         removeSuffix: bool = ...,
@@ -262,23 +262,23 @@ class Concept:
     @overload
     def getStandardLabel(
         self,
-        lang: Optional[str] = None,
+        lang: str | None = None,
         *,
         fallbackIfMissing: None = None,
         removeSuffix: bool = ...,
         fallbackToAnyLang: bool = ...,
         fallbackToQName: bool = ...,
-    ) -> Optional[str]: ...
+    ) -> str | None: ...
 
     def getStandardLabel(
         self,
-        lang: Optional[str] = None,
+        lang: str | None = None,
         *,
-        fallbackIfMissing: Optional[str] = None,
+        fallbackIfMissing: str | None = None,
         removeSuffix: bool = False,
         fallbackToAnyLang: bool = False,
         fallbackToQName: bool = False,
-    ) -> Optional[str]:
+    ) -> str | None:
         return self.getLabelForRole(
             STANDARD_LABEL_ROLE,
             requestedLanguage=lang,
@@ -290,13 +290,13 @@ class Concept:
 
     def getDocumentationLabel(
         self,
-        lang: Optional[str] = None,
+        lang: str | None = None,
         *,
-        fallbackIfMissing: Optional[str] = None,
+        fallbackIfMissing: str | None = None,
         removeSuffix: bool = False,
         fallbackToAnyLang: bool = False,
         fallbackToQName: bool = False,
-    ) -> Optional[str]:
+    ) -> str | None:
         return self.getLabelForRole(
             DOCUMENTATION_LABEL_ROLE,
             requestedLanguage=lang,
@@ -308,8 +308,8 @@ class Concept:
 
     def _getLabelIterable(
         self,
-        labelRole: Optional[str] = None,
-        lang: Optional[str] = None,
+        labelRole: str | None = None,
+        lang: str | None = None,
     ) -> Iterable[str]:
         """
         Yield labels for this concept, optionally filtered by role and/or language.
@@ -355,7 +355,7 @@ class Concept:
         )
 
     @cache
-    def getRequiredUnitQNames(self) -> Optional[frozenset[QName]]:
+    def getRequiredUnitQNames(self) -> frozenset[QName] | None:
         """If there is a valid UTR unitId or a valid unit QName in the
         measurement guidance label of the concept, return the first one found.
         Otherwise return None.
@@ -499,17 +499,17 @@ class Relationship(NamedTuple):
     roleUri: str
     depth: int
     concept: Concept
-    preferredLabel: Optional[str] = None
+    preferredLabel: str | None = None
 
     def getLabel(
         self,
-        requestedLanguage: Optional[str] = None,
+        requestedLanguage: str | None = None,
         *,
         removeSuffix: bool = True,
-        fallbackLabel: Optional[str] = None,
+        fallbackLabel: str | None = None,
         fallbackToAnyLang: bool = False,
         fallbackToQName: bool = False,
-    ) -> Optional[str]:
+    ) -> str | None:
         """Get the label for this relationship's concept."""
         labelRole = self.preferredLabel or STANDARD_LABEL_ROLE
         return self.concept.getLabelForRole(
@@ -565,7 +565,7 @@ class PresentationGroup(NamedTuple):
 
     def getLabel(
         self,
-        requestedLanguage: Optional[str] = None,
+        requestedLanguage: str | None = None,
         *,
         fallbackToDefaultLanguage: bool = True,
         fallbackToDefinition: bool = True,
@@ -807,7 +807,7 @@ class Taxonomy:
         by_name: bool = False,
         by_qname: bool = False,
         only_reportable: bool = True,
-    ) -> Optional[Concept]:
+    ) -> Concept | None:
         """Resolve a string to a Concept using one or more strategies.
 
         Strategies are tried in specificity order: qname → name → label.
@@ -875,7 +875,7 @@ class Taxonomy:
             name, by_name=True, by_label=False, by_qname=False, only_reportable=False
         )
 
-    def getConceptForLabel(self, label: str) -> Optional[Concept]:
+    def getConceptForLabel(self, label: str) -> Concept | None:
         return self.resolveConcept(
             label, by_label=True, by_name=False, by_qname=False, only_reportable=False
         )
@@ -976,7 +976,7 @@ class Taxonomy:
     @cache
     def getExplicitDimensionForDomainMember(
         self, primaryItem: Concept, dimensionValue: Concept
-    ) -> Optional[Concept]:
+    ) -> Concept | None:
         baseSets = self._lookupBaseSetByPrimaryItem.get(primaryItem)
         if baseSets is None:
             return None
@@ -1002,7 +1002,7 @@ class Taxonomy:
         """This aggregates across all base-sets to give all the domain members specified for the given dimension."""
         return self._lookupDomainByDimension.get(dimension, frozenset())
 
-    def getDimensionDefault(self, dimension: Concept) -> Optional[Concept]:
+    def getDimensionDefault(self, dimension: Concept) -> Concept | None:
         return self._dimensionDefaults.get(dimension)
 
     @cached_property
