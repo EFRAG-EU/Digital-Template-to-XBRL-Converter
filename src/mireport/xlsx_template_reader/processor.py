@@ -98,10 +98,10 @@ def eeDomainByLabel(eeConcept: Concept) -> dict[str, tuple[Concept, str]]:
         )
 
     eeDomainLabels: dict[str, tuple[Concept, str]] = {}
-    for eeConcept in eeConcept.getEEDomain():
-        all_labels = eeConcept.getAllStandardLabels()
+    for member in eeConcept.getEEDomain():
+        all_labels = member.getAllStandardLabels()
         for actual_label in all_labels:
-            result = (eeConcept, actual_label)
+            result = (member, actual_label)
             eeDomainLabels[actual_label] = result
 
             # difflib matching works better if we strip the [member] suffix
@@ -638,13 +638,11 @@ class ExcelProcessor:
         If report has not been opened and saved (so, refreshed), formula cells return None.
         template_migration_status is a formula cell.
         """
-        if self._workbook.defined_names.get("template_migration_status") is not None:
-            if self.getSingleValue("template_migration_status") is None:
-                return False  # not refreshed
-            else:
-                return True  # okay
-        else:
+        if self._workbook.defined_names.get("template_migration_status") is None:
             return None
+        # No value means the formula cell has not been recalculated, i.e. the
+        # workbook has not been opened and saved since being migrated.
+        return self.getSingleValue("template_migration_status") is not None
 
     def abortEarlyIfErrors(self) -> None:
         if self._results.hasErrors():
@@ -1872,10 +1870,11 @@ class ExcelProcessor:
             return False
 
         # If we have a default unit for the data type, use it iff UTR valid.
-        if (unit := self._configDataTypeToUnitMap.get(concept.dataType)) is not None:
-            if self.taxonomy.UTR.valid(concept.dataType, unit):
-                factBuilder.setSimpleUnit(unit)
-                return True
+        if (
+            unit := self._configDataTypeToUnitMap.get(concept.dataType)
+        ) is not None and self.taxonomy.UTR.valid(concept.dataType, unit):
+            factBuilder.setSimpleUnit(unit)
+            return True
 
         # Otherwise pick the first unit from the UTR that is valid.
         if units := self.taxonomy.UTR.getUnitsForDataType(concept.dataType):

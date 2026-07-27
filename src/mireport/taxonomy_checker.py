@@ -78,13 +78,12 @@ class TaxonomyChecker:
                             actual = labelsByRole.get(STANDARD_LABEL_ROLE)
                             if actual is None:
                                 continue
-                            if actual == bad_label:
+                            if actual == bad_label or (
+                                label_transforms
+                                and bad_label
+                                in _apply_transforms(actual, label_transforms)
+                            ):
                                 lang_codes.append(lang)
-                            elif label_transforms:
-                                if bad_label in _apply_transforms(
-                                    actual, label_transforms
-                                ):
-                                    lang_codes.append(lang)
                     unique_langs = set(lang_codes)
                     if len(unique_langs) == 1:
                         langs_for_label[bad_label] = next(iter(unique_langs))
