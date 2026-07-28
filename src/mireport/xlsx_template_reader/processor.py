@@ -4,7 +4,7 @@ import difflib
 import logging
 import re
 from collections import defaultdict
-from collections.abc import Iterable, Iterator
+from collections.abc import Iterable, Iterator, Sequence
 from dataclasses import dataclass
 from datetime import date, datetime
 from functools import lru_cache
@@ -144,6 +144,9 @@ class CellRangeMetadata:
     effectiveHeight: int
     cellsPopulated: int
 
+    def __str__(self) -> str:
+        return excelCellRangeRef(self.worksheet, self.cellRange)
+
     def contains(self, other: CellRangeMetadata) -> bool:
         """True if other is on the same worksheet and fully within this range."""
         return self.worksheet is other.worksheet and self.cellRange.issuperset(
@@ -257,6 +260,9 @@ class ExcelProcessor:
             self._createNamedPeriods()
             self.createSimpleFacts()
             self.createTableFacts()
+            self._report.reportInconsistentDuplicateFacts(
+                self._reportInconsistentDuplicateFacts
+            )
             self._processFootnotes()
             self.checkForUnhandledItems()
             return self._report
@@ -1444,6 +1450,7 @@ class ExcelProcessor:
         self, factBuilder: FactBuilder, holder: CellAndXBRLMetadataHolder
     ) -> bool:
         try:
+            factBuilder.setProvenance(holder)
             self._report.addFact(factBuilder.buildFact())
             return True
         except InlineReportException as i:
@@ -1454,6 +1461,33 @@ class ExcelProcessor:
                 excel_reference=excelCellRangeRef(holder.worksheet, holder.cellRange),
             )
         return False
+
+    def _reportInconsistentDuplicateFacts(
+        self, concept: Concept, facts: Sequence[Fact]
+    ) -> None:
+        """Surface inconsistent duplicate facts to the report preparer as an error.
+
+        These are facts with the same concept and dimensions but different values
+        (e.g. the same waste type appearing twice with different amounts). Only one
+        value can be rendered, so the conflict must be fixed in the template."""
+        details = "; ".join(
+            f"'{fact.value}' ({fact.provenance})"
+            if fact.provenance is not None
+            else f"'{fact.value}'"
+            for fact in facts
+        )
+        first_provenance = next(
+            (str(fact.provenance) for fact in facts if fact.provenance is not None),
+            None,
+        )
+        self._results.addMessage(
+            f"Conflicting duplicate values for {concept.qname} with the same "
+            f"dimensions. Only one will appear in the report. Values: {details}.",
+            Severity.ERROR,
+            MessageType.Conversion,
+            taxonomy_concept=concept,
+            excel_reference=first_provenance,
+        )
 
     def setUnitForName(
         self,

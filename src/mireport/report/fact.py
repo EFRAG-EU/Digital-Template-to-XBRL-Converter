@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 from enum import StrEnum
-from typing import TYPE_CHECKING, NamedTuple, cast
+from typing import TYPE_CHECKING, NamedTuple, Protocol, cast, runtime_checkable
 
 from markupsafe import Markup, escape
 
@@ -48,6 +48,18 @@ class Symbol(NamedTuple):
     name: str
 
 
+@runtime_checkable
+class Provenance(Protocol):
+    """
+    Describes where a Fact came from (e.g. a source cell reference).
+
+    The report package is source-agnostic, so callers supply any object whose
+    ``__str__`` yields a human-readable location. A plain ``str`` satisfies this.
+    """
+
+    def __str__(self) -> str: ...
+
+
 class Fact:
     """
     Represents a fact in an XBRL instance document.
@@ -59,9 +71,11 @@ class Fact:
         value: FactValue,
         report: InlineReport,
         aspects: dict[str | QName, str | QName] | None = None,
+        provenance: Provenance | None = None,
     ):
         self.concept: Concept = concept
         self.value: FactValue = value
+        self.provenance: Provenance | None = provenance
         self._report = report
         self._aspects: dict[str | QName, str | QName] = {}
         if aspects is not None:
