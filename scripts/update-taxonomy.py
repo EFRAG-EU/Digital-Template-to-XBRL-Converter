@@ -1,6 +1,7 @@
 import argparse
 import sys
 import time
+from collections.abc import Sequence
 
 from mireport.arelle.taxonomy_info import callArelleForTaxonomyInfo
 from mireport.cli import (
@@ -56,10 +57,11 @@ def parser() -> argparse.ArgumentParser:
 def main() -> None:
     cli = parser()
     args = cli.parse_args()
-    taxonomy_json_path = args.taxonomy_json_path
-    taxonomy_zips = args.taxonomy_zips
-    utr_json_path = args.utr_output
-    entry_point = args.entry_point
+    taxonomy_json_path: str = args.taxonomy_json_path
+    taxonomy_zips: list[str] = args.taxonomy_zips
+    utr_json_path: str | None = args.utr_output
+    # action="append" gives a list; pickEntryPointFromPackages() gives a tuple.
+    entry_point: Sequence[str] | None = args.entry_point
 
     taxonomy_zips = validateTaxonomyPackages(taxonomy_zips, cli)
 
