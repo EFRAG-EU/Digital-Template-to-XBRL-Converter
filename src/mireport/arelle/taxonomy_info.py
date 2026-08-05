@@ -4,7 +4,7 @@ import json
 import logging
 import time
 from collections import defaultdict
-from collections.abc import Iterable, MutableMapping
+from collections.abc import Iterable, MutableMapping, Sequence
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, TypeVar
 
@@ -58,7 +58,7 @@ def concepts_to_qnames(
 
 
 def callArelleForTaxonomyInfo(
-    entry_point: str,
+    entry_point: str | Sequence[str],
     taxonomy_zips: list[str],
     taxonomy_json_path: str,
     utr_json_path: str | None = None,
@@ -71,9 +71,18 @@ def callArelleForTaxonomyInfo(
         pluginOptions["utrDataFile"] = utr_json_path
         utrValidation = True
 
+    documents = [entry_point] if isinstance(entry_point, str) else list(entry_point)
+    if not documents:
+        raise ArelleRelatedException("No entry point document given.")
+    # An entry point may name several documents that together form one DTS.
+    # Importing the rest keeps them in the entry point's DTS; passing them all as
+    # entry points would instead load each as its own DTS.
+    importFiles = "|".join(documents[1:]) or None
+
     options = RuntimeOptions(
         abortOnMajorError=True,
-        entrypointFile=entry_point,
+        entrypointFile=documents[0],
+        importFiles=importFiles,
         internetConnectivity="offline",
         formulaAction="none",
         keepOpen=False,

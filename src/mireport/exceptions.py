@@ -18,6 +18,10 @@ class UnknownTaxonomyException(TaxonomyException):
     """Exception raised when a taxonomy entry point is unknown."""
 
 
+class TaxonomyPackageException(TaxonomyException):
+    """Exception raised when a taxonomy package zip can't be read or understood."""
+
+
 class BrokenNamespacePrefixException(MIReportException):
     """Exception raised when a prefix is bound to more than one namespace."""
 
