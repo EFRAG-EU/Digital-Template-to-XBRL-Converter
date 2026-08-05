@@ -77,12 +77,13 @@ def callArelleForTaxonomyInfo(
     # An entry point may name several documents that together form one DTS.
     # Importing the rest keeps them in the entry point's DTS; passing them all as
     # entry points would instead load each as its own DTS.
-    importFiles = "|".join(documents[1:]) or None
+    primaryEntryPointURL = documents[0]
+    otherEntryPointURLs = documents[1:]
 
     options = RuntimeOptions(
         abortOnMajorError=True,
-        entrypointFile=documents[0],
-        importFiles=importFiles,
+        entrypointFile=primaryEntryPointURL,
+        importFiles="|".join(otherEntryPointURLs) or None,
         internetConnectivity="offline",
         formulaAction="none",
         keepOpen=False,
