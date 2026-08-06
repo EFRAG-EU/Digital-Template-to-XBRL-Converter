@@ -17,20 +17,6 @@
   </ol>
 </div>
 
-<!-- Flash Error Messages -->
-{% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
-    {% for category, message in messages %}
-      {% if category == 'error' %}
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-          <span class="block sm:inline">{{ message }}</span>
-        </div>
-      {% endif %}
-    {% endfor %}
-  {% endif %}
-{% endwith %}
-
-
 <!-- Upload Form -->
 <form action="{{ url_for('basic.upload') }}" method="post" enctype="multipart/form-data" class="space-y-4" onsubmit="showSpinner('Converting... Please wait.')">
 

@@ -13,6 +13,7 @@ from typing import (
 
 from openpyxl import Workbook, load_workbook
 from openpyxl.cell import Cell, MergedCell, ReadOnlyCell
+from openpyxl.cell.cell import ERROR_CODES
 from openpyxl.utils.cell import absolute_coordinate, quote_sheetname
 from openpyxl.workbook.defined_name import DefinedName
 from openpyxl.worksheet.cell_range import CellRange
@@ -25,6 +26,16 @@ CellType: TypeAlias = ReadOnlyCell | MergedCell | Cell
 CellValueType: TypeAlias = bool | float | int | str | datetime | date | time | None
 
 EXCEL_PLACEHOLDER_VALUE = "#VALUE!"
+
+
+# openpyxl's ERROR_CODES covers standard Excel errors; #ERROR! is a Google Sheets addition
+EXCEL_ERROR_VALUES: frozenset[str] = frozenset(ERROR_CODES)
+GOOGLE_SHEET_ERROR_VALUES: frozenset[str] = frozenset({"#ERROR!"})
+ALL_ERROR_VALUES: frozenset[str] = EXCEL_ERROR_VALUES.union(GOOGLE_SHEET_ERROR_VALUES)
+
+
+def is_error_value(v: str) -> bool:
+    return v in ALL_ERROR_VALUES
 
 
 class NamedRangeException(OpenPyXlRelatedException):

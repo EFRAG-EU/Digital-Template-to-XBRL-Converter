@@ -61,6 +61,7 @@ from mireport.xlsx_template_reader._util import (
     get_decimal_places,
     getCellRangeIterator,
     getEffectiveCellRangeDimensions,
+    is_error_value,
     loadExcelFromPathOrFileLike,
 )
 
@@ -68,7 +69,10 @@ L = logging.getLogger(__name__)
 
 EE_SET_DESIRED_EMPTY_PLACEHOLDER_VALUE = "None"
 
-EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE = ("-", EXCEL_PLACEHOLDER_VALUE)
+
+def _is_blank_cell_value(v: object) -> bool:
+    """True for cells with no data to report: None or the placeholder dash."""
+    return v is None or v == "-"
 
 
 def cleanUnitTextFromExcel(unitTest: str, replacements: dict[str, str]) -> str:
@@ -413,10 +417,7 @@ class ExcelProcessor:
                 else:
                     aoixValue = self.getSingleStringValue(namedRangeName).strip()
 
-                if (
-                    not aoixValue
-                    or aoixValue in EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE
-                ):
+                if not aoixValue or aoixValue == "-" or is_error_value(aoixValue):
                     self._results.addMessage(
                         f"Excel report must have a valid value for named range {namedRangeName}.",
                         Severity.ERROR,
@@ -546,7 +547,7 @@ class ExcelProcessor:
         template_version_name = "template_reporting_template_version"
         template_version_string = self.getSingleStringValue(template_version_name)
         excel_version = VersionHolder.parse_safe(template_version_string)
-        converter_version = OUR_VERSION_HOLDER
+        converter_version = OUR_VERSION_HOLDER.strip_build_metadata
 
         major_minor_match = (
             excel_version is not None
@@ -591,9 +592,18 @@ class ExcelProcessor:
                         self.getDefinedNameForString(template_version_name)
                     ),
                 )
-            else:
+            elif excel_version < converter_version:
                 self._results.addMessage(
                     f"The Digital Template is based on version {excel_version}. The latest version available is {converter_version}, please update/migrate to the latest version of the Digital Template, in order to avoid any error message and data loss.",
+                    Severity.WARNING,
+                    MessageType.ExcelParsing,
+                    excel_reference=excelDefinedNameRef(
+                        self.getDefinedNameForString(template_version_name)
+                    ),
+                )
+            else:
+                self._results.addMessage(
+                    f"The Digital Template is based on version {excel_version}, which is newer than the converter version {converter_version}. This may cause errors during conversion. Please use a supported template (the latest version supported by this converter deployment is {converter_version}).",
                     Severity.WARNING,
                     MessageType.ExcelParsing,
                     excel_reference=excelDefinedNameRef(
@@ -1154,7 +1164,16 @@ class ExcelProcessor:
             dimValueDN = periodHolder.definedName
             namedPeriod = dimValueDN.name or ""
             year = self.getSingleValue(dimValueDN)
-            if year is None or year in EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE:
+            if _is_blank_cell_value(year):
+                self._definedNameToXBRLMap.pop(dimValueDN)
+                continue
+            if isinstance(year, str) and is_error_value(year):
+                self._results.addMessage(
+                    f"Named range {namedPeriod} contains an error value '{year}'. Please fix the error in the file.",
+                    Severity.ERROR,
+                    MessageType.ExcelParsing,
+                    excel_reference=excelDefinedNameRef(dimValueDN),
+                )
                 self._definedNameToXBRLMap.pop(dimValueDN)
                 continue
 
@@ -1237,10 +1256,16 @@ class ExcelProcessor:
                                 broken = True
                                 break
 
-                    if (
-                        value is None
-                        or value in EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE
-                    ):
+                    if _is_blank_cell_value(value):
+                        continue
+                    if isinstance(value, str) and is_error_value(value):
+                        self._results.addMessage(
+                            f"Cell in named range {priItem.definedName.name} contains an error value '{value}'. Please fix the error in the file.",
+                            Severity.ERROR,
+                            MessageType.ExcelParsing,
+                            taxonomy_concept=concept,
+                            excel_reference=excelCellRef(priItem.worksheet, cell),
+                        )
                         continue
 
                     factBuilder = self._report.getFactBuilder()
@@ -1618,8 +1643,17 @@ class ExcelProcessor:
                 continue
 
             value = cell.value
-            if value is None or value in EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE:
-                # No value in the cell, so not reportable
+            if _is_blank_cell_value(value):
+                self._definedNameToXBRLMap.pop(dn)
+                continue
+            if isinstance(value, str) and is_error_value(value):
+                self._results.addMessage(
+                    f"Named range {dn.name} contains an error value '{value}'. Please fix the error in the file.",
+                    Severity.ERROR,
+                    MessageType.ExcelParsing,
+                    taxonomy_concept=concept,
+                    excel_reference=excelDefinedNameRef(dn),
+                )
                 self._definedNameToXBRLMap.pop(dn)
                 continue
 
