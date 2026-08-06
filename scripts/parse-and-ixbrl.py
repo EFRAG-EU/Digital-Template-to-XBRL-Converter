@@ -221,7 +221,7 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, ExcelProc
         colour = ColourPalette.parse(args.style_custom or args.style_preset)
         report.theme.setDisplayMode(args.style_mode).setColour(colour)
 
-        for arg_name, setter in [
+        for arg_name, imageSetter in [
             ("image_logo", report.theme.setLogoImage),
             ("image_cover", report.theme.setCoverImage),
             ("image_background", report.theme.setBackgroundImage),
@@ -231,7 +231,7 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, ExcelProc
                 if err:
                     pc.addDevInfoMessage(err)
                 elif image:
-                    setter(image)
+                    imageSetter(image)
 
         if (extra_file := args.extra_data) and extra_file.is_file():
             extra = json.loads(extra_file.read_text(encoding="utf-8"))
@@ -266,8 +266,8 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, ExcelProc
             }
             for section in extra.get("optionalSections", []):
                 section_id = section.get("id")
-                setter = optional_section_setters.get(section_id)
-                if setter is None:
+                sectionSetter = optional_section_setters.get(section_id)
+                if sectionSetter is None:
                     pc.addDevInfoMessage(f"Unknown optionalSections id: {section_id!r}")
                     continue
                 if "path" in section:
@@ -276,9 +276,9 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, ExcelProc
                         additionalInfo=f"Creating {section_id} from {section['path']}",
                     )
                     docx_path = _resolve_extra_path(extra_file, section["path"])
-                    setter(_convert_docx_to_markup(docx_path, pc))
+                    sectionSetter(_convert_docx_to_markup(docx_path, pc))
                 elif "content" in section:
-                    setter(Markup(section["content"]))
+                    sectionSetter(Markup(section["content"]))
                 else:
                     pc.addDevInfoMessage(
                         f"optionalSections entry {section_id!r} has neither 'path' nor 'content'"
@@ -343,7 +343,7 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, ExcelProc
                 resultsBuilder.addMessages(arelleResults.messages)
 
                 if arelleResults.has_json:
-                    json_output = arelleResults.xBRL_JSON
+                    json_output = arelleResults.xbrl_json
                     if not dir_specified:
                         json_path = output_path.with_suffix(".json")
                         json_output.saveToFilepath(json_path)

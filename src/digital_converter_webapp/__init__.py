@@ -624,7 +624,7 @@ def downloadFile(id: str, ftype: str) -> Response:
         reportPackage = FilelikeAndFileName.from_tuple(session_data["zip"])
         arelle = getArelle()
         if ftype == "json":
-            session_data[ftype] = arelle.generateXBRLJson(reportPackage).xBRL_JSON
+            session_data[ftype] = arelle.generateXBRLJson(reportPackage).xbrl_json
         elif ftype == "viewer":
             session_data[ftype] = arelle.generateInlineViewer(reportPackage).viewer
         else:

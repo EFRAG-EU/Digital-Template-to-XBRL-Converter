@@ -72,6 +72,25 @@ def test_add_namespace(xbrli_and_utr: NamespaceManager) -> None:
     assert p1 is pG, "String interning has been broken."
 
 
+def test_first_prefix_wins_for_shared_namespace(namespaces: NamespaceManager) -> None:
+    ns = "http://example.com/shared"
+    namespaces.add("p1", ns)
+    namespaces.add("p2", ns)
+    assert namespaces.getPrefixForNamespace(ns) == "p1"
+
+
+def test_get_prefix_for_unknown_namespace_raises(namespaces: NamespaceManager) -> None:
+    with pytest.raises(KeyError):
+        namespaces.getPrefixForNamespace("http://example.com/unknown")
+
+
+def test_has_namespace(namespaces: NamespaceManager) -> None:
+    ns = "http://example.com/known"
+    assert namespaces.hasNamespace(ns) is False
+    namespaces.add("known", ns)
+    assert namespaces.hasNamespace(ns) is True
+
+
 @pytest.fixture
 def ns_manager() -> NamespaceManager:
     ns = NamespaceManager()

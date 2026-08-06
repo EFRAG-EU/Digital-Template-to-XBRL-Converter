@@ -29,6 +29,50 @@ BIG_ARELLE_LOCK = threading.Lock()
 L = logging.getLogger(__name__)
 
 
+def _singleFileFromResponseZip(stream: BytesIO, what: str) -> bytes:
+    """Return the content of the single file Arelle wrote to its response
+    zip, raising if the zip does not contain exactly one file."""
+    stream.seek(0)
+    with zipfile.ZipFile(stream, "r") as zf:
+        entries = zf.infolist()
+        if len(entries) != 1:
+            raise ArelleRelatedException(
+                f"{what} has gone wrong. Zip contents: {zf.namelist()}"
+            )
+        return zf.read(entries[0])
+
+
+def _determineViewerUrl() -> str:
+    try:
+        viewer_version = version("ixbrl-viewer")
+    except PackageNotFoundError:
+        viewer_version = "1.4.60"
+    return f"https://cdn.jsdelivr.net/npm/ixbrl-viewer@{viewer_version}/iXBRLViewerPlugin/viewer/dist/ixbrlviewer.js"
+
+
+def _makeVersionInformation(distribution: str) -> VersionInformationTuple:
+    try:
+        meta = metadata(distribution)
+        name = meta["Name"]
+        distVersion = meta["Version"]
+        if name and distVersion:
+            return VersionInformationTuple(name=name, version=distVersion)
+    except Exception as e:
+        L.exception(f"Failed to read metadata for {distribution}", exc_info=e)
+    return VersionInformationTuple(distribution, "<unknown>")
+
+
+def _determineVersionInformation() -> ArelleVersionHolder:
+    return ArelleVersionHolder(
+        arelle=_makeVersionInformation("arelle-release"),
+        ixbrlViewer=_makeVersionInformation("ixbrl-viewer"),
+    )
+
+
+ARELLE_VERSION_INFORMATION = _determineVersionInformation()
+ARELLE_VIEWER_URL = _determineViewerUrl()
+
+
 class ArelleReportProcessor:
     """Wrapper around the Arelle Session() API for the various validations and plugins wanted."""
 
@@ -113,122 +157,78 @@ class ArelleReportProcessor:
                 L.exception(message, exc_info=arelle_exception)
                 raise ArelleRelatedException(message) from arelle_exception
 
-    def validateReportPackage(
-        self, source: FilelikeAndFileName, *, disableCalculationValidation: bool = False
-    ) -> ArelleProcessingResult:
-        # Use Calc 1.1 round to nearest "c11r" for calculation validation unless
-        # calculation validation is disabled.
-        if disableCalculationValidation:
-            calcs = "none"
-        else:
-            calcs = "c11r"
-
-        validationOptions = RuntimeOptions(
-            internetConnectivity="offline" if self.workOffline is True else "online",
-            keepOpen=True,
-            logFile="logToBuffer",
-            logFormat="%(message)s",
-            logPropagate=False,
-            packages=[str(t) for t in self.taxonomyPackages],
-            plugins=None,
-            pluginOptions={},
-            # Turn validation on
-            validate=True,
-            calcs=calcs,
-            # Validate against the unit type registry
-            utrValidate=True,
-            # Warn if inconsistent duplicate facts encountered
-            validateDuplicateFacts="inconsistent",
-            showOptions=False,
-        )
-        return self._run(source, validationOptions)
-
-    def generateXBRLJson(self, source: FilelikeAndFileName) -> ArelleProcessingResult:
-        filename = "foo.json"
-        jsonOptions = RuntimeOptions(
+    def _makeOptions(
+        self,
+        *,
+        calcs: str = "c11r",
+        plugins: str | None = None,
+        pluginOptions: dict | None = None,
+    ) -> RuntimeOptions:
+        """RuntimeOptions shared by all report processing: validation on
+        (calcs 1.1 round-to-nearest unless overridden, UTR, inconsistent
+        duplicate facts warned) and logging to buffer."""
+        return RuntimeOptions(
             internetConnectivity="offline" if self.workOffline else "online",
             keepOpen=True,
             logFile="logToBuffer",
             logFormat="%(message)s",
             logPropagate=False,
             packages=[str(t) for t in self.taxonomyPackages],
-            plugins="saveLoadableOIM",
-            pluginOptions={
-                "saveLoadableOIM": filename,
-            },
-            # Turn validation on
+            plugins=plugins,
+            pluginOptions=pluginOptions if pluginOptions is not None else {},
             validate=True,
-            # Use Calc 1.1 round to nearest "c11r" for calculation validation
-            calcs="c11r",
-            # Validate against the unit type registry
+            calcs=calcs,
             utrValidate=True,
-            # Warn if inconsistent duplicate facts encountered
             validateDuplicateFacts="inconsistent",
             showOptions=False,
         )
 
+    def validateReportPackage(
+        self, source: FilelikeAndFileName, *, disableCalculationValidation: bool = False
+    ) -> ArelleProcessingResult:
+        options = self._makeOptions(
+            calcs="none" if disableCalculationValidation else "c11r",
+        )
+        return self._run(source, options)
+
+    def generateXBRLJson(self, source: FilelikeAndFileName) -> ArelleProcessingResult:
+        options = self._makeOptions(
+            plugins="saveLoadableOIM",
+            pluginOptions={"saveLoadableOIM": "report.json"},
+        )
         jsonBytesIO = BytesIO()
-        result = self._run(source, jsonOptions, jsonBytesIO)
-        jsonBytesIO.seek(0)
+        result = self._run(source, options, jsonBytesIO)
         try:
-            with zipfile.ZipFile(jsonBytesIO, "r") as zf:
-                a = zf.infolist()
-                assert len(a) == 1, (
-                    f"Arelle xBRL JSON generation has gone wrong. Zip contents: {zf.namelist()}"
-                )
-                json = zf.read(a[0])
+            json = _singleFileFromResponseZip(
+                jsonBytesIO, "Arelle xBRL JSON generation"
+            )
             jsonFilename = PurePath(source.filename).with_suffix(".json").name
             result._xbrlJson = FilelikeAndFileName(
                 fileContent=json, filename=jsonFilename
             )
         except Exception as e:
             result.addException(e)
-        finally:
-            del jsonBytesIO
         return result
 
     def generateInlineViewer(
         self, source: FilelikeAndFileName
     ) -> ArelleProcessingResult:
         viewerBytesIO = BytesIO()
-        viewer_plugin_options = {
-            "saveViewerDest": viewerBytesIO,
-            "viewer_feature_review": False,
-            "validationMessages": True,
-            "viewer_feature_highlight_facts_on_startup": False,
-            "useStubViewer": False,
-            "viewerNoCopyScript": True,
-            "viewerURL": ARELLE_VIEWER_URL,
-        }
-
-        viewerOptions = RuntimeOptions(
-            internetConnectivity="offline" if self.workOffline else "online",
-            keepOpen=True,
-            logFile="logToBuffer",
-            logFormat="%(message)s",
-            logPropagate=False,
-            packages=[str(t) for t in self.taxonomyPackages],
-            pluginOptions=viewer_plugin_options,
+        options = self._makeOptions(
             plugins="ixbrl-viewer",
-            # Turn validation on
-            validate=True,
-            # Use Calc 1.1 round to nearest "c11r" for calculation validation
-            calcs="c11r",
-            # Validate against the unit type registry
-            utrValidate=True,
-            # Warn if inconsistent duplicate facts encountered
-            validateDuplicateFacts="inconsistent",
-            showOptions=False,
+            pluginOptions={
+                "saveViewerDest": viewerBytesIO,
+                "viewer_feature_review": False,
+                "validationMessages": True,
+                "viewer_feature_highlight_facts_on_startup": False,
+                "useStubViewer": False,
+                "viewerNoCopyScript": True,
+                "viewerURL": ARELLE_VIEWER_URL,
+            },
         )
-        result = self._run(source, viewerOptions)
-        viewerBytesIO.seek(0)
+        result = self._run(source, options)
         try:
-            with zipfile.ZipFile(viewerBytesIO, "r") as zf:
-                a = zf.infolist()
-                assert len(a) == 1, (
-                    f"Arelle & inline-viewer has gone wrong. Zip contents: {zf.namelist()}"
-                )
-                viewer = zf.read(a[0])
+            viewer = _singleFileFromResponseZip(viewerBytesIO, "Arelle & inline-viewer")
             viewerFilename = f"{PurePath(source.filename).stem}_viewer.html"
             result._viewer = FilelikeAndFileName(
                 fileContent=viewer, filename=viewerFilename
@@ -238,9 +238,6 @@ class ArelleReportProcessor:
                 e,
                 message="Exception encountered during processing of Arelle's response stream",
             )
-            return result
-        finally:
-            del viewerBytesIO
         return result
 
     @staticmethod
@@ -250,62 +247,15 @@ class ArelleReportProcessor:
         if taxonomyPackageDir is None:
             return []
 
-        if isinstance(taxonomyPackageDir, (str, Path)):
-            tdir = Path(taxonomyPackageDir)
-        else:
-            raise ArelleRelatedException(
-                f"Supplied {taxonomyPackageDir=} needs to be a string or Path."
-            )
-
-        taxonomyPackages: list[Path] = []
-        for candidate in tdir.glob("**/*.zip"):
-            if candidate.is_file():
-                taxonomyPackages.append(candidate)
+        tdir = Path(taxonomyPackageDir)
+        taxonomyPackages = [
+            candidate for candidate in tdir.rglob("*.zip") if candidate.is_file()
+        ]
         if not taxonomyPackages:
             raise ArelleRelatedException(
                 f"Supplied {taxonomyPackageDir=} does not contain any taxonomy packages."
             )
         return taxonomyPackages
-
-    @staticmethod
-    def _determineViewerUrl() -> str:
-        try:
-            viewer_version = version("ixbrl-viewer")
-            viewer_url_cdn_base = r"https://cdn.jsdelivr.net/npm/ixbrl-viewer@<version>/iXBRLViewerPlugin/viewer/dist/ixbrlviewer.js"
-            viewer_url = viewer_url_cdn_base.replace("<version>", viewer_version)
-            return viewer_url
-        except PackageNotFoundError:
-            an_old_viewer_url = r"https://cdn.jsdelivr.net/npm/ixbrl-viewer@1.4.60/iXBRLViewerPlugin/viewer/dist/ixbrlviewer.js"
-            return an_old_viewer_url
-
-    @staticmethod
-    def _versionInformation() -> ArelleVersionHolder:
-        def makeVersionInformation(distribution: str) -> VersionInformationTuple:
-            fallback = VersionInformationTuple(distribution, "<unknown>")
-            try:
-                meta = metadata(distribution)
-                a = meta.get_all("Name")
-                b = meta.get_all("Version")
-                if a and b:
-                    return VersionInformationTuple(
-                        name=next(iter(meta.get_all("Name", []))),
-                        version=next(iter(meta.get_all("Version", []))),
-                    )
-            except Exception as e:
-                L.exception(
-                    "Failed to parse Arelle and Arelle ixbrl-viewer metadata",
-                    exc_info=e,
-                )
-            return fallback
-
-        return ArelleVersionHolder(
-            arelle=makeVersionInformation("arelle-release"),
-            ixbrlViewer=makeVersionInformation("ixbrl-viewer"),
-        )
-
-
-ARELLE_VERSION_INFORMATION = ArelleReportProcessor._versionInformation()
-ARELLE_VIEWER_URL = ArelleReportProcessor._determineViewerUrl()
 
 
 def getOrCreateReportPackage(reportPackage: Path) -> FilelikeAndFileName:
@@ -318,8 +268,7 @@ def getOrCreateReportPackage(reportPackage: Path) -> FilelikeAndFileName:
 
     zipName = reportPackage.name
     if zipfile.is_zipfile(reportPackage):
-        with open(reportPackage, "rb") as zin:
-            bytes = zin.read()
+        zipBytes = reportPackage.read_bytes()
     elif reportPackage.suffix in {".xhtml", ".html", ".htm"}:
         with BytesIO() as write_bio:
             with zipfile.ZipFile(write_bio, "w") as z:
@@ -328,10 +277,10 @@ def getOrCreateReportPackage(reportPackage: Path) -> FilelikeAndFileName:
                     zinfo_or_arcname="a/META-INF/reportPackage.json",
                     data=UNCONSTRAINED_REPORT_PACKAGE_JSON,
                 )
-            bytes = write_bio.getvalue()
+            zipBytes = write_bio.getvalue()
         zipName = reportPackage.with_suffix(".zip").name
     else:
         raise ArelleRelatedException(
             f"Passed a {reportPackage=} that has an unrecognised file type."
         )
-    return FilelikeAndFileName(fileContent=bytes, filename=zipName)
+    return FilelikeAndFileName(fileContent=zipBytes, filename=zipName)
