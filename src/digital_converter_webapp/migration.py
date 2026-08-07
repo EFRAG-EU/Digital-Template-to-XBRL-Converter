@@ -34,7 +34,7 @@ except ImportError:
 from mireport.filesupport import FilelikeAndFileName
 from mireport.xlsx_template_reader.processor import (
     OUR_VERSION_HOLDER,
-    ExcelProcessor,
+    XlsxProcessor,
 )
 
 from .blueprints import convert_bp
@@ -54,7 +54,7 @@ class MigrationOutcome(StrEnum):
 
 def doMigrationChecks(conversion: dict) -> tuple[MigrationOutcome, str]:
     upload = FilelikeAndFileName(*conversion["excel"])
-    check_results = ExcelProcessor.checkReport(upload.fileLike())
+    check_results = XlsxProcessor.checkReport(upload.fileLike())
     version = str(check_results.reported_version) if check_results else "unknown"
 
     if check_results is None:
@@ -226,9 +226,9 @@ def migrationButton(id: str) -> Response:
 
         return make_response(redirect(url_for("basic.migrationPage", id=id), code=303))
 
-    except Exception as e:
+    except Exception:
         L.exception("Unexpected error in migrationButton for id=%s", id)
-        flash(f"An unexpected error occurred: {e}", "error")
+        flash("An error occurred during migration.", "error")
         return make_response(redirect(url_for("basic.index")))
 
 

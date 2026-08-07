@@ -4,6 +4,7 @@ import logging
 import time
 import zipfile
 from collections import defaultdict
+from collections.abc import Mapping
 from datetime import UTC, date, datetime
 from io import BytesIO
 from itertools import count
@@ -69,6 +70,7 @@ class InlineReport:
         self._theme: ReportTheme = ReportTheme.default()
         self._footnotesByGroup: dict[str, Footnote] = {}
         self._labelOverrides: dict[str, str] = {}
+        self._partial_facts: dict[Concept, FactBuilder] = {}
         if not outputLocale:
             outputLocale = (
                 get_locale_from_str(taxonomy.defaultLanguage or "") or Locale.default()
@@ -238,27 +240,54 @@ class InlineReport:
         facts = [f for c in concepts for f in self.getFacts(c)]
         return self.addFootnoteToFacts(content, facts, group=group)
 
-    def replaceFactValue(self, concept_qname: str | QName, value: FactValue) -> None:
+    def replaceFactValue(
+        self, concept: Concept | QName | str, value: FactValue
+    ) -> None:
         """
-        Replace the value of the only fact for the specified concept QName.
+        Replace the value of the only fact for the specified concept.
         """
-        concept = self._taxonomy.getConcept(concept_qname)
+        if not isinstance(concept, Concept):
+            concept = self._taxonomy.getConcept(concept)
         candidates = self.getFacts(concept)
 
         if not candidates:
             raise InlineReportException(
-                f"No existing fact found for concept {concept_qname}. Cannot replace value."
+                f"No existing fact found for concept {concept}. Cannot replace value."
             )
         if len(candidates) != 1:
             raise InlineReportException(
-                f"Multiple existing facts found for concept {concept_qname}. Cannot replace value unambiguously."
+                f"Multiple existing facts found for concept {concept}. Cannot replace value unambiguously."
             )
-
         candidates[0].value = value
 
     @property
     def hasFacts(self) -> bool:
         return bool(self._facts)
+
+    @property
+    def hasPartialFacts(self) -> bool:
+        """True while any partial facts are still awaiting an external value.
+
+        Partial facts are registered with addPartialFact() and cleared by
+        completePartialFact(). Iterate partialFactsByConcept to see which
+        partial facts are outstanding.
+        """
+        return bool(self._partial_facts)
+
+    @property
+    def partialFactsByConcept(self) -> Mapping[Concept, FactBuilder]:
+        """Snapshot of the partial facts still awaiting an externally-supplied value.
+
+        Maps each pending Concept to its placeholder FactBuilder. Registered
+        via addPartialFact(); resolved (and removed) via completePartialFact().
+
+        The returned mapping is a *copy* taken at call time, not a live view of
+        the internal store: mutating it has no effect, and completing facts does
+        not change a snapshot you already hold. This is deliberate so callers can
+        safely iterate it while calling completePartialFact() in the same loop.
+        Re-read the property (or check hasPartialFacts) to see the current state.
+        """
+        return dict(self._partial_facts)
 
     @property
     def factCount(self) -> int:
@@ -271,6 +300,47 @@ class InlineReport:
     def getFacts(self, concept: Concept) -> list[Fact]:
         result = self._factsByConcept.get(concept)
         return [] if result is None else result.copy()
+
+    def addPartialFact(self, concept: Concept, fb: FactBuilder) -> None:
+        """Register a partial FactBuilder whose value must be supplied externally.
+
+        Use this for disclosures whose value comes from an external document
+        rather than the spreadsheet (e.g. an uploaded Word document). The
+        FactBuilder is held without a value until completePartialFact() supplies
+        one. While registered, the concept appears in partialFactsByConcept and
+        keeps hasPartialFacts True. Raises ValueError if fb.concept does not
+        match concept, or if concept is already pending.
+        """
+        if fb.concept != concept:
+            raise ValueError(
+                f"FactBuilder concept {fb.concept} does not match expected concept {concept}."
+            )
+        if concept in self._partial_facts:
+            raise ValueError(
+                f"Concept {concept} already has a pending external fact registered."
+            )
+        self._partial_facts[concept] = fb
+
+    def completePartialFact(self, concept: Concept, value: FactValue) -> None:
+        """Supply the value for a pending external fact, build it, and add it.
+
+        Completes a concept previously registered with addPartialFact(): sets the
+        value, builds the fact, adds it to the report, and removes the concept
+        from the pending set (so it no longer appears in partialFactsByConcept
+        and hasPartialFacts flips to False once the last one is done). Raises
+        ValueError if concept is not currently pending.
+
+        Note this mutates the internal pending store. The mapping returned by
+        partialFactsByConcept is a snapshot, so it is safe to iterate that while
+        calling this in the same loop.
+        """
+        if concept not in self._partial_facts:
+            raise ValueError(
+                f"Concept {concept} is not registered as pending an external value."
+            )
+        fb = self._partial_facts.pop(concept)
+        fb.setValue(value)
+        self.addFact(fb.buildFact())
 
     def getNamespacesForAoix(self) -> str:
         # {{ namespace utr = "http://www.xbrl.org/2009/utr" }}
@@ -326,6 +396,12 @@ class InlineReport:
             raise InlineReportException(
                 "Cannot generate a report with no facts or period."
             )
+        if self._partial_facts:
+            concepts = ", ".join(sorted(str(c) for c in self._partial_facts))
+            raise InlineReportException(
+                f"Cannot generate report while there are partial facts for the following concepts: {concepts}."
+            )
+
         if self._generatedReport is not None:
             return self._generatedReport
 
