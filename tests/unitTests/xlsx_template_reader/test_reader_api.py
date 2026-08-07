@@ -228,16 +228,17 @@ class TestUnusedDefinedNames:
             assert not dn.name.startswith(IGNORED_DEFINED_NAME_PREFIXES)
 
 
-class TestWorkbookBinder:
-    @pytest.fixture(scope="class")
-    def bound(self, taxonomy):
-        wb = loadExcelFromPathOrFileLike(SAMPLE)
-        reader = WorkbookReader(wb, _results())
-        try:
-            yield WorkbookBinder(reader, taxonomy, _results()).bind()
-        finally:
-            wb.close()
+@pytest.fixture(scope="module")
+def bound(taxonomy):
+    wb = loadExcelFromPathOrFileLike(SAMPLE)
+    reader = WorkbookReader(wb, _results())
+    try:
+        yield WorkbookBinder(reader, taxonomy, _results()).bind()
+    finally:
+        wb.close()
 
+
+class TestWorkbookBinder:
     def test_concept_map_populated(self, bound):
         assert len(bound.concept_map) > 0
         for dn, crm in bound.concept_map.items():

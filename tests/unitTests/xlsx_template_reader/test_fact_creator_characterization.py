@@ -175,6 +175,41 @@ def unit_resolver(creator_env):
     )
 
 
+@pytest.fixture(scope="module")
+def config(taxonomy):
+    return ConverterConfig.fromDefaults(VSME_DEFAULTS, taxonomy)
+
+
+@pytest.fixture(scope="module")
+def ee_concept(taxonomy):
+    return next(
+        c
+        for c in sorted(taxonomy.concepts, key=str)
+        if c.isEnumerationSingle and c.getEEDomain()
+    )
+
+
+@pytest.fixture(scope="module")
+def dimension(taxonomy):
+    dim = next(
+        (
+            c
+            for c in sorted(taxonomy.concepts, key=str)
+            if c.isExplicitDimension
+            and taxonomy.getDomainMembersForExplicitDimension(c)
+        ),
+        None,
+    )
+    if dim is None:
+        pytest.skip("vsme taxonomy has no explicit dimension with domain members")
+    return dim
+
+
+@pytest.fixture(scope="module")
+def any_holder(creator_env):
+    return next(iter(creator_env.bindings.concept_map.values()))
+
+
 # ---------------------------------------------------------------------------
 # Module-level helpers
 # ---------------------------------------------------------------------------
@@ -212,14 +247,6 @@ class TestEEDomainByLabel:
 
 
 class TestGetClosestEEMemberMatch:
-    @pytest.fixture(scope="class")
-    def ee_concept(self, taxonomy):
-        return next(
-            c
-            for c in sorted(taxonomy.concepts, key=str)
-            if c.isEnumerationSingle and c.getEEDomain()
-        )
-
     def test_close_typo_matches(self, ee_concept):
         member = ee_concept.getEEDomain()[0]
         label = member.getStandardLabel()
@@ -234,18 +261,6 @@ class TestGetClosestEEMemberMatch:
 class TestResolveMemberByLabel:
     """The one implementation of the exact -> configured-alias -> closest-match
     label chain that used to be pasted across FactCreator."""
-
-    @pytest.fixture(scope="class")
-    def config(self, taxonomy):
-        return ConverterConfig.fromDefaults(VSME_DEFAULTS, taxonomy)
-
-    @pytest.fixture(scope="class")
-    def ee_concept(self, taxonomy):
-        return next(
-            c
-            for c in sorted(taxonomy.concepts, key=str)
-            if c.isEnumerationSingle and c.getEEDomain()
-        )
 
     def test_exact_label(self, taxonomy, config, ee_concept):
         member = ee_concept.getEEDomain()[0]
@@ -305,33 +320,6 @@ class TestResolveMemberByLabelDomainScoping:
     Two routes to a domain: an enumeration concept carries its domain
     intrinsically (getEEDomain); an explicit dimension's maximum permitted
     domain comes from taxonomy.getDomainMembersForExplicitDimension."""
-
-    @pytest.fixture(scope="class")
-    def config(self, taxonomy):
-        return ConverterConfig.fromDefaults(VSME_DEFAULTS, taxonomy)
-
-    @pytest.fixture(scope="class")
-    def ee_concept(self, taxonomy):
-        return next(
-            c
-            for c in sorted(taxonomy.concepts, key=str)
-            if c.isEnumerationSingle and c.getEEDomain()
-        )
-
-    @pytest.fixture(scope="class")
-    def dimension(self, taxonomy):
-        dim = next(
-            (
-                c
-                for c in sorted(taxonomy.concepts, key=str)
-                if c.isExplicitDimension
-                and taxonomy.getDomainMembersForExplicitDimension(c)
-            ),
-            None,
-        )
-        if dim is None:
-            pytest.skip("vsme taxonomy has no explicit dimension with domain members")
-        return dim
 
     def test_in_domain_exact_match_survives_scoping(self, taxonomy, config, ee_concept):
         member = ee_concept.getEEDomain()[0]
@@ -578,10 +566,6 @@ def _makeCell(value, number_format=None):
 
 
 class TestGetSimpleUnit:
-    @pytest.fixture(scope="class")
-    def any_holder(self, creator_env):
-        return next(iter(creator_env.bindings.concept_map.values()))
-
     def test_direct_unit_id(self, unit_resolver, any_holder):
         unit = unit_resolver.getSimpleUnit(any_holder, _makeCell("MWh"))
         assert unit is not None and str(unit).endswith("MWh")
