@@ -13,7 +13,7 @@ from __future__ import annotations
 import json
 from collections import Counter
 from pathlib import Path
-from typing import NamedTuple
+from typing import ClassVar, NamedTuple
 
 import pytest
 
@@ -429,7 +429,7 @@ class TestResolveMemberByLabelScopePlumbing:
     regardless of the vsme taxonomy's shape."""
 
     class _Config:
-        cellValuesToTaxonomyLabels: dict = {}
+        cellValuesToTaxonomyLabels: ClassVar[dict] = {}
 
     class _RecordingTaxonomy:
         def __init__(self, domain_members=frozenset()):
@@ -441,7 +441,6 @@ class TestResolveMemberByLabelScopePlumbing:
 
         def resolveConcept(self, text, **kwargs):
             self.calls.append((text, kwargs))
-            return None
 
     def test_ambiguity_propagates_out_of_the_chain(self):
         """The chain stays message-silent: ambiguity reaches the callers, who

@@ -2,13 +2,12 @@ from __future__ import annotations
 
 import re
 import warnings
+from collections.abc import Iterable
 from datetime import date, datetime
 from pathlib import Path
 from typing import (
     TYPE_CHECKING,
     BinaryIO,
-    Iterable,
-    Optional,
 )
 
 if TYPE_CHECKING:
@@ -67,8 +66,8 @@ def excelCellRangeRef(worksheet: Worksheet, cellRange: CellRange) -> str:
 
 
 def excelDefinedNameRef(
-    definedName: Optional[DefinedName], cell: Optional[CellType] = None
-) -> Optional[str]:
+    definedName: DefinedName | None, cell: CellType | None = None
+) -> str | None:
     """Make an Excel cell reference such as 'Example sheet'!$A$5"""
     if definedName is None:
         return None

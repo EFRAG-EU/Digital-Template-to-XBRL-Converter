@@ -13,7 +13,7 @@ the method and can pass a CellRangeMetadata directly as the Excel reference:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from mireport.taxonomy import Concept, QName
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 from mireport.conversionresults import ConversionResultsBuilder, MessageType, Severity
 from mireport.xlsx_template_reader._ranges import CellRangeMetadata
 
-ExcelRef = Union[str, CellRangeMetadata, None]
+ExcelRef = str | CellRangeMetadata | None
 
 
 class Messenger:
@@ -38,7 +38,7 @@ class Messenger:
         message_type: MessageType,
         *,
         ref: ExcelRef = None,
-        concept: Optional[Concept | QName] = None,
+        concept: Concept | QName | None = None,
     ) -> None:
         self._add(message, Severity.INFO, message_type, ref, concept)
 
@@ -48,7 +48,7 @@ class Messenger:
         message_type: MessageType,
         *,
         ref: ExcelRef = None,
-        concept: Optional[Concept | QName] = None,
+        concept: Concept | QName | None = None,
     ) -> None:
         self._add(message, Severity.WARNING, message_type, ref, concept)
 
@@ -58,7 +58,7 @@ class Messenger:
         message_type: MessageType,
         *,
         ref: ExcelRef = None,
-        concept: Optional[Concept | QName] = None,
+        concept: Concept | QName | None = None,
     ) -> None:
         self._add(message, Severity.ERROR, message_type, ref, concept)
 
@@ -68,9 +68,9 @@ class Messenger:
         severity: Severity,
         message_type: MessageType,
         ref: ExcelRef,
-        concept: Optional[Concept | QName],
+        concept: Concept | QName | None,
     ) -> None:
-        excel_reference: Optional[str]
+        excel_reference: str | None
         if ref is None or isinstance(ref, str):
             excel_reference = ref
         else:

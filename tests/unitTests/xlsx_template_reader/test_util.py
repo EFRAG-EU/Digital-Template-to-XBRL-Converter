@@ -40,7 +40,10 @@ class TestGetDateFromValue:
         assert getDateFromValue(d) == d
 
     def test_datetime_converted_to_date(self):
-        assert getDateFromValue(datetime(2024, 6, 15, 10, 30)) == date(2024, 6, 15)
+        # Excel stores naive datetimes, so that is what a cell hands us.
+        assert getDateFromValue(datetime(2024, 6, 15, 10, 30)) == date(  # noqa: DTZ001
+            2024, 6, 15
+        )
 
     def test_iso_string(self):
         assert getDateFromValue("2024-03-01") == date(2024, 3, 1)

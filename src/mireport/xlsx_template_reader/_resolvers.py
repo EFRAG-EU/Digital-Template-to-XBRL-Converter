@@ -17,7 +17,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from itertools import combinations
-from typing import TYPE_CHECKING, NamedTuple, Optional
+from typing import TYPE_CHECKING, NamedTuple
 
 if TYPE_CHECKING:
     from openpyxl.worksheet.worksheet import Worksheet
@@ -97,7 +97,7 @@ def resolveNamedRangeTable(
     required_sub_names: tuple[str, ...],
     optional_sub_names: tuple[str, ...] = (),
     context: str,
-) -> Optional[ResolvedNamedRangeTable]:
+) -> ResolvedNamedRangeTable | None:
     """Resolve a container named range plus fixed-named sub-ranges (e.g. footnotes).
 
     Returns None silently when nothing is configured, and None with a warning
@@ -146,7 +146,7 @@ def resolveNamedRangeTable(
     return ResolvedNamedRangeTable(container_crm, sub_crms)
 
 
-def resolveFootnoteBinding(ctx: ExcelCellBindingContext) -> Optional[FootnoteBinding]:
+def resolveFootnoteBinding(ctx: ExcelCellBindingContext) -> FootnoteBinding | None:
     """Resolve the footnote named ranges into a FootnoteBinding."""
     resolved = resolveNamedRangeTable(
         ctx,
@@ -188,7 +188,14 @@ def resolveExternalValues(ctx: ExcelCellBindingContext) -> frozenset[Concept]:
 
     has_external_value: set[Concept] = set()
     for cell in crh.cells():
-        if (value := CellValue.fromCell(cell)).isBlank:
+        if (value := CellValue.fromCell(cell)).isError:
+            ctx.msg.error(
+                f"Cell in named range {_EXTERNAL_VALUES_RANGE} contains an error value '{value.raw}'. Please fix the error in the file.",
+                MessageType.ExcelParsing,
+                ref=crh.excelRef(cell),
+            )
+            continue
+        if value.isBlank:
             continue
         name_or_label = value.as_str_stripped()
         try:
@@ -237,7 +244,7 @@ class XBRLTableResolver:
         self._candidates_by_ws = candidates_by_ws
         self._concepts_in_excel = concepts_in_excel
 
-    def resolve(self, table: XbrlConceptCellRangeMetadata) -> Optional[TableBinding]:
+    def resolve(self, table: XbrlConceptCellRangeMetadata) -> TableBinding | None:
         """Return the TableBinding, or None if an overlap conflict makes it unusable."""
         msg = self._ctx.msg
         taxonomy = self._ctx.taxonomy

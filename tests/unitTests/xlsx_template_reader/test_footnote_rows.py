@@ -37,14 +37,14 @@ def _crm(wb: Workbook, reader: WorkbookReader, name: str, ref: str):
     return crm
 
 
-def _footnotes(
+def _footnotes_and_error_cells(
     wb: Workbook,
     table_ref: str,
     text_ref: str,
     ref_ref: str,
     dim_ref: str | None = None,
 ):
-    """Return the (text, [(label, dim_text), ...]) pairs _iterFootnoteRows yields."""
+    """As _footnotes, also returning the cells reported as holding error values."""
     reader = WorkbookReader(wb, ConversionResultsBuilder(consoleOutput=False))
     table = _crm(wb, reader, "footnote_table", table_ref)
     text = _crm(wb, reader, "footnote_text", text_ref)
@@ -53,12 +53,30 @@ def _footnotes(
     dim_col = None
     if dim_ref is not None:
         dim_col = _columnIndex(_crm(wb, reader, "footnote_ref_dim", dim_ref), origin)
-    return [
+    error_cells: list[str] = []
+    footnotes = [
         (text_value, [(label, dim) for label, dim, _ in label_cells])
         for text_value, label_cells in _iterFootnoteRows(
-            table, _columnIndex(text, origin), _columnIndex(ref, origin), dim_col
+            table,
+            _columnIndex(text, origin),
+            _columnIndex(ref, origin),
+            dim_col,
+            lambda cell: error_cells.append(str(cell.value)),
         )
     ]
+    return footnotes, error_cells
+
+
+def _footnotes(
+    wb: Workbook,
+    table_ref: str,
+    text_ref: str,
+    ref_ref: str,
+    dim_ref: str | None = None,
+):
+    """Return the (text, [(label, dim_text), ...]) pairs _iterFootnoteRows yields."""
+    footnotes, _ = _footnotes_and_error_cells(wb, table_ref, text_ref, ref_ref, dim_ref)
+    return footnotes
 
 
 def test_refs_under_blank_text_do_not_leak_into_next_footnote():
@@ -75,6 +93,37 @@ def test_refs_under_blank_text_do_not_leak_into_next_footnote():
     footnotes = _footnotes(wb, "A1:B2", "A1:A2", "B1:B2")
 
     assert footnotes == [("Real footnote", [("RealRef", None)])]
+
+
+def test_error_value_in_text_is_reported_and_reads_as_blank():
+    """Footnote cells come from range iteration, bypassing getSingleCell, so a
+    broken formula here is caught by _readFootnoteRow: it is reported and the
+    cell reads as blank, keeping '#REF!' out of the footnote text."""
+    wb = _wb()
+    ws = wb.active
+    assert ws is not None
+    ws["A1"] = "#REF!"
+    ws["B1"] = "OrphanedRef"
+    ws["A2"] = "Real footnote"
+    ws["B2"] = "RealRef"
+
+    footnotes, error_cells = _footnotes_and_error_cells(wb, "A1:B2", "A1:A2", "B1:B2")
+
+    assert error_cells == ["#REF!"]
+    assert footnotes == [("Real footnote", [("RealRef", None)])]
+
+
+def test_error_value_in_ref_is_reported_and_not_used_as_a_ref():
+    wb = _wb()
+    ws = wb.active
+    assert ws is not None
+    ws["A1"] = "Real footnote"
+    ws["B1"] = "#VALUE!"
+
+    footnotes, error_cells = _footnotes_and_error_cells(wb, "A1:B1", "A1:A1", "B1:B1")
+
+    assert error_cells == ["#VALUE!"]
+    assert footnotes == [("Real footnote", [])]
 
 
 def test_ref_in_otherwise_blank_table_yields_nothing():

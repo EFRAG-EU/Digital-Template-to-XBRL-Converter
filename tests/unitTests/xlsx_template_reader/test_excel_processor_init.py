@@ -26,9 +26,8 @@ class TestInitRejectsNonWorkbook:
             XlsxProcessor(SAMPLE, _builder(), VSME_DEFAULTS)  # type: ignore[arg-type]
 
     def test_init_rejects_filelike(self):
-        with SAMPLE.open("rb") as fh:
-            with pytest.raises(TypeError):
-                XlsxProcessor(fh, _builder(), VSME_DEFAULTS)  # type: ignore[arg-type]
+        with SAMPLE.open("rb") as fh, pytest.raises(TypeError):
+            XlsxProcessor(fh, _builder(), VSME_DEFAULTS)  # type: ignore[arg-type]
 
 
 class TestFromBytesVsFromFile:

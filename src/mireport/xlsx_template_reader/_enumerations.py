@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import difflib
 from functools import lru_cache
-from typing import TYPE_CHECKING, NamedTuple, Optional
+from typing import TYPE_CHECKING, NamedTuple
 
 if TYPE_CHECKING:
     from mireport.taxonomy import Concept, Taxonomy
@@ -35,7 +35,7 @@ def eeDomainByLabel(eeConcept: Concept) -> dict[str, tuple[Concept, str]]:
             f"Concept {eeConcept} with data-type {eeConcept.dataType} is not of enumeration type."
         )
 
-    eeDomainLabels: dict[str, tuple[Concept, str]] = dict()
+    eeDomainLabels: dict[str, tuple[Concept, str]] = {}
     for eeMember in eeConcept.getEEDomain():
         all_labels = eeMember.getAllStandardLabels()
         for actual_label in all_labels:
@@ -50,7 +50,7 @@ def eeDomainByLabel(eeConcept: Concept) -> dict[str, tuple[Concept, str]]:
 
 def getClosestEEMemberMatch(
     eeConcept: Concept, text: str
-) -> Optional[tuple[Concept, str]]:
+) -> tuple[Concept, str] | None:
     eeDomainLabels = eeDomainByLabel(eeConcept)
     closest_matches = difflib.get_close_matches(
         text, eeDomainLabels.keys(), n=1, cutoff=0.6
@@ -65,7 +65,7 @@ class LabelMatch(NamedTuple):
 
     concept: Concept
     viaConfiguredAlias: bool
-    closestLabel: Optional[str]
+    closestLabel: str | None
     """The domain-member label actually matched, when fuzzy matching was used."""
 
 
@@ -74,9 +74,9 @@ def resolveMemberByLabel(
     config: ConverterConfig,
     text: str,
     *,
-    ee_concept: Optional[Concept] = None,
-    dimension: Optional[Concept] = None,
-) -> Optional[LabelMatch]:
+    ee_concept: Concept | None = None,
+    dimension: Concept | None = None,
+) -> LabelMatch | None:
     """Resolve cell text to a concept by trying, in order: exact standard
     label, the configured cell-value alias, and — only when ee_concept is
     given — the closest domain-member label. None if nothing matches.
@@ -98,7 +98,7 @@ def resolveMemberByLabel(
     if ee_concept is not None and dimension is not None:
         raise ValueError("Specify at most one of ee_concept and dimension")
 
-    domain: Optional[frozenset[Concept]] = None
+    domain: frozenset[Concept] | None = None
     if ee_concept is not None:
         domain = frozenset(ee_concept.getEEDomain())
     elif dimension is not None:

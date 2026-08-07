@@ -11,8 +11,10 @@ from openpyxl.cell.cell import ERROR_CODES
 CellType: TypeAlias = ReadOnlyCell | MergedCell | Cell
 CellValueType: TypeAlias = bool | float | int | str | datetime | date | time | None
 
-EXCEL_PLACEHOLDER_VALUE = "#VALUE!"
-EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE = frozenset({"-", EXCEL_PLACEHOLDER_VALUE})
+# Placeholders a user types to mean "nothing to report here". Excel error
+# values are deliberately not in this set: they mean a broken formula, and are
+# reported (see is_error_value) rather than skipped.
+EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE = frozenset({"-"})
 IGNORED_DEFINED_NAME_PREFIXES = ("enum_", "template_")
 
 # TODO FIXME Temporary workarounds for the VSME taxonomy.

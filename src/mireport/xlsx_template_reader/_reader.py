@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from datetime import date
-from typing import Optional
 
 from openpyxl import Workbook
 from openpyxl.workbook.defined_name import DefinedName
@@ -11,11 +10,11 @@ from openpyxl.worksheet.cell_range import CellRange
 
 from mireport.conversionresults import ConversionResultsBuilder, MessageType
 from mireport.xlsx_template_reader._constants import (
-    EXCEL_PLACEHOLDER_VALUE,
     EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE,
     IGNORED_DEFINED_NAME_PREFIXES,
     CellType,
     CellValueType,
+    is_error_value,
 )
 from mireport.xlsx_template_reader._messages import Messenger
 from mireport.xlsx_template_reader._ranges import (
@@ -37,7 +36,7 @@ class CellValue:
     raw: CellValueType
 
     @classmethod
-    def fromCell(cls, cell: Optional[CellType]) -> CellValue:
+    def fromCell(cls, cell: CellType | None) -> CellValue:
         """Wrap a cell's value, stringifying rich objects (e.g. rich text) that
         aren't plain cell value types. A missing cell yields a blank CellValue."""
         if cell is None:
@@ -56,8 +55,18 @@ class CellValue:
         return self.raw is not None
 
     @property
+    def isError(self) -> bool:
+        """True for Excel/Google Sheets error values such as '#REF!' or '#VALUE!'.
+
+        Disjoint from isBlank: an error value is a broken formula to report, not
+        an empty cell to skip. Cells read through WorkbookReader.getSingleCell
+        are already screened, so this is for callers iterating a range directly.
+        """
+        return isinstance(self.raw, str) and is_error_value(self.raw.strip())
+
+    @property
     def isBlank(self) -> bool:
-        """True for empty cells and for Excel placeholder values ('-', '#VALUE!')."""
+        """True for empty cells and for the '-' placeholder, i.e. nothing to report."""
         if self.raw is None:
             return True
         if isinstance(self.raw, str):
@@ -102,7 +111,7 @@ class WorkbookReader:
     def close(self) -> None:
         self._workbook.close()
 
-    def getDefinedName(self, name: str) -> Optional[DefinedName]:
+    def getDefinedName(self, name: str) -> DefinedName | None:
         return self._workbook.defined_names.get(name)
 
     @property
@@ -113,7 +122,7 @@ class WorkbookReader:
         """Record that this defined name has been consumed by the conversion."""
         self._unused.discard(dn)
 
-    def peekRange(self, dn: DefinedName) -> Optional[CellRangeMetadata]:
+    def peekRange(self, dn: DefinedName) -> CellRangeMetadata | None:
         """Resolve a defined name to its cell range without marking it used.
 
         Emits an error message and returns None when the defined name is
@@ -178,7 +187,7 @@ class WorkbookReader:
     def resolveRange(
         self,
         definedName: DefinedName | str | CellRangeMetadata,
-    ) -> Optional[CellRangeMetadata]:
+    ) -> CellRangeMetadata | None:
         """Resolve a defined name (or its string name) to its cell range,
         marking it as used. Returns None if the name is missing or damaged.
 
@@ -203,7 +212,7 @@ class WorkbookReader:
         *,
         row: int = -1,
         column: int = -1,
-    ) -> Optional[CellType]:
+    ) -> CellType | None:
         if (stuff := self.resolveRange(definedName)) is None:
             return None
 
@@ -261,9 +270,9 @@ class WorkbookReader:
         if cell is None or cell.value is None:
             return None
 
-        if cell.value == EXCEL_PLACEHOLDER_VALUE:
+        if is_error_value(str(cell.value).strip()):
             self._msg.error(
-                f"Excel cell has an invalid stored value {EXCEL_PLACEHOLDER_VALUE}. Please check the Excel formula for this specific cell.",
+                f"Excel cell has an invalid stored value {cell.value}. Please check the Excel formula for this specific cell.",
                 MessageType.ExcelParsing,
                 ref=stuff.excelRef(cell),
             )

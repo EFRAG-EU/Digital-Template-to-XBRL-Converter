@@ -57,9 +57,25 @@ class TestVersionComparison:
         assert check.version_is_same is False
         assert check.version_major_minor_same is True
 
-    def test_different_major_warns(self):
-        other = VersionHolder(CONVERTER_VERSION.major + 1, 0, 0, "")
-        check, results = _check({"template_reporting_template_version": str(other)})
+    def test_newer_major_warns_template_is_ahead(self):
+        """A template from the future is a warning about the converter, not a
+        prompt to migrate: there is nothing newer for the user to migrate to."""
+        newer = VersionHolder(CONVERTER_VERSION.major + 1, 0, 0, "")
+        check, results = _check({"template_reporting_template_version": str(newer)})
+        assert check.version_is_same is False
+        assert check.version_major_minor_same is False
+        assert any(
+            m.severity is Severity.WARNING
+            and "newer than the converter version" in str(m.messageText)
+            for m in results.messages
+        )
+
+    def test_older_major_warns_to_migrate(self):
+        older = VersionHolder(max(CONVERTER_VERSION.major - 1, 0), 0, 0, "")
+        assert older < CONVERTER_VERSION, (
+            f"test needs a version below {CONVERTER_VERSION}"
+        )
+        check, results = _check({"template_reporting_template_version": str(older)})
         assert check.version_is_same is False
         assert check.version_major_minor_same is False
         assert any(

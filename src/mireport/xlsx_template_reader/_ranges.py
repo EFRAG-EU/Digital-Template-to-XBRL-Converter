@@ -7,8 +7,9 @@ XbrlConceptCellRangeMetadata additionally ties the range to a taxonomy concept.
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Iterator, NamedTuple, Optional
+from typing import TYPE_CHECKING, NamedTuple
 
 if TYPE_CHECKING:
     from typing import Self
@@ -54,7 +55,7 @@ class CellRangeMetadata:
             other.cellRange
         )
 
-    def excelRef(self, cell: Optional[CellType] = None) -> str:
+    def excelRef(self, cell: CellType | None = None) -> str:
         """Excel reference for this range, or for a specific cell within it.
 
         e.g. 'Example sheet'!$A$5:$B$10 for the range, 'Example sheet'!$A$5

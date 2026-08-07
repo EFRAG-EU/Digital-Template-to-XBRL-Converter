@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import NamedTuple, Optional
+from typing import NamedTuple
 
 from openpyxl.workbook.defined_name import DefinedName
 
@@ -42,7 +42,7 @@ class FootnoteBinding(NamedTuple):
     table: CellRangeMetadata
     text: CellRangeMetadata
     ref: CellRangeMetadata
-    ref_dimension: Optional[CellRangeMetadata]
+    ref_dimension: CellRangeMetadata | None
 
 
 @dataclass
@@ -52,4 +52,4 @@ class WorkbookBindings:
     unit_map: dict[Concept, XbrlConceptCellRangeMetadata]
     preset_dims: dict[XbrlConceptCellRangeMetadata, dict[Concept, Concept]]
     has_external_value: frozenset[Concept]
-    footnote: Optional[FootnoteBinding]
+    footnote: FootnoteBinding | None

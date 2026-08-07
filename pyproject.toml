@@ -111,6 +111,10 @@ extend-select = ["I"]
 "src/digital_converter_webapp/*.py" = ["BLE001"]
 "src/mireport/arelle/report_info.py" = ["BLE001"]
 "src/mireport/xlsx_template_reader/processor.py" = ["BLE001"]
+# _reader.py inherited the openpyxl boundary when processor.py was split up: it
+# wraps named range and cell range resolution, where openpyxl's exception
+# surface is not something we can enumerate.
+"src/mireport/xlsx_template_reader/_reader.py" = ["BLE001"]
 
 # Test package directories are camelCase to match the rest of the test suite.
 "tests/**" = ["N999"]

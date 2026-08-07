@@ -8,7 +8,6 @@ from collections.abc import Mapping
 from datetime import UTC, date, datetime
 from io import BytesIO
 from itertools import count
-from typing import TYPE_CHECKING
 from unicodedata import name as unicode_name
 
 import ixbrltemplates

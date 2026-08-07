@@ -27,6 +27,7 @@ from mireport.exceptions import AmbiguousComponentException
 from mireport.typealiases import FactValue
 from mireport.xlsx_template_reader._constants import (
     EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE,
+    is_error_value,
 )
 from mireport.xlsx_template_reader._enumerations import resolveMemberByLabel
 from mireport.xlsx_template_reader._fact_support import (
@@ -132,6 +133,18 @@ class TableFactCreator:
                     )
                     return False
 
+        # Reported rather than skipped: an error value is a broken formula the
+        # user needs to fix. Checked before the placeholder skip below, which
+        # would otherwise swallow '#VALUE!'.
+        if isinstance(value, str) and is_error_value(value.strip()):
+            self._msg.error(
+                f"Cell in named range {priItem.definedName.name} contains an error value '{value}'. Please fix the error in the file.",
+                MessageType.ExcelParsing,
+                concept=concept,
+                ref=priItem.excelRef(cell),
+            )
+            return True
+
         if value is None or value in EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE:
             return True
 
@@ -216,7 +229,7 @@ class TableFactCreator:
                         ref=priItem.excelRef(cell),
                     )
             factBuilder.setHiddenValue(
-                " ".join(sorted(set(e.expandedName for e in eeValues)))
+                " ".join(sorted({e.expandedName for e in eeValues}))
             )
 
         if broken:

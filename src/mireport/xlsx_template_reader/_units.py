@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from openpyxl.workbook.defined_name import DefinedName
@@ -60,7 +60,7 @@ class UnitResolver:
 
     def getSimpleUnit(
         self, unitHolder: XbrlConceptCellRangeMetadata, cell: CellType
-    ) -> Optional[QName]:
+    ) -> QName | None:
         if not cell.value:
             return None
         cellValue = str(cell.value).strip()
@@ -107,11 +107,11 @@ class UnitResolver:
         factBuilder: FactBuilder,
         *,
         row: int = -1,
-        specifiedUnitHolder: Optional[XbrlConceptCellRangeMetadata] = None,
-        sharedRange: Optional[bool] = None,
+        specifiedUnitHolder: XbrlConceptCellRangeMetadata | None = None,
+        sharedRange: bool | None = None,
     ) -> bool:
         concept = conceptHolder.concept
-        unitHolder: Optional[XbrlConceptCellRangeMetadata]
+        unitHolder: XbrlConceptCellRangeMetadata | None
         if specifiedUnitHolder is not None:
             unitHolder = specifiedUnitHolder
         else:
@@ -211,10 +211,11 @@ class UnitResolver:
         if not concept.isNumeric:
             return False
 
-        if (unit := self._config.dataTypesToUnits.get(concept.dataType)) is not None:
-            if self.taxonomy.UTR.valid(concept.dataType, unit):
-                factBuilder.setSimpleUnit(unit)
-                return True
+        if (
+            unit := self._config.dataTypesToUnits.get(concept.dataType)
+        ) is not None and self.taxonomy.UTR.valid(concept.dataType, unit):
+            factBuilder.setSimpleUnit(unit)
+            return True
 
         if units := self.taxonomy.UTR.getUnitsForDataType(concept.dataType):
             chosen = next(iter(units))

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from mireport.report import InlineReport
@@ -29,11 +29,11 @@ def resolveMemberWithMessages(
     text: str,
     eeConcept: Concept,
     holder: XbrlConceptCellRangeMetadata,
-    cell: Optional[CellType],
+    cell: CellType | None,
     *,
-    displayValue: Optional[str] = None,
+    displayValue: str | None = None,
     warnOnExactMatch: bool = False,
-) -> Optional[Concept]:
+) -> Concept | None:
     """Resolve cell text to an EE domain member via the full label chain
     (exact -> configured alias -> closest match), emitting the standard
     workaround warnings.
@@ -98,7 +98,7 @@ def processNumeric(
     holder: XbrlConceptCellRangeMetadata,
     cell: CellType,
     fb: FactBuilder,
-    value: Optional[object] = None,
+    value: object | None = None,
 ) -> None:
     """Apply the cell's numeric formatting (decimals, percentage) to the builder."""
     if value is None:

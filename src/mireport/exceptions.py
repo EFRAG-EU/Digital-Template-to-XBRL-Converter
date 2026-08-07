@@ -47,7 +47,6 @@ class AmbiguousComponentException(TaxonomyException):
         self.candidates: tuple[Concept, ...] = tuple(candidates)
 
 
-
 class OpenPyXlRelatedException(MIReportException):
     """Exception raised when dealing with an issue in OpenPyXL"""
 

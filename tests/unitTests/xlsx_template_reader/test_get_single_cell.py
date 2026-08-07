@@ -1,14 +1,13 @@
 """Tests for WorkbookReader.getSingleCell."""
 
+import pytest
 from openpyxl import Workbook
 from openpyxl.utils.cell import absolute_coordinate, quote_sheetname
 from openpyxl.workbook.defined_name import DefinedName
 
 from mireport.conversionresults import ConversionResultsBuilder, Severity
-from mireport.xlsx_template_reader._reader import (
-    EXCEL_PLACEHOLDER_VALUE,
-    WorkbookReader,
-)
+from mireport.xlsx_template_reader._constants import ALL_ERROR_VALUES
+from mireport.xlsx_template_reader._reader import WorkbookReader
 
 _SHEET = "Sheet"
 
@@ -67,11 +66,31 @@ class TestGetSingleCellBasic:
         wb = _wb()
         assert _reader(wb).getSingleCell("does_not_exist") is None
 
-    def test_returns_none_for_placeholder_value(self):
+    @pytest.mark.parametrize("error_value", sorted(ALL_ERROR_VALUES))
+    def test_returns_none_and_reports_every_error_value(self, error_value):
+        """Every Excel/Google Sheets error code is screened here, not just
+        '#VALUE!', so no caller downstream can mistake one for a real value."""
         wb = _wb()
-        _ws(wb)["A1"] = EXCEL_PLACEHOLDER_VALUE
+        _ws(wb)["A1"] = error_value
         _add_range(wb, "r", "A1")
-        assert _reader(wb).getSingleCell("r") is None
+        results = _results()
+        assert _reader(wb, results).getSingleCell("r") is None
+        assert any(
+            m.severity is Severity.ERROR and error_value in str(m.messageText)
+            for m in results.messages
+        ), f"no error reported for {error_value}"
+
+    def test_dash_placeholder_is_not_an_error(self):
+        """'-' means the user has nothing to report; it reaches the caller as a
+        value and is skipped there, without an error message."""
+        wb = _wb()
+        _ws(wb)["A1"] = "-"
+        _add_range(wb, "r", "A1")
+        results = _results()
+        cell = _reader(wb, results).getSingleCell("r")
+        assert cell is not None
+        assert cell.value == "-"
+        assert not [m for m in results.messages if m.severity is Severity.ERROR]
 
 
 class TestGetSingleCellMultiRow:

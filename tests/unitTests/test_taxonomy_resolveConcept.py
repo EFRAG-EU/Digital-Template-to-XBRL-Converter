@@ -92,7 +92,7 @@ class TestPredicateDisambiguation:
                 label,
                 by_label=True,
                 only_reportable=False,
-                predicate=lambda c: c.qname == target.qname,
+                predicate=lambda c, target=target: c.qname == target.qname,
             )
             assert resolved is target
 
@@ -153,7 +153,7 @@ class TestPredicateSemantics:
         if abstract is None:
             pytest.skip("vsme taxonomy has no abstract concept")
         qname = str(abstract.qname)
-        pin = lambda c: c.qname == abstract.qname  # noqa: E731
+        pin = lambda c: c.qname == abstract.qname
         # predicate passes but the reportable filter still applies...
         assert (
             taxonomy.resolveConcept(

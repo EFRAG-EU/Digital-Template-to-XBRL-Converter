@@ -195,7 +195,7 @@ def prepare_output_path(path: Path, force: bool) -> tuple[Path, bool]:
 
 def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, list[str]]:
     resultsBuilder = ConversionResultsBuilder(consoleOutput=True)
-    unused: list[str] = list()
+    unused: list[str] = []
     with resultsBuilder.processingContext(
         "mireport Excel to validated Inline Report"
     ) as pc:

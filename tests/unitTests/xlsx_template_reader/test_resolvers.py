@@ -12,6 +12,7 @@ from mireport.conversionresults import ConversionResultsBuilder, Severity
 from mireport.data.disclosures import VSME_DEFAULTS
 from mireport.taxonomy import getTaxonomy
 from mireport.xlsx_template_reader._binder import WorkbookBinder
+from mireport.xlsx_template_reader._constants import ALL_ERROR_VALUES
 from mireport.xlsx_template_reader._messages import Messenger
 from mireport.xlsx_template_reader._ranges import XbrlConceptCellRangeMetadata
 from mireport.xlsx_template_reader._reader import WorkbookReader
@@ -298,6 +299,10 @@ def _warnings(results):
     return [m for m in results.messages if m.severity is Severity.WARNING]
 
 
+def _errors(results):
+    return [m for m in results.messages if m.severity is Severity.ERROR]
+
+
 class TestResolveExternalValues:
     @pytest.fixture(scope="class")
     def textblock(self, taxonomy):
@@ -309,9 +314,20 @@ class TestResolveExternalValues:
         assert not _warnings(results)
 
     def test_blank_and_placeholder_cells_skipped_silently(self, taxonomy):
-        ctx, results = _external_values_ctx([None, "-", "   ", "#VALUE!"], taxonomy)
+        ctx, results = _external_values_ctx([None, "-", "   "], taxonomy)
         assert resolveExternalValues(ctx) == frozenset()
         assert not _warnings(results)
+        assert not _errors(results)
+
+    @pytest.mark.parametrize("error_value", sorted(ALL_ERROR_VALUES))
+    def test_error_cells_are_reported_not_skipped(self, taxonomy, error_value):
+        """This range is read by iterating cells, so it never passes through
+        getSingleCell's screening and has to catch error values itself."""
+        ctx, results = _external_values_ctx([error_value], taxonomy)
+        assert resolveExternalValues(ctx) == frozenset()
+        errors = _errors(results)
+        assert len(errors) == 1
+        assert error_value in str(errors[0].messageText)
 
     def test_non_string_cells_warn_and_are_excluded(self, taxonomy):
         # Numbers/booleans can't name a concept: they now stringify, fail the
@@ -361,7 +377,6 @@ class TestResolveExternalValues:
 
             def resolveConcept(self, text, **kwargs):
                 self.calls.append((text, kwargs))
-                return None
 
         stub = RecordingTaxonomy()
         ctx, _ = _external_values_ctx(["Anything"], stub)

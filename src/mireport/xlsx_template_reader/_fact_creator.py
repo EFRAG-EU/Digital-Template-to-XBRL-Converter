@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any, Mapping
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from openpyxl.workbook.defined_name import DefinedName
@@ -99,6 +100,8 @@ class FactCreator:
         for periodHolder in periodHolders:
             dimValueDN = periodHolder.definedName
             namedPeriod = dimValueDN.name or ""
+            # Error values are screened (and reported) by getSingleCell, so
+            # they arrive here as blank.
             yearValue = self._reader.value(periodHolder)
             if yearValue.isBlank:
                 self._pending.pop(dimValueDN)
@@ -203,7 +206,7 @@ class FactCreator:
             if concept.isDate:
                 try:
                     value = getDateFromValue(value)
-                except Exception:
+                except (ValueError, TypeError):
                     self._msg.error(
                         f"Unable to parse date from cell value '{value}' for {concept.qname}.",
                         MessageType.ExcelParsing,

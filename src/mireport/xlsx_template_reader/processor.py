@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import logging
 import re
+from collections.abc import Mapping
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Mapping, NamedTuple
+from typing import TYPE_CHECKING, Any, NamedTuple
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from datetime import date
-    from typing import BinaryIO, Callable, Optional, Self
+    from typing import BinaryIO, Self
 
 from babel import Locale
 from openpyxl import Workbook
@@ -30,7 +32,6 @@ from mireport.xlsx_template_reader._binder import WorkbookBinder
 from mireport.xlsx_template_reader._bindings import WorkbookBindings
 from mireport.xlsx_template_reader._constants import (
     EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE,
-    is_error_value,
 )
 from mireport.xlsx_template_reader._fact_creator import FactCreator
 from mireport.xlsx_template_reader._messages import Messenger
@@ -58,7 +59,7 @@ class XlsxProcessor:
         results: ConversionResultsBuilder,
         defaults: Mapping[str, Any],
         /,
-        outputLocale: Optional[Locale] = None,
+        outputLocale: Locale | None = None,
     ):
         if not isinstance(workbook, Workbook):
             raise TypeError(
@@ -70,8 +71,8 @@ class XlsxProcessor:
         self._defaults = defaults
 
         # For passing through to inline report
-        self._outputLocale: Optional[Locale] = outputLocale
-        self._coverImage: Optional[bytes] = None
+        self._outputLocale: Locale | None = outputLocale
+        self._coverImage: bytes | None = None
 
         self._report: InlineReport
         self._reader = WorkbookReader(workbook, results)
@@ -83,7 +84,7 @@ class XlsxProcessor:
         results: ConversionResultsBuilder,
         defaults: Mapping[str, Any],
         /,
-        outputLocale: Optional[Locale] = None,
+        outputLocale: Locale | None = None,
     ) -> Self:
         from io import BytesIO
 
@@ -97,7 +98,7 @@ class XlsxProcessor:
         results: ConversionResultsBuilder,
         defaults: Mapping[str, Any],
         /,
-        outputLocale: Optional[Locale] = None,
+        outputLocale: Locale | None = None,
     ) -> Self:
         wb = loadExcelFromPathOrFileLike(path_or_filelike)
         return cls(wb, results, defaults, outputLocale=outputLocale)
@@ -249,11 +250,7 @@ class XlsxProcessor:
             else:
                 aoixValue = self._reader.value(namedRangeName).as_str_stripped()
 
-            if (
-                not aoixValue
-                or aoixValue in EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE
-                or is_error_value(aoixValue)
-            ):
+            if not aoixValue or aoixValue in EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE:
                 self._msg.error(
                     f"Excel report must have a valid value for named range {namedRangeName}.",
                     MessageType.ExcelParsing,
@@ -284,7 +281,7 @@ class XlsxProcessor:
             if self._report.addDurationPeriod(name, startDate, endDate):
                 self._report.setDefaultPeriodName(name)
 
-    def _readPeriodDate(self, name: str) -> Optional[date]:
+    def _readPeriodDate(self, name: str) -> date | None:
         try:
             return self._reader.value(name).as_date()
         except Exception as e:
@@ -402,9 +399,17 @@ class XlsxProcessor:
                         self._reader.getDefinedName(template_version_name)
                     ),
                 )
-            else:
+            elif excel_version < converter_version:
                 self._msg.warning(
                     f"The Digital Template is based on version {excel_version}. The latest version available is {converter_version}, please update/migrate to the latest version of the Digital Template, in order to avoid any error message and data loss.",
+                    MessageType.ExcelParsing,
+                    ref=excelDefinedNameRef(
+                        self._reader.getDefinedName(template_version_name)
+                    ),
+                )
+            else:
+                self._msg.warning(
+                    f"The Digital Template is based on version {excel_version}, which is newer than the converter version {converter_version}. This may cause errors during conversion. Please use a supported template (the latest version supported by this converter deployment is {converter_version}).",
                     MessageType.ExcelParsing,
                     ref=excelDefinedNameRef(
                         self._reader.getDefinedName(template_version_name)
@@ -423,7 +428,7 @@ class XlsxProcessor:
         )
 
     @classmethod
-    def checkReport(cls, excelBlob: BinaryIO) -> Optional[TemplateCheckResult]:
+    def checkReport(cls, excelBlob: BinaryIO) -> TemplateCheckResult | None:
         """
         Check the report template for internal validation and version information.
         """

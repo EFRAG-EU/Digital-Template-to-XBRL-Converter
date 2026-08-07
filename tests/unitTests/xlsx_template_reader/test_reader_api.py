@@ -3,6 +3,7 @@ and the WorkbookBinder that turns a workbook into WorkbookBindings."""
 
 from datetime import date, datetime
 from pathlib import Path
+from typing import ClassVar
 
 import pytest
 from openpyxl.workbook.defined_name import DefinedName
@@ -11,6 +12,7 @@ from mireport.conversionresults import ConversionResultsBuilder
 from mireport.data.disclosures import VSME_DEFAULTS
 from mireport.taxonomy import getTaxonomy
 from mireport.xlsx_template_reader._binder import WorkbookBinder
+from mireport.xlsx_template_reader._constants import ALL_ERROR_VALUES
 from mireport.xlsx_template_reader._ranges import (
     CellRangeMetadata,
     XbrlConceptCellRangeMetadata,
@@ -95,8 +97,22 @@ class TestCellValue:
     def test_placeholder_dash_is_blank(self):
         assert CellValue("-").isBlank
 
-    def test_excel_error_placeholder_is_blank(self):
-        assert CellValue("#VALUE!").isBlank
+    @pytest.mark.parametrize("error_value", sorted(ALL_ERROR_VALUES))
+    def test_error_values_are_not_blank(self, error_value):
+        """isBlank and isError are disjoint: a broken formula is something to
+        report, not an empty cell to skip over."""
+        value = CellValue(error_value)
+        assert value.isError
+        assert not value.isBlank
+
+    def test_dash_is_not_an_error(self):
+        assert not CellValue("-").isError
+
+    def test_error_value_is_recognised_despite_whitespace(self):
+        assert CellValue("  #REF!  ").isError
+
+    def test_non_string_is_not_an_error(self):
+        assert not CellValue(42).isError
 
     def test_whitespace_is_blank(self):
         assert CellValue("   ").isBlank
@@ -154,7 +170,10 @@ class TestCellValue:
         assert CellValue(d).as_date() == d
 
     def test_as_date_from_datetime(self):
-        assert CellValue(datetime(2024, 6, 15, 10, 30)).as_date() == date(2024, 6, 15)
+        # Excel stores naive datetimes, so that is what a cell hands us.
+        assert CellValue(datetime(2024, 6, 15, 10, 30)).as_date() == date(  # noqa: DTZ001
+            2024, 6, 15
+        )
 
     def test_as_date_from_iso_string(self):
         assert CellValue("2024-03-01").as_date() == date(2024, 3, 1)
@@ -174,7 +193,7 @@ class TestCellValue:
 
     def test_from_cell_stringifies_rich_objects(self):
         class FakeCell:
-            value = ["rich", "text"]
+            value: ClassVar[list[str]] = ["rich", "text"]
 
         assert CellValue.fromCell(FakeCell()).raw == "['rich', 'text']"  # type: ignore[arg-type]
 

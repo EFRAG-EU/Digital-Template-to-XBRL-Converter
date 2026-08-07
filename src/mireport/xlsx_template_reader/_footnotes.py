@@ -8,7 +8,8 @@ the matching facts in the report.
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Callable, Iterator, NamedTuple, Optional
+from collections.abc import Callable, Iterator
+from typing import TYPE_CHECKING, NamedTuple
 
 if TYPE_CHECKING:
     from mireport.report import InlineReport
@@ -59,15 +60,22 @@ class FootnoteFactCreator:
         if binding.ref_dimension is not None:
             dim_col = _columnIndex(binding.ref_dimension, origin)
 
-        def warn_ref(msg: str, cell: Optional[CellType] = None) -> None:
+        def warn_ref(msg: str, cell: CellType | None = None) -> None:
             self._msg.warning(
                 msg,
                 MessageType.ExcelParsing,
                 ref=ref_crm.excelRef(cell),
             )
 
+        def error_cell(cell: CellType) -> None:
+            self._msg.error(
+                f"Cell in footnote table contains an error value '{cell.value}'. Please fix the error in the file.",
+                MessageType.ExcelParsing,
+                ref=table_crm.excelRef(cell),
+            )
+
         for text_value, label_cells in _iterFootnoteRows(
-            table_crm, text_col, ref_col, dim_col
+            table_crm, text_col, ref_col, dim_col, error_cell
         ):
             if not label_cells:
                 self._msg.warning(
@@ -139,7 +147,7 @@ class FootnoteFactCreator:
     def _factsForReference(
         self,
         concept: Concept,
-        member: Optional[Concept],
+        member: Concept | None,
         warn: Callable[..., object],
     ) -> list[Fact]:
         """The facts a footnote reference targets: dimension-filtered when a
@@ -199,6 +207,7 @@ def _readFootnoteRow(
     text_col: int,
     ref_col: int,
     dim_col: int | None,
+    on_error: Callable[[CellType], None],
 ) -> _FootnoteRow:
     """Parse one physical row of the footnote table.
 
@@ -206,23 +215,34 @@ def _readFootnoteRow(
     footnote blocks; a MergedCell continues the block above. The dimension and
     reference columns need no merged-cell handling: a MergedCell never holds a
     value, so it reads as blank like any other empty cell.
+
+    Cells are read through the range rather than getSingleCell, so error values
+    arrive unscreened: on_error is called for each and the cell then reads as
+    blank, keeping a broken formula out of the footnote text.
     """
+
+    def read(cell: CellType) -> CellValue:
+        value = CellValue.fromCell(cell)
+        if value.isError:
+            on_error(cell)
+            return CellValue(None)
+        return value
+
     is_boundary = False
     text: str | None = None
     cell = row_cells[text_col]
     if not isinstance(cell, MergedCell):
         is_boundary = True
-        if not (value := CellValue.fromCell(cell)).isBlank:
+        if not (value := read(cell)).isBlank:
             text = value.as_str_stripped()
 
     dim_text: str | None = None
-    if dim_col is not None:
-        if not (value := CellValue.fromCell(row_cells[dim_col])).isBlank:
-            dim_text = value.as_str_stripped()
+    if dim_col is not None and not (value := read(row_cells[dim_col])).isBlank:
+        dim_text = value.as_str_stripped()
 
     ref: tuple[str, CellType] | None = None
     cell = row_cells[ref_col]
-    if not (value := CellValue.fromCell(cell)).isBlank:
+    if not (value := read(cell)).isBlank:
         ref = (value.as_str_stripped(), cell)
 
     return _FootnoteRow(is_boundary, text, dim_text, ref)
@@ -233,13 +253,14 @@ def _iterFootnoteRows(
     text_col: int,
     ref_col: int,
     dim_col: int | None = None,
+    on_error: Callable[[CellType], None] = lambda _cell: None,
 ) -> Iterator[tuple[str, list[tuple[str, str | None, CellType]]]]:
     """Yields (footnote_text, [(label, dim_text_or_None, cell), ...]) for each footnote."""
     current_text: str | None = None
     current_label_cells: list[tuple[str, str | None, CellType]] = []
 
     for _, row_cells in table_crm.rows():
-        row = _readFootnoteRow(row_cells, text_col, ref_col, dim_col)
+        row = _readFootnoteRow(row_cells, text_col, ref_col, dim_col, on_error)
         if row.is_boundary:
             if current_text is not None:
                 yield current_text, current_label_cells
