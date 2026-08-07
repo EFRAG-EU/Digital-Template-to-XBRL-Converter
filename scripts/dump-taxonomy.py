@@ -15,6 +15,7 @@ from rich.text import Text
 import mireport
 from mireport.cli import configure_rich_output
 from mireport.cli import console_print as print
+from mireport.data.disclosures import VSME_DEFAULTS
 from mireport.taxonomy import (
     DOCUMENTATION_LABEL_ROLE,
     LABEL_SUFFIX_PATTERN,
@@ -31,7 +32,6 @@ from mireport.taxonomy import (
     listTaxonomies,
 )
 from mireport.taxonomy_checker import TaxonomyChecker
-from mireport.xlsx_template_reader.processor import VSME_DEFAULTS
 
 
 class Mismatch(NamedTuple):
@@ -362,58 +362,55 @@ def dump_translation_sheet(
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Dump taxonomy information.")
-    parser.add_argument(
+    parser.set_defaults(subcommand="dump")
+    subparsers = parser.add_subparsers(dest="subcommand")
+    subparsers.required = False
+
+    dump_parser = subparsers.add_parser(
+        "dump", help="Dump the taxonomy tree (default subcommand)."
+    )
+    dump_parser.set_defaults(subcommand="dump")
+    dump_parser.add_argument(
         "--check",
         action="store_true",
         help="Run taxonomy checks after dumping.",
     )
-    parser.add_argument(
-        "--translation-sheet",
-        metavar="OUTPUT.xlsx",
-        help="Write a translation sheet to the given Excel file instead of dumping the tree.",
+
+    ts_parser = subparsers.add_parser(
+        "translation-sheet", help="Write a translation sheet Excel file."
     )
-    parser.add_argument(
+    ts_parser.set_defaults(subcommand="translation-sheet")
+    ts_parser.add_argument("output", metavar="OUTPUT.xlsx", help="Output file path.")
+    ts_parser.add_argument(
         "--only-prefixes",
         nargs="+",
         metavar="PREFIX",
-        help="Restrict output to concepts with these namespace prefixes (e.g. --only-prefixes vsme nace).",
+        help="Restrict to concepts with these namespace prefixes (e.g. --only-prefixes vsme nace).",
     )
-    parser.add_argument(
+    ts_parser.add_argument(
         "--include-measurement-guidance",
         action="store_true",
         help="Include measurement guidance labels (default: excluded).",
     )
-    parser.add_argument(
+    lang_group = ts_parser.add_mutually_exclusive_group()
+    lang_group.add_argument(
+        "--all-languages",
+        action="store_true",
+        help="Include all supported languages as columns.",
+    )
+    lang_group.add_argument(
         "--languages",
         "-l",
         nargs="+",
         metavar="LANG",
         default=[],
-        help="Language codes for additional columns in the translation sheet (e.g. -l fr de).",
+        help="Language codes for additional columns (e.g. -l fr de).",
     )
+
     return parser
 
 
-def main() -> None:
-    parser = build_parser()
-    args = parser.parse_args()
-
-    with timer("Taxonomies loaded"):
-        mireport.loadBuiltInTaxonomyJSON()
-
-    entry_point = pick_entry_point()
-    taxonomy = getTaxonomy(entry_point)
-
-    if args.translation_sheet:
-        dump_translation_sheet(
-            taxonomy,
-            args.translation_sheet,
-            args.languages,
-            only_prefixes=args.only_prefixes,
-            filter_measurement_guidance=not args.include_measurement_guidance,
-        )
-        return
-
+def run_dump(taxonomy: Taxonomy, args: argparse.Namespace) -> None:
     for group in taxonomy.presentation:
         dump_group(group)
 
@@ -428,6 +425,38 @@ def main() -> None:
     if args.check:
         print()
         TaxonomyChecker(taxonomy).reportIssues()
+
+
+def run_translation_sheet(taxonomy: Taxonomy, args: argparse.Namespace) -> None:
+    languages = (
+        sorted(set(taxonomy.supportedLanguages) - {taxonomy.defaultLanguage})
+        if args.all_languages
+        else args.languages
+    )
+    dump_translation_sheet(
+        taxonomy,
+        args.output,
+        languages,
+        only_prefixes=args.only_prefixes,
+        filter_measurement_guidance=not args.include_measurement_guidance,
+    )
+
+
+def main() -> None:
+    parser = build_parser()
+    args = parser.parse_args()
+
+    with timer("Taxonomies loaded"):
+        mireport.loadBuiltInTaxonomyJSON()
+
+    entry_point = pick_entry_point()
+    taxonomy = getTaxonomy(entry_point)
+
+    match args.subcommand:
+        case "translation-sheet":
+            run_translation_sheet(taxonomy, args)
+        case None | "dump":
+            run_dump(taxonomy, args)
 
 
 if __name__ == "__main__":

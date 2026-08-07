@@ -38,6 +38,7 @@ from mireport.conversionresults import (
     MessageType,
     Severity,
 )
+from mireport.data.disclosures import VSME_DEFAULTS
 from mireport.filesupport import FilelikeAndFileName, ImageFileLikeAndFileName
 from mireport.localise import (
     EU_LOCALES,
@@ -48,10 +49,7 @@ from mireport.localise import (
 from mireport.report.theme import ColourPalette, DisplayMode, ReportTheme
 from mireport.stringutil import truthy
 from mireport.taxonomy import getTaxonomy, listTaxonomies
-from mireport.xlsx_template_reader.processor import (
-    VSME_DEFAULTS,
-    XlsxProcessor,
-)
+from mireport.xlsx_template_reader.processor import XlsxProcessor
 
 from .blueprints import convert_bp
 from .migration import (

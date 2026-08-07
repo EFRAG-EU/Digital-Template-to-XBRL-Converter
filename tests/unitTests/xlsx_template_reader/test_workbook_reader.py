@@ -44,23 +44,24 @@ class TestWorkbookReaderInit:
     def test_has_get_single_cell(self):
         assert callable(WorkbookReader.getSingleCell)
 
-    def test_has_get_single_value(self):
-        assert hasattr(WorkbookReader, "getSingleValue")
+    def test_has_value(self):
+        assert callable(WorkbookReader.value)
 
-    def test_has_get_single_string_value(self):
-        assert hasattr(WorkbookReader, "getSingleStringValue")
+    def test_has_resolve_range(self):
+        assert callable(WorkbookReader.resolveRange)
 
-    def test_has_get_single_date_value(self):
-        assert hasattr(WorkbookReader, "getSingleDateValue")
+    def test_legacy_getters_removed(self):
+        for name in ("getSingleValue", "getSingleStringValue", "getSingleDateValue"):
+            assert not hasattr(WorkbookReader, name)
 
 
-class TestWorkbookReaderGetSingleStringValue:
+class TestWorkbookReaderValue:
     def test_template_name_returns_string(self, reader):
-        val = reader.getSingleStringValue("template_version")
+        val = reader.value("template_reporting_template_version").asString()
         assert isinstance(val, str)
 
     def test_missing_name_returns_fallback(self, reader):
-        val = reader.getSingleStringValue("this_does_not_exist_xyz", fallbackValue="FB")
+        val = reader.value("this_does_not_exist_xyz").asString(fallback="FB")
         assert val == "FB"
 
 

@@ -16,6 +16,17 @@ EXCEL_VALUES_TO_BE_TREATED_AS_NONE_VALUE = frozenset({"-", EXCEL_PLACEHOLDER_VAL
 IGNORED_DEFINED_NAME_PREFIXES = ("enum_", "template_")
 EXTERNAL_VALUES_RANGE = "template_external_values"
 
+# TODO FIXME Temporary workarounds for the VSME taxonomy.
+# Template named ranges whose name doesn't match the taxonomy concept local
+# name; the value is the concept local name to bind them to instead.
+TAXONOMY_NAME_ALIASES: dict[str, str] = {
+    "IdentifierOfSitesInBiodiversitySensitiveAreasTypedAxis": "IdentifierOfSiteTypedAxis",
+}
+# Named ranges that are expected to go unhandled without warranting a message.
+UNHANDLED_NAMES_TO_IGNORE: frozenset[str] = frozenset(
+    {"BreakdownOfEnergyConsumptionAxis"}
+)
+
 # openpyxl's ERROR_CODES covers standard Excel errors; #ERROR! is a Google Sheets addition
 EXCEL_ERROR_VALUES: frozenset[str] = frozenset(ERROR_CODES)
 GOOGLE_SHEET_ERROR_VALUES: frozenset[str] = frozenset({"#ERROR!"})

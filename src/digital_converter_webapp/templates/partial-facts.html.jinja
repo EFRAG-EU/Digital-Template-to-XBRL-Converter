@@ -24,22 +24,12 @@
 {% endif %}
 {% endwith %}
 
-<div id="loadingSpinner" class="hidden fixed inset-0 items-center justify-center z-50">
-    <div class="flex items-center text-white text-lg font-bold border-4 border-white p-4 rounded-lg bg-black">
-        <svg class="mr-3 h-5 w-5 animate-spin text-white" viewBox="0 0 24 24" fill="none"
-            xmlns="http://www.w3.org/2000/svg">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 008 8V4a8 8 0 00-8 8z"></path>
-        </svg>
-        <span id="spinner-text">Converting... Please wait.</span>
-    </div>
-</div>
-
 <form id="partialFactsForm"
     action="{{ url_for('basic.partial_facts_submit', id=conversion_id) }}"
     method="post"
     enctype="multipart/form-data"
-    class="space-y-6">
+    class="space-y-6"
+    onsubmit="showSpinner('Converting... Please wait.')">
 
     {% for concept in concepts %}
     <div class="bg-gray-50 border border-gray-200 rounded-xl p-6 space-y-3">
@@ -58,9 +48,8 @@
 
     <div class="flex justify-center">
         <button type="submit"
-            class="submit-handler bg-blue-600 hover:bg-blue-700 focus-visible:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-600 text-white font-medium py-2 px-6 rounded-lg transition"
-            style="min-width: 200px;"
-            data-spinner-text="Converting...">
+            class="bg-blue-600 hover:bg-blue-700 focus-visible:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-600 text-white font-medium py-2 px-6 rounded-lg transition"
+            style="min-width: 200px;">
             Continue Conversion
         </button>
     </div>
@@ -73,22 +62,5 @@
         Start Over
     </a>
 </div>
-
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const button = document.querySelector('.submit-handler');
-        if (button) {
-            button.addEventListener('click', () => {
-                const spinner = document.getElementById('loadingSpinner');
-                const spinnerText = document.getElementById('spinner-text');
-                if (spinner && spinnerText) {
-                    spinnerText.textContent = button.dataset.spinnerText || 'Converting...';
-                    spinner.classList.remove('hidden');
-                    spinner.classList.add('flex');
-                }
-            });
-        }
-    });
-</script>
 
 {% endblock %}

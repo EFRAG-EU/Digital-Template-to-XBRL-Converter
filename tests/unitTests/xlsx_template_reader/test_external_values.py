@@ -16,7 +16,8 @@ from markupsafe import Markup
 from openpyxl.workbook.defined_name import DefinedName
 
 from mireport.conversionresults import ConversionResultsBuilder
-from mireport.xlsx_template_reader.processor import VSME_DEFAULTS, XlsxProcessor
+from mireport.data.disclosures import VSME_DEFAULTS
+from mireport.xlsx_template_reader.processor import XlsxProcessor
 from mireport.xlsx_template_reader.util import loadExcelFromPathOrFileLike
 
 SAMPLE_1_3_0 = (

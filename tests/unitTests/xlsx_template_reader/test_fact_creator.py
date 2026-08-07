@@ -3,11 +3,13 @@ from pathlib import Path
 import pytest
 
 from mireport.conversionresults import ConversionResultsBuilder
+from mireport.data.disclosures import VSME_DEFAULTS
 from mireport.report import InlineReport
 from mireport.taxonomy import getTaxonomy
+from mireport.xlsx_template_reader._binder import WorkbookBinder
 from mireport.xlsx_template_reader._fact_creator import FactCreator
 from mireport.xlsx_template_reader._reader import WorkbookReader
-from mireport.xlsx_template_reader.processor import VSME_DEFAULTS, XlsxProcessor
+from mireport.xlsx_template_reader.processor import XlsxProcessor
 from mireport.xlsx_template_reader.util import loadExcelFromPathOrFileLike
 
 SAMPLE = (
@@ -33,7 +35,7 @@ def fact_creator_fact_count():
     results = _results()
     reader = WorkbookReader(wb, results)
 
-    entry_point = reader.getSingleStringValue(VSME_DEFAULTS.get("entryPoint", ""))
+    entry_point = reader.value(VSME_DEFAULTS.get("entryPoint", "")).asString()
     taxonomy = getTaxonomy(entry_point)
 
     report = InlineReport(taxonomy, None)
@@ -42,25 +44,20 @@ def fact_creator_fact_count():
     entity_id_schemes: dict = VSME_DEFAULTS.get("entityIdentifierLabelsToSchemes", {})
     for aoix_name, named_range in VSME_DEFAULTS.get("aoix", {}).items():
         if aoix_name == "entity-scheme":
-            raw = (
-                reader.getSingleStringValue(named_range)
-                .strip()
-                .replace(" ", "")
-                .lower()
-            )
+            raw = reader.value(named_range).asString().strip().replace(" ", "").lower()
             value = entity_id_schemes.get(raw, "")
         else:
-            value = reader.getSingleStringValue(named_range).strip()
+            value = reader.value(named_range).asString().strip()
         if value:
             report.setDefaultAspect(aoix_name, value)
 
     for period in VSME_DEFAULTS.get("periods", []):
-        start = reader.getSingleDateValue(period["start"])
-        end = reader.getSingleDateValue(period["end"])
+        start = reader.value(period["start"]).asDate()
+        end = reader.value(period["end"]).asDate()
         if report.addDurationPeriod(period["name"], start, end):
             report.setDefaultPeriodName(period["name"])
 
-    bindings = reader.build_bindings(taxonomy, VSME_DEFAULTS)
+    bindings = WorkbookBinder(reader, taxonomy, results).bind()
     try:
         FactCreator(bindings, reader, report, results, VSME_DEFAULTS).create_all_facts()
     finally:

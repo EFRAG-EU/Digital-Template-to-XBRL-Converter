@@ -16,6 +16,8 @@ if TYPE_CHECKING:
 
 from markupsafe import Markup
 
+from markupsafe import Markup
+
 from mireport.exceptions import EarlyAbortException
 from mireport.stringutil import format_time_ns, str_to_markupsafe
 from mireport.taxonomy import Concept

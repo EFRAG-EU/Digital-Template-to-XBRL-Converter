@@ -226,9 +226,9 @@ def migrationButton(id: str) -> Response:
 
         return make_response(redirect(url_for("basic.migrationPage", id=id), code=303))
 
-    except Exception as e:
+    except Exception:
         L.exception("Unexpected error in migrationButton for id=%s", id)
-        flash(f"An unexpected error occurred: {e}", "error")
+        flash("An error occurred during migration.", "error")
         return make_response(redirect(url_for("basic.index")))
 
 
