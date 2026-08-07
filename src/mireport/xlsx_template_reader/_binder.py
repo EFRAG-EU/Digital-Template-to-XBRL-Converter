@@ -55,12 +55,17 @@ class WorkbookBinder:
 
         concept_map: dict[DefinedName, XbrlConceptCellRangeMetadata] = {}
         unit_map: dict[Concept, XbrlConceptCellRangeMetadata] = {}
-        preset_dims: defaultdict[XbrlConceptCellRangeMetadata, dict[Concept, Concept]]
-        preset_dims = defaultdict(dict)
+        preset_dims: defaultdict[
+            XbrlConceptCellRangeMetadata, dict[Concept, Concept]
+        ] = defaultdict(dict)
 
-        for dn in reader.unused_defined_names:
-            concept = taxonomy.getConceptForName(
-                TAXONOMY_NAME_ALIASES.get(dn.name, dn.name)
+        # unused_defined_names is a set of identity-hashed DefinedNames; sort so
+        # binding (and hence fact/message) order is stable across runs.
+        for dn in sorted(reader.unused_defined_names, key=lambda dn: dn.name or ""):
+            concept = taxonomy.resolveConcept(
+                TAXONOMY_NAME_ALIASES.get(dn.name, dn.name),
+                by_name=True,
+                only_reportable=False,
             )
 
             if concept is not None:
@@ -74,7 +79,9 @@ class WorkbookBinder:
                 conceptName, _, memberName = dn.name.partition("_")
                 if "unit" == memberName:
                     if (
-                        concept := taxonomy.getConceptForName(conceptName)
+                        concept := taxonomy.resolveConcept(
+                            conceptName, by_name=True, only_reportable=False
+                        )
                     ) is not None and (crh := reader.peekRange(dn)) is not None:
                         unit_map[concept] = (
                             XbrlConceptCellRangeMetadata.fromCellRangeMetadata(
@@ -83,8 +90,12 @@ class WorkbookBinder:
                         )
                         reader.markUsed(dn)
                 else:
-                    concept = taxonomy.getConceptForName(conceptName)
-                    dimValue = taxonomy.getConceptForName(memberName)
+                    concept = taxonomy.resolveConcept(
+                        conceptName, by_name=True, only_reportable=False
+                    )
+                    dimValue = taxonomy.resolveConcept(
+                        memberName, by_name=True, only_reportable=False
+                    )
                     crh = reader.peekRange(dn)
                     if crh is not None and concept is not None and dimValue is not None:
                         b = XbrlConceptCellRangeMetadata.fromCellRangeMetadata(

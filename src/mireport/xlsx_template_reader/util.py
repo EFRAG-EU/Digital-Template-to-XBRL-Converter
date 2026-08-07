@@ -66,18 +66,6 @@ def excelCellRangeRef(worksheet: Worksheet, cellRange: CellRange) -> str:
     return ref
 
 
-def excelCellOrCellRangeRef(
-    worksheet: Worksheet, cellRange: CellRange, cell: CellType | None
-) -> str:
-    """Make an Excel cell reference such as 'Example sheet'!$A$5"""
-    if cell is not None:
-        return excelCellRef(worksheet, cell)
-    elif cellRange is not None:
-        return excelCellRangeRef(worksheet, cellRange)
-    else:
-        return None
-
-
 def excelDefinedNameRef(
     definedName: Optional[DefinedName], cell: Optional[CellType] = None
 ) -> Optional[str]:
@@ -109,16 +97,9 @@ def get_decimal_places(cell: CellType) -> DecimalPlaces:
     """
     number_format = cell.number_format
 
-    # Match typical decimal number formats like '0.00', '#,##0.000', etc.
+    # Matches the zeros after the decimal point in formats like '0.00',
+    # '#,##0.000', '0.0%' and '0.00E+00'.
     if match := re.search(r"\.(0+)", number_format):
-        return len(match.group(1))
-
-    # Handle cases like percentage formats '0.0%' or '0.000%'
-    if match := re.search(r"\.(0+)%", number_format):
-        return len(match.group(1))
-
-    # Catch general cases like scientific notation '0.00E+00'
-    if match := re.search(r"\.(0+)[eE]", number_format):
         return len(match.group(1))
 
     return "INF"

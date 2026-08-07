@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections import defaultdict
 from dataclasses import dataclass
 from typing import NamedTuple, Optional
 
@@ -51,6 +50,6 @@ class WorkbookBindings:
     concept_map: dict[DefinedName, XbrlConceptCellRangeMetadata]
     tables: list[TableBinding]
     unit_map: dict[Concept, XbrlConceptCellRangeMetadata]
-    preset_dims: defaultdict[XbrlConceptCellRangeMetadata, dict[Concept, Concept]]
+    preset_dims: dict[XbrlConceptCellRangeMetadata, dict[Concept, Concept]]
     has_external_value: frozenset[Concept]
     footnote: Optional[FootnoteBinding]

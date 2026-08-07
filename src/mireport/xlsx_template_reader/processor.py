@@ -156,10 +156,10 @@ class XlsxProcessor:
 
         # No one specified a locale ... let's see if Excel has one.
         name = "template_reporting_language"
-        excelOutputLanguage = self._reader.value(name).asString().strip()
+        excelOutputLanguage = self._reader.value(name).as_str_stripped()
         if not excelOutputLanguage:
             name = "template_selected_display_language"
-            excelOutputLanguage = self._reader.value(name).asString().strip()
+            excelOutputLanguage = self._reader.value(name).as_str_stripped()
         if not excelOutputLanguage:
             return
 
@@ -199,7 +199,7 @@ class XlsxProcessor:
 
     def _verifyEntryPoint(self) -> None:
         name = self._defaults.get("entryPoint", "")
-        entryPoint = self._reader.value(name).asString()
+        entryPoint = self._reader.value(name).as_str()
         validEntryPoints = set(listTaxonomies())
         if not entryPoint:
             self._msg.error(
@@ -241,14 +241,13 @@ class XlsxProcessor:
             if aoixName == "entity-scheme":
                 lookup_key = (
                     self._reader.value(namedRangeName)
-                    .asString()
-                    .strip()
+                    .as_str_stripped()
                     .replace(" ", "")
                     .lower()
                 )
                 aoixValue = schemeLabelToURI.get(lookup_key)
             else:
-                aoixValue = self._reader.value(namedRangeName).asString().strip()
+                aoixValue = self._reader.value(namedRangeName).as_str_stripped()
 
             if (
                 not aoixValue
@@ -287,7 +286,7 @@ class XlsxProcessor:
 
     def _readPeriodDate(self, name: str) -> Optional[date]:
         try:
-            return self._reader.value(name).asDate()
+            return self._reader.value(name).as_date()
         except Exception as e:
             self._msg.error(
                 f"Excel report must have a valid date for named range {name}. Exception: {e}",
@@ -325,7 +324,7 @@ class XlsxProcessor:
         fallback = config.get("fallback")
 
         if self._reader.getDefinedName(named_range) is not None:
-            value = self._reader.value(named_range).asString()
+            value = self._reader.value(named_range).as_str()
             method(value)
         elif fallback is not None:
             method(fallback)
@@ -342,8 +341,8 @@ class XlsxProcessor:
 
         validation_failed_expected_value = self._reader.value(
             template_validation_fail_name
-        ).asString(fallback="INCOMPLETE")
-        validation_status = self._reader.value(template_validation_name).asString()
+        ).as_str(fallback="INCOMPLETE")
+        validation_status = self._reader.value(template_validation_name).as_str()
         is_incomplete = bool(
             validation_failed_expected_value
             and validation_status
@@ -360,7 +359,7 @@ class XlsxProcessor:
 
         # warn if template version is not the current version
         template_version_name = "template_reporting_template_version"
-        template_version_string = self._reader.value(template_version_name).asString()
+        template_version_string = self._reader.value(template_version_name).as_str()
         excel_version = VersionHolder.parse_safe(template_version_string)
         converter_version = OUR_VERSION_HOLDER.strip_build_metadata
 
@@ -372,7 +371,7 @@ class XlsxProcessor:
 
         if not template_version_string.strip():
             self._msg.error(
-                "The Digital Template has no version recorded. Please use a supported template (the latest version is {converter_version}).",
+                f"The Digital Template has no version recorded. Please use a supported template (the latest version is {converter_version}).",
                 MessageType.ExcelParsing,
                 ref=excelDefinedNameRef(
                     self._reader.getDefinedName(template_version_name)

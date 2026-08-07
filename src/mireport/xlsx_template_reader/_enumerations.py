@@ -6,8 +6,13 @@ fact creation uses everywhere a cell holds a member label:
 
   exact standard label -> configured cell-value alias -> closest EE-domain match
 
+The exact and alias lookups are scoped to the relevant domain when the caller
+supplies one (an EE concept's own domain, or an explicit dimension's maximum
+permitted members), so out-of-domain concepts can never win.
+
 Callers decide what messages to emit from the LabelMatch flags; the chain
-itself is silent.
+itself is silent (AmbiguousComponentException propagates for callers to
+report).
 """
 
 from __future__ import annotations
@@ -70,17 +75,52 @@ def resolveMemberByLabel(
     text: str,
     *,
     ee_concept: Optional[Concept] = None,
+    dimension: Optional[Concept] = None,
 ) -> Optional[LabelMatch]:
-    """Resolve cell text to a concept: exact standard label, then the
-    configured cell-value alias, then (when ee_concept is given) the closest
-    EE domain-member label. None if nothing matches."""
-    if (concept := taxonomy.getConceptForLabel(text)) is not None:
+    """Resolve cell text to a concept by trying, in order: exact standard
+    label, the configured cell-value alias, and — only when ee_concept is
+    given — the closest domain-member label. None if nothing matches.
+
+    ee_concept and dimension are mutually exclusive routes to a domain that
+    scopes the exact-label and alias lookups (the closest-match fallback is
+    only defined for enumeration domains, so it never runs for a plain
+    dimension): an enumeration concept's domain comes from its own allowed
+    fact values (getEEDomain), while an explicit dimension's domain is the
+    union of members declared for it across every hypercube that uses it
+    (getDomainMembersForExplicitDimension) — which of those are actually
+    valid in a given cube is left to fact building. Unscoped when neither is
+    given.
+
+    Raises AmbiguousComponentException when, even after scoping, several
+    domain members share the text — callers must report this rather than
+    have fuzzy matching pick one.
+    """
+    if ee_concept is not None and dimension is not None:
+        raise ValueError("Specify at most one of ee_concept and dimension")
+
+    domain: Optional[frozenset[Concept]] = None
+    if ee_concept is not None:
+        domain = frozenset(ee_concept.getEEDomain())
+    elif dimension is not None:
+        domain = taxonomy.getDomainMembersForExplicitDimension(dimension)
+    predicate = None if domain is None else (lambda c: c in domain)
+
+    if (
+        concept := taxonomy.resolveConcept(
+            text, by_label=True, only_reportable=False, predicate=predicate
+        )
+    ) is not None:
         return LabelMatch(concept, viaConfiguredAlias=False, closestLabel=None)
 
     alias = config.cellValuesToTaxonomyLabels.get(text)
     if (
         alias is not None
-        and (concept := taxonomy.getConceptForLabel(alias)) is not None
+        and (
+            concept := taxonomy.resolveConcept(
+                alias, by_label=True, only_reportable=False, predicate=predicate
+            )
+        )
+        is not None
     ):
         return LabelMatch(concept, viaConfiguredAlias=True, closestLabel=None)
 

@@ -28,7 +28,6 @@ if TYPE_CHECKING:
 from mireport.conversionresults import MessageType
 from mireport.exceptions import AmbiguousComponentException
 from mireport.xlsx_template_reader._bindings import FootnoteBinding, TableBinding
-from mireport.xlsx_template_reader._constants import EXTERNAL_VALUES_RANGE
 from mireport.xlsx_template_reader._messages import Messenger
 from mireport.xlsx_template_reader._ranges import (
     CellRangeMetadata,
@@ -44,6 +43,9 @@ _FOOTNOTE_TABLE = "footnote_table"
 _FOOTNOTE_TEXT = "footnote_text"
 _FOOTNOTE_REF = "footnote_ref_concept"
 _FOOTNOTE_REF_DIMENSION = "footnote_ref_dimension"
+
+# External values named range.
+_EXTERNAL_VALUES_RANGE = "template_external_values"
 
 
 @dataclass(frozen=True, slots=True)
@@ -156,40 +158,57 @@ def resolveFootnoteBinding(ctx: ExcelCellBindingContext) -> Optional[FootnoteBin
     )
     if resolved is None:
         return None
-    return FootnoteBinding(
+    binding = FootnoteBinding(
         table=resolved.container,
         text=resolved.subRanges[_FOOTNOTE_TEXT],
         ref=resolved.subRanges[_FOOTNOTE_REF],
         ref_dimension=resolved.subRanges.get(_FOOTNOTE_REF_DIMENSION),
     )
+    # The footnote reader only supports single-column sub-ranges; wider ones
+    # fall back to their first column.
+    for crm in (binding.text, binding.ref, binding.ref_dimension):
+        if crm is not None and crm.maximum_width > 1:
+            ctx.msg.warning(
+                f"Footnote named range '{crm.definedName.name}' is "
+                f"{crm.maximum_width} columns wide but only single-column "
+                "footnote ranges are supported; only the first column will "
+                "be used.",
+                MessageType.ExcelParsing,
+                ref=crm.excelRef(),
+            )
+    return binding
 
 
 def resolveExternalValues(ctx: ExcelCellBindingContext) -> frozenset[Concept]:
     """Resolve the template_external_values range into the set of concepts whose
     values are supplied externally rather than from the spreadsheet."""
     taxonomy = ctx.taxonomy
-    if (crh := ctx.reader.resolveRange(EXTERNAL_VALUES_RANGE)) is None:
+    if (crh := ctx.reader.resolveRange(_EXTERNAL_VALUES_RANGE)) is None:
         return frozenset()
 
     has_external_value: set[Concept] = set()
     for cell in crh.cells():
         if (value := CellValue.fromCell(cell)).isBlank:
             continue
-        name_or_label = value.asString().strip()
+        name_or_label = value.as_str_stripped()
         try:
             concept = taxonomy.resolveConcept(
-                name_or_label, by_label=True, by_name=True, only_reportable=True
+                name_or_label,
+                by_label=True,
+                by_name=True,
+                only_reportable=True,
+                predicate=lambda c: c.isTextblock,
             )
         except AmbiguousComponentException as exc:
             ctx.msg.warning(
-                f"External value '{name_or_label}' in {EXTERNAL_VALUES_RANGE} named range is ambiguous: {exc}",
+                f"External value '{name_or_label}' in {_EXTERNAL_VALUES_RANGE} named range is ambiguous: {exc}",
                 MessageType.DevInfo,
                 ref=crh.excelRef(cell),
             )
             continue
-        if concept is None or not concept.isTextblock:
+        if concept is None:
             ctx.msg.warning(
-                f"External value specified in {EXTERNAL_VALUES_RANGE} named range but no matching concept found for name or label '{name_or_label}'.",
+                f"External value specified in {_EXTERNAL_VALUES_RANGE} named range but no matching concept found for name or label '{name_or_label}'.",
                 MessageType.DevInfo,
                 ref=crh.excelRef(cell),
             )
