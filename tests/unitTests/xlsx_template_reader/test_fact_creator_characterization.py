@@ -19,7 +19,7 @@ import pytest
 
 from mireport.conversionresults import ConversionResultsBuilder, Severity
 from mireport.data.disclosures import VSME_DEFAULTS
-from mireport.exceptions import AmbiguousComponentException
+from mireport.exceptions import AmbiguousComponentException, InlineReportException
 from mireport.report import InlineReport
 from mireport.taxonomy import getTaxonomy, loadBuiltInTaxonomyJSON
 from mireport.xlsx_template_reader._binder import WorkbookBinder
@@ -665,6 +665,21 @@ class TestProcessNumeric:
             Messenger(creator_env.results), holder, _makeCell(12, "General"), fb, 12
         )
         assert fb._aspects.get("decimals") == "INF"
+
+
+class TestValidateNumericNonFinite:
+    @pytest.mark.parametrize(
+        "value", [float("nan"), float("inf"), float("-inf")], ids=str
+    )
+    def test_non_finite_values_rejected(self, creator_env, taxonomy, value):
+        concept = next(
+            c
+            for c in sorted(taxonomy.concepts, key=str)
+            if c.isReportable and c.isNumeric and not c.isMonetary
+        )
+        fb = creator_env.report.getFactBuilder().setConcept(concept).setValue(value)
+        with pytest.raises(InlineReportException, match="non-finite"):
+            fb.buildFact()
 
 
 if __name__ == "__main__":
