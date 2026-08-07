@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import math
 from typing import TYPE_CHECKING
 
 from mireport.exceptions import InlineReportException
@@ -217,6 +218,10 @@ class FactBuilder:
             # N.B. bool extends int
             raise InlineReportException(
                 f"Unable to create numeric fact from non-numeric value {value=}"
+            )
+        if isinstance(value, float) and not math.isfinite(value):
+            raise InlineReportException(
+                f"Unable to create numeric fact from non-finite value {value=}"
             )
         if self._concept.isMonetary:
             units = self._aspects.get(

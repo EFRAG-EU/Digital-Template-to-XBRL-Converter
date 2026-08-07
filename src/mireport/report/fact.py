@@ -162,7 +162,7 @@ class Fact:
             output = localise_and_format_number(
                 number, decimal_places, self._report._outputLocale
             )
-        except (ValueError, TypeError) as e:
+        except (ValueError, TypeError, ArithmeticError) as e:
             raise InlineReportException(
                 f"Unexpected fact value {self.value=} for numeric concept {self.concept=}."
             ) from e
