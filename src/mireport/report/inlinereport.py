@@ -2,11 +2,9 @@ from __future__ import annotations
 
 import logging
 import time
-import zipfile
 from collections import defaultdict
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from datetime import UTC, date, datetime
-from io import BytesIO
 from itertools import count
 from unicodedata import name as unicode_name
 
@@ -31,24 +29,13 @@ from mireport.report.factbuilder import FactBuilder
 from mireport.report.footnote import Footnote, FootnoteManager
 from mireport.report.layout import ReportLayoutOrganiser, TableStyle
 from mireport.report.periods import DurationPeriodHolder, PeriodHolder
+from mireport.report.reportpackage import buildReportPackage
 from mireport.report.theme import ReportTheme
 from mireport.stringutil import NumberGroupingApostrophes
 from mireport.taxonomy import Concept, PresentationStyle, QName, Taxonomy
 from mireport.typealiases import FactValue
 
 L = logging.getLogger(__name__)
-
-UNCONSTRAINED_REPORT_PACKAGE_JSON = b"""{
-    "documentInfo": {
-        "documentType": "https://xbrl.org/report-package/2023"
-    }
-}"""
-
-INLINE_REPORT_PACKAGE_JSON = b"""{
-    "documentInfo": {
-        "documentType": "https://xbrl.org/report-package/2023/xbri"
-    }
-}"""
 
 
 class InlineReport:
@@ -517,24 +504,24 @@ class InlineReport:
         safeName = zipSafeString(self._entityName, fallback="Sample")
         return safeName
 
-    def getInlineReportPackage(self) -> FilelikeAndFileName:
-        top_level = f"{self._getSafeEntityName()}_{self.defaultPeriod.end.year}"
-        report = self.getInlineReport()
-        content = BytesIO()
-        with zipfile.ZipFile(
-            content, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=6
-        ) as zf:
-            zf.writestr(
-                zinfo_or_arcname=f"{top_level}/META-INF/reportPackage.json",
-                data=UNCONSTRAINED_REPORT_PACKAGE_JSON,
-            )
-            zf.writestr(
-                zinfo_or_arcname=f"{top_level}/reports/{report.filename}",
-                data=report.fileContent,
-            )
-        package_filename = f"{top_level}_XBRL_Report.zip"
-        return FilelikeAndFileName(
-            fileContent=content.getvalue(), filename=package_filename
+    def getInlineReportPackage(
+        self,
+        *,
+        docsetMembers: Sequence[FilelikeAndFileName] = (),
+        attachments: Sequence[FilelikeAndFileName] = (),
+    ) -> FilelikeAndFileName:
+        """Package this report as an unconstrained report package.
+
+        @docsetMembers and @attachments are passed straight through to
+        :func:`buildReportPackage`, which documents them and owns the layout.
+        They are arguments rather than report state so that there is no
+        register-before-build ordering for a caller to get wrong.
+        """
+        return buildReportPackage(
+            self.getInlineReport(),
+            topLevel=f"{self._getSafeEntityName()}_{self.defaultPeriod.end.year}",
+            docsetMembers=docsetMembers,
+            attachments=attachments,
         )
 
     def getInlineReport(self) -> FilelikeAndFileName:
