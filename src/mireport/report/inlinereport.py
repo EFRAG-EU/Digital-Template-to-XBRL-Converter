@@ -4,9 +4,12 @@ import logging
 import time
 import zipfile
 from collections import defaultdict
+from collections.abc import Mapping
 from datetime import UTC, date, datetime
 from io import BytesIO
 from itertools import count
+from types import MappingProxyType
+from typing import TYPE_CHECKING
 from unicodedata import name as unicode_name
 
 import ixbrltemplates
@@ -69,6 +72,7 @@ class InlineReport:
         self._theme: ReportTheme = ReportTheme.default()
         self._footnotesByGroup: dict[str, Footnote] = {}
         self._labelOverrides: dict[str, str] = {}
+        self._partial_facts: dict[Concept, FactBuilder] = {}
         if not outputLocale:
             outputLocale = (
                 get_locale_from_str(taxonomy.defaultLanguage or "") or Locale.default()
@@ -238,27 +242,37 @@ class InlineReport:
         facts = [f for c in concepts for f in self.getFacts(c)]
         return self.addFootnoteToFacts(content, facts, group=group)
 
-    def replaceFactValue(self, concept_qname: str | QName, value: FactValue) -> None:
+    def replaceFactValue(
+        self, concept: Concept | QName | str, value: FactValue
+    ) -> None:
         """
-        Replace the value of the only fact for the specified concept QName.
+        Replace the value of the only fact for the specified concept.
         """
-        concept = self._taxonomy.getConcept(concept_qname)
+        if not isinstance(concept, Concept):
+            concept = self._taxonomy.getConcept(concept)
         candidates = self.getFacts(concept)
 
         if not candidates:
             raise InlineReportException(
-                f"No existing fact found for concept {concept_qname}. Cannot replace value."
+                f"No existing fact found for concept {concept}. Cannot replace value."
             )
         if len(candidates) != 1:
             raise InlineReportException(
-                f"Multiple existing facts found for concept {concept_qname}. Cannot replace value unambiguously."
+                f"Multiple existing facts found for concept {concept}. Cannot replace value unambiguously."
             )
-
         candidates[0].value = value
 
     @property
     def hasFacts(self) -> bool:
         return bool(self._facts)
+
+    @property
+    def hasPartialFacts(self) -> bool:
+        return bool(self._partial_facts)
+
+    @property
+    def partialFactsByConcept(self) -> Mapping[Concept, FactBuilder]:
+        return MappingProxyType(self._partial_facts)
 
     @property
     def factCount(self) -> int:
@@ -271,6 +285,28 @@ class InlineReport:
     def getFacts(self, concept: Concept) -> list[Fact]:
         result = self._factsByConcept.get(concept)
         return [] if result is None else result.copy()
+
+    def addPartialFact(self, concept: Concept, fb: FactBuilder) -> None:
+        """Register a partial FactBuilder whose value must be supplied from an external document."""
+        if fb.concept != concept:
+            raise ValueError(
+                f"FactBuilder concept {fb.concept} does not match expected concept {concept}."
+            )
+        if concept in self._partial_facts:
+            raise ValueError(
+                f"Concept {concept} already has a pending external fact registered."
+            )
+        self._partial_facts[concept] = fb
+
+    def completePartialFact(self, concept: Concept, value: FactValue) -> None:
+        """Supply the value for a pending external fact, build it, and add it to the report."""
+        if concept not in self._partial_facts:
+            raise ValueError(
+                f"Concept {concept} is not registered as pending an external value."
+            )
+        fb = self._partial_facts.pop(concept)
+        fb.setValue(value)
+        self.addFact(fb.buildFact())
 
     def getNamespacesForAoix(self) -> str:
         # {{ namespace utr = "http://www.xbrl.org/2009/utr" }}
@@ -326,6 +362,12 @@ class InlineReport:
             raise InlineReportException(
                 "Cannot generate a report with no facts or period."
             )
+        if self._partial_facts:
+            concepts = ", ".join(sorted(str(c) for c in self._partial_facts))
+            raise InlineReportException(
+                f"Cannot generate report while there are partial facts for the following concepts: {concepts}."
+            )
+
         if self._generatedReport is not None:
             return self._generatedReport
 

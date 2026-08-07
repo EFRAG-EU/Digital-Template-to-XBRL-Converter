@@ -34,7 +34,7 @@ except ImportError:
 from mireport.filesupport import FilelikeAndFileName
 from mireport.xlsx_template_reader.processor import (
     OUR_VERSION_HOLDER,
-    ExcelProcessor,
+    XlsxProcessor,
 )
 
 from .blueprints import convert_bp
@@ -54,7 +54,7 @@ class MigrationOutcome(StrEnum):
 
 def doMigrationChecks(conversion: dict) -> tuple[MigrationOutcome, str]:
     upload = FilelikeAndFileName(*conversion["excel"])
-    check_results = ExcelProcessor.checkReport(upload.fileLike())
+    check_results = XlsxProcessor.checkReport(upload.fileLike())
     version = str(check_results.reported_version) if check_results else "unknown"
 
     if check_results is None:

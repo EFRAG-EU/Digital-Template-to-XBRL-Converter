@@ -33,6 +33,10 @@ class FactBuilder:
         bits = (self._concept, self._aspects, self._value)
         return f"FactBuilder{bits}"
 
+    @property
+    def concept(self) -> Optional[Concept]:
+        return self._concept
+
     def setExplicitDimension(
         self, explicitDimension: Concept, explicitDimensionValue: Concept
     ) -> Self:
