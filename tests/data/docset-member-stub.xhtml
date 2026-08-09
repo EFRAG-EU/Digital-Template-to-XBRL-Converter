@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:ix="http://www.xbrl.org/2013/inlineXBRL"
+      xml:lang="en">
+  <head>
+    <title>Supplementary annex</title>
+    <style type="text/css">
+      .annex-page { margin: 0; padding: 1em; }
+      .annex-text { font-family: sans-serif; }
+    </style>
+  </head>
+  <body>
+    <!-- An empty ix:header, hidden as iXBRL 1.1 recommends (spec 8.1.2). An
+         Inline XBRL Document is defined as one containing Inline XBRL Elements
+         (spec 3.1), so a member with an xmlns:ix declaration and nothing else
+         is not one, and a processor drops it from the document set — Arelle
+         says so with an arelle:nonIxdsDocument warning. This is the
+         smallest thing that earns membership while contributing no facts,
+         no contexts, no units and no schemaRefs of its own. -->
+    <div style="display:none">
+      <ix:header>
+        <ix:resources/>
+      </ix:header>
+    </div>
+    <div class="annex-page">
+      <h1 class="annex-text">Supplementary annex</h1>
+      <p class="annex-text">
+        Stands in for a PDF converted to XHTML. Deliberately carries no
+        <code>ix:</code> content at all: an Inline XBRL document set needs only
+        one <code>ix:header</code> across the whole set, supplied by the tagged
+        report, so a member contributing no facts must still load cleanly.
+      </p>
+      <table>
+        <tbody>
+          <tr><td>Untagged value</td><td>1,234</td></tr>
+        </tbody>
+      </table>
+      <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+           alt="1x1 transparent gif, as pdf2htmlEX embeds page imagery" />
+    </div>
+  </body>
+</html>

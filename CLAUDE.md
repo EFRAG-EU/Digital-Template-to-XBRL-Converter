@@ -72,6 +72,13 @@ CI runs ruff only, but mypy config is strict-ish for `src/` (`disallow_untyped_d
 `--skip-validation` on `parse-and-ixbrl.py` is a development-only shortcut. Do not propose it as a way
 to make things faster in anything that matters — Arelle validation is the point of the tool.
 
+Supplementary PDFs are supplied to the CLI through `--extra-data`, as
+`{"pdfAttachments": [{"path": "annex1.pdf"}]}` with paths relative to the JSON file. Converting them
+for display needs `pdf2htmlEX` or `pdftohtml` on PATH, or `PDF_CONVERTER_PATH` (environment or
+`.env`, no `FLASK_` prefix — `findConverter()` reads it, so both front ends resolve the same binary);
+without any of those they are attached unconverted and a warning is issued. The web app also has
+`FLASK_ENABLE_SUPPLEMENTARY_PDFS`, on unless set false, which removes the upload field entirely.
+
 ### Regenerating taxonomy data
 
 Taxonomy metadata is **pre-baked JSON** in `src/mireport/data/taxonomies/`; nothing at runtime reads
@@ -183,6 +190,59 @@ produces the taxonomy JSON; `support.py` adapts Arelle to the rest of the codeba
 `ArelleQNameCanonicaliser` maps Arelle's per-document QName prefixes onto `mireport.xml.QName`'s
 one-prefix-per-namespace model. Arelle model objects are lxml elements: test them with `is not None`,
 never for truthiness (a childless element is falsy).
+
+### Supplementary PDFs (`mireport/pdf_converter/`)
+
+Optional PDFs uploaded alongside the workbook. Each is **always** attached to the report package
+verbatim under `{top}/attachments/`; where a converter is available each is *also* converted to XHTML
+and added to the report's **Inline XBRL document set**. Conversion failures (including "no converter
+installed") are `Severity.WARNING`, never errors, so the feature degrades to "the PDF still ships".
+
+Two converters are supported and the best available is chosen at runtime by
+`findConverter()` — see `_backends.py`, where adding a third means adding a subclass and a registry
+entry and nothing else:
+
+- **pdf2htmlEX**, preferred: keeps the PDF's own fonts and selectable text.
+- **pdftohtml** (Poppler), fallback: renders each page to a bitmap. Lower fidelity but available on
+  Windows. This build has **no `-dataurls`**, so `_inline.py` inlines its page images as `data:` URIs
+  from the working directory before it is destroyed — that step runs for every backend.
+
+`-xml` is not usable for this: it emits Poppler's own `pdf2xml` extraction format, not XHTML, and
+still writes external images.
+
+The document set is what forces the package layout in `mireport/report/reportpackage.py`. The first
+three reasons are Arelle's, not ours; the fourth is the iXBRL specification's, with Arelle merely the
+processor that enforces it here:
+
+- a file directly under `{top}/reports/` is its own entry point, so the tagged report moves down into
+  `{top}/reports/{stem}/` alongside its members and nothing is left at the top of `reports/`;
+- `_makeOptions()` in `arelle/report_info.py` always enables the `inlineXbrlDocumentSet` plug-in;
+  without it Arelle refuses to load a multi-file report entry at all;
+- `generateInlineViewer()` gets one output file per set member, so its extras are carried on
+  `ArelleProcessingResult.viewer_document_set_members` and must be served under their own filenames;
+- an Inline XBRL Document is *defined* as a well-formed XML document containing Inline XBRL Elements
+  (iXBRL 1.1 §3.1), so a member needs at least one `ix:` element — a namespace declaration is not
+  enough — and a Validating Conformant Processor accepts only documents valid against the
+  XHTML + iXBRL schema (§3.3.1), i.e. **XHTML Strict**. Arelle reports the first as
+  `arelle:nonIxdsDocument` and the second via `XhtmlValidate.xhtmlValidate`. So
+  `_xhtml.normaliseToXhtml()` injects an empty `ix:header` inside a `display:none` div (the form
+  §8.1.2 recommends; only one header across the whole set need carry anything, §8.1.3) and repairs
+  what the converters emit: `data-*` and `<meta charset>` (pdf2htmlEX); `lang`,
+  `bgcolor`/`link`/`vlink`, `<a name>`, and body-level `<style>` (pdftohtml). Every rule there came
+  from a real validation error, not a precaution
+  — don't remove one without re-running `tests/integrationTests/test_real_pdf_converter.py`. An
+  element outside XHTML Strict is *refused* (`_rejectUnknownElements`), never translated on a guess,
+  as are `object`/`param`/`form`/`input`/`button`/`select`/`textarea`/`base` — Strict defines them,
+  but neither converter emits them and each embeds, submits or re-points URLs.
+- **Script is stripped entirely** — the `<script>` element, `on*` handler attributes and
+  `javascript:` URLs. The last two are the one preventive rule here: neither converter emits them,
+  but members are served same-origin by the web app, which also sends them a `script-src 'none'`
+  CSP (`MEMBER_CSP`; the viewer itself is exempt, being script).
+
+Tests substitute `tests/data/stub-pdf-converter.py` for the real binaries via executable shims named
+after each backend, so the subprocess layer and *both* command lines are genuinely exercised on
+Windows. `tests/integrationTests/test_real_pdf_converter.py` is the only test that runs a real
+converter, and skips when neither is on PATH.
 
 ### Partial / external facts
 
