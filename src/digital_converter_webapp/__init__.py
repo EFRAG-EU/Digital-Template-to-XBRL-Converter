@@ -105,9 +105,8 @@ def create_app(test_config: Mapping[str, Any] | None = None) -> Flask:
     app.config["ENABLE_MIGRATION"] = (
         truthy(app.config.get("ENABLE_MIGRATION", False)) and MIGRATION_WORKING
     )
-    # On unless switched off: deployments already accept supplementary PDFs.
     app.config["ENABLE_SUPPLEMENTARY_PDFS"] = truthy(
-        app.config.get("ENABLE_SUPPLEMENTARY_PDFS", True)
+        app.config.get("ENABLE_SUPPLEMENTARY_PDFS", False)
     )
 
     # app looks to be working, install routes
