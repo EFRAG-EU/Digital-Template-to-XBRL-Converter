@@ -4,6 +4,7 @@ import logging
 from pathlib import Path
 
 import mammoth
+from dotenv import load_dotenv
 from markupsafe import Markup
 
 import mireport
@@ -25,8 +26,9 @@ from mireport.conversionresults import (
     ProcessingContext,
 )
 from mireport.data.disclosures import VSME_DEFAULTS
-from mireport.filesupport import ImageFileLikeAndFileName
+from mireport.filesupport import FilelikeAndFileName, ImageFileLikeAndFileName
 from mireport.localise import EU_LOCALES, argparse_locale
+from mireport.pdf_converter import convertSupplementaryPdfs
 from mireport.report.theme import ColourPalette, DisplayMode, ReportTheme
 from mireport.xlsx_template_reader.processor import XlsxProcessor
 
@@ -232,6 +234,7 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, list[str]
                 elif image:
                     imageSetter(image)
 
+        supplementary_pdfs: list[FilelikeAndFileName] = []
         if (extra_file := args.extra_data) and extra_file.is_file():
             extra = json.loads(extra_file.read_text(encoding="utf-8"))
 
@@ -292,9 +295,21 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, list[str]
                 markup = _convert_docx_to_markup(docx_path, pc)
                 report.replaceFactValue(rtv["concept"], markup)
 
+            for entry in extra.get("pdfAttachments", []):
+                pdf_path = _resolve_extra_path(extra_file, entry["path"])
+                supplementary_pdfs.append(
+                    FilelikeAndFileName(
+                        fileContent=pdf_path.read_bytes(), filename=pdf_path.name
+                    )
+                )
+
+        pdfs = convertSupplementaryPdfs(supplementary_pdfs, resultsBuilder, pc)
+
         pc.mark("Generating Inline Report")
         reportFile = report.getInlineReport()
-        reportPackage = report.getInlineReportPackage()
+        reportPackage = report.getInlineReportPackage(
+            docsetMembers=pdfs.docsetMembers, attachments=pdfs.attachments
+        )
 
         output_path, dir_specified = prepare_output_path(args.output_path, args.force)
         if dir_specified:
@@ -389,6 +404,9 @@ def outputMessages(
 
 
 def main() -> None:
+    # For PDF_CONVERTER_PATH, so a checkout converts PDFs the way its web app
+    # does rather than needing the same thing on PATH.
+    load_dotenv()
     parser = createArgParser()
     args = parseArgs(parser)
     result, excel = doConversion(args)
