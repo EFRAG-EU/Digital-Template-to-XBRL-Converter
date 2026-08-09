@@ -46,6 +46,12 @@ from mireport.localise import (
     get_locale_from_str,
     get_locale_list,
 )
+from mireport.pdf_converter import (
+    PATH_ENV_VAR,
+    PdfToolNotFoundError,
+    convertSupplementaryPdfs,
+    findConverter,
+)
 from mireport.report.theme import ColourPalette, DisplayMode, ReportTheme
 from mireport.stringutil import truthy
 from mireport.taxonomy import getTaxonomy, listTaxonomies
@@ -60,6 +66,7 @@ from .migration import (
 
 MAX_LIVE_CAPTCHAS = 20  # answers kept per session (multiple tabs/reloads)
 MAX_FILE_SIZE = 16 * 2**20  # 16 MiB
+MAX_PDF_COUNT = 10  # supplementary PDFs per conversion
 DEPLOYMENT_DATETIME = datetime.now(UTC)
 
 L = logging.getLogger(__name__)
@@ -98,6 +105,10 @@ def create_app(test_config: Mapping[str, Any] | None = None) -> Flask:
     app.config["ENABLE_MIGRATION"] = (
         truthy(app.config.get("ENABLE_MIGRATION", False)) and MIGRATION_WORKING
     )
+    # On unless switched off: deployments already accept supplementary PDFs.
+    app.config["ENABLE_SUPPLEMENTARY_PDFS"] = truthy(
+        app.config.get("ENABLE_SUPPLEMENTARY_PDFS", True)
+    )
 
     # app looks to be working, install routes
     app.register_blueprint(convert_bp, url_prefix=app.config.get("PREFIX", "/"))
@@ -108,6 +119,8 @@ def create_app(test_config: Mapping[str, Any] | None = None) -> Flask:
     )
 
     app.config["TAXONOMY_PACKAGES"] = taxonomyPackageList
+
+    _report_pdf_converter(app)
 
     # If config specified work online/offline, respect it otherwise, if not
     # specified, work offline iff we have been given some taxonomy packages
@@ -208,6 +221,26 @@ def _configure_redis_sessions(app: Flask) -> bool:
         return False
 
 
+def _report_pdf_converter(app: Flask) -> None:
+    """Say at startup which PDF converter uploads will get, if any.
+
+    Missing or misconfigured is not fatal — supplementary PDFs are attached
+    unconverted — but silence until the first upload is not helpful.
+    """
+    if not app.config["ENABLE_SUPPLEMENTARY_PDFS"]:
+        L.info("Supplementary PDF uploads are disabled.")
+        return
+    try:
+        converter = findConverter()
+    except PdfToolNotFoundError as e:
+        L.warning(
+            f"Supplementary PDFs will be attached unconverted. {e} Set "
+            f"{PATH_ENV_VAR} if a converter is installed somewhere off PATH."
+        )
+        return
+    L.info(f"Using PDF converter {converter}.")
+
+
 def brokenApp() -> Flask:
     """Only used when normal configuration is busted so you get a working
     webserver with a reasonable explanation to visitors."""
@@ -274,6 +307,8 @@ def index() -> Response:
             captcha_question=captcha_question,
             colour_palettes=list(ColourPalette),
             default_palette=ReportTheme.DEFAULT_COLOUR,
+            enable_pdfs=current_app.config["ENABLE_SUPPLEMENTARY_PDFS"],
+            max_pdf_count=MAX_PDF_COUNT,
         )
     )
 
@@ -448,6 +483,33 @@ def upload() -> Response:
                 fileContent=img_file.stream.read(), filename=img_file.filename
             )
 
+    # Supplementary PDFs. An untouched file input still submits an empty part,
+    # so blank filenames are dropped rather than rejected.
+    pdf_files = [f for f in request.files.getlist("pdfs") if f.filename]
+    if pdf_files and not current_app.config["ENABLE_SUPPLEMENTARY_PDFS"]:
+        return make_response({"error": "Supplementary PDFs are not accepted"}, 400)
+    if len(pdf_files) > MAX_PDF_COUNT:
+        return make_response(
+            {"error": f"Too many PDF files (maximum is {MAX_PDF_COUNT})"}, 400
+        )
+    for pdf_file in pdf_files:
+        assert pdf_file.filename is not None
+        if "pdf" != pdf_file.filename.lower().rpartition(".")[2]:
+            return make_response(
+                {
+                    "error": "Invalid file format (only .pdf files supported)",
+                    "file": pdf_file.filename,
+                },
+                400,
+            )
+    if pdf_files:
+        conversion["pdfs"] = [
+            FilelikeAndFileName(
+                fileContent=f.stream.read(), filename=f.filename or "annex.pdf"
+            )
+            for f in pdf_files
+        ]
+
     return make_response(
         redirect(url_for("basic.convert", id=result.conversionId), code=303)
     )
@@ -523,6 +585,15 @@ def getUploadFilename(id: str) -> str:
 
     excel = FilelikeAndFileName.from_tuple(conversion["excel"])
     return excel.filename
+
+
+def storedPdfs(conversion: dict) -> list[FilelikeAndFileName]:
+    """The uploaded PDFs, recovered from the server-side session.
+
+    from_tuple because the session backend serialises NamedTuples as lists, so
+    these come back as lists of lists rather than FilelikeAndFileNames.
+    """
+    return [FilelikeAndFileName.from_tuple(p) for p in conversion.get("pdfs") or []]
 
 
 def doConversion(conversion: dict, id: str) -> ConversionResults:
@@ -626,11 +697,15 @@ def doConversion(conversion: dict, id: str) -> ConversionResults:
                         pc.addDevInfoMessage(f"Adding {key} to report {image}")
                         setter(image)
 
+            pdfs = convertSupplementaryPdfs(storedPdfs(conversion), resultBuilder, pc)
+
             pc.mark(
                 "Generating Inline Report",
                 additionalInfo=f"({report.factCount} facts to include)",
             )
-            report_package = report.getInlineReportPackage()
+            report_package = report.getInlineReportPackage(
+                docsetMembers=pdfs.docsetMembers, attachments=pdfs.attachments
+            )
             resultBuilder.addMessage(
                 f"Inline XBRL report {report_package} created (containing {report.factCount} facts)",
                 Severity.INFO,
@@ -703,14 +778,50 @@ def partial_facts_submit(id: str) -> Response:
     return make_response(redirect(url_for("basic.convert", id=id), code=303))
 
 
+def ensureViewer(
+    session_data: dict[str, Any],
+) -> tuple[FilelikeAndFileName, dict[str, FilelikeAndFileName]]:
+    """Generate (once) and return the viewer plus any document set members."""
+    if "viewer" not in session_data:
+        arelle_result = getArelle().generateInlineViewer(
+            FilelikeAndFileName.from_tuple(session_data["zip"])
+        )
+        session_data["viewer"] = arelle_result.viewer
+        session_data["viewer_members"] = {
+            member.filename: member
+            for member in arelle_result.viewer_document_set_members
+        }
+        # Mutating the nested dict isn't noticed by the session implementation.
+        session.modified = True
+
+    return (
+        FilelikeAndFileName.from_tuple(session_data["viewer"]),
+        {
+            filename: FilelikeAndFileName.from_tuple(member)
+            for filename, member in session_data.get("viewer_members", {}).items()
+        },
+    )
+
+
+def ensureXbrlJson(session_data: dict[str, Any]) -> FilelikeAndFileName:
+    """Generate (once) and return the xBRL-JSON rendering of the report."""
+    if "json" not in session_data:
+        session_data["json"] = (
+            getArelle()
+            .generateXBRLJson(FilelikeAndFileName.from_tuple(session_data["zip"]))
+            .xbrl_json
+        )
+        # Mutating the nested dict isn't noticed by the session implementation.
+        session.modified = True
+
+    return FilelikeAndFileName.from_tuple(session_data["json"])
+
+
 @convert_bp.route("/downloadFile/<string:id>/<string:ftype>/", methods=["GET", "HEAD"])
 def downloadFile(id: str, ftype: str) -> Response:
     """Download the converted file from the session."""
     if id not in session:
         return make_response({"error": "No file found"}, 404)
-
-    if ftype not in ("json", "viewer", "zip", "excel"):
-        return make_response({"error": f"File type {ftype} not found."}, 404)
 
     session_data = session[id]
     if "zip" not in session_data:
@@ -718,20 +829,25 @@ def downloadFile(id: str, ftype: str) -> Response:
             {"error": "No report generated. Nothing to download."}, 404
         )
 
-    if ftype not in session_data:
-        reportPackage = FilelikeAndFileName.from_tuple(session_data["zip"])
-        arelle = getArelle()
-        if ftype == "json":
-            session_data[ftype] = arelle.generateXBRLJson(reportPackage).xbrl_json
-        elif ftype == "viewer":
-            session_data[ftype] = arelle.generateInlineViewer(reportPackage).viewer
-        else:
-            return make_response({"error": "No file found"}, 404)
+    match ftype:
+        case "viewer":
+            stuff, members = ensureViewer(session_data)
+            if members and request.method != "HEAD":
+                # A document set viewer fetches its members by name relative to
+                # itself, so it has to be served in place rather than downloaded.
+                return make_response(redirect(url_for("basic.viewer", id=id), code=303))
+        case "json":
+            stuff = ensureXbrlJson(session_data)
+        case "zip" | "excel":
+            if ftype not in session_data:
+                return make_response({"error": "No file found"}, 404)
+            stuff = FilelikeAndFileName.from_tuple(session_data[ftype])
+        case _:
+            return make_response({"error": f"File type {ftype} not found."}, 404)
 
     if request.method == "HEAD":
         return Response(status=200, headers={"X-File-Ready": "true"})
 
-    stuff = FilelikeAndFileName.from_tuple(session[id][ftype])
     return send_file(
         stuff.fileLike(),
         as_attachment=True,
@@ -787,18 +903,53 @@ def delete_all() -> Response:
 
 @convert_bp.route("/viewer/<string:id>/", methods=["GET", "HEAD"])
 def viewer(id: str) -> Response:
-    conversion = session[id]
-    if (existing := conversion.get("viewer")) is not None:
-        stuff = FilelikeAndFileName.from_tuple(existing)
-    else:
-        stuff = (
-            getArelle()
-            .generateInlineViewer(FilelikeAndFileName.from_tuple(conversion["zip"]))
-            .viewer
-        )
-        conversion["viewer"] = stuff
-        if request.method == "HEAD":
-            return Response(status=200, headers={"X-File-Ready": "true"})
+    if id not in session or "zip" not in session[id]:
+        return make_response({"error": "No file found"}, 404)
+
+    stuff, _ = ensureViewer(session[id])
+    return serveViewerFile(stuff)
+
+
+# A document set member is content extracted from a user-supplied PDF, served
+# same-origin. mireport.pdf_converter strips script out of it; this is the
+# second line of that defence, and takes away nothing an annex uses. The origin
+# stays 'self' rather than sandboxed so the viewer can still reach into the
+# member's DOM, and the viewer itself is served without this — it *is* script.
+MEMBER_CSP = (
+    "default-src 'none'; "
+    "img-src 'self' data:; "
+    "style-src 'self' 'unsafe-inline'; "
+    "font-src 'self' data:; "
+    "script-src 'none'; "
+    "object-src 'none'; "
+    "form-action 'none'; "
+    "base-uri 'none'; "
+    "frame-ancestors 'self'"
+)
+
+
+@convert_bp.route("/viewer/<string:id>/<string:filename>", methods=["GET", "HEAD"])
+def viewerDocumentSetMember(id: str, filename: str) -> Response:
+    """Serve a document set member where the viewer expects to find it.
+
+    The viewer data lists its fellow document set members by filename and
+    fetches them relative to itself, i.e. from this route.
+    """
+    if id not in session or "zip" not in session[id]:
+        return make_response({"error": "No file found"}, 404)
+
+    _, members = ensureViewer(session[id])
+    if (member := members.get(filename)) is None:
+        return make_response({"error": f"File {filename} not found."}, 404)
+    response = serveViewerFile(member)
+    response.headers["Content-Security-Policy"] = MEMBER_CSP
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    return response
+
+
+def serveViewerFile(stuff: FilelikeAndFileName) -> Response:
+    if request.method == "HEAD":
+        return Response(status=200, headers={"X-File-Ready": "true"})
 
     return send_file(
         stuff.fileLike(),
