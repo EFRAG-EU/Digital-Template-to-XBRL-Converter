@@ -284,6 +284,37 @@ class TestStrictStructure:
         root = etree.fromstring(normaliseToXhtml(source))
         assert "#other" in [a.get("href") for a in root.findall(f".//{{{XHTML}}}a")]
 
+    def test_a_links_hit_area_becomes_inline(self) -> None:
+        """pdf2htmlEX renders every PDF link annotation as an absolutely
+        positioned div inside the anchor, which Strict's inline-only content
+        model rejects."""
+        source = (
+            b'<html><body><a class="l" href="mailto:someone@example.org">'
+            b'<div class="d m2" style="position:absolute;left:1px"></div>'
+            b"</a></body></html>"
+        )
+        root = etree.fromstring(normaliseToXhtml(source))
+        assert not root.findall(f".//{{{XHTML}}}a//{{{XHTML}}}div")
+        span = root.find(f".//{{{XHTML}}}a/{{{XHTML}}}span")
+        assert span is not None
+        assert span.get("class") == "d m2"
+        assert span.get("style") == "position:absolute;left:1px"
+
+    def test_the_link_itself_survives(self) -> None:
+        """Renaming rather than unwrapping is the point: the annex keeps its
+        links."""
+        source = (
+            b'<html><body><a href="https://example.org/"><div>x</div></a></body></html>'
+        )
+        root = etree.fromstring(normaliseToXhtml(source))
+        anchor = root.find(f".//{{{XHTML}}}a")
+        assert anchor is not None and anchor.get("href") == "https://example.org/"
+
+    def test_divs_outside_anchors_are_left_alone(self) -> None:
+        source = b'<html><body><div class="pf">page</div></body></html>'
+        root = etree.fromstring(normaliseToXhtml(source))
+        assert root.findall(f".//{{{XHTML}}}div[@class='pf']")
+
     def test_style_gets_a_type(self) -> None:
         source = b"<html><head><style>p{color:red}</style></head><body>y</body></html>"
         root = etree.fromstring(normaliseToXhtml(source))

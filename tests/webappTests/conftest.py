@@ -15,7 +15,12 @@ def _test_config(session_dir, **overrides):
 
 @pytest.fixture(scope="session")
 def app(tmp_path_factory):
-    return create_app(_test_config(tmp_path_factory.mktemp("sessions")))
+    # Supplementary PDFs are off unless a deployment opts in; the suite opts in.
+    return create_app(
+        _test_config(
+            tmp_path_factory.mktemp("sessions"), ENABLE_SUPPLEMENTARY_PDFS=True
+        )
+    )
 
 
 @pytest.fixture()

@@ -145,6 +145,21 @@ def _convertAnchorNames(root: etree._Element) -> None:
             anchor.set("href", f"#{_ANCHOR_ID_PREFIX}{href[1:]}")
 
 
+def _inlineAnchorContent(root: etree._Element) -> None:
+    """Turn a link's ``div`` hit area into a ``span``.
+
+    XHTML Strict lets ``<a>`` hold inline content only, and pdf2htmlEX renders
+    every PDF link annotation as an empty, absolutely positioned ``div`` inside
+    one. Renaming it changes nothing on screen — absolute positioning computes
+    to ``display:block`` whatever the element is, and pdf2htmlEX's rules for
+    these boxes are class-based — while keeping the link clickable, which
+    dropping the anchor would not.
+    """
+    for anchor in _descendants(root, "a"):
+        for div in anchor.iter(_tag("div")):
+            div.tag = _tag("span")
+
+
 # XHTML Strict requires "type" on style; HTML5 made it optional.
 _REQUIRED_TYPE_ATTRIBUTES = {
     "style": "text/css",
@@ -529,6 +544,7 @@ def normaliseToXhtml(content: bytes) -> bytes:
             root = _moveIntoXhtmlNamespace(_parseAsHtml(content))
         _stripInvalidAttributes(root)
         _convertAnchorNames(root)
+        _inlineAnchorContent(root)
         _dropUnusableMeta(root)
         _stripScripts(root)
         _stripScripting(root)

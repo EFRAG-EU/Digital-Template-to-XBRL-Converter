@@ -64,8 +64,52 @@ def pdfBytes() -> bytes:
 
 
 @pytest.fixture(scope="module")
+def linkPdfBytes() -> bytes:
+    """A one-page PDF carrying a URI link annotation.
+
+    Hand-built because Pillow cannot write an annotation, and a link is what
+    makes pdf2htmlEX emit a div inside an anchor — invalid XHTML Strict, and
+    unreachable from a drawn page.
+    """
+    stream = b"BT /F1 12 Tf 20 100 Td (Contact us) Tj ET\n"
+    objects = [
+        b"<</Type/Catalog/Pages 2 0 R>>",
+        b"<</Type/Pages/Kids[3 0 R]/Count 1>>",
+        (
+            b"<</Type/Page/Parent 2 0 R/MediaBox[0 0 200 200]/Contents 4 0 R"
+            b"/Resources<</Font<</F1 5 0 R>>>>/Annots[6 0 R]>>"
+        ),
+        b"<</Length %d>>\nstream\n%sendstream" % (len(stream), stream),
+        b"<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>",
+        (
+            b"<</Type/Annot/Subtype/Link/Rect[20 95 120 115]/Border[0 0 0]"
+            b"/A<</S/URI/URI(https://example.org/)>>>>"
+        ),
+    ]
+    pdf = bytearray(b"%PDF-1.4\n")
+    offsets = []
+    for number, body in enumerate(objects, start=1):
+        offsets.append(len(pdf))
+        pdf += b"%d 0 obj\n%s\nendobj\n" % (number, body)
+    startxref = len(pdf)
+    pdf += b"xref\n0 %d\n0000000000 65535 f \n" % (len(objects) + 1)
+    for offset in offsets:
+        pdf += b"%010d 00000 n \n" % offset
+    pdf += b"trailer\n<</Size %d/Root 1 0 R>>\nstartxref\n%d\n%%%%EOF\n" % (
+        len(objects) + 1,
+        startxref,
+    )
+    return bytes(pdf)
+
+
+@pytest.fixture(scope="module")
 def converted(pdfBytes: bytes) -> FilelikeAndFileName:
     return convertPdfToHtml(pdfBytes, filename="annex1.pdf")
+
+
+@pytest.fixture(scope="module")
+def convertedLink(linkPdfBytes: bytes) -> FilelikeAndFileName:
+    return convertPdfToHtml(linkPdfBytes, filename="annex2.pdf")
 
 
 @pytest.fixture(scope="module")
@@ -138,13 +182,23 @@ class TestRealConversion:
             converted.fileContent
         )
 
+    def test_a_link_annotation_leaves_no_block_inside_an_anchor(
+        self, convertedLink: FilelikeAndFileName
+    ) -> None:
+        """pdf2htmlEX gives every PDF link an absolutely positioned div hit
+        area; XHTML Strict's <a> takes inline content only."""
+        root = etree.fromstring(convertedLink.fileContent)
+        assert not root.findall(f".//{{{XHTML}}}a//{{{XHTML}}}div")
+
 
 class TestRealConversionInAPackage:
     """The payoff: a really converted PDF, in a real report package, validated
     by real Arelle."""
 
     @pytest.fixture(scope="class")
-    def package(self, converted: FilelikeAndFileName) -> FilelikeAndFileName:
+    def package(
+        self, converted: FilelikeAndFileName, convertedLink: FilelikeAndFileName
+    ) -> FilelikeAndFileName:
         from mireport.conversionresults import ConversionResultsBuilder
         from mireport.data.disclosures import VSME_DEFAULTS
         from mireport.taxonomy import loadBuiltInTaxonomyJSON
@@ -158,7 +212,7 @@ class TestRealConversionInAPackage:
             outputLocale=None,
         ).createReport()
         return report.getInlineReportPackage(
-            docsetMembers=[converted],
+            docsetMembers=[converted, convertedLink],
             attachments=[
                 FilelikeAndFileName(fileContent=b"%PDF-1.7\n", filename="annex1.pdf")
             ],
@@ -205,5 +259,6 @@ class TestRealConversionInAPackage:
         result = ArelleReportProcessor(workOffline=False).generateInlineViewer(package)
         assert result.has_viewer, result.log_lines
         assert [m.filename for m in result.viewer_document_set_members] == [
-            "annex1.xhtml"
+            "annex1.xhtml",
+            "annex2.xhtml",
         ]

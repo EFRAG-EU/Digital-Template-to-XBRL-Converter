@@ -227,7 +227,8 @@ processor that enforces it here:
   `arelle:nonIxdsDocument` and the second via `XhtmlValidate.xhtmlValidate`. So
   `_xhtml.normaliseToXhtml()` injects an empty `ix:header` inside a `display:none` div (the form
   §8.1.2 recommends; only one header across the whole set need carry anything, §8.1.3) and repairs
-  what the converters emit: `data-*` and `<meta charset>` (pdf2htmlEX); `lang`,
+  what the converters emit: `data-*`, `<meta charset>` and the `div` hit area inside every link
+  annotation, which becomes a `span` (pdf2htmlEX); `lang`,
   `bgcolor`/`link`/`vlink`, `<a name>`, and body-level `<style>` (pdftohtml). Every rule there came
   from a real validation error, not a precaution
   — don't remove one without re-running `tests/integrationTests/test_real_pdf_converter.py`. An
