@@ -12,6 +12,7 @@ from collections import Counter, defaultdict
 from collections.abc import Callable, Iterable, Mapping
 from enum import Enum, StrEnum, auto
 from functools import cache, cached_property
+from pathlib import Path
 from typing import TYPE_CHECKING, NamedTuple, overload
 
 from mireport.data import registries, taxonomies
@@ -1101,6 +1102,22 @@ def loadBuiltInTaxonomyJSON() -> None:
             _createTaxonomyFromJSON(getObject(f))
         except Exception as e:  # noqa: BLE001 - one bad file must not lose the rest
             L.error(f"Error loading taxonomy from {f.name}", exc_info=e)
+
+
+def loadTaxonomyJSON(source: Path | dict) -> Taxonomy:
+    """Load one taxonomy from JSON that is not built in, and return it.
+
+    source may be a path to a file written by mireport.arelle.taxonomy_info, or
+    an already parsed dict. This is the counterpart to loadBuiltInTaxonomyJSON()
+    for callers that have just baked a taxonomy of their own: it registers the
+    taxonomy under its own entry point, so getTaxonomy() finds it afterwards.
+
+    Unlike loadBuiltInTaxonomyJSON(), failures are raised rather than logged --
+    there is only one taxonomy here, so there is no rest of the batch to save.
+    """
+    bits = source if isinstance(source, dict) else getObject(source)
+    _createTaxonomyFromJSON(bits)
+    return getTaxonomy(bits["entryPoint"])
 
 
 def _createTaxonomyFromJSON(bits: dict) -> None:
