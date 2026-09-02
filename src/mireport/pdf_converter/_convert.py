@@ -37,6 +37,7 @@ def convertPdfToHtml(
     converter: ResolvedConverter | None = None,
     binaryPath: str | None = None,
     timeoutSeconds: int = DEFAULT_TIMEOUT_SECONDS,
+    injectIxHeader: bool = True,
 ) -> FilelikeAndFileName:
     """Convert @pdfBytes into an Inline XBRL document set member.
 
@@ -46,6 +47,10 @@ def convertPdfToHtml(
         files, so the search happens — and any failure is reported — once.
     :param binaryPath: an explicit executable, resolved into a converter when
         @converter is not given.
+    :param injectIxHeader: forwarded to
+        :func:`mireport.pdf_converter._xhtml.normaliseToXhtml`. Pass False when
+        the result will be merged into another report rather than shipped as
+        its own document set member.
     :raises PdfToolNotFoundError: if no converter is installed.
     :raises PdfConversionError: if the conversion or its output is unusable.
     """
@@ -56,5 +61,6 @@ def convertPdfToHtml(
         timeoutSeconds=timeoutSeconds,
     )
     return FilelikeAndFileName(
-        fileContent=normaliseToXhtml(raw), filename=outputFilenameFor(filename)
+        fileContent=normaliseToXhtml(raw, injectIxHeader=injectIxHeader),
+        filename=outputFilenameFor(filename),
     )

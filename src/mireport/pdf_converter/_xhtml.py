@@ -525,9 +525,16 @@ def _addHiddenIxHeader(root: etree._Element) -> None:
     body.insert(0, hidden)
 
 
-def normaliseToXhtml(content: bytes) -> bytes:
-    """Return @content as well-formed XHTML carrying an empty ``ix:header``.
+def normaliseToXhtml(content: bytes, *, injectIxHeader: bool = True) -> bytes:
+    """Return @content as well-formed XHTML, optionally carrying an empty
+    ``ix:header``.
 
+    :param injectIxHeader: whether to inject the empty, hidden ``ix:header``
+        that earns a standalone document set member its Inline XBRL identity
+        (see the module docstring). Pass False when the result is destined to
+        be merged into another document rather than shipped as its own
+        document set member — the merged document needs exactly one header,
+        supplied by the report it joins, not one per source PDF.
     :raises PdfConversionError: if @content cannot be parsed as HTML at all, or
         contains no ``html`` element — either means the converter produced
         something other than a document, whatever its exit code claimed.
@@ -554,7 +561,7 @@ def normaliseToXhtml(content: bytes) -> bytes:
         # Wrap first, then insert the header: both end up block-level children
         # of body, which is what the schema wants.
         _wrapBodyContent(root)
-        if not _hasIxContent(root):
+        if injectIxHeader and not _hasIxContent(root):
             _addHiddenIxHeader(root)
         _rejectUnknownElements(root)
         etree.cleanup_namespaces(root)

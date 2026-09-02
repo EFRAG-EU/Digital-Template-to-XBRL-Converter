@@ -18,6 +18,7 @@ from mireport.conversionresults import (
 from mireport.filesupport import FilelikeAndFileName
 from mireport.pdf_converter import (
     BACKENDS_IN_PREFERENCE_ORDER,
+    MergedAnnex,
     PdfConversionError,
     PdfToolNotFoundError,
     ResolvedConverter,
@@ -56,7 +57,7 @@ def workingConverter(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         _batch,
         "convertPdfToHtml",
-        lambda content, *, filename, converter: converted(
+        lambda content, *, filename, converter, injectIxHeader=True: converted(
             filename.replace(".pdf", ".xhtml")
         ),
     )
@@ -82,8 +83,8 @@ def warnings(results: ConversionResultsBuilder) -> list[str]:
 
 
 class TestNoPdfs:
-    def test_returns_two_empty_lists(self, results: Any, pc: Any) -> None:
-        assert convertSupplementaryPdfs([], results, pc) == ([], [])
+    def test_returns_three_empty_lists(self, results: Any, pc: Any) -> None:
+        assert convertSupplementaryPdfs([], results, pc) == ([], [], [])
 
     def test_says_nothing_alarming(self, results: Any, pc: Any) -> None:
         """The processing context emits its own progress marks, so this is
@@ -182,7 +183,11 @@ class TestPartialFailure:
         monkeypatch.setattr(_batch, "findConverter", lambda: FAKE_CONVERTER)
 
         def convert(
-            content: bytes, *, filename: str, converter: ResolvedConverter
+            content: bytes,
+            *,
+            filename: str,
+            converter: ResolvedConverter,
+            injectIxHeader: bool = True,
         ) -> FilelikeAndFileName:
             if filename == "bad.pdf":
                 raise PdfConversionError("that one is corrupt")
@@ -235,3 +240,74 @@ class TestPartialFailure:
         assert result.docsetMembers == []
         assert len(result.attachments) == 2
         assert results.conversionSuccessful
+
+
+# ── merge mode ─────────────────────────────────────────────────────────────
+
+
+class TestMergeMode:
+    @pytest.fixture
+    def mergeConverter(self, monkeypatch: pytest.MonkeyPatch) -> list[bool]:
+        """Records the injectIxHeader value each conversion was asked for."""
+        monkeypatch.setattr(_batch, "findConverter", lambda: FAKE_CONVERTER)
+        headerFlags: list[bool] = []
+
+        def convert(
+            content: bytes,
+            *,
+            filename: str,
+            converter: ResolvedConverter,
+            injectIxHeader: bool = True,
+        ) -> FilelikeAndFileName:
+            headerFlags.append(injectIxHeader)
+            return converted(filename.replace(".pdf", ".xhtml"))
+
+        monkeypatch.setattr(_batch, "convertPdfToHtml", convert)
+        monkeypatch.setattr(
+            _batch,
+            "buildMergedAnnex",
+            lambda xhtml, *, index, label: MergedAnnex(
+                anchor_id=f"pdf-annex-{index}",
+                label=label,
+                body_html=f"<div id='pdf-annex-{index}'/>",
+                head_css="",
+            ),
+        )
+        return headerFlags
+
+    def test_does_not_inject_an_ix_header(
+        self, results: Any, pc: Any, mergeConverter: list[bool]
+    ) -> None:
+        convertSupplementaryPdfs([makePdf("a.pdf")], results, pc, mode="merge")
+        assert mergeConverter == [False]
+
+    def test_docset_mode_still_injects_the_header(
+        self, results: Any, pc: Any, mergeConverter: list[bool]
+    ) -> None:
+        convertSupplementaryPdfs([makePdf("a.pdf")], results, pc, mode="docset")
+        assert mergeConverter == [True]
+
+    def test_produces_no_docset_members(
+        self, results: Any, pc: Any, mergeConverter: list[bool]
+    ) -> None:
+        result = convertSupplementaryPdfs([makePdf("a.pdf")], results, pc, mode="merge")
+        assert result.docsetMembers == []
+
+    def test_produces_an_annex_per_pdf_in_order(
+        self, results: Any, pc: Any, mergeConverter: list[bool]
+    ) -> None:
+        result = convertSupplementaryPdfs(
+            [makePdf("a.pdf"), makePdf("b.pdf")], results, pc, mode="merge"
+        )
+        assert [a.anchor_id for a in result.mergedAnnexes] == [
+            "pdf-annex-1",
+            "pdf-annex-2",
+        ]
+        assert [a.label for a in result.mergedAnnexes] == ["a.pdf", "b.pdf"]
+
+    def test_originals_still_attached(
+        self, results: Any, pc: Any, mergeConverter: list[bool]
+    ) -> None:
+        pdfs = [makePdf("a.pdf"), makePdf("b.pdf")]
+        result = convertSupplementaryPdfs(pdfs, results, pc, mode="merge")
+        assert result.attachments == pdfs

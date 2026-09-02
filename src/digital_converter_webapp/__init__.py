@@ -48,10 +48,13 @@ from mireport.localise import (
 )
 from mireport.pdf_converter import (
     PATH_ENV_VAR,
+    PdfSupplementaryMode,
     PdfToolNotFoundError,
     convertSupplementaryPdfs,
     findConverter,
+    mergeAnnexesIntoReport,
 )
+from mireport.report.reportpackage import buildReportPackage
 from mireport.report.theme import ColourPalette, DisplayMode, ReportTheme
 from mireport.stringutil import truthy
 from mireport.taxonomy import getTaxonomy, listTaxonomies
@@ -108,6 +111,16 @@ def create_app(test_config: Mapping[str, Any] | None = None) -> Flask:
     app.config["ENABLE_SUPPLEMENTARY_PDFS"] = truthy(
         app.config.get("ENABLE_SUPPLEMENTARY_PDFS", False)
     )
+    pdfMode = app.config.get("PDF_SUPPLEMENTARY_MODE", PdfSupplementaryMode.DOCSET)
+    try:
+        pdfMode = PdfSupplementaryMode(pdfMode)
+    except ValueError:
+        L.warning(
+            f"Ignoring unknown PDF_SUPPLEMENTARY_MODE={pdfMode!r}; using "
+            f"{PdfSupplementaryMode.DOCSET!r}."
+        )
+        pdfMode = PdfSupplementaryMode.DOCSET
+    app.config["PDF_SUPPLEMENTARY_MODE"] = pdfMode
 
     # app looks to be working, install routes
     app.register_blueprint(convert_bp, url_prefix=app.config.get("PREFIX", "/"))
@@ -696,14 +709,25 @@ def doConversion(conversion: dict, id: str) -> ConversionResults:
                         pc.addDevInfoMessage(f"Adding {key} to report {image}")
                         setter(image)
 
-            pdfs = convertSupplementaryPdfs(storedPdfs(conversion), resultBuilder, pc)
+            pdfs = convertSupplementaryPdfs(
+                storedPdfs(conversion),
+                resultBuilder,
+                pc,
+                mode=current_app.config["PDF_SUPPLEMENTARY_MODE"],
+            )
 
             pc.mark(
                 "Generating Inline Report",
                 additionalInfo=f"({report.factCount} facts to include)",
             )
-            report_package = report.getInlineReportPackage(
-                docsetMembers=pdfs.docsetMembers, attachments=pdfs.attachments
+            reportFile = report.getInlineReport()
+            if pdfs.mergedAnnexes:
+                reportFile = mergeAnnexesIntoReport(reportFile, pdfs.mergedAnnexes)
+            report_package = buildReportPackage(
+                reportFile,
+                topLevel=report.packageTopLevelName,
+                docsetMembers=pdfs.docsetMembers,
+                attachments=pdfs.attachments,
             )
             resultBuilder.addMessage(
                 f"Inline XBRL report {report_package} created (containing {report.factCount} facts)",

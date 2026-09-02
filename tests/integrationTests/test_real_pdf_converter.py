@@ -26,6 +26,7 @@ from mireport.filesupport import FilelikeAndFileName
 from mireport.pdf_converter import (
     PdfToolNotFoundError,
     availableConverters,
+    buildMergedAnnex,
     convertPdfToHtml,
     findConverter,
 )
@@ -262,3 +263,95 @@ class TestRealConversionInAPackage:
             "annex1.xhtml",
             "annex2.xhtml",
         ]
+
+
+class TestRealConversionMergedInAPackage:
+    """The merge-mode counterpart: a really converted PDF spliced into the
+    report's own document, rather than travelling as a docset member."""
+
+    @pytest.fixture(scope="class")
+    def package(self, pdfBytes: bytes) -> FilelikeAndFileName:
+        from mireport.conversionresults import ConversionResultsBuilder
+        from mireport.data.disclosures import VSME_DEFAULTS
+        from mireport.pdf_converter import mergeAnnexesIntoReport
+        from mireport.report.reportpackage import buildReportPackage
+        from mireport.taxonomy import loadBuiltInTaxonomyJSON
+        from mireport.xlsx_template_reader.processor import XlsxProcessor
+
+        converted = convertPdfToHtml(
+            pdfBytes, filename="annex1.pdf", injectIxHeader=False
+        )
+        annex = buildMergedAnnex(converted.fileContent, index=1, label="annex1.pdf")
+
+        loadBuiltInTaxonomyJSON()
+        report = XlsxProcessor.from_file(
+            SAMPLE.open("rb"),
+            ConversionResultsBuilder(),
+            VSME_DEFAULTS,
+            outputLocale=None,
+        ).createReport()
+        reportFile = mergeAnnexesIntoReport(report.getInlineReport(), [annex])
+        return buildReportPackage(reportFile, topLevel=report.packageTopLevelName)
+
+    def test_stays_a_single_file_report(self, package: FilelikeAndFileName) -> None:
+        """No docset member means the layout is unchanged from a plain report."""
+        with zipfile.ZipFile(BytesIO(package.fileContent)) as zf:
+            names = zf.namelist()
+        assert sum("/reports/" in n for n in names) == 1
+        assert any(n.count("/") == 2 and "/reports/" in n for n in names), names
+
+    def test_arelle_reports_no_errors_or_warnings(
+        self, package: FilelikeAndFileName
+    ) -> None:
+        from mireport.arelle.report_info import ArelleReportProcessor
+        from mireport.conversionresults import Severity
+
+        result = ArelleReportProcessor(workOffline=False).validateReportPackage(package)
+        assert not result.has_exceptions, result.log_lines
+        problems = [
+            m.messageText
+            for m in result.messages
+            if m.severity in (Severity.ERROR, Severity.WARNING)
+        ]
+        assert problems == [], problems
+
+    def test_no_schema_validation_errors_at_all(
+        self, package: FilelikeAndFileName
+    ) -> None:
+        from mireport.arelle.report_info import ArelleReportProcessor
+
+        result = ArelleReportProcessor(workOffline=False).validateReportPackage(package)
+        text = "\n".join(result.log_lines)
+        for marker in ("SCHEMAV", "nonIxdsDocument", "XML file syntax error"):
+            assert marker not in text, text
+
+    def test_only_one_ix_header_in_the_document(
+        self, package: FilelikeAndFileName
+    ) -> None:
+        """A merged document must carry exactly the report's own header: one
+        per source PDF would be one too many."""
+        with zipfile.ZipFile(BytesIO(package.fileContent)) as zf:
+            [reportName] = [n for n in zf.namelist() if n.endswith(".html")]
+            content = zf.read(reportName)
+        root = etree.fromstring(content)
+        assert len(root.findall(f".//{{{IX}}}header")) == 1
+
+    def test_annex_content_is_in_the_document(
+        self, package: FilelikeAndFileName
+    ) -> None:
+        """pdftohtml renders pages as bitmaps, so the page text itself is not
+        necessarily selectable — check for the annex's own wrapper instead,
+        which is what proves the splice actually happened."""
+        with zipfile.ZipFile(BytesIO(package.fileContent)) as zf:
+            [reportName] = [n for n in zf.namelist() if n.endswith(".html")]
+            content = zf.read(reportName).decode("utf-8")
+        assert 'id="pdf-annex-1"' in content
+        assert "pdf-annex-placeholder" not in content
+
+    def test_annexes_entry_is_in_the_table_of_contents(
+        self, package: FilelikeAndFileName
+    ) -> None:
+        with zipfile.ZipFile(BytesIO(package.fileContent)) as zf:
+            [reportName] = [n for n in zf.namelist() if n.endswith(".html")]
+            content = zf.read(reportName).decode("utf-8")
+        assert 'href="#pdf-annex-1"' in content

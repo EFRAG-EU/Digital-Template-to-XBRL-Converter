@@ -28,7 +28,12 @@ from mireport.conversionresults import (
 from mireport.data.disclosures import VSME_DEFAULTS
 from mireport.filesupport import FilelikeAndFileName, ImageFileLikeAndFileName
 from mireport.localise import EU_LOCALES, argparse_locale
-from mireport.pdf_converter import convertSupplementaryPdfs
+from mireport.pdf_converter import (
+    PdfSupplementaryMode,
+    convertSupplementaryPdfs,
+    mergeAnnexesIntoReport,
+)
+from mireport.report.reportpackage import buildReportPackage
 from mireport.report.theme import ColourPalette, DisplayMode, ReportTheme
 from mireport.xlsx_template_reader.processor import XlsxProcessor
 
@@ -150,6 +155,20 @@ def createArgParser() -> argparse.ArgumentParser:
         type=Path,
         default=None,
         help="Path to a JSON file containing extra report data (footnotes, label overrides, etc.).",
+    )
+    parser.add_argument(
+        "--pdf-mode",
+        type=PdfSupplementaryMode,
+        choices=list(PdfSupplementaryMode),
+        default=PdfSupplementaryMode.DOCSET,
+        help=(
+            "How a successfully converted supplementary PDF (see --extra-data's "
+            "pdfAttachments) joins the report: as its own Inline XBRL document "
+            "set member ('docset', the default), or merged into the back of "
+            "the report document itself ('merge'). A PDF that fails to "
+            "convert is always attached to the package unconverted, "
+            "regardless of this setting."
+        ),
     )
     parser.add_argument(
         "--debug",
@@ -303,12 +322,19 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, list[str]
                     )
                 )
 
-        pdfs = convertSupplementaryPdfs(supplementary_pdfs, resultsBuilder, pc)
+        pdfs = convertSupplementaryPdfs(
+            supplementary_pdfs, resultsBuilder, pc, mode=args.pdf_mode
+        )
 
         pc.mark("Generating Inline Report")
         reportFile = report.getInlineReport()
-        reportPackage = report.getInlineReportPackage(
-            docsetMembers=pdfs.docsetMembers, attachments=pdfs.attachments
+        if pdfs.mergedAnnexes:
+            reportFile = mergeAnnexesIntoReport(reportFile, pdfs.mergedAnnexes)
+        reportPackage = buildReportPackage(
+            reportFile,
+            topLevel=report.packageTopLevelName,
+            docsetMembers=pdfs.docsetMembers,
+            attachments=pdfs.attachments,
         )
 
         output_path, dir_specified = prepare_output_path(args.output_path, args.force)

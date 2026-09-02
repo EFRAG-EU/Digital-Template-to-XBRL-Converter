@@ -185,9 +185,11 @@ def convertedOk(monkeypatch):
     monkeypatch.setattr(
         _batch,
         "convertPdfToHtml",
-        lambda content, *, filename, converter: FilelikeAndFileName(
-            fileContent=CONVERTED.fileContent,
-            filename=f"{Path(filename).stem}.xhtml",
+        lambda content, *, filename, converter, injectIxHeader=True: (
+            FilelikeAndFileName(
+                fileContent=CONVERTED.fileContent,
+                filename=f"{Path(filename).stem}.xhtml",
+            )
         ),
     )
 

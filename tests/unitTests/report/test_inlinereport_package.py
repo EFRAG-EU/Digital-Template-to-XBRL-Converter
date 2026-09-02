@@ -88,3 +88,19 @@ class TestEndToEnd:
         with zipfile.ZipFile(BytesIO(package.fileContent)) as zf:
             assert all("\\" not in i.orig_filename for i in zf.infolist())
             assert {n.split("/")[0] for n in zf.namelist()} == {"Acme___Ltd_Co_2024"}
+
+
+class TestPackageTopLevelName:
+    """The public property a caller assembling its own package (e.g. after
+    merging supplementary content into the report bytes) needs in place of
+    getInlineReportPackage()'s own topLevel computation."""
+
+    def test_matches_the_package_built_from_it(self, report: InlineReport) -> None:
+        assert report.packageTopLevelName == "Acme_Ltd_2024"
+        package = report.getInlineReportPackage()
+        with zipfile.ZipFile(BytesIO(package.fileContent)) as zf:
+            assert zf.namelist()[0].startswith(f"{report.packageTopLevelName}/")
+
+    def test_entity_name_is_made_zip_safe(self, report: InlineReport) -> None:
+        report.setEntityName("Acme / Ltd\\Co")
+        assert report.packageTopLevelName == "Acme___Ltd_Co_2024"

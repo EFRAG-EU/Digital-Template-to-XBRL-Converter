@@ -15,11 +15,20 @@ from mireport.pdf_converter._backends import (
     PdfConverterBackend,
     ResolvedConverter,
 )
-from mireport.pdf_converter._batch import PdfBatchResult, convertSupplementaryPdfs
+from mireport.pdf_converter._batch import (
+    PdfBatchResult,
+    PdfSupplementaryMode,
+    convertSupplementaryPdfs,
+)
 from mireport.pdf_converter._convert import convertPdfToHtml, outputFilenameFor
 from mireport.pdf_converter._exceptions import (
     PdfConversionError,
     PdfToolNotFoundError,
+)
+from mireport.pdf_converter._merge import (
+    MergedAnnex,
+    buildMergedAnnex,
+    mergeAnnexesIntoReport,
 )
 from mireport.pdf_converter._run import (
     DEFAULT_TIMEOUT_SECONDS,
@@ -32,14 +41,18 @@ __all__ = [
     "BACKENDS_IN_PREFERENCE_ORDER",
     "DEFAULT_TIMEOUT_SECONDS",
     "PATH_ENV_VAR",
+    "MergedAnnex",
     "PdfBatchResult",
     "PdfConversionError",
     "PdfConverterBackend",
+    "PdfSupplementaryMode",
     "PdfToolNotFoundError",
     "ResolvedConverter",
     "availableConverters",
+    "buildMergedAnnex",
     "convertPdfToHtml",
     "convertSupplementaryPdfs",
     "findConverter",
+    "mergeAnnexesIntoReport",
     "outputFilenameFor",
 ]

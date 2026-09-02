@@ -504,6 +504,14 @@ class InlineReport:
         safeName = zipSafeString(self._entityName, fallback="Sample")
         return safeName
 
+    @property
+    def packageTopLevelName(self) -> str:
+        """The top-level directory/entry name :func:`buildReportPackage` uses
+        for this report, e.g. for a caller assembling a package itself
+        (merging supplementary content into the report bytes first) rather
+        than going through :meth:`getInlineReportPackage`."""
+        return f"{self._getSafeEntityName()}_{self.defaultPeriod.end.year}"
+
     def getInlineReportPackage(
         self,
         *,
@@ -519,7 +527,7 @@ class InlineReport:
         """
         return buildReportPackage(
             self.getInlineReport(),
-            topLevel=f"{self._getSafeEntityName()}_{self.defaultPeriod.end.year}",
+            topLevel=self.packageTopLevelName,
             docsetMembers=docsetMembers,
             attachments=attachments,
         )
