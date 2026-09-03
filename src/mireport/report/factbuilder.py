@@ -266,82 +266,53 @@ class FactBuilder:
                     typedDims[dimension] = value
                 elif isinstance(value, QName):
                     explicitDims[dimension] = taxonomy.getConcept(value)
-        self.validateTypedDimensions(taxonomy, typedDims)
-        self.validateExplicitDimensions(taxonomy, explicitDims)
 
-    def validateTypedDimensions(
-        self, taxonomy: Taxonomy, typedDims: dict[Concept, str]
-    ) -> None:
-        if self._concept is None:
-            raise InlineReportException(
-                "Concept must be set before validating a FactBuilder.", self
-            )
-        neededTds = taxonomy.getTypedDimensionsForPrimaryItem(self._concept)
-        setTds = frozenset(typedDims)
-        neededButNotSet = neededTds - setTds
-        setButNotNeeded = setTds - neededTds
-        if setButNotNeeded:
-            dim_list = ", ".join(str(a.qname) for a in setButNotNeeded)
-            raise InlineReportException(
-                f"Unexpected typed dimension(s) [{dim_list}] set on FactBuilder for {self._concept}",
-                self,
-            )
-        if neededButNotSet:
-            dim_list = ", ".join(str(a.qname) for a in neededButNotSet)
-            raise InlineReportException(
-                f"Missing required typed dimension(s) [{dim_list}] not set on FactBuilder for {self._concept}",
-                self,
-            )
+        # An explicit dimension explicitly set to its own taxonomy-declared default
+        # is equivalent to omitting it, and must be omitted -- OIM (xBRL-JSON)
+        # forbids writing a dimension explicitly at its default member.
+        for dimName, chosenValue in list(explicitDims.items()):
+            if taxonomy.getDimensionDefault(dimName) == chosenValue:
+                explicitDims.pop(dimName)
+                self._aspects.pop(dimName.qname)
 
-    def validateExplicitDimensions(
-        self, taxonomy: Taxonomy, explicitDims: dict[Concept, Concept]
+        self.validateDimensions(taxonomy, explicitDims, typedDims)
+
+    def validateDimensions(
+        self,
+        taxonomy: Taxonomy,
+        explicitDims: dict[Concept, Concept],
+        typedDims: dict[Concept, str],
     ) -> None:
-        """Easy checks for XBRL validity to avoid mistakes. Still possible to create invalid facts."""
+        """Easy checks for XBRL validity to avoid mistakes. Still possible to create invalid facts.
+
+        A fact is dimensionally valid if its dimension values match at least one
+        DimensionSignature for the concept -- never the union of every signature's
+        dimensions, since a concept can participate in multiple hypercubes/base-sets
+        with different (even unrelated) dimensional requirements.
+        """
         if self._concept is None:
             raise InlineReportException("Concept must be set before validating a Fact.")
-        neededEds = set(taxonomy.getExplicitDimensionsForPrimaryItem(self._concept))
 
-        # Take defaulted dimensions out of both neededEds and self._aspects iff they match
-        for dimName in neededEds.copy():
-            defaultValue = taxonomy.getDimensionDefault(dimName)
-            if defaultValue is None:
-                continue
-            chosenValue = explicitDims.get(dimName)
-            if chosenValue is None or chosenValue == defaultValue:
-                neededEds.remove(dimName)
-                if chosenValue is not None:
-                    explicitDims.pop(dimName)
-                    self._aspects.pop(dimName.qname)
-
-        # At this point we have no defaulted dimensions or values to worry about.
-        chosenEds = frozenset(explicitDims.keys())
-        neededButNotChosen = neededEds - chosenEds
-        chosenButNotWanted = chosenEds - neededEds
-        if chosenButNotWanted:
-            dim_list = ", ".join(str(a.qname) for a in chosenButNotWanted)
-            raise InlineReportException(
-                f"Unexpected explicit dimension(s) [{dim_list}] set on FactBuilder for {self._concept}",
-                self,
-            )
-        if neededButNotChosen:
-            dim_list = ", ".join(str(a.qname) for a in neededButNotChosen)
-            raise InlineReportException(
-                f"Missing explicit dimension(s) [{dim_list}] not set on FactBuilder for {self._concept}",
-                self,
-            )
-        validMembersForDims = {
-            explicitDimension: taxonomy.getDomainMembersForExplicitDimension(
-                explicitDimension
-            )
-            for explicitDimension in neededEds
-        }
-        for dimension, chosenMember in explicitDims.items():
-            validMembers = validMembersForDims[dimension]
-            if chosenMember not in validMembers:
+        signatures = taxonomy.getValidDimensionsForPrimaryItem(self._concept)
+        if not signatures:
+            if explicitDims or typedDims:
+                dim_list = ", ".join(str(d.qname) for d in (*explicitDims, *typedDims))
                 raise InlineReportException(
-                    f"Explicit dimension {dimension} cannot be set to {chosenMember} on FactBuilder for {self._concept}",
+                    f"Unexpected dimension(s) [{dim_list}] set on FactBuilder for {self._concept}, which does not participate in any hypercube",
                     self,
                 )
+            return
+
+        if any(signature.matches(explicitDims, typedDims) for signature in signatures):
+            return
+
+        chosen_ed = ", ".join(f"{d.qname}={v.qname}" for d, v in explicitDims.items())
+        chosen_td = ", ".join(f"{d.qname}={v!r}" for d, v in typedDims.items())
+        raise InlineReportException(
+            f"No valid dimensional combination for {self._concept} matches the "
+            f"dimensions set on FactBuilder (explicit: [{chosen_ed}], typed: [{chosen_td}])",
+            self,
+        )
 
     def buildFact(self) -> Fact:
         if self._concept is None:

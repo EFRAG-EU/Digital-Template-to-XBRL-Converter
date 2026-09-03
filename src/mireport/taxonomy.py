@@ -10,6 +10,7 @@ import re
 import warnings
 from collections import Counter, defaultdict
 from collections.abc import Callable, Iterable, Mapping
+from dataclasses import dataclass, field
 from enum import Enum, StrEnum, auto
 from functools import cache, cached_property
 from pathlib import Path
@@ -21,6 +22,7 @@ from mireport.exceptions import (
     BrokenQNameException,
     TaxonomyException,
     UnknownTaxonomyException,
+    UnsupportedTaxonomyFeatureException,
 )
 from mireport.json import getJsonFiles, getObject, getResource
 from mireport.localise import getBestSupportedLanguage
@@ -652,9 +654,80 @@ class PresentationGroup(NamedTuple):
                 return PresentationStyle.Empty
 
 
-class BaseSet(NamedTuple):
+@dataclass(frozen=True)
+class ExplicitDimensionSignature:
+    """One explicit dimension and the domain members valid for it within a single
+    DimensionSignature."""
+
+    dimension: Concept
+    domain: frozenset[Concept]
+
+
+@dataclass(frozen=True)
+class DimensionSignature:
+    """One valid dimensional shape a primary item (or hypercube) can take: the
+    explicit and typed dimensions declared for one hypercube in one base set.
+
+    A fact never declares which base set/role it belongs to -- that is purely a
+    taxonomy-authoring grouping of definition-linkbase arcs, invisible in the
+    instance. A fact is dimensionally valid if its dimension values match *at
+    least one* DimensionSignature for its concept; checking against the union of
+    every signature's dimensions instead can both demand dimensions that were
+    never required together and admit member/dimension combinations that were
+    never valid together. Use Taxonomy.getValidDimensionsForPrimaryItem() /
+    getValidDimensionsForHypercube() to get the applicable signatures, and
+    matches() on each to test a candidate set of dimension values.
+    """
+
     roleUri: str
-    hyperCubes: frozenset[Concept]
+    hypercube: Concept
+    closed: bool
+    contextElement: DimensionContainerType
+    primaryItems: frozenset[Concept]
+    explicitDimensions: frozenset[ExplicitDimensionSignature]
+    typedDimensions: frozenset[Concept]
+    unsupportedReason: str | None
+    _taxonomy: Taxonomy = field(repr=False, compare=False)
+
+    @cached_property
+    def _explicitDimensionsByDimension(self) -> Mapping[Concept, frozenset[Concept]]:
+        return {ed.dimension: ed.domain for ed in self.explicitDimensions}
+
+    def __getitem__(self, dimension: Concept) -> frozenset[Concept]:
+        """The domain members valid for *dimension* within this signature.
+        Raises KeyError if *dimension* is not part of this signature."""
+        return self._explicitDimensionsByDimension[dimension]
+
+    def matches(
+        self,
+        explicitDims: Mapping[Concept, Concept],
+        typedDims: Mapping[Concept, str] | Iterable[Concept],
+    ) -> bool:
+        """True if the given dimension values are a valid instantiation of this
+        signature. An explicit dimension may be omitted from *explicitDims* only
+        if it has a taxonomy-wide default; any other missing, unexpected, or
+        out-of-domain dimension means this signature does not match."""
+        typedKeys = (
+            frozenset(typedDims.keys())
+            if isinstance(typedDims, Mapping)
+            else frozenset(typedDims)
+        )
+        if typedKeys != self.typedDimensions:
+            return False
+
+        byDimension = self._explicitDimensionsByDimension
+        chosenKeys = frozenset(explicitDims.keys())
+        if chosenKeys - frozenset(byDimension.keys()):
+            return False  # a dimension was set that isn't part of this signature
+
+        for dimension, domain in byDimension.items():
+            chosen = explicitDims.get(dimension)
+            if chosen is None:
+                if self._taxonomy.getDimensionDefault(dimension) is None:
+                    return False  # required and not defaulted, but omitted
+            elif chosen not in domain:
+                return False
+        return True
 
 
 class Taxonomy:
@@ -716,40 +789,35 @@ class Taxonomy:
             for dimension, domainMember in dimensions.pop("_defaults", {}).items()
         }
 
-        self._baseSets: dict[BaseSet, list[dict]] = defaultdict(list)
-        self._lookupBaseSetByCube: dict[Concept, list[BaseSet]] = defaultdict(list)
-        self._lookupBaseSetByPrimaryItem: dict[Concept, list[BaseSet]] = defaultdict(
-            list
+        self._signaturesByHypercube: dict[Concept, list[DimensionSignature]] = (
+            defaultdict(list)
+        )
+        self._signaturesByPrimaryItem: dict[Concept, list[DimensionSignature]] = (
+            defaultdict(list)
         )
         desired_containers: set[DimensionContainerType] = set()
-        open_hcs: set[Relationship] = set()
+        unsupportedRoles: dict[str, str] = {}
         domainByDimension: dict[Concept, list[Concept]] = defaultdict(list)
 
         for role, cubes in dimensions.items():
-            cubeConcepts = frozenset(concepts[c] for c in cubes)
-            baseSet = BaseSet(role, cubeConcepts)
+            if (defects := self._findBaseSetDefects(cubes)) is not None:
+                unsupportedRoles[role] = defects
+
             for cubeQname, cubeDetails in cubes.items():
                 hc_concept = concepts[cubeQname]
-                d: dict[str, Any] = {}
                 closed = bool(cubeDetails.pop("xbrldt:closed"))
-                d["xbrldt:closed"] = closed
-                if not closed:
-                    open_hcs.add(Relationship(role, 0, hc_concept))
 
                 container = DimensionContainerType(
                     cubeDetails.pop("xbrldt:contextElement")
                 )
                 desired_containers.add(container)
-                d["xbrldt:contextElement"] = container
 
-                d["primaryItems"] = [
+                primaryItemRels = [
                     Relationship(role, depth, concepts[qname])
                     for depth, qname in cubeDetails.pop("primaryItems", [])
                 ]
-                for r in d["primaryItems"]:
-                    self._lookupBaseSetByPrimaryItem[r.concept].append(baseSet)
 
-                d["explicitDimensions"] = {
+                explicitDimensionsByName = {
                     concepts[dimQname]: frozenset(
                         concepts[member] for member in memberQnameList
                     )
@@ -757,35 +825,55 @@ class Taxonomy:
                         "explicitDimensions", {}
                     ).items()
                 }
-                for dimension, memberList in d["explicitDimensions"].items():
+                for dimension, memberList in explicitDimensionsByName.items():
                     domainByDimension[dimension].extend(memberList)
+                explicitDimensions = frozenset(
+                    ExplicitDimensionSignature(dimension=dimension, domain=domain)
+                    for dimension, domain in explicitDimensionsByName.items()
+                )
 
-                d["typedDimensions"] = [
+                typedDimensions = frozenset(
                     concepts[dimQname]
                     for dimQname in cubeDetails.pop("typedDimensions", [])
-                ]
+                )
 
-                self._lookupBaseSetByCube[hc_concept].append(baseSet)
-                self._baseSets[baseSet].append(d)
+                # One DimensionSignature per (role, hypercube) -- this is the unit
+                # a fact must satisfy at least one of, never the union of several.
+                signature = DimensionSignature(
+                    roleUri=role,
+                    hypercube=hc_concept,
+                    closed=closed,
+                    contextElement=container,
+                    primaryItems=frozenset(r.concept for r in primaryItemRels),
+                    explicitDimensions=explicitDimensions,
+                    typedDimensions=typedDimensions,
+                    unsupportedReason=unsupportedRoles.get(role),
+                    _taxonomy=self,
+                )
+                self._signaturesByHypercube[hc_concept].append(signature)
+                for r in primaryItemRels:
+                    self._signaturesByPrimaryItem[r.concept].append(signature)
 
         self._lookupDomainByDimension: Mapping[Concept, frozenset[Concept]] = {
             dimension: frozenset(domainlist)
             for dimension, domainlist in domainByDimension.items()
         }
-        self._hypercubes = frozenset(c for x in self._baseSets for c in x.hyperCubes)
+        self._hypercubes = frozenset(self._signaturesByHypercube.keys())
 
-        if open_hcs:
-            # Not supported by mireport (aoix doesn't care)
+        if unsupportedRoles:
+            # Warn rather than raise so the rest of the taxonomy stays usable.
+            # Touching one of these base sets raises -- see _rejectUnsupported().
             te = TaxonomyException(
-                f"Unsupported taxonomy [{entryPoint}] contains ({len(open_hcs)}) open hypercubes."
+                f"Unsupported taxonomy [{entryPoint}] contains ({len(unsupportedRoles)}) "
+                "base sets that mireport cannot model."
             )
-            oc_str = "\n".join(
-                f"{role}\n\t{c.qname}"
-                for role, c in sorted(
-                    ((x.roleUri, x.concept) for x in open_hcs),
+            te.add_note(
+                "Unsupported base sets:\n"
+                + "\n".join(
+                    f"{role}\n\t{reason}"
+                    for role, reason in sorted(unsupportedRoles.items())
                 )
             )
-            te.add_note(f"Open hypercubes:\n{oc_str}")
             warnings.warn(UserWarning(te))
 
         match len(desired_containers):
@@ -798,6 +886,45 @@ class Taxonomy:
                 raise TaxonomyException(
                     f"Multiple dimension containers specified {desired_containers}. Not currently supported"
                 )
+
+    @staticmethod
+    def _findBaseSetDefects(cubes: Mapping[str, Mapping]) -> str | None:
+        """Describe why mireport cannot model this base set, or None if it can.
+
+        Neither defect is fatal on its own -- see the warning in __init__ -- but a
+        base set carrying one cannot be reasoned about, because both break the
+        assumption that a base set contributes exactly one closed dimensional
+        shape that a fact either matches or does not.
+        """
+        defects: list[str] = []
+        if len(cubes) > 1:
+            defects.append(
+                f"{len(cubes)} hypercubes in one base set "
+                f"({', '.join(sorted(cubes))}); only one is supported"
+            )
+        defects.extend(
+            f"hypercube {cubeQname} is open"
+            for cubeQname, cubeDetails in cubes.items()
+            if not cubeDetails["xbrldt:closed"]
+        )
+        return "; ".join(defects) if defects else None
+
+    def _rejectUnsupported(
+        self, subject: Concept, signatures: Iterable[DimensionSignature]
+    ) -> None:
+        faulty = {
+            signature.roleUri: signature.unsupportedReason
+            for signature in signatures
+            if signature.unsupportedReason is not None
+        }
+        if faulty:
+            raise UnsupportedTaxonomyFeatureException(
+                f"{subject.qname} can only be used through base set(s) that mireport "
+                "cannot model: "
+                + "; ".join(
+                    f"{role} ({reason})" for role, reason in sorted(faulty.items())
+                )
+            )
 
     def getConcept(self, qname: QName | str) -> Concept:
         if isinstance(qname, str):
@@ -908,92 +1035,105 @@ class Taxonomy:
         all_hcs = frozenset(c for c in self._concepts.values() if c.isHypercube)
         return all_hcs - self._hypercubes
 
+    def getValidDimensionsForHypercube(
+        self, hypercube: Concept
+    ) -> frozenset[DimensionSignature]:
+        """All the DimensionSignatures declared for this hypercube, one per base
+        set it participates in. A fact must satisfy at least one of these -- not
+        their union.
+
+        Raises UnsupportedTaxonomyFeatureException if any of them come from a base
+        set mireport cannot model."""
+        signatures = frozenset(self._signaturesByHypercube.get(hypercube, ()))
+        self._rejectUnsupported(hypercube, signatures)
+        return signatures
+
+    def getValidDimensionsForPrimaryItem(
+        self, primaryItem: Concept
+    ) -> frozenset[DimensionSignature]:
+        """All the DimensionSignatures a primary item can be reported against, one
+        per (base set, hypercube) it participates in as a primary item. A fact
+        must satisfy at least one of these -- not their union.
+
+        Raises UnsupportedTaxonomyFeatureException if any of them come from a base
+        set mireport cannot model."""
+        signatures = frozenset(self._signaturesByPrimaryItem.get(primaryItem, ()))
+        self._rejectUnsupported(primaryItem, signatures)
+        return signatures
+
     def getTypedDimensionsForHypercube(self, hypercube: Concept) -> frozenset[Concept]:
-        """This aggregates across all base-sets to give all the dimensions specified for the given hypercube."""
-        baseSets = self._lookupBaseSetByCube.get(hypercube)
-        if baseSets is None:
-            return frozenset()
-        typed = {
+        """The union, across every base-set this hypercube participates in, of its
+        typed dimensions. This is not a valid dimensional signature by itself --
+        see getValidDimensionsForHypercube()."""
+        return frozenset(
             td
-            for b in baseSets
-            for cube in self._baseSets[b]
-            for td in cube["typedDimensions"]
-        }
-        return frozenset(typed)
+            for signature in self.getValidDimensionsForHypercube(hypercube)
+            for td in signature.typedDimensions
+        )
 
     def getExplicitDimensionsForHypercube(
         self, hypercube: Concept
     ) -> frozenset[Concept]:
-        """This aggregates across all base-sets to give all the dimensions specified for the given hypercube."""
-        baseSets = self._lookupBaseSetByCube.get(hypercube)
-        if baseSets is None:
-            return frozenset()
-        explicit = {
-            ed
-            for b in baseSets
-            for cube in self._baseSets[b]
-            for ed in cube["explicitDimensions"]
-        }
-        return frozenset(explicit)
+        """The union, across every base-set this hypercube participates in, of its
+        explicit dimensions. This is not a valid dimensional signature by itself --
+        see getValidDimensionsForHypercube()."""
+        return frozenset(
+            ed.dimension
+            for signature in self.getValidDimensionsForHypercube(hypercube)
+            for ed in signature.explicitDimensions
+        )
 
     @cache  # noqa: B019 - Taxonomy lives for the life of the process. See above.
     def getDimensionsForHypercube(self, hypercube: Concept) -> frozenset[Concept]:
-        baseSets = self._lookupBaseSetByCube.get(hypercube)
-        if baseSets is None:
-            return frozenset()
-        dims: list[Concept] = []
-        for b in baseSets:
-            for cube in self._baseSets[b]:
-                dims.extend(ed for ed in cube["explicitDimensions"])
-                dims.extend(td for td in cube["typedDimensions"])
-        return frozenset(dims)
+        """The union, across every base-set this hypercube participates in, of all
+        its dimensions (explicit and typed). This is not a valid dimensional
+        signature by itself -- see getValidDimensionsForHypercube()."""
+        return self.getExplicitDimensionsForHypercube(
+            hypercube
+        ) | self.getTypedDimensionsForHypercube(hypercube)
 
     def getPrimaryItemsForHypercube(self, hypercube: Concept) -> frozenset[Concept]:
         """This aggregates across all base-sets to give all the primary items specified for the given hypercube."""
-        baseSets = self._lookupBaseSetByCube.get(hypercube)
-        if baseSets is None:
-            return frozenset()
-        primary = {
-            r.concept
-            for b in baseSets
-            for cube in self._baseSets[b]
-            for r in cube["primaryItems"]
-        }
-        return frozenset(primary)
-
-    def _getHypercubesForPrimaryItem(self, primaryItem: Concept) -> frozenset[Concept]:
-        baseSets = self._lookupBaseSetByPrimaryItem.get(primaryItem)
-        if baseSets is None:
-            return frozenset()
-        return frozenset(c for x in baseSets for c in x.hyperCubes)
+        return frozenset(
+            primaryItem
+            for signature in self.getValidDimensionsForHypercube(hypercube)
+            for primaryItem in signature.primaryItems
+        )
 
     def getExplicitDimensionsForPrimaryItem(
         self, primaryItem: Concept
     ) -> frozenset[Concept]:
-        hcs = self._getHypercubesForPrimaryItem(primaryItem)
-        eds = {ed for hc in hcs for ed in self.getExplicitDimensionsForHypercube(hc)}
-        return frozenset(eds)
+        """The union, across every applicable hypercube/base-set, of the explicit
+        dimensions a primary item can carry. This is not a valid dimensional
+        signature by itself -- see getValidDimensionsForPrimaryItem()."""
+        return frozenset(
+            ed.dimension
+            for signature in self.getValidDimensionsForPrimaryItem(primaryItem)
+            for ed in signature.explicitDimensions
+        )
 
     def getTypedDimensionsForPrimaryItem(
         self, primaryItem: Concept
     ) -> frozenset[Concept]:
-        hcs = self._getHypercubesForPrimaryItem(primaryItem)
-        tds = {td for hc in hcs for td in self.getTypedDimensionsForHypercube(hc)}
-        return frozenset(tds)
+        """The union, across every applicable hypercube/base-set, of the typed
+        dimensions a primary item can carry. This is not a valid dimensional
+        signature by itself -- see getValidDimensionsForPrimaryItem()."""
+        return frozenset(
+            td
+            for signature in self.getValidDimensionsForPrimaryItem(primaryItem)
+            for td in signature.typedDimensions
+        )
 
     @cache  # noqa: B019 - Taxonomy lives for the life of the process. See above.
     def getExplicitDimensionForDomainMember(
         self, primaryItem: Concept, dimensionValue: Concept
     ) -> Concept | None:
-        baseSets = self._lookupBaseSetByPrimaryItem.get(primaryItem)
-        if baseSets is None:
-            return None
-        possible: set = set()
-        for b in baseSets:
-            for cube in self._baseSets[b]:
-                for ed, domain in cube["explicitDimensions"].items():
-                    if dimensionValue in domain:
-                        possible.add(ed)
+        possible: set[Concept] = {
+            ed.dimension
+            for signature in self.getValidDimensionsForPrimaryItem(primaryItem)
+            for ed in signature.explicitDimensions
+            if dimensionValue in ed.domain
+        }
         match len(possible):
             case 0:
                 return None
