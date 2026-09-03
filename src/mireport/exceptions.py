@@ -51,6 +51,12 @@ class AmbiguousComponentException(TaxonomyException):
         self.candidates: tuple[Concept, ...] = tuple(candidates)
 
 
+class UnsupportedTaxonomyFeatureException(TaxonomyException):
+    """Exception raised when something in the taxonomy that mireport cannot model
+    is actually used. Loading such a taxonomy only warns, so the supported parts
+    of it remain usable."""
+
+
 class OpenPyXlRelatedException(MIReportException):
     """Exception raised when dealing with an issue in OpenPyXL"""
 
