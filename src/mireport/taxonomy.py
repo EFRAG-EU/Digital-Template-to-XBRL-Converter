@@ -686,7 +686,6 @@ class DimensionSignature:
     primaryItems: frozenset[Concept]
     explicitDimensions: frozenset[ExplicitDimensionSignature]
     typedDimensions: frozenset[Concept]
-    unsupportedReason: str | None
     _taxonomy: Taxonomy = field(repr=False, compare=False)
 
     @cached_property
@@ -798,10 +797,30 @@ class Taxonomy:
         desired_containers: set[DimensionContainerType] = set()
         unsupportedRoles: dict[str, str] = {}
         domainByDimension: dict[Concept, list[Concept]] = defaultdict(list)
+        self._unsupportedRolesByConcept: dict[Concept, dict[str, str]] = defaultdict(
+            dict
+        )
+        # Every cube in the definition linkbase, whether or not we can model it.
+        self._hypercubes = frozenset(
+            concepts[cubeQname] for cubes in dimensions.values() for cubeQname in cubes
+        )
 
         for role, cubes in dimensions.items():
             if (defects := self._findBaseSetDefects(cubes)) is not None:
                 unsupportedRoles[role] = defects
+                # Not modelled at all, so no DimensionSignature and no contribution
+                # to the container, domain or dimension-default lookups. Its
+                # concepts are recorded only so that using one raises.
+                for cubeQname, cubeDetails in cubes.items():
+                    for concept in (
+                        concepts[cubeQname],
+                        *(
+                            concepts[qname]
+                            for _, qname in cubeDetails.get("primaryItems", [])
+                        ),
+                    ):
+                        self._unsupportedRolesByConcept[concept][role] = defects
+                continue
 
             for cubeQname, cubeDetails in cubes.items():
                 hc_concept = concepts[cubeQname]
@@ -847,7 +866,6 @@ class Taxonomy:
                     primaryItems=frozenset(r.concept for r in primaryItemRels),
                     explicitDimensions=explicitDimensions,
                     typedDimensions=typedDimensions,
-                    unsupportedReason=unsupportedRoles.get(role),
                     _taxonomy=self,
                 )
                 self._signaturesByHypercube[hc_concept].append(signature)
@@ -858,7 +876,6 @@ class Taxonomy:
             dimension: frozenset(domainlist)
             for dimension, domainlist in domainByDimension.items()
         }
-        self._hypercubes = frozenset(self._signaturesByHypercube.keys())
 
         if unsupportedRoles:
             # Warn rather than raise so the rest of the taxonomy stays usable.
@@ -909,18 +926,11 @@ class Taxonomy:
         )
         return "; ".join(defects) if defects else None
 
-    def _rejectUnsupported(
-        self, subject: Concept, signatures: Iterable[DimensionSignature]
-    ) -> None:
-        faulty = {
-            signature.roleUri: signature.unsupportedReason
-            for signature in signatures
-            if signature.unsupportedReason is not None
-        }
-        if faulty:
+    def _rejectUnsupported(self, subject: Concept) -> None:
+        if faulty := self._unsupportedRolesByConcept.get(subject):
             raise UnsupportedTaxonomyFeatureException(
-                f"{subject.qname} can only be used through base set(s) that mireport "
-                "cannot model: "
+                f"{subject.qname} is declared in base set(s) that mireport cannot "
+                "model: "
                 + "; ".join(
                     f"{role} ({reason})" for role, reason in sorted(faulty.items())
                 )
@@ -1042,11 +1052,10 @@ class Taxonomy:
         set it participates in. A fact must satisfy at least one of these -- not
         their union.
 
-        Raises UnsupportedTaxonomyFeatureException if any of them come from a base
-        set mireport cannot model."""
-        signatures = frozenset(self._signaturesByHypercube.get(hypercube, ()))
-        self._rejectUnsupported(hypercube, signatures)
-        return signatures
+        Raises UnsupportedTaxonomyFeatureException if this hypercube is declared
+        in a base set mireport cannot model."""
+        self._rejectUnsupported(hypercube)
+        return frozenset(self._signaturesByHypercube.get(hypercube, ()))
 
     def getValidDimensionsForPrimaryItem(
         self, primaryItem: Concept
@@ -1055,11 +1064,10 @@ class Taxonomy:
         per (base set, hypercube) it participates in as a primary item. A fact
         must satisfy at least one of these -- not their union.
 
-        Raises UnsupportedTaxonomyFeatureException if any of them come from a base
-        set mireport cannot model."""
-        signatures = frozenset(self._signaturesByPrimaryItem.get(primaryItem, ()))
-        self._rejectUnsupported(primaryItem, signatures)
-        return signatures
+        Raises UnsupportedTaxonomyFeatureException if this primary item is declared
+        in a base set mireport cannot model."""
+        self._rejectUnsupported(primaryItem)
+        return frozenset(self._signaturesByPrimaryItem.get(primaryItem, ()))
 
     def getTypedDimensionsForHypercube(self, hypercube: Concept) -> frozenset[Concept]:
         """The union, across every base-set this hypercube participates in, of its
