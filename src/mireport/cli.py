@@ -3,6 +3,7 @@ import os
 import sys
 import warnings
 from argparse import ArgumentParser
+from collections.abc import Iterable
 from glob import glob
 from typing import Any
 
@@ -52,6 +53,16 @@ def get_console() -> Console:
 def console_print(*args: Any, **kwargs: Any) -> None:
     console = get_console()
     console.print(*args, **kwargs)
+
+
+def console_print_plain(lines: Iterable[object], indent: str = "\t") -> None:
+    """Print lines whose square brackets are data, not rich markup.
+
+    Arelle log lines and mireport messages contain message codes and QName lists
+    like "[xbrldie:PrimaryItemDimensionallyInvalidError]", which rich would
+    otherwise swallow as a style tag.
+    """
+    console_print(Text("\n".join(f"{indent}{line}" for line in lines)))
 
 
 def configure_rich_output(*, locals_max_length: int | None = None) -> Console:
