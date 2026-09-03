@@ -806,25 +806,35 @@ class Taxonomy:
         )
 
         for role, cubes in dimensions.items():
-            if (defects := self._findBaseSetDefects(cubes)) is not None:
-                unsupportedRoles[role] = defects
-                # Not modelled at all, so no DimensionSignature and no contribution
-                # to the container, domain or dimension-default lookups. Its
-                # concepts are recorded only so that using one raises.
-                for cubeQname, cubeDetails in cubes.items():
+            defects: list[str] = []
+
+            # XDT conjoins a base set's hypercubes, so a primary item in more than one
+            # of them must satisfy all at once. Disjoint primary items are fine,
+            # however many hypercubes the base set holds.
+            if overlapping := self._overlappingPrimaryItems(cubes):
+                defects.append(
+                    f"primary item(s) in more than one of this base set's "
+                    f"{len(cubes)} hypercubes: {', '.join(sorted(overlapping))}"
+                )
+                for qname in overlapping:
+                    self._unsupportedRolesByConcept[concepts[qname]][role] = defects[-1]
+
+            for cubeQname, cubeDetails in cubes.items():
+                hc_concept = concepts[cubeQname]
+                closed = bool(cubeDetails.pop("xbrldt:closed"))
+                if not closed:
+                    # DimensionSignature.matches() enforces closed semantics, so
+                    # modelling an open cube would reject facts it should admit.
+                    defects.append(f"hypercube {cubeQname} is open")
                     for concept in (
-                        concepts[cubeQname],
+                        hc_concept,
                         *(
                             concepts[qname]
                             for _, qname in cubeDetails.get("primaryItems", [])
                         ),
                     ):
-                        self._unsupportedRolesByConcept[concept][role] = defects
-                continue
-
-            for cubeQname, cubeDetails in cubes.items():
-                hc_concept = concepts[cubeQname]
-                closed = bool(cubeDetails.pop("xbrldt:closed"))
+                        self._unsupportedRolesByConcept[concept][role] = defects[-1]
+                    continue
 
                 container = DimensionContainerType(
                     cubeDetails.pop("xbrldt:contextElement")
@@ -872,6 +882,9 @@ class Taxonomy:
                 for r in primaryItemRels:
                     self._signaturesByPrimaryItem[r.concept].append(signature)
 
+            if defects:
+                unsupportedRoles[role] = "; ".join(defects)
+
         self._lookupDomainByDimension: Mapping[Concept, frozenset[Concept]] = {
             dimension: frozenset(domainlist)
             for dimension, domainlist in domainByDimension.items()
@@ -879,10 +892,10 @@ class Taxonomy:
 
         if unsupportedRoles:
             # Warn rather than raise so the rest of the taxonomy stays usable.
-            # Touching one of these base sets raises -- see _rejectUnsupported().
+            # Using an affected concept raises -- see _rejectUnsupported().
             te = TaxonomyException(
                 f"Unsupported taxonomy [{entryPoint}] contains ({len(unsupportedRoles)}) "
-                "base sets that mireport cannot model."
+                "base sets with parts that mireport cannot model."
             )
             te.add_note(
                 "Unsupported base sets:\n"
@@ -905,26 +918,21 @@ class Taxonomy:
                 )
 
     @staticmethod
-    def _findBaseSetDefects(cubes: Mapping[str, Mapping]) -> str | None:
-        """Describe why mireport cannot model this base set, or None if it can.
+    def _overlappingPrimaryItems(cubes: Mapping[str, Mapping]) -> frozenset[str]:
+        """The primary items declared in more than one hypercube of this base set.
 
-        Neither defect is fatal on its own -- see the warning in __init__ -- but a
-        base set carrying one cannot be reasoned about, because both break the
-        assumption that a base set contributes exactly one closed dimensional
-        shape that a fact either matches or does not.
+        Such a primary item must satisfy every one of those hypercubes at once, which
+        mireport cannot express: it gives a primary item one DimensionSignature per
+        hypercube and asks a fact to satisfy any one of them.
         """
-        defects: list[str] = []
-        if len(cubes) > 1:
-            defects.append(
-                f"{len(cubes)} hypercubes in one base set "
-                f"({', '.join(sorted(cubes))}); only one is supported"
-            )
-        defects.extend(
-            f"hypercube {cubeQname} is open"
-            for cubeQname, cubeDetails in cubes.items()
-            if not cubeDetails["xbrldt:closed"]
+        cubesPerPrimaryItem = Counter(
+            qname
+            for cubeDetails in cubes.values()
+            for qname in {q for _, q in cubeDetails.get("primaryItems", [])}
         )
-        return "; ".join(defects) if defects else None
+        return frozenset(
+            qname for qname, count in cubesPerPrimaryItem.items() if count > 1
+        )
 
     def _rejectUnsupported(self, subject: Concept) -> None:
         if faulty := self._unsupportedRolesByConcept.get(subject):
@@ -1052,8 +1060,8 @@ class Taxonomy:
         set it participates in. A fact must satisfy at least one of these -- not
         their union.
 
-        Raises UnsupportedTaxonomyFeatureException if this hypercube is declared
-        in a base set mireport cannot model."""
+        Raises UnsupportedTaxonomyFeatureException if this hypercube is open, since
+        matches() only implements closed semantics."""
         self._rejectUnsupported(hypercube)
         return frozenset(self._signaturesByHypercube.get(hypercube, ()))
 
@@ -1065,7 +1073,7 @@ class Taxonomy:
         must satisfy at least one of these -- not their union.
 
         Raises UnsupportedTaxonomyFeatureException if this primary item is declared
-        in a base set mireport cannot model."""
+        in an open hypercube, or in more than one hypercube of a single base set."""
         self._rejectUnsupported(primaryItem)
         return frozenset(self._signaturesByPrimaryItem.get(primaryItem, ()))
 
