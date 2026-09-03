@@ -672,6 +672,8 @@ class TaxonomyInfoExtractor:
             self.taxonomyJson["dimensions"]["_defaults"] = {
                 qnameOf(d): qnameOf(m) for d, m in self.dimensionDefaults.items()
             }
+        else:
+            self.cntlr.addToLog("INFO: No dimension defaults found")
 
     def getLabelsForRoleType(self, roleType: ModelRoleType) -> dict[str, str]:
         labels: dict[str, str] = {}
