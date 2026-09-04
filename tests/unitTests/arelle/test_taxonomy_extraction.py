@@ -28,6 +28,7 @@ from mireport.arelle.model_access import (
     ResourceRelationship,
     ValidatedModel,
 )
+from mireport.arelle.support import ArelleModelInconsistency
 from mireport.arelle.taxonomy_extraction import (
     DefinitionRow,
     PresentationRow,
@@ -69,13 +70,21 @@ class StubRoleType:
 class StubValidatedModel:
     """Stands in for ValidatedModel; serves canned ResourceRelationships."""
 
-    def __init__(self, relsByArcrole: dict[str, list[ResourceRelationship]]) -> None:
+    def __init__(
+        self,
+        relsByArcrole: dict[str, list[ResourceRelationship]],
+        conceptRelSets: dict[Any, Any] | None = None,
+    ) -> None:
         self._relsByArcrole = relsByArcrole
+        self._conceptRelSets = conceptRelSets or {}
 
     def resourceRelationshipsFrom(
         self, source: Any, arcrole: str
     ) -> list[ResourceRelationship]:
         return self._relsByArcrole[arcrole]
+
+    def conceptRelationshipSet(self, arcroles: Any, linkrole: str) -> Any:
+        return self._conceptRelSets[linkrole]
 
 
 def labelRel(resource: StubLabelResource) -> ResourceRelationship:
@@ -86,6 +95,7 @@ def labelRel(resource: StubLabelResource) -> ResourceRelationship:
 
 def makeExtractor(
     relsByArcrole: dict[str, list[ResourceRelationship]],
+    conceptRelSets: dict[Any, Any] | None = None,
 ) -> tuple[TaxonomyInfoExtractor, str]:
     """Build an extractor over stubs, with a diagnostics collector attached."""
     token = DiagnosticCollector.open()
@@ -96,7 +106,9 @@ def makeExtractor(
         cast(RuntimeOptions, options),
         cast(ModelXbrl, stubModel),
     )
-    extractor.model = cast(ValidatedModel, StubValidatedModel(relsByArcrole))
+    extractor.model = cast(
+        ValidatedModel, StubValidatedModel(relsByArcrole, conceptRelSets)
+    )
     return extractor, token
 
 
@@ -336,3 +348,95 @@ class TestGetLabelsForRoleType:
         assert labels == {"en": "Energy usage"}
         assert len(diagnostics) == 1
         assert "duplicate labels" in diagnostics[0].text
+
+
+class StubHypercubeDimensionRelSet:
+    """Serves canned roots/relationships for the hypercube-dimension arcrole."""
+
+    def __init__(
+        self,
+        roots: list[StubConcept],
+        relsFrom: dict[int, list[ConceptRelationship]],
+        targets: set[int] | None = None,
+    ) -> None:
+        self._roots = roots
+        self._relsFrom = relsFrom
+        self._targets = targets or set()
+
+    def rootConcepts(self) -> list[StubConcept]:
+        return self._roots
+
+    def hasRelationshipsFrom(self, concept: Any) -> bool:
+        return bool(self._relsFrom.get(id(concept)))
+
+    def hasRelationshipsTo(self, concept: Any) -> bool:
+        return id(concept) in self._targets
+
+    def relationshipsFrom(self, concept: Any) -> list[ConceptRelationship]:
+        return self._relsFrom.get(id(concept), [])
+
+
+class TestGetDimensions:
+    ELR = "https://example.com/elr"
+
+    def getDimensions(
+        self,
+        hypercube: StubConcept,
+        hypercubeIsClosed: bool,
+        relSet: StubHypercubeDimensionRelSet,
+    ) -> tuple[list[ConceptRelationship], list[Diagnostic]]:
+        extractor, token = makeExtractor({}, {self.ELR: relSet})
+        result = extractor.getDimensions(
+            self.ELR, cast(ModelConcept, hypercube), hypercubeIsClosed
+        )
+        return result, collectedDiagnostics(token)
+
+    def test_hypercube_with_no_dimensions_returns_empty(self) -> None:
+        # A table with zero dimensions is unusual but valid: it just has no
+        # outgoing hypercube-dimension relationships, and so is absent from
+        # rootConcepts() entirely (whether or not other, dimensioned,
+        # hypercubes share the same ELR).
+        table = StubConcept(qn("EmptyTable"))
+        other = StubConcept(qn("OtherTable"))
+        dimension = StubConcept(qn("SomeDimension"))
+        relSet = StubHypercubeDimensionRelSet(
+            roots=[other],
+            relsFrom={id(other): [conceptRel(dimension)]},
+        )
+        result, diagnostics = self.getDimensions(table, False, relSet)
+        assert result == []
+        assert diagnostics == []
+
+    def test_closed_hypercube_with_no_dimensions_warns(self) -> None:
+        table = StubConcept(qn("EmptyTable"))
+        relSet = StubHypercubeDimensionRelSet(roots=[], relsFrom={})
+        result, diagnostics = self.getDimensions(table, True, relSet)
+        assert result == []
+        assert len(diagnostics) == 1
+        assert "no dimensions" in diagnostics[0].text
+
+    def test_hypercube_with_dimensions_returns_relationships(self) -> None:
+        table = StubConcept(qn("Table"))
+        dimension = StubConcept(qn("Dimension"))
+        rel = conceptRel(dimension)
+        relSet = StubHypercubeDimensionRelSet(
+            roots=[table], relsFrom={id(table): [rel]}
+        )
+        result, diagnostics = self.getDimensions(table, True, relSet)
+        assert result == [rel]
+        assert diagnostics == []
+
+    def test_hypercube_not_a_root_but_with_relationships_is_inconsistent(self) -> None:
+        # A concept that has outgoing hypercube-dimension relationships but
+        # is also the target of one (i.e. used as a dimension itself)
+        # indicates real model corruption, distinct from simply having no
+        # dimensions.
+        table = StubConcept(qn("Table"))
+        rel = conceptRel(StubConcept(qn("Dimension")))
+        relSet = StubHypercubeDimensionRelSet(
+            roots=[],
+            relsFrom={id(table): [rel]},
+            targets={id(table)},
+        )
+        with pytest.raises(ArelleModelInconsistency):
+            self.getDimensions(table, True, relSet)

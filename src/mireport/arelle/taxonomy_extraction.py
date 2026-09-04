@@ -224,7 +224,10 @@ class TaxonomyInfoExtractor:
         relSet = self.model.conceptRelationshipSet(XbrlConst.hypercubeDimension, elrUri)
         roots: frozenset[ModelConcept] = frozenset(relSet.rootConcepts())
 
-        if not roots:
+        if not relSet.hasRelationshipsFrom(hypercube):
+            # This hypercube has no dimensions of its own. Other hypercubes
+            # sharing the same ELR may still have dimensions (and so appear
+            # in `roots`), so this is not by itself a model inconsistency.
             if hypercubeIsClosed:
                 self.diagnostics.emit(
                     Diagnostic.warning(
@@ -245,13 +248,16 @@ class TaxonomyInfoExtractor:
                 ),
             )
 
-        if hypercube not in roots:
+        if relSet.hasRelationshipsTo(hypercube):
+            # It has outgoing relationships (we didn't return above) but is
+            # also somebody else's target within the same hypercube-dimension
+            # set, i.e. it isn't a root of that set. A hypercube must not
+            # itself be used as a dimension.
             raise ArelleModelInconsistency(
                 Diagnostic.error(
-                    "Hypercube is not a root of the hypercube-dimension relationship set",
+                    "Hypercube is also the target of a hypercube-dimension relationship",
                     elr=elrUri,
                     concepts=(qnameOf(hypercube),),
-                    roots=sorted(qnameOf(root) for root in roots),
                 )
             )
         return relSet.relationshipsFrom(hypercube)
