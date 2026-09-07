@@ -12,8 +12,8 @@ plugin decides where to put it.
 from __future__ import annotations
 
 import json
-from collections import defaultdict
-from collections.abc import Iterable, Iterator
+from collections import Counter, defaultdict
+from collections.abc import Collection, Iterable, Iterator, Mapping
 from pathlib import Path
 from typing import TYPE_CHECKING, NamedTuple, TypeVar
 
@@ -65,6 +65,26 @@ _UTR_INTERESTING_KEYS = (
 def unique_list(i: Iterable[T]) -> list[T]:
     # N.B. This maintains insertion order where list(set()) does not.
     return list(dict.fromkeys(i))
+
+
+def _overlappingPrimaryItems(
+    primaryItemsByHypercube: Mapping[QName, Collection[QName]],
+) -> frozenset[QName]:
+    """The primary items declared in more than one hypercube of a base set.
+
+    Mirrors Taxonomy._overlappingPrimaryItems in mireport/taxonomy.py, which acts
+    on the same data once it has been loaded back out of the baked JSON (keyed by
+    canonicalised QName strings there, rather than QNames here). Keep the two in
+    step if the underlying rule ever changes.
+    """
+    hypercubesPerPrimaryItem = Counter(
+        qname
+        for primaryItems in primaryItemsByHypercube.values()
+        for qname in set(primaryItems)
+    )
+    return frozenset(
+        qname for qname, count in hypercubesPerPrimaryItem.items() if count > 1
+    )
 
 
 class DefinitionRow(NamedTuple):
@@ -153,7 +173,6 @@ class TaxonomyInfoExtractor:
             ArelleQNameCanonicaliser.bootstrap(modelXbrl)
         )
         self.dimensionDefaults: dict[ModelConcept, ModelConcept] = {}
-        self.elr_hypercube_dimension_seen: set[str] = set()
 
     def extract(self) -> dict[str, Any]:
         """Extract the taxonomy information and return it as a JSON-ready
@@ -222,12 +241,11 @@ class TaxonomyInfoExtractor:
         self, elrUri: str, hypercube: ModelConcept, hypercubeIsClosed: bool
     ) -> list[ConceptRelationship]:
         relSet = self.model.conceptRelationshipSet(XbrlConst.hypercubeDimension, elrUri)
-        roots: frozenset[ModelConcept] = frozenset(relSet.rootConcepts())
 
         if not relSet.hasRelationshipsFrom(hypercube):
             # This hypercube has no dimensions of its own. Other hypercubes
-            # sharing the same ELR may still have dimensions (and so appear
-            # in `roots`), so this is not by itself a model inconsistency.
+            # sharing the same ELR may still have dimensions of their own, so
+            # this is not by itself a model inconsistency.
             if hypercubeIsClosed:
                 self.diagnostics.emit(
                     Diagnostic.warning(
@@ -237,16 +255,6 @@ class TaxonomyInfoExtractor:
                     ),
                 )
             return []
-
-        if len(roots) > 1 and elrUri not in self.elr_hypercube_dimension_seen:
-            self.elr_hypercube_dimension_seen.add(elrUri)
-            self.diagnostics.emit(
-                Diagnostic.info(
-                    f"Extended link role has {len(roots)} hypercubes",
-                    elr=elrUri,
-                    concepts=sorted(qnameOf(root) for root in roots),
-                ),
-            )
 
         if relSet.hasRelationshipsTo(hypercube):
             # It has outgoing relationships (we didn't return above) but is
@@ -631,6 +639,7 @@ class TaxonomyInfoExtractor:
         hypercubeArcRoles = (XbrlConst.all, XbrlConst.notAll)
         for elrUri in self.model.linkrolesFor(*hypercubeArcRoles):
             relSet = self.model.conceptRelationshipSet(hypercubeArcRoles, elrUri)
+            primaryItemsByHypercube: dict[QName, set[QName]] = defaultdict(set)
             for root_concept in relSet.rootConcepts():
                 for rel in relSet.relationshipsFrom(root_concept):
                     concept = rel.target
@@ -657,6 +666,9 @@ class TaxonomyInfoExtractor:
                         "xbrldt:contextElement": rel.contextElement,
                         "xbrldt:closed": rel.isClosed,
                     }
+                    primaryItemsByHypercube[rel.targetQName].update(
+                        q for _, q in cube["primaryItems"]
+                    )
                     for dimensionRel in self.getDimensions(
                         rel.consecutiveLinkrole, concept, rel.isClosed
                     ):
@@ -673,6 +685,8 @@ class TaxonomyInfoExtractor:
                             )
                     self.taxonomyJson["dimensions"][elrUri][rel.targetQName] = cube
 
+            self.reportHypercubesForLinkrole(elrUri, primaryItemsByHypercube)
+
         self.cntlr.addToLog("Processing dimension defaults")
         if self.dimensionDefaults:
             self.taxonomyJson["dimensions"]["_defaults"] = {
@@ -680,6 +694,41 @@ class TaxonomyInfoExtractor:
             }
         else:
             self.cntlr.addToLog("INFO: No dimension defaults found")
+
+    def reportHypercubesForLinkrole(
+        self, elrUri: str, primaryItemsByHypercube: Mapping[QName, Collection[QName]]
+    ) -> None:
+        """Report a base set holding several hypercubes, warning if they share
+        primary items.
+
+        XDT conjoins a base set's hypercubes, so a primary item declared in more
+        than one of them must satisfy all of them at once -- something mireport
+        does not support (see Taxonomy._overlappingPrimaryItems in taxonomy.py).
+        """
+        if len(primaryItemsByHypercube) < 2:
+            return
+        hypercubes = sorted(primaryItemsByHypercube)
+        if shared := _overlappingPrimaryItems(primaryItemsByHypercube):
+            self.diagnostics.emit(
+                Diagnostic.warning(
+                    f"Extended link role has {len(hypercubes)} hypercubes sharing primary items",
+                    elr=elrUri,
+                    concepts=hypercubes,
+                    primaryItems=sorted(shared),
+                    hint=(
+                        "XDT conjoins a base set's hypercubes, so a primary item in "
+                        "more than one of them must satisfy all of them at once."
+                    ),
+                ),
+            )
+        else:
+            self.diagnostics.emit(
+                Diagnostic.info(
+                    f"Extended link role has {len(hypercubes)} hypercubes",
+                    elr=elrUri,
+                    concepts=hypercubes,
+                ),
+            )
 
     def getLabelsForRoleType(self, roleType: ModelRoleType) -> dict[str, str]:
         labels: dict[str, str] = {}
