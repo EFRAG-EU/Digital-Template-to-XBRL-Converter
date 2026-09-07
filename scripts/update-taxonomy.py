@@ -9,7 +9,7 @@ from pathlib import Path
 from rich.markup import escape
 from rich.table import Table
 
-from mireport.arelle.diagnostics import Diagnostic
+from mireport.arelle.diagnostics import ArelleDiagnostic
 from mireport.arelle.support import ArelleProcessingResult
 from mireport.arelle.taxonomy_info import callArelleForTaxonomyInfo
 from mireport.cli import (
@@ -89,7 +89,7 @@ def levelName(level: int) -> str:
     return logging.getLevelName(level).title()
 
 
-def diagnosticDetails(diagnostic: Diagnostic) -> str:
+def diagnosticDetails(diagnostic: ArelleDiagnostic) -> str:
     lines = [f"{key}: {value}" for key, value in diagnostic.details.items()]
     if diagnostic.hint is not None:
         lines.append(f"hint: {diagnostic.hint}")

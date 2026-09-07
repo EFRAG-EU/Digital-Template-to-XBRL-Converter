@@ -28,7 +28,7 @@ from arelle.ModelXbrl import ModelXbrl
 from arelle.RuntimeOptions import RuntimeOptions
 from arelle.ValidateUtr import UtrEntry
 
-from mireport.arelle.diagnostics import Diagnostic, DiagnosticEmitter
+from mireport.arelle.diagnostics import ArelleDiagnostic, DiagnosticEmitter
 from mireport.arelle.model_access import (
     ConceptRelationship,
     ConceptRelationshipSet,
@@ -224,7 +224,7 @@ class TaxonomyInfoExtractor:
 
         if not relSet.hasRelationshipsFrom(domainHeadConcept):
             self.diagnostics.emit(
-                Diagnostic.warning(
+                ArelleDiagnostic.warning(
                     "Hypercube has no primary items beyond the domain head (no outgoing domain-member relationships)",
                     elr=elrUri,
                     concepts=(domainHeadQName,),
@@ -248,7 +248,7 @@ class TaxonomyInfoExtractor:
             # this is not by itself a model inconsistency.
             if hypercubeIsClosed:
                 self.diagnostics.emit(
-                    Diagnostic.warning(
+                    ArelleDiagnostic.warning(
                         "Closed hypercube has no dimensions (no outgoing hypercube-dimension relationships)",
                         elr=elrUri,
                         concepts=(qnameOf(hypercube),),
@@ -262,7 +262,7 @@ class TaxonomyInfoExtractor:
             # set, i.e. it isn't a root of that set. A hypercube must not
             # itself be used as a dimension.
             raise ArelleModelInconsistency(
-                Diagnostic.error(
+                ArelleDiagnostic.error(
                     "Hypercube is also the target of a hypercube-dimension relationship",
                     elr=elrUri,
                     concepts=(qnameOf(hypercube),),
@@ -282,7 +282,7 @@ class TaxonomyInfoExtractor:
         dimensionDomainRoots = dimensionDomainRelSet.rootConcepts()
         if explicitDimension not in dimensionDomainRoots:
             raise ArelleModelInconsistency(
-                Diagnostic.error(
+                ArelleDiagnostic.error(
                     "Dimension is not a root of the dimension-domain relationship set",
                     elr=elrUri,
                     concepts=(qnameOf(explicitDimension),),
@@ -306,7 +306,7 @@ class TaxonomyInfoExtractor:
         if not domainMemberTrees:
             if hasDefaultedDomainMember:
                 self.diagnostics.emit(
-                    Diagnostic.warning(
+                    ArelleDiagnostic.warning(
                         "Dimension has a defaulted domain member but no domain relationships",
                         elr=elrUri,
                         concepts=(qnameOf(explicitDimension),),
@@ -317,7 +317,7 @@ class TaxonomyInfoExtractor:
                 )
             else:
                 self.diagnostics.emit(
-                    Diagnostic.warning(
+                    ArelleDiagnostic.warning(
                         "Dimension has no domain relationships",
                         elr=elrUri,
                         concepts=(qnameOf(explicitDimension),),
@@ -375,7 +375,7 @@ class TaxonomyInfoExtractor:
                 pass
             else:
                 self.diagnostics.emit(
-                    Diagnostic.warning(
+                    ArelleDiagnostic.warning(
                         "Dimension has a domain head with no outgoing domain-member relationships",
                         elr=elrUri,
                         concepts=(qnameOf(explicitDimension),),
@@ -385,7 +385,7 @@ class TaxonomyInfoExtractor:
 
         if incoming:
             self.diagnostics.emit(
-                Diagnostic.warning(
+                ArelleDiagnostic.warning(
                     "Dimension has a domain head with incoming domain-member relationships. How exciting!",
                     elr=elrUri,
                     concepts=(qnameOf(explicitDimension),),
@@ -428,7 +428,7 @@ class TaxonomyInfoExtractor:
                 defaultRels = dimensionDefaultRelSet.relationshipsFrom(d)
                 if len(defaultRels) != 1:
                     raise ArelleModelInconsistency(
-                        Diagnostic.error(
+                        ArelleDiagnostic.error(
                             "More than one default member for dimension",
                             elr=elrUri,
                             concepts=(qnameOf(d),),
@@ -440,7 +440,7 @@ class TaxonomyInfoExtractor:
                     otherElrs = dimToElrMap[d][:-1]
                     if m0 != m:
                         self.diagnostics.emit(
-                            Diagnostic.warning(
+                            ArelleDiagnostic.warning(
                                 "Inconsistent duplicate definition of dimension default",
                                 elr=elrUri,
                                 concepts=(qnameOf(d),),
@@ -451,7 +451,7 @@ class TaxonomyInfoExtractor:
                         )
                     else:
                         self.diagnostics.emit(
-                            Diagnostic.info(
+                            ArelleDiagnostic.info(
                                 "Consistent duplicate definition of dimension default",
                                 elr=elrUri,
                                 concepts=(qnameOf(d),),
@@ -487,7 +487,7 @@ class TaxonomyInfoExtractor:
         no conflicting existing label."""
         if existing and existing != label:
             self.diagnostics.emit(
-                Diagnostic.warning(
+                ArelleDiagnostic.warning(
                     "Inconsistent duplicate labels found; keeping the longer label",
                     elr=elr,
                     concepts=concepts,
@@ -524,7 +524,7 @@ class TaxonomyInfoExtractor:
                 )
             else:
                 self.diagnostics.emit(
-                    Diagnostic.warning(
+                    ArelleDiagnostic.warning(
                         "Label has no xml:lang so is being ignored",
                         concepts=(qnameOf(concept),),
                         role=role,
@@ -544,7 +544,7 @@ class TaxonomyInfoExtractor:
             ref_resource = refRel.resource
             if not refRel.role:
                 raise ArelleModelInconsistency(
-                    Diagnostic.error(
+                    ArelleDiagnostic.error(
                         "Reference resource has no role",
                         concepts=(qnameOf(concept),),
                         resource=repr(ref_resource),
@@ -576,7 +576,7 @@ class TaxonomyInfoExtractor:
 
             if not all_order1:
                 self.diagnostics.emit(
-                    Diagnostic.info(
+                    ArelleDiagnostic.info(
                         "References use order values other than 1 and will be sorted by order",
                         concepts=(qnameOf(concept),),
                         orders=sorted({r["order"] for r in refs}),
@@ -603,7 +603,7 @@ class TaxonomyInfoExtractor:
 
             if concept.isEnumeration and not concept.isEnumeration2Item:
                 self.diagnostics.emit(
-                    Diagnostic.warning(
+                    ArelleDiagnostic.warning(
                         "Extensible enumerations other than 2.0 are not supported",
                         concepts=(qname,),
                     ),
@@ -614,7 +614,7 @@ class TaxonomyInfoExtractor:
                 domainQName = concept.enumDomainQname
                 if linkrole is None or domainQName is None:
                     raise ArelleModelInconsistency(
-                        Diagnostic.error(
+                        ArelleDiagnostic.error(
                             "Extensible enumeration has no enumeration domain or linkrole",
                             concepts=(qname,),
                         )
@@ -645,7 +645,7 @@ class TaxonomyInfoExtractor:
                     concept = rel.target
                     if not concept.isHypercubeItem:
                         raise ArelleModelInconsistency(
-                            Diagnostic.error(
+                            ArelleDiagnostic.error(
                                 "Expected a hypercube as the target of an all/notAll relationship",
                                 elr=elrUri,
                                 concepts=(rel.targetQName,),
@@ -653,7 +653,7 @@ class TaxonomyInfoExtractor:
                         )
                     if not rel.isClosed:
                         self.diagnostics.emit(
-                            Diagnostic.info(
+                            ArelleDiagnostic.info(
                                 "Hypercube is open",
                                 elr=elrUri,
                                 concepts=(rel.targetQName,),
@@ -710,7 +710,7 @@ class TaxonomyInfoExtractor:
         hypercubes = sorted(primaryItemsByHypercube)
         if shared := _overlappingPrimaryItems(primaryItemsByHypercube):
             self.diagnostics.emit(
-                Diagnostic.warning(
+                ArelleDiagnostic.warning(
                     f"Extended link role has {len(hypercubes)} hypercubes sharing primary items",
                     elr=elrUri,
                     concepts=hypercubes,
@@ -723,7 +723,7 @@ class TaxonomyInfoExtractor:
             )
         else:
             self.diagnostics.emit(
-                Diagnostic.info(
+                ArelleDiagnostic.info(
                     f"Extended link role has {len(hypercubes)} hypercubes",
                     elr=elrUri,
                     concepts=hypercubes,
@@ -763,13 +763,13 @@ class TaxonomyInfoExtractor:
             match len(roots):
                 case 0:
                     self.diagnostics.emit(
-                        Diagnostic.warning("Presentation is empty", elr=elrUri),
+                        ArelleDiagnostic.warning("Presentation is empty", elr=elrUri),
                     )
                 case 1:
                     pass
                 case _:
                     self.diagnostics.emit(
-                        Diagnostic.warning(
+                        ArelleDiagnostic.warning(
                             f"Presentation has multiple ({len(roots)}) roots so presentation order will be arbitrary",
                             elr=elrUri,
                             # document order, deliberately not sorted
