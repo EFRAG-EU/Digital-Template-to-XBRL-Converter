@@ -394,15 +394,52 @@ class TaxonomyInfoExtractor:
             )
 
     def getDomainMembersForEnumeration(
-        self, elrUri: str, headUsable: bool, domainHeadConcept: ModelConcept
+        self,
+        elrUri: str,
+        headUsable: bool,
+        domainHeadConcept: ModelConcept,
+        enumerationConcept: QName,
     ) -> list[QName]:
-        """Deliberately over simplified for now."""
+        domainHeadQName = qnameOf(domainHeadConcept)
         domainMemberRelSet = self.model.conceptRelationshipSet(
             XbrlConst.domainMember, elrUri
         )
+        if elrUri not in self.model.linkrolesFor(XbrlConst.domainMember):
+            self.diagnostics.emit(
+                ArelleDiagnostic.warning(
+                    "Extensible enumeration linkrole has no domain-member relationships",
+                    elr=elrUri,
+                    concepts=(enumerationConcept,),
+                    domainHead=domainHeadQName,
+                ),
+            )
+        else:
+            if not domainMemberRelSet.hasRelationshipsFrom(domainHeadConcept):
+                self.diagnostics.emit(
+                    ArelleDiagnostic.warning(
+                        "Extensible enumeration domain head has no outgoing domain-member relationships",
+                        elr=elrUri,
+                        concepts=(enumerationConcept,),
+                        domainHead=domainHeadQName,
+                    ),
+                )
+            if domainMemberRelSet.hasRelationshipsTo(domainHeadConcept):
+                # Unlike the other conditions here, this doesn't stop the
+                # domain from resolving -- walkDefinitionChildren() still
+                # walks correctly downward from the declared head regardless
+                # of what points to it. Just a curiosity, not a defect.
+                self.diagnostics.emit(
+                    ArelleDiagnostic.info(
+                        "Extensible enumeration domain head is not a root of the domain-member relationship set",
+                        elr=elrUri,
+                        concepts=(enumerationConcept,),
+                        domainHead=domainHeadQName,
+                    ),
+                )
+
         members: list[QName] = []
         if headUsable:
-            members.append(qnameOf(domainHeadConcept))
+            members.append(domainHeadQName)
         members.extend(
             row.qname
             for row in self.walkDefinitionChildren(
@@ -410,7 +447,17 @@ class TaxonomyInfoExtractor:
             )
             if row.isUsable
         )
-        return unique_list(members)
+        members = unique_list(members)
+        if not members:
+            self.diagnostics.emit(
+                ArelleDiagnostic.warning(
+                    "Extensible enumeration resolved no usable domain members",
+                    elr=elrUri,
+                    concepts=(enumerationConcept,),
+                    domainHead=domainHeadQName,
+                ),
+            )
+        return members
 
     def extractDimensionDefaults(self) -> None:
         elrsWithDefaults = self.model.linkrolesFor(XbrlConst.dimensionDefault)
@@ -624,6 +671,7 @@ class TaxonomyInfoExtractor:
                         linkrole,
                         headUsable,
                         self.model.concept(domainQName),
+                        qname,
                     )
                 )
             if concept.isTypedDimension:

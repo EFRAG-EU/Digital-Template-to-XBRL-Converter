@@ -75,9 +75,13 @@ class StubValidatedModel:
         self,
         relsByArcrole: dict[str, list[ResourceRelationship]],
         conceptRelSets: dict[Any, Any] | None = None,
+        linkrolesByArcrole: dict[str, list[str]] | None = None,
+        baseSets: list[tuple[str, str]] | None = None,
     ) -> None:
         self._relsByArcrole = relsByArcrole
         self._conceptRelSets = conceptRelSets or {}
+        self._linkrolesByArcrole = linkrolesByArcrole or {}
+        self._baseSets = baseSets or []
 
     def resourceRelationshipsFrom(
         self, source: Any, arcrole: str
@@ -86,6 +90,16 @@ class StubValidatedModel:
 
     def conceptRelationshipSet(self, arcroles: Any, linkrole: str) -> Any:
         return self._conceptRelSets[linkrole]
+
+    def linkrolesFor(self, *arcroles: str) -> list[str]:
+        return [
+            linkrole
+            for arcrole in arcroles
+            for linkrole in self._linkrolesByArcrole.get(arcrole, [])
+        ]
+
+    def baseSetsInDTS(self) -> list[tuple[str, str]]:
+        return list(self._baseSets)
 
 
 def labelRel(resource: StubLabelResource) -> ResourceRelationship:
@@ -97,6 +111,8 @@ def labelRel(resource: StubLabelResource) -> ResourceRelationship:
 def makeExtractor(
     relsByArcrole: dict[str, list[ResourceRelationship]],
     conceptRelSets: dict[Any, Any] | None = None,
+    linkrolesByArcrole: dict[str, list[str]] | None = None,
+    baseSets: list[tuple[str, str]] | None = None,
 ) -> tuple[TaxonomyInfoExtractor, str]:
     """Build an extractor over stubs, with a diagnostics collector attached."""
     token = DiagnosticCollector.open()
@@ -108,7 +124,8 @@ def makeExtractor(
         cast(ModelXbrl, stubModel),
     )
     extractor.model = cast(
-        ValidatedModel, StubValidatedModel(relsByArcrole, conceptRelSets)
+        ValidatedModel,
+        StubValidatedModel(relsByArcrole, conceptRelSets, linkrolesByArcrole, baseSets),
     )
     return extractor, token
 
@@ -253,6 +270,32 @@ class StubConceptRelationshipSet:
         return self
 
 
+class StubDomainMemberRelSet:
+    """Serves canned domain-member relationships; consecutiveSet stays in
+    this set, and hasRelationshipsFrom/To are exposed like the real
+    ConceptRelationshipSet."""
+
+    def __init__(
+        self,
+        relsFrom: dict[int, list[ConceptRelationship]],
+        targets: set[int] | None = None,
+    ) -> None:
+        self._relsFrom = relsFrom
+        self._targets = targets or set()
+
+    def hasRelationshipsFrom(self, concept: Any) -> bool:
+        return bool(self._relsFrom.get(id(concept)))
+
+    def hasRelationshipsTo(self, concept: Any) -> bool:
+        return id(concept) in self._targets
+
+    def relationshipsFrom(self, concept: Any) -> list[ConceptRelationship]:
+        return self._relsFrom.get(id(concept), [])
+
+    def consecutiveSet(self, rel: ConceptRelationship) -> StubDomainMemberRelSet:
+        return self
+
+
 class TestTreeWalks:
     def makeWalker(self) -> TaxonomyInfoExtractor:
         extractor, token = makeExtractor({})
@@ -311,6 +354,87 @@ class TestTreeWalks:
             PresentationRow(1, qn("Child"), terse),
             PresentationRow(2, qn("Grandchild"), None),
         ]
+
+
+class TestGetDomainMembersForEnumeration:
+    ELR = "https://example.com/elr"
+    ENUM_CONCEPT = qn("Choice")
+
+    def getDomainMembers(
+        self,
+        headUsable: bool,
+        domainHeadConcept: StubConcept,
+        relSet: StubDomainMemberRelSet,
+        *,
+        linkroleHasDomainMember: bool = True,
+    ) -> tuple[list[QName], list[ArelleDiagnostic]]:
+        linkrolesByArcrole = (
+            {XbrlConst.domainMember: [self.ELR]} if linkroleHasDomainMember else {}
+        )
+        extractor, token = makeExtractor(
+            {}, {self.ELR: relSet}, linkrolesByArcrole=linkrolesByArcrole
+        )
+        result = extractor.getDomainMembersForEnumeration(
+            self.ELR,
+            headUsable,
+            cast(ModelConcept, domainHeadConcept),
+            self.ENUM_CONCEPT,
+        )
+        return result, collectedDiagnostics(token)
+
+    def test_undeclared_linkrole_warns_and_resolves_no_members(self) -> None:
+        head = StubConcept(qn("Domain"))
+        relSet = StubDomainMemberRelSet({})
+        result, diagnostics = self.getDomainMembers(
+            False, head, relSet, linkroleHasDomainMember=False
+        )
+        assert result == []
+        assert len(diagnostics) == 2
+        assert "no domain-member relationships" in diagnostics[0].text
+        assert "no usable domain members" in diagnostics[1].text
+
+    def test_head_with_no_outgoing_relationships_warns(self) -> None:
+        head = StubConcept(qn("Domain"))
+        relSet = StubDomainMemberRelSet({})
+        result, diagnostics = self.getDomainMembers(True, head, relSet)
+        assert result == [qn("Domain")]
+        assert len(diagnostics) == 1
+        assert diagnostics[0].level == logging.WARNING
+        assert "no outgoing domain-member relationships" in diagnostics[0].text
+
+    def test_head_not_a_root_is_informational(self) -> None:
+        # Unlike having no outgoing relationships, this doesn't stop the
+        # domain from resolving -- it's a curiosity, not a defect.
+        head = StubConcept(qn("Domain"))
+        member = StubConcept(qn("Member"))
+        relSet = StubDomainMemberRelSet(
+            {id(head): [conceptRel(member)]}, targets={id(head)}
+        )
+        result, diagnostics = self.getDomainMembers(True, head, relSet)
+        assert result == [qn("Domain"), qn("Member")]
+        assert len(diagnostics) == 1
+        assert diagnostics[0].level == logging.INFO
+        assert "not a root" in diagnostics[0].text
+
+    def test_well_formed_domain_is_silent(self) -> None:
+        head = StubConcept(qn("Domain"))
+        member = StubConcept(qn("Member"))
+        relSet = StubDomainMemberRelSet({id(head): [conceptRel(member)]})
+        result, diagnostics = self.getDomainMembers(False, head, relSet)
+        assert result == [qn("Member")]
+        assert diagnostics == []
+
+    def test_no_usable_members_warns(self) -> None:
+        head = StubConcept(qn("Domain"))
+        member = StubConcept(qn("Member"))
+        relSet = StubDomainMemberRelSet(
+            {id(head): [conceptRel(member, isUsable=False)]}
+        )
+        result, diagnostics = self.getDomainMembers(False, head, relSet)
+        assert result == []
+        assert len(diagnostics) == 1
+        assert diagnostics[0].level == logging.WARNING
+        assert "no usable domain members" in diagnostics[0].text
 
 
 class TestGetLabelsForRoleType:
