@@ -3,6 +3,7 @@ import re
 from collections.abc import Sequence
 from contextlib import contextmanager
 from itertools import count
+from pathlib import Path
 from time import perf_counter_ns
 from typing import NamedTuple
 
@@ -30,6 +31,7 @@ from mireport.taxonomy import (
     Taxonomy,
     getTaxonomy,
     listTaxonomies,
+    loadTaxonomyJSON,
 )
 from mireport.taxonomy_checker import TaxonomyChecker
 
@@ -375,6 +377,9 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Run taxonomy checks after dumping.",
     )
+    dump_parser.add_argument(
+        "--taxonomy", metavar="TAXONOMY", help="Path to the taxonomy file.", nargs="+"
+    )
 
     ts_parser = subparsers.add_parser(
         "translation-sheet", help="Write a translation sheet Excel file."
@@ -448,6 +453,9 @@ def main() -> None:
 
     with timer("Taxonomies loaded"):
         mireport.loadBuiltInTaxonomyJSON()
+        if args.taxonomy:
+            for t in args.taxonomy:
+                loadTaxonomyJSON(Path(t))
 
     entry_point = pick_entry_point()
     taxonomy = getTaxonomy(entry_point)
