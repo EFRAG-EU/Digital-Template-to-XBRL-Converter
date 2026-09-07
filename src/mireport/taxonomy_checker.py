@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 from collections import defaultdict
 from collections.abc import Callable, Sequence
 
+from mireport.diagnostics import Diagnostic
 from mireport.stringutil import normalizeLabelText, stripLabelSuffix
 from mireport.taxonomy import STANDARD_LABEL_ROLE, Concept, Taxonomy
 
@@ -9,10 +12,14 @@ class TaxonomyChecker:
     def __init__(self, taxonomy: Taxonomy):
         self.taxonomy = taxonomy
 
-    def reportIssues(self) -> None:
-        self.reportLabelCollisions()
+    def reportIssues(self) -> list[Diagnostic]:
+        return [
+            *self.reportLabelCollisions(),
+            *self.reportInconsistentDimensionDomains(),
+            *self.reportUnresolvedEnumerationDomains(),
+        ]
 
-    def reportLabelCollisions(self) -> None:
+    def reportLabelCollisions(self) -> list[Diagnostic]:
         def _find_collisions(
             lookup: dict[str, frozenset[Concept]],
         ) -> dict[frozenset[Concept], list[str]]:
@@ -48,18 +55,14 @@ class TaxonomyChecker:
                         matching.add(concept)
             return len(matching) < 2
 
-        def _print_collisions(
+        def _collect_collisions(
             heading: str,
             lookup: dict[str, frozenset[Concept]],
             label_transforms: Sequence[Callable[[str], str]] = (),
             skip_suffix_collisions: bool = False,
-        ) -> None:
+        ) -> list[Diagnostic]:
             bad = _find_collisions(lookup)
-
-            print(heading)
-            if not bad:
-                print("✅ No collisions found.")
-                return
+            diagnostics: list[Diagnostic] = []
 
             for concepts, bad_labels in bad.items():
                 if skip_suffix_collisions:
@@ -90,30 +93,89 @@ class TaxonomyChecker:
                     else:
                         langs_for_label[bad_label] = ", ".join(sorted(unique_langs))
 
-                print(
-                    "❎ More than one concept with the same label:",
-                    "\n".join(map(str, sorted(concepts))),
-                    "Labels",
-                    "\n".join(
-                        f"{lbl} [{langs_for_label[lbl]}]" for lbl in sorted(bad_labels)
-                    ),
-                    sep="\n",
+                diagnostics.append(
+                    Diagnostic.warning(
+                        heading,
+                        concepts=tuple(c.qname for c in sorted(concepts)),
+                        labels=[
+                            f"{lbl} [{langs_for_label[lbl]}]"
+                            for lbl in sorted(bad_labels)
+                        ],
+                    )
                 )
-                print()
-            print("🏁 End of check.")
+            return diagnostics
 
-        print("⏹️ Checking taxonomy for label collisions...")
-        print()
-        _print_collisions(
-            "⏹️ Real label collisions ...",
-            self.taxonomy._lookupConceptsByStandardLabel,
-        )
-        print()
-        _print_collisions(
-            "⏹️ Pretend (normalised) label collisions ...",
-            self.taxonomy._lookupConceptsByPretendLabel,
-            label_transforms=[normalizeLabelText, stripLabelSuffix, str.lower],
-            skip_suffix_collisions=True,
-        )
-        print()
-        print("🏁 End of taxonomy checker report.")
+        return [
+            *_collect_collisions(
+                "More than one concept has the same standard label",
+                self.taxonomy._lookupConceptsByStandardLabel,
+            ),
+            *_collect_collisions(
+                "More than one concept has the same normalised standard label",
+                self.taxonomy._lookupConceptsByPretendLabel,
+                label_transforms=[normalizeLabelText, stripLabelSuffix, str.lower],
+                skip_suffix_collisions=True,
+            ),
+        ]
+
+    def reportInconsistentDimensionDomains(self) -> list[Diagnostic]:
+        """Warn when an explicit dimension is given different domains in
+        different (role, hypercube) signatures.
+
+        Taxonomy._lookupDomainByDimension unions the domain across every base
+        set a dimension appears in, so getDomainMembersForExplicitDimension()
+        can admit member/dimension combinations that were never valid
+        together.
+        """
+        domainsByDimension: dict[
+            Concept, dict[tuple[str, Concept], frozenset[Concept]]
+        ] = defaultdict(dict)
+        for signature in self.taxonomy.dimensionSignatures:
+            for eds in signature.explicitDimensions:
+                domainsByDimension[eds.dimension][
+                    (signature.roleUri, signature.hypercube)
+                ] = eds.domain
+
+        diagnostics: list[Diagnostic] = []
+        for dimension, domainsByLocation in domainsByDimension.items():
+            if len({domain for domain in domainsByLocation.values()}) < 2:
+                continue
+            domainLines = [
+                f"{roleUri} [{hypercube.qname}]: "
+                f"{', '.join(sorted(str(m.qname) for m in domain))}"
+                for (roleUri, hypercube), domain in sorted(
+                    domainsByLocation.items(),
+                    key=lambda kv: (kv[0][0], str(kv[0][1].qname)),
+                )
+            ]
+            diagnostics.append(
+                Diagnostic.warning(
+                    "Explicit dimension is given different domains in different hypercubes",
+                    concepts=(dimension.qname,),
+                    domains=domainLines,
+                    hint=(
+                        "getDomainMembersForExplicitDimension() unions these "
+                        "domains, so it can admit member combinations that "
+                        "were never valid together."
+                    ),
+                )
+            )
+        return diagnostics
+
+    def reportUnresolvedEnumerationDomains(self) -> list[Diagnostic]:
+        """Warn for an enum2 concept whose extensible-enumeration domain
+        resolved to no members -- catches a taxonomy baked before
+        extraction-time enum2 validation existed."""
+        diagnostics: list[Diagnostic] = []
+        for concept in sorted(self.taxonomy.concepts):
+            if not (concept.isEnumerationSingle or concept.isEnumerationSet):
+                continue
+            if concept.getEEDomain():
+                continue
+            diagnostics.append(
+                Diagnostic.warning(
+                    "Extensible enumeration concept has no resolved domain members",
+                    concepts=(concept.qname,),
+                )
+            )
+        return diagnostics

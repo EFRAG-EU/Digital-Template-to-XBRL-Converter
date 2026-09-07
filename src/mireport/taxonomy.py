@@ -1053,6 +1053,25 @@ class Taxonomy:
         all_hcs = frozenset(c for c in self._concepts.values() if c.isHypercube)
         return all_hcs - self._hypercubes
 
+    @cached_property
+    def dimensionSignatures(self) -> tuple[DimensionSignature, ...]:
+        """Every modelled (base set, hypercube) DimensionSignature, ordered by
+        role then hypercube for stable reporting.
+
+        Unlike getValidDimensionsForHypercube()/getValidDimensionsForPrimaryItem(),
+        this does not go through _rejectUnsupported() -- it is for surveying the
+        whole taxonomy (e.g. TaxonomyChecker), not for building a fact."""
+        return tuple(
+            sorted(
+                (
+                    signature
+                    for signatures in self._signaturesByHypercube.values()
+                    for signature in signatures
+                ),
+                key=lambda s: (s.roleUri, str(s.hypercube.qname)),
+            )
+        )
+
     def getValidDimensionsForHypercube(
         self, hypercube: Concept
     ) -> frozenset[DimensionSignature]:
