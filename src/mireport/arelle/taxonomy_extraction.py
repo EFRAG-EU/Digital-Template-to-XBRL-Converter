@@ -182,7 +182,9 @@ class TaxonomyInfoExtractor:
         self.extractPresentation()
         self.extractDimensionDefaults()
         self.extractDimensionDefinitions()
+        self.reportDomainMemberOnlyLinkroleRoots()
         self.extractConceptsAndMetadata()
+        self.reportIsolatedConcepts()
 
         self.cntlr.addToLog("Processing namespaces and namespace prefixes")
         self.taxonomyJson = self.qnameConverter.convertRecursive(self.taxonomyJson)
@@ -447,8 +449,7 @@ class TaxonomyInfoExtractor:
             )
             if row.isUsable
         )
-        members = unique_list(members)
-        if not members:
+        if not (members := unique_list(members)):
             self.diagnostics.emit(
                 ArelleDiagnostic.warning(
                     "Extensible enumeration resolved no usable domain members",
@@ -680,6 +681,121 @@ class TaxonomyInfoExtractor:
                 )
             self.taxonomyJson["concepts"][qname] = jconcept
 
+    def reportIsolatedConcepts(self) -> None:
+        """Warn about concepts absent from the DTS's arc structure, at three
+        exclusive levels (a concept is reported at its single most severe
+        level, so the three lists partition the isolated concepts):
+
+        - fully isolated: no relationship, incoming or outgoing, in any
+          base set at all
+        - documentation only: relationships exist, but only
+          concept-label/concept-reference ones
+        - not presented: has other relationships, but none in the
+          presentation (parent-child) linkbase
+
+        A concept is excluded from "not presented" when it is a domain
+        member (or domain head) of an enum2 concept or explicit dimension
+        that is itself presented -- such members are not normally presented
+        directly, so flagging them would be noise rather than signal.
+        """
+        baseSets = self.model.baseSetsInDTS()
+        documentationArcroles = frozenset(
+            {XbrlConst.conceptLabel, XbrlConst.conceptReference}
+        )
+
+        presented: set[QName] = set()
+        arcrolesByQName: dict[QName, set[str]] = {}
+        for qname, concept in self.model.itemConcepts():
+            touched: set[str] = set()
+            for arcrole, linkrole in baseSets:
+                relSet = self.model.conceptRelationshipSet(arcrole, linkrole)
+                if relSet.hasRelationshipsFrom(concept) or relSet.hasRelationshipsTo(
+                    concept
+                ):
+                    touched.add(arcrole)
+            arcrolesByQName[qname] = touched
+            if XbrlConst.parentChild in touched:
+                presented.add(qname)
+
+        excludedFromNotPresented = self._presentedDimensionalDomainMembers(presented)
+
+        fullyIsolated: list[QName] = []
+        documentationOnly: list[QName] = []
+        notPresented: list[QName] = []
+        for qname, touched in arcrolesByQName.items():
+            if not touched:
+                fullyIsolated.append(qname)
+            elif touched <= documentationArcroles:
+                documentationOnly.append(qname)
+            elif (
+                XbrlConst.parentChild not in touched
+                and qname not in excludedFromNotPresented
+            ):
+                notPresented.append(qname)
+
+        documentationOnlyText = (
+            "concept(s) have only label/reference relationships "
+            "(no presentation or definition)"
+        )
+        for text, qnames in (
+            ("concept(s) have no relationship in any linkbase", fullyIsolated),
+            (documentationOnlyText, documentationOnly),
+            ("concept(s) are absent from the presentation linkbase", notPresented),
+        ):
+            if qnames:
+                self.diagnostics.emit(
+                    ArelleDiagnostic.warning(
+                        f"{len(qnames)} {text}",
+                        concepts=sorted(qnames),
+                    ),
+                )
+
+    def _presentedDimensionalDomainMembers(
+        self, presented: Collection[QName]
+    ) -> frozenset[QName]:
+        """QNames that are a domain member (or domain head) of an enum2
+        concept or explicit dimension which is itself presented."""
+        excluded: set[QName] = set()
+
+        for qname, concept in self.model.itemConcepts():
+            if concept.isEnumeration2Item and qname in presented:
+                # enumLinkrole/enumDomainQname are known good here:
+                # extractConceptsAndMetadata() already raised if either was
+                # missing for this concept.
+                linkrole = concept.enumLinkrole
+                domainQName = concept.enumDomainQname
+                if linkrole is None or domainQName is None:
+                    continue
+                domainHead = self.model.concept(domainQName)
+                excluded.add(domainQName)
+                domainMemberRelSet = self.model.conceptRelationshipSet(
+                    XbrlConst.domainMember, linkrole
+                )
+                excluded.update(
+                    row.qname
+                    for row in self.walkDefinitionChildren(
+                        domainHead, domainMemberRelSet, 1
+                    )
+                )
+            elif concept.isExplicitDimension and qname in presented:
+                for linkrole in self.model.linkrolesFor(XbrlConst.dimensionDomain):
+                    dimensionDomainRelSet = self.model.conceptRelationshipSet(
+                        XbrlConst.dimensionDomain, linkrole
+                    )
+                    for rel in dimensionDomainRelSet.relationshipsFrom(concept):
+                        excluded.add(rel.targetQName)
+                        domainMemberRelSet = self.model.conceptRelationshipSet(
+                            XbrlConst.domainMember, rel.consecutiveLinkrole
+                        )
+                        excluded.update(
+                            row.qname
+                            for row in self.walkDefinitionChildren(
+                                rel.target, domainMemberRelSet, 1
+                            )
+                        )
+
+        return frozenset(excluded)
+
     def extractDimensionDefinitions(self) -> None:
         self.cntlr.addToLog("Processing dimensions")
         self.taxonomyJson["dimensions"] = defaultdict(dict)
@@ -687,14 +803,29 @@ class TaxonomyInfoExtractor:
         hypercubeArcRoles = (XbrlConst.all, XbrlConst.notAll)
         for elrUri in self.model.linkrolesFor(*hypercubeArcRoles):
             relSet = self.model.conceptRelationshipSet(hypercubeArcRoles, elrUri)
+            roots = relSet.rootConcepts()
             primaryItemsByHypercube: dict[QName, set[QName]] = defaultdict(set)
-            for root_concept in relSet.rootConcepts():
+            for root_concept in roots:
                 for rel in relSet.relationshipsFrom(root_concept):
                     concept = rel.target
                     if not concept.isHypercubeItem:
                         raise ArelleModelInconsistency(
                             ArelleDiagnostic.error(
                                 "Expected a hypercube as the target of an all/notAll relationship",
+                                elr=elrUri,
+                                concepts=(rel.targetQName,),
+                            )
+                        )
+                    if rel.targetQName in self.taxonomyJson["dimensions"][elrUri]:
+                        # Two different root primary items targeting the same
+                        # hypercube in one ELR is a shape mireport doesn't
+                        # understand (which root's primary items apply?), and
+                        # would otherwise silently overwrite the first root's
+                        # cube entry -- dimensions[elrUri][hypercube] is keyed
+                        # by hypercube alone.
+                        raise ArelleModelInconsistency(
+                            ArelleDiagnostic.error(
+                                "Hypercube is targeted by all/notAll relationships from more than one root primary item",
                                 elr=elrUri,
                                 concepts=(rel.targetQName,),
                             )
@@ -777,6 +908,43 @@ class TaxonomyInfoExtractor:
                     concepts=hypercubes,
                 ),
             )
+
+    def reportDomainMemberOnlyLinkroleRoots(self) -> None:
+        """Warn about an extended link role holding domain-member relationships
+        but none of the dimensional arcroles (all/notAll/hypercube-dimension/
+        dimension-domain), when its domain-member tree has more than one root.
+
+        extractDimensionDefinitions() already checks all/notAll roots for the
+        hypercube-bearing ELRs it walks; this covers the other ELRs that hold
+        a domain-member tree by itself (e.g. an enumeration domain, or a
+        general-purpose taxonomy hierarchy), where a second root is otherwise
+        never noticed."""
+        dimensionalArcroles = frozenset(
+            {
+                XbrlConst.all,
+                XbrlConst.notAll,
+                XbrlConst.hypercubeDimension,
+                XbrlConst.dimensionDomain,
+            }
+        )
+        arcrolesByLinkrole: dict[str, set[str]] = defaultdict(set)
+        for arcrole, linkrole in self.model.baseSetsInDTS():
+            arcrolesByLinkrole[linkrole].add(arcrole)
+
+        for linkrole, arcroles in arcrolesByLinkrole.items():
+            if XbrlConst.domainMember not in arcroles or arcroles & dimensionalArcroles:
+                continue
+            relSet = self.model.conceptRelationshipSet(XbrlConst.domainMember, linkrole)
+            roots = relSet.rootConcepts()
+            if len(roots) > 1:
+                self.diagnostics.emit(
+                    ArelleDiagnostic.warning(
+                        f"Domain-member-only extended link role has multiple ({len(roots)}) roots",
+                        elr=linkrole,
+                        # document order, deliberately not sorted
+                        concepts=(qnameOf(root) for root in roots),
+                    ),
+                )
 
     def getLabelsForRoleType(self, roleType: ModelRoleType) -> dict[str, str]:
         labels: dict[str, str] = {}
