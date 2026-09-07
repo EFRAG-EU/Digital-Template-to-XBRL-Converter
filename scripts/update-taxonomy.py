@@ -1,15 +1,12 @@
 import argparse
-import logging
 import sys
 import time
-from collections import Counter
+import warnings
 from collections.abc import Sequence
 from pathlib import Path
 
 from rich.markup import escape
-from rich.table import Table
 
-from mireport.arelle.diagnostics import ArelleDiagnostic
 from mireport.arelle.support import ArelleProcessingResult
 from mireport.arelle.taxonomy_info import callArelleForTaxonomyInfo
 from mireport.cli import (
@@ -17,6 +14,7 @@ from mireport.cli import (
     get_console,
     getEntryPointsFromPackages,
     pickEntryPointFromPackages,
+    printDiagnosticTable,
     printEntryPointTable,
     validateTaxonomyPackages,
 )
@@ -24,17 +22,15 @@ from mireport.cli import (
     console_print as print,
 )
 from mireport.conversionresults import Severity
+from mireport.diagnostics import Diagnostic
+from mireport.exceptions import TaxonomyException
+from mireport.taxonomy import loadTaxonomyJSON
+from mireport.taxonomy_checker import TaxonomyChecker
 
 SEVERITY_STYLES = {
     Severity.ERROR: "bold red",
     Severity.WARNING: "yellow",
     Severity.INFO: "dim",
-}
-
-LEVEL_STYLES = {
-    logging.ERROR: "bold red",
-    logging.WARNING: "yellow",
-    logging.INFO: "dim",
 }
 
 
@@ -73,6 +69,13 @@ def parser() -> argparse.ArgumentParser:
         action="store_true",
         help="List the entry points declared by the taxonomy packages and exit.",
     )
+    parser.add_argument(
+        "--check-json",
+        action="store_true",
+        help="After writing the taxonomy JSON, load it back with loadTaxonomyJSON() "
+        "and run TaxonomyChecker over it, so load-time issues (unsupported base "
+        "sets, inconsistent dimension domains, ...) are reported immediately.",
+    )
     return parser
 
 
@@ -85,46 +88,33 @@ def printMessages(results: ArelleProcessingResult) -> None:
         )
 
 
-def levelName(level: int) -> str:
-    return logging.getLevelName(level).title()
+def diagnosticsFromWarnings(
+    caught: Sequence[warnings.WarningMessage],
+) -> list[Diagnostic]:
+    """Turn the warnings.warn(UserWarning(TaxonomyException(...))) issued by
+    Taxonomy.__init__ for unsupported base sets into Diagnostics, using the
+    exception's notes for the per-role detail."""
+    diagnostics = []
+    for caughtWarning in caught:
+        message = caughtWarning.message
+        exc = message.args[0] if isinstance(message, Warning) and message.args else None
+        if isinstance(exc, TaxonomyException):
+            notes = "\n".join(getattr(exc, "__notes__", ()))
+            diagnostics.append(Diagnostic.warning(str(exc), hint=notes or None))
+        else:
+            diagnostics.append(Diagnostic.warning(str(message)))
+    return diagnostics
 
 
-def diagnosticDetails(diagnostic: ArelleDiagnostic) -> str:
-    lines = [f"{key}: {value}" for key, value in diagnostic.details.items()]
-    if diagnostic.hint is not None:
-        lines.append(f"hint: {diagnostic.hint}")
-    return "\n".join(lines)
-
-
-def printDiagnostics(results: ArelleProcessingResult) -> None:
-    diagnostics = results.diagnostics
-    if not diagnostics:
-        print("No diagnostics from taxonomy extraction.")
-        return
-
-    table = Table(title="Taxonomy diagnostics", show_lines=True)
-    table.add_column("Level", no_wrap=True)
-    table.add_column("Message", max_width=40)
-    table.add_column("ELR", overflow="fold")
-    table.add_column("Concepts", overflow="fold")
-    table.add_column("Details", overflow="fold")
-
-    for diagnostic in sorted(diagnostics, key=lambda d: -d.level):
-        table.add_row(
-            f"[{LEVEL_STYLES.get(diagnostic.level, '')}]{levelName(diagnostic.level)}[/]",
-            escape(diagnostic.text),
-            escape(diagnostic.elr or ""),
-            escape("\n".join(str(qname) for qname in diagnostic.concepts)),
-            escape(diagnosticDetails(diagnostic)),
-        )
-    get_console().print(table)
-
-    counts = Counter(levelName(diagnostic.level) for diagnostic in diagnostics)
-    summary = ", ".join(
-        f"{count} {name.lower()}{'s' if count != 1 else ''}"
-        for name, count in counts.most_common()
-    )
-    print(f"{summary} from taxonomy extraction.")
+def checkTaxonomyJson(taxonomy_json_path: Path) -> None:
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        taxonomy = loadTaxonomyJSON(taxonomy_json_path)
+    diagnostics = [
+        *diagnosticsFromWarnings(caught),
+        *TaxonomyChecker(taxonomy).reportIssues(),
+    ]
+    printDiagnosticTable("Taxonomy checker findings", diagnostics)
 
 
 def main() -> None:
@@ -168,10 +158,17 @@ def main() -> None:
         entry_point, taxonomy_zips, taxonomy_json_path, utr_json_path
     )
     printMessages(results)
-    printDiagnostics(results)
+    printDiagnosticTable("Taxonomy diagnostics", results.diagnostics)
 
     elapsed = (time.perf_counter_ns() - start) / 1_000_000_000
     print(f"Finished querying Arelle ({elapsed:,.2f} seconds elapsed).")
+
+    if args.check_json:
+        if Path(taxonomy_json_path).exists():
+            print("Checking taxonomy JSON")
+            checkTaxonomyJson(Path(taxonomy_json_path))
+        else:
+            print("Skipping --check-json: taxonomy JSON was not written.")
 
 
 if __name__ == "__main__":

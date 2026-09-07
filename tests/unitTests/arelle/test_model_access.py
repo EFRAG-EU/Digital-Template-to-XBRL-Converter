@@ -282,6 +282,33 @@ class TestLinkrolesFor:
         assert model.linkrolesFor(XbrlConst.notAll) == []
 
 
+class TestBaseSetsInDTS:
+    LINKQNAME = qn("link")
+    ARCQNAME = qn("arc")
+
+    def test_filters_and_dedups(self) -> None:
+        elr1 = "https://example.com/elr1"
+        elr2 = "https://example.com/elr2"
+        baseSets: dict[tuple[Any, Any, Any, Any], Any] = {
+            (XbrlConst.parentChild, elr1, self.LINKQNAME, self.ARCQNAME): [],
+            # aggregate entries with None components must be ignored
+            (XbrlConst.parentChild, elr1, None, None): [],
+            (XbrlConst.parentChild, None, self.LINKQNAME, self.ARCQNAME): [],
+            (XbrlConst.summationItem, elr2, self.LINKQNAME, self.ARCQNAME): [],
+            # duplicate (different arc qname) must not repeat (parentChild, elr1)
+            (XbrlConst.parentChild, elr1, self.LINKQNAME, qn("otherArc")): [],
+        }
+        model = makeModel(StubModelXbrl(baseSets=baseSets))
+        assert model.baseSetsInDTS() == [
+            (XbrlConst.parentChild, elr1),
+            (XbrlConst.summationItem, elr2),
+        ]
+
+    def test_no_base_sets_is_empty(self) -> None:
+        model = makeModel(StubModelXbrl(baseSets={}))
+        assert model.baseSetsInDTS() == []
+
+
 class TestValidatedModel:
     def test_concept_returns(self) -> None:
         q = qn()

@@ -238,6 +238,19 @@ class ValidatedModel:
                 seen.setdefault(linkrole)
         return list(seen)
 
+    def baseSetsInDTS(self) -> list[tuple[str, str]]:
+        """Every (arcrole, linkrole) pair with a real base set in the DTS,
+        deduplicated, in base-set insertion order. Unlike linkrolesFor(), this
+        does not require the caller to already know which arcroles to look
+        for -- it is the primitive for "is this concept referenced by any
+        relationship anywhere"."""
+        seen: dict[tuple[str, str], None] = {}
+        for arcroleUri, linkrole, linkqname, arcqname in self._modelXbrl.baseSets:
+            if linkqname is None or arcqname is None or linkrole is None:
+                continue
+            seen.setdefault((arcroleUri, linkrole))
+        return list(seen)
+
     def itemConcepts(self) -> Iterator[tuple[QName, ModelConcept]]:
         """Yield (qname, concept) for item concepts, skipping the xbrli/xbrldt
         infrastructure items (xbrli:item, xbrldt:hypercubeItem, ...)."""
