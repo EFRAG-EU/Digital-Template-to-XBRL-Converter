@@ -14,7 +14,7 @@ from arelle.api.Session import Session
 from arelle.ModelValue import QName
 from arelle.ModelXbrl import ModelXbrl
 
-from mireport.arelle.diagnostics import Diagnostic
+from mireport.arelle.diagnostics import ArelleDiagnostic
 from mireport.conversionresults import Message, MessageType, Severity
 from mireport.exceptions import MIReportException
 from mireport.filesupport import FilelikeAndFileName
@@ -32,12 +32,12 @@ class ArelleRelatedException(MIReportException):
 class ArelleModelInconsistency(ArelleRelatedException):
     """The loaded DTS violates a structural assumption we rely on."""
 
-    def __init__(self, message: str | Diagnostic):
-        self.diagnostic: Diagnostic | None = (
-            message if isinstance(message, Diagnostic) else None
+    def __init__(self, message: str | ArelleDiagnostic):
+        self.diagnostic: ArelleDiagnostic | None = (
+            message if isinstance(message, ArelleDiagnostic) else None
         )
         super().__init__(
-            message.format() if isinstance(message, Diagnostic) else message
+            message.format() if isinstance(message, ArelleDiagnostic) else message
         )
 
 
@@ -70,7 +70,7 @@ class ArelleProcessingResult:
         self._viewer: FilelikeAndFileName | None = None
         self._xbrlJson: FilelikeAndFileName | None = None
         self._exceptions: list[Exception] = []
-        self._diagnostics: list[Diagnostic] = []
+        self._diagnostics: list[ArelleDiagnostic] = []
 
     @classmethod
     def fromSession(cls, session: Session) -> Self:
@@ -165,11 +165,11 @@ class ArelleProcessingResult:
     def log_lines(self) -> list[str]:
         return list(self._textLogLines)
 
-    def addDiagnostics(self, diagnostics: Iterable[Diagnostic]) -> None:
+    def addDiagnostics(self, diagnostics: Iterable[ArelleDiagnostic]) -> None:
         self._diagnostics.extend(diagnostics)
 
     @property
-    def diagnostics(self) -> list[Diagnostic]:
+    def diagnostics(self) -> list[ArelleDiagnostic]:
         return list(self._diagnostics)
 
     def addException(self, exception: Exception, message: str | None = None) -> None:
@@ -262,7 +262,7 @@ class ArelleQNameCanonicaliser:
     def convert(self, qname: QName) -> MireportQName:
         if qname.namespaceURI is None:
             raise ArelleModelInconsistency(
-                Diagnostic.error(
+                ArelleDiagnostic.error(
                     "QName should have a namespace",
                     qname=repr(qname),
                 )

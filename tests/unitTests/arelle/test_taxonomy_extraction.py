@@ -22,7 +22,7 @@ from arelle.ModelValue import QName
 from arelle.ModelXbrl import ModelXbrl
 from arelle.RuntimeOptions import RuntimeOptions
 
-from mireport.arelle.diagnostics import Diagnostic, DiagnosticCollector
+from mireport.arelle.diagnostics import ArelleDiagnostic, DiagnosticCollector
 from mireport.arelle.model_access import (
     ConceptRelationship,
     ConceptRelationshipSet,
@@ -113,7 +113,7 @@ def makeExtractor(
     return extractor, token
 
 
-def collectedDiagnostics(token: str) -> list[Diagnostic]:
+def collectedDiagnostics(token: str) -> list[ArelleDiagnostic]:
     return DiagnosticCollector.close(token)
 
 
@@ -157,7 +157,7 @@ class TestWriteDataFile:
 class TestAddLabels:
     def addLabels(
         self, labelRels: list[ResourceRelationship]
-    ) -> tuple[dict, list[Diagnostic]]:
+    ) -> tuple[dict, list[ArelleDiagnostic]]:
         extractor, token = makeExtractor({XbrlConst.conceptLabel: labelRels})
         jconcept: dict[str, Any] = {}
         extractor.addLabels(cast(ModelConcept, StubConcept(qn())), jconcept)
@@ -316,7 +316,7 @@ class TestTreeWalks:
 class TestGetLabelsForRoleType:
     def getLabels(
         self, labelRels: list[ResourceRelationship]
-    ) -> tuple[dict[str, str], list[Diagnostic]]:
+    ) -> tuple[dict[str, str], list[ArelleDiagnostic]]:
         extractor, token = makeExtractor({XbrlConst.elementLabel: labelRels})
         labels = extractor.getLabelsForRoleType(cast(Any, StubRoleType()))
         return labels, collectedDiagnostics(token)
@@ -385,7 +385,7 @@ class TestGetDimensions:
         hypercube: StubConcept,
         hypercubeIsClosed: bool,
         relSet: StubHypercubeDimensionRelSet,
-    ) -> tuple[list[ConceptRelationship], list[Diagnostic]]:
+    ) -> tuple[list[ConceptRelationship], list[ArelleDiagnostic]]:
         extractor, token = makeExtractor({}, {self.ELR: relSet})
         result = extractor.getDimensions(
             self.ELR, cast(ModelConcept, hypercube), hypercubeIsClosed
@@ -453,7 +453,7 @@ class TestReportHypercubesForLinkrole:
 
     def report(
         self, primaryItemsByHypercube: dict[QName, set[QName]]
-    ) -> list[Diagnostic]:
+    ) -> list[ArelleDiagnostic]:
         extractor, token = makeExtractor({})
         extractor.reportHypercubesForLinkrole(self.ELR, primaryItemsByHypercube)
         return collectedDiagnostics(token)
