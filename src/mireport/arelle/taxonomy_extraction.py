@@ -180,6 +180,8 @@ class TaxonomyInfoExtractor:
         self.taxonomyJson["entryPoint"] = self.options.entrypointFile
 
         self.extractPresentation()
+        # Extract dimension defaults before other dimension-related information
+        # (used by other dimension-related extraction methods)
         self.extractDimensionDefaults()
         self.extractDimensionDefinitions()
         self.reportDomainMemberOnlyLinkroleRoots()
@@ -461,8 +463,8 @@ class TaxonomyInfoExtractor:
         return members
 
     def extractDimensionDefaults(self) -> None:
+        self.cntlr.addToLog("Processing dimension defaults")
         elrsWithDefaults = self.model.linkrolesFor(XbrlConst.dimensionDefault)
-
         dimToElrMap: dict[ModelConcept, list[str]] = defaultdict(list)
 
         for elrUri in elrsWithDefaults:
@@ -508,6 +510,17 @@ class TaxonomyInfoExtractor:
                             ),
                         )
                 self.dimensionDefaults[d] = m
+        
+        if self.dimensionDefaults:
+            self.taxonomyJson["dimensions"]["_defaults"] = {
+                qnameOf(d): qnameOf(m) for d, m in self.dimensionDefaults.items()
+            }
+        else:
+            self.diagnostics.emit(
+                ArelleDiagnostic.info(
+                    "No dimension defaults found"
+                )
+            )
 
     def addConceptMetadata(self, concept: ModelConcept, jconcept: dict) -> None:
         meta = {
@@ -865,14 +878,6 @@ class TaxonomyInfoExtractor:
                     self.taxonomyJson["dimensions"][elrUri][rel.targetQName] = cube
 
             self.reportHypercubesForLinkrole(elrUri, primaryItemsByHypercube)
-
-        self.cntlr.addToLog("Processing dimension defaults")
-        if self.dimensionDefaults:
-            self.taxonomyJson["dimensions"]["_defaults"] = {
-                qnameOf(d): qnameOf(m) for d, m in self.dimensionDefaults.items()
-            }
-        else:
-            self.cntlr.addToLog("INFO: No dimension defaults found")
 
     def reportHypercubesForLinkrole(
         self, elrUri: str, primaryItemsByHypercube: Mapping[QName, Collection[QName]]
