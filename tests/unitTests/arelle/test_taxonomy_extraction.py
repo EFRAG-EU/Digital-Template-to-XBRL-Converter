@@ -9,6 +9,7 @@ test_model_access.py for the same approach).
 from __future__ import annotations
 
 import json
+import logging
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, cast
@@ -416,11 +417,16 @@ class TestGetDimensions:
         assert "no dimensions" in diagnostics[0].text
 
     def test_hypercube_with_dimensions_returns_relationships(self) -> None:
+        # A second hypercube-dimension root sharing the ELR does not, by
+        # itself, cause getDimensions() to emit anything: reporting on an
+        # ELR having multiple hypercubes is TaxonomyInfoExtractor's job (see
+        # TestReportHypercubesForLinkrole), not this method's.
         table = StubConcept(qn("Table"))
+        other = StubConcept(qn("OtherTable"))
         dimension = StubConcept(qn("Dimension"))
         rel = conceptRel(dimension)
         relSet = StubHypercubeDimensionRelSet(
-            roots=[table], relsFrom={id(table): [rel]}
+            roots=[table, other], relsFrom={id(table): [rel]}
         )
         result, diagnostics = self.getDimensions(table, True, relSet)
         assert result == [rel]
@@ -440,3 +446,79 @@ class TestGetDimensions:
         )
         with pytest.raises(ArelleModelInconsistency):
             self.getDimensions(table, True, relSet)
+
+
+class TestReportHypercubesForLinkrole:
+    ELR = "https://example.com/elr"
+
+    def report(
+        self, primaryItemsByHypercube: dict[QName, set[QName]]
+    ) -> list[Diagnostic]:
+        extractor, token = makeExtractor({})
+        extractor.reportHypercubesForLinkrole(self.ELR, primaryItemsByHypercube)
+        return collectedDiagnostics(token)
+
+    def test_single_hypercube_is_silent(self) -> None:
+        diagnostics = self.report({qn("Table"): {qn("Item")}})
+        assert diagnostics == []
+
+    def test_no_hypercubes_is_silent(self) -> None:
+        diagnostics = self.report({})
+        assert diagnostics == []
+
+    def test_disjoint_primary_items_is_informational(self) -> None:
+        diagnostics = self.report(
+            {
+                qn("TableA"): {qn("ItemA")},
+                qn("TableB"): {qn("ItemB")},
+            }
+        )
+        assert len(diagnostics) == 1
+        [diagnostic] = diagnostics
+        assert diagnostic.level == logging.INFO
+        assert "2 hypercubes" in diagnostic.text
+        assert diagnostic.concepts == (qn("TableA"), qn("TableB"))
+        assert "primaryItems" not in diagnostic.details
+
+    def test_shared_primary_item_warns(self) -> None:
+        diagnostics = self.report(
+            {
+                qn("TableA"): {qn("Item"), qn("ItemA")},
+                qn("TableB"): {qn("Item"), qn("ItemB")},
+            }
+        )
+        assert len(diagnostics) == 1
+        [diagnostic] = diagnostics
+        assert diagnostic.level == logging.WARNING
+        assert "sharing primary items" in diagnostic.text
+        assert diagnostic.concepts == (qn("TableA"), qn("TableB"))
+        assert diagnostic.details["primaryItems"] == [qn("Item")]
+
+    def test_only_overlapping_item_is_named_among_three_hypercubes(self) -> None:
+        diagnostics = self.report(
+            {
+                qn("TableA"): {qn("Shared"), qn("ItemA")},
+                qn("TableB"): {qn("Shared"), qn("ItemB")},
+                qn("TableC"): {qn("ItemC")},
+            }
+        )
+        assert len(diagnostics) == 1
+        [diagnostic] = diagnostics
+        assert diagnostic.level == logging.WARNING
+        assert diagnostic.concepts == (qn("TableA"), qn("TableB"), qn("TableC"))
+        assert diagnostic.details["primaryItems"] == [qn("Shared")]
+
+    def test_within_hypercube_repeats_do_not_count_as_overlap(self) -> None:
+        # A primary item appearing at multiple depths within the *same*
+        # hypercube's tree is not the conjoined-hypercubes problem: the caller
+        # already de-duplicates into a set per hypercube, but this pins that
+        # collapsing a single hypercube's own repeats never trips the warning.
+        diagnostics = self.report(
+            {
+                qn("TableA"): {qn("Item"), qn("ItemA")},
+                qn("TableB"): {qn("ItemB")},
+            }
+        )
+        assert len(diagnostics) == 1
+        [diagnostic] = diagnostics
+        assert diagnostic.level == logging.INFO
