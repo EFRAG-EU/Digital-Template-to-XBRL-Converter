@@ -35,7 +35,7 @@ from arelle.ModelValue import QName
 from arelle.ModelXbrl import ModelXbrl
 
 from mireport.arelle.diagnostics import ArelleDiagnostic
-from mireport.arelle.support import ArelleModelInconsistency
+from mireport.arelle.support import ArelleModelInconsistency, unique_list
 
 _NO_NAMESPACE_HINT = (
     'check that the taxonomy schemas have elementFormDefault="qualified" set '
@@ -226,17 +226,22 @@ class ValidatedModel:
                 order=rel.order,
             )
 
-    def linkrolesFor(self, *arcroles: str) -> list[str]:
-        """Extended link roles that have a base set for any of `arcroles`.
-        Deduplicated, in base-set insertion order."""
-        wanted = set(arcroles)
-        seen: dict[str, None] = {}
+    def _baseSets(self) -> Iterator[tuple[str, str]]:
+        """(arcrole, linkrole) for every real base set. Arelle's baseSets is
+        also keyed by roll-up entries with a None linkrole or link/arc qname,
+        which are summaries rather than base sets in their own right."""
         for arcroleUri, linkrole, linkqname, arcqname in self._modelXbrl.baseSets:
             if linkqname is None or arcqname is None or linkrole is None:
                 continue
-            if arcroleUri in wanted:
-                seen.setdefault(linkrole)
-        return list(seen)
+            yield arcroleUri, linkrole
+
+    def linkrolesFor(self, *arcroles: str) -> list[str]:
+        """Extended link roles that have a base set for any of `arcroles`.
+        Deduplicated, in base-set insertion order."""
+        wanted = frozenset(arcroles)
+        return unique_list(
+            linkrole for arcrole, linkrole in self._baseSets() if arcrole in wanted
+        )
 
     def baseSetsInDTS(self) -> list[tuple[str, str]]:
         """Every (arcrole, linkrole) pair with a real base set in the DTS,
@@ -244,12 +249,7 @@ class ValidatedModel:
         does not require the caller to already know which arcroles to look
         for -- it is the primitive for "is this concept referenced by any
         relationship anywhere"."""
-        seen: dict[tuple[str, str], None] = {}
-        for arcroleUri, linkrole, linkqname, arcqname in self._modelXbrl.baseSets:
-            if linkqname is None or arcqname is None or linkrole is None:
-                continue
-            seen.setdefault((arcroleUri, linkrole))
-        return list(seen)
+        return unique_list(self._baseSets())
 
     def itemConcepts(self) -> Iterator[tuple[QName, ModelConcept]]:
         """Yield (qname, concept) for item concepts, skipping the xbrli/xbrldt

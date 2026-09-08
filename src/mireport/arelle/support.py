@@ -5,7 +5,7 @@ import logging
 from collections import Counter
 from collections.abc import Iterable, Mapping, MutableMapping
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar
 
 if TYPE_CHECKING:
     from typing import Any, ClassVar, Self
@@ -23,6 +23,13 @@ from mireport.xml import QName as MireportQName
 from mireport.xml import QNameMaker, getBootstrapQNameMaker
 
 L = logging.getLogger(__name__)
+
+T = TypeVar("T")
+
+
+def unique_list(i: Iterable[T]) -> list[T]:
+    # N.B. This maintains insertion order where list(set()) does not.
+    return list(dict.fromkeys(i))
 
 
 class ArelleRelatedException(MIReportException):

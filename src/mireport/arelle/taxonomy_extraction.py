@@ -15,7 +15,7 @@ import json
 from collections import Counter, defaultdict
 from collections.abc import Collection, Iterable, Iterator, Mapping
 from pathlib import Path
-from typing import TYPE_CHECKING, NamedTuple, TypeVar
+from typing import TYPE_CHECKING, NamedTuple
 
 if TYPE_CHECKING:
     from typing import Any
@@ -40,9 +40,8 @@ from mireport.arelle.support import (
     ArelleObjectJSONEncoder,
     ArelleQNameCanonicaliser,
     ArelleRelatedException,
+    unique_list,
 )
-
-T = TypeVar("T")
 
 # The UtrEntry attributes worth serialising (the UTR schema's primary key is
 # status + unitId).
@@ -60,11 +59,6 @@ _UTR_INTERESTING_KEYS = (
     "symbol",
     "status",
 )
-
-
-def unique_list(i: Iterable[T]) -> list[T]:
-    # N.B. This maintains insertion order where list(set()) does not.
-    return list(dict.fromkeys(i))
 
 
 def _overlappingPrimaryItems(
