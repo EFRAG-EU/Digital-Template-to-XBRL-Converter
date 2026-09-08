@@ -178,6 +178,7 @@ class TaxonomyInfoExtractor:
         """Extract the taxonomy information and return it as a JSON-ready
         dict with all QNames canonicalised to strings."""
         self.taxonomyJson["entryPoint"] = self.options.entrypointFile
+        self.taxonomyJson["dimensions"] = defaultdict(dict)
 
         self.extractPresentation()
         # Extract dimension defaults before other dimension-related information
@@ -811,7 +812,6 @@ class TaxonomyInfoExtractor:
 
     def extractDimensionDefinitions(self) -> None:
         self.cntlr.addToLog("Processing dimensions")
-        self.taxonomyJson["dimensions"] = defaultdict(dict)
         # Get the hypercubes and primary items
         hypercubeArcRoles = (XbrlConst.all, XbrlConst.notAll)
         for elrUri in self.model.linkrolesFor(*hypercubeArcRoles):
