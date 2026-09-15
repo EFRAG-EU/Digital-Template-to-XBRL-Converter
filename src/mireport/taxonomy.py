@@ -75,6 +75,13 @@ class DimensionContainerType(StrEnum):
     Scenario = "scenario"
 
 
+class HypercubeType(StrEnum):
+    """Which of the two xbrldt hypercube arcroles declared this cube."""
+
+    Positive = "positive"  # "all": these dimension combinations are valid
+    Negative = "negative"  # "notAll": these dimension combinations are excluded
+
+
 class PresentationStyle(Enum):
     """The style of a particular presentation group (ELR)."""
 
@@ -729,6 +736,35 @@ class DimensionSignature:
         return True
 
 
+@dataclass(frozen=True)
+class HypercubeDeclaration:
+    """One hypercube as *declared* in one base set, whether or not mireport can
+    model it.
+
+    DimensionSignature is the fact-building contract: every one of them is a
+    shape a fact may take, and matches() implements closed positive semantics
+    only. Anything surveying the taxonomy's dimensional shape as a whole --
+    TaxonomyChecker above all -- needs the cubes mireport skips as well, or it
+    draws conclusions from a partial picture: a taxonomy whose hypercubes are
+    all open looks, through dimensionSignatures alone, like a taxonomy with no
+    primary items at all.
+    """
+
+    roleUri: str
+    hypercube: Concept
+    type: HypercubeType
+    closed: bool
+    contextElement: DimensionContainerType
+    primaryItems: frozenset[Concept]
+    explicitDimensions: frozenset[ExplicitDimensionSignature]
+    typedDimensions: frozenset[Concept]
+    modelled: bool
+    """True when a DimensionSignature was built for this (base set, hypercube).
+    Not the same as usable: a cube sharing primary items with another cube in
+    the same base set is modelled but its concepts are still rejected by
+    _rejectUnsupported()."""
+
+
 class Taxonomy:
     def __init__(
         self,
@@ -794,6 +830,7 @@ class Taxonomy:
         self._signaturesByPrimaryItem: dict[Concept, list[DimensionSignature]] = (
             defaultdict(list)
         )
+        self._hypercubeDeclarations: list[HypercubeDeclaration] = []
         desired_containers: set[DimensionContainerType] = set()
         unsupportedRoles: dict[str, str] = {}
         domainByDimension: dict[Concept, list[Concept]] = defaultdict(list)
@@ -822,24 +859,14 @@ class Taxonomy:
             for cubeQname, cubeDetails in cubes.items():
                 hc_concept = concepts[cubeQname]
                 closed = bool(cubeDetails.pop("xbrldt:closed"))
-                if not closed:
-                    # DimensionSignature.matches() enforces closed semantics, so
-                    # modelling an open cube would reject facts it should admit.
-                    defects.append(f"hypercube {cubeQname} is open")
-                    for concept in (
-                        hc_concept,
-                        *(
-                            concepts[qname]
-                            for _, qname in cubeDetails.get("primaryItems", [])
-                        ),
-                    ):
-                        self._unsupportedRolesByConcept[concept][role] = defects[-1]
-                    continue
-
+                # Older baked JSON (and third-party JSON we have not re-baked)
+                # predates the "type" key; its absence means positive.
+                cubeType = HypercubeType(
+                    cubeDetails.pop("type", HypercubeType.Positive)
+                )
                 container = DimensionContainerType(
                     cubeDetails.pop("xbrldt:contextElement")
                 )
-                desired_containers.add(container)
 
                 primaryItemRels = [
                     Relationship(role, depth, concepts[qname])
@@ -854,8 +881,6 @@ class Taxonomy:
                         "explicitDimensions", {}
                     ).items()
                 }
-                for dimension, memberList in explicitDimensionsByName.items():
-                    domainByDimension[dimension].extend(memberList)
                 explicitDimensions = frozenset(
                     ExplicitDimensionSignature(dimension=dimension, domain=domain)
                     for dimension, domain in explicitDimensionsByName.items()
@@ -865,6 +890,39 @@ class Taxonomy:
                     concepts[dimQname]
                     for dimQname in cubeDetails.pop("typedDimensions", [])
                 )
+
+                self._hypercubeDeclarations.append(
+                    HypercubeDeclaration(
+                        roleUri=role,
+                        hypercube=hc_concept,
+                        type=cubeType,
+                        closed=closed,
+                        contextElement=container,
+                        primaryItems=frozenset(r.concept for r in primaryItemRels),
+                        explicitDimensions=explicitDimensions,
+                        typedDimensions=typedDimensions,
+                        modelled=(
+                            unsupportedReason := self._unsupportedCubeReason(
+                                cubeQname, cubeType, closed
+                            )
+                        )
+                        is None,
+                    )
+                )
+                if unsupportedReason is not None:
+                    defects.append(unsupportedReason)
+                    for concept in (
+                        hc_concept,
+                        *(r.concept for r in primaryItemRels),
+                    ):
+                        self._unsupportedRolesByConcept[concept][role] = (
+                            unsupportedReason
+                        )
+                    continue
+
+                desired_containers.add(container)
+                for dimension, memberList in explicitDimensionsByName.items():
+                    domainByDimension[dimension].extend(memberList)
 
                 # One DimensionSignature per (role, hypercube) -- this is the unit
                 # a fact must satisfy at least one of, never the union of several.
@@ -933,6 +991,26 @@ class Taxonomy:
         return frozenset(
             qname for qname, count in cubesPerPrimaryItem.items() if count > 1
         )
+
+    @staticmethod
+    def _unsupportedCubeReason(
+        cubeQname: str, cubeType: HypercubeType, closed: bool
+    ) -> str | None:
+        """Why mireport cannot model this cube, or None if it can."""
+        match cubeType, closed:
+            case HypercubeType.Negative, _:
+                # DimensionSignature.matches() implements positive semantics
+                # only: it answers "are these dimension values admitted?".
+                # Modelling a negative cube as positive inverts its meaning
+                # and admits precisely the combinations the taxonomy set out
+                # to exclude.
+                return f"hypercube {cubeQname} is negative"
+            case _, False:
+                # matches() enforces closed semantics, so modelling an open
+                # cube would reject facts it should admit.
+                return f"hypercube {cubeQname} is open"
+            case _:
+                return None
 
     def _rejectUnsupported(self, subject: Concept) -> None:
         if faulty := self._unsupportedRolesByConcept.get(subject):
@@ -1069,6 +1147,24 @@ class Taxonomy:
                     for signature in signatures
                 ),
                 key=lambda s: (s.roleUri, str(s.hypercube.qname)),
+            )
+        )
+
+    @cached_property
+    def hypercubeDeclarations(self) -> tuple[HypercubeDeclaration, ...]:
+        """Every (base set, hypercube) in the definition linkbase exactly as
+        declared, ordered by role then hypercube for stable reporting. A
+        superset of dimensionSignatures: this also holds the cubes mireport
+        cannot model (open or negative), which dimensionSignatures omits
+        entirely.
+
+        Like dimensionSignatures, this does not go through
+        _rejectUnsupported() -- it is for surveying the whole taxonomy (e.g.
+        TaxonomyChecker), not for building a fact."""
+        return tuple(
+            sorted(
+                self._hypercubeDeclarations,
+                key=lambda d: (d.roleUri, str(d.hypercube.qname)),
             )
         )
 

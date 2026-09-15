@@ -91,6 +91,7 @@ class ConceptRelationship:
 
     target: ModelConcept
     targetQName: QName
+    arcrole: str
     consecutiveLinkrole: str
     isUsable: bool
     preferredLabel: str | None
@@ -111,9 +112,18 @@ class ConceptRelationship:
                     concepts=(qnameOf(target),),
                 )
             )
+        if (arcrole := rel.arcrole) is None:
+            raise ArelleModelInconsistency(
+                ArelleDiagnostic.error(
+                    "Relationship has no arcrole",
+                    elr=rel.linkrole,
+                    concepts=(qnameOf(target),),
+                )
+            )
         return cls(
             target=target,
             targetQName=qnameOf(target),
+            arcrole=arcrole,
             consecutiveLinkrole=consecutiveLinkrole,
             isUsable=rel.isUsable,
             preferredLabel=rel.preferredLabel,

@@ -81,6 +81,26 @@ def _overlappingPrimaryItems(
     )
 
 
+def _hypercubeType(arcrole: str, elrUri: str, hypercubeQName: QName) -> str:
+    """ "positive" for an "all" relationship, "negative" for "notAll" -- never
+    inferred by elimination, since a third arcrole here would be a modelling
+    error we want to know about, not one we want to default to positive."""
+    match arcrole:
+        case XbrlConst.all:
+            return "positive"
+        case XbrlConst.notAll:
+            return "negative"
+        case _:
+            raise ArelleModelInconsistency(
+                ArelleDiagnostic.error(
+                    "Hypercube relationship has neither the all nor the notAll arcrole",
+                    elr=elrUri,
+                    concepts=(hypercubeQName,),
+                    arcrole=arcrole,
+                )
+            )
+
+
 class DefinitionRow(NamedTuple):
     """One concept in a depth-first walk of a definition (domain-member) tree."""
 
@@ -163,6 +183,13 @@ class TaxonomyInfoExtractor:
             cntlr, getattr(options, "diagnosticsToken", None)
         )
         self.taxonomyJson: dict[str, Any] = defaultdict(dict)
+        # A plain dict here would auto-vivify each ELR's cube dict via
+        # defaultdict(dict), but leave the per-ELR mapping itself a plain
+        # dict on first access -- fine when populated only through extract(),
+        # but tests exercising extractDimensionDefinitions() directly (never
+        # going through extract()) would KeyError on the first cube. Set it
+        # here so both paths see the same structure.
+        self.taxonomyJson["dimensions"] = defaultdict(dict)
         self.qnameConverter: ArelleQNameCanonicaliser = (
             ArelleQNameCanonicaliser.bootstrap(modelXbrl)
         )
@@ -172,7 +199,6 @@ class TaxonomyInfoExtractor:
         """Extract the taxonomy information and return it as a JSON-ready
         dict with all QNames canonicalised to strings."""
         self.taxonomyJson["entryPoint"] = self.options.entrypointFile
-        self.taxonomyJson["dimensions"] = defaultdict(dict)
 
         self.extractPresentation()
         # Extract dimension defaults before other dimension-related information
@@ -244,11 +270,16 @@ class TaxonomyInfoExtractor:
         if not relSet.hasRelationshipsFrom(hypercube):
             # This hypercube has no dimensions of its own. Other hypercubes
             # sharing the same ELR may still have dimensions of their own, so
-            # this is not by itself a model inconsistency.
+            # this is not by itself a model inconsistency -- and a closed,
+            # dimensionless hypercube is the WGN "Guidance on the use of
+            # dimensions" section 3.4 way to give an otherwise-undimensioned
+            # concept full dimensional validity, so this is informational
+            # rather than a defect to fix.
             if hypercubeIsClosed:
                 self.diagnostics.emit(
-                    ArelleDiagnostic.warning(
-                        "Closed hypercube has no dimensions (no outgoing hypercube-dimension relationships)",
+                    ArelleDiagnostic.info(
+                        "Closed hypercube has no dimensions (no outgoing "
+                        "hypercube-dimension relationships)",
                         elr=elrUri,
                         concepts=(qnameOf(hypercube),),
                     ),
@@ -505,17 +536,13 @@ class TaxonomyInfoExtractor:
                             ),
                         )
                 self.dimensionDefaults[d] = m
-        
+
         if self.dimensionDefaults:
             self.taxonomyJson["dimensions"]["_defaults"] = {
                 qnameOf(d): qnameOf(m) for d, m in self.dimensionDefaults.items()
             }
         else:
-            self.diagnostics.emit(
-                ArelleDiagnostic.info(
-                    "No dimension defaults found"
-                )
-            )
+            self.diagnostics.emit(ArelleDiagnostic.info("No dimension defaults found"))
 
     def addConceptMetadata(self, concept: ModelConcept, jconcept: dict) -> None:
         meta = {
@@ -849,6 +876,7 @@ class TaxonomyInfoExtractor:
                         "primaryItems": self.getPrimaryItems(
                             rel.consecutiveLinkrole, root_concept
                         ),
+                        "type": _hypercubeType(rel.arcrole, elrUri, rel.targetQName),
                         "xbrldt:contextElement": rel.contextElement,
                         "xbrldt:closed": rel.isClosed,
                     }

@@ -1,11 +1,26 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Iterable, Sequence
 
 from mireport.diagnostics import Diagnostic
 from mireport.stringutil import normalizeLabelText, stripLabelSuffix
-from mireport.taxonomy import STANDARD_LABEL_ROLE, Concept, Taxonomy
+from mireport.taxonomy import (
+    STANDARD_LABEL_ROLE,
+    Concept,
+    HypercubeDeclaration,
+    HypercubeType,
+    Taxonomy,
+)
+
+_FDV_HINT_PREFIX = (
+    "XBRL WGN 'Guidance on the use of dimensions' section 3.5 (full "
+    "dimensional validity): "
+)
+
+
+def _locations(declarations: Iterable[HypercubeDeclaration]) -> list[str]:
+    return [f"{d.roleUri} [{d.hypercube.qname}]" for d in declarations]
 
 
 class TaxonomyChecker:
@@ -17,6 +32,10 @@ class TaxonomyChecker:
             *self.reportLabelCollisions(),
             *self.reportInconsistentDimensionDomains(),
             *self.reportUnresolvedEnumerationDomains(),
+            *self.reportOpenPositiveHypercubes(),
+            *self.reportNegativeHypercubesWithoutPositive(),
+            *self.reportClosedNegativeHypercubes(),
+            *self.reportConceptsWithoutHypercube(),
         ]
 
     def reportLabelCollisions(self) -> list[Diagnostic]:
@@ -179,3 +198,131 @@ class TaxonomyChecker:
                 )
             )
         return diagnostics
+
+    def reportOpenPositiveHypercubes(self) -> list[Diagnostic]:
+        """WGN section 3.5, recommendation 1: a positive ("all") hypercube
+        should be closed."""
+        bad = [
+            d
+            for d in self.taxonomy.hypercubeDeclarations
+            if d.type is HypercubeType.Positive and not d.closed
+        ]
+        if not bad:
+            return []
+        return [
+            Diagnostic.warning(
+                f"{len(bad)} positive hypercube(s) are open",
+                concepts=sorted({d.hypercube.qname for d in bad}),
+                locations=_locations(bad),
+                hint=(
+                    _FDV_HINT_PREFIX
+                    + "a positive hypercube should be closed, otherwise its "
+                    "primary items get no dimensional validation for any "
+                    "dimension it does not declare. mireport cannot model an "
+                    "open hypercube and ignores it, so its primary items have "
+                    "no usable dimensions here either."
+                ),
+            )
+        ]
+
+    def reportClosedNegativeHypercubes(self) -> list[Diagnostic]:
+        """WGN section 3.5, recommendation 4: a negative ("notAll") hypercube
+        should be open."""
+        bad = [
+            d
+            for d in self.taxonomy.hypercubeDeclarations
+            if d.type is HypercubeType.Negative and d.closed
+        ]
+        if not bad:
+            return []
+        return [
+            Diagnostic.warning(
+                f"{len(bad)} negative hypercube(s) are closed",
+                concepts=sorted({d.hypercube.qname for d in bad}),
+                locations=_locations(bad),
+                hint=(
+                    _FDV_HINT_PREFIX
+                    + "a negative hypercube should be open; xbrldt:closed on a "
+                    "negative hypercube has no agreed meaning. mireport cannot "
+                    "model a negative hypercube and ignores it."
+                ),
+            )
+        ]
+
+    def reportNegativeHypercubesWithoutPositive(self) -> list[Diagnostic]:
+        """WGN section 3.5, recommendation 2: a negative ("notAll") hypercube
+        only belongs in a base set that also holds a positive ("all") one --
+        on its own it excludes nothing from anything."""
+        byRole: dict[str, list[HypercubeDeclaration]] = defaultdict(list)
+        for d in self.taxonomy.hypercubeDeclarations:
+            byRole[d.roleUri].append(d)
+        bad = [
+            d
+            for declarations in byRole.values()
+            if not any(x.type is HypercubeType.Positive for x in declarations)
+            for d in declarations
+            if d.type is HypercubeType.Negative
+        ]
+        if not bad:
+            return []
+        return [
+            Diagnostic.warning(
+                f"{len(bad)} negative hypercube(s) are in a base set with no "
+                "positive hypercube",
+                concepts=sorted({d.hypercube.qname for d in bad}),
+                locations=_locations(bad),
+                hint=(
+                    _FDV_HINT_PREFIX + "a negative hypercube only excludes dimension "
+                    "combinations from what a positive hypercube in the same "
+                    "base set admits; on its own it constrains nothing."
+                ),
+            )
+        ]
+
+    def reportConceptsWithoutHypercube(self) -> list[Diagnostic]:
+        """WGN section 3.5, recommendation 3 (via section 3.4): in a taxonomy
+        that uses dimensions, every concept should be a primary item of at
+        least one hypercube -- even a hypercube with no dimensions.
+
+        A concept in no hypercube gets *no* dimensional validation at all, so
+        a fact for it may carry any dimension value, valid or not. Membership
+        of an open or negative hypercube still counts here -- it is an
+        association, however unhelpfully shaped, and the other three checks
+        above cover the shape.
+        """
+        if not self.taxonomy.hypercubes:
+            return []  # a taxonomy that does not use dimensions at all
+        covered = {
+            concept
+            for declaration in self.taxonomy.hypercubeDeclarations
+            for concept in declaration.primaryItems
+        }
+        orphans = sorted(self._reportableConcepts() - covered)
+        if not orphans:
+            return []
+        return [
+            Diagnostic.warning(
+                f"{len(orphans)} concept(s) are not a primary item of any hypercube",
+                concepts=[c.qname for c in orphans],
+                hint=(
+                    _FDV_HINT_PREFIX
+                    + "in a taxonomy that uses dimensions, a concept belonging "
+                    "to no hypercube receives no dimensional validation, so a "
+                    "fact for it may carry any dimension value at all. "
+                    "Associate it with a hypercube -- one with no dimensions "
+                    "if it takes none."
+                ),
+            )
+        ]
+
+    def _reportableConcepts(self) -> frozenset[Concept]:
+        """Concepts that could be the concept of a fact. XDT requires
+        hypercube and dimension items to be declared abstract, so
+        isReportable (not abstract) already excludes them -- there is no
+        separate hypercube/dimension check to make. Whether a reportable
+        concept is also, say, a domain member elsewhere is irrelevant to full
+        dimensional validity -- if it appears as no cube's primary item, its
+        facts get no dimensional validation, full stop."""
+        return frozenset(
+            concept for concept in self.taxonomy.concepts if concept.isReportable
+        )
