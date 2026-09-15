@@ -907,9 +907,10 @@ class TaxonomyInfoExtractor:
         """Report a base set holding several hypercubes, warning if they share
         primary items.
 
-        XDT conjoins a base set's hypercubes, so a primary item declared in more
-        than one of them must satisfy all of them at once -- something mireport
-        does not support (see Taxonomy._overlappingPrimaryItems in taxonomy.py).
+        XDT conjoins a base set's hypercubes, so a primary item declared in
+        more than one of them must satisfy all of them at once -- see
+        Taxonomy.EffectiveHypercube in taxonomy.py, which builds exactly that
+        conjunction.
         """
         if len(primaryItemsByHypercube) < 2:
             return
