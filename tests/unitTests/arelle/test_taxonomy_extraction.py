@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import logging
 from collections.abc import Iterator
+from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, cast
@@ -277,11 +278,13 @@ def conceptRel(
     *,
     isUsable: bool = True,
     preferredLabel: str | None = None,
+    arcrole: str = XbrlConst.all,
 ) -> ConceptRelationship:
     assert target.qname is not None
     return ConceptRelationship(
         target=cast(Any, target),
         targetQName=target.qname,
+        arcrole=arcrole,
         consecutiveLinkrole="https://example.com/elr",
         isUsable=isUsable,
         preferredLabel=preferredLabel,
@@ -565,12 +568,16 @@ class TestGetDimensions:
         assert result == []
         assert diagnostics == []
 
-    def test_closed_hypercube_with_no_dimensions_warns(self) -> None:
+    def test_closed_hypercube_with_no_dimensions_is_informational(self) -> None:
+        # A closed, dimensionless hypercube is the WGN section 3.4 way to give
+        # an otherwise-undimensioned concept full dimensional validity, so
+        # this must not read as something to fix.
         table = StubConcept(qn("EmptyTable"))
         relSet = StubHypercubeDimensionRelSet(roots=[], relsFrom={})
         result, diagnostics = self.getDimensions(table, True, relSet)
         assert result == []
         assert len(diagnostics) == 1
+        assert diagnostics[0].level == logging.INFO
         assert "no dimensions" in diagnostics[0].text
 
     def test_hypercube_with_dimensions_returns_relationships(self) -> None:
@@ -715,6 +722,84 @@ class TestExtractDimensionDefinitionsHypercubeCollision:
                 extractor.extractDimensionDefinitions()
         finally:
             collectedDiagnostics(token)
+
+
+class TestExtractDimensionDefinitionsType:
+    """extractDimensionDefinitions() must record which of the all/notAll
+    arcroles produced each cube, since Taxonomy silently modelled a notAll
+    cube as positive when this was unrecorded."""
+
+    ELR = "https://example.com/elr"
+
+    def extractCube(
+        self, root: StubConcept, rel: ConceptRelationship
+    ) -> tuple[dict[str, Any], list[ArelleDiagnostic]]:
+        allNotAllRelSet = StubHypercubeDimensionRelSet(
+            roots=[root], relsFrom={id(root): [rel]}
+        )
+        extractor, token = makeExtractor(
+            {},
+            {
+                ((XbrlConst.all, XbrlConst.notAll), self.ELR): allNotAllRelSet,
+                (XbrlConst.domainMember, self.ELR): StubDomainMemberRelSet({}),
+                (XbrlConst.hypercubeDimension, self.ELR): (
+                    StubHypercubeDimensionRelSet(roots=[], relsFrom={})
+                ),
+            },
+            linkrolesByArcrole={XbrlConst.all: [self.ELR]},
+        )
+        extractor.extractDimensionDefinitions()
+        diagnostics = collectedDiagnostics(token)
+        cube = extractor.taxonomyJson["dimensions"][self.ELR][rel.targetQName]
+        return cube, diagnostics
+
+    def test_all_arc_records_positive_type(self) -> None:
+        root = StubConcept(qn("Root"))
+        table = StubConcept(qn("Table"), isHypercubeItem=True)
+        cube, _ = self.extractCube(root, conceptRel(table, arcrole=XbrlConst.all))
+        assert cube["type"] == "positive"
+
+    def test_notall_arc_records_negative_type(self) -> None:
+        root = StubConcept(qn("Root"))
+        table = StubConcept(qn("Table"), isHypercubeItem=True)
+        cube, _ = self.extractCube(root, conceptRel(table, arcrole=XbrlConst.notAll))
+        assert cube["type"] == "negative"
+
+    def test_unexpected_arcrole_is_inconsistent(self) -> None:
+        # Positive must never be inferred by elimination: an arcrole that is
+        # neither all nor notAll should be impossible to reach here (the
+        # relSet is keyed by exactly those two), but if it ever happened,
+        # defaulting to "positive" would be exactly the wrong failure mode.
+        root = StubConcept(qn("Root"))
+        table = StubConcept(qn("Table"), isHypercubeItem=True)
+        rel = conceptRel(table, arcrole=XbrlConst.hypercubeDimension)
+        with pytest.raises(ArelleModelInconsistency):
+            self.extractCube(root, rel)
+
+    def test_cube_dict_has_exactly_the_legacy_keys_plus_type(self) -> None:
+        # A guard against silently growing the cube dict's shape: this is the
+        # entire dimensional vocabulary Taxonomy.__init__ understands.
+        root = StubConcept(qn("Root"))
+        table = StubConcept(qn("Table"), isHypercubeItem=True)
+        cube, _ = self.extractCube(root, conceptRel(table, arcrole=XbrlConst.all))
+        assert set(cube.keys()) == {
+            "primaryItems",
+            "type",
+            "xbrldt:contextElement",
+            "xbrldt:closed",
+        }
+
+    def test_open_hypercube_still_emits_the_info_diagnostic(self) -> None:
+        root = StubConcept(qn("Root"))
+        table = StubConcept(qn("Table"), isHypercubeItem=True)
+        rel = conceptRel(table, arcrole=XbrlConst.all)
+        rel = replace(rel, isClosed=False)
+        _, diagnostics = self.extractCube(root, rel)
+        # root has no outgoing domain-member relationships in this fixture, so
+        # getPrimaryItems() also warns -- irrelevant to this test, which is
+        # only about the "Hypercube is open" diagnostic surviving A2's change.
+        [openDiagnostic] = [d for d in diagnostics if "open" in d.text]
+        assert openDiagnostic.level == logging.INFO
 
 
 class TestReportDomainMemberOnlyLinkroleRoots:

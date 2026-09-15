@@ -56223,6 +56223,7 @@
             "vsme:RegisteredAddressOfTheSubsidiary"
           ]
         ],
+        "type": "positive",
         "typedDimensions": [
           "vsme:IdentifierOfSubsidiaryTypedAxis"
         ],
@@ -56262,6 +56263,7 @@
             "vsme:GPSLocationOfSite"
           ]
         ],
+        "type": "positive",
         "typedDimensions": [
           "vsme:IdentifierOfSiteTypedAxis"
         ],
@@ -56300,6 +56302,7 @@
             "vsme:EnergyConsumptionFromFuels"
           ]
         ],
+        "type": "positive",
         "xbrldt:closed": true,
         "xbrldt:contextElement": "scenario"
       }
@@ -56353,6 +56356,7 @@
             "vsme:TotalGrossMarketBasedGHGEmissions"
           ]
         ],
+        "type": "positive",
         "xbrldt:closed": true,
         "xbrldt:contextElement": "scenario"
       }
@@ -56480,6 +56484,7 @@
             "vsme:AmountOfEmissionToSoil"
           ]
         ],
+        "type": "positive",
         "xbrldt:closed": true,
         "xbrldt:contextElement": "scenario"
       }
@@ -56508,6 +56513,7 @@
             "vsme:SiteLocatedNearABiodiversitySensitiveArea"
           ]
         ],
+        "type": "positive",
         "typedDimensions": [
           "vsme:IdentifierOfSiteTypedAxis"
         ],
@@ -57529,6 +57535,7 @@
             "vsme:TotalWasteRecycledReusedAndDirectedToDisposalMass"
           ]
         ],
+        "type": "positive",
         "xbrldt:closed": true,
         "xbrldt:contextElement": "scenario"
       }
@@ -57557,6 +57564,7 @@
             "vsme:VolumeOfMaterialUsed"
           ]
         ],
+        "type": "positive",
         "typedDimensions": [
           "vsme:IdentifierOfMaterialTypedAxis"
         ],
@@ -57841,6 +57849,7 @@
             "vsme:NumberOfEmployeesForCountryOfEmploymentContract"
           ]
         ],
+        "type": "positive",
         "xbrldt:closed": true,
         "xbrldt:contextElement": "scenario"
       }
@@ -57895,6 +57904,7 @@
             "vsme:TotalGrossMarketBasedGHGEmissions"
           ]
         ],
+        "type": "positive",
         "xbrldt:closed": true,
         "xbrldt:contextElement": "scenario"
       }

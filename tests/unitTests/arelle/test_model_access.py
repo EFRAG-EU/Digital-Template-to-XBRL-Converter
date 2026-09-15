@@ -7,6 +7,7 @@ the narrowing/consistency logic using lightweight stubs.
 """
 
 from typing import Any, cast
+from unittest.mock import MagicMock
 
 import pytest
 from arelle import XbrlConst
@@ -60,7 +61,7 @@ class StubRel:
         contextElement: str | None = None,
         isClosed: bool = False,
         order: float = 1.0,
-        arcrole: str = "https://example.com/arcrole",
+        arcrole: str | None = "https://example.com/arcrole",
         linkrole: str = "https://example.com/elr",
     ) -> None:
         self.arcrole = arcrole
@@ -154,6 +155,29 @@ class TestConceptRelationship:
                 cast(Any, StubRel(toModelObject=StubConcept(qn())))
             )
 
+    def test_raises_on_none_arcrole(self) -> None:
+        # ModelRelationship.arcrole is typed str | None (a bare xlink:arc has
+        # no required xlink:arcrole), but ConceptRelationship.arcrole is not
+        # optional -- guard it the same way consecutiveLinkrole is guarded
+        # above, rather than assigning None into a str field.
+        target = MagicMock(spec=ModelConcept)
+        target.qname = qn()
+        with pytest.raises(ArelleModelInconsistency):
+            ConceptRelationship.fromArelle(
+                cast(Any, StubRel(toModelObject=target, arcrole=None))
+            )
+
+    def test_carries_arcrole_through(self) -> None:
+        # isinstance(target, ModelConcept) must hold for _asConcept() to accept
+        # it -- StubConcept doesn't satisfy that (see test_raises_on_non_concept_
+        # target above), so use a spec'd Mock, which does.
+        target = MagicMock(spec=ModelConcept)
+        target.qname = qn()
+        rel = ConceptRelationship.fromArelle(
+            cast(Any, StubRel(toModelObject=target, arcrole=XbrlConst.notAll))
+        )
+        assert rel.arcrole == XbrlConst.notAll
+
 
 class TestConceptRelationshipSet:
     ARCROLE = XbrlConst.domainMember
@@ -215,6 +239,7 @@ class TestConceptRelationshipSet:
         rel = ConceptRelationship(
             target=cast(ModelConcept, StubConcept(qn())),
             targetQName=qn(),
+            arcrole=self.ARCROLE,
             consecutiveLinkrole=self.ELR,
             isUsable=True,
             preferredLabel=None,
@@ -238,6 +263,7 @@ class TestConceptRelationshipSet:
         rel = ConceptRelationship(
             target=cast(ModelConcept, StubConcept(qn())),
             targetQName=qn(),
+            arcrole=self.ARCROLE,
             consecutiveLinkrole=otherElr,
             isUsable=True,
             preferredLabel=None,
