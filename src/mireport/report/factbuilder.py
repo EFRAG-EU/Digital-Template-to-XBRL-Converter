@@ -286,15 +286,18 @@ class FactBuilder:
         """Easy checks for XBRL validity to avoid mistakes. Still possible to create invalid facts.
 
         A fact is dimensionally valid if its dimension values match at least one
-        DimensionSignature for the concept -- never the union of every signature's
-        dimensions, since a concept can participate in multiple hypercubes/base-sets
-        with different (even unrelated) dimensional requirements.
+        EffectiveHypercube for the concept (XBRL Dimensions 1.0 section 3.1.1: OR
+        across base sets) -- never the union of every one's dimensions, since a
+        concept can participate in multiple hypercubes/base-sets with different
+        (even unrelated) dimensional requirements.
         """
         if self._concept is None:
             raise InlineReportException("Concept must be set before validating a Fact.")
 
-        signatures = taxonomy.getValidDimensionsForPrimaryItem(self._concept)
-        if not signatures:
+        effectiveHypercubes = taxonomy.getEffectiveHypercubesForPrimaryItem(
+            self._concept
+        )
+        if not effectiveHypercubes:
             if explicitDims or typedDims:
                 dim_list = ", ".join(str(d.qname) for d in (*explicitDims, *typedDims))
                 raise InlineReportException(
@@ -303,7 +306,10 @@ class FactBuilder:
                 )
             return
 
-        if any(signature.matches(explicitDims, typedDims) for signature in signatures):
+        if any(
+            effective.matches(explicitDims, typedDims)
+            for effective in effectiveHypercubes
+        ):
             return
 
         chosen_ed = ", ".join(f"{d.qname}={v.qname}" for d, v in explicitDims.items())

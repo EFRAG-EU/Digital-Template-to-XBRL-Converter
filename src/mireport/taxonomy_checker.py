@@ -139,7 +139,7 @@ class TaxonomyChecker:
 
     def reportInconsistentDimensionDomains(self) -> list[Diagnostic]:
         """Warn when an explicit dimension is given different domains in
-        different (role, hypercube) signatures.
+        different (role, hypercube) declarations.
 
         Taxonomy._lookupDomainByDimension unions the domain across every base
         set a dimension appears in, so getDomainMembersForExplicitDimension()
@@ -149,10 +149,10 @@ class TaxonomyChecker:
         domainsByDimension: dict[
             Concept, dict[tuple[str, Concept], frozenset[Concept]]
         ] = defaultdict(dict)
-        for signature in self.taxonomy.dimensionSignatures:
-            for eds in signature.explicitDimensions:
+        for declaration in self.taxonomy.hypercubeDeclarations:
+            for eds in declaration.explicitDimensions:
                 domainsByDimension[eds.dimension][
-                    (signature.roleUri, signature.hypercube)
+                    (declaration.roleUri, declaration.hypercube)
                 ] = eds.domain
 
         diagnostics: list[Diagnostic] = []
