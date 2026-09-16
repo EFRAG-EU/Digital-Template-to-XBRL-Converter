@@ -63,3 +63,9 @@ class OpenPyXlRelatedException(MIReportException):
 
 class EarlyAbortException(MIReportException):
     """Exception raised when a required field is missing in the report."""
+
+
+class SampleGenerationException(MIReportException):
+    """Exception raised by mireport.fact_sampling when it has no configured sample
+    value or unit for a concept's data type, or when a generated fact turns out not
+    to be dimensionally valid."""
