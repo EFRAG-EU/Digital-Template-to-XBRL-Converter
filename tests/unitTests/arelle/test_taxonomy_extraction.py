@@ -117,7 +117,7 @@ class StubValidatedModel:
     ) -> list[ResourceRelationship]:
         return self._relsByArcrole[arcrole]
 
-    def typeQNamesOfOrAnyType(self, concept: Any) -> tuple[QName, QName]:
+    def typeQNamesOfTypedDomainElement(self, concept: Any) -> tuple[QName, QName]:
         return self._typeQNamesByQName[concept.qname]
 
     def conceptRelationshipSet(self, arcroles: Any, linkrole: str) -> Any:
@@ -293,34 +293,34 @@ class TestAddLabels:
 
 
 class TestExtractTypedDomainWrapperElement:
-    def test_adds_wrapper_entry_with_type_info_and_labels(self) -> None:
+    def test_adds_wrapper_entry_with_type_info(self) -> None:
         elementQName = qn("SiteIdentifierDomain")
         dataType, baseType = qn("SiteIdentifierType"), qn("string", ns=XbrlConst.xsd)
         extractor, _ = makeExtractor(
-            {XbrlConst.conceptLabel: [labelRel(StubLabelResource(None, "en", "Site"))]},
+            {},
             typeQNamesByQName={elementQName: (dataType, baseType)},
         )
         element = StubConcept(elementQName, isNillable=True)
 
         extractor.extractTypedDomainWrapperElement(cast(ModelConcept, element))
 
-        wrapper = extractor.taxonomyJson["typed_domain_wrapper_elements"][elementQName]
+        wrapper = extractor.taxonomyJson["xs_elements"][elementQName]
         assert wrapper["dataType"] is dataType
         assert wrapper["baseDataType"] is baseType
         assert wrapper["nillable"] is True
-        assert wrapper["labels"]["en"] == {XbrlConst.standardLabel: "Site"}
+        assert "labels" not in wrapper
 
     def test_metadata_flags_omitted_when_false(self) -> None:
         elementQName = qn("PlainDomain")
         extractor, _ = makeExtractor(
-            {XbrlConst.conceptLabel: []},
+            {},
             typeQNamesByQName={elementQName: (qn("string"), qn("string"))},
         )
         element = StubConcept(elementQName)
 
         extractor.extractTypedDomainWrapperElement(cast(ModelConcept, element))
 
-        wrapper = extractor.taxonomyJson["typed_domain_wrapper_elements"][elementQName]
+        wrapper = extractor.taxonomyJson["xs_elements"][elementQName]
         assert "nillable" not in wrapper
         assert "abstract" not in wrapper
         assert "dimension" not in wrapper
@@ -330,41 +330,20 @@ class TestExtractTypedDomainWrapperElement:
     def test_second_call_for_the_same_element_is_a_no_op(self) -> None:
         elementQName = qn("SharedDomain")
         extractor, _ = makeExtractor(
-            {
-                XbrlConst.conceptLabel: [
-                    labelRel(StubLabelResource(None, "en", "First"))
-                ]
-            },
-            typeQNamesByQName={elementQName: (qn("string"), qn("string"))},
+            {}, typeQNamesByQName={elementQName: (qn("string"), qn("string"))}
         )
-        firstElement = StubConcept(elementQName)
+        firstElement = StubConcept(elementQName, isNillable=True)
         extractor.extractTypedDomainWrapperElement(cast(ModelConcept, firstElement))
-        firstWrapper = extractor.taxonomyJson["typed_domain_wrapper_elements"][
-            elementQName
-        ]
+        firstWrapper = extractor.taxonomyJson["xs_elements"][elementQName]
 
-        # A second typed dimension sharing the same typed domain element would
-        # see different (canned) label relationships if re-processed -- this
-        # proves it is not.
-        extractor.model = cast(
-            ValidatedModel,
-            StubValidatedModel(
-                {
-                    XbrlConst.conceptLabel: [
-                        labelRel(StubLabelResource(None, "en", "Second"))
-                    ]
-                },
-                typeQNamesByQName={elementQName: (qn("string"), qn("string"))},
-            ),
-        )
-        secondElement = StubConcept(elementQName)
+        # A second typed dimension sharing the same typed domain element
+        # would see a different (canned) nillable flag if re-processed --
+        # this proves it is not.
+        secondElement = StubConcept(elementQName, isNillable=False)
         extractor.extractTypedDomainWrapperElement(cast(ModelConcept, secondElement))
 
-        assert (
-            extractor.taxonomyJson["typed_domain_wrapper_elements"][elementQName]
-            is firstWrapper
-        )
-        assert firstWrapper["labels"]["en"] == {XbrlConst.standardLabel: "First"}
+        assert extractor.taxonomyJson["xs_elements"][elementQName] is firstWrapper
+        assert firstWrapper["nillable"] is True
 
 
 def conceptRel(

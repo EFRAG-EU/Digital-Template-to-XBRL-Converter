@@ -1,5 +1,5 @@
 """Unit tests for TypedDomainWrapperElement: the typed domain element of a
-typed dimension, loaded from its own "typed_domain_wrapper_elements" section
+typed dimension, loaded from its own "xs_elements" section
 of the taxonomy JSON (see mireport.arelle.taxonomy_extraction.
 extractTypedDomainWrapperElement()) rather than "concepts", since it is a
 plain xs:element and not an XBRL concept.
@@ -58,7 +58,6 @@ def _wrapper_element(
     data_type: str = "xs:string",
     base_data_type: str = "xs:string",
     nillable: bool = False,
-    labels: dict[str, dict[str, str]] | None = None,
 ) -> dict[str, Any]:
     jelement: dict[str, Any] = {
         "dataType": data_type,
@@ -66,8 +65,6 @@ def _wrapper_element(
     }
     if nillable:
         jelement["nillable"] = True
-    if labels is not None:
-        jelement["labels"] = labels
     return jelement
 
 
@@ -75,7 +72,7 @@ def _build_taxonomy(
     entry_point: str,
     concepts: dict[str, dict[str, Any]],
     *,
-    typed_domain_wrapper_elements: dict[str, dict[str, Any]] | None = None,
+    xs_elements: dict[str, dict[str, Any]] | None = None,
 ) -> Taxonomy:
     bits: dict[str, Any] = {
         "entryPoint": entry_point,
@@ -84,14 +81,18 @@ def _build_taxonomy(
         "presentation": {},
         "dimensions": {},
     }
-    if typed_domain_wrapper_elements is not None:
-        bits["typed_domain_wrapper_elements"] = typed_domain_wrapper_elements
+    if xs_elements is not None:
+        bits["xs_elements"] = xs_elements
     return loadTaxonomyJSON(bits)
 
 
-_BASE_CONCEPTS = {
-    "vsme:TypedAxis": _concept(dimension=True, other={"typedElement": "vsme:TYP"}),
+_PLAIN_CONCEPTS = {
     "vsme:PlainConcept": _concept(),
+}
+
+_TYPED_AXIS_CONCEPTS = {
+    **_PLAIN_CONCEPTS,
+    "vsme:TypedAxis": _concept(dimension=True, other={"typedElement": "vsme:TYP"}),
 }
 
 
@@ -99,15 +100,14 @@ class TestLoading:
     def test_typed_dimension_resolves_its_wrapper_element(self) -> None:
         taxonomy = _build_taxonomy(
             "test://typed-wrapper/resolves",
-            _BASE_CONCEPTS,
-            typed_domain_wrapper_elements={
+            _TYPED_AXIS_CONCEPTS,
+            xs_elements={
                 "vsme:TYP": _wrapper_element(
                     data_type="vsme:SiteIdentifierType", nillable=True
                 )
             },
         )
-        dimension = taxonomy.getConcept("vsme:TypedAxis")
-        element = dimension.getTypedDomainWrapperElement()
+        element = taxonomy.getConcept("vsme:TypedAxis").typedElement
         assert element is not None
         assert str(element.qname) == "vsme:TYP"
         assert str(element.dataType) == "vsme:SiteIdentifierType"
@@ -115,20 +115,23 @@ class TestLoading:
         assert element.isNillable is True
 
     def test_non_typed_concept_has_no_wrapper_element(self) -> None:
-        taxonomy = _build_taxonomy("test://typed-wrapper/non-typed", _BASE_CONCEPTS)
-        assert (
-            taxonomy.getConcept("vsme:PlainConcept").getTypedDomainWrapperElement()
-            is None
+        taxonomy = _build_taxonomy(
+            "test://typed-wrapper/non-typed",
+            _TYPED_AXIS_CONCEPTS,
+            xs_elements={"vsme:TYP": _wrapper_element()},
         )
+        assert taxonomy.getConcept("vsme:PlainConcept").typedElement is None
 
-    def test_missing_section_is_tolerated_for_older_json(self) -> None:
-        # Older or third-party baked JSON predates typed_domain_wrapper_elements
-        # entirely; a typed dimension's typedElement then has no entry to
-        # resolve, but that must not break loading the rest of the taxonomy.
-        taxonomy = _build_taxonomy("test://typed-wrapper/legacy-json", _BASE_CONCEPTS)
-        dimension = taxonomy.getConcept("vsme:TypedAxis")
-        assert dimension.typedElement is not None
-        assert dimension.getTypedDomainWrapperElement() is None
+    def test_missing_section_raises_for_a_typed_dimension(self) -> None:
+        # A concept declaring other.typedElement without a matching
+        # xs_elements entry is an inconsistent taxonomy
+        # JSON, not "older JSON missing an optional section" -- extraction
+        # always writes both together (see extractTypedDomainWrapperElement()
+        # in taxonomy_extraction.py), so this must fail loudly.
+        with pytest.raises(TaxonomyException):
+            _build_taxonomy(
+                "test://typed-wrapper/missing-section", _TYPED_AXIS_CONCEPTS
+            )
 
     def test_missing_data_type_raises(self) -> None:
         jelement = _wrapper_element()
@@ -136,8 +139,8 @@ class TestLoading:
         with pytest.raises(TaxonomyException):
             _build_taxonomy(
                 "test://typed-wrapper/no-data-type",
-                _BASE_CONCEPTS,
-                typed_domain_wrapper_elements={"vsme:TYP": jelement},
+                _TYPED_AXIS_CONCEPTS,
+                xs_elements={"vsme:TYP": jelement},
             )
 
     def test_missing_base_data_type_raises(self) -> None:
@@ -146,27 +149,17 @@ class TestLoading:
         with pytest.raises(TaxonomyException):
             _build_taxonomy(
                 "test://typed-wrapper/no-base-data-type",
-                _BASE_CONCEPTS,
-                typed_domain_wrapper_elements={"vsme:TYP": jelement},
+                _TYPED_AXIS_CONCEPTS,
+                xs_elements={"vsme:TYP": jelement},
             )
-
-    def test_labels_default_to_empty(self) -> None:
-        taxonomy = _build_taxonomy(
-            "test://typed-wrapper/no-labels",
-            _BASE_CONCEPTS,
-            typed_domain_wrapper_elements={"vsme:TYP": _wrapper_element()},
-        )
-        element = taxonomy.getConcept("vsme:TypedAxis").getTypedDomainWrapperElement()
-        assert element is not None
-        assert element.labels == {}
 
 
 class TestTaxonomyAccessor:
     def test_get_typed_domain_wrapper_element_by_qname_string(self) -> None:
         taxonomy = _build_taxonomy(
             "test://typed-wrapper/accessor-by-string",
-            _BASE_CONCEPTS,
-            typed_domain_wrapper_elements={"vsme:TYP": _wrapper_element()},
+            _PLAIN_CONCEPTS,
+            xs_elements={"vsme:TYP": _wrapper_element()},
         )
         element = taxonomy.getTypedDomainWrapperElement("vsme:TYP")
         assert str(element.qname) == "vsme:TYP"
@@ -174,15 +167,15 @@ class TestTaxonomyAccessor:
     def test_get_typed_domain_wrapper_element_by_qname_object(self) -> None:
         taxonomy = _build_taxonomy(
             "test://typed-wrapper/accessor-by-qname",
-            _BASE_CONCEPTS,
-            typed_domain_wrapper_elements={"vsme:TYP": _wrapper_element()},
+            _PLAIN_CONCEPTS,
+            xs_elements={"vsme:TYP": _wrapper_element()},
         )
         byString = taxonomy.getTypedDomainWrapperElement("vsme:TYP")
         assert taxonomy.getTypedDomainWrapperElement(byString.qname) is byString
 
     def test_unknown_qname_raises_key_error(self) -> None:
         taxonomy = _build_taxonomy(
-            "test://typed-wrapper/accessor-unknown", _BASE_CONCEPTS
+            "test://typed-wrapper/accessor-unknown", _PLAIN_CONCEPTS
         )
         with pytest.raises(KeyError):
             taxonomy.getTypedDomainWrapperElement("vsme:NoSuchElement")
@@ -192,8 +185,8 @@ class TestEquality:
     def test_equal_by_qname(self) -> None:
         taxonomy = _build_taxonomy(
             "test://typed-wrapper/equality",
-            _BASE_CONCEPTS,
-            typed_domain_wrapper_elements={"vsme:TYP": _wrapper_element()},
+            _PLAIN_CONCEPTS,
+            xs_elements={"vsme:TYP": _wrapper_element()},
         )
         element = taxonomy.getTypedDomainWrapperElement("vsme:TYP")
         other = TypedDomainWrapperElement(
@@ -205,8 +198,8 @@ class TestEquality:
     def test_not_equal_to_other_types(self) -> None:
         taxonomy = _build_taxonomy(
             "test://typed-wrapper/not-equal",
-            _BASE_CONCEPTS,
-            typed_domain_wrapper_elements={"vsme:TYP": _wrapper_element()},
+            _PLAIN_CONCEPTS,
+            xs_elements={"vsme:TYP": _wrapper_element()},
         )
         element = taxonomy.getTypedDomainWrapperElement("vsme:TYP")
         assert element != "vsme:TYP"

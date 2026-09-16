@@ -59132,7 +59132,8 @@
     "xbrldt": "http://xbrl.org/2005/xbrldt",
     "xbrli": "http://www.xbrl.org/2003/instance",
     "xl": "http://www.xbrl.org/2003/XLink",
-    "xlink": "http://www.w3.org/1999/xlink"
+    "xlink": "http://www.w3.org/1999/xlink",
+    "xs": "http://www.w3.org/2001/XMLSchema"
   },
   "presentation": {
     "https://xbrl.efrag.org/taxonomy/vsme/2026-05-01/role/role-100": {
@@ -66158,6 +66159,13 @@
           "vsme:DisclosureOfAnyOtherGovernanceAndOrEntitySpecificGovernanceDisclosures"
         ]
       ]
+    }
+  },
+  "xs_elements": {
+    "vsme:TYP": {
+      "baseDataType": "xs:string",
+      "dataType": "xs:string",
+      "nillable": true
     }
   }
 }

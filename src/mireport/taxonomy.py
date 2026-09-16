@@ -120,7 +120,7 @@ class Concept:
         "_labels",
         "_qnameMaker",
         "_taxonomy",
-        "_typedDomainWrapperElement",
+        "_typedElementQName",
         "baseDataType",
         "dataType",
         "periodType",
@@ -163,10 +163,10 @@ class Concept:
 
         other = details.get("other", {})
 
-        self.typedElement = None
+        self.typedElement: TypedDomainWrapperElement | None = None
+        self._typedElementQName: QName | None = None
         if (tElem := other.get("typedElement")) is not None:
-            self.typedElement = self._qnameMaker.fromString(tElem)
-        self._typedDomainWrapperElement: TypedDomainWrapperElement | None = None
+            self._typedElementQName = self._qnameMaker.fromString(tElem)
 
         self._eeDomainMembers: tuple[Concept, ...] | None = None
         self._eeDomainMemberStrings: list[str] | None = None
@@ -206,15 +206,18 @@ class Concept:
                 taxonomy.getConcept(member) for member in self._eeDomainMemberStrings
             )
             self._eeDomainMemberStrings = None
-        if self.typedElement is not None:
-            # .get(), not getTypedDomainWrapperElement(): older or
-            # third-party taxonomy JSON predates typed_domain_wrapper_elements
-            # entirely, so a typed dimension's typedElement can legitimately
-            # have no entry there -- that just means no type info is
-            # available for it, not a broken taxonomy.
-            self._typedDomainWrapperElement = taxonomy._typedDomainWrapperElements.get(
-                self.typedElement
-            )
+        if self._typedElementQName is not None:
+            try:
+                self.typedElement = taxonomy.getTypedDomainWrapperElement(
+                    self._typedElementQName
+                )
+            except KeyError:
+                raise TaxonomyException(
+                    f"Concept {self.qname} declares typed dimension domain "
+                    f"element {self._typedElementQName}, but the taxonomy has "
+                    "no xs_elements entry for it."
+                ) from None
+            self._typedElementQName = None
 
     def getLabelForRole(
         self,
@@ -521,11 +524,6 @@ class Concept:
     def getEEDomain(self) -> tuple[Concept, ...]:
         return tuple(self._eeDomainMembers) if self._eeDomainMembers is not None else ()
 
-    def getTypedDomainWrapperElement(self) -> TypedDomainWrapperElement | None:
-        """The typed domain element of this typed dimension, or None if this
-        concept is not a typed dimension."""
-        return self._typedDomainWrapperElement
-
 
 class TypedDomainWrapperElement:
     """
@@ -534,15 +532,15 @@ class TypedDomainWrapperElement:
     member of the xbrli:item substitution group, so it has no periodType, is
     never a fact's reported concept, and cannot itself be the source or
     target of a linkbase arc the way a Concept can. Loaded from its own
-    "typed_domain_wrapper_elements" section of the taxonomy JSON rather than
-    "concepts", to avoid misrepresenting it as one.
+    "xs_elements" section of the taxonomy JSON rather than "concepts", to
+    avoid misrepresenting it as one. No labels: unlike a concept, it is
+    never presented to a user by name.
     """
 
-    __slots__ = ("baseDataType", "dataType", "isNillable", "labels", "qname")
+    __slots__ = ("baseDataType", "dataType", "isNillable", "qname")
 
     def __init__(self, qnameMaker: QNameMaker, s_qname: str, details: dict) -> None:
         self.qname: QName = qnameMaker.fromString(s_qname)
-        self.labels: LabelsByLang = details.get("labels", {})
         self.isNillable: bool = details.get("nillable", False)
 
         if (data_type := details.get("dataType")) is None:
@@ -1480,7 +1478,7 @@ def _createTaxonomyFromJSON(bits: dict) -> None:
     }
     typedDomainWrapperElements: dict[str, TypedDomainWrapperElement] = {
         str_qname: TypedDomainWrapperElement(qnameMaker, str_qname, jelement)
-        for str_qname, jelement in bits.get("typed_domain_wrapper_elements", {}).items()
+        for str_qname, jelement in bits.get("xs_elements", {}).items()
     }
 
     _TAXONOMIES[entryPoint] = Taxonomy(
