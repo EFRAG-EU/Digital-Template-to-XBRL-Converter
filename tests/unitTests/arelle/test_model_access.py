@@ -415,20 +415,52 @@ class TestValidatedModel:
         with pytest.raises(ArelleModelInconsistency):
             model.typeQNamesOf(cast(ModelConcept, concept))
 
-    def test_typed_domain_qname_of(self) -> None:
-        domainQName = qn("myDomain")
-        concept = StubConcept(qn(), typedDomainElement=StubConcept(domainQName))
+    def test_type_qnames_of_or_any_type_delegates_when_named(self) -> None:
+        typeQName = qn("myType")
+        baseQName = QName("xbrli", XbrlConst.xbrli, "stringItemType")
+        concept = StubConcept(
+            qn(), type=StubType(typeQName), baseXbrliTypeQname=baseQName
+        )
         model = makeModel(StubModelXbrl())
-        assert model.typedDomainQNameOf(cast(ModelConcept, concept)) is domainQName
+        assert model.typeQNamesOfOrAnyType(cast(ModelConcept, concept)) == (
+            typeQName,
+            baseQName,
+        )
 
     @pytest.mark.parametrize(
-        "typedDomainElement", [None, StubConcept(None)], ids=["missing", "no-qname"]
+        "type_", [None, StubType(None)], ids=["no-type", "anonymous-type"]
     )
-    def test_typed_domain_qname_of_raises(self, typedDomainElement: Any) -> None:
-        concept = StubConcept(qn(), typedDomainElement=typedDomainElement)
+    def test_type_qnames_of_or_any_type_falls_back_when_untyped(
+        self, type_: StubType | None
+    ) -> None:
+        # A bare xs:element with no type attribute and no inline type is
+        # legal XML Schema (implicit xs:anyType) -- unlike an XBRL item, a
+        # typed dimension's typed domain element commonly looks like this
+        # (confirmed against real ESRS taxonomy data), so this must not
+        # raise the way typeQNamesOf() does.
+        concept = StubConcept(qn(), type=type_, baseXbrliTypeQname=qn("base"))
+        model = makeModel(StubModelXbrl())
+        dataType, baseDataType = model.typeQNamesOfOrAnyType(
+            cast(ModelConcept, concept)
+        )
+        assert dataType.localName == "anyType"
+        assert dataType.namespaceURI == XbrlConst.xsd
+        assert baseDataType.localName == "anyType"
+        assert baseDataType.namespaceURI == XbrlConst.xsd
+
+    def test_typed_domain_element_of(self) -> None:
+        domainElement = StubConcept(qn("myDomain"))
+        concept = StubConcept(qn(), typedDomainElement=domainElement)
+        model = makeModel(StubModelXbrl())
+        assert model.typedDomainElementOf(cast(ModelConcept, concept)) is cast(
+            ModelConcept, domainElement
+        )
+
+    def test_typed_domain_element_of_raises_when_missing(self) -> None:
+        concept = StubConcept(qn(), typedDomainElement=None)
         model = makeModel(StubModelXbrl())
         with pytest.raises(ArelleModelInconsistency):
-            model.typedDomainQNameOf(cast(ModelConcept, concept))
+            model.typedDomainElementOf(cast(ModelConcept, concept))
 
     def test_role_type_returns_single_match(self) -> None:
         roleUri = "https://example.com/role"
