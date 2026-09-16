@@ -12,13 +12,16 @@ from dataclasses import dataclass, field
 import pytest
 
 from mireport.coverage_report_generator._sampling import (
+    SampleEntityPeriod,
     buildDimensionValues,
+    buildFactDimensions,
     domainForDimension,
     pickExplicitRepresentative,
     unitFor,
     valueFor,
 )
 from mireport.exceptions import SampleGenerationException
+from mireport.taxonomy import PeriodType
 
 
 @dataclass(frozen=True)
@@ -43,6 +46,7 @@ class FakeConcept:
     eeDomain: frozenset[FakeConcept] = field(default_factory=frozenset)
     dataTypeLocalName: str = "stringItemType"
     baseDataTypeLocalName: str = "stringItemType"
+    periodType: PeriodType = PeriodType.Duration
 
     def getEEDomain(self) -> frozenset[FakeConcept]:
         return self.eeDomain
@@ -340,3 +344,96 @@ class TestBuildDimensionValues:
         )
         assert dimensions == {"esrs:TypedAxis": "sample value"}
         assert used == {dim.qname}
+
+
+class FakeEffectiveHypercube:
+    def __init__(
+        self, *, roleUri: str = "urn:example:role", valid: bool = True
+    ) -> None:
+        self.roleUri = roleUri
+        self._valid = valid
+
+    def matches(
+        self,
+        explicitDims: dict[FakeConcept, FakeConcept],
+        typedDims: dict[FakeConcept, str],
+    ) -> bool:
+        return self._valid
+
+
+SAMPLE_PERIOD = SampleEntityPeriod(
+    entity="lei:529900T8BM49AURSDO55",
+    entityPrefix="lei",
+    entityNamespace="http://standards.iso.org/iso/17442",
+    periodInstant="2027-01-01T00:00:00",
+    periodDuration="2026-01-01T00:00:00/2027-01-01T00:00:00",
+)
+
+
+class TestBuildFactDimensions:
+    def test_no_variation_uses_representative_values_and_omits_defaults(self) -> None:
+        concept = FakeConcept(qname=FakeQName("esrs", "C"))
+        axis = member("esrs", "Axis")
+        default = member("esrs", "DefaultMember")
+        dimensions, used = buildFactDimensions(
+            FakeTaxonomy(UTR=FakeUTR()),
+            concept,
+            SAMPLE_PERIOD,
+            FakeEffectiveHypercube(),
+            {axis: default},
+            {axis: default},
+            {},
+        )
+        assert dimensions == {
+            "concept": "esrs:C",
+            "entity": "lei:529900T8BM49AURSDO55",
+            "period": SAMPLE_PERIOD.periodDuration,
+        }
+        assert used == {concept.qname}
+
+    def test_varied_explicit_dimension_overrides_representative_value(self) -> None:
+        concept = FakeConcept(qname=FakeQName("esrs", "C"))
+        axis = member("esrs", "Axis")
+        default, chosen = member("esrs", "DefaultMember"), member("esrs", "OtherMember")
+        dimensions, used = buildFactDimensions(
+            FakeTaxonomy(UTR=FakeUTR()),
+            concept,
+            SAMPLE_PERIOD,
+            FakeEffectiveHypercube(),
+            {axis: default},
+            {axis: default},
+            {},
+            variedExplicit=axis,
+            explicitValue=chosen,
+        )
+        assert dimensions["esrs:Axis"] == "esrs:OtherMember"
+        assert used == {concept.qname, axis.qname, chosen.qname}
+
+    def test_varied_typed_dimension_overrides_placeholder(self) -> None:
+        concept = FakeConcept(qname=FakeQName("esrs", "C"))
+        typedAxis = member("esrs", "TypedAxis")
+        dimensions, _ = buildFactDimensions(
+            FakeTaxonomy(UTR=FakeUTR()),
+            concept,
+            SAMPLE_PERIOD,
+            FakeEffectiveHypercube(),
+            {},
+            {},
+            {typedAxis: "placeholder"},
+            variedTyped=typedAxis,
+            typedValue="chosen value",
+        )
+        assert dimensions["esrs:TypedAxis"] == "chosen value"
+
+    def test_raises_when_generated_dimensions_do_not_match_the_hypercube(self) -> None:
+        concept = FakeConcept(qname=FakeQName("esrs", "C"))
+        with pytest.raises(SampleGenerationException):
+            buildFactDimensions(
+                FakeTaxonomy(UTR=FakeUTR()),
+                concept,
+                SAMPLE_PERIOD,
+                FakeEffectiveHypercube(valid=False),
+                {},
+                {},
+                {},
+            )
