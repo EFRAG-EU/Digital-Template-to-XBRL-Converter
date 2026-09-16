@@ -40,13 +40,17 @@ class StubConcept:
         *,
         isItem: bool = True,
         type: StubType | None = None,
+        typeQname: QName | None = None,
         baseXbrliTypeQname: QName | None = None,
+        baseXsdType: str = "anyType",
         typedDomainElement: Any = None,
     ) -> None:
         self.qname = qname
         self.isItem = isItem
         self.type = type
+        self.typeQname = typeQname
         self.baseXbrliTypeQname = baseXbrliTypeQname
+        self.baseXsdType = baseXsdType
         self.typedDomainElement = typedDomainElement
 
 
@@ -415,32 +419,53 @@ class TestValidatedModel:
         with pytest.raises(ArelleModelInconsistency):
             model.typeQNamesOf(cast(ModelConcept, concept))
 
-    def test_type_qnames_of_or_any_type_delegates_when_named(self) -> None:
-        typeQName = qn("myType")
-        baseQName = QName("xbrli", XbrlConst.xbrli, "stringItemType")
-        concept = StubConcept(
-            qn(), type=StubType(typeQName), baseXbrliTypeQname=baseQName
-        )
-        model = makeModel(StubModelXbrl())
-        assert model.typeQNamesOfOrAnyType(cast(ModelConcept, concept)) == (
-            typeQName,
-            baseQName,
-        )
-
-    @pytest.mark.parametrize(
-        "type_", [None, StubType(None)], ids=["no-type", "anonymous-type"]
-    )
-    def test_type_qnames_of_or_any_type_falls_back_when_untyped(
-        self, type_: StubType | None
+    def test_type_qnames_of_typed_domain_element_resolves_a_named_xsd_type(
+        self,
     ) -> None:
-        # A bare xs:element with no type attribute and no inline type is
-        # legal XML Schema (implicit xs:anyType) -- unlike an XBRL item, a
-        # typed dimension's typed domain element commonly looks like this
-        # (confirmed against real ESRS taxonomy data), so this must not
-        # raise the way typeQNamesOf() does.
-        concept = StubConcept(qn(), type=type_, baseXbrliTypeQname=qn("base"))
+        # A taxonomy-defined named type (e.g. a restriction of xs:string):
+        # the declared type is its own name; the base comes from
+        # element.baseXsdType (Arelle's own XSD-only derivation walk, never
+        # an xbrli:*ItemType -- a typed domain element can never be of xbrli
+        # item type in the first place, XBRL Dimensions 1.0 3.1.9.2 forbids
+        # it -- which is why baseXbrliTypeQname is the wrong tool here).
+        typeQName = qn("SiteIdentifierType")
+        concept = StubConcept(qn(), typeQname=typeQName, baseXsdType="string")
         model = makeModel(StubModelXbrl())
-        dataType, baseDataType = model.typeQNamesOfOrAnyType(
+        dataType, baseDataType = model.typeQNamesOfTypedDomainElement(
+            cast(ModelConcept, concept)
+        )
+        assert dataType == typeQName
+        assert baseDataType.localName == "string"
+        assert baseDataType.namespaceURI == XbrlConst.xsd
+
+    def test_type_qnames_of_typed_domain_element_resolves_a_bare_xsd_primitive(
+        self,
+    ) -> None:
+        # type="xs:string" directly (not a taxonomy-defined named type) is
+        # exactly how both ESRS's and VSME's own typed-dimension domain
+        # elements are declared.
+        concept = StubConcept(
+            qn(),
+            typeQname=QName("xsd", XbrlConst.xsd, "string"),
+            baseXsdType="string",
+        )
+        model = makeModel(StubModelXbrl())
+        dataType, baseDataType = model.typeQNamesOfTypedDomainElement(
+            cast(ModelConcept, concept)
+        )
+        assert dataType == baseDataType
+        assert dataType.localName == "string"
+        assert dataType.namespaceURI == XbrlConst.xsd
+
+    def test_type_qnames_of_typed_domain_element_falls_back_when_untyped(
+        self,
+    ) -> None:
+        # No type attribute and no inline type at all (concept.typeQname is
+        # None) is legal XML Schema (implicit xs:anyType) -- not observed in
+        # ESRS or VSME, but handled for completeness.
+        concept = StubConcept(qn(), typeQname=None, baseXsdType="anyType")
+        model = makeModel(StubModelXbrl())
+        dataType, baseDataType = model.typeQNamesOfTypedDomainElement(
             cast(ModelConcept, concept)
         )
         assert dataType.localName == "anyType"

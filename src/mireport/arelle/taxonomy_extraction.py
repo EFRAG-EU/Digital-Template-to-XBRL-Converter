@@ -718,31 +718,38 @@ class TaxonomyInfoExtractor:
 
     def extractTypedDomainWrapperElement(self, element: ModelConcept) -> None:
         """Add *element* -- a typed dimension's typed domain element -- to
-        typed_domain_wrapper_elements, unless already added by an earlier
-        typed dimension sharing the same element.
+        xs_elements, unless already added by an earlier typed dimension
+        sharing the same element.
 
         This is a separate top-level JSON section, not another entry in
         "concepts", because a typed domain element is an xs:element, not an
         XBRL item (XBRL Dimensions 1.0 3.1.9.2 requires it NOT be one) --
         it has no periodType or balance and cannot appear in a linkbase
         arc the way a concept can, so folding it into "concepts" would
-        misrepresent it as one.
+        misrepresent it as one. No labels: unlike a concept, a typed domain
+        element is not something a report ever presents to a user by name.
         """
         elementQName = qnameOf(element)
-        if elementQName in self.taxonomyJson["typed_domain_wrapper_elements"]:
+        if elementQName in self.taxonomyJson["xs_elements"]:
             return
-        # OrAnyType, not typeQNamesOf(): unlike an XBRL item, a typed domain
-        # element commonly declares no type at all (implicit xs:anyType) --
-        # ESRS's own typed dimensions do this -- and that is not a modelling
-        # defect worth raising over.
-        dataType, baseDataType = self.model.typeQNamesOfOrAnyType(element)
+        # Not typeQNamesOf(): both ESRS's and VSME's typed dimensions declare
+        # their domain element as type="xs:string" directly, which
+        # typeQNamesOf() cannot resolve (Arelle never models a ModelType for
+        # a bare XML Schema primitive) even though it is a genuine, named
+        # type -- see typeQNamesOfTypedDomainElement() for why.
+        dataType, baseDataType = self.model.typeQNamesOfTypedDomainElement(element)
         wrapper: dict[str, Any] = {
             "dataType": dataType,
             "baseDataType": baseDataType,
         }
-        self.addConceptMetadata(element, wrapper)
-        self.addLabels(element, wrapper)
-        self.taxonomyJson["typed_domain_wrapper_elements"][elementQName] = wrapper
+        # Not addConceptMetadata(): abstract/dimension/hypercube/numeric are
+        # all concept-only concerns that can never apply to a typed domain
+        # element (XBRL Dimensions forbids it from being an item at all), so
+        # writing it here would misleadingly suggest they could. nillable is
+        # the only one of those flags that is actually meaningful for it.
+        if element.isNillable:
+            wrapper["nillable"] = True
+        self.taxonomyJson["xs_elements"][elementQName] = wrapper
 
     def reportIsolatedConcepts(self) -> None:
         """Warn about concepts absent from the DTS's arc structure, at three
