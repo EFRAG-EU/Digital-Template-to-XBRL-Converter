@@ -711,10 +711,38 @@ class TaxonomyInfoExtractor:
                     )
                 )
             if concept.isTypedDimension:
-                jconcept.setdefault("other", {})["typedElement"] = (
-                    self.model.typedDomainQNameOf(concept)
-                )
+                typedElement = self.model.typedDomainElementOf(concept)
+                jconcept.setdefault("other", {})["typedElement"] = qnameOf(typedElement)
+                self.extractTypedDomainWrapperElement(typedElement)
             self.taxonomyJson["concepts"][qname] = jconcept
+
+    def extractTypedDomainWrapperElement(self, element: ModelConcept) -> None:
+        """Add *element* -- a typed dimension's typed domain element -- to
+        typed_domain_wrapper_elements, unless already added by an earlier
+        typed dimension sharing the same element.
+
+        This is a separate top-level JSON section, not another entry in
+        "concepts", because a typed domain element is an xs:element, not an
+        XBRL item (XBRL Dimensions 1.0 3.1.9.2 requires it NOT be one) --
+        it has no periodType or balance and cannot appear in a linkbase
+        arc the way a concept can, so folding it into "concepts" would
+        misrepresent it as one.
+        """
+        elementQName = qnameOf(element)
+        if elementQName in self.taxonomyJson["typed_domain_wrapper_elements"]:
+            return
+        # OrAnyType, not typeQNamesOf(): unlike an XBRL item, a typed domain
+        # element commonly declares no type at all (implicit xs:anyType) --
+        # ESRS's own typed dimensions do this -- and that is not a modelling
+        # defect worth raising over.
+        dataType, baseDataType = self.model.typeQNamesOfOrAnyType(element)
+        wrapper: dict[str, Any] = {
+            "dataType": dataType,
+            "baseDataType": baseDataType,
+        }
+        self.addConceptMetadata(element, wrapper)
+        self.addLabels(element, wrapper)
+        self.taxonomyJson["typed_domain_wrapper_elements"][elementQName] = wrapper
 
     def reportIsolatedConcepts(self) -> None:
         """Warn about concepts absent from the DTS's arc structure, at three
