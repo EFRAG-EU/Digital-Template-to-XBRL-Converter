@@ -15,6 +15,7 @@ sensibly default, so callers supply them via SampleEntityPeriod.
 
 from __future__ import annotations
 
+import functools
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
@@ -24,7 +25,12 @@ from mireport.taxonomy import HypercubeType, PeriodType
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-    from mireport.taxonomy import Concept, HypercubeDeclaration, Taxonomy
+    from mireport.taxonomy import (
+        Concept,
+        EffectiveHypercube,
+        HypercubeDeclaration,
+        Taxonomy,
+    )
     from mireport.xml import QName
 
 # OIM reserved alias for the standard xBRL namespace; declaring it is what makes the
@@ -325,6 +331,67 @@ def coreDimensionsFor(
     return dimensions, qnames
 
 
+def buildFactDimensions(
+    taxonomy: Taxonomy,
+    concept: Concept,
+    samplePeriod: SampleEntityPeriod,
+    effective: EffectiveHypercube,
+    explicitRepresentative: dict[Concept, Concept],
+    defaultByDim: dict[Concept, Concept | None],
+    typedPlaceholder: dict[Concept, str],
+    *,
+    variedExplicit: Concept | None = None,
+    explicitValue: Concept | None = None,
+    variedTyped: Concept | None = None,
+    typedValue: str | None = None,
+) -> tuple[dict[str, str], set[QName]]:
+    """
+    One fact's dimensions: the dimension under test (if any) at its test value,
+    every other explicit dimension in *explicitRepresentative* and typed dimension
+    in *typedPlaceholder* -- both scoped to *effective*, a single EffectiveHypercube
+    -- at its representative/placeholder value.
+
+    Confirms the result is actually valid against *effective* via
+    EffectiveHypercube.matches() rather than trusting the representative-value
+    picker in isolation -- if a negative (notAll) hypercube's exclusion zone catches
+    a representative value the picker chose, this raises loudly with a clear message
+    instead of silently returning an invalid fixture.
+    """
+    explicitChosen: dict[Concept, Concept] = {
+        dim: (
+            explicitValue
+            if dim is variedExplicit and explicitValue is not None
+            else defaultMember
+        )
+        for dim, defaultMember in explicitRepresentative.items()
+    }
+    typedChosen: dict[Concept, str] = {
+        dim: (
+            typedValue if dim is variedTyped and typedValue is not None else placeholder
+        )
+        for dim, placeholder in typedPlaceholder.items()
+    }
+    if not effective.matches(explicitChosen, typedChosen):
+        raise SampleGenerationException(
+            "Generated dimensions for "
+            f"{concept.qname} are not dimensionally valid against "
+            f"{effective.roleUri} -- explicit="
+            f"{ {str(d.qname): str(v.qname) for d, v in explicitChosen.items()} }, "
+            f"typed={ {str(d.qname): v for d, v in typedChosen.items()} }. "
+            "The representative-value picker in buildFacts() cannot "
+            "satisfy a negative (notAll) hypercube's exclusion here on "
+            "its own; it needs updating for this shape."
+        )
+
+    dimensions, used = coreDimensionsFor(taxonomy, concept, samplePeriod)
+    extraDimensions, extraUsed = buildDimensionValues(
+        explicitChosen, defaultByDim, typedChosen
+    )
+    dimensions.update(extraDimensions)
+    used.update(extraUsed)
+    return dimensions, used
+
+
 def buildFacts(
     taxonomy: Taxonomy,
     concepts: list[Concept],
@@ -494,50 +561,20 @@ def buildFacts(
                 dim: f"{dim.qname.localName} sample value" for dim in typedDims
             }
 
-            def dimensionsWith(
-                variedExplicit: Concept | None = None,
-                explicitValue: Concept | None = None,
-                variedTyped: Concept | None = None,
-                typedValue: str | None = None,
-            ) -> tuple[dict[str, str], set[QName]]:
-                """One fact's dimensions: the dimension under test at its test
-                value, every other dimension attached to *this EffectiveHypercube*
-                at its representative/placeholder value."""
-                explicitChosen: dict[Concept, Concept] = {
-                    dim: (
-                        explicitValue
-                        if dim is variedExplicit and explicitValue is not None
-                        else defaultMember
-                    )
-                    for dim, defaultMember in explicitRepresentative.items()
-                }
-                typedChosen: dict[Concept, str] = {
-                    dim: (
-                        typedValue
-                        if dim is variedTyped and typedValue is not None
-                        else placeholder
-                    )
-                    for dim, placeholder in typedPlaceholder.items()
-                }
-                if not effective.matches(explicitChosen, typedChosen):
-                    raise SampleGenerationException(
-                        "Generated dimensions for "
-                        f"{concept.qname} are not dimensionally valid against "
-                        f"{effective.roleUri} -- explicit="
-                        f"{ {str(d.qname): str(v.qname) for d, v in explicitChosen.items()} }, "
-                        f"typed={ {str(d.qname): v for d, v in typedChosen.items()} }. "
-                        "The representative-value picker in buildFacts() cannot "
-                        "satisfy a negative (notAll) hypercube's exclusion here on "
-                        "its own; it needs updating for this shape."
-                    )
-
-                dimensions, used = coreDimensionsFor(taxonomy, concept, samplePeriod)
-                extraDimensions, extraUsed = buildDimensionValues(
-                    explicitChosen, defaultByDim, typedChosen
-                )
-                dimensions.update(extraDimensions)
-                used.update(extraUsed)
-                return dimensions, used
+            # functools.partial, not a nested def/lambda: its arguments are bound
+            # eagerly at this point in the loop, so there is no closure capturing
+            # (and no B023 risk of) whatever effective/explicitRepresentative/
+            # defaultByDim/typedPlaceholder are bound to by a *later* iteration.
+            dimensionsWith = functools.partial(
+                buildFactDimensions,
+                taxonomy,
+                concept,
+                samplePeriod,
+                effective,
+                explicitRepresentative,
+                defaultByDim,
+                typedPlaceholder,
+            )
 
             if effectiveIndex == 0:
                 # The proof-of-reportability fact for this concept: every
