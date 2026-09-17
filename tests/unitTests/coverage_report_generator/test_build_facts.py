@@ -42,14 +42,19 @@ def _concept(
     dimension: bool = False,
     hypercube: bool = False,
     abstract: bool = False,
+    numeric: bool = False,
+    data_type: str = "xbrli:stringItemType",
+    base_data_type: str = "xbrli:stringItemType",
     other: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     jconcept: dict[str, Any] = {
         "labels": {"en": {_STANDARD_LABEL: "Label"}},
-        "dataType": "xbrli:stringItemType",
-        "baseDataType": "xbrli:stringItemType",
+        "dataType": data_type,
+        "baseDataType": base_data_type,
         "periodType": "duration",
     }
+    if numeric:
+        jconcept["numeric"] = True
     if dimension or hypercube or abstract:
         jconcept["abstract"] = True
     if dimension:
@@ -78,7 +83,12 @@ def _cube(
     return cube
 
 
-def _build_taxonomy(entry_point: str, dimensions: dict[str, Any]) -> Taxonomy:
+def _build_taxonomy(
+    entry_point: str,
+    dimensions: dict[str, Any],
+    *,
+    extra_concepts: dict[str, dict[str, Any]] | None = None,
+) -> Taxonomy:
     concepts = {
         "vsme:Table": _concept(hypercube=True),
         "vsme:Item": _concept(),
@@ -89,6 +99,7 @@ def _build_taxonomy(entry_point: str, dimensions: dict[str, Any]) -> Taxonomy:
         "vsme:MemberX": _concept(abstract=True),
         "vsme:MemberY": _concept(abstract=True),
         "vsme:TypedAxis": _concept(dimension=True, other={"typedElement": "vsme:TYP"}),
+        **(extra_concepts or {}),
     }
     bits = {
         "entryPoint": entry_point,
@@ -182,3 +193,38 @@ class TestVaryAllDimensionsFact:
         # proof-of-reportability + the one non-default member -- no combinatorial
         # fact, since there is only one dimension to vary in the first place.
         assert len(facts) == 2
+
+
+class TestExtraUnitFact:
+    def test_narrowly_ambiguous_unit_gets_one_extra_fact(self) -> None:
+        # electricChargeItemType is a real UTR entry with exactly two permitted
+        # units (Ah, C), matched by local name regardless of namespace -- see
+        # UTR.getUnitsForDataType() -- and has no PREFERRED_UNIT_IDS entry, so
+        # this exercises the real UTR-ambiguity relaxation end to end rather
+        # than via a FakeUTR.
+        taxonomy = _build_taxonomy(
+            "test://build-facts/extra-unit",
+            dimensions={},
+            extra_concepts={
+                "vsme:Charge": _concept(
+                    numeric=True,
+                    data_type="vsme:electricChargeItemType",
+                    base_data_type="xbrli:decimalItemType",
+                )
+            },
+        )
+        concept = taxonomy.getConcept("vsme:Charge")
+        permitted = sorted(taxonomy.UTR.getUnitsForDataType(concept.dataType))
+        assert len(permitted) == 2
+
+        concepts = reportableConcepts(taxonomy)
+        facts, _, _, _ = buildFacts(taxonomy, concepts, PERIOD, nil=False)
+
+        chargeFacts = [
+            fact["dimensions"]
+            for fact in facts.values()
+            if fact["dimensions"]["concept"] == "vsme:Charge"
+        ]
+        assert len(chargeFacts) == 2
+        unitsSeen = {dims["unit"] for dims in chargeFacts}
+        assert unitsSeen == {str(permitted[0]), str(permitted[1])}
