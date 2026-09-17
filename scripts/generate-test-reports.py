@@ -4,16 +4,20 @@ reportable concept, plus further facts that individually exercise every hypercub
 dimension and enumeration domain a concept carries. See mireport.coverage_report_generator
 for what "maximal" means here and why.
 
-    python scripts/generate-test-reports.py <primary package glob>
-        [support package glob ...]
+    python scripts/generate-test-reports.py
         --entity-scheme URI --entity-identifier ID --entity-prefix PREFIX
         --period-instant ISO-DATETIME --period-duration ISO-DATETIME/ISO-DATETIME
-        [--output-dir DIR] [--entry-point URL ...] [--taxonomy-json-out PATH]
+        --output-dir DIR
+        [--entry-point URL] [--taxonomy PATH ...]
 
-Bakes the taxonomy with Arelle via mireport and asks it for everything -- which
-concepts are reportable, their period and data types, the members of an enumeration
-domain, which units the UTR permits, and which hypercube dimensions a concept
-carries and their domains -- so nothing here parses a schema or a linkbase.
+Works against taxonomies mireport already knows about -- the built-in ones, plus any
+extra taxonomy JSON files (as produced by scripts/update-taxonomy.py) named via
+--taxonomy -- exactly as scripts/dump-taxonomy.py does, prompting for an entry point
+if --entry-point is not given. This is deliberately not the tool for baking a
+taxonomy from package zips in the first place: that is scripts/update-taxonomy.py's
+job, and a taxonomy under active local development that has no stable JSON yet is a
+different problem again (see esrs-taxonomy's own wrapper, which bakes fresh via
+mireport.arelle.taxonomy_info.bakeTaxonomy() for exactly that reason).
 
 Writes three files to --output-dir:
 
@@ -21,67 +25,23 @@ Writes three files to --output-dir:
     all-nil.json     one xsi:nil fact per reportable concept, plus further facts
                      exercising every hypercube dimension a concept carries
     all-values.json  the same, with real (non-nil) values
-
-The entry point comes from the *primary* package's own declared entry point (an
-error if it declares more than one, unless --entry-point overrides it); support
-packages are loaded into the DTS but not scanned for entry points, since they may
-well declare their own irrelevant ones (a country/currency/LEI codelist package,
-say).
 """
 
 from __future__ import annotations
 
 import argparse
-import glob as glob_module
-import tempfile
 from pathlib import Path
 
-from mireport.cli import (
-    configure_rich_output,
-)
-from mireport.cli import (
-    console_print as print,
-)
+import mireport
+from mireport.cli import configure_rich_output, pickEntryPointFromLoadedTaxonomies
+from mireport.cli import console_print as print
 from mireport.coverage_report_generator import (
     SampleEntityPeriod,
-    bakeTaxonomy,
     buildCoverageReportSet,
     writeCoverageReportSet,
 )
-from mireport.exceptions import SampleGenerationException, TaxonomyPackageException
-from mireport.taxonomy_package import entryPointsFromPackage
-
-
-def resolvePackage(package_glob: str) -> str:
-    """Resolve a taxonomy-package glob to a single file."""
-    if not (matches := sorted(glob_module.glob(package_glob))):
-        raise SystemExit(f"Error: no file matching {package_glob!r} -- is it built?")
-    if len(matches) > 1:
-        others = ", ".join(repr(m) for m in matches[1:])
-        print(
-            f"Warning: multiple files match {package_glob!r}; using {matches[0]!r}. "
-            f"Ignored: {others}"
-        )
-    return matches[0]
-
-
-def entryPointFromPrimaryPackage(package: str) -> tuple[str, ...]:
-    """The primary package's own single declared entry point.
-
-    Taken from the package rather than assembled from a filename, so the entry point
-    baked here is the one the package actually declares.
-    """
-    try:
-        found = entryPointsFromPackage(package)
-    except TaxonomyPackageException as e:
-        raise SystemExit(f"Error: could not read entry points from {package}: {e}")
-    if len(found) != 1:
-        names = [ep.hrefs for ep in found]
-        raise SystemExit(
-            f"Error: expected exactly one entry point in {package}, found {names}. "
-            "Pass --entry-point to choose one explicitly."
-        )
-    return found[0].hrefs
+from mireport.exceptions import SampleGenerationException
+from mireport.taxonomy import getTaxonomy, loadTaxonomyJSON
 
 
 def parser() -> argparse.ArgumentParser:
@@ -89,25 +49,16 @@ def parser() -> argparse.ArgumentParser:
         description="Generate a maximal xBRL-JSON coverage report for a taxonomy."
     )
     parser.add_argument(
-        "primary_package",
-        help="Glob for the taxonomy package whose entry point is baked, e.g. "
-        "MyTaxonomy-*.zip.",
-    )
-    parser.add_argument(
-        "support_packages",
-        nargs="*",
-        help="Globs for further taxonomy packages loaded into the DTS alongside "
-        "the primary one (a country/currency/LEI codelist package, say). Not "
-        "scanned for entry points.",
+        "--taxonomy",
+        metavar="TAXONOMY",
+        type=Path,
+        nargs="+",
+        help="Path to one or more taxonomy JSON files (as produced by "
+        "update-taxonomy.py) to load in addition to the built-in ones.",
     )
     parser.add_argument(
         "--entry-point",
-        type=str,
-        action="append",
-        default=None,
-        help="Entry point to bake. Repeat it for an entry point that names several "
-        "documents. If omitted, the primary package's own single declared entry "
-        "point is used.",
+        help="Entry point to generate a coverage report for. Prompts if omitted.",
     )
     parser.add_argument(
         "--entity-scheme",
@@ -140,27 +91,19 @@ def parser() -> argparse.ArgumentParser:
         required=True,
         help="Where to write no-facts.json, all-nil.json and all-values.json.",
     )
-    parser.add_argument(
-        "--taxonomy-json-out",
-        type=Path,
-        help="Keep the baked taxonomy JSON at this path instead of a temporary one. "
-        "For inspection; it is an intermediate, not a report.",
-    )
     return parser
 
 
 def main() -> None:
-    args = parser().parse_args()
+    argParser = parser()
+    args = argParser.parse_args()
 
-    primary_package = resolvePackage(args.primary_package)
-    support_packages = [resolvePackage(glob) for glob in args.support_packages]
-    packages = [primary_package, *support_packages]
+    mireport.loadBuiltInTaxonomyJSON()
+    for taxonomyPath in args.taxonomy or ():
+        loadTaxonomyJSON(taxonomyPath)
 
-    entry_point: tuple[str, ...] = (
-        tuple(args.entry_point)
-        if args.entry_point
-        else entryPointFromPrimaryPackage(primary_package)
-    )
+    entry_point = args.entry_point or pickEntryPointFromLoadedTaxonomies(argParser)
+    taxonomy = getTaxonomy(entry_point)
 
     samplePeriod = SampleEntityPeriod(
         entity=f"{args.entity_prefix}:{args.entity_identifier}",
@@ -170,18 +113,12 @@ def main() -> None:
         periodDuration=args.period_duration,
     )
 
-    print(f"Baking taxonomy for {entry_point}")
-    for package in packages:
-        print(f"  package: {package}")
+    print(f"Generating coverage report for {entry_point}")
 
     try:
-        with tempfile.TemporaryDirectory(prefix="taxonomy-info-") as tmp:
-            taxonomy_json_path = args.taxonomy_json_out or Path(tmp) / "taxonomy.json"
-            taxonomy = bakeTaxonomy(entry_point, packages, taxonomy_json_path)
-            if args.taxonomy_json_out:
-                print(f"Kept baked taxonomy JSON at {args.taxonomy_json_out}")
-
-            reportSet = buildCoverageReportSet(taxonomy, samplePeriod, entry_point)
+        reportSet = buildCoverageReportSet(
+            taxonomy, samplePeriod, (taxonomy.entryPoint,)
+        )
     except SampleGenerationException as e:
         raise SystemExit(f"Error: {e}")
 
