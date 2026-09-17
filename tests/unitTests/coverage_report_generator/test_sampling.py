@@ -489,8 +489,7 @@ class TestBuildFactDimensions:
             {axis: default},
             {axis: default},
             {},
-            variedExplicit=axis,
-            explicitValue=chosen,
+            explicitOverrides={axis: chosen},
         )
         assert dimensions["esrs:Axis"] == "esrs:OtherMember"
         assert used == {concept.qname, axis.qname, chosen.qname}
@@ -506,10 +505,29 @@ class TestBuildFactDimensions:
             {},
             {},
             {typedAxis: "placeholder"},
-            variedTyped=typedAxis,
-            typedValue="chosen value",
+            typedOverrides={typedAxis: "chosen value"},
         )
         assert dimensions["esrs:TypedAxis"] == "chosen value"
+
+    def test_multiple_overrides_apply_simultaneously(self) -> None:
+        concept = FakeConcept(qname=FakeQName("esrs", "C"))
+        axis = member("esrs", "Axis")
+        default, chosen = member("esrs", "DefaultMember"), member("esrs", "OtherMember")
+        typedAxis = member("esrs", "TypedAxis")
+        dimensions, used = buildFactDimensions(
+            FakeTaxonomy(UTR=FakeUTR()),
+            concept,
+            SAMPLE_PERIOD,
+            FakeEffectiveHypercube(),
+            {axis: default},
+            {axis: default},
+            {typedAxis: "placeholder"},
+            explicitOverrides={axis: chosen},
+            typedOverrides={typedAxis: "chosen value"},
+        )
+        assert dimensions["esrs:Axis"] == "esrs:OtherMember"
+        assert dimensions["esrs:TypedAxis"] == "chosen value"
+        assert used == {concept.qname, axis.qname, chosen.qname, typedAxis.qname}
 
     def test_raises_when_generated_dimensions_do_not_match_the_hypercube(self) -> None:
         concept = FakeConcept(qname=FakeQName("esrs", "C"))

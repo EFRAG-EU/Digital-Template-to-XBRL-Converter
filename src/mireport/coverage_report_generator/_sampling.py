@@ -393,16 +393,16 @@ def buildFactDimensions(
     defaultByDim: dict[Concept, Concept | None],
     typedPlaceholder: dict[Concept, str],
     *,
-    variedExplicit: Concept | None = None,
-    explicitValue: Concept | None = None,
-    variedTyped: Concept | None = None,
-    typedValue: str | None = None,
+    explicitOverrides: dict[Concept, Concept] | None = None,
+    typedOverrides: dict[Concept, str] | None = None,
 ) -> tuple[dict[str, str], set[QName]]:
     """
-    One fact's dimensions: the dimension under test (if any) at its test value,
-    every other explicit dimension in *explicitRepresentative* and typed dimension
-    in *typedPlaceholder* -- both scoped to *effective*, a single EffectiveHypercube
-    -- at its representative/placeholder value.
+    One fact's dimensions: every explicit dimension in *explicitRepresentative*
+    and typed dimension in *typedPlaceholder* -- both scoped to *effective*, a
+    single EffectiveHypercube -- at its representative/placeholder value, except
+    for whichever dimensions *explicitOverrides*/*typedOverrides* name, which take
+    the value given there instead. A single-entry override tests one dimension in
+    isolation; more than one tests them varying together.
 
     Confirms the result is actually valid against *effective* via
     EffectiveHypercube.matches() rather than trusting the representative-value
@@ -411,19 +411,10 @@ def buildFactDimensions(
     instead of silently returning an invalid fixture.
     """
     explicitChosen: dict[Concept, Concept] = {
-        dim: (
-            explicitValue
-            if dim is variedExplicit and explicitValue is not None
-            else defaultMember
-        )
-        for dim, defaultMember in explicitRepresentative.items()
+        **explicitRepresentative,
+        **(explicitOverrides or {}),
     }
-    typedChosen: dict[Concept, str] = {
-        dim: (
-            typedValue if dim is variedTyped and typedValue is not None else placeholder
-        )
-        for dim, placeholder in typedPlaceholder.items()
-    }
+    typedChosen: dict[Concept, str] = {**typedPlaceholder, **(typedOverrides or {})}
     if not effective.matches(explicitChosen, typedChosen):
         raise SampleGenerationException(
             "Generated dimensions for "
@@ -659,9 +650,7 @@ def buildFacts(
                         # shares this (dimension, member) -- no need to repeat it.
                         continue
                     seenExplicit.add(key)
-                    addFact(
-                        *dimensionsWith(variedExplicit=variedDim, explicitValue=member)
-                    )
+                    addFact(*dimensionsWith(explicitOverrides={variedDim: member}))
 
             for variedDim in typedDims:
                 if variedDim in seenTyped:
@@ -669,7 +658,7 @@ def buildFacts(
                 seenTyped.add(variedDim)
                 for row in range(1, TYPED_DIMENSION_SAMPLE_ROWS + 1):
                     value = typedDimensionSampleValue(variedDim, row)
-                    addFact(*dimensionsWith(variedTyped=variedDim, typedValue=value))
+                    addFact(*dimensionsWith(typedOverrides={variedDim: value}))
 
     namespaces = {
         "xbrl": NS_XBRL,
