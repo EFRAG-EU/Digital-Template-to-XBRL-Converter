@@ -340,13 +340,26 @@ def pickExplicitRepresentative(
 ) -> dict[Concept, Concept]:
     """
     One representative member per explicit dimension, for use as a co-dimension when
-    some other dimension is the one under test: the taxonomy default if there is one,
-    else the first member by QName. A dimension with no members at all is omitted --
-    there is no representative value to offer, and the caller tracks that separately
-    (an empty domain, not a representative choice).
+    some other dimension is the one under test: the taxonomy default if there is one
+    *and* it is actually a member of this dimension's domain here, else the first
+    member by QName. A dimension with no members at all is omitted -- there is no
+    representative value to offer, and the caller tracks that separately (an empty
+    domain, not a representative choice).
+
+    The default is taxonomy-wide, but *members* is already scoped to one
+    EffectiveHypercube (domainForDimension() intersects every positive hypercube
+    declaring this dimension there) -- a dimension can be declared in more than one
+    base set with a different, non-overlapping domain in each, so the taxonomy
+    default is not guaranteed to be a member of *this* one. Using it anyway would
+    hand buildFactDimensions() a representative value EffectiveHypercube.matches()
+    then rejects, for a dimension that was never actually left at its default here.
     """
     return {
-        dim: (defaultByDim[dim] or members[0])
+        dim: (
+            defaultByDim[dim]
+            if defaultByDim[dim] is not None and defaultByDim[dim] in members
+            else members[0]
+        )
         for dim, members in membersByDim.items()
         if members
     }

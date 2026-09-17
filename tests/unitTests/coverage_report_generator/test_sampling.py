@@ -527,6 +527,20 @@ class TestPickExplicitRepresentative:
         )
         assert representative == {}
 
+    def test_default_not_in_this_domain_falls_back_to_first_member(self) -> None:
+        # The default is taxonomy-wide, but a dimension declared in more than one
+        # base set can have a different, non-overlapping domain in each -- here the
+        # default belongs to some other base set's view of this dimension, not this
+        # one's, so using it anyway would hand a representative value
+        # EffectiveHypercube.matches() then rejects.
+        dim = member("esrs", "Axis")
+        default = member("esrs", "DefaultElsewhere")
+        first, second = member("esrs", "Alpha"), member("esrs", "Beta")
+        representative = pickExplicitRepresentative(
+            membersByDim={dim: [first, second]}, defaultByDim={dim: default}
+        )
+        assert representative == {dim: first}
+
 
 class TestBuildDimensionValues:
     def test_explicit_dimension_at_its_default_is_omitted(self) -> None:
