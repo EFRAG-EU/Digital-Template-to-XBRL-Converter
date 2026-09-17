@@ -187,6 +187,20 @@ def valueFor(concept: Concept) -> tuple[str | None, int | None, frozenset[QName]
     return baseValue, (DEFAULT_DECIMALS if concept.isNumeric else None), frozenset()
 
 
+def typedDimensionSampleValue(dim: Concept, row: int) -> str:
+    """
+    The synthetic sample value for typed dimension *dim* at *row* -- 0 for the
+    fixed placeholder used whenever *dim* is a co-dimension rather than the one
+    under test, else 1..TYPED_DIMENSION_SAMPLE_ROWS for the values that
+    individually vary it (see that constant). A typed dimension has no domain to
+    enumerate, so unlike an explicit dimension's members these are synthesised
+    rather than read off the taxonomy.
+    """
+    if row == 0:
+        return f"{dim.qname.localName} sample value"
+    return f"{dim.qname.localName} typed member {row}"
+
+
 def valueAndDecimalsFor(
     concept: Concept, *, nil: bool
 ) -> tuple[str | None, int | None, frozenset[QName]]:
@@ -558,7 +572,7 @@ def buildFacts(
             # so there is no "default" to reason about the way there is for
             # explicit dims.
             typedPlaceholder = {
-                dim: f"{dim.qname.localName} sample value" for dim in typedDims
+                dim: typedDimensionSampleValue(dim, 0) for dim in typedDims
             }
 
             # functools.partial, not a nested def/lambda: its arguments are bound
@@ -615,7 +629,7 @@ def buildFacts(
                     continue
                 seenTyped.add(variedDim)
                 for row in range(1, TYPED_DIMENSION_SAMPLE_ROWS + 1):
-                    value = f"{variedDim.qname.localName} typed member {row}"
+                    value = typedDimensionSampleValue(variedDim, row)
                     addFact(*dimensionsWith(variedTyped=variedDim, typedValue=value))
 
     namespaces = {
