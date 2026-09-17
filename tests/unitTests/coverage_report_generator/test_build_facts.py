@@ -88,6 +88,7 @@ def _build_taxonomy(
     dimensions: dict[str, Any],
     *,
     extra_concepts: dict[str, dict[str, Any]] | None = None,
+    extra_xs_elements: dict[str, dict[str, Any]] | None = None,
 ) -> Taxonomy:
     concepts = {
         "vsme:Table": _concept(hypercube=True),
@@ -108,7 +109,8 @@ def _build_taxonomy(
         "presentation": {},
         "dimensions": dimensions,
         "xs_elements": {
-            "vsme:TYP": {"dataType": "xs:string", "baseDataType": "xs:string"}
+            "vsme:TYP": {"dataType": "xs:string", "baseDataType": "xs:string"},
+            **(extra_xs_elements or {}),
         },
     }
     return loadTaxonomyJSON(bits)
@@ -228,3 +230,41 @@ class TestExtraUnitFact:
         assert len(chargeFacts) == 2
         unitsSeen = {dims["unit"] for dims in chargeFacts}
         assert unitsSeen == {str(permitted[0]), str(permitted[1])}
+
+
+class TestTypedDimensionValueIsTypeAware:
+    def test_non_string_typed_dimension_gets_a_type_aware_value(self) -> None:
+        dimensions = {
+            "role-1": {
+                "vsme:Table": _cube(
+                    ["vsme:Item"], typed_dimensions=["vsme:DateTypedAxis"]
+                )
+            },
+        }
+        taxonomy = _build_taxonomy(
+            "test://build-facts/typed-date",
+            dimensions,
+            extra_concepts={
+                "vsme:DateTypedAxis": _concept(
+                    dimension=True, other={"typedElement": "vsme:DTYP"}
+                )
+            },
+            extra_xs_elements={
+                "vsme:DTYP": {"dataType": "xs:date", "baseDataType": "xs:date"}
+            },
+        )
+        concepts = reportableConcepts(taxonomy)
+
+        facts, _, _, _ = buildFacts(taxonomy, concepts, PERIOD, nil=False)
+        itemFacts = [
+            fact["dimensions"]
+            for fact in facts.values()
+            if fact["dimensions"]["concept"] == "vsme:Item"
+        ]
+        typedValues = {dims["vsme:DateTypedAxis"] for dims in itemFacts}
+
+        # Every value written for this typed dimension is itself a legal
+        # xs:date lexical value -- the placeholder plus one per varied row --
+        # not the blind "<name> sample value"/"<name> typed member N" string a
+        # string-typed dimension gets.
+        assert typedValues == {"2026-01-01", "2026-01-02", "2026-01-03"}
