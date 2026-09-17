@@ -17,6 +17,7 @@ from mireport.coverage_report_generator._sampling import (
     buildFactDimensions,
     domainForDimension,
     pickExplicitRepresentative,
+    typedDimensionSampleValue,
     unitFor,
     valueFor,
 )
@@ -150,6 +151,18 @@ class TestValueForOtherTypes:
         )
         with pytest.raises(SampleGenerationException):
             valueFor(concept)
+
+
+class TestTypedDimensionSampleValue:
+    def test_row_zero_is_the_fixed_placeholder(self) -> None:
+        dim = member("esrs", "TypedAxis")
+        assert typedDimensionSampleValue(dim, 0) == "TypedAxis sample value"
+
+    def test_later_rows_are_distinct_from_each_other(self) -> None:
+        dim = member("esrs", "TypedAxis")
+        assert typedDimensionSampleValue(dim, 1) == "TypedAxis typed member 1"
+        assert typedDimensionSampleValue(dim, 2) == "TypedAxis typed member 2"
+        assert typedDimensionSampleValue(dim, 1) != typedDimensionSampleValue(dim, 2)
 
 
 class FakeUTR:
