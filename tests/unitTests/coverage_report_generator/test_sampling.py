@@ -16,6 +16,7 @@ from mireport.coverage_report_generator._sampling import (
     buildDimensionValues,
     buildFactDimensions,
     domainForDimension,
+    extraUnitsFor,
     pickExplicitRepresentative,
     typedDimensionSampleValue,
     unitFor,
@@ -58,9 +59,13 @@ class FakeConcept:
     baseDataTypeLocalName: str = "stringItemType"
     periodType: PeriodType = PeriodType.Duration
     typedElementBaseType: str | None = "string"
+    requiredUnits: frozenset[FakeQName] | None = None
 
     def getEEDomain(self) -> frozenset[FakeConcept]:
         return self.eeDomain
+
+    def getRequiredUnitQNames(self) -> frozenset[FakeQName] | None:
+        return self.requiredUnits
 
     @property
     def dataType(self) -> FakeQName:
@@ -270,6 +275,37 @@ class TestUnitFor:
         concept = FakeConcept(qname=FakeQName("esrs", "C"), isNumeric=False)
         assert unitFor(FakeTaxonomy(UTR=FakeUTR()), concept) is None
 
+    def test_required_unit_wins_over_utr_guessing(self) -> None:
+        kg, t = FakeQName("utr", "kg"), FakeQName("utr", "t")
+        concept = FakeConcept(
+            qname=FakeQName("esrs", "C"),
+            isNumeric=True,
+            dataTypeLocalName="massItemType",
+            requiredUnits=frozenset({kg, t}),
+        )
+        # The UTR would permit far more than these two, but the taxonomy's own
+        # guidance for this concept specifically takes priority.
+        taxonomy = FakeTaxonomy(
+            UTR=FakeUTR(permitted=frozenset({kg, t, FakeQName("utr", "lb")}))
+        )
+        assert unitFor(taxonomy, concept) == min(kg, t)
+
+    def test_required_unit_wins_over_preferred_unit_ids(self) -> None:
+        usd = FakeQName("iso4217", "USD")
+        concept = FakeConcept(
+            qname=FakeQName("esrs", "C"),
+            isNumeric=True,
+            dataTypeLocalName="monetaryItemType",
+            requiredUnits=frozenset({usd}),
+        )
+        taxonomy = FakeTaxonomy(
+            UTR=FakeUTR(
+                permitted=frozenset({usd, FakeQName("iso4217", "EUR")}),
+                unitByPreferredId={"EUR": FakeQName("iso4217", "EUR")},
+            )
+        )
+        assert unitFor(taxonomy, concept) == usd
+
     def test_utr_unconstrained_type_takes_no_unit(self) -> None:
         concept = FakeConcept(
             qname=FakeQName("esrs", "C"),
@@ -279,15 +315,36 @@ class TestUnitFor:
         taxonomy = FakeTaxonomy(UTR=FakeUTR(permitted=frozenset()))
         assert unitFor(taxonomy, concept) is None
 
-    def test_utr_constrained_type_with_no_preferred_id_raises(self) -> None:
+    def test_single_permitted_unit_with_no_preferred_id_is_auto_picked(self) -> None:
         concept = FakeConcept(
             qname=FakeQName("esrs", "C"),
             isNumeric=True,
             dataTypeLocalName="lengthItemType",
         )
-        taxonomy = FakeTaxonomy(
-            UTR=FakeUTR(permitted=frozenset({FakeQName("utr", "m")}))
+        metre = FakeQName("utr", "m")
+        taxonomy = FakeTaxonomy(UTR=FakeUTR(permitted=frozenset({metre})))
+        assert unitFor(taxonomy, concept) == metre
+
+    def test_narrowly_ambiguous_type_with_no_preferred_id_picks_the_lowest(
+        self,
+    ) -> None:
+        concept = FakeConcept(
+            qname=FakeQName("esrs", "C"),
+            isNumeric=True,
+            dataTypeLocalName="lengthItemType",
         )
+        metre, foot = FakeQName("utr", "m"), FakeQName("utr", "ft")
+        taxonomy = FakeTaxonomy(UTR=FakeUTR(permitted=frozenset({metre, foot})))
+        assert unitFor(taxonomy, concept) == min(metre, foot)
+
+    def test_widely_ambiguous_type_with_no_preferred_id_still_raises(self) -> None:
+        concept = FakeConcept(
+            qname=FakeQName("esrs", "C"),
+            isNumeric=True,
+            dataTypeLocalName="lengthItemType",
+        )
+        permitted = frozenset(FakeQName("utr", f"u{i}") for i in range(6))
+        taxonomy = FakeTaxonomy(UTR=FakeUTR(permitted=permitted))
         with pytest.raises(SampleGenerationException):
             unitFor(taxonomy, concept)
 
@@ -319,6 +376,77 @@ class TestUnitFor:
             UTR=FakeUTR(permitted=frozenset({eur}), unitByPreferredId={"EUR": eur})
         )
         assert unitFor(taxonomy, concept) == eur
+
+
+class TestExtraUnitsFor:
+    def test_non_numeric_concept_has_no_extra_units(self) -> None:
+        concept = FakeConcept(qname=FakeQName("esrs", "C"), isNumeric=False)
+        assert extraUnitsFor(FakeTaxonomy(UTR=FakeUTR()), concept) == []
+
+    def test_required_units_return_every_one_but_the_lowest(self) -> None:
+        kg, t = FakeQName("utr", "kg"), FakeQName("utr", "t")
+        concept = FakeConcept(
+            qname=FakeQName("esrs", "C"),
+            isNumeric=True,
+            dataTypeLocalName="massItemType",
+            requiredUnits=frozenset({kg, t}),
+        )
+        taxonomy = FakeTaxonomy(UTR=FakeUTR(permitted=frozenset({kg, t})))
+        assert extraUnitsFor(taxonomy, concept) == [max(kg, t)]
+
+    def test_single_required_unit_has_no_extra_units(self) -> None:
+        kg = FakeQName("utr", "kg")
+        concept = FakeConcept(
+            qname=FakeQName("esrs", "C"),
+            isNumeric=True,
+            dataTypeLocalName="massItemType",
+            requiredUnits=frozenset({kg}),
+        )
+        taxonomy = FakeTaxonomy(UTR=FakeUTR(permitted=frozenset({kg})))
+        assert extraUnitsFor(taxonomy, concept) == []
+
+    def test_curated_preference_has_no_extra_units(self) -> None:
+        concept = FakeConcept(
+            qname=FakeQName("esrs", "C"),
+            isNumeric=True,
+            dataTypeLocalName="monetaryItemType",
+        )
+        eur, usd = FakeQName("iso4217", "EUR"), FakeQName("iso4217", "USD")
+        taxonomy = FakeTaxonomy(
+            UTR=FakeUTR(permitted=frozenset({eur, usd}), unitByPreferredId={"EUR": eur})
+        )
+        assert extraUnitsFor(taxonomy, concept) == []
+
+    def test_single_permitted_unit_has_no_extra_units(self) -> None:
+        concept = FakeConcept(
+            qname=FakeQName("esrs", "C"),
+            isNumeric=True,
+            dataTypeLocalName="lengthItemType",
+        )
+        taxonomy = FakeTaxonomy(
+            UTR=FakeUTR(permitted=frozenset({FakeQName("utr", "m")}))
+        )
+        assert extraUnitsFor(taxonomy, concept) == []
+
+    def test_narrowly_ambiguous_type_returns_every_unit_but_the_lowest(self) -> None:
+        concept = FakeConcept(
+            qname=FakeQName("esrs", "C"),
+            isNumeric=True,
+            dataTypeLocalName="lengthItemType",
+        )
+        metre, foot = FakeQName("utr", "m"), FakeQName("utr", "ft")
+        taxonomy = FakeTaxonomy(UTR=FakeUTR(permitted=frozenset({metre, foot})))
+        assert extraUnitsFor(taxonomy, concept) == [max(metre, foot)]
+
+    def test_widely_ambiguous_type_has_no_extra_units(self) -> None:
+        concept = FakeConcept(
+            qname=FakeQName("esrs", "C"),
+            isNumeric=True,
+            dataTypeLocalName="lengthItemType",
+        )
+        permitted = frozenset(FakeQName("utr", f"u{i}") for i in range(6))
+        taxonomy = FakeTaxonomy(UTR=FakeUTR(permitted=permitted))
+        assert extraUnitsFor(taxonomy, concept) == []
 
 
 @dataclass

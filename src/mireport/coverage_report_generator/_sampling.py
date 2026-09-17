@@ -52,6 +52,13 @@ PREFERRED_UNIT_IDS: dict[str, str] = {
     "areaItemType": "ha",
 }
 
+# Above this many UTR-permitted units, a data type with no PREFERRED_UNIT_IDS
+# entry still needs one curated rather than guessed at: monetaryItemType alone
+# admits 185, and enumerating "one extra fact per unit" for that many would be
+# the combinatorial explosion this module otherwise avoids, not a proof of
+# usability. At or below it, unitFor()/extraUnitsFor() pick for themselves.
+UNIT_AMBIGUITY_CUTOFF = 5
+
 # Sample value keyed on the *base* data type, because canonical lexical form is a
 # property of the base type: canonical xs:decimal requires a fractional digit, so
 # decimal-derived types cannot use a bare "1". A report built with these values and
@@ -137,26 +144,77 @@ def unitFor(taxonomy: Taxonomy, concept: Concept) -> QName | None:
     A numeric concept whose data type the UTR does not constrain is dimensionless, and
     OIM requires the unit dimension to be *omitted* for those rather than written as
     xbrli:pure. percentItemType is the case that matters here: it has no UTR entries.
+
+    Concept.getRequiredUnitQNames() -- the taxonomy's own per-concept measurement
+    guidance, parsed from its documentation label, the same signal
+    mireport.xlsx_template_reader._units.UnitResolver consults for real
+    Excel-sourced facts -- takes priority over anything this module decides for
+    itself: it is the taxonomy author's own answer for this concept specifically,
+    not an inference from the data type as a whole (in VSME 2026-05-01, roughly
+    half of numeric concepts have one). Only when a concept has none does
+    PREFERRED_UNIT_IDS's curated default apply, and only when neither applies does
+    a narrowly-ambiguous UTR-permitted set (UNIT_AMBIGUITY_CUTOFF or fewer) get
+    auto-picked (the lowest by QName's sort order, for a stable choice) -- see
+    extraUnitsFor() for how the *other* candidates in either set still get proven
+    usable. A wide-open UTR-permitted set with no guidance of any kind still
+    raises: guessing among that many is not a reasonable default.
     """
     if not concept.isNumeric:
         return None
+
+    if (required := concept.getRequiredUnitQNames()) is not None:
+        return min(required)
+
     permitted = taxonomy.UTR.getUnitsForDataType(concept.dataType)
     if not permitted:
         return None
 
     dataTypeName = concept.dataType.localName
-    if (unitId := PREFERRED_UNIT_IDS.get(dataTypeName)) is None:
+    if (unitId := PREFERRED_UNIT_IDS.get(dataTypeName)) is not None:
+        unit = taxonomy.UTR.getQNameForUnitId(unitId)
+        if unit is None or not taxonomy.UTR.valid(concept.dataType, unit):
+            raise SampleGenerationException(
+                f"Preferred unit {unitId!r} is not valid for {dataTypeName} "
+                f"(concept {concept.qname})."
+            )
+        return unit
+
+    if len(permitted) > UNIT_AMBIGUITY_CUTOFF:
         raise SampleGenerationException(
             f"No preferred unit for {dataTypeName} (concept {concept.qname}). "
             f"The UTR permits {len(permitted)}; add one to PREFERRED_UNIT_IDS."
         )
-    unit = taxonomy.UTR.getQNameForUnitId(unitId)
-    if unit is None or not taxonomy.UTR.valid(concept.dataType, unit):
-        raise SampleGenerationException(
-            f"Preferred unit {unitId!r} is not valid for {dataTypeName} "
-            f"(concept {concept.qname})."
-        )
-    return unit
+    return min(permitted)
+
+
+def extraUnitsFor(taxonomy: Taxonomy, concept: Concept) -> list[QName]:
+    """
+    Every unit for *concept* other than the one unitFor() already uses on every
+    one of its facts -- for proving each of them individually usable too via one
+    extra fact apiece, the same reasoning as TYPED_DIMENSION_SAMPLE_ROWS and the
+    explicit-dimension variation loop in buildFacts().
+
+    Mirrors unitFor()'s own precedence: every other unit
+    Concept.getRequiredUnitQNames() names, when the taxonomy documents more than
+    one for this concept specifically -- not capped by UNIT_AMBIGUITY_CUTOFF,
+    since the taxonomy author already curated that set, not this module. Only
+    with no such guidance does the UTR-permitted set apply instead, empty when a
+    curated PREFERRED_UNIT_IDS entry already stands in for the whole type, or
+    when that set is a single unit or too wide-open to enumerate.
+    """
+    if not concept.isNumeric:
+        return []
+
+    if (required := concept.getRequiredUnitQNames()) is not None:
+        return sorted(required)[1:]
+
+    dataTypeName = concept.dataType.localName
+    if dataTypeName in PREFERRED_UNIT_IDS:
+        return []
+    permitted = taxonomy.UTR.getUnitsForDataType(concept.dataType)
+    if len(permitted) <= 1 or len(permitted) > UNIT_AMBIGUITY_CUTOFF:
+        return []
+    return sorted(permitted)[1:]
 
 
 def valueFor(concept: Concept) -> tuple[str | None, int | None, frozenset[QName]]:
@@ -522,6 +580,12 @@ def buildFacts(
     otherwise carry -- an empty selection is a distinct, deliberately-valid shape, not
     something a concept falls back to only when its domain happens to be empty.
 
+    A numeric concept with more than one UTR-permitted unit and no curated
+    PREFERRED_UNIT_IDS entry also gets one further fact per unit extraUnitsFor()
+    names, alongside the proof-of-reportability fact -- units are a per-concept
+    property, not a hypercube dimension, so this happens once per concept rather
+    than once per EffectiveHypercube.
+
     Returns (facts, namespaces used -- including the reserved xbrl alias and the
     sample entity's own namespace, "concept" entries left nil because an enumeration
     *single*'s domain resolved to no members, "concept" entries that are an
@@ -572,6 +636,8 @@ def buildFacts(
         if not nil and eeSetMembers is not None and not eeSetMembers:
             emptySetDomains.append(str(concept.qname))
 
+        extraUnits = extraUnitsFor(taxonomy, concept)
+
         effectiveHypercubes = sorted(
             taxonomy.getEffectiveHypercubesForPrimaryItem(concept),
             key=lambda eh: (
@@ -594,6 +660,12 @@ def buildFacts(
                 addFact(
                     *coreDimensionsFor(taxonomy, concept, samplePeriod),
                     valueOverride=("", None, frozenset()),
+                )
+            for altUnit in extraUnits:
+                addFact(
+                    *coreDimensionsFor(
+                        taxonomy, concept, samplePeriod, unitOverride=altUnit
+                    )
                 )
 
         seenExplicit: set[tuple[Concept, Concept]] = set()
@@ -648,6 +720,8 @@ def buildFacts(
                 addFact(*dimensionsWith())
                 if addEmptySetFact:
                     addFact(*dimensionsWith(), valueOverride=("", None, frozenset()))
+                for altUnit in extraUnits:
+                    addFact(*dimensionsWith(unitOverride=altUnit))
 
             for variedDim in explicitDims:
                 members = membersByDim[variedDim]
