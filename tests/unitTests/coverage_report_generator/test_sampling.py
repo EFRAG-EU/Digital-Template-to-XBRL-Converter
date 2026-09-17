@@ -39,6 +39,15 @@ class FakeQName:
 
 
 @dataclass(frozen=True)
+class FakeTypedElement:
+    baseDataTypeLocalName: str
+
+    @property
+    def baseDataType(self) -> FakeQName:
+        return FakeQName("xs", self.baseDataTypeLocalName)
+
+
+@dataclass(frozen=True)
 class FakeConcept:
     qname: FakeQName
     isEnumerationSingle: bool = False
@@ -48,6 +57,7 @@ class FakeConcept:
     dataTypeLocalName: str = "stringItemType"
     baseDataTypeLocalName: str = "stringItemType"
     periodType: PeriodType = PeriodType.Duration
+    typedElementBaseType: str | None = "string"
 
     def getEEDomain(self) -> frozenset[FakeConcept]:
         return self.eeDomain
@@ -59,6 +69,12 @@ class FakeConcept:
     @property
     def baseDataType(self) -> FakeQName:
         return FakeQName("xbrli", self.baseDataTypeLocalName)
+
+    @property
+    def typedElement(self) -> FakeTypedElement | None:
+        if self.typedElementBaseType is None:
+            return None
+        return FakeTypedElement(self.typedElementBaseType)
 
     def __lt__(self, other: FakeConcept) -> bool:
         return self.qname < other.qname
@@ -154,15 +170,72 @@ class TestValueForOtherTypes:
 
 
 class TestTypedDimensionSampleValue:
-    def test_row_zero_is_the_fixed_placeholder(self) -> None:
+    def test_row_zero_is_the_fixed_placeholder_for_string(self) -> None:
         dim = member("esrs", "TypedAxis")
         assert typedDimensionSampleValue(dim, 0) == "TypedAxis sample value"
 
-    def test_later_rows_are_distinct_from_each_other(self) -> None:
+    def test_later_rows_are_distinct_from_each_other_for_string(self) -> None:
         dim = member("esrs", "TypedAxis")
         assert typedDimensionSampleValue(dim, 1) == "TypedAxis typed member 1"
         assert typedDimensionSampleValue(dim, 2) == "TypedAxis typed member 2"
         assert typedDimensionSampleValue(dim, 1) != typedDimensionSampleValue(dim, 2)
+
+    def test_no_typed_element_raises(self) -> None:
+        dim = FakeConcept(
+            qname=FakeQName("esrs", "TypedAxis"), typedElementBaseType=None
+        )
+        with pytest.raises(SampleGenerationException):
+            typedDimensionSampleValue(dim, 0)
+
+    def test_unmapped_base_type_raises(self) -> None:
+        dim = FakeConcept(
+            qname=FakeQName("esrs", "TypedAxis"), typedElementBaseType="mysteryType"
+        )
+        with pytest.raises(SampleGenerationException):
+            typedDimensionSampleValue(dim, 0)
+
+    @pytest.mark.parametrize(
+        ("baseType", "row", "expected"),
+        [
+            ("boolean", 0, "true"),
+            ("boolean", 1, "false"),
+            ("boolean", 2, "true"),
+            ("date", 1, "2026-01-02"),
+            ("date", 2, "2026-01-03"),
+            ("decimal", 1, "2.0"),
+            ("decimal", 2, "3.0"),
+            ("integer", 1, "1"),
+            ("integer", 2, "2"),
+            ("gYear", 1, "2027"),
+            ("gYear", 2, "2028"),
+            ("anyURI", 1, "https://example.org/TypedAxis/1"),
+            ("anyURI", 2, "https://example.org/TypedAxis/2"),
+        ],
+    )
+    def test_non_string_base_types_use_canonical_values(
+        self, baseType: str, row: int, expected: str
+    ) -> None:
+        dim = FakeConcept(
+            qname=FakeQName("esrs", "TypedAxis"), typedElementBaseType=baseType
+        )
+        assert typedDimensionSampleValue(dim, row) == expected
+
+    def test_non_string_varied_rows_are_distinct_from_each_other(self) -> None:
+        dim = FakeConcept(
+            qname=FakeQName("esrs", "TypedAxis"), typedElementBaseType="date"
+        )
+        assert typedDimensionSampleValue(dim, 1) != typedDimensionSampleValue(dim, 2)
+
+    def test_date_rolls_over_the_month_boundary_instead_of_an_invalid_day(
+        self,
+    ) -> None:
+        # Not a row count TYPED_DIMENSION_SAMPLE_ROWS would ever reach today, but
+        # the generator must still produce a calendar-valid date rather than a
+        # string like "2026-01-32" if that constant ever grows.
+        dim = FakeConcept(
+            qname=FakeQName("esrs", "TypedAxis"), typedElementBaseType="date"
+        )
+        assert typedDimensionSampleValue(dim, 35) == "2026-02-05"
 
 
 class FakeUTR:
