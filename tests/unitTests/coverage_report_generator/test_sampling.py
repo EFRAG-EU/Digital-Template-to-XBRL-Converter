@@ -529,6 +529,29 @@ class TestBuildFactDimensions:
         assert dimensions["esrs:TypedAxis"] == "chosen value"
         assert used == {concept.qname, axis.qname, chosen.qname, typedAxis.qname}
 
+    def test_unit_override_replaces_computed_unit(self) -> None:
+        concept = FakeConcept(
+            qname=FakeQName("esrs", "C"),
+            isNumeric=True,
+            dataTypeLocalName="monetaryItemType",
+        )
+        eur = FakeQName("iso4217", "EUR")
+        usd = FakeQName("iso4217", "USD")
+        dimensions, used = buildFactDimensions(
+            FakeTaxonomy(
+                UTR=FakeUTR(permitted=frozenset({eur}), unitByPreferredId={"EUR": eur})
+            ),
+            concept,
+            SAMPLE_PERIOD,
+            FakeEffectiveHypercube(),
+            {},
+            {},
+            {},
+            unitOverride=usd,
+        )
+        assert dimensions["unit"] == "iso4217:USD"
+        assert used == {concept.qname, usd}
+
     def test_raises_when_generated_dimensions_do_not_match_the_hypercube(self) -> None:
         concept = FakeConcept(qname=FakeQName("esrs", "C"))
         with pytest.raises(SampleGenerationException):

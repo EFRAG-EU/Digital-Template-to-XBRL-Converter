@@ -360,13 +360,21 @@ def reportableConcepts(taxonomy: Taxonomy) -> list[Concept]:
 
 
 def coreDimensionsFor(
-    taxonomy: Taxonomy, concept: Concept, samplePeriod: SampleEntityPeriod
+    taxonomy: Taxonomy,
+    concept: Concept,
+    samplePeriod: SampleEntityPeriod,
+    *,
+    unitOverride: QName | None = None,
 ) -> tuple[dict[str, str], set[QName]]:
     """
     The concept/entity/period/unit dimensions common to every fact for *concept*, and
     the QNames it uses (concept, and unit if any) -- collected rather than written
     straight into a shared namespaces dict, since the same concept/unit recurs across
     many facts and there is no reason to overwrite the same entry repeatedly.
+
+    *unitOverride* reports the fact with that unit instead of unitFor()'s own choice --
+    for exercising a UTR-permitted unit other than the one every other fact uses, not
+    for anything unitFor() itself wouldn't already consider valid.
     """
     qnames = {concept.qname}
     dimensions: dict[str, str] = {
@@ -378,7 +386,8 @@ def coreDimensionsFor(
             else samplePeriod.periodDuration
         ),
     }
-    if (unit := unitFor(taxonomy, concept)) is not None:
+    unit = unitOverride if unitOverride is not None else unitFor(taxonomy, concept)
+    if unit is not None:
         dimensions["unit"] = str(unit)
         qnames.add(unit)
     return dimensions, qnames
@@ -395,6 +404,7 @@ def buildFactDimensions(
     *,
     explicitOverrides: dict[Concept, Concept] | None = None,
     typedOverrides: dict[Concept, str] | None = None,
+    unitOverride: QName | None = None,
 ) -> tuple[dict[str, str], set[QName]]:
     """
     One fact's dimensions: every explicit dimension in *explicitRepresentative*
@@ -402,7 +412,9 @@ def buildFactDimensions(
     single EffectiveHypercube -- at its representative/placeholder value, except
     for whichever dimensions *explicitOverrides*/*typedOverrides* name, which take
     the value given there instead. A single-entry override tests one dimension in
-    isolation; more than one tests them varying together.
+    isolation; more than one tests them varying together. *unitOverride* passes
+    straight through to coreDimensionsFor() -- it plays no part in hypercube
+    validity, so it is not part of the matches() check below.
 
     Confirms the result is actually valid against *effective* via
     EffectiveHypercube.matches() rather than trusting the representative-value
@@ -427,7 +439,9 @@ def buildFactDimensions(
             "its own; it needs updating for this shape."
         )
 
-    dimensions, used = coreDimensionsFor(taxonomy, concept, samplePeriod)
+    dimensions, used = coreDimensionsFor(
+        taxonomy, concept, samplePeriod, unitOverride=unitOverride
+    )
     extraDimensions, extraUsed = buildDimensionValues(
         explicitChosen, defaultByDim, typedChosen
     )
