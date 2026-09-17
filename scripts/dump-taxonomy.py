@@ -9,12 +9,15 @@ from typing import NamedTuple
 
 import xlsxwriter
 from rich import box
-from rich.prompt import Prompt
 from rich.table import Table
 from rich.text import Text
 
 import mireport
-from mireport.cli import configure_rich_output, printDiagnosticTable
+from mireport.cli import (
+    configure_rich_output,
+    pickEntryPointFromLoadedTaxonomies,
+    printDiagnosticTable,
+)
 from mireport.cli import console_print as print
 from mireport.data.disclosures import VSME_DEFAULTS
 from mireport.taxonomy import (
@@ -30,7 +33,6 @@ from mireport.taxonomy import (
     Relationship,
     Taxonomy,
     getTaxonomy,
-    listTaxonomies,
     loadTaxonomyJSON,
 )
 from mireport.taxonomy_checker import TaxonomyChecker
@@ -150,30 +152,6 @@ def dump_group(group: PresentationGroup) -> None:
         if not is_last:
             active_depths.add(depth)
         print(format_relationship(relationship, active_depths))
-
-
-def pick_entry_point() -> str:
-    """Prompt the user to select a taxonomy entry point."""
-    default = VSME_DEFAULTS["taxonomyEntryPoints"]["supportedEntryPoint"]
-    available = {
-        str(num): ep for num, ep in enumerate(sorted(listTaxonomies()), start=1)
-    }
-
-    table = Table(show_header=True, box=box.SIMPLE)
-    table.add_column("#", style="bold cyan", justify="right", no_wrap=True)
-    table.add_column("Entry point")
-    for num, url in available.items():
-        marker = "  [bold green]← default[/bold green]" if url == default else ""
-        table.add_row(num, url + marker)
-    print(table)
-
-    response = Prompt.ask("Number or URL (enter for default)", default=default).strip()
-
-    if response == default:
-        return default
-    if (entry_point := available.get(response, response)) in available.values():
-        return entry_point
-    raise SystemExit("Can't access specified entry point.")
 
 
 LABEL_ROLE_NAMES: dict[str, str] = {
@@ -468,7 +446,9 @@ def main() -> None:
         for taxonomyPath in args.taxonomy or ():
             loadTaxonomyJSON(taxonomyPath)
 
-    entry_point = pick_entry_point()
+    entry_point = pickEntryPointFromLoadedTaxonomies(
+        parser, default=VSME_DEFAULTS["taxonomyEntryPoints"]["supportedEntryPoint"]
+    )
     taxonomy = getTaxonomy(entry_point)
 
     match args.subcommand:

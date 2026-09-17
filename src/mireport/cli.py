@@ -19,6 +19,7 @@ from rich.text import Text
 
 from mireport.diagnostics import AbstractDiagnostic
 from mireport.exceptions import TaxonomyPackageException
+from mireport.taxonomy import listTaxonomies
 from mireport.taxonomy_package import PackageEntryPoint, entryPointsFromPackage
 
 _CONSOLE = Console()
@@ -172,6 +173,46 @@ def pickEntryPointFromPackages(
     if chosen is None:
         raise parser.error(f"{response!r} is not one of the listed entry points.")
     return chosen.hrefs
+
+
+def pickEntryPointFromLoadedTaxonomies(
+    parser: ArgumentParser, *, default: str | None = None
+) -> str:
+    """Show the entry point of every taxonomy already loaded (via
+    loadBuiltInTaxonomyJSON()/loadTaxonomyJSON()) and prompt for one.
+
+    Unlike pickEntryPointFromPackages(), there is no package zip or Arelle baking
+    involved -- this only ever offers a choice among taxonomies mireport already
+    knows about.
+    """
+    available = {
+        str(num): ep for num, ep in enumerate(sorted(listTaxonomies()), start=1)
+    }
+    if not available:
+        raise parser.error("No taxonomies loaded.")
+
+    table = Table(show_header=True, box=box.SIMPLE)
+    table.add_column("#", style="bold cyan", justify="right", no_wrap=True)
+    table.add_column("Entry point")
+    for num, url in available.items():
+        marker = "  [bold green]← default[/bold green]" if url == default else ""
+        table.add_row(num, url + marker)
+    console_print(table)
+
+    prompt = (
+        "Number or URL (enter for default)" if default is not None else "Number or URL"
+    )
+    response = (
+        Prompt.ask(prompt, default=default)
+        if default is not None
+        else Prompt.ask(prompt)
+    ).strip()
+
+    if default is not None and response == default:
+        return default
+    if (entry_point := available.get(response, response)) in available.values():
+        return entry_point
+    raise parser.error(f"{response!r} is not one of the loaded entry points.")
 
 
 def _diagnosticLevelName(level: int) -> str:
