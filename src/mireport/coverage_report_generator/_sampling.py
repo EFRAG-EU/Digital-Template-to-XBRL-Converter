@@ -490,11 +490,18 @@ def buildFacts(
     no domain to enumerate and no default to skip -- see that constant.
 
     Either way, the dimension under test varies while its co-dimensions (explicit or
-    typed) are pinned to one representative value each -- varying every attached
-    dimension together would multiply the fact count rather than add to it, and is
-    not needed to prove each dimension individually valid. A (dimension, member) or
+    typed) are pinned to one representative value each, proving each dimension
+    individually valid without multiplying the fact count. A (dimension, member) or
     typed dimension already exercised via one EffectiveHypercube is not repeated for
     another that happens to share it.
+
+    On top of that, each EffectiveHypercube with more than one dimension able to vary
+    gets exactly one further fact with every one of them varied away from its
+    representative/default value at once, proving the combination is valid together
+    and not just each dimension in isolation -- one fact regardless of how many
+    dimensions there are, not their cross product. A dimension whose only member is
+    its own default has nothing to vary it to and sits out of this fact rather than
+    suppressing it.
 
     An enumeration *set* concept whose domain is not empty also gets one further fact
     with the empty-set value (see valueFor()), on top of whatever a plain fact would
@@ -659,6 +666,30 @@ def buildFacts(
                 for row in range(1, TYPED_DIMENSION_SAMPLE_ROWS + 1):
                     value = typedDimensionSampleValue(variedDim, row)
                     addFact(*dimensionsWith(typedOverrides={variedDim: value}))
+
+            explicitVariedAll: dict[Concept, Concept] = {}
+            for variedDim in explicitDims:
+                nonDefault = next(
+                    (
+                        m
+                        for m in membersByDim[variedDim]
+                        if m != defaultByDim[variedDim]
+                    ),
+                    None,
+                )
+                if nonDefault is not None:
+                    explicitVariedAll[variedDim] = nonDefault
+            typedVariedAll = {
+                variedDim: typedDimensionSampleValue(variedDim, 1)
+                for variedDim in typedDims
+            }
+            if len(explicitVariedAll) + len(typedVariedAll) > 1:
+                addFact(
+                    *dimensionsWith(
+                        explicitOverrides=explicitVariedAll,
+                        typedOverrides=typedVariedAll,
+                    )
+                )
 
     namespaces = {
         "xbrl": NS_XBRL,
