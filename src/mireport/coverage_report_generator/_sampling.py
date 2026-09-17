@@ -17,13 +17,14 @@ from __future__ import annotations
 
 import functools
 from dataclasses import dataclass
+from datetime import date, timedelta
 from typing import TYPE_CHECKING, Any
 
 from mireport.exceptions import SampleGenerationException
 from mireport.taxonomy import HypercubeType, PeriodType
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Callable, Iterable
 
     from mireport.taxonomy import (
         Concept,
@@ -80,6 +81,27 @@ DEFAULT_DECIMALS = 0
 # than one proves that distinct instances (e.g. two different sites) are
 # dimensionally valid at once, not just that the dimension accepts *a* value.
 TYPED_DIMENSION_SAMPLE_ROWS = 2
+
+
+def _stringTypedDomainSample(dim: Concept, row: int) -> str:
+    if row == 0:
+        return f"{dim.qname.localName} sample value"
+    return f"{dim.qname.localName} typed member {row}"
+
+
+# Keyed on TypedDomainWrapperElement.baseDataType's XML Schema primitive local
+# name, not an xbrli item type -- hence a separate table from VALUE_BY_BASE_TYPE.
+# boolean has only two legal values, so its placeholder (row 0) unavoidably
+# repeats one of the two varied rows.
+TYPED_DOMAIN_SAMPLE_BY_BASE_TYPE: dict[str, Callable[[Concept, int], str]] = {
+    "string": _stringTypedDomainSample,
+    "boolean": lambda dim, row: "true" if row % 2 == 0 else "false",
+    "date": lambda dim, row: (date(2026, 1, 1) + timedelta(days=row)).isoformat(),
+    "decimal": lambda dim, row: f"{row + 1}.0",
+    "integer": lambda dim, row: str(row),
+    "gYear": lambda dim, row: str(2026 + row),
+    "anyURI": lambda dim, row: f"https://example.org/{dim.qname.localName}/{row}",
+}
 
 # Same reasoning for an enumeration *set*: one member would leave it indistinguishable
 # from an enumeration-single fact, and would never exercise the canonical ordering that
@@ -194,11 +216,28 @@ def typedDimensionSampleValue(dim: Concept, row: int) -> str:
     under test, else 1..TYPED_DIMENSION_SAMPLE_ROWS for the values that
     individually vary it (see that constant). A typed dimension has no domain to
     enumerate, so unlike an explicit dimension's members these are synthesised
-    rather than read off the taxonomy.
+    rather than read off the taxonomy -- but they must still be legal content
+    for the dimension's own declared type (XBRL Dimensions 1.0 section 3.1.9.2's
+    typed domain element), which is why this dispatches on *dim*.typedElement's
+    base type rather than assuming every typed dimension is textual.
+
+    Every base type, including xs:string, is looked up in
+    TYPED_DOMAIN_SAMPLE_BY_BASE_TYPE; one with no entry raises
+    SampleGenerationException rather than guessing at legal content for a type
+    this module has never been told how to synthesise.
     """
-    if row == 0:
-        return f"{dim.qname.localName} sample value"
-    return f"{dim.qname.localName} typed member {row}"
+    if (element := dim.typedElement) is None:
+        raise SampleGenerationException(
+            f"Typed dimension {dim.qname} has no typed domain element -- "
+            "XBRL Dimensions 1.0 section 3.1.9.2 requires one."
+        )
+    baseType = element.baseDataType.localName
+    if (generator := TYPED_DOMAIN_SAMPLE_BY_BASE_TYPE.get(baseType)) is None:
+        raise SampleGenerationException(
+            f"No sample value for typed dimension base type {baseType} "
+            f"(dimension {dim.qname}). Add it to TYPED_DOMAIN_SAMPLE_BY_BASE_TYPE."
+        )
+    return generator(dim, row)
 
 
 def valueAndDecimalsFor(
