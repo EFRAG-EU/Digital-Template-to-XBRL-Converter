@@ -25,10 +25,8 @@ Design notes baked into these tests (confirmed against the XBRL Dimensions
   therefore not a contradiction: the primary item ends up needing valid
   values for the union of both hypercubes' dimensions, closed to that union.
 
-Taxonomy.__init__ mutates the `dimensions` dict it is given (several .pop()
-calls), and _TAXONOMIES is a process-lifetime registry that rejects a
-duplicate entryPoint, so every test builds its own fresh dicts and uses its
-own unique entry point.
+_TAXONOMIES is a process-lifetime registry that rejects a duplicate
+entryPoint, so every test uses its own unique entry point.
 """
 
 from __future__ import annotations
