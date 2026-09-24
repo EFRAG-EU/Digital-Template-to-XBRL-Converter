@@ -152,6 +152,36 @@ def labelRel(resource: StubLabelResource) -> ResourceRelationship:
     )
 
 
+class StubReferencePart:
+    def __init__(self, qname: QName, value: str) -> None:
+        self.qname = qname
+        self.stringValue = value
+
+
+class StubReferenceResource:
+    def __init__(self, role: str | None, parts: list[StubReferencePart]) -> None:
+        self.role = role
+        self._parts = parts
+
+    def iterchildren(self) -> list[StubReferencePart]:
+        return self._parts
+
+
+REF_NS = "http://www.xbrl.org/2006/ref"
+
+
+def refPart(local: str, value: str, ns: str = REF_NS) -> StubReferencePart:
+    return StubReferencePart(QName("ref", ns, local), value)
+
+
+def refRel(
+    resource: StubReferenceResource, *, order: float = 1.0
+) -> ResourceRelationship:
+    return ResourceRelationship(
+        resource=cast(Any, resource), role=resource.role, order=order
+    )
+
+
 def makeExtractor(
     relsByArcrole: dict[str, list[ResourceRelationship]],
     conceptRelSets: dict[Any, Any] | None = None,
@@ -290,6 +320,132 @@ class TestAddLabels:
         )
         assert jconcept["labels"]["en"] == {role: "Assets"}
         assert diagnostics == []
+
+
+REFERENCE_ROLE = "http://www.xbrl.org/2003/role/reference"
+EXAMPLE_ROLE = "http://www.xbrl.org/2003/role/example"
+
+
+class TestReferences:
+    def collect(
+        self,
+        extractor: TaxonomyInfoExtractor,
+        concept: QName,
+        rels: list[ResourceRelationship],
+    ) -> None:
+        # StubValidatedModel.resourceRelationshipsFrom() ignores its
+        # `source` argument and serves one canned list per arcrole, so a
+        # per-concept scenario has to swap that list in before each call.
+        cast(Any, extractor.model)._relsByArcrole[XbrlConst.conceptReference] = rels
+        extractor.collectReferences(cast(ModelConcept, StubConcept(concept)))
+
+    def test_identical_references_on_two_concepts_fold_into_one(self) -> None:
+        extractor, token = makeExtractor({XbrlConst.conceptReference: []})
+        resource = StubReferenceResource(
+            REFERENCE_ROLE, [refPart("Name", "ISO"), refPart("Number", "3166-1")]
+        )
+        self.collect(extractor, qn("A"), [refRel(resource)])
+        self.collect(extractor, qn("B"), [refRel(resource)])
+
+        extractor.extractReferences()
+
+        refs = extractor.taxonomyJson["references"]
+        assert len(refs) == 1
+        assert set(refs[0]["concepts"]) == {qn("A"), qn("B")}
+        assert "orders" not in refs[0]
+        assert collectedDiagnostics(token) == []
+
+    def test_same_parts_different_role_are_two_references(self) -> None:
+        extractor, _ = makeExtractor({XbrlConst.conceptReference: []})
+        parts = [refPart("Name", "ISO")]
+        self.collect(
+            extractor, qn("A"), [refRel(StubReferenceResource(REFERENCE_ROLE, parts))]
+        )
+        self.collect(
+            extractor, qn("B"), [refRel(StubReferenceResource(EXAMPLE_ROLE, parts))]
+        )
+
+        extractor.extractReferences()
+
+        refs = extractor.taxonomyJson["references"]
+        assert len(refs) == 2
+        assert {r["role"] for r in refs} == {REFERENCE_ROLE, EXAMPLE_ROLE}
+
+    def test_order_other_than_1_is_recorded_per_concept_with_diagnostic(self) -> None:
+        extractor, token = makeExtractor({XbrlConst.conceptReference: []})
+        resource = StubReferenceResource(REFERENCE_ROLE, [refPart("Name", "ISO")])
+        self.collect(extractor, qn("A"), [refRel(resource, order=1.0)])
+        self.collect(extractor, qn("B"), [refRel(resource, order=2.0)])
+
+        extractor.extractReferences()
+
+        refs = extractor.taxonomyJson["references"]
+        assert len(refs) == 1
+        assert refs[0]["orders"] == {qn("B"): 2.0}
+        diagnostics = collectedDiagnostics(token)
+        assert len(diagnostics) == 1
+        assert "order" in diagnostics[0].text
+
+    def test_all_order_1_has_no_orders_key(self) -> None:
+        extractor, token = makeExtractor({XbrlConst.conceptReference: []})
+        resource = StubReferenceResource(REFERENCE_ROLE, [refPart("Name", "ISO")])
+        self.collect(extractor, qn("A"), [refRel(resource, order=1.0)])
+
+        extractor.extractReferences()
+
+        assert "orders" not in extractor.taxonomyJson["references"][0]
+        assert collectedDiagnostics(token) == []
+
+    def test_empty_parts_are_dropped(self) -> None:
+        extractor, _ = makeExtractor({XbrlConst.conceptReference: []})
+        resource = StubReferenceResource(
+            REFERENCE_ROLE, [refPart("Name", "  "), refPart("Number", "3166-1")]
+        )
+        self.collect(extractor, qn("A"), [refRel(resource)])
+
+        extractor.extractReferences()
+
+        refs = extractor.taxonomyJson["references"]
+        assert len(refs) == 1
+        assert refs[0]["parts"] == [(QName("ref", REF_NS, "Number"), "3166-1")]
+
+    def test_reference_with_only_empty_parts_is_dropped_entirely(self) -> None:
+        extractor, _ = makeExtractor({XbrlConst.conceptReference: []})
+        resource = StubReferenceResource(REFERENCE_ROLE, [refPart("Name", "   ")])
+        self.collect(extractor, qn("A"), [refRel(resource)])
+
+        extractor.extractReferences()
+
+        assert extractor.taxonomyJson["references"] == []
+
+    def test_missing_role_raises(self) -> None:
+        extractor, _ = makeExtractor({XbrlConst.conceptReference: []})
+        resource = StubReferenceResource(None, [refPart("Name", "ISO")])
+        with pytest.raises(ArelleModelInconsistency, match="no role"):
+            self.collect(extractor, qn("A"), [refRel(resource)])
+
+    def test_output_is_sorted_by_role_then_parts(self) -> None:
+        extractor, _ = makeExtractor({XbrlConst.conceptReference: []})
+        self.collect(
+            extractor,
+            qn("A"),
+            [refRel(StubReferenceResource(REFERENCE_ROLE, [refPart("Name", "Z")]))],
+        )
+        self.collect(
+            extractor,
+            qn("B"),
+            [refRel(StubReferenceResource(EXAMPLE_ROLE, [refPart("Name", "A")]))],
+        )
+
+        extractor.extractReferences()
+
+        refs = extractor.taxonomyJson["references"]
+        assert [r["role"] for r in refs] == [EXAMPLE_ROLE, REFERENCE_ROLE]
+
+    def test_no_references_gives_empty_list(self) -> None:
+        extractor, _ = makeExtractor({XbrlConst.conceptReference: []})
+        extractor.extractReferences()
+        assert extractor.taxonomyJson["references"] == []
 
 
 class TestExtractTypedDomainWrapperElement:

@@ -524,6 +524,13 @@ class Concept:
     def getEEDomain(self) -> tuple[Concept, ...]:
         return tuple(self._eeDomainMembers) if self._eeDomainMembers is not None else ()
 
+    @property
+    def references(self) -> tuple[Reference, ...]:
+        """This concept's references, in the same order the reference
+        linkbase would present them for this concept (own arc order, then
+        role, then parts) -- see Reference and Taxonomy.getReferencesForConcept."""
+        return self._taxonomy.getReferencesForConcept(self)
+
 
 class TypedDomainWrapperElement:
     """
@@ -572,6 +579,114 @@ class TypedDomainWrapperElement:
 
     def __hash__(self) -> int:
         return hash(self.qname)
+
+
+class Reference:
+    """
+    A reference from the reference linkbase: a role plus an ordered set of
+    parts (e.g. Name, Number, Publisher). Reference resources are commonly
+    reused across many concepts -- the same standard or paragraph backs
+    several disclosures -- so, unlike a label, a Reference is first class
+    and shared rather than duplicated per concept: content identity (role +
+    parts) is what makes two arcs "the same reference", regardless of how
+    many link:reference resources the taxonomy actually declares or how many
+    concepts arc to them. Concept.references and
+    Taxonomy.getReferencesForConcept() are the read side; this class holds
+    the reference's own data plus which concepts cite it and, where it
+    differs from the default of 1, the arc order each of those concepts used
+    (only relevant for ordering several references on the same concept).
+
+    Concept qnames are resolved lazily via _reifyUsingTaxonomy(), the same
+    two-step construction Concept itself uses for its enumeration domain --
+    a Reference has no dependency ordering versus the concepts it cites, so
+    all concepts must already exist.
+    """
+
+    __slots__ = (
+        "_conceptQNameStrings",
+        "_ordersByConcept",
+        "_ordersByQNameString",
+        "_qnameMaker",
+        "concepts",
+        "parts",
+        "role",
+    )
+
+    def __init__(self, qnameMaker: QNameMaker, details: Mapping) -> None:
+        self._qnameMaker = qnameMaker
+
+        if (role := details.get("role")) is None:
+            raise TaxonomyException("Reference does not specify a role.")
+        self.role: str = role
+
+        if not (parts := details.get("parts")):
+            raise TaxonomyException(f"Reference (role={self.role!r}) has no parts.")
+        self.parts: tuple[tuple[QName, str], ...] = tuple(
+            (qnameMaker.fromString(name), value) for name, value in parts
+        )
+
+        self._conceptQNameStrings: tuple[str, ...] = tuple(details.get("concepts", ()))
+        self._ordersByQNameString: Mapping[str, float] = details.get("orders", {})
+        self.concepts: frozenset[Concept] = frozenset()
+        self._ordersByConcept: dict[Concept, float] = {}
+
+    def _reifyUsingTaxonomy(self, taxonomy: Taxonomy) -> None:
+        """Resolve concept qname strings to Concepts, now that every concept
+        in the taxonomy exists."""
+        concepts: list[Concept] = []
+        orders: dict[Concept, float] = {}
+        for s_qname in self._conceptQNameStrings:
+            try:
+                concept = taxonomy.getConcept(s_qname)
+            except KeyError:
+                raise TaxonomyException(
+                    f"Reference (role={self.role!r}) cites unknown concept {s_qname!r}."
+                ) from None
+            concepts.append(concept)
+            if (order := self._ordersByQNameString.get(s_qname)) is not None:
+                orders[concept] = order
+        self.concepts = frozenset(concepts)
+        self._ordersByConcept = orders
+
+    def getOrder(self, concept: Concept) -> float:
+        """The arc order this concept's reference-linkbase arc to this
+        reference used. Defaults to 1, the XBRL default and by far the
+        common case."""
+        return self._ordersByConcept.get(concept, 1.0)
+
+    def getPart(self, name: QName | str, *, fallback: str | None = None) -> str | None:
+        """The value of this reference's first part named `name`, or
+        `fallback` if there is none. A part name can legally repeat (e.g.
+        several ref:Section parts); see partValues() to get them all."""
+        if isinstance(name, str):
+            name = self._qnameMaker.fromString(name)
+        for part_name, value in self.parts:
+            if part_name == name:
+                return value
+        return fallback
+
+    def partValues(self, name: QName | str) -> tuple[str, ...]:
+        """Every value of this reference's parts named `name`, in document
+        order."""
+        if isinstance(name, str):
+            name = self._qnameMaker.fromString(name)
+        return tuple(value for part_name, value in self.parts if part_name == name)
+
+    def __repr__(self) -> str:
+        return f"Reference(role={self.role!r}, parts={self.parts!r})"
+
+    def __str__(self) -> str:
+        return f"{self.role} {self.parts}"
+
+    def __eq__(self, other: object) -> bool:
+        if self is other:
+            return True
+        if isinstance(other, Reference):
+            return self.role == other.role and self.parts == other.parts
+        return NotImplemented
+
+    def __hash__(self) -> int:
+        return hash((self.role, self.parts))
 
 
 class Relationship(NamedTuple):
@@ -863,6 +978,7 @@ class Taxonomy:
         qnameMaker: QNameMaker,
         utr: UTR,
         typedDomainWrapperElements: dict[str, TypedDomainWrapperElement] | None = None,
+        references: Iterable[Mapping] | None = None,
     ) -> None:
         self._entryPoint = entryPoint
         self._dimensions = dimensions
@@ -882,6 +998,25 @@ class Taxonomy:
         self._concepts = {concept.qname: concept for concept in concepts.values()}
         for concept in concepts.values():
             concept._reifyUsingTaxonomy(self)
+
+        self._references: tuple[Reference, ...] = tuple(
+            Reference(qnameMaker, jref) for jref in references or ()
+        )
+        referencesByConcept: dict[Concept, list[Reference]] = defaultdict(list)
+        for reference in self._references:
+            reference._reifyUsingTaxonomy(self)
+            for concept in reference.concepts:
+                referencesByConcept[concept].append(reference)
+        # Sorted per concept the way the reference linkbase would present
+        # them for that concept: that concept's own arc order first (most
+        # references never override the default of 1), then role, then
+        # parts, for a stable order when several references tie on order.
+        self._referencesByConcept: Mapping[Concept, tuple[Reference, ...]] = {
+            concept: tuple(
+                sorted(refs, key=lambda r: (r.getOrder(concept), r.role, r.parts))
+            )
+            for concept, refs in referencesByConcept.items()
+        }
 
         self._groups: tuple[PresentationGroup, ...] = tuple(
             PresentationGroup.fromJSON(self, roleUri, bits)
@@ -1116,6 +1251,11 @@ class Taxonomy:
             qname = self._qnameMaker.fromString(qname)
         return self._typedDomainWrapperElements[qname]
 
+    def getReferencesForConcept(self, concept: Concept) -> tuple[Reference, ...]:
+        """This concept's references, or an empty tuple if it has none. See
+        Concept.references, which is the usual way to call this."""
+        return self._referencesByConcept.get(concept, ())
+
     def resolveConcept(
         self,
         text: str,
@@ -1204,6 +1344,12 @@ class Taxonomy:
     def concepts(self) -> frozenset[Concept]:
         """All concepts in the taxonomy."""
         return frozenset(self._concepts.values())
+
+    @property
+    def references(self) -> tuple[Reference, ...]:
+        """Every distinct reference in the taxonomy. See
+        getReferencesForConcept() to get the ones for one concept."""
+        return self._references
 
     @property
     def presentation(self) -> tuple[PresentationGroup, ...]:
@@ -1448,7 +1594,7 @@ def loadBuiltInTaxonomyJSON() -> None:
 def loadTaxonomyJSON(source: Path | dict) -> Taxonomy:
     """Load one taxonomy from JSON that is not built in, and return it.
 
-    source may be a path to a file written by mireport.arelle.taxonomy_info, or
+    source may be a path to a file written by mireport.arelle.taxonomy_extraction, or
     an already parsed dict. This is the counterpart to loadBuiltInTaxonomyJSON()
     for callers that have just baked a taxonomy of their own: it registers the
     taxonomy under its own entry point, so getTaxonomy() finds it afterwards.
@@ -1480,6 +1626,11 @@ def _createTaxonomyFromJSON(bits: dict) -> None:
         str_qname: TypedDomainWrapperElement(qnameMaker, str_qname, jelement)
         for str_qname, jelement in bits.get("xs_elements", {}).items()
     }
+    if (references := bits.get("references")) is None:
+        # Predates the top-level "references" section (each concept carried
+        # its own "references" list instead): fold those into the same
+        # shape so old baked JSON still loads.
+        references = _foldLegacyConceptReferences(bits["concepts"])
 
     _TAXONOMIES[entryPoint] = Taxonomy(
         concepts,
@@ -1491,4 +1642,32 @@ def _createTaxonomyFromJSON(bits: dict) -> None:
             getObject(getResource(registries, "utr.json")), qnameMaker=qnameMaker
         ),
         typedDomainWrapperElements=typedDomainWrapperElements,
+        references=references,
     )
+
+
+def _foldLegacyConceptReferences(
+    concepts_bits: Mapping[str, Mapping],
+) -> list[dict]:
+    """Fold the per-concept "references" lists that TaxonomyInfoExtractor
+    used to write into the current top-level shape, grouped by content (role
+    + parts) exactly as extractReferences() now groups them at source. Arc
+    order is not recoverable from the old shape -- a concept's position in
+    its own references list doesn't survive JSON -- so every reference here
+    is reported as order 1 for every concept that cites it; this only
+    affects the relative order of several references tying on the same
+    concept.
+    """
+    grouped: dict[tuple[str, tuple[tuple[str, str], ...]], set[str]] = defaultdict(set)
+    for str_qname, jconcept in concepts_bits.items():
+        for jref in jconcept.get("references", ()):
+            key = (jref["role"], tuple((name, value) for name, value in jref["parts"]))
+            grouped[key].add(str_qname)
+    return [
+        {
+            "role": role,
+            "parts": [list(part) for part in parts],
+            "concepts": sorted(qnames),
+        }
+        for (role, parts), qnames in grouped.items()
+    ]
