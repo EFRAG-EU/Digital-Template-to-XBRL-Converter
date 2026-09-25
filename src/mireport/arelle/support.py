@@ -264,7 +264,16 @@ class ArelleQNameCanonicaliser:
             for qname in arelle_model.qnameConcepts.keys()
             | arelle_model.qnameTypes.keys()
             if qname is not None
-            and (prefix := qname.prefix) is not None
+            # `prefix` (not just `is not None`): an element declared under a
+            # default `xmlns="..."` binding -- entirely legal, and exactly
+            # what a schema authored as `xs:schema targetNamespace="NS"
+            # xmlns="NS" xmlns:foo="NS"` produces, one binding for local use
+            # and one for everyone else to reference it by -- gives Arelle a
+            # QName with prefix "" rather than None. "" is not a namespace
+            # prefix any more than None is; NamespaceManager.add() rejects it
+            # (correctly: "" is not an NCName), so it must be filtered here
+            # alongside None rather than reaching that validation as a crash.
+            and (prefix := qname.prefix)
             and (ns := qname.namespaceURI) is not None
         )
 
