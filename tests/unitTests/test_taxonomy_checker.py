@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import warnings
 from collections.abc import Iterator
-from typing import Any
+from typing import Any, ClassVar
 
 import pytest
 
@@ -20,6 +20,7 @@ from mireport.taxonomy import Taxonomy, loadTaxonomyJSON
 from mireport.taxonomy_checker import TaxonomyChecker
 
 _NS = "https://example.com/vsme"
+_OTHER_NS = "https://example.com/other"
 _REF_NS = "http://www.xbrl.org/2006/ref"
 _STANDARD_LABEL = "http://www.xbrl.org/2003/role/label"
 _TERSE_LABEL = "http://www.xbrl.org/2003/role/terseLabel"
@@ -108,10 +109,11 @@ def _build_taxonomy(
     *,
     dimensions: dict[str, Any] | None = None,
     presentation: dict[str, Any] | None = None,
+    extra_namespaces: dict[str, str] | None = None,
 ) -> Taxonomy:
     bits = {
         "entryPoint": entry_point,
-        "namespaces": {"vsme": _NS, "ref": _REF_NS},
+        "namespaces": {"vsme": _NS, "ref": _REF_NS, **(extra_namespaces or {})},
         "concepts": concepts,
         "presentation": presentation or {},
         "dimensions": dimensions or {},
@@ -636,11 +638,23 @@ class TestConceptsWithoutStandardLabel:
         [finding] = TaxonomyChecker(taxonomy).reportConceptsWithoutStandardLabel()
         assert finding.concepts == (taxonomy.getConcept("vsme:NoStandard").qname,)
 
-    def test_standard_label_in_any_language_is_silent(self) -> None:
+    def test_label_in_other_language_only_is_flagged(self) -> None:
+        # An "any language" standard label is not enough -- English is
+        # required specifically, regardless of what else is present.
         concepts = {
             "vsme:French": _concept(labels={"fr": {_STANDARD_LABEL: "Libellé"}}),
         }
         taxonomy = _build_taxonomy("test://checker/standard-label-fr", concepts)
+        [finding] = TaxonomyChecker(taxonomy).reportConceptsWithoutStandardLabel()
+        assert finding.concepts == (taxonomy.getConcept("vsme:French").qname,)
+
+    def test_regional_english_variant_counts_as_english(self) -> None:
+        # Concept.getStandardLabel() does BCP-47 base-language matching, so
+        # "en-GB" satisfies the English requirement.
+        concepts = {
+            "vsme:BritishOnly": _concept(labels={"en-GB": {_STANDARD_LABEL: "Colour"}}),
+        }
+        taxonomy = _build_taxonomy("test://checker/standard-label-en-gb", concepts)
         assert TaxonomyChecker(taxonomy).reportConceptsWithoutStandardLabel() == []
 
     def test_abstract_concept_is_still_checked(self) -> None:
@@ -652,6 +666,100 @@ class TestConceptsWithoutStandardLabel:
         )
         [finding] = TaxonomyChecker(taxonomy).reportConceptsWithoutStandardLabel()
         assert finding.concepts == (taxonomy.getConcept("vsme:Heading").qname,)
+
+
+class TestConceptsMissingExpectedLanguageLabels:
+    _EN_FR: ClassVar = {
+        "en": {_STANDARD_LABEL: "Label"},
+        "fr": {_STANDARD_LABEL: "Étiquette"},
+    }
+    _EN_ONLY: ClassVar = {"en": {_STANDARD_LABEL: "Label"}}
+
+    def test_majority_language_gap_is_flagged(self) -> None:
+        concepts = {
+            "vsme:HasFrenchA": _concept(labels=self._EN_FR),
+            "vsme:HasFrenchB": _concept(labels=self._EN_FR),
+            "vsme:MissingFrench": _concept(labels=self._EN_ONLY),
+        }
+        taxonomy = _build_taxonomy("test://checker/lang-majority-gap", concepts)
+        [finding] = TaxonomyChecker(
+            taxonomy
+        ).reportConceptsMissingExpectedLanguageLabels()
+        assert finding.concepts == (taxonomy.getConcept("vsme:MissingFrench").qname,)
+        assert "'fr'" in finding.text
+
+    def test_minority_language_is_not_flagged(self) -> None:
+        concepts = {
+            "vsme:HasFrench": _concept(labels=self._EN_FR),
+            "vsme:NoFrenchA": _concept(labels=self._EN_ONLY),
+            "vsme:NoFrenchB": _concept(labels=self._EN_ONLY),
+        }
+        taxonomy = _build_taxonomy("test://checker/lang-minority", concepts)
+        assert (
+            TaxonomyChecker(taxonomy).reportConceptsMissingExpectedLanguageLabels()
+            == []
+        )
+
+    def test_exactly_half_coverage_is_not_a_majority(self) -> None:
+        concepts = {
+            "vsme:HasFrench": _concept(labels=self._EN_FR),
+            "vsme:NoFrench": _concept(labels=self._EN_ONLY),
+        }
+        taxonomy = _build_taxonomy("test://checker/lang-exactly-half", concepts)
+        assert (
+            TaxonomyChecker(taxonomy).reportConceptsMissingExpectedLanguageLabels()
+            == []
+        )
+
+    def test_full_coverage_is_silent(self) -> None:
+        concepts = {
+            "vsme:HasFrenchA": _concept(labels=self._EN_FR),
+            "vsme:HasFrenchB": _concept(labels=self._EN_FR),
+        }
+        taxonomy = _build_taxonomy("test://checker/lang-full-coverage", concepts)
+        assert (
+            TaxonomyChecker(taxonomy).reportConceptsMissingExpectedLanguageLabels()
+            == []
+        )
+
+    def test_prefixes_are_scoped_independently(self) -> None:
+        # "vsme:" has a real fr-majority gap; "other:" has no fr coverage at
+        # all (0%, not a majority there), so its untranslated concept must
+        # not be treated as a gap.
+        concepts = {
+            "vsme:HasFrenchA": _concept(labels=self._EN_FR),
+            "vsme:HasFrenchB": _concept(labels=self._EN_FR),
+            "vsme:MissingFrench": _concept(labels=self._EN_ONLY),
+            "other:NoFrenchAnywhere": _concept(labels=self._EN_ONLY),
+        }
+        taxonomy = _build_taxonomy(
+            "test://checker/lang-scoped-prefixes",
+            concepts,
+            extra_namespaces={"other": _OTHER_NS},
+        )
+        [finding] = TaxonomyChecker(
+            taxonomy
+        ).reportConceptsMissingExpectedLanguageLabels()
+        assert finding.concepts == (taxonomy.getConcept("vsme:MissingFrench").qname,)
+
+    def test_english_is_never_a_candidate_language(self) -> None:
+        # vsme:NoEnglish has no English label at all -- that's
+        # reportConceptsWithoutStandardLabel's job. It does have French, so
+        # it counts towards (not against) the 'fr' majority here; this check
+        # must still never itself produce an 'en' finding for anyone.
+        concepts = {
+            "vsme:HasBothA": _concept(labels=self._EN_FR),
+            "vsme:HasBothB": _concept(labels=self._EN_FR),
+            "vsme:MissingFrench": _concept(labels=self._EN_ONLY),
+            "vsme:NoEnglish": _concept(labels={"fr": {_STANDARD_LABEL: "Étiquette"}}),
+        }
+        taxonomy = _build_taxonomy("test://checker/lang-english-excluded", concepts)
+        findings = TaxonomyChecker(
+            taxonomy
+        ).reportConceptsMissingExpectedLanguageLabels()
+        [finding] = findings
+        assert finding.concepts == (taxonomy.getConcept("vsme:MissingFrench").qname,)
+        assert all("'en'" not in f.text for f in findings)
 
 
 class TestConceptsWithoutReferences:
@@ -947,13 +1055,33 @@ class TestReportIssues:
                     }
                 }
             ),
+            # A separate namespace so its fr-majority doesn't have to
+            # outweigh the other, en-only "vsme:" concepts above.
+            "other:HasFrenchA": _concept(
+                labels={
+                    "en": {_STANDARD_LABEL: "A"},
+                    "fr": {_STANDARD_LABEL: "A-fr"},
+                }
+            ),
+            "other:HasFrenchB": _concept(
+                labels={
+                    "en": {_STANDARD_LABEL: "B"},
+                    "fr": {_STANDARD_LABEL: "B-fr"},
+                }
+            ),
+            "other:MissingFrench": _concept(labels={"en": {_STANDARD_LABEL: "C"}}),
         }
-        taxonomy = _build_taxonomy("test://checker/aggregate-labels-refs-mg", concepts)
+        taxonomy = _build_taxonomy(
+            "test://checker/aggregate-labels-refs-mg",
+            concepts,
+            extra_namespaces={"other": _OTHER_NS},
+        )
         texts = {f.text for f in TaxonomyChecker(taxonomy).reportIssues()}
-        assert any("no standard label" in text for text in texts)
+        assert any("no English standard label" in text for text in texts)
         assert any("have no references" in text for text in texts)
         assert any("no measurementGuidance label" in text for text in texts)
         assert any("does not resolve to a valid unit" in text for text in texts)
+        assert any("missing a standard label in" in text for text in texts)
         assert any("have a measurementGuidance label" in text for text in texts)
 
     def test_aggregates_full_dimensional_validity_checks(self) -> None:

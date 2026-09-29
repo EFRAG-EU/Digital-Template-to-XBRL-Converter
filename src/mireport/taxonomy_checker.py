@@ -20,6 +20,8 @@ _FDV_HINT_PREFIX = (
     "dimensional validity): "
 )
 
+_ENGLISH_LANGUAGE = "en"
+
 
 def _locations(declarations: Iterable[HypercubeDeclaration]) -> list[str]:
     return [f"{d.roleUri} [{d.hypercube.qname}]" for d in declarations]
@@ -39,6 +41,7 @@ class TaxonomyChecker:
             self.reportClosedNegativeHypercubes,
             self.reportConceptsWithoutHypercube,
             self.reportConceptsWithoutStandardLabel,
+            self.reportConceptsMissingExpectedLanguageLabels,
             self.reportConceptsWithoutReferences,
             self.reportNumericConceptsWithoutMeasurementGuidance,
             self.reportMeasurementGuidanceNotResolvingToAUnit,
@@ -324,22 +327,73 @@ class TaxonomyChecker:
         ]
 
     def reportConceptsWithoutStandardLabel(self) -> list[Diagnostic]:
-        """Every concept should have a standard label in at least one
-        language -- it is the fallback every other label role and every UI
-        surface reaches for."""
+        """Every concept should have an English standard label -- VSME's
+        authoritative language regardless of which language happens to have
+        the most labels in a given build (see Taxonomy.defaultLanguage,
+        which this deliberately does not use), and the label every other
+        label role and every UI surface falls back to.
+
+        Concept.getStandardLabel() does BCP-47 base-language matching, so an
+        "en-GB"-only label still counts."""
         bad = sorted(
             concept
             for concept in self.taxonomy.concepts
-            if not concept.getAllStandardLabels()
+            if concept.getStandardLabel(_ENGLISH_LANGUAGE) is None
         )
         if not bad:
             return []
         return [
             Diagnostic.warning(
-                f"{len(bad)} concept(s) have no standard label in any language",
+                f"{len(bad)} concept(s) have no English standard label",
                 concepts=[c.qname for c in bad],
             )
         ]
+
+    def reportConceptsMissingExpectedLanguageLabels(self) -> list[Diagnostic]:
+        """Beyond the hard English requirement above, flag a concept that
+        falls short of its own namespace's translation effort: if a strict
+        majority of a namespace's concepts (grouped by qname prefix, e.g.
+        "vsme" vs. an external code list like "nace") carry a standard label
+        in some language, that language is "expected" there, and any
+        concept in that namespace lacking it is notable.
+
+        A namespace nobody has translated at all (0% in every language)
+        raises nothing here -- this is about consistency of an existing
+        translation effort, not a mandate to start one."""
+        conceptsByPrefix: dict[str, list[Concept]] = defaultdict(list)
+        for concept in self.taxonomy.concepts:
+            conceptsByPrefix[concept.qname.prefix].append(concept)
+
+        candidateLanguages = self.taxonomy.supportedLanguages - {_ENGLISH_LANGUAGE}
+        missingByLanguage: dict[str, list[Concept]] = defaultdict(list)
+        for concepts in conceptsByPrefix.values():
+            total = len(concepts)
+            for lang in candidateLanguages:
+                covered = {
+                    concept
+                    for concept in concepts
+                    if concept.getStandardLabel(lang) is not None
+                }
+                if len(covered) * 2 <= total:
+                    continue  # not a majority language for this namespace
+                missingByLanguage[lang].extend(
+                    concept for concept in concepts if concept not in covered
+                )
+
+        diagnostics: list[Diagnostic] = []
+        for lang, missing in sorted(missingByLanguage.items()):
+            if not missing:
+                continue
+            ordered = sorted(missing)
+            diagnostics.append(
+                Diagnostic.warning(
+                    f"{len(ordered)} concept(s) are missing a standard label "
+                    f"in {lang!r}, though most concepts in their namespace "
+                    "have one",
+                    concepts=[c.qname for c in ordered],
+                )
+            )
+        return diagnostics
 
     def reportConceptsWithoutReferences(self) -> list[Diagnostic]:
         """Every reportable concept should be backed by at least one
