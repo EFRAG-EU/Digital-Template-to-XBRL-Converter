@@ -117,12 +117,49 @@ def checkTaxonomyJson(taxonomy_json_path: Path) -> None:
     printDiagnosticTable("Taxonomy checker findings", diagnostics)
 
 
+def regenerateOne(
+    entry_point: Sequence[str],
+    taxonomy_zips: list[str],
+    out_path: Path,
+    utr_path: Path | None,
+    *,
+    checkJson: bool,
+) -> ArelleProcessingResult:
+    print(
+        "Using:",
+        "Taxonomy entry point:\n\t\t{}".format("\n\t\t".join(entry_point)),
+        f"Taxonomy JSON path: {out_path}",
+        f"Taxonomy packages:\n\t\t{' '.join(taxonomy_zips)}",
+        f"UTR JSON path: {utr_path}" if utr_path else "No UTR processing requested",
+        sep="\n\t",
+    )
+
+    start = time.perf_counter_ns()
+
+    print("Calling into Arelle")
+    results = callArelleForTaxonomyInfo(entry_point, taxonomy_zips, out_path, utr_path)
+    printMessages(results)
+    printDiagnosticTable("Taxonomy diagnostics", results.diagnostics)
+
+    elapsed = (time.perf_counter_ns() - start) / 1_000_000_000
+    print(f"Finished querying Arelle ({elapsed:,.2f} seconds elapsed).")
+
+    if checkJson:
+        if out_path.exists():
+            print("Checking taxonomy JSON")
+            checkTaxonomyJson(out_path)
+        else:
+            print("Skipping --check-json: taxonomy JSON was not written.")
+
+    return results
+
+
 def main() -> None:
     cli = parser()
     args = cli.parse_args()
-    taxonomy_json_path: str = args.taxonomy_json_path
+    taxonomy_json_path: Path = args.taxonomy_json_path
     taxonomy_zips: list[str] = args.taxonomy_zips
-    utr_json_path: str | None = args.utr_output
+    utr_json_path: Path | None = args.utr_output
     # action="append" gives a list; pickEntryPointFromPackages() gives a tuple.
     entry_point: Sequence[str] | None = args.entry_point
 
@@ -140,35 +177,13 @@ def main() -> None:
             )
         entry_point = pickEntryPointFromPackages(taxonomy_zips, cli)
 
-    print(
-        "Using:",
-        "Taxonomy entry point:\n\t\t{}".format("\n\t\t".join(entry_point)),
-        f"Taxonomy JSON path: {taxonomy_json_path}",
-        f"Taxonomy packages:\n\t\t{' '.join(taxonomy_zips)}",
-        f"UTR JSON path: {utr_json_path}"
-        if utr_json_path
-        else "No UTR processing requested",
-        sep="\n\t",
+    regenerateOne(
+        entry_point,
+        taxonomy_zips,
+        taxonomy_json_path,
+        utr_json_path,
+        checkJson=args.check_json,
     )
-
-    start = time.perf_counter_ns()
-
-    print("Calling into Arelle")
-    results = callArelleForTaxonomyInfo(
-        entry_point, taxonomy_zips, taxonomy_json_path, utr_json_path
-    )
-    printMessages(results)
-    printDiagnosticTable("Taxonomy diagnostics", results.diagnostics)
-
-    elapsed = (time.perf_counter_ns() - start) / 1_000_000_000
-    print(f"Finished querying Arelle ({elapsed:,.2f} seconds elapsed).")
-
-    if args.check_json:
-        if Path(taxonomy_json_path).exists():
-            print("Checking taxonomy JSON")
-            checkTaxonomyJson(Path(taxonomy_json_path))
-        else:
-            print("Skipping --check-json: taxonomy JSON was not written.")
 
 
 if __name__ == "__main__":
