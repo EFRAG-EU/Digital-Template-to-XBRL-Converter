@@ -6,6 +6,7 @@ from argparse import ArgumentParser
 from collections import Counter
 from collections.abc import Iterable, Sequence
 from glob import glob
+from pathlib import Path
 from typing import Any
 
 import rich.traceback
@@ -31,11 +32,14 @@ _DIAGNOSTIC_LEVEL_STYLES = {
 }
 
 
-def getListofPathsFromListOfGlobs(globs: list[str]) -> list[str]:
-    paths = [
-        glob_result for glob_candidate in globs for glob_result in glob(glob_candidate)
-    ]
-    return paths
+def getListofPathsFromListOfGlobs(globs: list[str]) -> list[Path]:
+    """Expand globs (PowerShell passes them through unexpanded) into unique
+    paths, sorted by file name then path so console output is consistent.
+    glob.glob() rather than Path.glob(): the latter rejects absolute patterns."""
+    # A set, not unique_list(): the result is sorted anyway, and unique_list
+    # lives behind the Arelle boundary.
+    paths = {Path(match) for pattern in globs for match in glob(pattern)}
+    return sorted(paths, key=lambda path: (path.name, str(path)))
 
 
 def configure_utf8_output() -> None:
@@ -91,24 +95,43 @@ def configure_rich_output(*, locals_max_length: int | None = None) -> Console:
     return get_console()
 
 
-def validateTaxonomyPackages(globList: list[str], parser: ArgumentParser) -> list[str]:
+def packageListLines(paths: Sequence[Path]) -> list[str]:
+    """Lines listing paths grouped by directory: each directory once, then
+    (tab-indented) the name of every file in it, in the order given. A file
+    alone in its directory is just one line, its full path."""
+    byParent: dict[Path, list[Path]] = {}
+    for path in paths:
+        byParent.setdefault(path.parent, []).append(path)
+    lines = []
+    for parent, children in byParent.items():
+        if len(children) == 1:
+            lines.append(str(children[0]))
+            continue
+        lines.append(f"{parent}{os.sep}")
+        lines.extend(f"\t{child.name}" for child in children)
+    return lines
+
+
+def validateTaxonomyPackages(globList: list[str], parser: ArgumentParser) -> list[Path]:
     console_print("Zip files specified", " ".join(globList))
     # A path or glob that matches nothing would otherwise just drop out of
     # the list, so a mistyped package would be silently left out.
     if unmatched := [g for g in globList if not glob(g)]:
         raise parser.error(f"No files found for: {' '.join(unmatched)}")
-    taxonomy_zips: list[str] = getListofPathsFromListOfGlobs(globList)
-    console_print("Zip files to use  ", " ".join(taxonomy_zips))
+    taxonomy_zips = getListofPathsFromListOfGlobs(globList)
+    console_print("Zip files to use:")
+    console_print_plain(packageListLines(taxonomy_zips))
 
-    if missing := [z for z in taxonomy_zips if not os.path.exists(z)]:
-        raise parser.error(f"Specified files not found: {' '.join(missing)}")
-    if notZips := [z for z in taxonomy_zips if not z.endswith(".zip")]:
+    # glob only returns paths that exist, but a directory can match too.
+    if notFiles := [str(z) for z in taxonomy_zips if not z.is_file()]:
+        raise parser.error(f"Specified paths are not files: {' '.join(notFiles)}")
+    if notZips := [str(z) for z in taxonomy_zips if z.suffix.lower() != ".zip"]:
         raise parser.error(f"Specified files are not Zip files: {' '.join(notZips)}")
     return taxonomy_zips
 
 
 def getEntryPointsFromPackages(
-    taxonomy_zips: list[str], parser: ArgumentParser
+    taxonomy_zips: Sequence[Path], parser: ArgumentParser
 ) -> list[PackageEntryPoint]:
     """Read the entry points declared by each package, warning about (but not
     failing on) any package we can't read."""
@@ -129,7 +152,8 @@ def getEntryPointsFromPackages(
                 entryPoints.append(entryPoint)
     if not entryPoints:
         raise parser.error(
-            f"No taxonomy entry points declared by any of: {taxonomy_zips}"
+            "No taxonomy entry points declared by any of: "
+            + " ".join(str(z) for z in taxonomy_zips)
         )
     return entryPoints
 
@@ -157,7 +181,7 @@ def printEntryPointTable(entryPoints: list[PackageEntryPoint]) -> None:
 
 
 def pickEntryPointFromPackages(
-    taxonomy_zips: list[str], parser: ArgumentParser
+    taxonomy_zips: Sequence[Path], parser: ArgumentParser
 ) -> tuple[str, ...]:
     """Show the entry points declared by the given packages and prompt for one.
 

@@ -30,7 +30,7 @@ TEST_CASES = [
 @pytest.mark.integration
 @pytest.mark.parametrize("json_name", TEST_CASES)
 def test_taxonomy_json_regeneration(json_name: str, tmp_path: Path) -> None:
-    taxonomy_zips = sorted(str(p) for p in PACKAGES_DIR.glob("*.zip"))
+    taxonomy_zips = sorted(PACKAGES_DIR.glob("*.zip"))
     if not taxonomy_zips:
         pytest.skip(f"No taxonomy packages available in {PACKAGES_DIR}")
 

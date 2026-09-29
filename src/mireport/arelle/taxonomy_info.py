@@ -49,7 +49,7 @@ PLUGIN_INFO = VersionInformationTuple(PLUGIN_NAME, PLUGIN_VERSION)
 
 def callArelleForTaxonomyInfo(
     entry_point: str | Sequence[str],
-    taxonomy_zips: list[str],
+    taxonomy_zips: Sequence[Path],
     taxonomy_json_path: Path | str,
     utr_json_path: Path | str | None = None,
 ) -> ArelleProcessingResult:
@@ -85,7 +85,7 @@ def callArelleForTaxonomyInfo(
         logFile="logToBuffer",
         logFormat="%(message)s",
         logPropagate=False,
-        packages=taxonomy_zips,
+        packages=[str(z) for z in taxonomy_zips],
         pluginOptions=pluginOptions,
         plugins=__file__,
         validate=True,
