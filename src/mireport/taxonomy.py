@@ -65,6 +65,63 @@ LABEL_SUFFIX_PATTERN = re.compile(r"\s*\[[A-Z]?[a-z ]+\]\s*$")
 ConceptPredicate = Callable[["Concept"], bool]
 
 
+@cache  # keyed on utr/qnameMaker, not a Concept, since Concept equality is qname-only and would collide across taxonomies.
+def _resolveMeasurementGuidanceUnit(
+    measurementLabel: str,
+    dataType: QName,
+    utr: UTR,
+    qnameMaker: QNameMaker,
+) -> frozenset[QName] | None:
+    """If there is a valid UTR unitId or a valid unit QName in
+    measurementLabel, return the first one found. Otherwise return None."""
+    allValidUnitQNames = frozenset({u for u in utr.getUnitsForDataType(dataType)})
+    if not allValidUnitQNames:
+        return None
+
+    # Perhaps the label is just a unitId
+    if (
+        qname := utr.getQNameForUnitId(measurementLabel)
+    ) is not None and qname in allValidUnitQNames:
+        return frozenset({qname})
+
+    # Perhaps the label is just a unit QNAME
+    if qnameMaker.isValidQName(measurementLabel):
+        qname = qnameMaker.fromString(measurementLabel)
+        if qname in allValidUnitQNames:
+            return frozenset({qname})
+
+    valid: list[QName] = []
+
+    # We might have a measurement label that is a mixture of human readable text and units in []
+    between_square_bracket_pattern = re.compile(r"\[([^\]]+)\]")
+    content = between_square_bracket_pattern.finditer(measurementLabel)
+
+    for m1 in content:
+        for m2 in QNAME_RE.finditer(m1.group(1)):
+            s = m2.group(0)
+            if qnameMaker.isValidQName(s):
+                q = qnameMaker.fromString(s)
+                if q in allValidUnitQNames:
+                    valid.append(q)
+
+    if not valid:
+        # If we're still empty, then let's see if someone has used bare unitIds
+        delimiters = [" ", ",", "*", "/"]
+        if any(c in delimiters for c in measurementLabel):
+            desired = {x for x in NCNAME_RE.findall(measurementLabel)}
+            allValidUnitIds = {u.localName: u for u in allValidUnitQNames}
+            for d in desired:
+                q2 = allValidUnitIds.get(d)
+                if q2 is not None:
+                    valid.append(q2)
+
+    match len(valid):
+        case 0:
+            return None
+        case _:
+            return frozenset(valid)
+
+
 class PeriodType(StrEnum):
     Duration = "duration"
     Instant = "instant"
@@ -383,9 +440,6 @@ class Concept:
             for role_uri in lang_labels
         )
 
-    # N.B. B019 (cache keeps `self` alive) is not a concern: Concepts belong to a
-    # Taxonomy which is kept in a module level registry for the life of the process.
-    @cache  # noqa: B019
     def getRequiredUnitQNames(self) -> frozenset[QName] | None:
         """If there is a valid UTR unitId or a valid unit QName in the
         measurement guidance label of the concept, return the first one found.
@@ -402,54 +456,9 @@ class Concept:
             # N.B. Deals with None or empty string
             return None
 
-        allValidUnitQNames = frozenset(
-            {u for u in self._taxonomy.UTR.getUnitsForDataType(self.dataType)}
+        return _resolveMeasurementGuidanceUnit(
+            measurementLabel, self.dataType, self._taxonomy.UTR, self._qnameMaker
         )
-        if not allValidUnitQNames:
-            return None
-
-        # Perhaps the label is just a unitId
-        if (
-            qname := self._taxonomy.UTR.getQNameForUnitId(measurementLabel)
-        ) is not None and qname in allValidUnitQNames:
-            return frozenset({qname})
-
-        # Perhaps the label is just a unit QNAME
-        if self._qnameMaker.isValidQName(measurementLabel):
-            qname = self._qnameMaker.fromString(measurementLabel)
-            if qname in allValidUnitQNames:
-                return frozenset({qname})
-
-        valid: list[QName] = []
-
-        # We might have a measurement label that is a mixture of human readable text and units in []
-        between_square_bracket_pattern = re.compile(r"\[([^\]]+)\]")
-        content = between_square_bracket_pattern.finditer(measurementLabel)
-
-        for m1 in content:
-            for m2 in QNAME_RE.finditer(m1.group(1)):
-                s = m2.group(0)
-                if self._qnameMaker.isValidQName(s):
-                    q = self._qnameMaker.fromString(s)
-                    if q in allValidUnitQNames:
-                        valid.append(q)
-
-        if not valid:
-            # If we're still empty, then let's see if someone has used bare unitIds
-            delimiters = [" ", ",", "*", "/"]
-            if any(c in delimiters for c in measurementLabel):
-                desired = {x for x in NCNAME_RE.findall(measurementLabel)}
-                allValidUnitIds = {u.localName: u for u in allValidUnitQNames}
-                for d in desired:
-                    q2 = allValidUnitIds.get(d)
-                    if q2 is not None:
-                        valid.append(q2)
-
-        match len(valid):
-            case 0:
-                return None
-            case _:
-                return frozenset(valid)
 
     @property
     def isAbstract(self) -> bool:
