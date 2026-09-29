@@ -81,6 +81,18 @@ def _overlappingPrimaryItems(
     )
 
 
+def _linkbaseOfArcrole(arcrole: str) -> str:
+    """The standard linkbase an arcrole's relationships live in, for messages.
+    Not XbrlConst.standardArcroleArcElement(): it raises on XDT arcroles."""
+    if arcrole == XbrlConst.parentChild:
+        return "presentation"
+    if arcrole in XbrlConst.summationItems:
+        return "calculation"
+    if XbrlConst.isDefinitionOrXdtArcrole(arcrole):
+        return "definition"
+    return arcrole
+
+
 def _hypercubeType(arcrole: str, elrUri: str, hypercubeQName: QName) -> str:
     """ "positive" for an "all" relationship, "negative" for "notAll" -- never
     inferred by elimination, since a third arcrole here would be a modelling
@@ -807,6 +819,11 @@ class TaxonomyInfoExtractor:
         member (or domain head) of an enum2 concept or explicit dimension
         that is itself presented -- such members are not normally presented
         directly, so flagging them would be noise rather than signal.
+
+        "Not presented" is reported once per ELR the concepts do appear in,
+        naming that ELR's linkbase(s), so they can be found. Label/reference
+        arcs don't count as appearing: every labelled concept has them in
+        the standard link role.
         """
         baseSets = self.model.baseSetsInDTS()
         documentationArcroles = frozenset(
@@ -815,15 +832,18 @@ class TaxonomyInfoExtractor:
 
         presented: set[QName] = set()
         arcrolesByQName: dict[QName, set[str]] = {}
+        baseSetsByQName: dict[QName, set[tuple[str, str]]] = {}
         for qname, concept in self.model.itemConcepts():
-            touched: set[str] = set()
+            touchedBaseSets: set[tuple[str, str]] = set()
             for arcrole, linkrole in baseSets:
                 relSet = self.model.conceptRelationshipSet(arcrole, linkrole)
                 if relSet.hasRelationshipsFrom(concept) or relSet.hasRelationshipsTo(
                     concept
                 ):
-                    touched.add(arcrole)
+                    touchedBaseSets.add((arcrole, linkrole))
+            touched = {arcrole for arcrole, _ in touchedBaseSets}
             arcrolesByQName[qname] = touched
+            baseSetsByQName[qname] = touchedBaseSets
             if XbrlConst.parentChild in touched:
                 presented.add(qname)
 
@@ -850,7 +870,6 @@ class TaxonomyInfoExtractor:
         for text, qnames in (
             ("concept(s) have no relationship in any linkbase", fullyIsolated),
             (documentationOnlyText, documentationOnly),
-            ("concept(s) are absent from the presentation linkbase", notPresented),
         ):
             if qnames:
                 self.diagnostics.emit(
@@ -859,6 +878,25 @@ class TaxonomyInfoExtractor:
                         concepts=sorted(qnames),
                     ),
                 )
+
+        conceptsByELR: dict[str, set[QName]] = defaultdict(set)
+        linkbasesByELR: dict[str, set[str]] = defaultdict(set)
+        for qname in notPresented:
+            for arcrole, linkrole in baseSetsByQName[qname]:
+                if arcrole not in documentationArcroles:
+                    conceptsByELR[linkrole].add(qname)
+                    linkbasesByELR[linkrole].add(_linkbaseOfArcrole(arcrole))
+        for elr in sorted(conceptsByELR):
+            qnames = sorted(conceptsByELR[elr])
+            self.diagnostics.emit(
+                ArelleDiagnostic.warning(
+                    f"{len(qnames)} concept(s) are absent from the presentation "
+                    "linkbase",
+                    elr=elr,
+                    concepts=qnames,
+                    linkbase=", ".join(sorted(linkbasesByELR[elr])),
+                ),
+            )
 
     def _presentedDimensionalDomainMembers(
         self, presented: Collection[QName]
