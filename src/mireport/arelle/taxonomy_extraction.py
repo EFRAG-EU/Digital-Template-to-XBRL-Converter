@@ -42,6 +42,7 @@ from mireport.arelle.support import (
     ArelleRelatedException,
     unique_list,
 )
+from mireport.arelle.taxonomy_info_run import TaxonomyInfoRun, TaxonomyInfoRunRegistry
 
 # The UtrEntry attributes worth serialising (the UTR schema's primary key is
 # status + unitId).
@@ -191,9 +192,13 @@ class TaxonomyInfoExtractor:
         self.options: RuntimeOptions = options
         self.modelXbrl: ModelXbrl = modelXbrl
         self.model: ValidatedModel = ValidatedModel(modelXbrl)
+        # None when the plugin runs from plain arelleCmdLine, not the Session API.
+        self.run: TaxonomyInfoRun | None = TaxonomyInfoRunRegistry.get(
+            getattr(options, "runToken", None)
+        )
         self.diagnostics: DiagnosticEmitter = DiagnosticEmitter(
             cntlr,
-            getattr(options, "diagnosticsToken", None),
+            self.run.diagnostics if self.run is not None else None,
             # Looked up via self.model at emit time, not bound now: tests
             # swap the model for a stub after construction.
             elrDefinition=lambda elr: self.model.roleDefinition(elr),

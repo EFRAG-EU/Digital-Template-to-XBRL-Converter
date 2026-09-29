@@ -4,8 +4,8 @@ This file is deliberately a thin harness: Arelle loads it by file path
 (``plugins=__file__``) as its own module, so anything living here exists
 twice when the plugin runs in-process. The actual extraction logic lives in
 :mod:`mireport.arelle.taxonomy_extraction`, which both sides import by name.
-The same trick makes :class:`DiagnosticCollector` work as a hand-back
-channel — see its docstring in :mod:`mireport.arelle.diagnostics`.
+The same trick lets the caller and plugin share a per-run context -- see
+:mod:`mireport.arelle.taxonomy_info_run`.
 
 Use :func:`callArelleForTaxonomyInfo` to run the plugin via the Arelle
 Session API, or pass this file to ``arelleCmdLine --plugins``.
@@ -25,7 +25,6 @@ from arelle.RuntimeOptions import RuntimeOptions, RuntimeOptionValue
 from arelle.utils.PluginData import PluginData
 
 import mireport
-from mireport.arelle.diagnostics import DiagnosticCollector
 from mireport.arelle.support import (
     ArelleProcessingResult,
     ArelleRelatedException,
@@ -35,6 +34,7 @@ from mireport.arelle.taxonomy_extraction import (
     UTRInfoExtractor,
     writeDataFile,
 )
+from mireport.arelle.taxonomy_info_run import TaxonomyInfoRunRegistry
 from mireport.version import VersionInformationTuple
 
 if TYPE_CHECKING:
@@ -53,22 +53,22 @@ def callArelleForTaxonomyInfo(
     taxonomy_json_path: Path | str,
     utr_json_path: Path | str | None = None,
 ) -> ArelleProcessingResult:
-    diagnosticsToken = DiagnosticCollector.open()
+    documents = (entry_point,) if isinstance(entry_point, str) else tuple(entry_point)
+    if not documents:
+        raise ArelleRelatedException("No entry point document given.")
+    runToken = TaxonomyInfoRunRegistry.open(entryPointSet=documents)
     # N.B. paths must cross the Arelle boundary as str: RuntimeOptions applies
     # pluginOptions with a bare setattr() so a Path would survive today, but
     # RuntimeOptionValue does not admit Path so that is not contractual.
     pluginOptions: dict[str, RuntimeOptionValue] = {
         "taxonomyDataFile": str(taxonomy_json_path),
-        "diagnosticsToken": diagnosticsToken,
+        "runToken": runToken,
     }
     utrValidation = False
     if utr_json_path is not None:
         pluginOptions["utrDataFile"] = str(utr_json_path)
         utrValidation = True
 
-    documents = [entry_point] if isinstance(entry_point, str) else list(entry_point)
-    if not documents:
-        raise ArelleRelatedException("No entry point document given.")
     # An entry point may name several documents that together form one DTS.
     # Importing the rest keeps them in the entry point's DTS; passing them all as
     # entry points would instead load each as its own DTS.
@@ -99,8 +99,8 @@ def callArelleForTaxonomyInfo(
             )
             results = ArelleProcessingResult.fromSession(session)
     finally:
-        diagnostics = DiagnosticCollector.close(diagnosticsToken)
-    results.addDiagnostics(diagnostics)
+        run = TaxonomyInfoRunRegistry.close(runToken)
+    results.addDiagnostics(run.diagnostics)
     return results
 
 
