@@ -1615,6 +1615,32 @@ def loadBuiltInTaxonomyJSON() -> None:
             L.error(f"Error loading taxonomy from {f.name}", exc_info=e)
 
 
+def builtInTaxonomyJsonPaths() -> list[tuple[Path, str]]:
+    """The built-in taxonomy JSON files, sorted by name, each with the entry
+    point it records -- what scripts/update-taxonomy.py --regenerate-builtin
+    regenerates in place. Raises rather than logs: a file that cannot be
+    regenerated must not be silently skipped."""
+    found = []
+    for f in getJsonFiles(taxonomies):
+        if not isinstance(f, Path):
+            raise TaxonomyException(
+                f"Built-in taxonomy JSON {f.name} is not a file on disk (is "
+                "mireport installed as a zip or non-editable package?) so it "
+                "cannot be regenerated in place."
+            )
+        found.append((f, _entryPointFromJSON(getObject(f), source=f.name)))
+    return sorted(found, key=lambda pair: pair[0].name)
+
+
+def _entryPointFromJSON(bits: dict, *, source: str) -> str:
+    entryPoint = bits.get("entryPoint")
+    if not isinstance(entryPoint, str) or not entryPoint.strip():
+        raise TaxonomyException(
+            f"Taxonomy JSON {source} has no usable entryPoint (got {entryPoint!r})."
+        )
+    return entryPoint
+
+
 def loadTaxonomyJSON(source: Path | dict) -> Taxonomy:
     """Load one taxonomy from JSON that is not built in, and return it.
 

@@ -1,11 +1,17 @@
 import argparse
+import json
+import os
 import sys
 import time
 import warnings
 from collections.abc import Sequence
+from dataclasses import dataclass
+from enum import StrEnum
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 from rich.markup import escape
+from rich.table import Table
 
 from mireport.arelle.support import ArelleProcessingResult
 from mireport.arelle.taxonomy_info import callArelleForTaxonomyInfo
@@ -24,7 +30,7 @@ from mireport.cli import (
 from mireport.conversionresults import Severity
 from mireport.diagnostics import Diagnostic
 from mireport.exceptions import TaxonomyException
-from mireport.taxonomy import loadTaxonomyJSON
+from mireport.taxonomy import builtInTaxonomyJsonPaths, loadTaxonomyJSON
 from mireport.taxonomy_checker import TaxonomyChecker
 
 SEVERITY_STYLES = {
@@ -39,15 +45,40 @@ def parser() -> argparse.ArgumentParser:
         description="Extract taxonomy information from zip files and save to JSON file."
     )
     parser.add_argument(
-        "taxonomy_json_path",
-        type=Path,
-        help="Path to the taxonomy JSON file to be created.",
-    )
-    parser.add_argument(
         "taxonomy_zips",
         type=str,
         nargs="+",
         help="Path to the taxonomy zip files to be used (globs, *.zip, are permitted).",
+    )
+    # Not required=True: main() checks that one mode was given, after first
+    # catching the removed `update-taxonomy.py out.json *.zip` form.
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument(
+        "--output",
+        type=Path,
+        metavar="TAXONOMY_JSON",
+        help="Path to the taxonomy JSON file to be created.",
+    )
+    mode.add_argument(
+        "--regenerate-builtin",
+        action="store_true",
+        help="Regenerate every built-in taxonomy JSON in src/mireport/data/taxonomies "
+        "in place, each from the entry point it records. The taxonomy packages "
+        "must include the supporting packages (codelists, country, nace, ...). A "
+        "file is only replaced when regeneration succeeds and its content has "
+        "changed.",
+    )
+    mode.add_argument(
+        "--list-entry-points",
+        action="store_true",
+        help="List the entry points declared by the taxonomy packages and exit.",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="With --regenerate-builtin: regenerate to a temporary file and report "
+        "which built-in files would change, without replacing any. Exits 1 if any "
+        "would change.",
     )
     parser.add_argument(
         "--utr-output",
@@ -60,14 +91,9 @@ def parser() -> argparse.ArgumentParser:
         type=str,
         action="append",
         default=None,
-        help="Entry point to the taxonomy. Repeat it for an entry point that names "
-        "several documents. If omitted, you are prompted to pick one of the entry "
-        "points declared by the taxonomy packages.",
-    )
-    parser.add_argument(
-        "--list-entry-points",
-        action="store_true",
-        help="List the entry points declared by the taxonomy packages and exit.",
+        help="With --output: entry point to the taxonomy. Repeat it for an entry "
+        "point that names several documents. If omitted, you are prompted to pick "
+        "one of the entry points declared by the taxonomy packages.",
     )
     parser.add_argument(
         "--check-json",
@@ -154,21 +180,151 @@ def regenerateOne(
     return results
 
 
+class RegenerationStatus(StrEnum):
+    UNCHANGED = "unchanged"
+    UPDATED = "updated"
+    WOULD_CHANGE = "would change"
+    FAILED = "failed"
+
+
+STATUS_STYLES = {
+    RegenerationStatus.UNCHANGED: "green",
+    RegenerationStatus.UPDATED: "cyan",
+    RegenerationStatus.WOULD_CHANGE: "yellow",
+    RegenerationStatus.FAILED: "bold red",
+}
+
+
+@dataclass(frozen=True)
+class RegenerationOutcome:
+    path: Path
+    entryPoint: str
+    status: RegenerationStatus
+    seconds: float
+
+
+def succeeded(results: ArelleProcessingResult, out_path: Path) -> bool:
+    return (
+        out_path.exists()
+        and not results.has_exceptions
+        and not any(m.severity == Severity.ERROR for m in results.messages)
+    )
+
+
+def regenerateBuiltIn(
+    path: Path,
+    entryPoint: str,
+    taxonomy_zips: list[str],
+    utr_path: Path | None,
+    *,
+    checkJson: bool,
+    dryRun: bool,
+) -> RegenerationOutcome:
+    start = time.perf_counter()
+    # Same directory as the target so os.replace() is an atomic rename.
+    with TemporaryDirectory(dir=path.parent, prefix=".regenerate-") as tmp:
+        out_path = Path(tmp) / path.name
+        results = regenerateOne(
+            (entryPoint,), taxonomy_zips, out_path, utr_path, checkJson=checkJson
+        )
+        if not succeeded(results, out_path):
+            status = RegenerationStatus.FAILED
+        elif json.loads(out_path.read_bytes()) == json.loads(path.read_bytes()):
+            status = RegenerationStatus.UNCHANGED
+        elif dryRun:
+            status = RegenerationStatus.WOULD_CHANGE
+        else:
+            os.replace(out_path, path)
+            status = RegenerationStatus.UPDATED
+    return RegenerationOutcome(path, entryPoint, status, time.perf_counter() - start)
+
+
+def printRegenerationSummary(outcomes: Sequence[RegenerationOutcome]) -> None:
+    table = Table(title="Built-in taxonomy JSON regeneration")
+    table.add_column("File", no_wrap=True)
+    table.add_column("Entry point")
+    table.add_column("Status", no_wrap=True)
+    table.add_column("Seconds", justify="right")
+    for outcome in outcomes:
+        style = STATUS_STYLES[outcome.status]
+        table.add_row(
+            outcome.path.name,
+            outcome.entryPoint,
+            f"[{style}]{outcome.status}[/]",
+            f"{outcome.seconds:,.2f}",
+        )
+    get_console().print(table)
+
+
+def regenerateAllBuiltIn(
+    taxonomy_zips: list[str],
+    utr_path: Path | None,
+    *,
+    checkJson: bool,
+    dryRun: bool,
+) -> int:
+    outcomes = []
+    for index, (path, entryPoint) in enumerate(builtInTaxonomyJsonPaths()):
+        print(f"Regenerating {path.name}")
+        outcomes.append(
+            regenerateBuiltIn(
+                path,
+                entryPoint,
+                taxonomy_zips,
+                # The UTR is independent of the taxonomy: write it once.
+                utr_path if index == 0 else None,
+                checkJson=checkJson,
+                dryRun=dryRun,
+            )
+        )
+    printRegenerationSummary(outcomes)
+    bad = {RegenerationStatus.FAILED, RegenerationStatus.WOULD_CHANGE}
+    return 1 if any(o.status in bad for o in outcomes) else 0
+
+
 def main() -> None:
     cli = parser()
     args = cli.parse_args()
-    taxonomy_json_path: Path = args.taxonomy_json_path
-    taxonomy_zips: list[str] = args.taxonomy_zips
+    taxonomy_json_path: Path | None = args.output
     utr_json_path: Path | None = args.utr_output
     # action="append" gives a list; pickEntryPointFromPackages() gives a tuple.
     entry_point: Sequence[str] | None = args.entry_point
 
-    taxonomy_zips = validateTaxonomyPackages(taxonomy_zips, cli)
+    if jsonPaths := [z for z in args.taxonomy_zips if z.lower().endswith(".json")]:
+        cli.error(
+            f"{jsonPaths[0]} is not a taxonomy package. The taxonomy JSON to "
+            f"create is given with --output (e.g. --output {jsonPaths[0]}), not "
+            "as the first positional argument."
+        )
+    if not (taxonomy_json_path or args.regenerate_builtin or args.list_entry_points):
+        cli.error(
+            "one of the arguments --output --regenerate-builtin "
+            "--list-entry-points is required"
+        )
+    # Dependencies the mutually exclusive group cannot express.
+    if entry_point is not None and taxonomy_json_path is None:
+        cli.error("--entry-point is only supported with --output.")
+    if args.dry_run and not args.regenerate_builtin:
+        cli.error("--dry-run is only supported with --regenerate-builtin.")
+
+    taxonomy_zips = validateTaxonomyPackages(args.taxonomy_zips, cli)
+
+    if args.regenerate_builtin:
+        raise SystemExit(
+            regenerateAllBuiltIn(
+                taxonomy_zips,
+                utr_json_path,
+                checkJson=args.check_json,
+                dryRun=args.dry_run,
+            )
+        )
 
     if args.list_entry_points:
         printEntryPointTable(getEntryPointsFromPackages(taxonomy_zips, cli))
         raise SystemExit(0)
 
+    # One mode is required, so --output is set once the other two are gone.
+    assert taxonomy_json_path is not None
     if entry_point is None:
         if not sys.stdin.isatty():
             cli.error(
