@@ -2,10 +2,12 @@ from __future__ import annotations
 
 from collections import defaultdict
 from collections.abc import Callable, Iterable, Sequence
+from itertools import chain
 
 from mireport.diagnostics import Diagnostic
 from mireport.stringutil import normalizeLabelText, stripLabelSuffix
 from mireport.taxonomy import (
+    MEASUREMENT_GUIDANCE_LABEL_ROLE,
     STANDARD_LABEL_ROLE,
     Concept,
     HypercubeDeclaration,
@@ -28,15 +30,21 @@ class TaxonomyChecker:
         self.taxonomy = taxonomy
 
     def reportIssues(self) -> list[Diagnostic]:
-        return [
-            *self.reportLabelCollisions(),
-            *self.reportInconsistentDimensionDomains(),
-            *self.reportUnresolvedEnumerationDomains(),
-            *self.reportOpenPositiveHypercubes(),
-            *self.reportNegativeHypercubesWithoutPositive(),
-            *self.reportClosedNegativeHypercubes(),
-            *self.reportConceptsWithoutHypercube(),
-        ]
+        checks: tuple[Callable[[], list[Diagnostic]], ...] = (
+            self.reportLabelCollisions,
+            self.reportInconsistentDimensionDomains,
+            self.reportUnresolvedEnumerationDomains,
+            self.reportOpenPositiveHypercubes,
+            self.reportNegativeHypercubesWithoutPositive,
+            self.reportClosedNegativeHypercubes,
+            self.reportConceptsWithoutHypercube,
+            self.reportConceptsWithoutStandardLabel,
+            self.reportConceptsWithoutReferences,
+            self.reportNumericConceptsWithoutMeasurementGuidance,
+            self.reportMeasurementGuidanceNotResolvingToAUnit,
+            self.reportMeasurementGuidanceOnNonNumericConcepts,
+        )
+        return list(chain.from_iterable(check() for check in checks))
 
     def reportLabelCollisions(self) -> list[Diagnostic]:
         def _find_collisions(
@@ -311,6 +319,149 @@ class TaxonomyChecker:
                     "fact for it may carry any dimension value at all. "
                     "Associate it with a hypercube -- one with no dimensions "
                     "if it takes none."
+                ),
+            )
+        ]
+
+    def reportConceptsWithoutStandardLabel(self) -> list[Diagnostic]:
+        """Every concept should have a standard label in at least one
+        language -- it is the fallback every other label role and every UI
+        surface reaches for."""
+        bad = sorted(
+            concept
+            for concept in self.taxonomy.concepts
+            if not concept.getAllStandardLabels()
+        )
+        if not bad:
+            return []
+        return [
+            Diagnostic.warning(
+                f"{len(bad)} concept(s) have no standard label in any language",
+                concepts=[c.qname for c in bad],
+            )
+        ]
+
+    def reportConceptsWithoutReferences(self) -> list[Diagnostic]:
+        """Every reportable concept should be backed by at least one
+        reference (authoritative literature, disclosure guidance, etc.).
+        Abstract concepts (hypercubes, dimensions, domain members, headings)
+        are excluded -- they are structural, not reportable, and routinely
+        carry no reference of their own."""
+        bad = sorted(
+            concept for concept in self._reportableConcepts() if not concept.references
+        )
+        if not bad:
+            return []
+        return [
+            Diagnostic.warning(
+                f"{len(bad)} reportable concept(s) have no references",
+                concepts=[c.qname for c in bad],
+            )
+        ]
+
+    def reportNumericConceptsWithoutMeasurementGuidance(self) -> list[Diagnostic]:
+        """A reportable, numeric, non-monetary concept whose data type has at
+        least one candidate unit in the UTR should carry a
+        measurementGuidance label naming it -- Concept.getRequiredUnitQNames()
+        reads that label to pick the concept's unit. A data type with zero
+        UTR candidates is not flagged: there is nothing a label could name.
+
+        This still applies with exactly one candidate today, even though
+        UnitResolver already auto-resolves that case (see
+        UnitResolver.unitFor) -- the UTR can grow a second candidate for the
+        same data type in a later release, at which point resolution becomes
+        ambiguous with no guidance in place to catch it. Naming today's only
+        candidate now is cheap and forward-compatible; each finding lists the
+        concept's actual current candidate(s) so it's actionable without
+        reaching for the UTR yourself.
+        """
+        diagnostics: list[Diagnostic] = []
+        for concept in sorted(self._reportableConcepts()):
+            if (
+                not concept.isNumeric
+                or concept.isMonetary
+                or MEASUREMENT_GUIDANCE_LABEL_ROLE in concept.labelRoles
+            ):
+                continue
+            candidates = self.taxonomy.UTR.getUnitsForDataType(concept.dataType)
+            if not candidates:
+                continue
+            candidateNames = sorted(str(u) for u in candidates)
+            if len(candidateNames) == 1:
+                text = (
+                    "Concept has no measurementGuidance label; the UTR's "
+                    f"only candidate unit for its data type is {candidateNames[0]}"
+                )
+            else:
+                text = (
+                    "Concept has no measurementGuidance label; the UTR's "
+                    f"candidate units for its data type are {', '.join(candidateNames)}"
+                )
+            diagnostics.append(
+                Diagnostic.warning(
+                    text,
+                    concepts=(concept.qname,),
+                    candidateUnits=candidateNames,
+                    hint=(
+                        "Concept.getRequiredUnitQNames() reads this label to "
+                        "pick the concept's unit; without it, unit "
+                        "resolution picks an arbitrary UTR candidate once "
+                        "there is more than one."
+                    ),
+                )
+            )
+        return diagnostics
+
+    def reportMeasurementGuidanceNotResolvingToAUnit(self) -> list[Diagnostic]:
+        """A measurementGuidance label should resolve to one of the UTR's
+        candidate units for the concept's data type --
+        Concept.getRequiredUnitQNames() returns None if it doesn't, whether
+        from a typo, an unresolvable QName, or text that names no valid unit
+        at all. Only checked when the data type has UTR candidates to
+        resolve to -- otherwise there is nothing the label could match, see
+        reportNumericConceptsWithoutMeasurementGuidance()."""
+        bad = sorted(
+            concept
+            for concept in self._reportableConcepts()
+            if concept.isNumeric
+            and MEASUREMENT_GUIDANCE_LABEL_ROLE in concept.labelRoles
+            and self.taxonomy.UTR.getUnitsForDataType(concept.dataType)
+            and concept.getRequiredUnitQNames() is None
+        )
+        if not bad:
+            return []
+        return [
+            Diagnostic.warning(
+                f"{len(bad)} concept(s) have a measurementGuidance label that "
+                "does not resolve to a valid unit",
+                concepts=[c.qname for c in bad],
+                hint=(
+                    "Concept.getRequiredUnitQNames() could not match this "
+                    "label's text against any of the UTR's candidate units "
+                    "for the concept's data type; check for a typo or an "
+                    "unregistered unit reference."
+                ),
+            )
+        ]
+
+    def reportMeasurementGuidanceOnNonNumericConcepts(self) -> list[Diagnostic]:
+        """A measurementGuidance label only makes sense on a numeric concept
+        -- getRequiredUnitQNames() ignores it for any other concept."""
+        bad = sorted(
+            concept
+            for concept in self.taxonomy.concepts
+            if not concept.isNumeric
+            and MEASUREMENT_GUIDANCE_LABEL_ROLE in concept.labelRoles
+        )
+        if not bad:
+            return []
+        return [
+            Diagnostic.warning(
+                f"{len(bad)} non-numeric concept(s) have a measurementGuidance label",
+                concepts=[c.qname for c in bad],
+                hint=(
+                    "measurementGuidance is only read for numeric concepts; "
+                    "on a non-numeric concept it is ignored."
                 ),
             )
         ]
