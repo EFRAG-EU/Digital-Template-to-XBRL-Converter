@@ -5,6 +5,7 @@ import warnings
 from argparse import ArgumentParser
 from collections import Counter
 from collections.abc import Iterable, Sequence
+from glob import escape as escape_glob
 from glob import glob
 from pathlib import Path
 from typing import Any
@@ -113,7 +114,10 @@ def packageListLines(paths: Sequence[Path]) -> list[str]:
 
 
 def validateTaxonomyPackages(globList: list[str], parser: ArgumentParser) -> list[Path]:
-    console_print("Zip files specified", " ".join(globList))
+    # Only worth echoing when there are patterns to expand (PowerShell passes
+    # them through); after a bash expansion it would just repeat the list.
+    if any(escape_glob(g) != g for g in globList):
+        console_print(Text(f"Zip globs specified {' '.join(globList)}"))
     # A path or glob that matches nothing would otherwise just drop out of
     # the list, so a mistyped package would be silently left out.
     if unmatched := [g for g in globList if not glob(g)]:

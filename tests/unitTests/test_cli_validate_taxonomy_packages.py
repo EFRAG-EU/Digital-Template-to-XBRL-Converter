@@ -145,3 +145,23 @@ def test_validate_lists_packages_under_their_directory(
     assert "a.zip" in out and "b.zip" in out
     assert str(tmp_path / "a.zip") not in out
     assert str(tmp_path / "b.zip") not in out
+
+
+def test_explicit_paths_are_not_echoed_before_expansion(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # What a shell that expands globs itself (bash) hands over.
+    validate([str(touch(tmp_path / "a.zip")), str(touch(tmp_path / "b.zip"))])
+
+    assert "Zip globs specified" not in capsys.readouterr().out
+
+
+def test_patterns_are_echoed_before_expansion(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # What PowerShell hands over: the pattern, unexpanded.
+    touch(tmp_path / "a.zip")
+
+    validate([str(tmp_path / "*.zip")])
+
+    assert "Zip globs specified" in capsys.readouterr().out
