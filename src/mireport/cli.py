@@ -33,13 +33,28 @@ _DIAGNOSTIC_LEVEL_STYLES = {
 }
 
 
+def expandPackageArgument(pattern: str) -> list[Path]:
+    """The paths one package argument stands for: a glob (PowerShell passes
+    them through unexpanded) or path, where a directory means the zips
+    directly in it. glob.glob() rather than Path.glob(): the latter rejects
+    absolute patterns."""
+    paths: list[Path] = []
+    for match in map(Path, glob(pattern)):
+        if match.is_dir():
+            paths.extend(
+                p for p in match.iterdir() if p.is_file() and p.suffix.lower() == ".zip"
+            )
+        else:
+            paths.append(match)
+    return paths
+
+
 def getListofPathsFromListOfGlobs(globs: list[str]) -> list[Path]:
-    """Expand globs (PowerShell passes them through unexpanded) into unique
-    paths, sorted by file name then path so console output is consistent.
-    glob.glob() rather than Path.glob(): the latter rejects absolute patterns."""
+    """Expand package arguments into unique paths, sorted by file name then
+    path so console output is consistent."""
     # A set, not unique_list(): the result is sorted anyway, and unique_list
     # lives behind the Arelle boundary.
-    paths = {Path(match) for pattern in globs for match in glob(pattern)}
+    paths = {path for pattern in globs for path in expandPackageArgument(pattern)}
     return sorted(paths, key=lambda path: (path.name, str(path)))
 
 
@@ -118,17 +133,14 @@ def validateTaxonomyPackages(globList: list[str], parser: ArgumentParser) -> lis
     # them through); after a bash expansion it would just repeat the list.
     if any(escape_glob(g) != g for g in globList):
         console_print(Text(f"Zip globs specified {' '.join(globList)}"))
-    # A path or glob that matches nothing would otherwise just drop out of
-    # the list, so a mistyped package would be silently left out.
-    if unmatched := [g for g in globList if not glob(g)]:
+    # A path, glob or directory that yields nothing would otherwise just drop
+    # out of the list, so a mistyped package would be silently left out.
+    if unmatched := [g for g in globList if not expandPackageArgument(g)]:
         raise parser.error(f"No files found for: {' '.join(unmatched)}")
     taxonomy_zips = getListofPathsFromListOfGlobs(globList)
     console_print("Zip files to use:")
     console_print_plain(packageListLines(taxonomy_zips))
 
-    # glob only returns paths that exist, but a directory can match too.
-    if notFiles := [str(z) for z in taxonomy_zips if not z.is_file()]:
-        raise parser.error(f"Specified paths are not files: {' '.join(notFiles)}")
     if notZips := [str(z) for z in taxonomy_zips if z.suffix.lower() != ".zip"]:
         raise parser.error(f"Specified files are not Zip files: {' '.join(notZips)}")
     return taxonomy_zips

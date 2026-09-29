@@ -80,7 +80,7 @@ def createArgParser() -> argparse.ArgumentParser:
         type=str,
         nargs="+",
         default=[],
-        help="Paths to the taxonomy packages to be used (globs, *.zip, are permitted).",
+        help="Paths to the taxonomy packages to be used (globs such as *.zip, and directories of zips, are permitted).",
     )
     parser.add_argument(
         "--offline",
