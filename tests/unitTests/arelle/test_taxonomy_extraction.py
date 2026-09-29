@@ -24,7 +24,7 @@ from arelle.ModelValue import QName
 from arelle.ModelXbrl import ModelXbrl
 from arelle.RuntimeOptions import RuntimeOptions
 
-from mireport.arelle.diagnostics import ArelleDiagnostic, DiagnosticCollector
+from mireport.arelle.diagnostics import ArelleDiagnostic
 from mireport.arelle.model_access import (
     ConceptRelationship,
     ConceptRelationshipSet,
@@ -38,6 +38,9 @@ from mireport.arelle.taxonomy_extraction import (
     TaxonomyInfoExtractor,
     writeDataFile,
 )
+from mireport.arelle.taxonomy_info_run import TaxonomyInfoRunRegistry
+
+ENTRY_POINT = "https://example.com/vsme-all.xsd"
 
 
 def qn(local: str = "Thing", ns: str = "https://example.com/vsme") -> QName:
@@ -196,10 +199,11 @@ def makeExtractor(
     typeQNamesByQName: dict[QName, tuple[QName, QName]] | None = None,
     roleDefinitions: dict[str, str] | None = None,
 ) -> tuple[TaxonomyInfoExtractor, str]:
-    """Build an extractor over stubs, with a diagnostics collector attached."""
-    token = DiagnosticCollector.open()
+    """Build an extractor over stubs, with a run (to collect diagnostics)
+    registered."""
+    token = TaxonomyInfoRunRegistry.open(entryPointSet=(ENTRY_POINT,))
     stubModel = SimpleNamespace(qnameConcepts={}, qnameTypes={})
-    options = SimpleNamespace(diagnosticsToken=token)
+    options = SimpleNamespace(runToken=token)
     extractor = TaxonomyInfoExtractor(
         cast(Cntlr, StubCntlr()),
         cast(RuntimeOptions, options),
@@ -221,7 +225,7 @@ def makeExtractor(
 
 
 def collectedDiagnostics(token: str) -> list[ArelleDiagnostic]:
-    return DiagnosticCollector.close(token)
+    return TaxonomyInfoRunRegistry.close(token).diagnostics
 
 
 class TestWriteDataFile:
