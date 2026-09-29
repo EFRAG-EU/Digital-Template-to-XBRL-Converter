@@ -26,6 +26,7 @@ from mireport.conversionresults import (
     ProcessingContext,
 )
 from mireport.data.disclosures import VSME_DEFAULTS
+from mireport.entrypoints import describeEntryPointSet
 from mireport.filesupport import ImageFileLikeAndFileName
 from mireport.localise import EU_LOCALES, argparse_locale
 from mireport.report.theme import ColourPalette, DisplayMode, ReportTheme
@@ -204,7 +205,8 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, list[str]
         mireport.loadBuiltInTaxonomyJSON()
         allTaxonomies = mireport.taxonomy.listTaxonomies()
         pc.addDevInfoMessage(
-            f"Taxonomies entry points ({len(allTaxonomies)}) available: {', '.join(allTaxonomies)}"
+            f"Taxonomies entry points ({len(allTaxonomies)}) available: "
+            + ", ".join(describeEntryPointSet(eps) for eps in allTaxonomies)
         )
         pc.mark(
             "Extracting data from Excel workbook",

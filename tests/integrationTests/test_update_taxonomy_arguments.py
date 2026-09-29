@@ -70,3 +70,15 @@ def test_missing_package_is_named(tmp_path: Path, package: str) -> None:
 
     assert result.returncode == 2
     assert missing in result.stderr
+
+
+def test_entry_point_that_is_not_a_uri_is_a_usage_error(
+    tmp_path: Path, package: str
+) -> None:
+    result = run(
+        "--output", str(tmp_path / "out.json"), "--entry-point", "vsme-all.xsd", package
+    )
+
+    assert result.returncode == 2, result.stderr
+    assert "not an absolute URI" in result.stderr
+    assert "Traceback" not in result.stderr

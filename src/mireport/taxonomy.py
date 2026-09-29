@@ -17,6 +17,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING, NamedTuple, overload
 
 from mireport.data import registries, taxonomies
+from mireport.entrypoints import (
+    EntryPointSet,
+    describeEntryPointSet,
+    entryPointSetOf,
+)
 from mireport.exceptions import (
     AmbiguousComponentException,
     BrokenQNameException,
@@ -1018,7 +1023,7 @@ class Taxonomy:
     def __init__(
         self,
         concepts: dict[str, Concept],
-        entryPoint: str,
+        entryPointSet: EntryPointSet,
         presentation: dict[str, dict[str, Any]],
         dimensions: dict[str, dict],
         qnameMaker: QNameMaker,
@@ -1026,7 +1031,8 @@ class Taxonomy:
         typedDomainWrapperElements: dict[str, TypedDomainWrapperElement] | None = None,
         references: Iterable[Mapping] | None = None,
     ) -> None:
-        self._entryPoint = entryPoint
+        self._entryPointSet = entryPointSet
+        entryPoint = describeEntryPointSet(self._entryPointSet)
         self._dimensions = dimensions
         self._qnameMaker = qnameMaker
         self._utr = utr
@@ -1535,9 +1541,11 @@ class Taxonomy:
     def dimensionContainer(self) -> DimensionContainerType:
         return self._dimensionContainer
 
-    @cached_property
-    def entryPoint(self) -> str:
-        return self._entryPoint
+    @property
+    def entryPointSet(self) -> EntryPointSet:
+        """The documents that together form the entry point -- what the
+        taxonomy is registered (and so looked up) under."""
+        return self._entryPointSet
 
     @property
     def namespacePrefixesMap(self) -> Mapping[str, str]:
@@ -1590,34 +1598,40 @@ class Taxonomy:
         return self._qnameMaker
 
 
-_TAXONOMIES: dict[str, Taxonomy] = {}
+_TAXONOMIES: dict[EntryPointSet, Taxonomy] = {}
 
 
-def getTaxonomy(entryPoint: str) -> Taxonomy:
-    taxonomy = _TAXONOMIES.get(entryPoint)
+def getTaxonomy(entryPoint: str | Iterable[str]) -> Taxonomy:
+    """The taxonomy whose entry-point set is exactly entryPoint: its
+    documents in any order, or a single document as a str."""
+    entryPointSet = entryPointSetOf(entryPoint)
+    taxonomy = _TAXONOMIES.get(entryPointSet)
     if taxonomy is None:
         raise UnknownTaxonomyException(
-            f'No knowledge of taxonomy entry point "{entryPoint}"'
+            "No knowledge of taxonomy entry point "
+            f'"{describeEntryPointSet(entryPointSet)}"'
         )
     return taxonomy
 
 
-def listTaxonomies() -> tuple[str, ...]:
-    return tuple(_TAXONOMIES.keys())
+def listTaxonomies() -> tuple[EntryPointSet, ...]:
+    """The entry-point set of every loaded taxonomy, sorted by their
+    documents so listings are stable."""
+    return tuple(sorted(_TAXONOMIES, key=sorted))
 
 
 def loadBuiltInTaxonomyJSON() -> None:
     """Loads the taxonomies, unit registry and other models."""
     for f in getJsonFiles(taxonomies):
         try:
-            _createTaxonomyFromJSON(getObject(f))
+            _createTaxonomyFromJSON(getObject(f), source=f.name)
         except Exception as e:  # noqa: BLE001 - one bad file must not lose the rest
             L.error(f"Error loading taxonomy from {f.name}", exc_info=e)
 
 
-def builtInTaxonomyJsonPaths() -> list[tuple[Path, str]]:
-    """The built-in taxonomy JSON files, sorted by name, each with the entry
-    point it records -- what scripts/update-taxonomy.py --regenerate-builtin
+def builtInTaxonomyJsonPaths() -> list[tuple[Path, EntryPointSet]]:
+    """The built-in taxonomy JSON files, sorted by name, each with the
+    entry-point set it records -- what scripts/update-taxonomy.py --regenerate-builtin
     regenerates in place. Raises rather than logs: a file that cannot be
     regenerated must not be silently skipped."""
     found = []
@@ -1628,17 +1642,28 @@ def builtInTaxonomyJsonPaths() -> list[tuple[Path, str]]:
                 "mireport installed as a zip or non-editable package?) so it "
                 "cannot be regenerated in place."
             )
-        found.append((f, _entryPointFromJSON(getObject(f), source=f.name)))
+        found.append((f, _entryPointSetFromJSON(getObject(f), source=f.name)))
     return sorted(found, key=lambda pair: pair[0].name)
 
 
-def _entryPointFromJSON(bits: dict, *, source: str) -> str:
-    entryPoint = bits.get("entryPoint")
-    if not isinstance(entryPoint, str) or not entryPoint.strip():
+def _entryPointSetFromJSON(bits: dict, *, source: str) -> EntryPointSet:
+    """The "entryPointSet" list, or for JSON baked before that existed, the
+    single legacy "entryPoint"."""
+    if "entryPointSet" in bits:
+        documents = bits["entryPointSet"]
+        if not isinstance(documents, list):
+            raise TaxonomyException(
+                f"Taxonomy JSON {source} entryPointSet is not a list "
+                f"(got {documents!r})."
+            )
+    else:
+        documents = [bits.get("entryPoint")]
+    try:
+        return entryPointSetOf(documents)
+    except TaxonomyException as e:
         raise TaxonomyException(
-            f"Taxonomy JSON {source} has no usable entryPoint (got {entryPoint!r})."
-        )
-    return entryPoint
+            f"Taxonomy JSON {source} has no usable entry point: {e}"
+        ) from e
 
 
 def loadTaxonomyJSON(source: Path | dict) -> Taxonomy:
@@ -1653,15 +1678,18 @@ def loadTaxonomyJSON(source: Path | dict) -> Taxonomy:
     there is only one taxonomy here, so there is no rest of the batch to save.
     """
     bits = source if isinstance(source, dict) else getObject(source)
-    _createTaxonomyFromJSON(bits)
-    return getTaxonomy(bits["entryPoint"])
+    return _createTaxonomyFromJSON(
+        bits, source=source.name if isinstance(source, Path) else "dict"
+    )
 
 
-def _createTaxonomyFromJSON(bits: dict) -> None:
-    entryPoint = bits["entryPoint"]
-    if _TAXONOMIES.get(entryPoint) is not None:
+def _createTaxonomyFromJSON(bits: dict, *, source: str) -> Taxonomy:
+    entryPointSet = _entryPointSetFromJSON(bits, source=source)
+    if entryPointSet in _TAXONOMIES:
+        loaded = "; ".join(describeEntryPointSet(eps) for eps in listTaxonomies())
         raise TaxonomyException(
-            f"Already loaded taxonomy. Taxonomies loaded: {' '.join(_TAXONOMIES.keys())}"
+            f"Already loaded taxonomy {describeEntryPointSet(entryPointSet)}. "
+            f"Taxonomies loaded: {loaded}"
         )
 
     qnameMaker = getBootstrapQNameMaker()
@@ -1682,9 +1710,9 @@ def _createTaxonomyFromJSON(bits: dict) -> None:
         # shape so old baked JSON still loads.
         references = _foldLegacyConceptReferences(bits["concepts"])
 
-    _TAXONOMIES[entryPoint] = Taxonomy(
+    taxonomy = _TAXONOMIES[entryPointSet] = Taxonomy(
         concepts,
-        entryPoint=entryPoint,
+        entryPointSet=entryPointSet,
         presentation=bits["presentation"],
         dimensions=bits["dimensions"],
         qnameMaker=qnameMaker,
@@ -1694,6 +1722,7 @@ def _createTaxonomyFromJSON(bits: dict) -> None:
         typedDomainWrapperElements=typedDomainWrapperElements,
         references=references,
     )
+    return taxonomy
 
 
 def _foldLegacyConceptReferences(

@@ -38,7 +38,8 @@ def test_taxonomy_json_regeneration(json_name: str, tmp_path: Path) -> None:
     output_path = tmp_path / json_name
 
     results = callArelleForTaxonomyInfo(
-        entry_point=expected["entryPoint"],
+        # Legacy JSON records a single "entryPoint" in place of the set.
+        entry_point=expected.get("entryPointSet") or [expected["entryPoint"]],
         taxonomy_zips=taxonomy_zips,
         taxonomy_json_path=str(output_path),
     )

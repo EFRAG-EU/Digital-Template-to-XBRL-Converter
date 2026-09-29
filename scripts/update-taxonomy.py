@@ -12,6 +12,7 @@ from tempfile import TemporaryDirectory
 
 from rich.markup import escape
 from rich.table import Table
+from rich.text import Text
 
 from mireport.arelle.support import ArelleProcessingResult
 from mireport.arelle.taxonomy_info import callArelleForTaxonomyInfo
@@ -29,6 +30,7 @@ from mireport.cli import (
 )
 from mireport.conversionresults import Severity
 from mireport.diagnostics import Diagnostic
+from mireport.entrypoints import EntryPointSet, entryPointSetOf
 from mireport.exceptions import TaxonomyException
 from mireport.taxonomy import builtInTaxonomyJsonPaths, loadTaxonomyJSON
 from mireport.taxonomy_checker import TaxonomyChecker
@@ -144,7 +146,7 @@ def checkTaxonomyJson(taxonomy_json_path: Path) -> None:
 
 
 def regenerateOne(
-    entry_point: Sequence[str],
+    entryPointSet: EntryPointSet,
     taxonomy_zips: Sequence[Path],
     out_path: Path,
     utr_path: Path | None,
@@ -154,9 +156,12 @@ def regenerateOne(
 ) -> ArelleProcessingResult:
     """targetPath: where the JSON ends up, when out_path is only a staging
     file (batch mode), so the banner names the file being regenerated."""
+    documents = sorted(entryPointSet)
     print(
         "Using:",
-        "Taxonomy entry point:\n\t\t{}".format("\n\t\t".join(entry_point)),
+        f"Taxonomy entry point: {documents[0]}"
+        if len(documents) == 1
+        else "Taxonomy entry point:\n\t\t{}".format("\n\t\t".join(documents)),
         f"Taxonomy JSON path: {targetPath or out_path}",
         f"UTR JSON path: {utr_path}" if utr_path else "No UTR processing requested",
         sep="\n\t",
@@ -165,7 +170,9 @@ def regenerateOne(
     start = time.perf_counter_ns()
 
     print("Calling into Arelle")
-    results = callArelleForTaxonomyInfo(entry_point, taxonomy_zips, out_path, utr_path)
+    results = callArelleForTaxonomyInfo(
+        entryPointSet, taxonomy_zips, out_path, utr_path
+    )
     printMessages(results)
     printDiagnosticTable("Taxonomy diagnostics", results.diagnostics)
 
@@ -200,7 +207,7 @@ STATUS_STYLES = {
 @dataclass(frozen=True)
 class RegenerationOutcome:
     path: Path
-    entryPoint: str
+    entryPointSet: EntryPointSet
     status: RegenerationStatus
     seconds: float
 
@@ -215,7 +222,7 @@ def succeeded(results: ArelleProcessingResult, out_path: Path) -> bool:
 
 def regenerateBuiltIn(
     path: Path,
-    entryPoint: str,
+    entryPointSet: EntryPointSet,
     taxonomy_zips: Sequence[Path],
     utr_path: Path | None,
     *,
@@ -227,7 +234,7 @@ def regenerateBuiltIn(
     with TemporaryDirectory(dir=path.parent, prefix=".regenerate-") as tmp:
         out_path = Path(tmp) / path.name
         results = regenerateOne(
-            (entryPoint,),
+            entryPointSet,
             taxonomy_zips,
             out_path,
             utr_path,
@@ -243,7 +250,7 @@ def regenerateBuiltIn(
         else:
             os.replace(out_path, path)
             status = RegenerationStatus.UPDATED
-    return RegenerationOutcome(path, entryPoint, status, time.perf_counter() - start)
+    return RegenerationOutcome(path, entryPointSet, status, time.perf_counter() - start)
 
 
 def printRegenerationSummary(outcomes: Sequence[RegenerationOutcome]) -> None:
@@ -254,9 +261,11 @@ def printRegenerationSummary(outcomes: Sequence[RegenerationOutcome]) -> None:
     table.add_column("Seconds", justify="right")
     for outcome in outcomes:
         style = STATUS_STYLES[outcome.status]
+        # Text() not markup; one line per document of the set.
+        entryPoint = Text("\n".join(sorted(outcome.entryPointSet)))
         table.add_row(
             outcome.path.name,
-            outcome.entryPoint,
+            entryPoint,
             f"[{style}]{outcome.status}[/]",
             f"{outcome.seconds:,.2f}",
         )
@@ -271,12 +280,12 @@ def regenerateAllBuiltIn(
     dryRun: bool,
 ) -> int:
     outcomes = []
-    for index, (path, entryPoint) in enumerate(builtInTaxonomyJsonPaths()):
+    for index, (path, entryPointSet) in enumerate(builtInTaxonomyJsonPaths()):
         print(f"Regenerating {path.name}")
         outcomes.append(
             regenerateBuiltIn(
                 path,
-                entryPoint,
+                entryPointSet,
                 taxonomy_zips,
                 # The UTR is independent of the taxonomy: write it once.
                 utr_path if index == 0 else None,
@@ -289,12 +298,23 @@ def regenerateAllBuiltIn(
     return 1 if any(o.status in bad for o in outcomes) else 0
 
 
+def entryPointSetOrUsageError(
+    documents: Sequence[str], cli: argparse.ArgumentParser
+) -> EntryPointSet:
+    """Where a single-file run's entry point becomes a set; an unusable one
+    (e.g. not an absolute URI) is a usage error, not a traceback."""
+    try:
+        return entryPointSetOf(documents)
+    except TaxonomyException as e:
+        cli.error(str(e))
+
+
 def main() -> None:
     cli = parser()
     args = cli.parse_args()
     taxonomy_json_path: Path | None = args.output
     utr_json_path: Path | None = args.utr_output
-    # action="append" gives a list; pickEntryPointFromPackages() gives a tuple.
+    # action="append" gives a list of documents.
     entry_point: Sequence[str] | None = args.entry_point
 
     if jsonPaths := [z for z in args.taxonomy_zips if z.lower().endswith(".json")]:
@@ -313,6 +333,9 @@ def main() -> None:
         cli.error("--entry-point is only supported with --output.")
     if args.dry_run and not args.regenerate_builtin:
         cli.error("--dry-run is only supported with --regenerate-builtin.")
+    entryPointSet = (
+        entryPointSetOrUsageError(entry_point, cli) if entry_point is not None else None
+    )
 
     taxonomy_zips = validateTaxonomyPackages(args.taxonomy_zips, cli)
 
@@ -332,16 +355,18 @@ def main() -> None:
 
     # One mode is required, so --output is set once the other two are gone.
     assert taxonomy_json_path is not None
-    if entry_point is None:
+    if entryPointSet is None:
         if not sys.stdin.isatty():
             cli.error(
                 "--entry-point is required when not running interactively. "
                 "Use --list-entry-points to see the available entry points."
             )
-        entry_point = pickEntryPointFromPackages(taxonomy_zips, cli)
+        entryPointSet = entryPointSetOrUsageError(
+            pickEntryPointFromPackages(taxonomy_zips, cli), cli
+        )
 
     regenerateOne(
-        entry_point,
+        entryPointSet,
         taxonomy_zips,
         taxonomy_json_path,
         utr_json_path,

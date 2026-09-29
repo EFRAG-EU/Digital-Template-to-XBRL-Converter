@@ -40,6 +40,7 @@ from mireport.coverage_report_generator import (
     buildCoverageReportSet,
     writeCoverageReportSet,
 )
+from mireport.entrypoints import describeEntryPointSet
 from mireport.exceptions import SampleGenerationException
 from mireport.taxonomy import getTaxonomy, loadTaxonomyJSON
 
@@ -113,11 +114,14 @@ def main() -> None:
         periodDuration=args.period_duration,
     )
 
-    print(f"Generating coverage report for {entry_point}")
+    print(
+        "Generating coverage report for "
+        + describeEntryPointSet(taxonomy.entryPointSet)
+    )
 
     try:
         reportSet = buildCoverageReportSet(
-            taxonomy, samplePeriod, (taxonomy.entryPoint,)
+            taxonomy, samplePeriod, sorted(taxonomy.entryPointSet)
         )
     except SampleGenerationException as e:
         raise SystemExit(f"Error: {e}")

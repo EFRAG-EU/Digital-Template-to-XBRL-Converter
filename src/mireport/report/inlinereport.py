@@ -352,7 +352,7 @@ class InlineReport:
     def getSchemaRefForAoix(self) -> str:
         # {{ schema-ref "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/vsme-all.xsd" }}
         if not self._schemaRefs:
-            self._schemaRefs.add(self.taxonomy.entryPoint)
+            self._schemaRefs.update(self.taxonomy.entryPointSet)
         lines = []
         for url in sorted(self._schemaRefs):
             lines.append(f'{{{{ schema-ref "{url}" }}}}')
@@ -408,7 +408,7 @@ class InlineReport:
         label_language = self._taxonomy.getBestSupportedLanguage(self.language)
         lang = label_language or ""
 
-        layout = DisclosureLayoutStrategy.for_entry_point(self._taxonomy.entryPoint)
+        layout = DisclosureLayoutStrategy.for_entry_point(self._taxonomy.entryPointSet)
         rl = ReportLayoutOrganiser(self._taxonomy, self)
         sections = rl.organise(layout)
         toc = layout.build_toc(sections, lang)

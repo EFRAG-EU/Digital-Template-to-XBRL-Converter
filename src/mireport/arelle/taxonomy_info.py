@@ -14,7 +14,7 @@ Session API, or pass this file to ``arelleCmdLine --plugins``.
 from __future__ import annotations
 
 import time
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
@@ -35,6 +35,8 @@ from mireport.arelle.taxonomy_extraction import (
     writeDataFile,
 )
 from mireport.arelle.taxonomy_info_run import TaxonomyInfoRunRegistry
+from mireport.entrypoints import entryPointSetOf
+from mireport.exceptions import TaxonomyException
 from mireport.version import VersionInformationTuple
 
 if TYPE_CHECKING:
@@ -48,15 +50,16 @@ PLUGIN_INFO = VersionInformationTuple(PLUGIN_NAME, PLUGIN_VERSION)
 
 
 def callArelleForTaxonomyInfo(
-    entry_point: str | Sequence[str],
+    entry_point: str | Iterable[str],
     taxonomy_zips: Sequence[Path],
     taxonomy_json_path: Path | str,
     utr_json_path: Path | str | None = None,
 ) -> ArelleProcessingResult:
-    documents = (entry_point,) if isinstance(entry_point, str) else tuple(entry_point)
-    if not documents:
-        raise ArelleRelatedException("No entry point document given.")
-    runToken = TaxonomyInfoRunRegistry.open(entryPointSet=documents)
+    try:
+        entryPointSet = entryPointSetOf(entry_point)
+    except TaxonomyException as e:
+        raise ArelleRelatedException(f"Unusable entry point: {e}") from e
+    runToken = TaxonomyInfoRunRegistry.open(entryPointSet=entryPointSet)
     # N.B. paths must cross the Arelle boundary as str: RuntimeOptions applies
     # pluginOptions with a bare setattr() so a Path would survive today, but
     # RuntimeOptionValue does not admit Path so that is not contractual.
@@ -71,14 +74,15 @@ def callArelleForTaxonomyInfo(
 
     # An entry point may name several documents that together form one DTS.
     # Importing the rest keeps them in the entry point's DTS; passing them all as
-    # entry points would instead load each as its own DTS.
-    primaryEntryPointURL = documents[0]
-    otherEntryPointURLs = documents[1:]
+    # entry points would instead load each as its own DTS. The set has no
+    # order, so which one is Arelle's entrypointFile is arbitrary: the first
+    # in sorted order, for repeatability.
+    entrypointFile, *importedEntryPointURLs = sorted(entryPointSet)
 
     options = RuntimeOptions(
         abortOnMajorError=True,
-        entrypointFile=primaryEntryPointURL,
-        importFiles="|".join(otherEntryPointURLs) or None,
+        entrypointFile=entrypointFile,
+        importFiles="|".join(importedEntryPointURLs) or None,
         internetConnectivity="offline",
         formulaAction="none",
         keepOpen=False,

@@ -1,5 +1,6 @@
 """builtInTaxonomyJsonPaths(): the on-disk built-in taxonomy JSON files and the
-entry point each one records, as used by update-taxonomy.py --regenerate-builtin."""
+entry-point set each one records, as used by update-taxonomy.py
+--regenerate-builtin."""
 
 import json
 from pathlib import Path
@@ -31,10 +32,10 @@ def writeJson(path: Path, bits: dict) -> Path:
 def test_builtin_files_and_entry_points() -> None:
     found = builtInTaxonomyJsonPaths()
 
-    assert [(path.name, entryPoint) for path, entryPoint in found] == [
+    assert [(path.name, entryPointSet) for path, entryPointSet in found] == [
         (
             f"vsme-{date}.json",
-            f"https://xbrl.efrag.org/taxonomy/vsme/{date}/vsme-all.xsd",
+            frozenset({f"https://xbrl.efrag.org/taxonomy/vsme/{date}/vsme-all.xsd"}),
         )
         for date in ("2024-12-17", "2025-07-30", "2026-02-01", "2026-05-01")
     ]
@@ -49,9 +50,19 @@ def test_sorted_by_file_name(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) ->
     useJsonFiles(monkeypatch, tmp_path)
 
     assert builtInTaxonomyJsonPaths() == [
-        (tmp_path / "a.json", "https://example.com/a.xsd"),
-        (tmp_path / "b.json", "https://example.com/b.xsd"),
+        (tmp_path / "a.json", frozenset({"https://example.com/a.xsd"})),
+        (tmp_path / "b.json", frozenset({"https://example.com/b.xsd"})),
     ]
+
+
+def test_entry_point_set_is_read(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    documents = ["https://example.com/core.xsd", "https://example.com/labels.xml"]
+    writeJson(tmp_path / "a.json", {"entryPointSet": documents})
+    useJsonFiles(monkeypatch, tmp_path)
+
+    assert builtInTaxonomyJsonPaths() == [(tmp_path / "a.json", frozenset(documents))]
 
 
 def test_missing_entry_point_raises(
@@ -64,11 +75,22 @@ def test_missing_entry_point_raises(
         builtInTaxonomyJsonPaths()
 
 
-@pytest.mark.parametrize("entryPoint", [42, ["https://example.com/a.xsd"], "", "  "])
-def test_non_string_or_blank_entry_point_raises(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, entryPoint: object
+@pytest.mark.parametrize(
+    "bits",
+    [
+        {"entryPoint": 42},
+        {"entryPoint": ["https://example.com/a.xsd"]},
+        {"entryPoint": ""},
+        {"entryPoint": "  "},
+        {"entryPointSet": []},
+        {"entryPointSet": "https://example.com/a.xsd"},
+        {"entryPointSet": ["https://example.com/a.xsd", ""]},
+    ],
+)
+def test_unusable_entry_point_raises(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, bits: dict
 ) -> None:
-    writeJson(tmp_path / "bad.json", {"entryPoint": entryPoint})
+    writeJson(tmp_path / "bad.json", bits)
     useJsonFiles(monkeypatch, tmp_path)
 
     with pytest.raises(TaxonomyException, match="bad.json"):

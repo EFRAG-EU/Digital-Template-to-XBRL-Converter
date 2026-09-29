@@ -31,7 +31,7 @@ from mireport.arelle.model_access import (
     ResourceRelationship,
     ValidatedModel,
 )
-from mireport.arelle.support import ArelleModelInconsistency
+from mireport.arelle.support import ArelleModelInconsistency, ArelleRelatedException
 from mireport.arelle.taxonomy_extraction import (
     DefinitionRow,
     PresentationRow,
@@ -39,6 +39,8 @@ from mireport.arelle.taxonomy_extraction import (
     writeDataFile,
 )
 from mireport.arelle.taxonomy_info_run import TaxonomyInfoRunRegistry
+from mireport.entrypoints import entryPointSetOf
+from mireport.exceptions import TaxonomyException
 
 ENTRY_POINT = "https://example.com/vsme-all.xsd"
 
@@ -201,7 +203,7 @@ def makeExtractor(
 ) -> tuple[TaxonomyInfoExtractor, str]:
     """Build an extractor over stubs, with a run (to collect diagnostics)
     registered."""
-    token = TaxonomyInfoRunRegistry.open(entryPointSet=(ENTRY_POINT,))
+    token = TaxonomyInfoRunRegistry.open(entryPointSet=entryPointSetOf(ENTRY_POINT))
     stubModel = SimpleNamespace(qnameConcepts={}, qnameTypes={})
     options = SimpleNamespace(runToken=token)
     extractor = TaxonomyInfoExtractor(
@@ -1379,3 +1381,61 @@ class TestReportIsolatedConcepts:
             linkrolesByArcrole={XbrlConst.dimensionDomain: [self.ELR]},
         )
         assert diagnostics == []
+
+
+class TestEntryPointSetForJSON:
+    LABELS = "https://example.com/vsme-labels.xml"
+
+    def extractor(
+        self, *, run: bool, entrypointFile: str | None = ENTRY_POINT
+    ) -> tuple[TaxonomyInfoExtractor, StubCntlr, str | None]:
+        token = (
+            TaxonomyInfoRunRegistry.open(
+                entryPointSet=entryPointSetOf([self.LABELS, ENTRY_POINT])
+            )
+            if run
+            else None
+        )
+        cntlr = StubCntlr()
+        extractor = TaxonomyInfoExtractor(
+            cast(Cntlr, cntlr),
+            cast(
+                RuntimeOptions,
+                SimpleNamespace(runToken=token, entrypointFile=entrypointFile),
+            ),
+            cast(ModelXbrl, SimpleNamespace(qnameConcepts={}, qnameTypes={})),
+        )
+        return extractor, cntlr, token
+
+    def test_is_the_runs_entry_point_set_sorted(self) -> None:
+        extractor, _, token = self.extractor(run=True)
+        assert token is not None
+        try:
+            assert extractor.entryPointSetForJSON() == sorted(
+                [ENTRY_POINT, self.LABELS]
+            )
+        finally:
+            assert TaxonomyInfoRunRegistry.close(token).diagnostics == []
+
+    def test_without_a_run_is_the_entrypoint_file_with_a_warning(self) -> None:
+        # Plain arelleCmdLine use: nothing tells the plugin about imported
+        # entry-point documents, so say so rather than guess.
+        extractor, cntlr, _ = self.extractor(run=False)
+
+        assert extractor.entryPointSetForJSON() == [ENTRY_POINT]
+        (message,) = cntlr.logMessages
+        assert "entryPointSet" in message
+
+    def test_without_a_run_or_entrypoint_file_raises(self) -> None:
+        extractor, _, _ = self.extractor(run=False, entrypointFile=None)
+
+        with pytest.raises(ArelleRelatedException, match="entrypointFile"):
+            extractor.entryPointSetForJSON()
+
+    def test_without_a_run_a_non_uri_entrypoint_file_raises(self) -> None:
+        # e.g. arelleCmdLine -f some/local/path.xsd: baked JSON keyed on a
+        # local path would be unloadable, so fail here rather than there.
+        extractor, _, _ = self.extractor(run=False, entrypointFile="local/vsme.xsd")
+
+        with pytest.raises(TaxonomyException, match="not an absolute URI"):
+            extractor.entryPointSetForJSON()
