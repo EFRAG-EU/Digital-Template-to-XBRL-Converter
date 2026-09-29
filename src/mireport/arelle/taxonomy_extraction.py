@@ -43,6 +43,7 @@ from mireport.arelle.support import (
     unique_list,
 )
 from mireport.arelle.taxonomy_info_run import TaxonomyInfoRun, TaxonomyInfoRunRegistry
+from mireport.entrypoints import entryPointSetOf
 
 # The UtrEntry attributes worth serialising (the UTR schema's primary key is
 # status + unitId).
@@ -222,10 +223,32 @@ class TaxonomyInfoExtractor:
             tuple[str, tuple[tuple[str, str], ...]], dict[str, Any]
         ] = {}
 
+    def entryPointSetForJSON(self) -> list[str]:
+        """Every document of the entry point, as handed in by the caller's
+        run, in sorted order (the set has none). Without a run (plain
+        arelleCmdLine use) only the entrypointFile is known to be one:
+        imported files may or may not be entry-point documents, so they are
+        not guessed at."""
+        if self.run is not None:
+            return sorted(self.run.entryPointSet)
+        # RuntimeOptions.entrypointFile is Optional[str] (Arelle's types are
+        # Any to mypy -- no py.typed -- so narrow it by hand).
+        if (entrypointFile := self.options.entrypointFile) is None:
+            raise ArelleRelatedException("No run registered and no entrypointFile.")
+        entryPointSet = entryPointSetOf(entrypointFile)
+        self.diagnostics.emit(
+            ArelleDiagnostic.warning(
+                "No taxonomy-info run registered, so entryPointSet records only "
+                "the entrypointFile; any other entry-point documents are missing",
+                hint="Run via mireport.arelle.taxonomy_info.callArelleForTaxonomyInfo()",
+            )
+        )
+        return sorted(entryPointSet)
+
     def extract(self) -> dict[str, Any]:
         """Extract the taxonomy information and return it as a JSON-ready
         dict with all QNames canonicalised to strings."""
-        self.taxonomyJson["entryPoint"] = self.options.entrypointFile
+        self.taxonomyJson["entryPointSet"] = self.entryPointSetForJSON()
 
         self.extractPresentation()
         # Extract dimension defaults before other dimension-related information

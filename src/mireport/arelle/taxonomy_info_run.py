@@ -17,14 +17,15 @@ from dataclasses import dataclass, field
 from typing import ClassVar
 
 from mireport.arelle.diagnostics import ArelleDiagnostic
+from mireport.entrypoints import EntryPointSet
 
 
 @dataclass
 class TaxonomyInfoRun:
-    """In: the documents that together form the entry point, primary first.
+    """In: the documents that together form the entry point.
     Out: the diagnostics the plugin raised."""
 
-    entryPointSet: tuple[str, ...]
+    entryPointSet: EntryPointSet
     diagnostics: list[ArelleDiagnostic] = field(default_factory=list)
 
 
@@ -32,7 +33,7 @@ class TaxonomyInfoRunRegistry:
     _registry: ClassVar[dict[str, TaxonomyInfoRun]] = {}
 
     @classmethod
-    def open(cls, *, entryPointSet: tuple[str, ...]) -> str:
+    def open(cls, *, entryPointSet: EntryPointSet) -> str:
         token = uuid.uuid4().hex
         cls._registry[token] = TaxonomyInfoRun(entryPointSet=entryPointSet)
         return token

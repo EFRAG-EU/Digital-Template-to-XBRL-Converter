@@ -5,8 +5,9 @@ import pytest
 
 from mireport.arelle.diagnostics import ArelleDiagnostic
 from mireport.arelle.taxonomy_info_run import TaxonomyInfoRun, TaxonomyInfoRunRegistry
+from mireport.entrypoints import entryPointSetOf
 
-ENTRY_POINT = ("https://example.com/entry.xsd",)
+ENTRY_POINT = entryPointSetOf("https://example.com/entry.xsd")
 
 
 def test_open_get_close_lifecycle() -> None:
