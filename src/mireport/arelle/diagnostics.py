@@ -14,7 +14,8 @@ displays it).
 from __future__ import annotations
 
 import uuid
-from dataclasses import dataclass
+from collections.abc import Callable
+from dataclasses import dataclass, replace
 from typing import ClassVar
 
 from arelle.Cntlr import Cntlr
@@ -68,15 +69,33 @@ class DiagnosticCollector:
 class DiagnosticEmitter:
     """Where the plugin sends its diagnostics, chosen once at start-up:
     a DiagnosticCollector when the caller registered one (Session API path),
-    otherwise the Arelle log (plain arelleCmdLine plugin usage)."""
+    otherwise the Arelle log (plain arelleCmdLine plugin usage).
 
-    def __init__(self, cntlr: Cntlr, token: str | None) -> None:
+    elrDefinition, when given, fills in the role definition of any emitted
+    diagnostic that names an elr but not its definition."""
+
+    def __init__(
+        self,
+        cntlr: Cntlr,
+        token: str | None,
+        *,
+        elrDefinition: Callable[[str], str | None] | None = None,
+    ) -> None:
         self._cntlr = cntlr
         self._token = (
             token if token is not None and DiagnosticCollector.exists(token) else None
         )
+        self._elrDefinition = elrDefinition
 
     def emit(self, diagnostic: ArelleDiagnostic) -> None:
+        if (
+            self._elrDefinition is not None
+            and diagnostic.elr is not None
+            and diagnostic.elrDefinition is None
+        ):
+            diagnostic = replace(
+                diagnostic, elrDefinition=self._elrDefinition(diagnostic.elr)
+            )
         if self._token is not None:
             DiagnosticCollector.add(self._token, diagnostic)
         else:

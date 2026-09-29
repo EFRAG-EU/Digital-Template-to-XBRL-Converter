@@ -385,6 +385,13 @@ class ValidatedModel:
             )
         return element
 
+    def roleDefinition(self, roleUri: str) -> str | None:
+        """The role type's definition, or None when the role declares none --
+        or has no roleType at all, as with the standard link role."""
+        if not self._modelXbrl.roleTypes.get(roleUri):
+            return None
+        return self.roleType(roleUri).definition or None
+
     def roleType(self, roleUri: str) -> ModelRoleType:
         matching = self._modelXbrl.roleTypes.get(roleUri, [])
         if (num := len(matching)) != 1:

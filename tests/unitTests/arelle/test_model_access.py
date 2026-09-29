@@ -6,6 +6,7 @@ tests/integrationTests/test_taxonomy_info_regeneration.py; these tests cover
 the narrowing/consistency logic using lightweight stubs.
 """
 
+from types import SimpleNamespace
 from typing import Any, cast
 from unittest.mock import MagicMock
 
@@ -499,6 +500,24 @@ class TestValidatedModel:
         model = makeModel(StubModelXbrl(roleTypes={roleUri: matches}))
         with pytest.raises(ArelleModelInconsistency):
             model.roleType(roleUri)
+
+    def test_role_definition_of_a_declared_role(self) -> None:
+        roleUri = "https://example.com/role"
+        roleType = SimpleNamespace(definition="[100] General information")
+        model = makeModel(StubModelXbrl(roleTypes={roleUri: [roleType]}))
+        assert model.roleDefinition(roleUri) == "[100] General information"
+
+    @pytest.mark.parametrize("definition", [None, ""], ids=["none", "empty"])
+    def test_role_definition_absent_is_none(self, definition: str | None) -> None:
+        roleUri = "https://example.com/role"
+        roleType = SimpleNamespace(definition=definition)
+        model = makeModel(StubModelXbrl(roleTypes={roleUri: [roleType]}))
+        assert model.roleDefinition(roleUri) is None
+
+    def test_role_definition_of_undeclared_role_is_none(self) -> None:
+        # e.g. the standard link role, which has no roleType.
+        model = makeModel(StubModelXbrl(roleTypes={}))
+        assert model.roleDefinition("http://www.xbrl.org/2003/role/link") is None
 
     def test_resource_relationships_from_raises_on_non_resource(self) -> None:
         concept = StubConcept(qn())

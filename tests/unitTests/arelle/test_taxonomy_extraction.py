@@ -103,8 +103,10 @@ class StubValidatedModel:
         baseSets: list[tuple[str, str]] | None = None,
         items: list[tuple[QName, Any]] | None = None,
         typeQNamesByQName: dict[QName, tuple[QName, QName]] | None = None,
+        roleDefinitions: dict[str, str] | None = None,
     ) -> None:
         self._relsByArcrole = relsByArcrole
+        self._roleDefinitions = roleDefinitions or {}
         self._conceptRelSets = conceptRelSets or {}
         self._linkrolesByArcrole = linkrolesByArcrole or {}
         self._baseSets = baseSets or []
@@ -144,6 +146,9 @@ class StubValidatedModel:
 
     def concept(self, qname: QName) -> Any:
         return self._conceptsByQName[qname]
+
+    def roleDefinition(self, roleUri: str) -> str | None:
+        return self._roleDefinitions.get(roleUri)
 
 
 def labelRel(resource: StubLabelResource) -> ResourceRelationship:
@@ -189,6 +194,7 @@ def makeExtractor(
     baseSets: list[tuple[str, str]] | None = None,
     items: list[tuple[QName, Any]] | None = None,
     typeQNamesByQName: dict[QName, tuple[QName, QName]] | None = None,
+    roleDefinitions: dict[str, str] | None = None,
 ) -> tuple[TaxonomyInfoExtractor, str]:
     """Build an extractor over stubs, with a diagnostics collector attached."""
     token = DiagnosticCollector.open()
@@ -208,6 +214,7 @@ def makeExtractor(
             baseSets,
             items,
             typeQNamesByQName,
+            roleDefinitions,
         ),
     )
     return extractor, token
@@ -1191,6 +1198,7 @@ class TestReportIsolatedConcepts:
         baseSets: list[tuple[str, str]],
         conceptRelSets: dict[Any, Any],
         linkrolesByArcrole: dict[str, list[str]] | None = None,
+        roleDefinitions: dict[str, str] | None = None,
     ) -> list[ArelleDiagnostic]:
         extractor, token = makeExtractor(
             {},
@@ -1198,6 +1206,7 @@ class TestReportIsolatedConcepts:
             linkrolesByArcrole=linkrolesByArcrole,
             baseSets=baseSets,
             items=items,
+            roleDefinitions=roleDefinitions,
         )
         extractor.reportIsolatedConcepts()
         return collectedDiagnostics(token)
@@ -1254,6 +1263,19 @@ class TestReportIsolatedConcepts:
         )
         assert diagnostic.elr == self.ELR
         assert diagnostic.details == {"linkbase": "definition"}
+
+    def test_not_presented_diagnostic_carries_the_elr_definition(self) -> None:
+        concept = StubConcept(qn("NotPresented"))
+        relSet = StubDomainMemberRelSet(
+            {id(concept): [conceptRel(StubConcept(qn("Other")))]}
+        )
+        (diagnostic,) = self.report(
+            items=[(qn("NotPresented"), concept)],
+            baseSets=[(XbrlConst.domainMember, self.ELR)],
+            conceptRelSets={(XbrlConst.domainMember, self.ELR): relSet},
+            roleDefinitions={self.ELR: "[99007] Enumeration of practices"},
+        )
+        assert diagnostic.elrDefinition == "[99007] Enumeration of practices"
 
     def test_not_presented_concepts_are_grouped_by_elr(self) -> None:
         otherELR = "https://example.com/another-elr"

@@ -42,6 +42,8 @@ class AbstractDiagnostic(Generic[QNameT]):
     concepts: tuple[QNameT, ...] = ()
     hint: str | None = None
     details: Mapping[str, object] = field(default_factory=dict)
+    # The elr's role type definition, filled in where the emitter knows it.
+    elrDefinition: str | None = None
 
     @classmethod
     def _make(
@@ -107,11 +109,13 @@ class AbstractDiagnostic(Generic[QNameT]):
 
     def format(self) -> str:
         """Render for humans: the sentence, then one indented line per
-        populated field (elr, concept(s), details in insertion order, hint
-        last)."""
+        populated field (elr, elr definition, concept(s), details in insertion
+        order, hint last)."""
         lines = [self.text]
         if self.elr is not None:
             lines.append(f"  elr: {self.elr}")
+        if self.elrDefinition is not None:
+            lines.append(f"  elr definition: {self.elrDefinition}")
         if len(self.concepts) == 1:
             lines.append(f"  concept: {self.concepts[0]}")
         elif self.concepts:
