@@ -263,6 +263,18 @@ def _diagnosticLevelName(level: int) -> str:
     return logging.getLevelName(level).title()
 
 
+def _diagnosticELR(diagnostic: AbstractDiagnostic[Any]) -> Text:
+    """The ELR URI with its role definition underneath, dimmed and on one
+    logical line (rich wraps it to the column)."""
+    if diagnostic.elr is None:
+        return Text()
+    cell = Text(diagnostic.elr)
+    if diagnostic.elrDefinition is not None:
+        definition = " ".join(diagnostic.elrDefinition.split())
+        cell.append(f"\n{definition}", style="dim")
+    return cell
+
+
 def _diagnosticDetails(diagnostic: AbstractDiagnostic[Any]) -> str:
     lines = [f"{key}: {value}" for key, value in diagnostic.details.items()]
     if diagnostic.hint is not None:
@@ -292,7 +304,7 @@ def printDiagnosticTable(
             f"[{_DIAGNOSTIC_LEVEL_STYLES.get(diagnostic.level, '')}]"
             f"{_diagnosticLevelName(diagnostic.level)}[/]",
             escape(diagnostic.text),
-            escape(diagnostic.elr or ""),
+            _diagnosticELR(diagnostic),
             escape("\n".join(str(qname) for qname in diagnostic.concepts)),
             escape(_diagnosticDetails(diagnostic)),
         )

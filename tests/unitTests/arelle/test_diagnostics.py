@@ -1,6 +1,7 @@
 """Unit tests for the structured taxonomy diagnostics."""
 
 import logging
+from dataclasses import replace
 from typing import Any, cast
 
 import pytest
@@ -51,6 +52,17 @@ class TestFormat:
             "Presentation is empty", elr="https://example.com/elr"
         )
         assert d.format() == ("Presentation is empty\n  elr: https://example.com/elr")
+
+    def test_elr_definition_follows_elr(self) -> None:
+        d = replace(
+            ArelleDiagnostic.warning("Presentation is empty", elr="https://e.com/elr"),
+            elrDefinition="[100] General information",
+        )
+        assert d.format() == (
+            "Presentation is empty\n"
+            "  elr: https://e.com/elr\n"
+            "  elr definition: [100] General information"
+        )
 
     def test_single_concept(self) -> None:
         d = ArelleDiagnostic.warning(
@@ -172,3 +184,36 @@ class TestDiagnosticEmitter:
         emitter = DiagnosticEmitter(cast(Cntlr, cntlr), token)
         emitter.emit(ArelleDiagnostic.warning("orphan"))
         assert cntlr.logged == [("orphan", logging.WARNING)]
+
+    def emitted(
+        self, diagnostic: ArelleDiagnostic, definitions: dict[str, str]
+    ) -> ArelleDiagnostic:
+        token = DiagnosticCollector.open()
+        try:
+            emitter = DiagnosticEmitter(
+                cast(Cntlr, StubCntlr()), token, elrDefinition=definitions.get
+            )
+            emitter.emit(diagnostic)
+        finally:
+            (collected,) = DiagnosticCollector.close(token)
+        return collected
+
+    def test_fills_elr_definition_from_resolver(self) -> None:
+        collected = self.emitted(
+            ArelleDiagnostic.warning("w", elr="https://e.com/elr"),
+            {"https://e.com/elr": "[100] General"},
+        )
+        assert collected.elrDefinition == "[100] General"
+
+    def test_keeps_an_elr_definition_already_given(self) -> None:
+        given = replace(
+            ArelleDiagnostic.warning("w", elr="https://e.com/elr"),
+            elrDefinition="given",
+        )
+        collected = self.emitted(given, {"https://e.com/elr": "[100] General"})
+        assert collected.elrDefinition == "given"
+
+    def test_without_elr_or_definition_leaves_it_unset(self) -> None:
+        assert self.emitted(ArelleDiagnostic.warning("w"), {}).elrDefinition is None
+        unknown = ArelleDiagnostic.warning("w", elr="https://e.com/unknown")
+        assert self.emitted(unknown, {}).elrDefinition is None

@@ -192,7 +192,11 @@ class TaxonomyInfoExtractor:
         self.modelXbrl: ModelXbrl = modelXbrl
         self.model: ValidatedModel = ValidatedModel(modelXbrl)
         self.diagnostics: DiagnosticEmitter = DiagnosticEmitter(
-            cntlr, getattr(options, "diagnosticsToken", None)
+            cntlr,
+            getattr(options, "diagnosticsToken", None),
+            # Looked up via self.model at emit time, not bound now: tests
+            # swap the model for a stub after construction.
+            elrDefinition=lambda elr: self.model.roleDefinition(elr),
         )
         self.taxonomyJson: dict[str, Any] = defaultdict(dict)
         # A plain dict here would auto-vivify each ELR's cube dict via
