@@ -145,7 +145,7 @@ def checkTaxonomyJson(taxonomy_json_path: Path) -> None:
 
 def regenerateOne(
     entry_point: Sequence[str],
-    taxonomy_zips: list[str],
+    taxonomy_zips: Sequence[Path],
     out_path: Path,
     utr_path: Path | None,
     *,
@@ -155,7 +155,6 @@ def regenerateOne(
         "Using:",
         "Taxonomy entry point:\n\t\t{}".format("\n\t\t".join(entry_point)),
         f"Taxonomy JSON path: {out_path}",
-        f"Taxonomy packages:\n\t\t{' '.join(taxonomy_zips)}",
         f"UTR JSON path: {utr_path}" if utr_path else "No UTR processing requested",
         sep="\n\t",
     )
@@ -214,7 +213,7 @@ def succeeded(results: ArelleProcessingResult, out_path: Path) -> bool:
 def regenerateBuiltIn(
     path: Path,
     entryPoint: str,
-    taxonomy_zips: list[str],
+    taxonomy_zips: Sequence[Path],
     utr_path: Path | None,
     *,
     checkJson: bool,
@@ -257,7 +256,7 @@ def printRegenerationSummary(outcomes: Sequence[RegenerationOutcome]) -> None:
 
 
 def regenerateAllBuiltIn(
-    taxonomy_zips: list[str],
+    taxonomy_zips: Sequence[Path],
     utr_path: Path | None,
     *,
     checkJson: bool,

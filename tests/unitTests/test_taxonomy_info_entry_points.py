@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TYPE_CHECKING
 from unittest.mock import patch
 
@@ -51,3 +52,16 @@ def test_extra_documents_are_imported_into_the_one_dts() -> None:
 def test_no_entry_point_document() -> None:
     with pytest.raises(ArelleRelatedException, match="No entry point document"):
         optionsFor([])
+
+
+def test_package_paths_cross_the_arelle_boundary_as_str() -> None:
+    packages = [Path("a/one.zip"), Path("b/two.zip")]
+    with (
+        patch.object(taxonomy_info, "Session") as session,
+        patch.object(taxonomy_info.ArelleProcessingResult, "fromSession"),
+    ):
+        taxonomy_info.callArelleForTaxonomyInfo(
+            ENTRY_POINT, packages, Path("taxonomy.json")
+        )
+    options = session.return_value.__enter__.return_value.run.call_args.args[0]
+    assert options.packages == [str(p) for p in packages]
