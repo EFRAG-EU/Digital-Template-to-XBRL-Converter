@@ -977,6 +977,43 @@ class EffectiveHypercube:
         return True
 
 
+@cache
+def _getDimensionsForHypercube(
+    taxonomy: Taxonomy, hypercube: Concept
+) -> frozenset[Concept]:
+    """The union, across every base-set this hypercube participates in, of all
+    its dimensions (explicit and typed). This is not a valid dimensional
+    signature by itself -- see getDeclarationsForHypercube()."""
+    return taxonomy.getExplicitDimensionsForHypercube(
+        hypercube
+    ) | taxonomy.getTypedDimensionsForHypercube(hypercube)
+
+
+@cache
+def _getExplicitDimensionForDomainMember(
+    taxonomy: Taxonomy, primaryItem: Concept, dimensionValue: Concept
+) -> Concept | None:
+    possible: set[Concept] = {
+        ed.dimension
+        for effective in taxonomy.getEffectiveHypercubesForPrimaryItem(primaryItem)
+        for hc in effective.hypercubes
+        for ed in hc.explicitDimensions
+        if dimensionValue in ed.domain
+    }
+    match len(possible):
+        case 0:
+            return None
+        case 1:
+            return next(iter(possible))
+        case _:
+            ordered = sorted(possible)
+            raise AmbiguousComponentException(
+                f"Ambiguous domain member specified. Candidate dimensions: "
+                f"{', '.join(str(concept.qname) for concept in ordered)}",
+                candidates=ordered,
+            )
+
+
 class Taxonomy:
     def __init__(
         self,
@@ -1436,14 +1473,11 @@ class Taxonomy:
             for ed in declaration.explicitDimensions
         )
 
-    @cache  # noqa: B019 - Taxonomy lives for the life of the process. See above.
     def getDimensionsForHypercube(self, hypercube: Concept) -> frozenset[Concept]:
         """The union, across every base-set this hypercube participates in, of all
         its dimensions (explicit and typed). This is not a valid dimensional
         signature by itself -- see getDeclarationsForHypercube()."""
-        return self.getExplicitDimensionsForHypercube(
-            hypercube
-        ) | self.getTypedDimensionsForHypercube(hypercube)
+        return _getDimensionsForHypercube(self, hypercube)
 
     def getPrimaryItemsForHypercube(self, hypercube: Concept) -> frozenset[Concept]:
         """This aggregates across all base-sets to give all the primary items specified for the given hypercube."""
@@ -1479,29 +1513,10 @@ class Taxonomy:
             for td in hc.typedDimensions
         )
 
-    @cache  # noqa: B019 - Taxonomy lives for the life of the process. See above.
     def getExplicitDimensionForDomainMember(
         self, primaryItem: Concept, dimensionValue: Concept
     ) -> Concept | None:
-        possible: set[Concept] = {
-            ed.dimension
-            for effective in self.getEffectiveHypercubesForPrimaryItem(primaryItem)
-            for hc in effective.hypercubes
-            for ed in hc.explicitDimensions
-            if dimensionValue in ed.domain
-        }
-        match len(possible):
-            case 0:
-                return None
-            case 1:
-                return next(iter(possible))
-            case _:
-                ordered = sorted(possible)
-                raise AmbiguousComponentException(
-                    f"Ambiguous domain member specified. Candidate dimensions: "
-                    f"{', '.join(str(concept.qname) for concept in ordered)}",
-                    candidates=ordered,
-                )
+        return _getExplicitDimensionForDomainMember(self, primaryItem, dimensionValue)
 
     def getDomainMembersForExplicitDimension(
         self, dimension: Concept

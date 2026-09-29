@@ -11,6 +11,46 @@ from mireport.exceptions import UnitException
 from mireport.xml import ISO4217_NS, XBRLI_NS, QName, QNameMaker
 
 
+@cache
+def _getQNameForUnitId(utr: UTR, unitId: str) -> QName | None:
+    if utr._qnameMaker.isValidQName(unitId):
+        return utr._qnameMaker.fromString(unitId)
+    namespaces = utr._lookupNamespacesByUnitId.get(unitId)
+    if namespaces is None:
+        return None
+    elif len(namespaces) > 1:
+        raise UnitException(
+            "Found non unique unit identifier {unitId}. Specify a QName not a name to avoid this exception."
+        )
+    return utr._qnameMaker.fromNamespaceAndLocalName(
+        namespace=namespaces[0], localName=unitId
+    )
+
+
+@cache
+def _getUnitsForDataType(utr: UTR, dataType: QName) -> frozenset[QName]:
+    """Get the unit IDs for a given data type."""
+    possible = utr._lookupUnitIdByDataType.get(dataType)
+    if not possible:
+        possible = utr._lookupUnitIdByDataType.get(dataType.localName)
+    if possible:
+        return frozenset(
+            unitQName
+            for unitId in possible
+            if (unitQName := utr.getQNameForUnitId(unitId)) is not None
+        )
+    return frozenset()
+
+
+@cache
+def _getUnitIdsForDataType(utr: UTR, dataType: QName) -> frozenset[str]:
+    """Get the unit ID for a given data type."""
+    possible: list[str] = []
+    possible.extend(utr._lookupUnitIdByDataType.get(dataType, []))
+    possible.extend(utr._lookupUnitIdByDataType.get(dataType.localName, []))
+    return frozenset(possible)
+
+
 class UTR:
     def __init__(
         self,
@@ -57,44 +97,16 @@ class UTR:
 
         return cls(unitToNamespaces, dataTypeToUnit, unitQNamesToEntries, qnameMaker)
 
-    # N.B. B019 (cache keeps `self` alive) is not a concern: a UTR belongs to a
-    # Taxonomy which is kept in a module level registry for the life of the process.
-    @cache  # noqa: B019
     def getQNameForUnitId(self, unitId: str) -> QName | None:
-        if self._qnameMaker.isValidQName(unitId):
-            return self._qnameMaker.fromString(unitId)
-        namespaces = self._lookupNamespacesByUnitId.get(unitId)
-        if namespaces is None:
-            return None
-        elif len(namespaces) > 1:
-            raise UnitException(
-                "Found non unique unit identifier {unitId}. Specify a QName not a name to avoid this exception."
-            )
-        return self._qnameMaker.fromNamespaceAndLocalName(
-            namespace=namespaces[0], localName=unitId
-        )
+        return _getQNameForUnitId(self, unitId)
 
-    @cache  # noqa: B019 - UTR lives for the life of the process. See above.
     def getUnitsForDataType(self, dataType: QName) -> frozenset[QName]:
         """Get the unit IDs for a given data type."""
-        possible = self._lookupUnitIdByDataType.get(dataType)
-        if not possible:
-            possible = self._lookupUnitIdByDataType.get(dataType.localName)
-        if possible:
-            return frozenset(
-                unitQName
-                for unitId in possible
-                if (unitQName := self.getQNameForUnitId(unitId)) is not None
-            )
-        return frozenset()
+        return _getUnitsForDataType(self, dataType)
 
-    @cache  # noqa: B019 - UTR lives for the life of the process. See above.
     def getUnitIdsForDataType(self, dataType: QName) -> frozenset[str]:
         """Get the unit ID for a given data type."""
-        possible: list[str] = []
-        possible.extend(self._lookupUnitIdByDataType.get(dataType, []))
-        possible.extend(self._lookupUnitIdByDataType.get(dataType.localName, []))
-        return frozenset(possible)
+        return _getUnitIdsForDataType(self, dataType)
 
     def getSymbolForUnit(self, unit: QName, dataType: QName) -> str:
         unitEntry = self._lookupUnitEntriesByQName[unit]
