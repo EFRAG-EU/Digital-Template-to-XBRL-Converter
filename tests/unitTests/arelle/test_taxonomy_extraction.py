@@ -1242,6 +1242,70 @@ class TestReportIsolatedConcepts:
         assert "absent from the presentation linkbase" in diagnostics[0].text
         assert diagnostics[0].concepts == (qn("NotPresented"),)
 
+    def test_not_presented_concept_names_where_it_does_appear(self) -> None:
+        concept = StubConcept(qn("NotPresented"))
+        relSet = StubDomainMemberRelSet(
+            {id(concept): [conceptRel(StubConcept(qn("Other")))]}
+        )
+        (diagnostic,) = self.report(
+            items=[(qn("NotPresented"), concept)],
+            baseSets=[(XbrlConst.domainMember, self.ELR)],
+            conceptRelSets={(XbrlConst.domainMember, self.ELR): relSet},
+        )
+        assert diagnostic.elr == self.ELR
+        assert diagnostic.details == {"linkbase": "definition"}
+
+    def test_not_presented_concepts_are_grouped_by_elr(self) -> None:
+        otherELR = "https://example.com/another-elr"
+        a, b, c = (StubConcept(qn(name)) for name in ("A", "B", "C"))
+        definitionRelSet = StubDomainMemberRelSet(
+            {id(a): [conceptRel(b)]}, targets={id(b)}
+        )
+        calculationRelSet = StubDomainMemberRelSet(
+            {id(c): [conceptRel(a)]}, targets={id(a)}
+        )
+        diagnostics = self.report(
+            items=[(qn("A"), a), (qn("B"), b), (qn("C"), c)],
+            baseSets=[
+                (XbrlConst.domainMember, self.ELR),
+                (XbrlConst.summationItem, otherELR),
+            ],
+            conceptRelSets={
+                (XbrlConst.domainMember, self.ELR): definitionRelSet,
+                (XbrlConst.summationItem, otherELR): calculationRelSet,
+            },
+        )
+        # Sorted by ELR; C is only the source of its calculation arc, and
+        # A is the target of it, so A is in both ELRs.
+        assert [(d.elr, d.concepts, d.details) for d in diagnostics] == [
+            (otherELR, (qn("A"), qn("C")), {"linkbase": "calculation"}),
+            (self.ELR, (qn("A"), qn("B")), {"linkbase": "definition"}),
+        ]
+
+    def test_label_links_are_not_where_a_concept_appears(self) -> None:
+        # Every labelled concept has label arcs in the standard link role;
+        # naming that as where it appears would just be noise.
+        concept = StubConcept(qn("NotPresented"))
+        labelRelSet = StubDomainMemberRelSet(
+            {id(concept): [conceptRel(StubConcept(qn("Label")))]}
+        )
+        definitionRelSet = StubDomainMemberRelSet(
+            {id(concept): [conceptRel(StubConcept(qn("Other")))]}
+        )
+        standardRole = "http://www.xbrl.org/2003/role/link"
+        (diagnostic,) = self.report(
+            items=[(qn("NotPresented"), concept)],
+            baseSets=[
+                (XbrlConst.conceptLabel, standardRole),
+                (XbrlConst.domainMember, self.ELR),
+            ],
+            conceptRelSets={
+                (XbrlConst.conceptLabel, standardRole): labelRelSet,
+                (XbrlConst.domainMember, self.ELR): definitionRelSet,
+            },
+        )
+        assert diagnostic.elr == self.ELR
+
     def test_presented_concept_is_silent(self) -> None:
         concept = StubConcept(qn("Presented"))
         relSet = StubDomainMemberRelSet(
