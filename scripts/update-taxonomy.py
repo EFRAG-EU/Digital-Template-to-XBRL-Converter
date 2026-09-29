@@ -150,11 +150,14 @@ def regenerateOne(
     utr_path: Path | None,
     *,
     checkJson: bool,
+    targetPath: Path | None = None,
 ) -> ArelleProcessingResult:
+    """targetPath: where the JSON ends up, when out_path is only a staging
+    file (batch mode), so the banner names the file being regenerated."""
     print(
         "Using:",
         "Taxonomy entry point:\n\t\t{}".format("\n\t\t".join(entry_point)),
-        f"Taxonomy JSON path: {out_path}",
+        f"Taxonomy JSON path: {targetPath or out_path}",
         f"UTR JSON path: {utr_path}" if utr_path else "No UTR processing requested",
         sep="\n\t",
     )
@@ -224,7 +227,12 @@ def regenerateBuiltIn(
     with TemporaryDirectory(dir=path.parent, prefix=".regenerate-") as tmp:
         out_path = Path(tmp) / path.name
         results = regenerateOne(
-            (entryPoint,), taxonomy_zips, out_path, utr_path, checkJson=checkJson
+            (entryPoint,),
+            taxonomy_zips,
+            out_path,
+            utr_path,
+            checkJson=checkJson,
+            targetPath=path,
         )
         if not succeeded(results, out_path):
             status = RegenerationStatus.FAILED
