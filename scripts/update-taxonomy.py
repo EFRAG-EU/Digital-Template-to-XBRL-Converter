@@ -48,7 +48,7 @@ def parser() -> argparse.ArgumentParser:
         "taxonomy_zips",
         type=str,
         nargs="+",
-        help="Path to the taxonomy zip files to be used (globs, *.zip, are permitted).",
+        help="Path to the taxonomy zip files to be used (globs such as *.zip, and directories of zips, are permitted).",
     )
     # Not required=True: main() checks that one mode was given, after first
     # catching the removed `update-taxonomy.py out.json *.zip` form.

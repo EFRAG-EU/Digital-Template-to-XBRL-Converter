@@ -55,13 +55,50 @@ def test_zip_suffix_is_case_insensitive(tmp_path: Path) -> None:
     assert validate([str(upper)]) == [upper]
 
 
-def test_directory_named_like_a_zip_is_an_error(
+def test_directory_means_the_zips_directly_in_it(tmp_path: Path) -> None:
+    a = touch(tmp_path / "a.zip")
+    upper = touch(tmp_path / "B.ZIP")
+    touch(tmp_path / "notes.txt")
+    (tmp_path / "nested").mkdir()
+    touch(tmp_path / "nested" / "deeper.zip")
+
+    assert validate([str(tmp_path)]) == [upper, a]
+
+
+def test_directory_with_trailing_separator(tmp_path: Path) -> None:
+    a = touch(tmp_path / "a.zip")
+
+    assert validate([f"{tmp_path}{os.sep}"]) == [a]
+
+
+def test_directory_and_its_zips_given_twice_give_each_once(tmp_path: Path) -> None:
+    a = touch(tmp_path / "a.zip")
+
+    assert validate([str(tmp_path), str(a), str(tmp_path / "*.zip")]) == [a]
+
+
+def test_directory_without_zips_is_an_error_naming_it(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    a = touch(tmp_path / "a.zip")
+    empty = tmp_path / "empty"
+    empty.mkdir()
+    touch(empty / "notes.txt")
+
+    err = errorMessage(capsys, [str(a), str(empty)])
+
+    assert str(empty) in err
+    assert str(a) not in err
+
+
+def test_directory_named_like_a_zip_is_searched_like_any_directory(
+    tmp_path: Path,
 ) -> None:
     directory = tmp_path / "unpacked.zip"
     directory.mkdir()
+    inner = touch(directory / "inner.zip")
 
-    assert str(directory) in errorMessage(capsys, [str(directory)])
+    assert validate([str(directory)]) == [inner]
 
 
 def test_path_matching_nothing_is_an_error_naming_it(
