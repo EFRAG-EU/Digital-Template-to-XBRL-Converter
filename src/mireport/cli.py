@@ -93,13 +93,17 @@ def configure_rich_output(*, locals_max_length: int | None = None) -> Console:
 
 def validateTaxonomyPackages(globList: list[str], parser: ArgumentParser) -> list[str]:
     console_print("Zip files specified", " ".join(globList))
+    # A path or glob that matches nothing would otherwise just drop out of
+    # the list, so a mistyped package would be silently left out.
+    if unmatched := [g for g in globList if not glob(g)]:
+        raise parser.error(f"No files found for: {' '.join(unmatched)}")
     taxonomy_zips: list[str] = getListofPathsFromListOfGlobs(globList)
     console_print("Zip files to use  ", " ".join(taxonomy_zips))
 
-    if not all(os.path.exists(taxonomy_zip) for taxonomy_zip in taxonomy_zips):
-        raise parser.error(f"Not all specified files found: {taxonomy_zips}")
-    elif not all(taxonomy_zip.endswith(".zip") for taxonomy_zip in taxonomy_zips):
-        raise parser.error(f"Not all specified files are Zip files: {taxonomy_zips}")
+    if missing := [z for z in taxonomy_zips if not os.path.exists(z)]:
+        raise parser.error(f"Specified files not found: {' '.join(missing)}")
+    if notZips := [z for z in taxonomy_zips if not z.endswith(".zip")]:
+        raise parser.error(f"Specified files are not Zip files: {' '.join(notZips)}")
     return taxonomy_zips
 
 
