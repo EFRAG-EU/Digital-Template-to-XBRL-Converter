@@ -343,14 +343,19 @@ def _markdownCell(text: str) -> str:
 
 
 def diagnosticMarkdown(
-    title: str, diagnostics: Sequence[AbstractDiagnostic[Any]]
+    title: str,
+    diagnostics: Sequence[AbstractDiagnostic[Any]],
+    *,
+    note: str | None = None,
 ) -> str:
     """The same content as printDiagnosticTable(), as a markdown table that
     survives being pasted into GitHub, Loop or a wiki: full text, no wrapping
-    or truncation, severity-sorted, followed by the count summary."""
+    or truncation, severity-sorted, followed by the count summary and, when
+    given, a note."""
     heading = f"### {title}\n\n"
+    noteBlock = f"\n> **Note:** {note}\n" if note else ""
     if not diagnostics:
-        return f"{heading}No {title.lower()} to report.\n"
+        return f"{heading}No {title.lower()} to report.\n{noteBlock}"
 
     lines = [
         "| Level | Message | ELR | Concepts | Details |",
@@ -370,7 +375,8 @@ def diagnosticMarkdown(
         )
         lines.append("| " + " | ".join(_markdownCell(c) for c in cells) + " |")
     table = "\n".join(lines)
-    return f"{heading}{table}\n\n{_diagnosticSummary(title, diagnostics)}.\n"
+    summary = _diagnosticSummary(title, diagnostics)
+    return f"{heading}{table}\n\n{summary}.\n{noteBlock}"
 
 
 def _htmlCell(text: str) -> str:
@@ -378,14 +384,22 @@ def _htmlCell(text: str) -> str:
     return "<br>".join(html.escape(line) for line in text.split("\n"))
 
 
-def diagnosticHtml(title: str, diagnostics: Sequence[AbstractDiagnostic[Any]]) -> str:
+def diagnosticHtml(
+    title: str,
+    diagnostics: Sequence[AbstractDiagnostic[Any]],
+    *,
+    note: str | None = None,
+) -> str:
     """The same content as printDiagnosticTable(), as an HTML fragment. Open it
     in a browser, select all, copy and paste: rich-text boxes such as Teams chat
     keep it as a real table, which they won't do with pasted markdown source.
     The border is an attribute rather than CSS because pasting drops stylesheets."""
     heading = f"<h3>{html.escape(title)}</h3>\n"
+    noteBlock = f"<p><strong>Note:</strong> {html.escape(note)}</p>\n" if note else ""
     if not diagnostics:
-        return f"{heading}<p>No {html.escape(title.lower())} to report.</p>\n"
+        return (
+            f"{heading}<p>No {html.escape(title.lower())} to report.</p>\n{noteBlock}"
+        )
 
     rows = [
         "<tr>"
@@ -415,5 +429,5 @@ def diagnosticHtml(title: str, diagnostics: Sequence[AbstractDiagnostic[Any]]) -
     summary = html.escape(_diagnosticSummary(title, diagnostics))
     return (
         f'{heading}<table border="1" cellpadding="4" cellspacing="0">\n'
-        f"{table}\n</table>\n<p>{summary}.</p>\n"
+        f"{table}\n</table>\n<p>{summary}.</p>\n{noteBlock}"
     )
