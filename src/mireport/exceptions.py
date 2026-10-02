@@ -16,6 +16,11 @@ class UnitException(MIReportException):
     """Exception raised when a unit is not found in the UTR."""
 
 
+class UtrSourceError(MIReportException):
+    """Exception raised when the Unit Type Registry (utr.xml) can't be fetched, read
+    or understood."""
+
+
 class TaxonomyException(MIReportException):
     """All taxonomy related exceptions"""
 
