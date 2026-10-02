@@ -11,9 +11,8 @@ import mireport.taxonomy
 from mireport.exceptions import TaxonomyException
 from mireport.taxonomy import builtInTaxonomyJsonPaths
 
-TAXONOMY_DATA_DIR = (
-    Path(__file__).resolve().parents[2] / "src" / "mireport" / "data" / "taxonomies"
-)
+# Beside the imported package, so it holds for editable and installed copies alike.
+TAXONOMY_DATA_DIR = Path(mireport.taxonomy.__file__).parent / "data" / "taxonomies"
 
 
 def useJsonFiles(monkeypatch: pytest.MonkeyPatch, directory: Path) -> None:

@@ -167,7 +167,30 @@ def checkTaxonomyJson(taxonomy_json_path: Path) -> list[Diagnostic]:
     return diagnostics
 
 
-Sections = Sequence[tuple[str, Sequence[AbstractDiagnostic[Any]]]]
+FIRST_PROBLEMS_NOTE = (
+    "Extraction reports the first problem it meets in each phase, ELR and "
+    "concept, then carries on. Fixing the errors above may reveal further errors "
+    "and warnings on the next run."
+)
+
+
+def statusNote(results: ArelleProcessingResult) -> str | None:
+    """The note to show with the diagnostics: only errors can be hiding others."""
+    if any(d.level >= logging.ERROR for d in results.diagnostics):
+        return FIRST_PROBLEMS_NOTE
+    return None
+
+
+@dataclass(frozen=True)
+class StatusSection:
+    """One diagnostics table of the status report."""
+
+    title: str
+    diagnostics: Sequence[AbstractDiagnostic[Any]]
+    note: str | None = None
+
+
+Sections = Sequence[StatusSection]
 
 
 def writeMarkdownStatusReport(
@@ -176,7 +199,10 @@ def writeMarkdownStatusReport(
     """Write the diagnostics as markdown, for GitHub issues and pull requests."""
     entryPoint = ", ".join(f"`{document}`" for document in documents)
     parts = [f"## Taxonomy update: {entryPoint}\n"]
-    parts.extend(diagnosticMarkdown(title, found) for title, found in sections)
+    parts.extend(
+        diagnosticMarkdown(section.title, section.diagnostics, note=section.note)
+        for section in sections
+    )
     path.write_text("\n".join(parts), encoding="utf-8")
     print(f"Diagnostics written as markdown to {path}")
 
@@ -195,7 +221,10 @@ def writeHtmlStatusReport(
             "<title>Taxonomy update status</title></head>\n<body>"
         ),
         f"<h2>Taxonomy update: {entryPoint}</h2>",
-        *(diagnosticHtml(title, found) for title, found in sections),
+        *(
+            diagnosticHtml(section.title, section.diagnostics, note=section.note)
+            for section in sections
+        ),
         "</body>\n</html>\n",
     ]
     path.write_text("\n".join(parts), encoding="utf-8")
@@ -252,9 +281,10 @@ def regenerateOne(
     )
     printMessages(results)
     printDiagnosticTable(DIAGNOSTICS_TITLE, results.diagnostics)
-    sections: list[tuple[str, Sequence[AbstractDiagnostic[Any]]]] = [
-        (DIAGNOSTICS_TITLE, results.diagnostics)
-    ]
+    note = statusNote(results)
+    if note is not None:
+        print(f"Note: {note}")
+    sections = [StatusSection(DIAGNOSTICS_TITLE, results.diagnostics, note)]
 
     elapsed = (time.perf_counter_ns() - start) / 1_000_000_000
     print(f"Finished querying Arelle ({elapsed:,.2f} seconds elapsed).")
@@ -262,7 +292,7 @@ def regenerateOne(
     if checkJson:
         if out_path.exists():
             print("Checking taxonomy JSON")
-            sections.append((CHECKER_TITLE, checkTaxonomyJson(out_path)))
+            sections.append(StatusSection(CHECKER_TITLE, checkTaxonomyJson(out_path)))
         else:
             print("Skipping --check-json: taxonomy JSON was not written.")
 

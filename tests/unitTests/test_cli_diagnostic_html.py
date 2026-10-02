@@ -77,3 +77,20 @@ def test_no_diagnostics_says_so_without_a_table() -> None:
 
     assert "<table" not in html
     assert "<p>No taxonomy diagnostics to report.</p>" in html
+
+
+def test_note_follows_the_summary() -> None:
+    html = diagnosticHtml("t", [Diagnostic.error("e")], note="Fix & rerun.")
+
+    assert html.rstrip().endswith(
+        "<p>1 error (t).</p>\n<p><strong>Note:</strong> Fix &amp; rerun.</p>"
+    )
+
+
+def test_without_a_note_the_output_is_unchanged() -> None:
+    diagnostics = [Diagnostic.error("e")]
+
+    assert diagnosticHtml("t", diagnostics, note=None) == diagnosticHtml(
+        "t", diagnostics
+    )
+    assert "Note" not in diagnosticHtml("t", diagnostics)

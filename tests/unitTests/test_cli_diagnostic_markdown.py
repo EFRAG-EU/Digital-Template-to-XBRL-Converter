@@ -129,3 +129,23 @@ def test_no_diagnostics_says_so_without_a_table() -> None:
     assert (
         markdown == "### Taxonomy diagnostics\n\nNo taxonomy diagnostics to report.\n"
     )
+
+
+def test_note_follows_the_summary_as_a_blockquote() -> None:
+    markdown = diagnosticMarkdown(
+        "Taxonomy diagnostics", [Diagnostic.error("e")], note="Fix and rerun."
+    )
+
+    lines = markdown.rstrip().splitlines()
+    assert lines[-3] == "1 error (taxonomy diagnostics)."
+    assert lines[-2] == ""
+    assert lines[-1] == "> **Note:** Fix and rerun."
+
+
+def test_without_a_note_the_output_is_unchanged() -> None:
+    diagnostics = [Diagnostic.error("e")]
+
+    assert diagnosticMarkdown("t", diagnostics, note=None) == diagnosticMarkdown(
+        "t", diagnostics
+    )
+    assert "Note" not in diagnosticMarkdown("t", diagnostics)

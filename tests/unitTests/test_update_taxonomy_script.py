@@ -6,6 +6,7 @@ from __future__ import annotations
 import importlib.util
 from pathlib import Path
 from types import ModuleType
+from typing import Any
 
 import pytest
 
@@ -90,3 +91,49 @@ class TestPublishIfSucceeded:
         assert script.publishIfSucceeded(results, staged, target) is False
 
         assert target.read_text(encoding="utf-8") == '{"old": true}'
+
+
+class TestStatusNote:
+    def test_no_note_for_a_clean_run(self, script: ModuleType) -> None:
+        assert script.statusNote(resultsWith()) is None
+
+    def test_no_note_for_warnings_and_info_only(self, script: ModuleType) -> None:
+        results = resultsWith(ArelleDiagnostic.warning("w"), ArelleDiagnostic.info("i"))
+        assert script.statusNote(results) is None
+
+    def test_note_when_there_are_errors(self, script: ModuleType) -> None:
+        note = script.statusNote(resultsWith(ArelleDiagnostic.error("e")))
+        assert note == script.FIRST_PROBLEMS_NOTE
+        assert "further errors and warnings" in note
+
+
+class TestStatusReports:
+    def sections(self, script: ModuleType) -> list[Any]:
+        return [
+            script.StatusSection(
+                "Taxonomy diagnostics",
+                [ArelleDiagnostic.error("e")],
+                note="First problems.",
+            ),
+            script.StatusSection("Taxonomy checker findings", []),
+        ]
+
+    def test_markdown_report_has_the_note_once_under_diagnostics(
+        self, script: ModuleType, tmp_path: Path
+    ) -> None:
+        report = tmp_path / "r.md"
+        script.writeStatusReport(report, ["https://e.com/x.xsd"], self.sections(script))
+
+        text = report.read_text(encoding="utf-8")
+        assert text.count("First problems.") == 1
+        assert text.index("First problems.") < text.index("### Taxonomy checker")
+
+    def test_html_report_has_the_note_once_under_diagnostics(
+        self, script: ModuleType, tmp_path: Path
+    ) -> None:
+        report = tmp_path / "r.html"
+        script.writeStatusReport(report, ["https://e.com/x.xsd"], self.sections(script))
+
+        text = report.read_text(encoding="utf-8")
+        assert text.count("First problems.") == 1
+        assert text.index("First problems.") < text.index("Taxonomy checker findings")
