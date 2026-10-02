@@ -55,6 +55,8 @@ def callArelleForTaxonomyInfo(
     taxonomy_zips: Sequence[Path],
     taxonomy_json_path: Path | str,
     utr_json_path: Path | str | None = None,
+    *,
+    writeDataDespiteErrors: bool = False,
 ) -> ArelleProcessingResult:
     try:
         entryPointSet = entryPointSetOf(entry_point)
@@ -68,6 +70,8 @@ def callArelleForTaxonomyInfo(
         "taxonomyDataFile": str(taxonomy_json_path),
         "runToken": runToken,
     }
+    if writeDataDespiteErrors:
+        pluginOptions["writeDataDespiteErrors"] = True
     utrValidation = False
     if utr_json_path is not None:
         pluginOptions["utrDataFile"] = str(utr_json_path)
@@ -139,7 +143,9 @@ def runTaxonomyInfo(
     pdata = pluginData(cntlr)
     extractor = TaxonomyInfoExtractor(cntlr, options, modelXbrl)
     taxonomy = extractor.extract()
-    if extractor.diagnostics.hasErrors:
+    if extractor.diagnostics.hasErrors and not getattr(
+        options, "writeDataDespiteErrors", False
+    ):
         cntlr.addToLog(
             "Taxonomy data not written: extraction reported errors (see diagnostics)",
             level=logging.ERROR,

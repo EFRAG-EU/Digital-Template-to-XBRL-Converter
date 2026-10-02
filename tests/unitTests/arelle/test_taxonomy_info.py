@@ -64,6 +64,7 @@ class TestRunTaxonomyInfo:
         tmp_path: Path,
         *,
         hasErrors: bool,
+        writeDataDespiteErrors: bool | None = None,
     ) -> tuple[StubCntlr, Path]:
         monkeypatch.setattr(
             taxonomy_info,
@@ -73,6 +74,8 @@ class TestRunTaxonomyInfo:
         jsonPath = tmp_path / "taxonomy.json"
         cntlr = StubCntlr()
         options = SimpleNamespace(taxonomyDataFile=str(jsonPath), utrValidate=False)
+        if writeDataDespiteErrors is not None:
+            options.writeDataDespiteErrors = writeDataDespiteErrors
         taxonomy_info.runTaxonomyInfo(
             cast(Any, cntlr), cast(Any, options), cast(Any, None)
         )
@@ -93,3 +96,22 @@ class TestRunTaxonomyInfo:
         errors = [m for m, level in cntlr.logged if level == logging.ERROR]
         assert len(errors) == 1
         assert "not written" in errors[0]
+
+    def test_writes_the_json_despite_errors_when_asked(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        # For a caller that stages the file and decides for itself whether to
+        # publish it, so that it can still check the data and report on it.
+        cntlr, jsonPath = self.run(
+            monkeypatch, tmp_path, hasErrors=True, writeDataDespiteErrors=True
+        )
+        assert jsonPath.exists()
+        assert not [m for m, level in cntlr.logged if level == logging.ERROR]
+
+    def test_still_withholds_when_despite_errors_is_explicitly_off(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        _, jsonPath = self.run(
+            monkeypatch, tmp_path, hasErrors=True, writeDataDespiteErrors=False
+        )
+        assert not jsonPath.exists()

@@ -230,6 +230,10 @@ def collectedDiagnostics(token: str) -> list[ArelleDiagnostic]:
     return TaxonomyInfoRunRegistry.close(token).diagnostics
 
 
+def collectedErrors(token: str) -> list[ArelleDiagnostic]:
+    return [d for d in collectedDiagnostics(token) if d.level >= logging.ERROR]
+
+
 class TestWriteDataFile:
     def write(self, tmp_path: Path, data: dict, **kwargs: Any) -> str:
         jsonPath = tmp_path / "out.json"
@@ -934,11 +938,12 @@ class TestExtractDimensionDefinitionsHypercubeCollision:
     """Two different root primary items targeting the same hypercube in one
     ELR is a shape mireport doesn't understand (which root's primary items
     apply?) and would otherwise silently overwrite the first root's cube
-    entry -- extractDimensionDefinitions() must give up rather than guess."""
+    entry -- extractDimensionDefinitions() reports it as an error and records
+    no cube for that ELR rather than guess."""
 
     ELR = "https://example.com/elr"
 
-    def test_two_roots_targeting_same_hypercube_is_inconsistent(self) -> None:
+    def test_two_roots_targeting_same_hypercube_is_an_error_diagnostic(self) -> None:
         rootA = StubConcept(qn("RootA"))
         rootB = StubConcept(qn("RootB"))
         table = StubConcept(qn("Table"), isHypercubeItem=True)
@@ -959,11 +964,51 @@ class TestExtractDimensionDefinitionsHypercubeCollision:
             },
             linkrolesByArcrole={XbrlConst.all: [self.ELR]},
         )
-        try:
-            with pytest.raises(ArelleModelInconsistency):
-                extractor.extractDimensionDefinitions()
-        finally:
-            collectedDiagnostics(token)
+        extractor.extractDimensionDefinitions()
+        (diagnostic,) = collectedErrors(token)
+        assert "more than one root primary item" in diagnostic.text
+        assert qn("Table") not in extractor.taxonomyJson["dimensions"][self.ELR]
+
+
+class TestExtractDimensionDefinitionsContinuesPastBadElr:
+    """One ELR with a problem must not hide the problems (or the content) of
+    the ELRs after it."""
+
+    BAD_ELR = "https://example.com/bad"
+    GOOD_ELR = "https://example.com/elr"  # the ELR conceptRel() links to
+
+    def hypercubeRelSets(
+        self, root: StubConcept, rel: ConceptRelationship, elr: str
+    ) -> dict[Any, Any]:
+        return {
+            ((XbrlConst.all, XbrlConst.notAll), elr): StubHypercubeDimensionRelSet(
+                roots=[root], relsFrom={id(root): [rel]}
+            ),
+            (XbrlConst.domainMember, elr): StubDomainMemberRelSet({}),
+            (XbrlConst.hypercubeDimension, elr): StubHypercubeDimensionRelSet(
+                roots=[], relsFrom={}
+            ),
+        }
+
+    def test_good_elr_is_extracted_after_a_bad_one_is_reported(self) -> None:
+        badRoot = StubConcept(qn("BadRoot"))
+        notACube = StubConcept(qn("NotACube"))  # isHypercubeItem is False
+        goodRoot = StubConcept(qn("GoodRoot"))
+        table = StubConcept(qn("Table"), isHypercubeItem=True)
+        extractor, token = makeExtractor(
+            {},
+            {
+                **self.hypercubeRelSets(badRoot, conceptRel(notACube), self.BAD_ELR),
+                **self.hypercubeRelSets(goodRoot, conceptRel(table), self.GOOD_ELR),
+            },
+            linkrolesByArcrole={XbrlConst.all: [self.BAD_ELR, self.GOOD_ELR]},
+        )
+
+        extractor.extractDimensionDefinitions()
+
+        (diagnostic,) = collectedErrors(token)
+        assert diagnostic.elr == self.BAD_ELR
+        assert qn("Table") in extractor.taxonomyJson["dimensions"][self.GOOD_ELR]
 
 
 class TestExtractDimensionDefinitionsType:
@@ -973,13 +1018,13 @@ class TestExtractDimensionDefinitionsType:
 
     ELR = "https://example.com/elr"
 
-    def extractCube(
+    def makeCubeExtractor(
         self, root: StubConcept, rel: ConceptRelationship
-    ) -> tuple[dict[str, Any], list[ArelleDiagnostic]]:
+    ) -> tuple[TaxonomyInfoExtractor, str]:
         allNotAllRelSet = StubHypercubeDimensionRelSet(
             roots=[root], relsFrom={id(root): [rel]}
         )
-        extractor, token = makeExtractor(
+        return makeExtractor(
             {},
             {
                 ((XbrlConst.all, XbrlConst.notAll), self.ELR): allNotAllRelSet,
@@ -990,6 +1035,11 @@ class TestExtractDimensionDefinitionsType:
             },
             linkrolesByArcrole={XbrlConst.all: [self.ELR]},
         )
+
+    def extractCube(
+        self, root: StubConcept, rel: ConceptRelationship
+    ) -> tuple[dict[str, Any], list[ArelleDiagnostic]]:
+        extractor, token = self.makeCubeExtractor(root, rel)
         extractor.extractDimensionDefinitions()
         diagnostics = collectedDiagnostics(token)
         cube = extractor.taxonomyJson["dimensions"][self.ELR][rel.targetQName]
@@ -1007,7 +1057,7 @@ class TestExtractDimensionDefinitionsType:
         cube, _ = self.extractCube(root, conceptRel(table, arcrole=XbrlConst.notAll))
         assert cube["type"] == "negative"
 
-    def test_unexpected_arcrole_is_inconsistent(self) -> None:
+    def test_unexpected_arcrole_is_an_error_and_records_no_cube(self) -> None:
         # Positive must never be inferred by elimination: an arcrole that is
         # neither all nor notAll should be impossible to reach here (the
         # relSet is keyed by exactly those two), but if it ever happened,
@@ -1015,8 +1065,10 @@ class TestExtractDimensionDefinitionsType:
         root = StubConcept(qn("Root"))
         table = StubConcept(qn("Table"), isHypercubeItem=True)
         rel = conceptRel(table, arcrole=XbrlConst.hypercubeDimension)
-        with pytest.raises(ArelleModelInconsistency):
-            self.extractCube(root, rel)
+        extractor, token = self.makeCubeExtractor(root, rel)
+        extractor.extractDimensionDefinitions()
+        collectedErrors(token)
+        assert qn("Table") not in extractor.taxonomyJson["dimensions"][self.ELR]
 
     def test_cube_dict_has_exactly_the_legacy_keys_plus_type(self) -> None:
         # A guard against silently growing the cube dict's shape: this is the
@@ -1549,3 +1601,69 @@ class TestDiagnosticEmitterHasErrors:
         emitter.emit(ArelleDiagnostic.error("e"))
         emitter.emit(ArelleDiagnostic.info("i"))
         assert emitter.hasErrors is True
+
+
+class TestCollectingInconsistencies:
+    def test_a_diagnostic_carrying_inconsistency_is_emitted_as_is(self) -> None:
+        extractor, token = makeExtractor({})
+        diagnostic = ArelleDiagnostic.error("Something is wrong", elr="https://elr")
+        with extractor.collectingInconsistencies():
+            raise ArelleModelInconsistency(diagnostic)
+        assert collectedDiagnostics(token) == [diagnostic]
+
+    def test_a_message_only_inconsistency_becomes_an_error_diagnostic(self) -> None:
+        extractor, token = makeExtractor({})
+        with extractor.collectingInconsistencies():
+            raise ArelleModelInconsistency("plain text")
+        (diagnostic,) = collectedDiagnostics(token)
+        assert diagnostic.level == logging.ERROR
+        assert diagnostic.text == "plain text"
+
+    def test_other_exceptions_propagate(self) -> None:
+        extractor, token = makeExtractor({})
+        try:
+            with (
+                pytest.raises(ValueError),
+                extractor.collectingInconsistencies(),
+            ):
+                raise ValueError("a bug, not a taxonomy problem")
+        finally:
+            collectedDiagnostics(token)
+
+    def test_code_after_the_block_still_runs(self) -> None:
+        extractor, token = makeExtractor({})
+        with extractor.collectingInconsistencies():
+            raise ArelleModelInconsistency("first")
+        with extractor.collectingInconsistencies():
+            raise ArelleModelInconsistency("second")
+        assert [d.text for d in collectedDiagnostics(token)] == ["first", "second"]
+
+
+class TestExtractRunsEveryPhase:
+    PHASES = (
+        "extractPresentation",
+        "extractDimensionDefaults",
+        "extractDimensionDefinitions",
+        "reportDomainMemberOnlyLinkroleRoots",
+        "extractConceptsAndMetadata",
+        "extractReferences",
+        "reportIsolatedConcepts",
+    )
+
+    def test_a_failing_phase_does_not_stop_the_later_ones(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        extractor, token = makeExtractor({})
+        ran: list[str] = []
+
+        def fail() -> None:
+            raise ArelleModelInconsistency("dimension problem")
+
+        for phase in self.PHASES:
+            monkeypatch.setattr(extractor, phase, lambda phase=phase: ran.append(phase))
+        monkeypatch.setattr(extractor, "extractDimensionDefinitions", fail)
+
+        extractor.extract()
+
+        assert ran == [p for p in self.PHASES if p != "extractDimensionDefinitions"]
+        assert [d.text for d in collectedDiagnostics(token)] == ["dimension problem"]

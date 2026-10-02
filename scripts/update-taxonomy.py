@@ -1,6 +1,9 @@
 import argparse
+import html
 import json
+import logging
 import os
+import shutil
 import sys
 import time
 import warnings
@@ -9,6 +12,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import Any
 
 from rich.markup import escape
 from rich.table import Table
@@ -18,6 +22,8 @@ from mireport.arelle.support import ArelleProcessingResult
 from mireport.arelle.taxonomy_info import callArelleForTaxonomyInfo
 from mireport.cli import (
     configure_rich_output,
+    diagnosticHtml,
+    diagnosticMarkdown,
     get_console,
     getEntryPointsFromPackages,
     pickEntryPointFromPackages,
@@ -29,7 +35,7 @@ from mireport.cli import (
     console_print as print,
 )
 from mireport.conversionresults import Severity
-from mireport.diagnostics import Diagnostic
+from mireport.diagnostics import AbstractDiagnostic, Diagnostic
 from mireport.entrypoints import EntryPointSet, entryPointSetOf
 from mireport.exceptions import TaxonomyException
 from mireport.taxonomy import builtInTaxonomyJsonPaths, loadTaxonomyJSON
@@ -98,6 +104,17 @@ def parser() -> argparse.ArgumentParser:
         "one of the entry points declared by the taxonomy packages.",
     )
     parser.add_argument(
+        "--status-report",
+        type=Path,
+        default=None,
+        metavar="PATH",
+        help="With --output: also write the diagnostics to PATH as tables, in the "
+        f"format given by its extension ({', '.join(STATUS_REPORT_WRITERS)}). "
+        "Markdown renders in GitHub issues and pull requests; for Teams, which "
+        "does not render pasted markdown, write HTML, open it in a browser, copy "
+        "and paste. The console output is unchanged.",
+    )
+    parser.add_argument(
         "--check-json",
         action="store_true",
         help="After writing the taxonomy JSON, load it back with loadTaxonomyJSON() "
@@ -134,7 +151,11 @@ def diagnosticsFromWarnings(
     return diagnostics
 
 
-def checkTaxonomyJson(taxonomy_json_path: Path) -> None:
+DIAGNOSTICS_TITLE = "Taxonomy diagnostics"
+CHECKER_TITLE = "Taxonomy checker findings"
+
+
+def checkTaxonomyJson(taxonomy_json_path: Path) -> list[Diagnostic]:
     with warnings.catch_warnings(record=True) as caught:
         warnings.simplefilter("always")
         taxonomy = loadTaxonomyJSON(taxonomy_json_path)
@@ -142,7 +163,56 @@ def checkTaxonomyJson(taxonomy_json_path: Path) -> None:
         *diagnosticsFromWarnings(caught),
         *TaxonomyChecker(taxonomy).reportIssues(),
     ]
-    printDiagnosticTable("Taxonomy checker findings", diagnostics)
+    printDiagnosticTable(CHECKER_TITLE, diagnostics)
+    return diagnostics
+
+
+Sections = Sequence[tuple[str, Sequence[AbstractDiagnostic[Any]]]]
+
+
+def writeMarkdownStatusReport(
+    path: Path, documents: Sequence[str], sections: Sections
+) -> None:
+    """Write the diagnostics as markdown, for GitHub issues and pull requests."""
+    entryPoint = ", ".join(f"`{document}`" for document in documents)
+    parts = [f"## Taxonomy update: {entryPoint}\n"]
+    parts.extend(diagnosticMarkdown(title, found) for title, found in sections)
+    path.write_text("\n".join(parts), encoding="utf-8")
+    print(f"Diagnostics written as markdown to {path}")
+
+
+def writeHtmlStatusReport(
+    path: Path, documents: Sequence[str], sections: Sections
+) -> None:
+    """Write the diagnostics as HTML: open it in a browser, copy and paste into
+    Teams, which keeps the table."""
+    entryPoint = ", ".join(
+        f"<code>{html.escape(document)}</code>" for document in documents
+    )
+    parts = [
+        (
+            '<!DOCTYPE html>\n<html lang="en">\n<head><meta charset="utf-8">'
+            "<title>Taxonomy update status</title></head>\n<body>"
+        ),
+        f"<h2>Taxonomy update: {entryPoint}</h2>",
+        *(diagnosticHtml(title, found) for title, found in sections),
+        "</body>\n</html>\n",
+    ]
+    path.write_text("\n".join(parts), encoding="utf-8")
+    print(f"Diagnostics written as HTML to {path}")
+
+
+STATUS_REPORT_WRITERS = {
+    ".md": writeMarkdownStatusReport,
+    ".markdown": writeMarkdownStatusReport,
+    ".html": writeHtmlStatusReport,
+    ".htm": writeHtmlStatusReport,
+}
+
+
+def writeStatusReport(path: Path, documents: Sequence[str], sections: Sections) -> None:
+    """Write the status report in the format the extension of path names."""
+    STATUS_REPORT_WRITERS[path.suffix.lower()](path, documents, sections)
 
 
 def regenerateOne(
@@ -153,9 +223,13 @@ def regenerateOne(
     *,
     checkJson: bool,
     targetPath: Path | None = None,
+    statusReportPath: Path | None = None,
 ) -> ArelleProcessingResult:
     """targetPath: where the JSON ends up, when out_path is only a staging
-    file (batch mode), so the banner names the file being regenerated."""
+    file (batch mode), so the banner names the file being regenerated.
+
+    statusReportPath: where to also write the diagnostics, as markdown or HTML
+    according to its extension (see writeStatusReport)."""
     documents = sorted(entryPointSet)
     print(
         "Using:",
@@ -170,11 +244,17 @@ def regenerateOne(
     start = time.perf_counter_ns()
 
     print("Calling into Arelle")
+    # out_path is always a staging file (see publishIfSucceeded), so have the
+    # plugin write it even when it found problems: they are all listed, and
+    # the checker below can look at the data for more.
     results = callArelleForTaxonomyInfo(
-        entryPointSet, taxonomy_zips, out_path, utr_path
+        entryPointSet, taxonomy_zips, out_path, utr_path, writeDataDespiteErrors=True
     )
     printMessages(results)
-    printDiagnosticTable("Taxonomy diagnostics", results.diagnostics)
+    printDiagnosticTable(DIAGNOSTICS_TITLE, results.diagnostics)
+    sections: list[tuple[str, Sequence[AbstractDiagnostic[Any]]]] = [
+        (DIAGNOSTICS_TITLE, results.diagnostics)
+    ]
 
     elapsed = (time.perf_counter_ns() - start) / 1_000_000_000
     print(f"Finished querying Arelle ({elapsed:,.2f} seconds elapsed).")
@@ -182,9 +262,12 @@ def regenerateOne(
     if checkJson:
         if out_path.exists():
             print("Checking taxonomy JSON")
-            checkTaxonomyJson(out_path)
+            sections.append((CHECKER_TITLE, checkTaxonomyJson(out_path)))
         else:
             print("Skipping --check-json: taxonomy JSON was not written.")
+
+    if statusReportPath is not None:
+        writeStatusReport(statusReportPath, documents, sections)
 
     return results
 
@@ -217,7 +300,20 @@ def succeeded(results: ArelleProcessingResult, out_path: Path) -> bool:
         out_path.exists()
         and not results.has_exceptions
         and not any(m.severity == Severity.ERROR for m in results.messages)
+        and not any(d.level >= logging.ERROR for d in results.diagnostics)
     )
+
+
+def publishIfSucceeded(
+    results: ArelleProcessingResult, staged: Path, target: Path
+) -> bool:
+    """Move the staged taxonomy JSON to target if the run had no problems.
+    Otherwise target is left exactly as it was: a taxonomy with errors is
+    reported on, but never persisted."""
+    if not succeeded(results, staged):
+        return False
+    shutil.move(staged, target)
+    return True
 
 
 def regenerateBuiltIn(
@@ -331,6 +427,14 @@ def main() -> None:
     # Dependencies the mutually exclusive group cannot express.
     if entry_point is not None and taxonomy_json_path is None:
         cli.error("--entry-point is only supported with --output.")
+    if args.status_report is not None:
+        if taxonomy_json_path is None:
+            cli.error("--status-report is only supported with --output.")
+        if args.status_report.suffix.lower() not in STATUS_REPORT_WRITERS:
+            cli.error(
+                f"--status-report {args.status_report} must end in one of: "
+                + ", ".join(STATUS_REPORT_WRITERS)
+            )
     if args.dry_run and not args.regenerate_builtin:
         cli.error("--dry-run is only supported with --regenerate-builtin.")
     entryPointSet = (
@@ -365,13 +469,20 @@ def main() -> None:
             pickEntryPointFromPackages(taxonomy_zips, cli), cli
         )
 
-    regenerateOne(
-        entryPointSet,
-        taxonomy_zips,
-        taxonomy_json_path,
-        utr_json_path,
-        checkJson=args.check_json,
-    )
+    with TemporaryDirectory() as tmp:
+        staged = Path(tmp) / taxonomy_json_path.name
+        results = regenerateOne(
+            entryPointSet,
+            taxonomy_zips,
+            staged,
+            utr_json_path,
+            checkJson=args.check_json,
+            targetPath=taxonomy_json_path,
+            statusReportPath=args.status_report,
+        )
+        if not publishIfSucceeded(results, staged, taxonomy_json_path):
+            print(f"Taxonomy JSON not written to {taxonomy_json_path}: see above.")
+            raise SystemExit(1)
 
 
 if __name__ == "__main__":

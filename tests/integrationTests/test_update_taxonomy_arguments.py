@@ -82,3 +82,33 @@ def test_entry_point_that_is_not_a_uri_is_a_usage_error(
     assert result.returncode == 2, result.stderr
     assert "not an absolute URI" in result.stderr
     assert "Traceback" not in result.stderr
+
+
+def test_status_report_requires_output(tmp_path: Path, package: str) -> None:
+    result = run(
+        "--list-entry-points", "--status-report", str(tmp_path / "r.md"), package
+    )
+
+    assert result.returncode == 2
+    assert "--status-report" in result.stderr
+    assert "--output" in result.stderr
+
+
+@pytest.mark.parametrize("name", ["report.txt", "report", "report.docx"])
+def test_status_report_needs_a_known_extension(
+    tmp_path: Path, package: str, name: str
+) -> None:
+    result = run(
+        "--output",
+        str(tmp_path / "out.json"),
+        "--entry-point",
+        "https://example.com/e.xsd",
+        "--status-report",
+        str(tmp_path / name),
+        package,
+    )
+
+    assert result.returncode == 2
+    assert "--status-report" in result.stderr
+    assert ".md" in result.stderr
+    assert ".html" in result.stderr
