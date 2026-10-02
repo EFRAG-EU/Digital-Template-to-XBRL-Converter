@@ -88,6 +88,18 @@ repo):
 
 `scripts/dump-taxonomy.py` dumps concept/presentation info (including to xlsx) from the baked JSON.
 
+The Unit Type Registry JSON (`src/mireport/data/registries/utr.json`) is baked
+separately, from `utr.xml` read by `mireport.utr_xml`. It needs no taxonomy
+packages and fetches <https://www.xbrl.org/utr/utr.xml> unless told otherwise:
+
+```powershell
+.venv-py314/Scripts/python scripts/update-taxonomy.py --utr-output src/mireport/data/registries/utr.json
+# --utr-source <URL or local utr.xml> to read from somewhere else
+```
+
+A taxonomy run can also write `--status-report report.md` (or `.html`, which pastes into Teams as
+a table) with everything it found.
+
 ### Front-end assets
 
 `src/digital_converter_webapp/static/style.css` is a **generated, committed** Tailwind build. Edit
