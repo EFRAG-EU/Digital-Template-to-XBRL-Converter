@@ -13,6 +13,7 @@ Session API, or pass this file to ``arelleCmdLine --plugins``.
 
 from __future__ import annotations
 
+import logging
 import time
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
@@ -137,7 +138,14 @@ def runTaxonomyInfo(
     cntlr.addToLog(f"{PLUGIN_INFO} starting.")
     pdata = pluginData(cntlr)
     extractor = TaxonomyInfoExtractor(cntlr, options, modelXbrl)
-    pdata.Taxonomy.update(extractor.extract())
+    taxonomy = extractor.extract()
+    if extractor.diagnostics.hasErrors:
+        cntlr.addToLog(
+            "Taxonomy data not written: extraction reported errors (see diagnostics)",
+            level=logging.ERROR,
+        )
+        return
+    pdata.Taxonomy.update(taxonomy)
     if options.utrValidate:
         cntlr.addToLog("UTR validation is on so attempting to process UTR entries")
         pdata.UTR.update(UTRInfoExtractor(cntlr, modelXbrl).extract())

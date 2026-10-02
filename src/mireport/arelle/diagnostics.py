@@ -13,6 +13,7 @@ displays it).
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable
 from dataclasses import dataclass, replace
 
@@ -51,6 +52,12 @@ class DiagnosticEmitter:
         self._cntlr = cntlr
         self._sink = sink
         self._elrDefinition = elrDefinition
+        self._hasErrors = False
+
+    @property
+    def hasErrors(self) -> bool:
+        """Whether any error-level diagnostic has been emitted."""
+        return self._hasErrors
 
     def emit(self, diagnostic: ArelleDiagnostic) -> None:
         if (
@@ -61,6 +68,8 @@ class DiagnosticEmitter:
             diagnostic = replace(
                 diagnostic, elrDefinition=self._elrDefinition(diagnostic.elr)
             )
+        if diagnostic.level >= logging.ERROR:
+            self._hasErrors = True
         if self._sink is not None:
             self._sink.append(diagnostic)
         else:
