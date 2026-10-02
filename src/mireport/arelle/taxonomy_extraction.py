@@ -362,6 +362,21 @@ class TaxonomyInfoExtractor:
 
         dimensionDomainRoots = dimensionDomainRelSet.rootConcepts()
         if explicitDimension not in dimensionDomainRoots:
+            if not dimensionDomainRelSet.hasRelationshipsFrom(explicitDimension):
+                # Valid XBRL Dimensions, but useless to us. Most likely a typed
+                # dimension that has lost its xbrldt:typedDomainRef, which
+                # makes it explicit by definition. Report it and carry on so
+                # that every such dimension is reported in one run.
+                self.diagnostics.emit(
+                    ArelleDiagnostic.error(
+                        "Explicit dimension has no dimension-domain relationships",
+                        elr=elrUri,
+                        concepts=(qnameOf(explicitDimension),),
+                        hint="If this dimension is meant to be typed, it is "
+                        "missing its xbrldt:typedDomainRef attribute.",
+                    )
+                )
+                return []
             raise ArelleModelInconsistency(
                 ArelleDiagnostic.error(
                     "Dimension is not a root of the dimension-domain relationship set",

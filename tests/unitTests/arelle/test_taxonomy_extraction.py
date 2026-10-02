@@ -24,7 +24,7 @@ from arelle.ModelValue import QName
 from arelle.ModelXbrl import ModelXbrl
 from arelle.RuntimeOptions import RuntimeOptions
 
-from mireport.arelle.diagnostics import ArelleDiagnostic
+from mireport.arelle.diagnostics import ArelleDiagnostic, DiagnosticEmitter
 from mireport.arelle.model_access import (
     ConceptRelationship,
     ConceptRelationshipSet,
@@ -1439,3 +1439,113 @@ class TestEntryPointSetForJSON:
 
         with pytest.raises(TaxonomyException, match="not an absolute URI"):
             extractor.entryPointSetForJSON()
+
+
+class StubDimensionDomainRelSet:
+    """Serves canned dimension-domain relationships and roots."""
+
+    def __init__(
+        self,
+        relsFrom: dict[int, list[ConceptRelationship]],
+        roots: list[StubConcept],
+    ) -> None:
+        self._relsFrom = relsFrom
+        self._roots = roots
+
+    def rootConcepts(self) -> list[StubConcept]:
+        return self._roots
+
+    def hasRelationshipsFrom(self, concept: Any) -> bool:
+        return bool(self._relsFrom.get(id(concept)))
+
+    def relationshipsFrom(self, concept: Any) -> list[ConceptRelationship]:
+        return self._relsFrom.get(id(concept), [])
+
+
+class TestExplicitDimensionWithoutDomain:
+    ELR = "https://example.com/elr"
+
+    def getDomainMembers(
+        self,
+        dimension: StubConcept,
+        dimensionDomain: StubDimensionDomainRelSet,
+    ) -> tuple[list[QName], list[ArelleDiagnostic]]:
+        extractor, token = makeExtractor(
+            {}, {(XbrlConst.dimensionDomain, self.ELR): dimensionDomain}
+        )
+        result = extractor.getDomainMembersForExplicitDimension(
+            cast(ModelConcept, dimension), self.ELR
+        )
+        return result, collectedDiagnostics(token)
+
+    def test_dimension_with_no_dimension_domain_relationships_is_an_error_diagnostic(
+        self,
+    ) -> None:
+        # What a typed axis missing xbrldt:typedDomainRef looks like: by
+        # definition an explicit dimension, but with no domain.
+        axis = StubConcept(qn("SubsidiaryTypedAxis"), isExplicitDimension=True)
+        result, diagnostics = self.getDomainMembers(
+            axis, StubDimensionDomainRelSet({}, roots=[])
+        )
+        assert result == []
+        (diagnostic,) = diagnostics
+        assert diagnostic.level == logging.ERROR
+        assert diagnostic.elr == self.ELR
+        assert diagnostic.concepts == (qn("SubsidiaryTypedAxis"),)
+        assert "no dimension-domain relationships" in diagnostic.text
+        assert diagnostic.hint is not None
+        assert "typedDomainRef" in diagnostic.hint
+
+    def test_dimension_beside_other_roots_with_no_domain_is_still_an_error_diagnostic(
+        self,
+    ) -> None:
+        axis = StubConcept(qn("SubsidiaryTypedAxis"), isExplicitDimension=True)
+        other = StubConcept(qn("OtherAxis"), isExplicitDimension=True)
+        member = StubConcept(qn("Domain"))
+        relSet = StubDimensionDomainRelSet(
+            {id(other): [conceptRel(member, arcrole=XbrlConst.dimensionDomain)]},
+            roots=[other],
+        )
+        result, diagnostics = self.getDomainMembers(axis, relSet)
+        assert result == []
+        (diagnostic,) = diagnostics
+        assert diagnostic.level == logging.ERROR
+        assert "no dimension-domain relationships" in diagnostic.text
+
+    def test_dimension_that_is_a_target_of_another_dimension_is_still_inconsistent(
+        self,
+    ) -> None:
+        # Not a root *and* has outgoing relationships: a genuine structural
+        # problem rather than a missing domain, so still a hard stop.
+        axis = StubConcept(qn("Axis"), isExplicitDimension=True)
+        other = StubConcept(qn("OtherAxis"), isExplicitDimension=True)
+        member = StubConcept(qn("Domain"))
+        relSet = StubDimensionDomainRelSet(
+            {
+                id(other): [conceptRel(axis, arcrole=XbrlConst.dimensionDomain)],
+                id(axis): [conceptRel(member, arcrole=XbrlConst.dimensionDomain)],
+            },
+            roots=[other],
+        )
+        with pytest.raises(ArelleModelInconsistency, match="not a root"):
+            self.getDomainMembers(axis, relSet)
+
+
+class TestDiagnosticEmitterHasErrors:
+    def emitter(self) -> DiagnosticEmitter:
+        return DiagnosticEmitter(cast(Cntlr, StubCntlr()), [])
+
+    def test_no_errors_initially(self) -> None:
+        assert self.emitter().hasErrors is False
+
+    def test_warnings_and_info_are_not_errors(self) -> None:
+        emitter = self.emitter()
+        emitter.emit(ArelleDiagnostic.warning("w"))
+        emitter.emit(ArelleDiagnostic.info("i"))
+        assert emitter.hasErrors is False
+
+    def test_an_error_is_remembered(self) -> None:
+        emitter = self.emitter()
+        emitter.emit(ArelleDiagnostic.error("e"))
+        emitter.emit(ArelleDiagnostic.info("i"))
+        assert emitter.hasErrors is True
