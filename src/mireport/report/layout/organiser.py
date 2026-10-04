@@ -23,6 +23,7 @@ from mireport.report.layout.model import (
     ReportSection,
     TabularReportSection,
 )
+from mireport.report.model import ReportPeriod
 from mireport.taxonomy import Concept, PresentationStyle, Relationship, Taxonomy
 
 if TYPE_CHECKING:
@@ -41,7 +42,7 @@ class ReportLayoutOrganiser:
         self.report = report
         self.presentation = self.taxonomy.presentation
         self.reportSections: list[ReportSection] = []
-        self._grids = GridBuilder(report.getFacts, self._label)
+        self._grids = GridBuilder(report.getFacts, self._label, self._period_rank)
         # Facts a List group cannot show in its list because they carry taxonomy dimensions, in
         # presentation order, keyed by the group's role.
         self._dimensional: dict[str, list[Placed]] = {}
@@ -255,6 +256,13 @@ class ReportLayoutOrganiser:
             presentation=section.presentation,
             heading_suffix=heading_suffix,
             table=assemble_table(grid),
+        )
+
+    def _period_rank(self, period: ReportPeriod) -> int:
+        """Where a period comes among a report's periods: current, prior, then the rest."""
+        return next(
+            (n for n, p in enumerate(self.report.reportingPeriods) if p == period),
+            len(self.report.reportingPeriods),
         )
 
     def _label(self, concept: Concept) -> str:

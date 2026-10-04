@@ -10,11 +10,13 @@ dimension values. ``GridBuilder`` has one method per kind, each a few lines over
 from __future__ import annotations
 
 import logging
+from collections import defaultdict
 from collections.abc import Callable, Hashable, Iterable, Sequence
 from typing import TypeVar
 
 from mireport.report.fact import Fact, numeric_string_key
 from mireport.report.layout.model import FactGrid, TableStyle
+from mireport.report.model import FactPeriod, ReportPeriod
 from mireport.taxonomy import Concept, Relationship
 
 L = logging.getLogger(__name__)
@@ -24,26 +26,36 @@ C = TypeVar("C", bound=Hashable)  # what identifies a column
 DimensionKey = tuple["Concept | str", ...]
 
 
+Cells = dict[tuple[R, C, FactPeriod], Fact]
+
+
 def _place(
     facts: Iterable[Fact],
     row_of: Callable[[Fact], R | None],
     column_of: Callable[[Fact], C | None],
-) -> dict[tuple[R, C], Fact]:
-    """Each fact in the cell its row and column name. A fact that belongs to neither is left out;
-    when two belong to one cell the first stays and the other is reported."""
-    cells: dict[tuple[R, C], Fact] = {}
+) -> Cells[R, C]:
+    """Each fact in the cell its row, column and period (which part of it, too). A fact that belongs to no row or
+    column is left out; when two belong to one cell the first stays and the other is reported."""
+    cells: Cells[R, C] = {}
     for fact in facts:
         row, column = row_of(fact), column_of(fact)
         if row is None or column is None:
             continue
-        if (held := cells.get((row, column))) is not None:
+        if (held := cells.get((row, column, fact.period))) is not None:
             L.warning(
                 f"Several facts for {fact.concept.qname} belong in the same table cell; "
                 f"showing the first.\n{held=}\n{fact=}"
             )
             continue
-        cells[row, column] = fact
+        cells[row, column, fact.period] = fact
     return cells
+
+
+def _swap(cells: Cells[R, C]) -> Cells[C, R]:
+    """The same cells with rows and columns exchanged."""
+    return {
+        (column, row, period): fact for (row, column, period), fact in cells.items()
+    }
 
 
 def _matrix(
@@ -62,9 +74,43 @@ class GridBuilder:
         self,
         facts_for: Callable[[Concept], Sequence[Fact]],
         label: Callable[[Concept], str],
+        period_rank: Callable[[ReportPeriod], int] = lambda period: 0,
     ) -> None:
         self._facts_for = facts_for
         self._label = label
+        self._period_rank = period_rank
+
+    def _arrange(
+        self, rows: Sequence[R], columns: Sequence[C], cells: Cells[R, C]
+    ) -> tuple[list[R], list[list[Fact | None]], list[C], bool]:
+        """The grid for these cells: the rows that have a fact, their data, the columns (each
+        repeated once per period when a column held facts from more than one), and whether they were.
+
+        A table whose every column is in one period (a table of current facts, or one whose columns
+        are baseline and target years) is laid out as it always was."""
+        periods_of: dict[C, set[FactPeriod]] = defaultdict(set)
+        for _, column, period in cells:
+            periods_of[column].add(period)
+        if not any(len(periods) > 1 for periods in periods_of.values()):
+            kept, data = _matrix(
+                rows, columns, {(r, c): f for (r, c, _), f in cells.items()}
+            )
+            return kept, data, list(columns), False
+
+        periods = sorted(
+            {period for _, _, period in cells},
+            key=lambda p: (
+                self._period_rank(p.reportPeriod),
+                p.reportPeriod.duration.start,
+                p.reportPeriod.duration.end,
+                p.partRank,
+            ),
+        )
+        spread = [(column, period) for period in periods for column in columns]
+        kept, data = _matrix(
+            rows, spread, {(r, (c, p)): f for (r, c, p), f in cells.items()}
+        )
+        return kept, data, [column for column, _ in spread], True
 
     def explicit_dimension(
         self,
@@ -82,14 +128,23 @@ class GridBuilder:
 
         cells = _place(facts, lambda f: f.concept, member_of)
         if len(domain) <= len(reportable):
-            rows, data = _matrix(reportable, domain, cells)
+            rows, data, columns, spread = self._arrange(reportable, domain, cells)
             return FactGrid(
-                TableStyle.SingleExplicitDimensionColumn, data, rows, None, domain
+                TableStyle.SingleExplicitDimensionColumn,
+                data,
+                rows,
+                None,
+                columns,
+                spread,
             )
-        swapped = {(column, row): fact for (row, column), fact in cells.items()}
-        rows, data = _matrix(domain, reportable, swapped)
+        rows, data, columns, spread = self._arrange(domain, reportable, _swap(cells))
         return FactGrid(
-            TableStyle.SingleExplicitDimensionRow, data, rows, dimension, reportable
+            TableStyle.SingleExplicitDimensionRow,
+            data,
+            rows,
+            dimension,
+            columns,
+            spread,
         )
 
     def typed_dimension(
@@ -104,9 +159,14 @@ class GridBuilder:
         cells = _place(
             facts, lambda f: f.typed_dimensions.get(dimension), lambda f: f.concept
         )
-        rows, data = _matrix(texts, reportable, cells)
+        rows, data, columns, spread = self._arrange(texts, reportable, cells)
         return FactGrid(
-            TableStyle.SingleTypedDimensionColumn, data, rows, dimension, reportable
+            TableStyle.SingleTypedDimensionColumn,
+            data,
+            rows,
+            dimension,
+            columns,
+            spread,
         )
 
     def dimension_set(
@@ -129,25 +189,27 @@ class GridBuilder:
             lambda f: key_of(f),
             lambda f: owner[id(f)],
         )
-        keys = sorted({row for row, _ in cells}, key=self._key_order)
+        keys = sorted({row for row, _, _ in cells}, key=self._key_order)
         if len(keys) <= len(relationships):
-            _, data = _matrix(
-                relationships, keys, {(c, r): f for (r, c), f in cells.items()}
-            )
+            _, data, columns, spread = self._arrange(relationships, keys, _swap(cells))
             return FactGrid(
                 TableStyle.Other,
                 data,
                 [rel.concept for rel in relationships],
                 None,
-                [self._key_label(key) for key in keys],
+                [self._key_label(key) for key in columns],
+                spread,
             )
-        _, data = _matrix(keys, relationships, cells)
+        _, data, by_relationship, spread_by_period = self._arrange(
+            keys, relationships, cells
+        )
         return FactGrid(
             TableStyle.Other,
             data,
             [self._key_label(key) for key in keys],
             " / ".join(self._label(d) for d in signature),
-            [rel.concept for rel in relationships],
+            [rel.concept for rel in by_relationship],
+            spread_by_period,
         )
 
     def _key_order(self, key: DimensionKey) -> tuple:

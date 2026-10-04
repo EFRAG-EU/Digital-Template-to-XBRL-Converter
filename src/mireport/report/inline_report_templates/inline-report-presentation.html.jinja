@@ -180,7 +180,7 @@
                     {% set rowloop = loop %}
                     <tr>
                     {% for column in row %}
-                        <th colspan="{{ column.colspan }}" rowspan="{{ column.rowspan }}" class="{% if column.numeric %}numeric{% elif section.table.numeric and not loop.first %}numeric{% elif not loop.first and rowloop.first and (row | count <= 2)  %}center{% else %}noop{% endif %}">
+                        <th colspan="{{ column.colspan }}" rowspan="{{ column.rowspan }}" class="{% if column.numeric %}numeric{% elif section.table.numeric and not loop.first %}numeric{% elif not loop.first and rowloop.first and (row | count <= 2 or column.isPeriod)  %}center{% else %}noop{% endif %}">
                         {% if column.value is none %}
                             {# nothing to do #}
                         {% elif column.value is string %}

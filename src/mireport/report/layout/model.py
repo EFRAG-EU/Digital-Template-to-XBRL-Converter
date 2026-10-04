@@ -90,6 +90,9 @@ class FactGrid:
     row_labels: Sequence[Concept | str]
     row_heading_label: Concept | str | None
     col_labels: Sequence[Concept | str]
+    period_axis: bool = False
+    """Whether the columns are each column of the table once per period (the same label repeated),
+    because a column held facts from more than one period."""
 
 
 @dataclass(slots=True, frozen=True, eq=True)
