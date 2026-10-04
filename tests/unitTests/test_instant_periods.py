@@ -235,7 +235,8 @@ class TestInTheReport:
         report = _report()
         self._facts(report)
         html = _html(report)
-        assert "Reporting period: At 2025-01-01" in html  # opening balance of 2025
+        # the closing balance leads its line, the opening balance is its comparative
+        assert 'fact-comparative-period">At 2025-01-01<' in html
         # the closing balance of the report's own period is what a fact with no period means
         assert "At 2025-12-31" not in html
 
