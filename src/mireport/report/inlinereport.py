@@ -396,10 +396,12 @@ class InlineReport:
             "Entity Name": self._entityName,
             "Entity Identifier": self._defaultAspects["entity-identifier"],
             "Entity Identifier Scheme": self._defaultAspects["entity-scheme"],
-            "Report currency": self._defaultAspects["monetary-units"],
+            # Not every taxonomy has monetary facts, so there may be no report currency.
+            "Report currency": self._defaultAspects.get("monetary-units"),
         }
         for k, v in meta.items():
-            addDict(k, v)
+            if v is not None:
+                addDict(k, v)
         addDict("Report period", self.defaultPeriod, "render_duration_period")
 
         separator = decimal_symbol(self._outputLocale)
