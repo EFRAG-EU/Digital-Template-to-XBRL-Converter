@@ -16,10 +16,13 @@ from mireport.report.layout import (
     ReportSection,
     TableHeadingCell,
     TableStyle,
-    _column_periods,
-    _column_units,
-    _table_period,
-    _table_unit,
+)
+from mireport.report.layout.grid import GridBuilder
+from mireport.report.layout.headers import (
+    column_periods,
+    column_units,
+    table_period,
+    table_unit,
 )
 from mireport.report.periods import DurationPeriodHolder, InstantPeriodHolder
 from mireport.taxonomy import (
@@ -131,128 +134,128 @@ class TestTableHeadingCell:
 
 class TestGetTableUnit:
     def test_empty_data(self):
-        assert _table_unit([]) is None
+        assert table_unit([]) is None
 
     def test_all_none(self):
-        assert _table_unit([[None, None]]) is None
+        assert table_unit([[None, None]]) is None
 
     def test_single_numeric_fact(self):
         f = _fact(numeric=True, unit="EUR")
-        assert _table_unit([[f]]) == "EUR"
+        assert table_unit([[f]]) == "EUR"
 
     def test_two_facts_same_unit(self):
         f1 = _fact(numeric=True, unit="EUR")
         f2 = _fact(numeric=True, unit="EUR")
-        assert _table_unit([[f1], [f2]]) == "EUR"
+        assert table_unit([[f1], [f2]]) == "EUR"
 
     def test_two_facts_different_units(self):
         f1 = _fact(numeric=True, unit="EUR")
         f2 = _fact(numeric=True, unit="USD")
-        assert _table_unit([[f1, f2]]) is None
+        assert table_unit([[f1, f2]]) is None
 
     def test_empty_string_unit_returns_none(self):
         f = _fact(numeric=True, unit="")
-        assert _table_unit([[f]]) is None
+        assert table_unit([[f]]) is None
 
     def test_non_numeric_facts_ignored(self):
         f = _fact(numeric=False, unit=None)
-        assert _table_unit([[f]]) is None
+        assert table_unit([[f]]) is None
 
     def test_mix_numeric_and_non_numeric(self):
         f_num = _fact(numeric=True, unit="EUR")
         f_text = _fact(numeric=False, unit=None)
-        assert _table_unit([[f_num, f_text]]) == "EUR"
+        assert table_unit([[f_num, f_text]]) == "EUR"
 
 
 class TestGetTablePeriod:
     def test_empty_data(self):
-        assert _table_period([]) is None
+        assert table_period([]) is None
 
     def test_all_none(self):
-        assert _table_period([[None]]) is None
+        assert table_period([[None]]) is None
 
     def test_single_period(self):
         f = _fact(period=_DUR)
-        assert _table_period([[f]]) == _DUR
+        assert table_period([[f]]) == _DUR
 
     def test_two_facts_same_period(self):
         f1 = _fact(period=_DUR)
         f2 = _fact(period=_DUR)
-        assert _table_period([[f1], [f2]]) == _DUR
+        assert table_period([[f1], [f2]]) == _DUR
 
     def test_two_facts_different_periods(self):
         f1 = _fact(period=_DUR)
         f2 = _fact(period=_INST)
-        assert _table_period([[f1, f2]]) is None
+        assert table_period([[f1, f2]]) is None
 
 
 class TestGetColumnUnits:
     def test_empty_data(self):
-        assert _column_units([]) == []
+        assert column_units([]) == []
 
     def test_single_column_with_unit(self):
         f = _fact(numeric=True, unit="EUR")
-        assert _column_units([[f]]) == ["EUR"]
+        assert column_units([[f]]) == ["EUR"]
 
     def test_all_none_returns_empty_list(self):
-        assert _column_units([[None]]) == []
+        assert column_units([[None]]) == []
 
     def test_mixed_units_in_column_returns_empty_list(self):
         # mixed units → column is None → all-None short-circuit → []
         f1 = _fact(numeric=True, unit="EUR")
         f2 = _fact(numeric=True, unit="USD")
-        assert _column_units([[f1], [f2]]) == []
+        assert column_units([[f1], [f2]]) == []
 
     def test_partial_none_columns_preserved(self):
         # first column has a unit, second has no numeric facts → [unit, None]
         f_eur = _fact(numeric=True, unit="EUR")
         f_text = _fact(numeric=False)
-        assert _column_units([[f_eur, f_text]]) == ["EUR", None]
+        assert column_units([[f_eur, f_text]]) == ["EUR", None]
 
     def test_two_columns_different_units(self):
         f_eur = _fact(numeric=True, unit="EUR")
         f_usd = _fact(numeric=True, unit="USD")
-        result = _column_units([[f_eur, f_usd]])
+        result = column_units([[f_eur, f_usd]])
         assert result == ["EUR", "USD"]
 
     def test_empty_string_unit_treated_as_none(self):
         f = _fact(numeric=True, unit="")
-        assert _column_units([[f]]) == []
+        assert column_units([[f]]) == []
 
     def test_non_numeric_column_gives_none(self):
         f = _fact(numeric=False, unit=None)
-        result = _column_units([[f]])
+        result = column_units([[f]])
         assert result == []
 
 
 class TestGetColumnPeriods:
     def test_empty_data(self):
-        assert _column_periods([]) == []
+        assert column_periods([]) == []
 
     def test_single_column_with_period(self):
         f = _fact(period=_DUR)
-        assert _column_periods([[f]]) == [_DUR]
+        assert column_periods([[f]]) == [_DUR]
 
     def test_all_none_returns_empty_list(self):
-        assert _column_periods([[None]]) == []
+        assert column_periods([[None]]) == []
 
     def test_mixed_periods_in_column_returns_empty_list(self):
         # mixed periods → column is None → all-None short-circuit → []
         f1 = _fact(period=_DUR)
         f2 = _fact(period=_INST)
-        assert _column_periods([[f1], [f2]]) == []
+        assert column_periods([[f1], [f2]]) == []
 
     def test_two_columns_different_periods(self):
         f_dur = _fact(period=_DUR)
         f_inst = _fact(period=_INST)
-        result = _column_periods([[f_dur, f_inst]])
+        result = column_periods([[f_dur, f_inst]])
         assert result == [_DUR, _INST]
 
     def test_partial_none_columns_preserved(self):
         # second column has no facts → [_DUR, None]
         f_dur = _fact(period=_DUR)
         f_none: Fact | None = None
-        result = _column_periods([[f_dur, f_none]])
+        result = column_periods([[f_dur, f_none]])
         assert result == [_DUR, None]
 
 
@@ -484,224 +487,238 @@ class TestCreateReportSections:
         assert dimensional in included
 
 
-class TestAssembleDimsAsColumnTable:
+def _builder(facts_by_concept):
+    for concept, facts in facts_by_concept.items():
+        for fact in facts:
+            fact.concept = concept  # a concept's facts are, by definition, its own
+    return GridBuilder(lambda c: facts_by_concept.get(c, []), lambda c: c.name)
+
+
+def _concept(name):
+    concept = MagicMock(spec=Concept)
+    concept.name = name
+    concept.qname = name
+    return concept
+
+
+class TestExplicitDimensionAsColumns:
+    """No more members than concepts: the members are the columns."""
+
     def _setup(self):
-        dim_qname = object()  # use a sentinel as the dimension qname key
-
-        explicit_dim = MagicMock(spec=Concept)
-        explicit_dim.qname = dim_qname
-
-        member_a = MagicMock(spec=Concept)
-        member_a.qname = "qname:member_a"
-        member_b = MagicMock(spec=Concept)
-        member_b.qname = "qname:member_b"
+        dimension = _concept("dim")
+        member_a, member_b = _concept("a"), _concept("b")
         domain = [member_a, member_b]
-
-        concept_x = MagicMock(spec=Concept)
-        concept_y = MagicMock(spec=Concept)
-        reportable = [concept_x, concept_y]
-
-        fact_xa = _fact(explicit={explicit_dim: member_a})
-        fact_xb = _fact(explicit={explicit_dim: member_b})
-        fact_ya = _fact(explicit={explicit_dim: member_a})
-        fact_yb = _fact(explicit={explicit_dim: member_b})
-
-        facts_map = {
-            concept_x: [fact_xa, fact_xb],
-            concept_y: [fact_ya, fact_yb],
+        x, y = _concept("x"), _concept("y")
+        facts = {
+            x: [
+                _fact(explicit={dimension: member_a}),
+                _fact(explicit={dimension: member_b}),
+            ],
+            y: [
+                _fact(explicit={dimension: member_a}),
+                _fact(explicit={dimension: member_b}),
+            ],
         }
-
-        return (
-            explicit_dim,
-            domain,
-            reportable,
-            [fact_xa, fact_xb, fact_ya, fact_yb],
-            facts_map,
-        )
+        return dimension, domain, [x, y], facts
 
     def test_returns_correct_table_style(self):
-        explicit_dim, domain, reportable, _, facts_map = self._setup()
-        o = _organiser(facts_by_concept=facts_map)
-        matrix = o._assemble_explicit_dim_as_columns(
-            "[B01.test", reportable, explicit_dim, domain, None
-        )
-        assert matrix.style == TableStyle.SingleExplicitDimensionColumn
+        dimension, domain, reportable, facts = self._setup()
+        grid = _builder(facts).explicit_dimension(reportable, dimension, domain, None)
+        assert grid.style == TableStyle.SingleExplicitDimensionColumn
 
     def test_col_labels(self):
-        explicit_dim, domain, reportable, _, facts_map = self._setup()
-        o = _organiser(facts_by_concept=facts_map)
-        matrix = o._assemble_explicit_dim_as_columns(
-            "[B01.test", reportable, explicit_dim, domain, None
-        )
-        assert matrix.col_labels == domain
+        dimension, domain, reportable, facts = self._setup()
+        grid = _builder(facts).explicit_dimension(reportable, dimension, domain, None)
+        assert grid.col_labels == domain
 
     def test_row_heading_label_is_none(self):
-        explicit_dim, domain, reportable, _, facts_map = self._setup()
-        o = _organiser(facts_by_concept=facts_map)
-        matrix = o._assemble_explicit_dim_as_columns(
-            "[B01.test", reportable, explicit_dim, domain, None
-        )
-        assert matrix.row_heading_label is None
+        dimension, domain, reportable, facts = self._setup()
+        grid = _builder(facts).explicit_dimension(reportable, dimension, domain, None)
+        assert grid.row_heading_label is None
 
     def test_row_labels_are_reportable_concepts(self):
-        explicit_dim, domain, reportable, _, facts_map = self._setup()
-        o = _organiser(facts_by_concept=facts_map)
-        matrix = o._assemble_explicit_dim_as_columns(
-            "[B01.test", reportable, explicit_dim, domain, None
-        )
-        assert matrix.row_labels == reportable
+        dimension, domain, reportable, facts = self._setup()
+        grid = _builder(facts).explicit_dimension(reportable, dimension, domain, None)
+        assert grid.row_labels == reportable
 
     def test_data_matrix_shape(self):
-        explicit_dim, domain, reportable, _, facts_map = self._setup()
-        o = _organiser(facts_by_concept=facts_map)
-        matrix = o._assemble_explicit_dim_as_columns(
-            "[B01.test", reportable, explicit_dim, domain, None
-        )
-        assert len(matrix.data) == 2
-        assert len(matrix.data[0]) == len(domain)
+        dimension, domain, reportable, facts = self._setup()
+        grid = _builder(facts).explicit_dimension(reportable, dimension, domain, None)
+        assert len(grid.data) == 2
+        assert len(grid.data[0]) == len(domain)
+
+    def test_each_fact_lands_under_its_member(self):
+        dimension, domain, reportable, facts = self._setup()
+        grid = _builder(facts).explicit_dimension(reportable, dimension, domain, None)
+        x = reportable[0]
+        assert grid.data[0] == facts[x]
 
     def test_empty_rows_excluded(self):
-        explicit_dim, domain, reportable, _, facts_map = self._setup()
-        # concept_x has no facts → its row should be dropped
-        concept_x = reportable[0]
-        facts_map = {concept_x: [], reportable[1]: facts_map[reportable[1]]}
-        o = _organiser(facts_by_concept=facts_map)
-        matrix = o._assemble_explicit_dim_as_columns(
-            "[B01.test", reportable, explicit_dim, domain, None
+        dimension, domain, reportable, facts = self._setup()
+        x, y = reportable
+        grid = _builder({x: facts[x], y: []}).explicit_dimension(
+            reportable, dimension, domain, None
         )
-        assert len(matrix.data) == 1
-        assert matrix.row_labels == [reportable[1]]
+        assert grid.row_labels == [x]
+
+    def test_a_fact_with_no_member_is_at_the_default(self):
+        dimension, domain, reportable, _ = self._setup()
+        x = reportable[0]
+        plain = _fact()
+        grid = _builder({x: [plain]}).explicit_dimension(
+            reportable, dimension, domain, domain[0]
+        )
+        assert grid.data == [[plain, None]]
+
+    def test_a_fact_with_no_member_and_no_default_is_left_out(self):
+        dimension, domain, reportable, _ = self._setup()
+        grid = _builder({reportable[0]: [_fact()]}).explicit_dimension(
+            reportable, dimension, domain, None
+        )
+        assert grid.data == []
+
+    def test_a_member_outside_the_domain_is_left_out(self):
+        dimension, domain, reportable, _ = self._setup()
+        stranger = _concept("elsewhere")
+        grid = _builder(
+            {reportable[0]: [_fact(explicit={dimension: stranger})]}
+        ).explicit_dimension(reportable, dimension, domain, None)
+        assert grid.data == []
+
+    def test_two_facts_for_one_cell_show_the_first_and_say_so(self, caplog):
+        dimension, domain, reportable, _ = self._setup()
+        first = _fact(explicit={dimension: domain[0]}, value="first")
+        second = _fact(explicit={dimension: domain[0]}, value="second")
+        with caplog.at_level(logging.WARNING, logger="mireport.report.layout"):
+            grid = _builder({reportable[0]: [first, second]}).explicit_dimension(
+                reportable, dimension, domain, None
+            )
+        assert grid.data == [[first, None]]
+        assert any("same table cell" in r.message for r in caplog.records)
 
 
-class TestAssembleDimsAsRowsTable:
+class TestExplicitDimensionAsRows:
+    """More members than concepts: the members are the rows."""
+
     def _setup(self):
-        dim_qname = object()
-
-        explicit_dim = MagicMock(spec=Concept)
-        explicit_dim.qname = dim_qname
-
-        member_a = MagicMock(spec=Concept)
-        member_a.qname = "qname:member_a"
-        member_b = MagicMock(spec=Concept)
-        member_b.qname = "qname:member_b"
-        domain = [member_a, member_b]
-
-        concept_x = MagicMock(spec=Concept)
-        concept_y = MagicMock(spec=Concept)
-        reportable = [concept_x, concept_y]
-
-        fact_xa = _fact(explicit={explicit_dim: member_a})
-        fact_ya = _fact(explicit={explicit_dim: member_a})
-
-        facts_map = {
-            concept_x: [fact_xa],
-            concept_y: [fact_ya],
-        }
-
-        return explicit_dim, domain, reportable, facts_map, member_a, member_b
+        dimension = _concept("dim")
+        a, b, c = _concept("a"), _concept("b"), _concept("c")
+        x = _concept("x")
+        facts = {x: [_fact(explicit={dimension: a}), _fact(explicit={dimension: b})]}
+        return dimension, [a, b, c], [x], facts
 
     def test_returns_correct_table_style(self):
-        explicit_dim, domain, reportable, facts_map, _, __ = self._setup()
-        o = _organiser(facts_by_concept=facts_map)
-        matrix = o._assemble_explicit_dim_as_rows(
-            "[B01.test", reportable, explicit_dim, domain, None
-        )
-        assert matrix.style == TableStyle.SingleExplicitDimensionRow
+        dimension, domain, reportable, facts = self._setup()
+        grid = _builder(facts).explicit_dimension(reportable, dimension, domain, None)
+        assert grid.style == TableStyle.SingleExplicitDimensionRow
 
-    def test_col_labels_are_reportable(self):
-        explicit_dim, domain, reportable, facts_map, _, __ = self._setup()
-        o = _organiser(facts_by_concept=facts_map)
-        matrix = o._assemble_explicit_dim_as_rows(
-            "[B01.test", reportable, explicit_dim, domain, None
-        )
-        assert matrix.col_labels == reportable
+    def test_col_labels_are_the_reportable_concepts(self):
+        dimension, domain, reportable, facts = self._setup()
+        grid = _builder(facts).explicit_dimension(reportable, dimension, domain, None)
+        assert grid.col_labels == reportable
 
-    def test_row_heading_label_is_explicit_dim(self):
-        explicit_dim, domain, reportable, facts_map, _, __ = self._setup()
-        o = _organiser(facts_by_concept=facts_map)
-        matrix = o._assemble_explicit_dim_as_rows(
-            "[B01.test", reportable, explicit_dim, domain, None
-        )
-        assert matrix.row_heading_label is explicit_dim
+    def test_row_heading_label_is_the_dimension(self):
+        dimension, domain, reportable, facts = self._setup()
+        grid = _builder(facts).explicit_dimension(reportable, dimension, domain, None)
+        assert grid.row_heading_label is dimension
 
-    def test_row_labels_are_domain_members(self):
-        explicit_dim, domain, reportable, facts_map, member_a, _ = self._setup()
-        o = _organiser(facts_by_concept=facts_map)
-        matrix = o._assemble_explicit_dim_as_rows(
-            "[B01.test", reportable, explicit_dim, domain, None
-        )
-        assert member_a in matrix.row_labels
-
-    def test_empty_rows_excluded(self):
-        explicit_dim, domain, reportable, _, _, member_b = self._setup()
-        # member_b has no facts
-        concept_x = reportable[0]
-        concept_y = reportable[1]
-        fact_xa = _fact(explicit={explicit_dim: domain[0]})
-        facts_map = {concept_x: [fact_xa], concept_y: []}
-        o = _organiser(facts_by_concept=facts_map)
-        matrix = o._assemble_explicit_dim_as_rows(
-            "[B01.test", reportable, explicit_dim, domain, None
-        )
-        assert member_b not in matrix.row_labels
+    def test_row_labels_are_the_members_that_have_facts(self):
+        dimension, domain, reportable, facts = self._setup()
+        a, b, _c = domain
+        grid = _builder(facts).explicit_dimension(reportable, dimension, domain, None)
+        assert grid.row_labels == [a, b]  # the third has no facts, so no row
 
 
-class TestAssembleTypedDimTable:
+class TestTypedDimension:
     def _setup(self):
-        typed_dim = MagicMock(spec=Concept)
-        typed_dim.qname = "esrs:typedDim"
-
-        concept_x = MagicMock(spec=Concept)
-        concept_y = MagicMock(spec=Concept)
-        reportable = [concept_x, concept_y]
-
-        val_2 = "2"
-        val_10 = "10"
-
-        fact_x2 = _fact(typed={typed_dim: val_2}, concept=concept_x)
-        fact_x10 = _fact(typed={typed_dim: val_10}, concept=concept_x)
-        fact_y2 = _fact(typed={typed_dim: val_2}, concept=concept_y)
-        fact_y10 = _fact(typed={typed_dim: val_10}, concept=concept_y)
-
-        facts_map = {
-            concept_x: [fact_x2, fact_x10],
-            concept_y: [fact_y2, fact_y10],
+        dimension = _concept("typed")
+        x, y = _concept("x"), _concept("y")
+        facts = {
+            x: [_fact(typed={dimension: "2"}), _fact(typed={dimension: "10"})],
+            y: [_fact(typed={dimension: "2"}), _fact(typed={dimension: "10"})],
         }
-        return typed_dim, reportable, facts_map, val_2, val_10
+        return dimension, [x, y], facts
 
     def test_returns_correct_table_style(self):
-        typed_dim, reportable, facts_map, _, __ = self._setup()
-        o = _organiser(facts_by_concept=facts_map)
-        matrix = o._assemble_typed_dim("[B01.test", [typed_dim], reportable)
-        assert matrix.style == TableStyle.SingleTypedDimensionColumn
+        dimension, reportable, facts = self._setup()
+        grid = _builder(facts).typed_dimension(reportable, dimension)
+        assert grid.style == TableStyle.SingleTypedDimensionColumn
 
     def test_col_labels_are_reportable(self):
-        typed_dim, reportable, facts_map, _, __ = self._setup()
-        o = _organiser(facts_by_concept=facts_map)
-        matrix = o._assemble_typed_dim("[B01.test", [typed_dim], reportable)
-        assert matrix.col_labels == reportable
+        dimension, reportable, facts = self._setup()
+        assert (
+            _builder(facts).typed_dimension(reportable, dimension).col_labels
+            == reportable
+        )
 
     def test_row_heading_label_is_typed_dim(self):
-        typed_dim, reportable, facts_map, _, __ = self._setup()
-        o = _organiser(facts_by_concept=facts_map)
-        matrix = o._assemble_typed_dim("[B01.test", [typed_dim], reportable)
-        assert matrix.row_heading_label is typed_dim
+        dimension, reportable, facts = self._setup()
+        grid = _builder(facts).typed_dimension(reportable, dimension)
+        assert grid.row_heading_label is dimension
 
     def test_rows_sorted_numerically(self):
-        typed_dim, reportable, facts_map, _, _ = self._setup()
-        o = _organiser(facts_by_concept=facts_map)
-        matrix = o._assemble_typed_dim("[B01.test", [typed_dim], reportable)
-        assert len(matrix.data) == 2
-        assert matrix.row_labels[0] == "2"  # numerically: 2 before 10
-        assert matrix.row_labels[1] == "10"
+        dimension, reportable, facts = self._setup()
+        grid = _builder(facts).typed_dimension(reportable, dimension)
+        assert len(grid.data) == 2
+        assert grid.row_labels == ["2", "10"]  # 2 before 10, not "10" before "2"
 
     def test_empty_rows_excluded(self):
-        typed_dim, reportable, facts_map, val_2, _ = self._setup()
-        concept_x, concept_y = reportable
-        fact_x2 = _fact(typed={typed_dim: val_2}, concept=concept_x)
-        # No val_10 facts at all
-        facts_map = {concept_x: [fact_x2], concept_y: []}
-        o = _organiser(facts_by_concept=facts_map)
-        matrix = o._assemble_typed_dim("[B01.test", [typed_dim], reportable)
-        assert len(matrix.data) == 1
-        assert matrix.row_labels == ["2"]
+        dimension, reportable, facts = self._setup()
+        x, y = reportable
+        only_two = {x: [facts[x][0]], y: []}
+        grid = _builder(only_two).typed_dimension(reportable, dimension)
+        assert len(grid.data) == 1
+        assert grid.row_labels == ["2"]
+
+    def test_a_fact_without_the_dimension_is_left_out_not_an_error(self):
+        dimension, reportable, facts = self._setup()
+        x, y = reportable
+        grid = _builder({x: [_fact(), facts[x][0]], y: []}).typed_dimension(
+            reportable, dimension
+        )
+        assert grid.row_labels == ["2"]
+
+
+class TestDimensionSet:
+    """Facts with a set of dimensions in common, with no hypercube to say how to lay them out."""
+
+    @staticmethod
+    def _rel(concept):
+        return Relationship("role", 1, concept)
+
+    def test_fewer_combinations_than_concepts_makes_them_the_columns(self):
+        dimension = _concept("d")
+        a = _concept("a")
+        x, y = _concept("x"), _concept("y")
+        items = [(self._rel(c), _fact(explicit={dimension: a})) for c in (x, y)]
+        grid = _builder({}).dimension_set((dimension,), items)
+        assert grid.row_labels == [x, y]
+        assert grid.col_labels == ["a"]
+        assert grid.row_heading_label is None
+
+    def test_more_combinations_than_concepts_makes_them_rows(self):
+        dimension = _concept("d")
+        x = _concept("x")
+        items = [(self._rel(x), _fact(typed={dimension: v})) for v in ("1", "2")]
+        grid = _builder({}).dimension_set((dimension,), items)
+        assert grid.row_labels == ["1", "2"]
+        assert grid.col_labels == [x]
+        assert grid.row_heading_label == "d"
+
+    def test_combinations_of_several_dimensions_are_labelled_with_all_of_them(self):
+        d1, d2 = _concept("d1"), _concept("d2")
+        m = _concept("m")
+        x, y = _concept("x"), _concept("y")
+        items = [
+            (self._rel(x), _fact(explicit={d1: m}, typed={d2: "7"})),
+            (self._rel(y), _fact(explicit={d1: m}, typed={d2: "7"})),
+        ]
+        grid = _builder({}).dimension_set((d1, d2), items)
+        assert grid.col_labels == ["m / 7"]
+
+    def test_typed_values_are_ordered_numerically(self):
+        dimension = _concept("d")
+        x = _concept("x")
+        items = [(self._rel(x), _fact(typed={dimension: v})) for v in ("10", "9", "2")]
+        grid = _builder({}).dimension_set((dimension,), items)
+        assert grid.row_labels == ["2", "9", "10"]

@@ -146,7 +146,7 @@
                             </span>
                         </dd>
                         {% if fact.hasNonDefaultPeriod %}
-                        <dd class="fact-period">Reporting period: {{ macros.render_period(fact) }}</dd>
+                        <dd class="fact-period">Reporting period: {{ macros.render_fact_period(fact) }}</dd>
                         {% endif %}
                         {% set reference = none %}
                         {% if reference != none %}

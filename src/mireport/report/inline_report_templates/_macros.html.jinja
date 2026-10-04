@@ -8,11 +8,12 @@
     {%- endif -%}
 {%- endmacro %}
 
+{#- A fact's period: its whole duration, or for an instant fact the day that duration ends. -#}
 {% macro render_fact_period(fact) -%}
     {%- if fact.concept.periodType.value == "duration" -%}
-        {{ render_duration_period(fact.period) }}
+        {{ render_duration_period(fact.period.duration) }}
     {%- else -%}
-        {{ render_instant_period(fact.period) }}
+        {{- fact.period.duration.end -}}
     {%- endif -%}
 {%- endmacro %}
 
