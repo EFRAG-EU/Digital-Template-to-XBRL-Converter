@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import math
+from decimal import Decimal
 from typing import TYPE_CHECKING
 
 from mireport.exceptions import InlineReportException
@@ -85,21 +86,43 @@ class FactBuilder:
         """Use instead of setValue() when you don't want to think about what to
         do with percentage values.
 
+        `decimals` here is the number of decimals the percentage is *displayed*
+        with (a spreadsheet's number format): 0.125 at 2 shows 12.50%. If you have
+        XBRL's own decimals instead (4 for 0.1250), use setPercentageFact().
+
         If @inputIsDecimalForm is set to false then
         input is assumed to be whole-number form."""
         if inputIsDecimalForm:
-            # HTML needs the display value for humans (100% stored as "100")
-            human_value = value * 10**2
-            # And use ix:scale attribute to reduce it down again as XBRL stores
-            # same way as Excel (100% stored as "1.0")
-            self.setValue(human_value).setScale(-2)
-
-            if decimals != "INF":
-                # Add on the scale amount
-                decimals += 2
-        else:
-            self.setValue(value)
+            # The fact carries two more decimals than the page shows, the scale amount.
+            return self.setPercentageFact(
+                value, decimals if decimals == "INF" else decimals + 2
+            )
+        self.setValue(value)
         self.setDecimals(decimals)
+        return self
+
+    def setPercentageFact(
+        self, fraction: float | Decimal, decimals: DecimalPlaces
+    ) -> Self:
+        """Set a percentage from what the XBRL fact holds: a fraction, and its decimals.
+
+        0.1250 at decimals 4 is 12.50%. The page shows 12.50 (the fraction x100, which is
+        what a human reads) and tags it ix:scale="-2", so the fact stays 0.1250 at decimals 4
+        exactly as given -- the decimals are XBRL's, not the display's, so none are added.
+
+        Use this when the value and decimals come from XBRL (an xBRL-JSON fact, say).
+        setPercentageValue() is the one for a spreadsheet's display decimals. Pass a Decimal
+        when exactness matters: a float times 100 can pick up noise (0.07 -> 7.000000000000001).
+        """
+        if isinstance(fraction, Decimal):
+            shown: int | float | Decimal = fraction * 100
+            if shown == shown.to_integral_value():
+                shown = int(shown)
+            else:
+                shown = float(shown)
+        else:
+            shown = fraction * 10**2
+        self.setValue(shown).setScale(-2).setDecimals(decimals)
         return self
 
     def setDecimals(self, decimals: DecimalPlaces) -> Self:
