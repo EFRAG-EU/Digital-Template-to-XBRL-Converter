@@ -24,7 +24,11 @@ _TYPED_VALUE_STRIPPED = str.maketrans("", "", "\v\t\f\r\n")
 
 def _measures(measures: QName | Iterable[QName]) -> tuple[QName, ...]:
     """Measures in a canonical order, so two units naming the same measures are equal."""
-    found = (measures,) if isinstance(measures, QName) else tuple(measures)
+    match measures:
+        case QName():
+            found: tuple[QName, ...] = (measures,)
+        case _:
+            found = tuple(measures)
     return tuple(sorted(found, key=str))
 
 
@@ -69,10 +73,13 @@ class Unit:
             part = part.strip().removeprefix("(").removesuffix(")")
             return tuple(resolve(m) for m in part.split("*") if m.strip())
 
-        numerator, slash, denominator = text.partition("/")
-        if slash and "/" in denominator:
-            raise InlineReportException(f"Unit {text!r} has more than one '/'.")
-        return cls(side(numerator), side(denominator) if slash else ())
+        match text.split("/"):
+            case [numerator]:
+                return cls(side(numerator))
+            case [numerator, denominator]:
+                return cls(side(numerator), side(denominator))
+            case _:
+                raise InlineReportException(f"Unit {text!r} has more than one '/'.")
 
     @property
     def is_divide(self) -> bool:
@@ -123,13 +130,16 @@ class TypedDimensionValue:
 
     @classmethod
     def of(cls, dimension: Concept, value: FactValue) -> TypedDimensionValue:
-        text = str(value).lower() if isinstance(value, bool) else str(value)
+        match value:
+            case bool():
+                text = str(value).lower()
+            case _:
+                text = str(value)
         return cls(dimension, text.translate(_TYPED_VALUE_STRIPPED))
 
     @property
     def wrapper(self) -> QName:
-        element = self.dimension.typedElement
-        if element is None:
+        if (element := self.dimension.typedElement) is None:
             raise InlineReportException(
                 f"{self.dimension.qname} is not a typed dimension."
             )

@@ -2,19 +2,19 @@ from __future__ import annotations
 
 import logging
 from collections import defaultdict
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from itertools import compress
 from typing import TYPE_CHECKING, NamedTuple, cast
 
 from mireport.exceptions import InlineReportException
-from mireport.report.fact import Fact, numeric_string_key, tidyTdValue
+from mireport.report.fact import Fact, numeric_string_key
 from mireport.report.periods import DurationPeriodHolder, InstantPeriodHolder, _Period
 from mireport.taxonomy import (
     Concept,
     PresentationGroup,
     PresentationStyle,
-    QName,
     Relationship,
     Taxonomy,
 )
@@ -103,9 +103,9 @@ class _FactGrid:
 
     style: TableStyle
     data: list[list[Fact | None]]
-    row_labels: list[Concept | str]
+    row_labels: Sequence[Concept | str]
     row_heading_label: Concept | str | None
-    col_labels: list[Concept | str]
+    col_labels: Sequence[Concept | str]
 
 
 @dataclass(slots=True, frozen=True, eq=True)
@@ -178,7 +178,7 @@ def _table_period(data: list[list[Fact | None]]) -> _Period | None:
     for row in data:
         for fact in row:
             if fact is not None:
-                periods.add(fact.period)
+                periods.add(fact.period.duration)
     return next(iter(periods)) if len(periods) == 1 else None
 
 
@@ -209,7 +209,7 @@ def _column_periods(data: list[list[Fact | None]]) -> list[_Period | None]:
     for row in data:
         for col, fact in enumerate(row):
             if fact is not None:
-                col_periods_map[col].add(fact.period)
+                col_periods_map[col].add(fact.period.duration)
     result: list[_Period | None] = []
     for c in range(num_cols):
         periods = col_periods_map[c]
@@ -251,7 +251,7 @@ def _drop_empty_columns(
 
 def _build_header_rows(
     row_heading_label: _TableHeadingValue,
-    col_labels: list[Concept | str],
+    col_labels: Sequence[Concept | str],
     col_numeric: list[bool],
     all_numeric: bool,
     table_unit: str | None,
@@ -369,11 +369,10 @@ class ReportLayoutOrganiser:
                     continue
                 others = list(self.report.getFacts(u.concept))
                 others.remove(u)
-                u_aspects = frozenset(u.aspects.items())
                 inconsistent_duplicates = [
                     f
                     for f in others
-                    if frozenset(f.aspects.items()) == u_aspects and f.value != u.value  # type: ignore[operator]
+                    if f.context_key == u.context_key and f.value != u.value  # type: ignore[operator]
                 ]
                 processed.add(u)
                 processed.update(inconsistent_duplicates)
@@ -387,11 +386,7 @@ class ReportLayoutOrganiser:
             if self.report.requireAllFactsRendered:
                 raise InlineReportException(
                     f"{len(unused_facts)} fact(s) appear nowhere in the report: "
-                    + "; ".join(
-                        sorted(
-                            f"{f.concept.qname} {dict(f.aspects)}" for f in unused_facts
-                        )
-                    )
+                    + "; ".join(sorted(repr(f) for f in unused_facts))
                 )
 
     def createReportSections(self) -> None:
@@ -559,14 +554,8 @@ class ReportLayoutOrganiser:
 
     def _dimensionValues(self, fact: Fact) -> dict[Concept, Concept | str]:
         """A fact's taxonomy dimensions: an explicit member as its Concept, a typed one as text."""
-        values: dict[Concept, Concept | str] = {}
-        for name, value in fact.aspects.items():
-            if isinstance(name, QName) and isinstance(value, QName):
-                values[self.taxonomy.getConcept(name)] = self.taxonomy.getConcept(value)
-            elif isinstance(name, str) and name.startswith("typed "):
-                values[self.taxonomy.getConcept(name.removeprefix("typed "))] = (
-                    tidyTdValue(str(value))
-                )
+        values: dict[Concept, Concept | str] = dict(fact.explicit_dimensions)
+        values.update(fact.typed_dimensions)
         return values
 
     def createDimensionalFallbackTables(self) -> None:
@@ -654,9 +643,9 @@ class ReportLayoutOrganiser:
             for c in domain:
                 found: Fact | None = None
                 for fact in self.report.getFacts(r):
-                    eValue = fact.aspects.get(explicitDim.qname)
+                    eValue = fact.explicit_dimensions.get(explicitDim)
                     if (eValue is None and c == defaultMember) or (
-                        eValue is not None and eValue == c.qname
+                        eValue is not None and eValue == c
                     ):
                         if found is not None:
                             L.debug(
@@ -694,9 +683,9 @@ class ReportLayoutOrganiser:
             for c in reportable:
                 found: Fact | None = None
                 for fact in self.report.getFacts(c):
-                    eValue = fact.aspects.get(explicitDim.qname)
+                    eValue = fact.explicit_dimensions.get(explicitDim)
                     if (eValue is None and r == defaultMember) or (
-                        eValue is not None and eValue == r.qname
+                        eValue is not None and eValue == r
                     ):
                         if found is not None:
                             L.debug(
@@ -725,24 +714,23 @@ class ReportLayoutOrganiser:
         typedDims: list[Concept],
         reportable: list[Concept],
     ) -> _FactGrid:
-        typed_qname = f"typed {typedDims[0].qname}"
+        dimension = typedDims[0]
         td_values = {
-            str(fact.aspects[typed_qname])
+            text
             for r in reportable
             for fact in self.report.getFacts(r)
+            if (text := fact.typed_dimensions.get(dimension)) is not None
         }
-        pretty_td_values = [(tidyTdValue(v), v) for v in td_values]
-        pretty_td_values.sort(key=lambda x: numeric_string_key(x[0]))
+        sorted_td_values = sorted(td_values, key=numeric_string_key)
 
         data: list[list[Fact | None]] = []
         row_labels: list[Concept | str] = []
-        for heading, r_key in pretty_td_values:
+        for heading in sorted_td_values:
             row: list[Fact | None] = []
             for c in reportable:
                 found: Fact | None = None
                 for fact in self.report.getFacts(c):
-                    td_value = fact.aspects.get(typed_qname)
-                    if td_value is not None and td_value == r_key:
+                    if fact.typed_dimensions.get(dimension) == heading:
                         if found is not None:
                             L.debug(
                                 f"Multiple facts found (handle this better) {roleUri=} style=SingleTypedDimensionColumn\n{found=}\n{fact=}"
@@ -760,6 +748,6 @@ class ReportLayoutOrganiser:
             style=TableStyle.SingleTypedDimensionColumn,
             data=data,
             row_labels=row_labels,
-            row_heading_label=typedDims[0],
+            row_heading_label=dimension,
             col_labels=reportable,
         )

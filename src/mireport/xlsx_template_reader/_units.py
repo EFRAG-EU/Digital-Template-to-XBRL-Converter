@@ -191,9 +191,7 @@ class UnitResolver:
             if complex_unit is not None:
                 denominator: list
                 if c.endswith("_per_Monetary") and (
-                    currency := self.taxonomy.UTR.getQNameForUnitId(
-                        self._report.defaultAspects.get("monetary-units")
-                    )
+                    currency := self._report.defaultCurrency
                 ):
                     denominator = [currency]
                 else:

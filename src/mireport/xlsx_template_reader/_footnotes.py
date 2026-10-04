@@ -25,7 +25,6 @@ from openpyxl.cell import MergedCell
 from mireport.conversionresults import MessageType
 from mireport.exceptions import AmbiguousComponentException
 from mireport.stringutil import str_to_markupsafe
-from mireport.taxonomy import QName
 from mireport.xlsx_template_reader._reader import CellValue
 
 L = logging.getLogger(__name__)
@@ -158,9 +157,9 @@ class FootnoteFactCreator:
                 f"No facts found for concept '{concept.qname}'; footnote will not be attached.",
             )
         elif member is not None:
-            # TODO: typed dimensions store a string value under "typed {axis_qname}"
-            # rather than a QName member — if typed domain filtering is ever needed, extend here.
-            facts = [f for f in facts if member.qname in f.aspects.values()]
+            # TODO: only explicit dimensions are matched here — if typed domain filtering is
+            # ever needed, extend here (a fact's typed_dimensions maps axis to text).
+            facts = [f for f in facts if member in f.explicit_dimensions.values()]
             if not facts:
                 warn(
                     f"Dimension member '{member.qname}' not found among facts for "
@@ -168,16 +167,8 @@ class FootnoteFactCreator:
                 )
         else:
             # No member specified — restrict to facts that carry no taxonomy-defined
-            # dimension context (no explicit QName key, no typed-dimension string key).
-            facts = [
-                f
-                for f in facts
-                if not any(
-                    isinstance(k, QName)
-                    or (isinstance(k, str) and k.startswith("typed "))
-                    for k in f.aspects
-                )
-            ]
+            # dimension context (no explicit and no typed dimension).
+            facts = [f for f in facts if not f.hasTaxonomyDimensions()]
             if not facts:
                 warn(
                     f"All facts for concept '{concept.qname}' have dimensional context; "

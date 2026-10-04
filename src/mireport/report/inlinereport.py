@@ -29,10 +29,11 @@ from mireport.localise import (
     group_symbol,
 )
 from mireport.report.disclosure_layout import DisclosureLayoutStrategy
-from mireport.report.fact import Fact, Symbol, tidyTdValue
+from mireport.report.fact import Fact, Symbol
 from mireport.report.factbuilder import FactBuilder
 from mireport.report.footnote import Footnote, FootnoteManager
 from mireport.report.layout import ReportLayoutOrganiser, TableStyle
+from mireport.report.model import ReportPeriod
 from mireport.report.periods import DurationPeriodHolder, PeriodHolder
 from mireport.report.reportpackage import buildReportPackage
 from mireport.report.theme import ReportTheme
@@ -67,7 +68,7 @@ class InlineReport:
         self._footnoteCounter: count = count(1)
         self._footnotes: dict[int, Footnote] = {}
         self._taxonomy: Taxonomy = taxonomy
-        self._periods: dict[str, DurationPeriodHolder] = {}
+        self._periods: dict[str, ReportPeriod] = {}
         self._entityName: str = "Sample"
         # When set, rendering fails if any fact would appear nowhere in the report, instead of
         # leaving it out. A report built from data we did not author wants this; the Excel
@@ -107,10 +108,10 @@ class InlineReport:
                     f"Unsupported decimal separator '{decimal_separator}' in locale {self._outputLocale}."
                 )
 
-        self._defaultAspects: dict[str, str] = {
-            "numeric-transform": numeric_transform,
-            "decimals": "INF",
-        }
+        self._numericTransform: str = numeric_transform
+        self._entityIdentifier: str | None = None
+        self._entityScheme: str | None = None
+        self._defaultCurrency: QName | None = None
 
     def setLabelOverrides(self, overrides: dict[str, str]) -> None:
         self._labelOverrides = overrides
@@ -132,24 +133,45 @@ class InlineReport:
         return self._taxonomy
 
     @property
-    def defaultAspects(self) -> dict[str, str]:
-        return self._defaultAspects.copy()
+    def entityIdentifier(self) -> str | None:
+        return self._entityIdentifier
+
+    @property
+    def entityScheme(self) -> str | None:
+        return self._entityScheme
+
+    def setEntity(self, scheme: str, identifier: str) -> None:
+        """The reporting entity's identifier and the scheme (a URI) that identifier is in."""
+        if not (scheme and identifier):
+            raise InlineReportException(
+                f"Entity not configured correctly. Specifically: '{scheme=}' '{identifier=}'"
+            )
+        self._entityScheme = scheme
+        self._entityIdentifier = identifier
+
+    @property
+    def defaultCurrency(self) -> QName | None:
+        """The currency monetary facts are reported in unless they say otherwise."""
+        return self._defaultCurrency
+
+    def setDefaultCurrency(self, currency: QName | str) -> None:
+        match currency:
+            case str():
+                currency = self._taxonomy.QNameMaker.fromString(f"iso4217:{currency}")
+        self._defaultCurrency = currency
 
     def getDefaultAspectsForAoix(self) -> str:
-        defaults = self._defaultAspects.copy()
-        aoix = []
-        for key, value in defaults.items():
-            if not (key and value):
-                raise InlineReportException(
-                    f"Default aspects not configured correctly. Specifically: '{key=}' '{value=}'"
-                )
-            if key in {"entity-identifier", "entity-scheme", "decimals"}:
-                value = f'"{value}"'
-            aoix.append(f"{{{{ default {key} = {value} }}}}")
-        return "\n".join(aoix)
-
-    def setDefaultAspect(self, key: str, value: str) -> None:
-        self._defaultAspects[key] = value
+        defaults = [
+            f"{{{{ default numeric-transform = {self._numericTransform} }}}}",
+            '{{ default decimals = "INF" }}',
+        ]
+        if (currency := self._defaultCurrency) is not None:
+            defaults.append(f"{{{{ default monetary-units = {currency.localName} }}}}")
+        if (identifier := self._entityIdentifier) is not None:
+            defaults.append(f'{{{{ default entity-identifier = "{identifier}" }}}}')
+        if (scheme := self._entityScheme) is not None:
+            defaults.append(f'{{{{ default entity-scheme = "{scheme}" }}}}')
+        return "\n".join(defaults)
 
     @property
     def theme(self) -> ReportTheme:
@@ -172,7 +194,9 @@ class InlineReport:
     def addDurationPeriod(self, name: str, periodStart: date, periodEnd: date) -> bool:
         if name in self._periods:
             return False
-        self._periods[name] = DurationPeriodHolder(periodStart, periodEnd)
+        self._periods[name] = ReportPeriod(
+            name, DurationPeriodHolder(periodStart, periodEnd)
+        )
         return True
 
     def hasNamedPeriod(self, name: str) -> bool:
@@ -184,9 +208,23 @@ class InlineReport:
     def addSchemaRef(self, schemaRef: str) -> None:
         self._schemaRefs.add(schemaRef)
 
+    def getReportPeriod(self, name: str) -> ReportPeriod:
+        try:
+            return self._periods[name]
+        except KeyError:
+            raise InlineReportException(
+                f"Period '{name}' does not exist in the report."
+            ) from None
+
+    @property
+    def defaultReportPeriod(self) -> ReportPeriod:
+        if not (name := self._defaultPeriodName):
+            raise InlineReportException("The report has no default period yet.")
+        return self._periods[name]
+
     @property
     def defaultPeriod(self) -> DurationPeriodHolder:
-        return self._periods[self._defaultPeriodName]
+        return self.defaultReportPeriod.duration
 
     @property
     def language(self) -> str:
@@ -197,8 +235,9 @@ class InlineReport:
 
     def getPeriodsForAoix(self) -> str:
         p = []
-        for name, period in self._periods.items():
-            p.append(f'{{{{ period {name} "{period.start}" "{period.end}" }}}}')
+        for name, reportPeriod in self._periods.items():
+            duration = reportPeriod.duration
+            p.append(f'{{{{ period {name} "{duration.start}" "{duration.end}" }}}}')
         p.append(f"{{{{ default period = {self._defaultPeriodName} }}}}")
         return "\n".join(p)
 
@@ -222,17 +261,18 @@ class InlineReport:
         Find inconsistent duplicate facts and report each set via handler.
 
         Facts are inconsistent duplicates when they share a concept and all
-        aspects (dimensions, period, unit, ...) but hold different values. Such
+        aspects (dimensions, period, unit, ...), i.e. their context_key, but hold
+        different values. Such
         facts cannot both be rendered, so one is silently dropped downstream;
         this surfaces the conflict so the caller can warn the report preparer.
         """
         for concept, facts in self._factsByConcept.items():
             if len(facts) < 2:
                 continue
-            byAspects: dict[frozenset[tuple], list[Fact]] = defaultdict(list)
+            byContext: dict[tuple, list[Fact]] = defaultdict(list)
             for fact in facts:
-                byAspects[frozenset(fact.aspects.items())].append(fact)
-            for group in byAspects.values():
+                byContext[fact.context_key].append(fact)
+            for group in byContext.values():
                 if len({fact.value for fact in group}) > 1:
                     handler(concept, group)
 
@@ -407,10 +447,12 @@ class InlineReport:
 
         meta = {
             "Entity Name": self._entityName,
-            "Entity Identifier": self._defaultAspects["entity-identifier"],
-            "Entity Identifier Scheme": self._defaultAspects["entity-scheme"],
+            "Entity Identifier": self._entityIdentifier,
+            "Entity Identifier Scheme": self._entityScheme,
             # Not every taxonomy has monetary facts, so there may be no report currency.
-            "Report currency": self._defaultAspects.get("monetary-units"),
+            "Report currency": (
+                self._defaultCurrency.localName if self._defaultCurrency else None
+            ),
         }
         for k, v in meta.items():
             if v is not None:
@@ -470,7 +512,6 @@ class InlineReport:
         )
         env.filters.update(
             {
-                "tidyTdValue": tidyTdValue,
                 "cssmin": cssmin,
             }
         )
