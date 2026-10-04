@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 from enum import StrEnum
+from html import unescape
 from typing import TYPE_CHECKING, NamedTuple, Protocol, cast, runtime_checkable
 
 from markupsafe import Markup, escape
@@ -18,6 +19,24 @@ if TYPE_CHECKING:
     from mireport.report.inlinereport import InlineReport
 
 TD_VALUE_RE = re.compile(r">(.*?)</")
+
+
+_TYPED_XML_RE = re.compile(r'"<([^>]+)>(.*)</\1>"', re.DOTALL)
+
+
+def _aoixTypedDimension(dimension: str, held: str) -> list[str]:
+    """A typed dimension as aoix wants it: a typed-value-wrapper naming the element, then the
+    dimension with its plain value, which aoix wraps and escapes itself.
+
+    aoix's quoted strings cannot contain a double quote, which the older pre-built-XML form
+    could (as &quot;). That rare value keeps the deprecated 'typed' keyword rather than being
+    lost or corrupted."""
+    if (m := _TYPED_XML_RE.fullmatch(held)) is not None:
+        wrapper, escaped = m.groups()
+        raw = unescape(escaped)
+        if '"' not in raw:
+            return [f"typed-value-wrapper={wrapper}", f'{dimension}="{raw}"']
+    return [f"typed {dimension}={held}"]
 
 
 def tidyTdValue(original: str) -> str:
@@ -196,11 +215,27 @@ class Fact:
         aspects = self._aspects.copy()
         if self.footnotes:
             aspects["fn-refs"] = f'"{"|".join(str(fn.id) for fn in self.footnotes)}"'
-        aspects_str = ", ".join(f"{k}={v}" for k, v in aspects.items())
+        aspects_str = ", ".join(self._aoixAspects(aspects))
         value = self.html_format_value()
         return Markup(
             f"{{{{ {aoix_verb} {self.concept.qname}[{aspects_str}] }}}}{value}{{{{ end }}}}"
         )
+
+    @staticmethod
+    def _aoixAspects(aspects: dict[str | QName, str | QName]) -> list[str]:
+        """The aspects as aoix wants them written. Held internally in the older shapes (a
+        typed dimension as pre-built XML, a divide unit as a quoted string) that the layout
+        code reads; only what is handed to aoix is converted."""
+        out: list[str] = []
+        for key, value in aspects.items():
+            if key == "complex-units":
+                # units=u1/u2, unquoted; the 'complex-units' aspect is deprecated.
+                out.append(f"units={str(value).strip(chr(34))}")
+            elif isinstance(key, str) and key.startswith("typed "):
+                out.extend(_aoixTypedDimension(key.removeprefix("typed "), str(value)))
+            else:
+                out.append(f"{key}={value}")
+        return out
 
     def __html__(self) -> Markup:
         return self.as_aoix()
