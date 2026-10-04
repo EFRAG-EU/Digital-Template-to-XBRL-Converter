@@ -269,8 +269,10 @@ class Fact:
         return symbol
 
     def hasTaxonomyDimensions(self) -> bool:
+        """Whether the fact is qualified by any taxonomy dimension, explicit or typed
+        (a typed dimension is held under a "typed <qname>" key, not a QName)."""
         for name in self.aspects:
-            if isinstance(name, QName):
+            if isinstance(name, QName) or name.startswith("typed "):
                 return True
         return False
 
