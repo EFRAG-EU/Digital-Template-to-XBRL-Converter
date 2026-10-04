@@ -69,6 +69,10 @@ class InlineReport:
         self._taxonomy: Taxonomy = taxonomy
         self._periods: dict[str, DurationPeriodHolder] = {}
         self._entityName: str = "Sample"
+        # When set, rendering fails if any fact would appear nowhere in the report, instead of
+        # leaving it out. A report built from data we did not author wants this; the Excel
+        # route has facts (e.g. inconsistent duplicates) it knowingly leaves out.
+        self.requireAllFactsRendered: bool = False
         self._generatedReport: str | None = None
         self._defaultPeriodName: str = ""
         self._schemaRefs: set[str] = set()

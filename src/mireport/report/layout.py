@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from collections import defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum, auto
 from itertools import compress
 from typing import TYPE_CHECKING, NamedTuple, cast
@@ -14,6 +14,7 @@ from mireport.taxonomy import (
     Concept,
     PresentationGroup,
     PresentationStyle,
+    QName,
     Relationship,
     Taxonomy,
 )
@@ -103,8 +104,8 @@ class _FactGrid:
     style: TableStyle
     data: list[list[Fact | None]]
     row_labels: list[Concept | str]
-    row_heading_label: Concept | None
-    col_labels: list[Concept]
+    row_heading_label: Concept | str | None
+    col_labels: list[Concept | str]
 
 
 @dataclass(slots=True, frozen=True, eq=True)
@@ -113,9 +114,12 @@ class ReportSection:
 
     relationshipToFact: dict[Relationship, list[Fact]]
     presentation: PresentationGroup
+    # Set when one presentation group yields several sections, e.g. a table per dimension set.
+    heading_suffix: str = field(default="", kw_only=True)
 
     def getLabel(self, language: str) -> str:
-        return self.presentation.getLabel(language)
+        label = self.presentation.getLabel(language)
+        return f"{label} - {self.heading_suffix}" if self.heading_suffix else label
 
     @property
     def style(self) -> PresentationStyle:
@@ -135,6 +139,12 @@ class ReportSection:
 @dataclass(slots=True, frozen=True, eq=True)
 class TabularReportSection(ReportSection):
     table: Table
+
+    @property
+    def style(self) -> PresentationStyle:
+        # A section that carries a table is rendered as one, whatever style its group has: a
+        # group with no hypercube (style List) can still hold dimensionally qualified facts.
+        return PresentationStyle.Table
 
     @property
     def tabular(self) -> bool:
@@ -241,7 +251,7 @@ def _drop_empty_columns(
 
 def _build_header_rows(
     row_heading_label: _TableHeadingValue,
-    col_labels: list[Concept],
+    col_labels: list[Concept | str],
     col_numeric: list[bool],
     all_numeric: bool,
     table_unit: str | None,
@@ -322,10 +332,14 @@ class ReportLayoutOrganiser:
         self.report = report
         self.presentation = self.taxonomy.presentation
         self.reportSections: list[ReportSection] = []
+        # Facts a List group cannot show in its list because they carry taxonomy dimensions,
+        # in presentation order, keyed by the group's role. They get tables of their own.
+        self._dimensionalFacts: dict[str, list[tuple[Relationship, Fact]]] = {}
 
     def organise(self, layout: DisclosureLayoutStrategy) -> list[ReportSection]:
         self.createReportSections()
         self.createReportTables()
+        self.createDimensionalFallbackTables()
         self.reportSections.sort(key=lambda x: x.presentation)
         self.reportSections = layout.organise_sections(self.reportSections)
         self.checkAllFactsUsed()
@@ -370,6 +384,15 @@ class ReportLayoutOrganiser:
                     L.debug(
                         f"Fact has inconsistent duplicates.\nUnused: {u}\nOthers: {inconsistent_duplicates}"
                     )
+            if self.report.requireAllFactsRendered:
+                raise InlineReportException(
+                    f"{len(unused_facts)} fact(s) appear nowhere in the report: "
+                    + "; ".join(
+                        sorted(
+                            f"{f.concept.qname} {dict(f.aspects)}" for f in unused_facts
+                        )
+                    )
+                )
 
     def createReportSections(self) -> None:
         for group in self.presentation:
@@ -387,11 +410,13 @@ class ReportLayoutOrganiser:
                 if not factsForConcept:
                     continue
                 if group.style == PresentationStyle.List:
-                    factsForRel[rel].extend(
-                        fact
-                        for fact in factsForConcept
-                        if not fact.hasTaxonomyDimensions()
-                    )
+                    for fact in factsForConcept:
+                        if fact.hasTaxonomyDimensions():
+                            self._dimensionalFacts.setdefault(group.roleUri, []).append(
+                                (rel, fact)
+                            )
+                        else:
+                            factsForRel[rel].append(fact)
                 elif group.style in {PresentationStyle.Hybrid, PresentationStyle.Table}:
                     factsForRel[rel].extend(factsForConcept)
                 else:
@@ -482,7 +507,12 @@ class ReportLayoutOrganiser:
 
         if grid is None or not grid.data:
             return None
+        return self._section_from_grid(section, grid)
 
+    def _section_from_grid(
+        self, section: ReportSection, grid: _FactGrid, heading_suffix: str = ""
+    ) -> TabularReportSection:
+        """Work out the headers, units and periods for a grid and wrap it as a section."""
         col_empty, col_numeric, all_numeric = _column_flags(grid.data)
         if True in col_empty:
             grid, col_numeric = _drop_empty_columns(grid, col_empty, col_numeric)
@@ -507,12 +537,106 @@ class ReportLayoutOrganiser:
         return TabularReportSection(
             relationshipToFact=section.relationshipToFact,
             presentation=section.presentation,
+            heading_suffix=heading_suffix,
             table=Table(
                 style=grid.style,
                 numeric=all_numeric,
                 header_rows=header_rows,
                 rows=table_rows,
             ),
+        )
+
+    # -- facts the taxonomy gives no hypercube for ---------------------------------------------
+
+    def _label(self, concept: Concept) -> str:
+        language = self.taxonomy.getBestSupportedLanguage(self.report.language)
+        return concept.getStandardLabel(
+            language,
+            fallbackToAnyLang=True,
+            fallbackToQName=language is None,
+            removeSuffix=True,
+        ) or str(concept.qname)
+
+    def _dimensionValues(self, fact: Fact) -> dict[Concept, Concept | str]:
+        """A fact's taxonomy dimensions: an explicit member as its Concept, a typed one as text."""
+        values: dict[Concept, Concept | str] = {}
+        for name, value in fact.aspects.items():
+            if isinstance(name, QName) and isinstance(value, QName):
+                values[self.taxonomy.getConcept(name)] = self.taxonomy.getConcept(value)
+            elif isinstance(name, str) and name.startswith("typed "):
+                values[self.taxonomy.getConcept(name.removeprefix("typed "))] = (
+                    tidyTdValue(str(value))
+                )
+        return values
+
+    def createDimensionalFallbackTables(self) -> None:
+        """Give dimensionally qualified facts a table when their presentation group has no
+        hypercube to say how. The taxonomy's definition linkbase may be rich; its presentation
+        linkbase need not be. Facts are grouped by the set of dimensions they carry, and each
+        group becomes one table, so nothing is dropped for want of a layout."""
+        extra: list[ReportSection] = []
+        for section in self.reportSections:
+            dropped = self._dimensionalFacts.get(section.presentation.roleUri)
+            if not dropped:
+                continue
+            bySignature: dict[tuple[Concept, ...], list[tuple[Relationship, Fact]]]
+            bySignature = {}
+            for rel, fact in dropped:
+                signature = tuple(
+                    sorted(self._dimensionValues(fact), key=lambda d: str(d.qname))
+                )
+                bySignature.setdefault(signature, []).append((rel, fact))
+            for signature, items in bySignature.items():
+                grid = self._assemble_from_dimension_values(signature, items)
+                suffix = "by " + " and ".join(self._label(d) for d in signature)
+                extra.append(self._section_from_grid(section, grid, suffix))
+        self.reportSections.extend(extra)
+
+    def _assemble_from_dimension_values(
+        self,
+        signature: tuple[Concept, ...],
+        items: list[tuple[Relationship, Fact]],
+    ) -> _FactGrid:
+        """Lay out facts that share a set of dimensions: one axis is the concepts, the other the
+        distinct combinations of dimension values. The smaller axis becomes the columns."""
+        rels = list(dict.fromkeys(rel for rel, _ in items))
+        cells: dict[tuple[tuple[Concept | str, ...], Relationship], Fact] = {}
+        for rel, fact in items:
+            values = self._dimensionValues(fact)
+            key = tuple(values[d] for d in signature)
+            if (key, rel) in cells:
+                L.warning(
+                    f"Several facts for {rel.concept.qname} with the same dimensions; showing the first.\n{cells[key, rel]=}\n{fact=}"
+                )
+                continue
+            cells[key, rel] = fact
+
+        def sortKey(key: tuple[Concept | str, ...]) -> tuple:
+            return tuple(
+                numeric_string_key(v) if isinstance(v, str) else (1, self._label(v))
+                for v in key
+            )
+
+        keys = sorted({key for key, _ in cells}, key=sortKey)
+
+        def keyLabel(key: tuple[Concept | str, ...]) -> str:
+            return " / ".join(v if isinstance(v, str) else self._label(v) for v in key)
+
+        keyHeading = " / ".join(self._label(d) for d in signature)
+        if len(keys) <= len(rels):
+            return _FactGrid(
+                style=TableStyle.Other,
+                data=[[cells.get((key, rel)) for key in keys] for rel in rels],
+                row_labels=[rel.concept for rel in rels],
+                row_heading_label=None,
+                col_labels=[keyLabel(key) for key in keys],
+            )
+        return _FactGrid(
+            style=TableStyle.Other,
+            data=[[cells.get((key, rel)) for rel in rels] for key in keys],
+            row_labels=[keyLabel(key) for key in keys],
+            row_heading_label=keyHeading,
+            col_labels=[rel.concept for rel in rels],
         )
 
     def _assemble_explicit_dim_as_columns(

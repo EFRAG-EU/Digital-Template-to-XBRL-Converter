@@ -49,6 +49,7 @@ def _organiser(facts_by_concept=None, presentation_groups=None):
     taxonomy.presentation = presentation_groups or []
     report = MagicMock()
     report.taxonomy = taxonomy
+    report.requireAllFactsRendered = False  # the real default
     facts_map = facts_by_concept or {}
     report.getFacts.side_effect = lambda c: facts_map.get(c, [])
     all_facts = [f for facts in facts_map.values() for f in facts]
