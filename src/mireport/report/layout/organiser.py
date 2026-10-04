@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING
 
 from mireport.exceptions import InlineReportException
 from mireport.report.fact import Fact
+from mireport.report.layout.entries import list_entries
 from mireport.report.layout.grid import GridBuilder
 from mireport.report.layout.headers import assemble_table
 from mireport.report.layout.model import (
@@ -130,7 +131,15 @@ class ReportLayoutOrganiser:
                     case PresentationStyle.Hybrid | PresentationStyle.Table:
                         factsForRel[rel].extend(facts)
             self.reportSections.append(
-                ReportSection(relationshipToFact=factsForRel, presentation=group)
+                ReportSection(
+                    relationshipToFact=factsForRel,
+                    presentation=group,
+                    entries=(
+                        list_entries(factsForRel, self._period_rank)
+                        if group.style == PresentationStyle.List
+                        else ()
+                    ),
+                )
             )
 
     def createReportTables(self) -> None:

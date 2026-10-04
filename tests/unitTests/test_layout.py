@@ -33,6 +33,12 @@ from mireport.taxonomy import (
     Taxonomy,
 )
 
+_NO_PERIOD = FactPeriod(
+    ReportPeriod(
+        "none", DurationPeriodHolder.fromDays(date(2000, 1, 1), date(2000, 12, 31))
+    )
+)
+
 
 def _fact(
     *,
@@ -52,7 +58,7 @@ def _fact(
     f.concept = concept or MagicMock(spec=Concept)
     f.concept.isNumeric = numeric
     f.unitSymbol = unit
-    f.period = period
+    f.period = period or _NO_PERIOD
     f.explicit_dimensions = dict(explicit or {})
     f.typed_dimensions = dict(typed or {})
     f.context_key = context

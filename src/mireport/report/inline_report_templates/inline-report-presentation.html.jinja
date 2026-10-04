@@ -71,7 +71,7 @@
                     <dd>{{ macros.render_datetime(timestamp) }}</dd>
                 </dl>
                 <div class="document-note">
-                    <p>All disclosures are related to the reporting period above unless specified otherwise.</p>
+                    <p>All disclosures are related to the reporting period above unless specified otherwise.{% if reportInfo.priorPeriod %} Comparative figures are for the prior period above.{% endif %}</p>
                 </div>
             </div>
         </div>
@@ -128,10 +128,11 @@
             {{ macros.create_h2_title(section, loop, footnote_manager, _grp_fn) }}
 
             <div class="fact-list">
-            {% for rel, factList in section.relationshipToFact.items() %}
-                {# Determine alternating shade suffix based on the loop index #}
-                {% set shade = 'b' if loop.index0 is even else 'a' %}
-                {% for fact in factList %}
+            {% for entry in section.entries %}
+                {% set rel = entry.relationship %}
+                {% set fact = entry.fact %}
+                {# Determine alternating shade suffix based on the relationship's position #}
+                {% set shade = 'b' if entry.group is even else 'a' %}
                     {% set documentation = rel.concept.getDocumentationLabel() %}
                     <dl class="fact fact-depth-{{ rel.depth if rel.depth <= 4 else 4 }} fact-depth-{{ rel.depth if rel.depth <= 4 else 4 }}-{{ shade }}">
                         <dt class="fact-value {% if fact.concept.isTextblock %}fact-textblock{% endif %}" title="{{ rel.concept.qname }}">{{ macros.render_fact_value(fact) }}{{ macros.footnote_refs(fact.footnotes, footnote_manager) }}{% set ns.fact_count = ns.fact_count + 1 %}</dt>
@@ -145,7 +146,16 @@
                                 {% endif %}
                             </span>
                         </dd>
-                        {% if fact.hasNonDefaultPeriod %}
+                        {% if entry.others %}
+                        <dd class="fact-period">
+                            {% if fact.hasNonDefaultPeriod %}
+                            <div>Reporting period: {{ macros.render_fact_period(fact) }}</div>
+                            {% endif %}
+                            {% for other in entry.others %}
+                            <div class="fact-comparative"><span class="fact-comparative-period">{{ macros.render_fact_period(other) }}</span> {{ macros.render_fact_value(other) }}{{ macros.footnote_refs(other.footnotes, footnote_manager) }}{% set ns.fact_count = ns.fact_count + 1 %}</div>
+                            {% endfor %}
+                        </dd>
+                        {% elif fact.hasNonDefaultPeriod %}
                         <dd class="fact-period">Reporting period: {{ macros.render_fact_period(fact) }}</dd>
                         {% endif %}
                         {% set reference = none %}
@@ -153,7 +163,6 @@
                         <dd class="fact-ref">{{ documentation | e }}</dd>
                         {% endif %}
                     </dl>
-                {% endfor %}
             {% endfor %}
             </div>
 
