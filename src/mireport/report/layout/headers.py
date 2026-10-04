@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from collections.abc import Iterable, Sequence
-from itertools import compress
+from itertools import compress, groupby
 
 from mireport.report.fact import Fact
 from mireport.report.layout.model import (
@@ -89,6 +89,13 @@ def column_periods(data: Data) -> list[FactPeriod | None]:
     return result if any(period is not None for period in result) else []
 
 
+def period_groups(
+    periods: list[FactPeriod | None],
+) -> list[tuple[FactPeriod | None, int]]:
+    """Runs of neighbouring columns in the same period, as (period, how many columns)."""
+    return [(period, len(list(run))) for period, run in groupby(periods)]
+
+
 def column_flags(data: Data) -> tuple[list[bool], list[bool], bool]:
     """Per column: is it empty, is it all numeric; and is the whole table numeric."""
     columns = range(len(data[0]) if data else 0)
@@ -111,6 +118,7 @@ def drop_empty_columns(
             row_labels=grid.row_labels,
             row_heading_label=grid.row_heading_label,
             col_labels=list(compress(grid.col_labels, keep)),
+            period_axis=grid.period_axis,
         ),
         list(compress(numeric, keep)),
     )
@@ -125,12 +133,18 @@ def build_header_rows(
     period: FactPeriod | None,
     units: list[str | None],
     periods: list[FactPeriod | None],
+    groups: Sequence[tuple[FactPeriod | None, int]] = (),
 ) -> list[list[TableHeadingCell]]:
-    """The header rows, top to bottom: a table-wide period, a table-wide unit, the column labels,
-    then a period and a unit per column where those were not said once for the table."""
+    """The header rows, top to bottom: the periods (one spanning the table, or one spanning each
+    group of columns), a table-wide unit, the column labels, then a period and a unit per column
+    where those were not said once for the table."""
     width = max(1, len(col_labels))
     rows: list[list[TableHeadingCell]] = []
-    if period:
+    if groups:
+        rows.append(
+            [TableHeadingCell(p, colspan=span, rowspan=1) for p, span in groups]
+        )
+    elif period:
         rows.append([TableHeadingCell(period, colspan=width, rowspan=1)])
     if unit:
         rows.append([TableHeadingCell(unit, colspan=width, rowspan=1, numeric=True)])
@@ -144,7 +158,7 @@ def build_header_rows(
         ]
 
     rows.append(per_column(col_labels))
-    if not period and periods:
+    if not period and not groups and periods:
         rows.append(per_column(periods))
     if not unit and units:
         rows.append(per_column(units))
@@ -183,15 +197,18 @@ def assemble_table(grid: FactGrid) -> Table:
         grid, numeric = drop_empty_columns(grid, empty, numeric)
 
     unit, units = table_unit(grid.data), column_units(grid.data)
+    periods = column_periods(grid.data)
     header_rows = build_header_rows(
         grid.row_heading_label,
         grid.col_labels,
         numeric,
         all_numeric,
         unit,
-        table_period(grid.data),
+        None if grid.period_axis else table_period(grid.data),
         units,
-        column_periods(grid.data),
+        periods,
+        # Columns repeated per period: say each period once over its columns.
+        period_groups(periods) if grid.period_axis else (),
     )
     return Table(
         style=grid.style,

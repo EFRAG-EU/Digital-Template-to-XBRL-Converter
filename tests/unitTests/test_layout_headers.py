@@ -256,3 +256,59 @@ class TestHeadingPeriods:
             [_fact(period=CUR_END), _fact(period=CUR_START)],
         ]
         assert column_periods(data) == [CURRENT, CUR_START]
+
+
+class TestPeriodAxis:
+    @staticmethod
+    def _grid() -> FactGrid:
+        cur_x, cur_y = _fact(period=CURRENT), _fact(period=CURRENT)
+        pri_x, pri_y = _fact(period=PRIOR), _fact(period=PRIOR)
+        return FactGrid(
+            TableStyle.Other,
+            [[cur_x, cur_y, pri_x, pri_y]],
+            ["r"],
+            None,
+            ["x", "y", "x", "y"],
+            period_axis=True,
+        )
+
+    def test_each_period_is_said_once_over_its_columns(self) -> None:
+        table = assemble_table(self._grid())
+        top = table.header_rows[0]
+        assert _values(top) == [None, CURRENT, PRIOR]
+        assert [c.colspan for c in top[1:]] == [2, 2]
+
+    def test_the_labels_repeat_under_each_period(self) -> None:
+        table = assemble_table(self._grid())
+        labels = [r for r in table.header_rows if _values(r)[:1] == ["x"]]
+        assert _values(labels[0]) == ["x", "y", "x", "y"]
+
+    def test_the_row_heading_spans_every_header_row(self) -> None:
+        table = assemble_table(self._grid())
+        assert table.header_rows[0][0].rowspan == len(table.header_rows)
+
+    def test_a_period_group_of_a_dropped_empty_column_shrinks(self) -> None:
+        cur = _fact(period=CURRENT)
+        pri_x = _fact(period=PRIOR)
+        grid = FactGrid(
+            TableStyle.Other,
+            [[cur, None, pri_x, None]],  # y is empty in both periods
+            ["r"],
+            None,
+            ["x", "y", "x", "y"],
+            period_axis=True,
+        )
+        table = assemble_table(grid)
+        assert [c.colspan for c in table.header_rows[0][1:]] == [1, 1]
+        assert table.column_count == 2
+
+    def test_a_table_wide_unit_still_comes_once_under_the_periods(self) -> None:
+        table = assemble_table(self._grid())  # every fact is in "t"
+        assert _values(table.header_rows[1]) == ["t"]
+
+    def test_without_a_period_axis_one_period_is_still_said_once_for_the_table(
+        self,
+    ) -> None:
+        grid = FactGrid(TableStyle.Other, [[_fact(), _fact()]], ["r"], None, ["x", "y"])
+        top = assemble_table(grid).header_rows[0]
+        assert _values(top) == [None, CURRENT] and top[1].colspan == 2
