@@ -25,7 +25,7 @@ from mireport.entrypoints import (
     entryPointSetOf,
     isAbsoluteUri,
 )
-from mireport.exceptions import EarlyAbortException
+from mireport.exceptions import EarlyAbortException, InlineReportException
 from mireport.localise import as_xmllang, get_locale_from_str
 from mireport.report import InlineReport
 from mireport.taxonomy import (
@@ -287,14 +287,24 @@ class XlsxProcessor:
             self._report.setEntity(found["entity-scheme"], found["entity-identifier"])
         if "monetary-units" in found:
             self._report.setDefaultCurrency(found["monetary-units"])
-        for unknown in sorted(found.keys() - _KNOWN_DEFAULTS):
-            self._msg.error(
-                f"Unsupported default '{unknown}' in the disclosure configuration.",
-                MessageType.DevInfo,
+        if unknown := sorted(found.keys() - _KNOWN_DEFAULTS):
+            raise InlineReportException(
+                f"Unsupported default(s) {unknown} in the disclosure configuration."
             )
 
     def _addReportingPeriods(self) -> None:
+        """Declare the periods the disclosure configuration names.
+
+        Each has a `role`: "current" (the default if omitted) or "prior". The first current period
+        is the report's own; a prior one is for comparatives. A prior period whose cells are not in
+        the workbook (the VSME template reports one period only) is left out, not an error."""
         for period in self._defaults.get("periods", []):
+            role = period.get("role", "current")
+            if role == "prior" and not all(
+                self._reader.getDefinedName(period[key]) for key in ("start", "end")
+            ):
+                continue
+
             startDate = self._readPeriodDate(period["start"])
             endDate = self._readPeriodDate(period["end"])
             if startDate is None or endDate is None:
@@ -310,8 +320,19 @@ class XlsxProcessor:
                 )
 
             name = period["name"]
-            if self._report.addDurationPeriod(name, startDate, endDate):
-                self._report.setDefaultPeriodName(name)
+            if not self._report.addDurationPeriod(name, startDate, endDate):
+                continue
+            match role:
+                case "prior":
+                    self._report.setPriorPeriodName(name)
+                case "current" if not self._report.hasDefaultPeriod:
+                    self._report.setDefaultPeriodName(name)
+                case "current":
+                    pass  # a later current period does not displace the first
+                case _:
+                    raise InlineReportException(
+                        f"Period '{name}' has an unknown role '{role}' in the disclosure configuration."
+                    )
 
     def _readPeriodDate(self, name: str) -> date | None:
         try:
