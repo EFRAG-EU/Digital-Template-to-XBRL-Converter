@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from datetime import date
+from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 from mireport.report.disclosure_layout import (
@@ -31,16 +32,29 @@ from mireport.taxonomy import (
 
 
 def _fact(
-    *, numeric=False, unit=None, period=None, concept=None, aspects=None, value="x"
+    *,
+    numeric=False,
+    unit=None,
+    period=None,
+    concept=None,
+    explicit=None,
+    typed=None,
+    context=None,
+    value="x",
 ):
+    """A fact as layout sees it. `period` is the duration a ReportPeriod would hold, `explicit`
+    maps an explicit dimension to its member, `typed` a typed dimension to its text, and `context`
+    stands in for everything that makes two facts duplicates of each other."""
     f = MagicMock(spec=Fact)
     f.concept = concept or MagicMock(spec=Concept)
     f.concept.isNumeric = numeric
     f.unitSymbol = unit
-    f.period = period
-    f.aspects = aspects or {}
+    f.period = SimpleNamespace(duration=period)
+    f.explicit_dimensions = dict(explicit or {})
+    f.typed_dimensions = dict(typed or {})
+    f.context_key = context
     f.value = value
-    f.hasTaxonomyDimensions.return_value = bool(aspects)
+    f.hasTaxonomyDimensions.return_value = bool(explicit or typed)
     return f
 
 
@@ -394,9 +408,9 @@ class TestCheckAllFactsUsed:
         # InlineReport.reportInconsistentDuplicateFacts; this is kept only as a
         # debug-level developer safety net.
         concept = MagicMock(spec=Concept)
-        aspects_dict = {"period": "2024"}
-        unused = _fact(value="v1", concept=concept, aspects=aspects_dict)
-        duplicate = _fact(value="v2", concept=concept, aspects=aspects_dict)
+        context = ("2024",)
+        unused = _fact(value="v1", concept=concept, context=context)
+        duplicate = _fact(value="v2", concept=concept, context=context)
         o = _organiser(facts_by_concept={concept: [unused, duplicate]})
         o.reportSections = []
         o.report.getFacts.return_value = [unused, duplicate]
@@ -487,10 +501,10 @@ class TestAssembleDimsAsColumnTable:
         concept_y = MagicMock(spec=Concept)
         reportable = [concept_x, concept_y]
 
-        fact_xa = _fact(aspects={dim_qname: "qname:member_a"})
-        fact_xb = _fact(aspects={dim_qname: "qname:member_b"})
-        fact_ya = _fact(aspects={dim_qname: "qname:member_a"})
-        fact_yb = _fact(aspects={dim_qname: "qname:member_b"})
+        fact_xa = _fact(explicit={explicit_dim: member_a})
+        fact_xb = _fact(explicit={explicit_dim: member_b})
+        fact_ya = _fact(explicit={explicit_dim: member_a})
+        fact_yb = _fact(explicit={explicit_dim: member_b})
 
         facts_map = {
             concept_x: [fact_xa, fact_xb],
@@ -576,8 +590,8 @@ class TestAssembleDimsAsRowsTable:
         concept_y = MagicMock(spec=Concept)
         reportable = [concept_x, concept_y]
 
-        fact_xa = _fact(aspects={dim_qname: "qname:member_a"})
-        fact_ya = _fact(aspects={dim_qname: "qname:member_a"})
+        fact_xa = _fact(explicit={explicit_dim: member_a})
+        fact_ya = _fact(explicit={explicit_dim: member_a})
 
         facts_map = {
             concept_x: [fact_xa],
@@ -623,7 +637,7 @@ class TestAssembleDimsAsRowsTable:
         # member_b has no facts
         concept_x = reportable[0]
         concept_y = reportable[1]
-        fact_xa = _fact(aspects={explicit_dim.qname: "qname:member_a"})
+        fact_xa = _fact(explicit={explicit_dim: domain[0]})
         facts_map = {concept_x: [fact_xa], concept_y: []}
         o = _organiser(facts_by_concept=facts_map)
         matrix = o._assemble_explicit_dim_as_rows(
@@ -636,19 +650,18 @@ class TestAssembleTypedDimTable:
     def _setup(self):
         typed_dim = MagicMock(spec=Concept)
         typed_dim.qname = "esrs:typedDim"
-        typed_qname = f"typed {typed_dim.qname}"
 
         concept_x = MagicMock(spec=Concept)
         concept_y = MagicMock(spec=Concept)
         reportable = [concept_x, concept_y]
 
-        val_2 = "<value>2</value>"
-        val_10 = "<value>10</value>"
+        val_2 = "2"
+        val_10 = "10"
 
-        fact_x2 = _fact(aspects={typed_qname: val_2}, concept=concept_x)
-        fact_x10 = _fact(aspects={typed_qname: val_10}, concept=concept_x)
-        fact_y2 = _fact(aspects={typed_qname: val_2}, concept=concept_y)
-        fact_y10 = _fact(aspects={typed_qname: val_10}, concept=concept_y)
+        fact_x2 = _fact(typed={typed_dim: val_2}, concept=concept_x)
+        fact_x10 = _fact(typed={typed_dim: val_10}, concept=concept_x)
+        fact_y2 = _fact(typed={typed_dim: val_2}, concept=concept_y)
+        fact_y10 = _fact(typed={typed_dim: val_10}, concept=concept_y)
 
         facts_map = {
             concept_x: [fact_x2, fact_x10],
@@ -679,14 +692,13 @@ class TestAssembleTypedDimTable:
         o = _organiser(facts_by_concept=facts_map)
         matrix = o._assemble_typed_dim("[B01.test", [typed_dim], reportable)
         assert len(matrix.data) == 2
-        assert matrix.row_labels[0] == "2"  # tidyTdValue extracts the inner text
+        assert matrix.row_labels[0] == "2"  # numerically: 2 before 10
         assert matrix.row_labels[1] == "10"
 
     def test_empty_rows_excluded(self):
         typed_dim, reportable, facts_map, val_2, _ = self._setup()
         concept_x, concept_y = reportable
-        typed_qname = f"typed {typed_dim.qname}"
-        fact_x2 = _fact(aspects={typed_qname: val_2}, concept=concept_x)
+        fact_x2 = _fact(typed={typed_dim: val_2}, concept=concept_x)
         # No val_10 facts at all
         facts_map = {concept_x: [fact_x2], concept_y: []}
         o = _organiser(facts_by_concept=facts_map)

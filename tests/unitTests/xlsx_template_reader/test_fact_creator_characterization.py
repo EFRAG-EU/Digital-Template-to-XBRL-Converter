@@ -1,6 +1,6 @@
 """Characterization tests pinning FactCreator behaviour before decomposition.
 
-The snapshot test captures every fact (concept, value, aspects) produced from
+The snapshot test captures every fact (concept, value, period, unit, decimals, scale, dimensions, enumeration) produced from
 the 1.2.0 sample, so any refactor that changes a value, unit, dimension or
 period — not just the fact count — fails loudly. Regenerate the snapshot by
 running this module directly:
@@ -68,11 +68,29 @@ def _canonicalFacts(report: InlineReport) -> list[dict]:
         value = str(fact.value)
         if len(value) > MAX_VALUE_LENGTH:
             value = f"{value[:MAX_VALUE_LENGTH]}…[{len(str(fact.value))} chars]"
-        entry = {
+        entry: dict = {
             "concept": str(fact.concept.qname),
             "value": value,
-            "aspects": {str(k): str(v) for k, v in fact.aspects.items()},
+            "period": fact.period.name,
         }
+        # Only what a fact actually has, so an entry reads as what is special about it.
+        if fact.unit is not None:
+            entry["unit"] = str(fact.unit)
+        if fact.decimals is not None:
+            entry["decimals"] = fact.decimals
+        if fact.scale is not None:
+            entry["scale"] = fact.scale
+        if fact.explicit_values:
+            entry["explicit"] = {
+                str(d.dimension.qname): str(d.member.qname)
+                for d in fact.explicit_values
+            }
+        if fact.typed_values:
+            entry["typed"] = {
+                str(d.dimension.qname): d.value for d in fact.typed_values
+            }
+        if fact.enumeration is not None:
+            entry["enumeration"] = sorted(m.expandedName for m in fact.enumeration)
         if fact.footnotes:
             entry["footnotes"] = sorted(
                 str(fn.content)[:MAX_VALUE_LENGTH] for fn in fact.footnotes
@@ -610,7 +628,7 @@ class TestSetFallbackUnitForName:
             name = "test_range"
 
         assert unit_resolver.setFallbackUnitForName(FakeDn(), concept, fb) is True
-        assert "units" in fb._aspects
+        assert fb._unit is not None
 
 
 class TestProcessNumeric:
@@ -632,7 +650,7 @@ class TestProcessNumeric:
             fb,
             12.345,
         )
-        assert fb._aspects.get("decimals") == "2"
+        assert fb._decimals == 2
 
     def test_plain_format_means_inf_decimals(self, creator_env, taxonomy):
         report, bindings = creator_env.report, creator_env.bindings
@@ -648,7 +666,7 @@ class TestProcessNumeric:
         processNumeric(
             Messenger(creator_env.results), holder, _makeCell(12, "General"), fb, 12
         )
-        assert fb._aspects.get("decimals") == "INF"
+        assert fb._decimals == "INF"
 
 
 class TestValidateNumericNonFinite:

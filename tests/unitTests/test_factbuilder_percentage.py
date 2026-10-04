@@ -19,14 +19,15 @@ def _builder() -> FactBuilder:
 
 
 def _held(fb: FactBuilder) -> tuple[object, dict]:
-    return fb._value, {k: v for k, v in fb._aspects.items() if isinstance(k, str)}
+    """The value and the typed scale and decimals the builder holds, as a dict by name."""
+    return fb._value, {"numeric-scale": fb._scale, "decimals": fb._decimals}
 
 
 def test_a_percentage_fact_shows_the_fraction_x100_and_keeps_xbrl_decimals() -> None:
     value, aspects = _held(_builder().setPercentageFact(Decimal("0.1250"), 4))
     assert value == 12.5  # what the page shows: 12.50
-    assert aspects["numeric-scale"] == "-2"
-    assert aspects["decimals"] == "4"  # XBRL's own; not 6
+    assert aspects["numeric-scale"] == -2
+    assert aspects["decimals"] == 4  # XBRL's own; not 6
 
 
 def test_decimals_inf_is_kept() -> None:
@@ -50,8 +51,8 @@ def test_the_display_decimals_route_adds_the_scale_amount() -> None:
     """The Excel reader's route, unchanged: 0.125 shown to 2 decimals is 0.1250 in XBRL."""
     value, aspects = _held(_builder().setPercentageValue(0.125, 2))
     assert value == 12.5
-    assert aspects["numeric-scale"] == "-2"
-    assert aspects["decimals"] == "4"
+    assert aspects["numeric-scale"] == -2
+    assert aspects["decimals"] == 4
 
 
 def test_the_display_decimals_route_leaves_inf_alone() -> None:
@@ -64,8 +65,8 @@ def test_the_whole_number_form_is_not_scaled() -> None:
         _builder().setPercentageValue(12.5, 2, inputIsDecimalForm=False)
     )
     assert value == 12.5
-    assert "numeric-scale" not in aspects
-    assert aspects["decimals"] == "2"
+    assert aspects["numeric-scale"] is None
+    assert aspects["decimals"] == 2
 
 
 @pytest.mark.parametrize("float_input", [0.07, 0.29, 0.1234])
