@@ -15,7 +15,7 @@ from mireport.report.model import (
     Unit,
 )
 from mireport.report.periods import DurationPeriodHolder
-from mireport.taxonomy import Concept
+from mireport.taxonomy import Concept, QName
 from mireport.xml import getBootstrapQNameMaker
 
 _Q = getBootstrapQNameMaker()
@@ -78,24 +78,62 @@ class TestUnit:
     @pytest.mark.parametrize(
         "text",
         [
-            "utr:tCO2e",
+            # The examples in OIM Common, "Unit string representation".
+            "iso4217:EUR",
+            "iso4217:EUR/xbrli:shares",
+            "utr:m*utr:m",
+            "utr:kg/(utr:m*utr:m)",
+            "(utr:m*utr:m*utr:m)/utr:S",
             "utr:tCO2e/iso4217:EUR",
             "(utr:m*utr:tCO2e)/utr:s",
-            "utr:tCO2e/(utr:m*utr:s)",
-            "utr:m*utr:tCO2e",
         ],
     )
-    def test_parse_and_print_round_trip(self, text: str) -> None:
-        assert str(Unit.parse(text, _Q.fromString)) == text
+    def test_unit_string_round_trip(self, text: str) -> None:
+        unit = Unit.fromUnitString(text, _Q.fromString)
+        assert unit.toUnitString() == text
+        assert str(unit) == text
 
-    def test_parse_accepts_unbracketed_and_unsorted_input(self) -> None:
-        assert Unit.parse("utr:tCO2e*utr:m/utr:s", _Q.fromString) == Unit.divide(
-            [M, T], S
+    def test_unit_string_order_is_normalised(self) -> None:
+        assert Unit.fromUnitString(
+            "(utr:tCO2e*utr:m)/utr:s", _Q.fromString
+        ) == Unit.divide([M, T], S)
+        assert (
+            Unit.fromUnitString("utr:tCO2e*utr:m", _Q.fromString).toUnitString()
+            == "utr:m*utr:tCO2e"
         )
 
-    def test_parse_refuses_two_slashes(self) -> None:
-        with pytest.raises(InlineReportException, match="more than one"):
-            Unit.parse("utr:m/utr:s/utr:t", _Q.fromString)
+    @pytest.mark.parametrize(
+        "text",
+        [
+            "",
+            " utr:m",
+            "utr:m * utr:m",
+            "utr:m*utr:m/utr:s",  # a list beside a '/' must be bracketed
+            "utr:s/utr:m*utr:m",
+            "(utr:m)",  # no brackets round a single measure
+            "(utr:m*utr:m)",  # nor when there is no denominator
+            "(utr:m)/utr:s",
+            "utr:m//utr:s",
+            "utr:m/utr:s/utr:t",
+            "utr:m/",
+            "/utr:s",
+            "utr:m*",
+            "(utr:m*utr:m/utr:s",
+            "((utr:m*utr:m))/utr:s",
+        ],
+    )
+    def test_malformed_unit_strings_are_refused(self, text: str) -> None:
+        with pytest.raises(
+            InlineReportException, match="oimce:invalidUnitStringRepresentation"
+        ):
+            Unit.fromUnitString(text, _Q.fromString)
+
+    def test_an_unbound_prefix_is_refused(self) -> None:
+        def resolve(text: str) -> QName:
+            raise InlineReportException(f"no prefix for {text}")
+
+        with pytest.raises(InlineReportException, match="oimce:unboundPrefix"):
+            Unit.fromUnitString("nope:m", resolve)
 
 
 def _typed_dimension() -> Concept:
