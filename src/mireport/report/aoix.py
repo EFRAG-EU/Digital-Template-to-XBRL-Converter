@@ -40,7 +40,7 @@ def unit_aspect(unit: Unit) -> str:
         case Unit(numerator=(measure,), denominator=()) if unit.is_currency:
             return f"monetary-units={measure.localName}"
         case _:
-            return f"units={unit}"
+            return f"units={unit.toUnitString()}"
 
 
 def check_typed_value_expressible(typed: TypedDimensionValue) -> None:

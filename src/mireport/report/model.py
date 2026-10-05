@@ -37,7 +37,7 @@ class Unit:
     """An XBRL unit: one or more measures, optionally divided by one or more measures.
 
     ``Unit.simple(utr:tCO2e)``, ``Unit.divide(utr:tCO2e, iso4217:EUR)``, or from text with
-    ``Unit.parse("(a*b)/c", resolver)``.
+    ``Unit.fromUnitString("(a*b)/c", resolver)``.
     """
 
     numerator: tuple[QName, ...]
@@ -66,20 +66,63 @@ class Unit:
         return cls(_measures(numerator), denominator)
 
     @classmethod
-    def parse(cls, text: str, resolve: Callable[[str], QName]) -> Unit:
-        """Read ``a``, ``a*b``, ``a/b`` or ``(a*b)/(c*d)`` (OIM and aoix both write units so)."""
+    def fromUnitString(cls, text: str, resolve: Callable[[str], QName]) -> Unit:
+        """Read a unit in the OIM Common "unit string representation".
 
-        def side(part: str) -> tuple[QName, ...]:
-            part = part.strip().removeprefix("(").removesuffix(")")
-            return tuple(resolve(m) for m in part.split("*") if m.strip())
+        ``a``, ``a*b``, ``a/b``, ``(a*b)/c``: measures joined by ``*``, at most one ``/``, no
+        whitespace, and brackets round a side only when it has more than one measure *and* there is a
+        denominator. Measure order is not enforced on the way in (a unit's measures are always held
+        sorted). ``resolve`` turns ``prefix:local`` into a QName and raises for an unbound prefix.
+        Anything else raises ``InlineReportException`` naming the OIM error code.
+        """
 
+        def invalid(why: str) -> InlineReportException:
+            return InlineReportException(
+                f"oimce:invalidUnitStringRepresentation: {text!r} {why}."
+            )
+
+        def side(part: str, divided: bool) -> tuple[QName, ...]:
+            if bracketed := part.startswith("("):
+                if not part.endswith(")"):
+                    raise invalid("has an unclosed bracket")
+                part = part[1:-1]
+            names = part.split("*")
+            if any(not n or any(c in n for c in "()/ ") for n in names):
+                raise invalid("has an empty or malformed measure")
+            if bracketed and not (divided and len(names) > 1):
+                raise invalid(
+                    "brackets a side that is a single measure or has no denominator"
+                )
+            if len(names) > 1 and not bracketed and divided:
+                raise invalid("needs brackets round a list of measures beside a '/'")
+            try:
+                return tuple(resolve(n) for n in names)
+            except (InlineReportException, KeyError, ValueError) as e:
+                raise InlineReportException(
+                    f"oimce:unboundPrefix: in unit {text!r}: {e}"
+                ) from e
+
+        if not text or any(c.isspace() for c in text):
+            raise invalid("is empty or contains whitespace")
         match text.split("/"):
             case [numerator]:
-                return cls(side(numerator))
+                return cls(side(numerator, False))
             case [numerator, denominator]:
-                return cls(side(numerator), side(denominator))
+                return cls(side(numerator, True), side(denominator, True))
             case _:
-                raise InlineReportException(f"Unit {text!r} has more than one '/'.")
+                raise invalid("has more than one '/'")
+
+    def toUnitString(self) -> str:
+        """The OIM Common unit string: sorted measures joined by ``*``, brackets round a list of
+        more than one measure when there is a denominator, no whitespace."""
+
+        def side(measures: tuple[QName, ...], bracket: bool) -> str:
+            joined = "*".join(str(m) for m in measures)
+            return f"({joined})" if bracket and len(measures) > 1 else joined
+
+        if self.denominator:
+            return f"{side(self.numerator, True)}/{side(self.denominator, True)}"
+        return side(self.numerator, False)
 
     @property
     def is_divide(self) -> bool:
@@ -102,13 +145,7 @@ class Unit:
         return self.numerator[0]
 
     def __str__(self) -> str:
-        def side(measures: tuple[QName, ...], bracket: bool) -> str:
-            joined = "*".join(str(m) for m in measures)
-            return f"({joined})" if bracket and len(measures) > 1 else joined
-
-        if self.denominator:
-            return f"{side(self.numerator, True)}/{side(self.denominator, True)}"
-        return side(self.numerator, False)
+        return self.toUnitString()
 
 
 @dataclass(frozen=True, slots=True)
