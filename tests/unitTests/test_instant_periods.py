@@ -262,3 +262,35 @@ class TestRenderMacros:
         assert str(macros.render_fact_period(whole)).strip() == (
             "2025-01-01 &#8211; 2025-12-31"
         )
+
+
+class TestCopyingAFact:
+    def test_an_opening_balance_copied_to_another_period_is_still_an_opening_balance(
+        self,
+    ) -> None:
+        report = _report()
+        original = (
+            _builder(report, STOCK, 1)
+            .setNamedPeriod("cur", at=PeriodPart.Start)
+            .buildFact()
+        )
+        copy = (
+            FactBuilder.fromFact(report, original).setNamedPeriod("prior").buildFact()
+        )
+        assert copy.period == FactPeriod(
+            report.getReportPeriod("prior"), PeriodPart.Start
+        )
+
+    def test_it_can_be_made_a_closing_balance_in_the_copy(self) -> None:
+        report = _report()
+        original = (
+            _builder(report, STOCK, 1)
+            .setNamedPeriod("cur", at=PeriodPart.Start)
+            .buildFact()
+        )
+        copy = (
+            FactBuilder.fromFact(report, original)
+            .setNamedPeriod("prior", at=PeriodPart.End)
+            .buildFact()
+        )
+        assert copy.period.isEnd
