@@ -1,1157 +1,1475 @@
 {
- "facts": [
-  {
-   "concept": "vsme:AddressOfSite",
-   "value": "Duomo Square",
-   "period": "cur",
-   "typed": {
-    "vsme:IdentifierOfSiteTypedAxis": "1"
-   }
-  },
-  {
-   "concept": "vsme:AmountOfEmissionToAir",
-   "value": "10",
-   "period": "cur",
-   "unit": "utr:t",
-   "decimals": 2,
-   "explicit": {
-    "vsme:TypeOfPollutantAxis": "vsme:AlachlorMember"
-   }
-  },
-  {
-   "concept": "vsme:AmountOfEmissionToAir",
-   "value": "10",
-   "period": "cur",
-   "unit": "utr:t",
-   "decimals": 2,
-   "explicit": {
-    "vsme:TypeOfPollutantAxis": "vsme:AldrinMember"
-   }
-  },
-  {
-   "concept": "vsme:AmountOfEmissionToSoil",
-   "value": "3",
-   "period": "cur",
-   "unit": "utr:t",
-   "decimals": 2,
-   "explicit": {
-    "vsme:TypeOfPollutantAxis": "vsme:AlachlorMember"
-   }
-  },
-  {
-   "concept": "vsme:AmountOfEmissionToSoil",
-   "value": "5",
-   "period": "cur",
-   "unit": "utr:t",
-   "decimals": 2,
-   "explicit": {
-    "vsme:TypeOfPollutantAxis": "vsme:AldrinMember"
-   }
-  },
-  {
-   "concept": "vsme:AmountOfEmissionToWater",
-   "value": "5",
-   "period": "cur",
-   "unit": "utr:t",
-   "decimals": 2,
-   "explicit": {
-    "vsme:TypeOfPollutantAxis": "vsme:AlachlorMember"
-   }
-  },
-  {
-   "concept": "vsme:AmountOfEmissionToWater",
-   "value": "3",
-   "period": "cur",
-   "unit": "utr:t",
-   "decimals": 2,
-   "explicit": {
-    "vsme:TypeOfPollutantAxis": "vsme:AldrinMember"
-   }
-  },
-  {
-   "concept": "vsme:AreaOfSiteInBiodiversitySensitiveArea",
-   "value": "1200",
-   "period": "cur",
-   "unit": "utr:sqm",
-   "decimals": 2,
-   "typed": {
-    "vsme:IdentifierOfSiteTypedAxis": "1"
-   }
-  },
-  {
-   "concept": "vsme:Assets",
-   "value": "60000",
-   "period": "cur",
-   "unit": "iso4217:EUR",
-   "decimals": 2,
-   "footnotes": [
-    "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque a enim nulla. U"
-   ]
-  },
-  {
-   "concept": "vsme:AverageNumberOfAnnualTrainingHoursPerFemaleEmployee",
-   "value": "150",
-   "period": "cur",
-   "unit": "xbrli:pure",
-   "decimals": 2
-  },
-  {
-   "concept": "vsme:AverageNumberOfAnnualTrainingHoursPerMaleEmployee",
-   "value": "100",
-   "period": "cur",
-   "unit": "xbrli:pure",
-   "decimals": 2
-  },
-  {
-   "concept": "vsme:AverageNumberOfAnnualTrainingHoursPerNonReportedGenderEmployee",
-   "value": "120",
-   "period": "cur",
-   "unit": "xbrli:pure",
-   "decimals": 2
-  },
-  {
-   "concept": "vsme:AverageNumberOfAnnualTrainingHoursPerOtherGenderEmployee",
-   "value": "140",
-   "period": "cur",
-   "unit": "xbrli:pure",
-   "decimals": 2
-  },
-  {
-   "concept": "vsme:BasisForPreparation",
-   "value": "Option B (Basic Module and Comprehensive Module)",
-   "period": "cur",
-   "enumeration": [
-    "https://xbrl.efrag.org/taxonomy/vsme/2026-05-01/vsme#OptionBBasicModuleAndComprehensiveModuleMember"
-   ]
-  },
-  {
-   "concept": "vsme:BasisForReporting",
-   "value": "Sustainability report prepared on a consolidated basis",
-   "period": "cur",
-   "enumeration": [
-    "https://xbrl.efrag.org/taxonomy/vsme/2026-05-01/vsme#ConsolidatedMember"
-   ]
-  },
-  {
-   "concept": "vsme:CityOfSite",
-   "value": "Milan",
-   "period": "cur",
-   "typed": {
-    "vsme:IdentifierOfSiteTypedAxis": "1"
-   }
-  },
-  {
-   "concept": "vsme:CountryOfPrimaryOperationsAndLocationOfSignificantAssets",
-   "value": "Italy",
-   "period": "cur",
-   "enumeration": [
-    "https://xbrl.org/2024/iso3166#IT"
-   ]
-  },
-  {
-   "concept": "vsme:CountryOfSite",
-   "value": "Italy",
-   "period": "cur",
-   "typed": {
-    "vsme:IdentifierOfSiteTypedAxis": "1"
-   },
-   "enumeration": [
-    "https://xbrl.org/2024/iso3166#IT"
-   ]
-  },
-  {
-   "concept": "vsme:DescriptionOfATargetRelatedToAPolicy",
-   "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque a enim nulla. U…[1341 chars]",
-   "period": "cur"
-  },
-  {
-   "concept": "vsme:DescriptionOfATransitionPlanForClimateChangeMitigationIncludingAnExplanationOfHowItIsContributingToReduceGhgEmissions",
-   "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque a enim nulla. U…[1341 chars]",
-   "period": "cur"
-  },
-  {
-   "concept": "vsme:DescriptionOfClimateRelatedHazardsAndClimateRelatedTransitionEvents",
-   "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque a enim nulla. U…[1341 chars]",
-   "period": "cur"
-  },
-  {
-   "concept": "vsme:DescriptionOfHowCircularEconomyPrinciplesAreApplied",
-   "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque a enim nulla. U…[1341 chars]",
-   "period": "cur"
-  },
-  {
-   "concept": "vsme:DescriptionOfKeyElementsOfStrategyThatRelatesToOrAffectsSustainabilityIssues",
-   "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque a enim nulla. U…[1341 chars]",
-   "period": "cur"
-  },
-  {
-   "concept": "vsme:DescriptionOfMainBusinessRelationships",
-   "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque a enim nulla. U…[1341 chars]",
-   "period": "cur"
-  },
-  {
-   "concept": "vsme:DescriptionOfPracticesPoliciesAndOrFutureInitiatives",
-   "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque a enim nulla. U…[1341 chars]",
-   "period": "cur"
-  },
-  {
-   "concept": "vsme:DescriptionOfSignificantGroupsOfProductsAndOrServicesOffered",
-   "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque a enim nulla. U…[1341 chars]",
-   "period": "cur"
-  },
-  {
-   "concept": "vsme:DescriptionOfSignificantMarketsTheUndertakingOperatesIn",
-   "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque a enim nulla. U…[1341 chars]",
-   "period": "cur"
-  },
-  {
-   "concept": "vsme:DescriptionOfSustainabilityRelatedCertificationsOrLabels",
-   "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque a enim nulla. U…[1341 chars]",
-   "period": "cur"
-  },
-  {
-   "concept": "vsme:DisclosureOfAnyOtherGeneralAndOrEntitySpecificInformation",
-   "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque a enim nulla. U…[1341 chars]",
-   "period": "cur"
-  },
-  {
-   "concept": "vsme:DisclosureOfHowItHasAssessedTheExposureAndSensitivityOfItsAssetsActivitiesAndValueChainToTheseHazardsAndTransitionEvents",
-   "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque a enim nulla. U…[1341 chars]",
-   "period": "cur"
-  },
-  {
-   "concept": "vsme:DisclosureOfListOfMainActionsTheEntitySeeksInOrderToAchieveItsTargets",
-   "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque a enim nulla. U…[1341 chars]",
-   "period": "cur"
-  },
-  {
-   "concept": "vsme:DisclosureOfWhetherItHasUndertakenClimateChangeAdaptationActionsForAnyClimateRelatedHazardsAndTransitionEvents",
-   "value": "YES",
-   "period": "cur"
-  },
-  {
-   "concept": "vsme:EmployeeCountingMethodology",
-   "value": "As an average across the reporting period",
-   "period": "cur",
-   "enumeration": [
-    "https://xbrl.efrag.org/taxonomy/vsme/2026-05-01/vsme#AverageDuringTheReportingPeriodMember"
-   ]
-  },
-  {
-   "concept": "vsme:EmployeeTurnoverRate",
-   "value": "28.40909090909091",
-   "period": "cur",
-   "unit": "xbrli:pure",
-   "decimals": 4,
-   "scale": -2
-  },
-  {
-   "concept": "vsme:EmployeesReceivePayEqualOrAboveMinimumWageDeterminedByNationalLawOrCollectiveAgreement",
-   "value": "YES",
-   "period": "cur"
-  },
-  {
-   "concept": "vsme:EnergyConsumptionFromElectricity",
-   "value": "100",
-   "period": "cur",
-   "unit": "utr:MWh",
-   "decimals": 2,
-   "explicit": {
-    "vsme:BreakdownOfEnergyConsumptionAxis": "vsme:NonRenewableEnergyMember"
-   }
-  },
-  {
-   "concept": "vsme:EnergyConsumptionFromElectricity",
-   "value": "0",
-   "period": "cur",
-   "unit": "utr:MWh",
-   "decimals": 2,
-   "explicit": {
-    "vsme:BreakdownOfEnergyConsumptionAxis": "vsme:RenewableEnergyMember"
-   }
-  },
-  {
-   "concept": "vsme:EnergyConsumptionFromElectricity",
-   "value": "100",
-   "period": "cur",
-   "unit": "utr:MWh",
-   "decimals": 2,
-   "footnotes": [
-    "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque a enim nulla. U"
-   ]
-  },
-  {
-   "concept": "vsme:EnergyConsumptionFromFuels",
-   "value": "10.03334136",
-   "period": "cur",
-   "unit": "utr:MWh",
-   "decimals": 2,
-   "explicit": {
-    "vsme:BreakdownOfEnergyConsumptionAxis": "vsme:NonRenewableEnergyMember"
-   }
-  },
-  {
-   "concept": "vsme:EnergyConsumptionFromFuels",
-   "value": "6.3750051",
-   "period": "cur",
-   "unit": "utr:MWh",
-   "decimals": 2,
-   "explicit": {
-    "vsme:BreakdownOfEnergyConsumptionAxis": "vsme:RenewableEnergyMember"
-   }
-  },
-  {
-   "concept": "vsme:EnergyConsumptionFromFuels",
-   "value": "16.40834646",
-   "period": "cur",
-   "unit": "utr:MWh",
-   "decimals": 2,
-   "footnotes": [
-    "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque a enim nulla. U"
-   ]
-  },
-  {
-   "concept": "vsme:EnergyConsumptionFromSelfGeneratedElectricity",
-   "value": "20",
-   "period": "cur",
-   "unit": "utr:MWh",
-   "decimals": 2,
-   "explicit": {
-    "vsme:BreakdownOfEnergyConsumptionAxis": "vsme:NonRenewableEnergyMember"
-   }
-  },
-  {
-   "concept": "vsme:EnergyConsumptionFromSelfGeneratedElectricity",
-   "value": "23",
-   "period": "cur",
-   "unit": "utr:MWh",
-   "decimals": 2,
-   "explicit": {
-    "vsme:BreakdownOfEnergyConsumptionAxis": "vsme:RenewableEnergyMember"
-   }
-  },
-  {
-   "concept": "vsme:EnergyConsumptionFromSelfGeneratedElectricity",
-   "value": "43",
-   "period": "cur",
-   "unit": "utr:MWh",
-   "decimals": 2,
-   "footnotes": [
-    "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque a enim nulla. U"
-   ]
-  },
-  {
-   "concept": "vsme:FemaleToMaleRatioAtManagementLevelForTheReportingPeriod",
-   "value": "0.8",
-   "period": "cur",
-   "unit": "xbrli:pure",
-   "decimals": 2
-  },
-  {
-   "concept": "vsme:GenderDiversityRatioInGovernanceBody",
-   "value": "2.5",
-   "period": "cur",
-   "unit": "xbrli:pure",
-   "decimals": 2
-  },
-  {
-   "concept": "vsme:GreenhouseGasEmissionReductionTargetBaseYear",
-   "value": "2020",
-   "period": "cur"
-  },
-  {
-   "concept": "vsme:GreenhouseGasEmissionReductionTargetYear",
-   "value": "2030",
-   "period": "cur"
-  },
-  {
-   "concept": "vsme:GrossLocationBasedScope2GreenhouseGasEmissions",
-   "value": "75",
-   "period": "BaselineYearMember",
-   "unit": "utr:tCO2e",
-   "decimals": 2,
-   "explicit": {
-    "vsme:ReportingScopesAxis": "vsme:BaselineYearMember"
-   }
-  },
-  {
-   "concept": "vsme:GrossLocationBasedScope2GreenhouseGasEmissions",
-   "value": "15",
-   "period": "TargetYearMember",
-   "unit": "utr:tCO2e",
-   "decimals": 2,
-   "explicit": {
-    "vsme:ReportingScopesAxis": "vsme:TargetYearMember"
-   }
-  },
-  {
-   "concept": "vsme:GrossLocationBasedScope2GreenhouseGasEmissions",
-   "value": "50",
-   "period": "cur",
-   "unit": "utr:tCO2e",
-   "decimals": 2
-  },
-  {
-   "concept": "vsme:GrossScope1GreenhouseGasEmissions",
-   "value": "150",
-   "period": "BaselineYearMember",
-   "unit": "utr:tCO2e",
-   "decimals": 2,
-   "explicit": {
-    "vsme:ReportingScopesAxis": "vsme:BaselineYearMember"
-   }
-  },
-  {
-   "concept": "vsme:GrossScope1GreenhouseGasEmissions",
-   "value": "75",
-   "period": "TargetYearMember",
-   "unit": "utr:tCO2e",
-   "decimals": 2,
-   "explicit": {
-    "vsme:ReportingScopesAxis": "vsme:TargetYearMember"
-   }
-  },
-  {
-   "concept": "vsme:GrossScope1GreenhouseGasEmissions",
-   "value": "100",
-   "period": "cur",
-   "unit": "utr:tCO2e",
-   "decimals": 2
-  },
-  {
-   "concept": "vsme:GrossScope3GreenhouseGasEmissions",
-   "value": "300",
-   "period": "BaselineYearMember",
-   "unit": "utr:tCO2e",
-   "decimals": 2,
-   "explicit": {
-    "vsme:ReportingScopesAxis": "vsme:BaselineYearMember"
-   }
-  },
-  {
-   "concept": "vsme:GrossScope3GreenhouseGasEmissions",
-   "value": "100",
-   "period": "TargetYearMember",
-   "unit": "utr:tCO2e",
-   "decimals": 2,
-   "explicit": {
-    "vsme:ReportingScopesAxis": "vsme:TargetYearMember"
-   }
-  },
-  {
-   "concept": "vsme:GrossScope3GreenhouseGasEmissions",
-   "value": "200",
-   "period": "cur",
-   "unit": "utr:tCO2e",
-   "decimals": 2
-  },
-  {
-   "concept": "vsme:ListOfOmittedDisclosuresDeemedToBeClassifiedOrSensitiveInformation",
-   "value": "B6 - Water\nB6 - Water Withdrawal\nB6 - Water Consumption",
-   "period": "cur",
-   "enumeration": [
-    "https://xbrl.efrag.org/taxonomy/vsme/2026-05-01/vsme#B6-WaterMember",
-    "https://xbrl.efrag.org/taxonomy/vsme/2026-05-01/vsme#B6WaterConsumptionMember",
-    "https://xbrl.efrag.org/taxonomy/vsme/2026-05-01/vsme#B6WaterWithdrawalMember"
-   ]
-  },
-  {
-   "concept": "vsme:MostSeniorLevelAccountableForImplementationOfPolicies",
-   "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque a enim nulla. U…[1341 chars]",
-   "period": "cur"
-  },
-  {
-   "concept": "vsme:NaceSectorClassificationCodes",
-   "value": "NACE G - 47.22 Retail sale of meat and meat products\nNACE G - 47.21 Retail sale …[103 chars]",
-   "period": "cur",
-   "enumeration": [
-    "https://xbrl.efrag.org/taxonomy/nace/2026-05-01#NACE_G4721",
-    "https://xbrl.efrag.org/taxonomy/nace/2026-05-01#NACE_G4722"
-   ]
-  },
-  {
-   "concept": "vsme:NameOfMaterialUsed",
-   "value": "Packaging",
-   "period": "cur",
-   "typed": {
-    "vsme:IdentifierOfMaterialTypedAxis": "1"
-   }
-  },
-  {
-   "concept": "vsme:NameOfMaterialUsed",
-   "value": "Wrapping, trays, containers",
-   "period": "cur",
-   "typed": {
-    "vsme:IdentifierOfMaterialTypedAxis": "2"
-   }
-  },
-  {
-   "concept": "vsme:NameOfTheSubsidiary",
-   "value": "Company XYZ Subsidiary 1",
-   "period": "cur",
-   "typed": {
-    "vsme:IdentifierOfSubsidiaryTypedAxis": "1"
-   }
-  },
-  {
-   "concept": "vsme:NumberOfEmployees",
-   "value": "151",
-   "period": "cur",
-   "unit": "xbrli:pure",
-   "decimals": 2
-  },
-  {
-   "concept": "vsme:NumberOfEmployeesForCountryOfEmploymentContract",
-   "value": "6",
-   "period": "cur",
-   "unit": "xbrli:pure",
-   "decimals": 2,
-   "explicit": {
-    "vsme:CountryOfEmploymentContractAxis": "country:AL"
-   }
-  },
-  {
-   "concept": "vsme:NumberOfEmployeesForCountryOfEmploymentContract",
-   "value": "5",
-   "period": "cur",
-   "unit": "xbrli:pure",
-   "decimals": 2,
-   "explicit": {
-    "vsme:CountryOfEmploymentContractAxis": "country:BE"
-   }
-  },
-  {
-   "concept": "vsme:NumberOfEmployeesForCountryOfEmploymentContract",
-   "value": "140",
-   "period": "cur",
-   "unit": "xbrli:pure",
-   "decimals": 2,
-   "explicit": {
-    "vsme:CountryOfEmploymentContractAxis": "country:IT"
-   }
-  },
-  {
-   "concept": "vsme:NumberOfFatalitiesAsAResultOfWorkRelatedInjuriesAndWorkRelatedIllHealth",
-   "value": "0",
-   "period": "cur",
-   "unit": "xbrli:pure",
-   "decimals": 2
-  },
-  {
-   "concept": "vsme:NumberOfFemaleEmployees",
-   "value": "40",
-   "period": "cur",
-   "unit": "xbrli:pure",
-   "decimals": 2
-  },
-  {
-   "concept": "vsme:NumberOfMaleEmployees",
-   "value": "55",
-   "period": "cur",
-   "unit": "xbrli:pure",
-   "decimals": 2
-  },
-  {
-   "concept": "vsme:NumberOfNonReportedGenderEmployees",
-   "value": "51",
-   "period": "cur",
-   "unit": "xbrli:pure",
-   "decimals": 2
-  },
-  {
-   "concept": "vsme:NumberOfOtherGenderEmployees",
-   "value": "5",
-   "period": "cur",
-   "unit": "xbrli:pure",
-   "decimals": 2
-  },
-  {
-   "concept": "vsme:NumberOfPermanentContractEmployees",
-   "value": "110",
-   "period": "cur",
-   "unit": "xbrli:pure",
-   "decimals": 2
-  },
-  {
-   "concept": "vsme:NumberOfRecordableWorkRelatedAccidentsInTheReportingPeriod",
-   "value": "0",
-   "period": "cur",
-   "unit": "xbrli:pure",
-   "decimals": 2
-  },
-  {
-   "concept": "vsme:NumberOfTemporaryContractEmployees",
-   "value": "41",
-   "period": "cur",
-   "unit": "xbrli:pure",
-   "decimals": 2
-  },
-  {
-   "concept": "vsme:PercentageGapInPayBetweenFemaleAndMaleEmployees",
-   "value": "10.0",
-   "period": "cur",
-   "unit": "xbrli:pure",
-   "decimals": 4,
-   "scale": -2
-  },
-  {
-   "concept": "vsme:PercentageOfEmployeesCoveredByCollectiveBargainingAgreements",
-   "value": "92.71523178807946",
-   "period": "cur",
-   "unit": "xbrli:pure",
-   "decimals": 4,
-   "scale": -2
-  },
-  {
-   "concept": "vsme:PostalCodeOfSite",
-   "value": "20122",
-   "period": "cur",
-   "typed": {
-    "vsme:IdentifierOfSiteTypedAxis": "1"
-   }
-  },
-  {
-   "concept": "vsme:PubliclyAvailableDisclosure",
-   "value": "False",
-   "period": "cur"
-  },
-  {
-   "concept": "vsme:RateOfRecordableWorkRelatedAccidentsInTheReportingPeriod",
-   "value": "0",
-   "period": "cur",
-   "unit": "xbrli:pure",
-   "decimals": 2
-  },
-  {
-   "concept": "vsme:RegisteredAddressOfTheSubsidiary",
-   "value": "Street XYZ, Coutry",
-   "period": "cur",
-   "typed": {
-    "vsme:IdentifierOfSubsidiaryTypedAxis": "1"
-   }
-  },
-  {
-   "concept": "vsme:ReportContainsDisclosuresFromThePreviousReportingPeriodThatRemainUnchanged",
-   "value": "False",
-   "period": "cur"
-  },
-  {
-   "concept": "vsme:SiteLocatedInABiodiversitySensitiveArea",
-   "value": "True",
-   "period": "cur",
-   "typed": {
-    "vsme:IdentifierOfSiteTypedAxis": "1"
-   }
-  },
-  {
-   "concept": "vsme:SiteLocatedNearABiodiversitySensitiveArea",
-   "value": "False",
-   "period": "cur",
-   "typed": {
-    "vsme:IdentifierOfSiteTypedAxis": "1"
-   }
-  },
-  {
-   "concept": "vsme:SustainabilityIssueAddressedByPracticePolicyAndOrFutureInitiative",
-   "value": "Climate change\nCircular economy\nConsumers and end users",
-   "period": "cur",
-   "enumeration": [
-    "https://xbrl.efrag.org/taxonomy/vsme/2026-05-01/vsme#CircularEconomyMember",
-    "https://xbrl.efrag.org/taxonomy/vsme/2026-05-01/vsme#ClimateChangeMember",
-    "https://xbrl.efrag.org/taxonomy/vsme/2026-05-01/vsme#ConsumersAndEndUsersMember"
-   ]
-  },
-  {
-   "concept": "vsme:TimeHorizonsOfAnyClimateRelatedHazardsAndTransitionEventsIdentified",
-   "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque a enim nulla. U…[1341 chars]",
-   "period": "cur"
-  },
-  {
-   "concept": "vsme:TotalAmountOfFinesForTheViolationOfAnticorruptionAndAntibriberyLaws",
-   "value": "5000",
-   "period": "cur",
-   "unit": "iso4217:EUR",
-   "decimals": 2
-  },
-  {
-   "concept": "vsme:TotalEnergyConsumption",
-   "value": "250",
-   "period": "cur",
-   "unit": "utr:MWh",
-   "decimals": 2
-  },
-  {
-   "concept": "vsme:TotalGrossLocationBasedGHGEmissions",
-   "value": "525",
-   "period": "BaselineYearMember",
-   "unit": "utr:tCO2e",
-   "decimals": 2,
-   "explicit": {
-    "vsme:ReportingScopesAxis": "vsme:BaselineYearMember"
-   }
-  },
-  {
-   "concept": "vsme:TotalGrossLocationBasedGHGEmissions",
-   "value": "190",
-   "period": "TargetYearMember",
-   "unit": "utr:tCO2e",
-   "decimals": 2,
-   "explicit": {
-    "vsme:ReportingScopesAxis": "vsme:TargetYearMember"
-   }
-  },
-  {
-   "concept": "vsme:TotalGrossLocationBasedGHGEmissions",
-   "value": "350",
-   "period": "cur",
-   "unit": "utr:tCO2e",
-   "decimals": 2
-  },
-  {
-   "concept": "vsme:TotalGrossLocationBasedScope1AndScope2GHGEmissions",
-   "value": "225",
-   "period": "BaselineYearMember",
-   "unit": "utr:tCO2e",
-   "decimals": 2,
-   "explicit": {
-    "vsme:ReportingScopesAxis": "vsme:BaselineYearMember"
-   }
-  },
-  {
-   "concept": "vsme:TotalGrossLocationBasedScope1AndScope2GHGEmissions",
-   "value": "90",
-   "period": "TargetYearMember",
-   "unit": "utr:tCO2e",
-   "decimals": 2,
-   "explicit": {
-    "vsme:ReportingScopesAxis": "vsme:TargetYearMember"
-   }
-  },
-  {
-   "concept": "vsme:TotalGrossLocationBasedScope1AndScope2GHGEmissions",
-   "value": "150",
-   "period": "cur",
-   "unit": "utr:tCO2e",
-   "decimals": 2
-  },
-  {
-   "concept": "vsme:TotalHazardousWasteGeneratedMass",
-   "value": "101200",
-   "period": "cur",
-   "unit": "utr:kg",
-   "decimals": 2
-  },
-  {
-   "concept": "vsme:TotalHazardousWasteGeneratedVolume",
-   "value": "0",
-   "period": "cur",
-   "unit": "utr:m3",
-   "decimals": 2
-  },
-  {
-   "concept": "vsme:TotalLocationBasedGreenhouseGasEmissionsIntensityValue",
-   "value": "0.014893617021276596",
-   "period": "cur",
-   "unit": "utr:tCO2e/iso4217:EUR",
-   "decimals": 7
-  },
-  {
-   "concept": "vsme:TotalMassOfMaterialUsed",
-   "value": "1500",
-   "period": "cur",
-   "unit": "utr:kg",
-   "decimals": 2
-  },
-  {
-   "concept": "vsme:TotalNatureOrientedAreaOffSite",
-   "value": "35",
-   "period": "cur",
-   "unit": "utr:sqm",
-   "decimals": 2
-  },
-  {
-   "concept": "vsme:TotalNatureOrientedAreaOnSite",
-   "value": "100",
-   "period": "cur",
-   "unit": "utr:sqm",
-   "decimals": 2
-  },
-  {
-   "concept": "vsme:TotalNonHazardousWasteGeneratedMass",
-   "value": "7850000",
-   "period": "cur",
-   "unit": "utr:kg",
-   "decimals": 2
-  },
-  {
-   "concept": "vsme:TotalNonHazardousWasteGeneratedVolume",
-   "value": "0",
-   "period": "cur",
-   "unit": "utr:m3",
-   "decimals": 2
-  },
-  {
-   "concept": "vsme:TotalNumberOfConvictionsForTheViolationOfAntiCorruptionAndAntiBriberyLaws",
-   "value": "1",
-   "period": "cur",
-   "unit": "xbrli:pure",
-   "decimals": 2
-  },
-  {
-   "concept": "vsme:TotalNumberOfSelfEmployedWorkersWithoutPersonnelThatAreWorkingExclusivelyForTheUndertaking",
-   "value": "4",
-   "period": "cur",
-   "unit": "xbrli:pure",
-   "decimals": 2
-  },
-  {
-   "concept": "vsme:TotalNumberOfTemporaryWorkersProvidedByUndertakingsPrimarilyEngagedInEmploymentActivities",
-   "value": "50",
-   "period": "cur",
-   "unit": "xbrli:pure",
-   "decimals": 2
-  },
-  {
-   "concept": "vsme:TotalSealedArea",
-   "value": "25",
-   "period": "cur",
-   "unit": "utr:sqm",
-   "decimals": 2
-  },
-  {
-   "concept": "vsme:TotalUseOfLand",
-   "value": "200",
-   "period": "cur",
-   "unit": "utr:sqm",
-   "decimals": 2
-  },
-  {
-   "concept": "vsme:TotalVolumeOfMaterialUsed",
-   "value": "800",
-   "period": "cur",
-   "unit": "utr:m3",
-   "decimals": 2
-  },
-  {
-   "concept": "vsme:TotalWasteGeneratedMass",
-   "value": "7951200",
-   "period": "cur",
-   "unit": "utr:kg",
-   "decimals": 2
-  },
-  {
-   "concept": "vsme:TotalWasteGeneratedVolume",
-   "value": "0",
-   "period": "cur",
-   "unit": "utr:m3",
-   "decimals": 2
-  },
-  {
-   "concept": "vsme:TotalWasteRecycledReusedAndDirectedToDisposalMass",
-   "value": "5000",
-   "period": "cur",
-   "unit": "utr:t",
-   "decimals": 2,
-   "explicit": {
-    "vsme:TypeOfWasteAxis": "waste:W-040210-Non-Hazardous-OrganicMatterFromNaturalProductsForExampleGreaseWaxMember"
-   }
-  },
-  {
-   "concept": "vsme:TotalWasteRecycledReusedAndDirectedToDisposalMass",
-   "value": "250",
-   "period": "cur",
-   "unit": "utr:t",
-   "decimals": 2,
-   "explicit": {
-    "vsme:TypeOfWasteAxis": "waste:W-040221-Non-Hazardous-WastesFromUnprocessedTextileFibresMember"
-   }
-  },
-  {
-   "concept": "vsme:TotalWasteRecycledReusedAndDirectedToDisposalMass",
-   "value": "700",
-   "period": "cur",
-   "unit": "utr:t",
-   "decimals": 2,
-   "explicit": {
-    "vsme:TypeOfWasteAxis": "waste:W-101103-Non-Hazardous-WasteGlass-BasedFibrousMaterialsMember"
-   }
-  },
-  {
-   "concept": "vsme:TotalWasteRecycledReusedAndDirectedToDisposalMass",
-   "value": "100",
-   "period": "cur",
-   "unit": "utr:t",
-   "decimals": 2,
-   "explicit": {
-    "vsme:TypeOfWasteAxis": "waste:W-130101-Hazardous-HydraulicOilsContainingPcbsMember"
-   }
-  },
-  {
-   "concept": "vsme:TotalWasteRecycledReusedAndDirectedToDisposalMass",
-   "value": "400",
-   "period": "cur",
-   "unit": "utr:t",
-   "decimals": 2,
-   "explicit": {
-    "vsme:TypeOfWasteAxis": "waste:W-150104-Non-Hazardous-MetallicPackagingMember"
-   }
-  },
-  {
-   "concept": "vsme:TotalWasteRecycledReusedAndDirectedToDisposalMass",
-   "value": "1200",
-   "period": "cur",
-   "unit": "utr:kg",
-   "decimals": 2,
-   "explicit": {
-    "vsme:TypeOfWasteAxis": "waste:W-160806-Hazardous-SpentLiquidsUsedAsCatalystsMember"
-   }
-  },
-  {
-   "concept": "vsme:TotalWasteRecycledReusedAndDirectedToDisposalMass",
-   "value": "1500",
-   "period": "cur",
-   "unit": "utr:t",
-   "decimals": 2,
-   "explicit": {
-    "vsme:TypeOfWasteAxis": "waste:W-200101-Non-Hazardous-PaperAndCardboardMember"
-   }
-  },
-  {
-   "concept": "vsme:Turnover",
-   "value": "23500",
-   "period": "cur",
-   "unit": "iso4217:EUR",
-   "decimals": 2,
-   "footnotes": [
-    "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque a enim nulla. U"
-   ]
-  },
-  {
-   "concept": "vsme:TypeOfContentCoveredByTheCodeOfConductOrHumanRightsPolicyForItsOwnWorkforce",
-   "value": "Child labour\nForced labour\nHuman trafficking\nDiscrimination\nAccident prevention",
-   "period": "cur",
-   "enumeration": [
-    "https://xbrl.efrag.org/taxonomy/vsme/2026-05-01/vsme#AccidentPreventionMember",
-    "https://xbrl.efrag.org/taxonomy/vsme/2026-05-01/vsme#ChildLabourMember",
-    "https://xbrl.efrag.org/taxonomy/vsme/2026-05-01/vsme#DiscriminationMember",
-    "https://xbrl.efrag.org/taxonomy/vsme/2026-05-01/vsme#ForcedLabourMember",
-    "https://xbrl.efrag.org/taxonomy/vsme/2026-05-01/vsme#HumanTraffickingMember"
-   ]
-  },
-  {
-   "concept": "vsme:TypeOfNumberOfEmployees",
-   "value": "Full-time equivalent (FTE)",
-   "period": "cur",
-   "enumeration": [
-    "https://xbrl.efrag.org/taxonomy/vsme/2026-05-01/vsme#Full-TimeEquivalentFTEMember"
-   ]
-  },
-  {
-   "concept": "vsme:UndertakingAppliesCircularEconomyPrinciples",
-   "value": "YES",
-   "period": "cur"
-  },
-  {
-   "concept": "vsme:UndertakingHasACodeOfConductOrHumanRightsPolicyForItsOwnWorkforce",
-   "value": "YES",
-   "period": "cur"
-  },
-  {
-   "concept": "vsme:UndertakingHasAComplaintHandlingMechanismForItsOwnWorkforce",
-   "value": "YES",
-   "period": "cur"
-  },
-  {
-   "concept": "vsme:UndertakingHasConfirmedHumanRightsIncidentsInItsOwnWorkforce",
-   "value": "NO",
-   "period": "cur"
-  },
-  {
-   "concept": "vsme:UndertakingHasSetATargetWhichIsRelatedToAPolicy",
-   "value": "True",
-   "period": "cur"
-  },
-  {
-   "concept": "vsme:UndertakingIsAwareOfAnyConfirmedIncidentsInvolvingWorkersInTheValueChainAffectedCommunitiesConsumersAndEndUsers",
-   "value": "NO",
-   "period": "cur"
-  },
-  {
-   "concept": "vsme:UndertakingsAreExcludedFromAnyEuReferenceBenchmarksThatAreAlignedWithTheParisAgreement",
-   "value": "NO",
-   "period": "cur"
-  },
-  {
-   "concept": "vsme:UndertakingsLegalForm",
-   "value": "private limited liability undertaking",
-   "period": "cur",
-   "enumeration": [
-    "https://xbrl.efrag.org/taxonomy/vsme/2026-05-01/vsme#PrivateLimitedLiabilityUndertakingMember"
-   ]
-  },
-  {
-   "concept": "vsme:VolumeOfMaterialUsed",
-   "value": "800",
-   "period": "cur",
-   "unit": "utr:m3",
-   "decimals": 2,
-   "typed": {
-    "vsme:IdentifierOfMaterialTypedAxis": "2"
-   }
-  },
-  {
-   "concept": "vsme:WasteDirectedToDisposalMass",
-   "value": "1000",
-   "period": "cur",
-   "unit": "utr:t",
-   "decimals": 2,
-   "explicit": {
-    "vsme:TypeOfWasteAxis": "waste:W-040210-Non-Hazardous-OrganicMatterFromNaturalProductsForExampleGreaseWaxMember"
-   }
-  },
-  {
-   "concept": "vsme:WasteDirectedToDisposalMass",
-   "value": "150",
-   "period": "cur",
-   "unit": "utr:t",
-   "decimals": 2,
-   "explicit": {
-    "vsme:TypeOfWasteAxis": "waste:W-040221-Non-Hazardous-WastesFromUnprocessedTextileFibresMember"
-   }
-  },
-  {
-   "concept": "vsme:WasteDirectedToDisposalMass",
-   "value": "200",
-   "period": "cur",
-   "unit": "utr:t",
-   "decimals": 2,
-   "explicit": {
-    "vsme:TypeOfWasteAxis": "waste:W-101103-Non-Hazardous-WasteGlass-BasedFibrousMaterialsMember"
-   }
-  },
-  {
-   "concept": "vsme:WasteDirectedToDisposalMass",
-   "value": "70",
-   "period": "cur",
-   "unit": "utr:t",
-   "decimals": 2,
-   "explicit": {
-    "vsme:TypeOfWasteAxis": "waste:W-130101-Hazardous-HydraulicOilsContainingPcbsMember"
-   }
-  },
-  {
-   "concept": "vsme:WasteDirectedToDisposalMass",
-   "value": "100",
-   "period": "cur",
-   "unit": "utr:t",
-   "decimals": 2,
-   "explicit": {
-    "vsme:TypeOfWasteAxis": "waste:W-150104-Non-Hazardous-MetallicPackagingMember"
-   }
-  },
-  {
-   "concept": "vsme:WasteDirectedToDisposalMass",
-   "value": "400",
-   "period": "cur",
-   "unit": "utr:kg",
-   "decimals": 2,
-   "explicit": {
-    "vsme:TypeOfWasteAxis": "waste:W-160806-Hazardous-SpentLiquidsUsedAsCatalystsMember"
-   }
-  },
-  {
-   "concept": "vsme:WasteDirectedToDisposalMass",
-   "value": "300",
-   "period": "cur",
-   "unit": "utr:t",
-   "decimals": 2,
-   "explicit": {
-    "vsme:TypeOfWasteAxis": "waste:W-200101-Non-Hazardous-PaperAndCardboardMember"
-   }
-  },
-  {
-   "concept": "vsme:WasteDivertedToRecycleOrReuseMass",
-   "value": "4000",
-   "period": "cur",
-   "unit": "utr:t",
-   "decimals": 2,
-   "explicit": {
-    "vsme:TypeOfWasteAxis": "waste:W-040210-Non-Hazardous-OrganicMatterFromNaturalProductsForExampleGreaseWaxMember"
-   }
-  },
-  {
-   "concept": "vsme:WasteDivertedToRecycleOrReuseMass",
-   "value": "100",
-   "period": "cur",
-   "unit": "utr:t",
-   "decimals": 2,
-   "explicit": {
-    "vsme:TypeOfWasteAxis": "waste:W-040221-Non-Hazardous-WastesFromUnprocessedTextileFibresMember"
-   }
-  },
-  {
-   "concept": "vsme:WasteDivertedToRecycleOrReuseMass",
-   "value": "500",
-   "period": "cur",
-   "unit": "utr:t",
-   "decimals": 2,
-   "explicit": {
-    "vsme:TypeOfWasteAxis": "waste:W-101103-Non-Hazardous-WasteGlass-BasedFibrousMaterialsMember"
-   }
-  },
-  {
-   "concept": "vsme:WasteDivertedToRecycleOrReuseMass",
-   "value": "30",
-   "period": "cur",
-   "unit": "utr:t",
-   "decimals": 2,
-   "explicit": {
-    "vsme:TypeOfWasteAxis": "waste:W-130101-Hazardous-HydraulicOilsContainingPcbsMember"
-   }
-  },
-  {
-   "concept": "vsme:WasteDivertedToRecycleOrReuseMass",
-   "value": "300",
-   "period": "cur",
-   "unit": "utr:t",
-   "decimals": 2,
-   "explicit": {
-    "vsme:TypeOfWasteAxis": "waste:W-150104-Non-Hazardous-MetallicPackagingMember"
-   }
-  },
-  {
-   "concept": "vsme:WasteDivertedToRecycleOrReuseMass",
-   "value": "800",
-   "period": "cur",
-   "unit": "utr:kg",
-   "decimals": 2,
-   "explicit": {
-    "vsme:TypeOfWasteAxis": "waste:W-160806-Hazardous-SpentLiquidsUsedAsCatalystsMember"
-   }
-  },
-  {
-   "concept": "vsme:WasteDivertedToRecycleOrReuseMass",
-   "value": "1200",
-   "period": "cur",
-   "unit": "utr:t",
-   "decimals": 2,
-   "explicit": {
-    "vsme:TypeOfWasteAxis": "waste:W-200101-Non-Hazardous-PaperAndCardboardMember"
-   }
-  },
-  {
-   "concept": "vsme:WeightOfMaterialUsed",
-   "value": "1500",
-   "period": "cur",
-   "unit": "utr:kg",
-   "decimals": 2,
-   "typed": {
-    "vsme:IdentifierOfMaterialTypedAxis": "1"
-   }
+  "documentInfo": {
+    "documentType": "https://xbrl.org/2021/xbrl-json",
+    "namespaces": {
+      "country": "https://xbrl.org/2024/iso3166",
+      "iso4217": "http://www.xbrl.org/2003/iso4217",
+      "lei": "http://standards.iso.org/iso/17442",
+      "nace": "https://xbrl.efrag.org/taxonomy/nace/2026-05-01",
+      "utr": "http://www.xbrl.org/2009/utr",
+      "vsme": "https://xbrl.efrag.org/taxonomy/vsme/2026-05-01/vsme",
+      "waste": "https://xbrl.efrag.org/taxonomy/waste/2026-05-01/waste",
+      "xbrl": "https://xbrl.org/2021",
+      "xbrli": "http://www.xbrl.org/2003/instance"
+    },
+    "taxonomy": [
+      "https://xbrl.efrag.org/taxonomy/vsme/2026-05-01/vsme-all.xsd"
+    ]
+  },
+  "facts": {
+    "f0001": {
+      "value": "Duomo Square",
+      "dimensions": {
+        "concept": "vsme:AddressOfSite",
+        "entity": "lei:TestCode1234",
+        "period": "2027-01-01T00:00:00",
+        "vsme:IdentifierOfSiteTypedAxis": "1"
+      }
+    },
+    "f0002": {
+      "value": "10",
+      "dimensions": {
+        "concept": "vsme:AmountOfEmissionToAir",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:t",
+        "vsme:TypeOfPollutantAxis": "vsme:AlachlorMember"
+      },
+      "decimals": 2
+    },
+    "f0003": {
+      "value": "10",
+      "dimensions": {
+        "concept": "vsme:AmountOfEmissionToAir",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:t",
+        "vsme:TypeOfPollutantAxis": "vsme:AldrinMember"
+      },
+      "decimals": 2
+    },
+    "f0004": {
+      "value": "3",
+      "dimensions": {
+        "concept": "vsme:AmountOfEmissionToSoil",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:t",
+        "vsme:TypeOfPollutantAxis": "vsme:AlachlorMember"
+      },
+      "decimals": 2
+    },
+    "f0005": {
+      "value": "5",
+      "dimensions": {
+        "concept": "vsme:AmountOfEmissionToSoil",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:t",
+        "vsme:TypeOfPollutantAxis": "vsme:AldrinMember"
+      },
+      "decimals": 2
+    },
+    "f0006": {
+      "value": "5",
+      "dimensions": {
+        "concept": "vsme:AmountOfEmissionToWater",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:t",
+        "vsme:TypeOfPollutantAxis": "vsme:AlachlorMember"
+      },
+      "decimals": 2
+    },
+    "f0007": {
+      "value": "3",
+      "dimensions": {
+        "concept": "vsme:AmountOfEmissionToWater",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:t",
+        "vsme:TypeOfPollutantAxis": "vsme:AldrinMember"
+      },
+      "decimals": 2
+    },
+    "f0008": {
+      "value": "1200",
+      "dimensions": {
+        "concept": "vsme:AreaOfSiteInBiodiversitySensitiveArea",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:sqm",
+        "vsme:IdentifierOfSiteTypedAxis": "1"
+      },
+      "decimals": 2
+    },
+    "f0009": {
+      "value": "60000",
+      "dimensions": {
+        "concept": "vsme:Assets",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "iso4217:EUR"
+      },
+      "decimals": 2,
+      "links": {
+        "footnote": {
+          "_": [
+            "n001"
+          ]
+        }
+      }
+    },
+    "f0010": {
+      "value": "150",
+      "dimensions": {
+        "concept": "vsme:AverageNumberOfAnnualTrainingHoursPerFemaleEmployee",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "xbrli:pure"
+      },
+      "decimals": 2
+    },
+    "f0011": {
+      "value": "100",
+      "dimensions": {
+        "concept": "vsme:AverageNumberOfAnnualTrainingHoursPerMaleEmployee",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "xbrli:pure"
+      },
+      "decimals": 2
+    },
+    "f0012": {
+      "value": "120",
+      "dimensions": {
+        "concept": "vsme:AverageNumberOfAnnualTrainingHoursPerNonReportedGenderEmployee",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "xbrli:pure"
+      },
+      "decimals": 2
+    },
+    "f0013": {
+      "value": "140",
+      "dimensions": {
+        "concept": "vsme:AverageNumberOfAnnualTrainingHoursPerOtherGenderEmployee",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "xbrli:pure"
+      },
+      "decimals": 2
+    },
+    "f0014": {
+      "value": "vsme:OptionBBasicModuleAndComprehensiveModuleMember",
+      "dimensions": {
+        "concept": "vsme:BasisForPreparation",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00"
+      }
+    },
+    "f0015": {
+      "value": "vsme:ConsolidatedMember",
+      "dimensions": {
+        "concept": "vsme:BasisForReporting",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00"
+      }
+    },
+    "f0016": {
+      "value": "Milan",
+      "dimensions": {
+        "concept": "vsme:CityOfSite",
+        "entity": "lei:TestCode1234",
+        "period": "2027-01-01T00:00:00",
+        "vsme:IdentifierOfSiteTypedAxis": "1"
+      }
+    },
+    "f0017": {
+      "value": "country:IT",
+      "dimensions": {
+        "concept": "vsme:CountryOfPrimaryOperationsAndLocationOfSignificantAssets",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00"
+      }
+    },
+    "f0018": {
+      "value": "country:IT",
+      "dimensions": {
+        "concept": "vsme:CountryOfSite",
+        "entity": "lei:TestCode1234",
+        "period": "2027-01-01T00:00:00",
+        "vsme:IdentifierOfSiteTypedAxis": "1"
+      }
+    },
+    "f0019": {
+      "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque a enim nulla. Ut quis lorem at arcu fermentum dictum. Curabitur orci nisl, maximus quis varius nec, vestibulum sed lectus. Quisque tempor sodales sem at ullamcorper. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nullam ligula leo, ornare ac gravida nec, convallis eu lectus. Fusce at molestie ex, eget laoreet lectus. Duis scelerisque erat mi, sed placerat erat fermentum eget. Aenean volutpat risus nec gravida mollis. Aenean cursus elementum diam vitae dictum. Maecenas imperdiet imperdiet felis, vitae hendrerit nisi tempor quis. Maecenas dictum, elit ut viverra fringilla, libero quam viverra turpis, a tristique diam metus eu sapien. Suspendisse dapibus, lorem sit amet porta cursus, purus sapien sollicitudin leo, sed aliquet massa ante nec urna. Cras ultricies in erat vitae tincidunt. Nam vel suscipit dui, et convallis ex. Vivamus et efficitur est.\n\nNulla quis turpis eget turpis dapibus fermentum. Etiam et vestibulum purus, at malesuada neque. Donec vel aliquam arcu. Sed aliquam placerat odio, nec placerat enim rhoncus ut. Nullam a faucibus magna, ac ultrices magna. Duis eget sem justo. Fusce suscipit at augue ut aliquam. Aliquam vel fringilla dolor. Nulla felis lorem, aliquam eget euismod quis, iaculis id erat.",
+      "dimensions": {
+        "concept": "vsme:DescriptionOfATargetRelatedToAPolicy",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00"
+      }
+    },
+    "f0020": {
+      "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque a enim nulla. Ut quis lorem at arcu fermentum dictum. Curabitur orci nisl, maximus quis varius nec, vestibulum sed lectus. Quisque tempor sodales sem at ullamcorper. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nullam ligula leo, ornare ac gravida nec, convallis eu lectus. Fusce at molestie ex, eget laoreet lectus. Duis scelerisque erat mi, sed placerat erat fermentum eget. Aenean volutpat risus nec gravida mollis. Aenean cursus elementum diam vitae dictum. Maecenas imperdiet imperdiet felis, vitae hendrerit nisi tempor quis. Maecenas dictum, elit ut viverra fringilla, libero quam viverra turpis, a tristique diam metus eu sapien. Suspendisse dapibus, lorem sit amet porta cursus, purus sapien sollicitudin leo, sed aliquet massa ante nec urna. Cras ultricies in erat vitae tincidunt. Nam vel suscipit dui, et convallis ex. Vivamus et efficitur est.\n\nNulla quis turpis eget turpis dapibus fermentum. Etiam et vestibulum purus, at malesuada neque. Donec vel aliquam arcu. Sed aliquam placerat odio, nec placerat enim rhoncus ut. Nullam a faucibus magna, ac ultrices magna. Duis eget sem justo. Fusce suscipit at augue ut aliquam. Aliquam vel fringilla dolor. Nulla felis lorem, aliquam eget euismod quis, iaculis id erat.",
+      "dimensions": {
+        "concept": "vsme:DescriptionOfATransitionPlanForClimateChangeMitigationIncludingAnExplanationOfHowItIsContributingToReduceGhgEmissions",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00"
+      }
+    },
+    "f0021": {
+      "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque a enim nulla. Ut quis lorem at arcu fermentum dictum. Curabitur orci nisl, maximus quis varius nec, vestibulum sed lectus. Quisque tempor sodales sem at ullamcorper. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nullam ligula leo, ornare ac gravida nec, convallis eu lectus. Fusce at molestie ex, eget laoreet lectus. Duis scelerisque erat mi, sed placerat erat fermentum eget. Aenean volutpat risus nec gravida mollis. Aenean cursus elementum diam vitae dictum. Maecenas imperdiet imperdiet felis, vitae hendrerit nisi tempor quis. Maecenas dictum, elit ut viverra fringilla, libero quam viverra turpis, a tristique diam metus eu sapien. Suspendisse dapibus, lorem sit amet porta cursus, purus sapien sollicitudin leo, sed aliquet massa ante nec urna. Cras ultricies in erat vitae tincidunt. Nam vel suscipit dui, et convallis ex. Vivamus et efficitur est.\n\nNulla quis turpis eget turpis dapibus fermentum. Etiam et vestibulum purus, at malesuada neque. Donec vel aliquam arcu. Sed aliquam placerat odio, nec placerat enim rhoncus ut. Nullam a faucibus magna, ac ultrices magna. Duis eget sem justo. Fusce suscipit at augue ut aliquam. Aliquam vel fringilla dolor. Nulla felis lorem, aliquam eget euismod quis, iaculis id erat.",
+      "dimensions": {
+        "concept": "vsme:DescriptionOfClimateRelatedHazardsAndClimateRelatedTransitionEvents",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00"
+      }
+    },
+    "f0022": {
+      "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque a enim nulla. Ut quis lorem at arcu fermentum dictum. Curabitur orci nisl, maximus quis varius nec, vestibulum sed lectus. Quisque tempor sodales sem at ullamcorper. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nullam ligula leo, ornare ac gravida nec, convallis eu lectus. Fusce at molestie ex, eget laoreet lectus. Duis scelerisque erat mi, sed placerat erat fermentum eget. Aenean volutpat risus nec gravida mollis. Aenean cursus elementum diam vitae dictum. Maecenas imperdiet imperdiet felis, vitae hendrerit nisi tempor quis. Maecenas dictum, elit ut viverra fringilla, libero quam viverra turpis, a tristique diam metus eu sapien. Suspendisse dapibus, lorem sit amet porta cursus, purus sapien sollicitudin leo, sed aliquet massa ante nec urna. Cras ultricies in erat vitae tincidunt. Nam vel suscipit dui, et convallis ex. Vivamus et efficitur est.\n\nNulla quis turpis eget turpis dapibus fermentum. Etiam et vestibulum purus, at malesuada neque. Donec vel aliquam arcu. Sed aliquam placerat odio, nec placerat enim rhoncus ut. Nullam a faucibus magna, ac ultrices magna. Duis eget sem justo. Fusce suscipit at augue ut aliquam. Aliquam vel fringilla dolor. Nulla felis lorem, aliquam eget euismod quis, iaculis id erat.",
+      "dimensions": {
+        "concept": "vsme:DescriptionOfHowCircularEconomyPrinciplesAreApplied",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00"
+      }
+    },
+    "f0023": {
+      "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque a enim nulla. Ut quis lorem at arcu fermentum dictum. Curabitur orci nisl, maximus quis varius nec, vestibulum sed lectus. Quisque tempor sodales sem at ullamcorper. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nullam ligula leo, ornare ac gravida nec, convallis eu lectus. Fusce at molestie ex, eget laoreet lectus. Duis scelerisque erat mi, sed placerat erat fermentum eget. Aenean volutpat risus nec gravida mollis. Aenean cursus elementum diam vitae dictum. Maecenas imperdiet imperdiet felis, vitae hendrerit nisi tempor quis. Maecenas dictum, elit ut viverra fringilla, libero quam viverra turpis, a tristique diam metus eu sapien. Suspendisse dapibus, lorem sit amet porta cursus, purus sapien sollicitudin leo, sed aliquet massa ante nec urna. Cras ultricies in erat vitae tincidunt. Nam vel suscipit dui, et convallis ex. Vivamus et efficitur est.\n\nNulla quis turpis eget turpis dapibus fermentum. Etiam et vestibulum purus, at malesuada neque. Donec vel aliquam arcu. Sed aliquam placerat odio, nec placerat enim rhoncus ut. Nullam a faucibus magna, ac ultrices magna. Duis eget sem justo. Fusce suscipit at augue ut aliquam. Aliquam vel fringilla dolor. Nulla felis lorem, aliquam eget euismod quis, iaculis id erat.",
+      "dimensions": {
+        "concept": "vsme:DescriptionOfKeyElementsOfStrategyThatRelatesToOrAffectsSustainabilityIssues",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00"
+      }
+    },
+    "f0024": {
+      "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque a enim nulla. Ut quis lorem at arcu fermentum dictum. Curabitur orci nisl, maximus quis varius nec, vestibulum sed lectus. Quisque tempor sodales sem at ullamcorper. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nullam ligula leo, ornare ac gravida nec, convallis eu lectus. Fusce at molestie ex, eget laoreet lectus. Duis scelerisque erat mi, sed placerat erat fermentum eget. Aenean volutpat risus nec gravida mollis. Aenean cursus elementum diam vitae dictum. Maecenas imperdiet imperdiet felis, vitae hendrerit nisi tempor quis. Maecenas dictum, elit ut viverra fringilla, libero quam viverra turpis, a tristique diam metus eu sapien. Suspendisse dapibus, lorem sit amet porta cursus, purus sapien sollicitudin leo, sed aliquet massa ante nec urna. Cras ultricies in erat vitae tincidunt. Nam vel suscipit dui, et convallis ex. Vivamus et efficitur est.\n\nNulla quis turpis eget turpis dapibus fermentum. Etiam et vestibulum purus, at malesuada neque. Donec vel aliquam arcu. Sed aliquam placerat odio, nec placerat enim rhoncus ut. Nullam a faucibus magna, ac ultrices magna. Duis eget sem justo. Fusce suscipit at augue ut aliquam. Aliquam vel fringilla dolor. Nulla felis lorem, aliquam eget euismod quis, iaculis id erat.",
+      "dimensions": {
+        "concept": "vsme:DescriptionOfMainBusinessRelationships",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00"
+      }
+    },
+    "f0025": {
+      "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque a enim nulla. Ut quis lorem at arcu fermentum dictum. Curabitur orci nisl, maximus quis varius nec, vestibulum sed lectus. Quisque tempor sodales sem at ullamcorper. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nullam ligula leo, ornare ac gravida nec, convallis eu lectus. Fusce at molestie ex, eget laoreet lectus. Duis scelerisque erat mi, sed placerat erat fermentum eget. Aenean volutpat risus nec gravida mollis. Aenean cursus elementum diam vitae dictum. Maecenas imperdiet imperdiet felis, vitae hendrerit nisi tempor quis. Maecenas dictum, elit ut viverra fringilla, libero quam viverra turpis, a tristique diam metus eu sapien. Suspendisse dapibus, lorem sit amet porta cursus, purus sapien sollicitudin leo, sed aliquet massa ante nec urna. Cras ultricies in erat vitae tincidunt. Nam vel suscipit dui, et convallis ex. Vivamus et efficitur est.\n\nNulla quis turpis eget turpis dapibus fermentum. Etiam et vestibulum purus, at malesuada neque. Donec vel aliquam arcu. Sed aliquam placerat odio, nec placerat enim rhoncus ut. Nullam a faucibus magna, ac ultrices magna. Duis eget sem justo. Fusce suscipit at augue ut aliquam. Aliquam vel fringilla dolor. Nulla felis lorem, aliquam eget euismod quis, iaculis id erat.",
+      "dimensions": {
+        "concept": "vsme:DescriptionOfPracticesPoliciesAndOrFutureInitiatives",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00"
+      }
+    },
+    "f0026": {
+      "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque a enim nulla. Ut quis lorem at arcu fermentum dictum. Curabitur orci nisl, maximus quis varius nec, vestibulum sed lectus. Quisque tempor sodales sem at ullamcorper. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nullam ligula leo, ornare ac gravida nec, convallis eu lectus. Fusce at molestie ex, eget laoreet lectus. Duis scelerisque erat mi, sed placerat erat fermentum eget. Aenean volutpat risus nec gravida mollis. Aenean cursus elementum diam vitae dictum. Maecenas imperdiet imperdiet felis, vitae hendrerit nisi tempor quis. Maecenas dictum, elit ut viverra fringilla, libero quam viverra turpis, a tristique diam metus eu sapien. Suspendisse dapibus, lorem sit amet porta cursus, purus sapien sollicitudin leo, sed aliquet massa ante nec urna. Cras ultricies in erat vitae tincidunt. Nam vel suscipit dui, et convallis ex. Vivamus et efficitur est.\n\nNulla quis turpis eget turpis dapibus fermentum. Etiam et vestibulum purus, at malesuada neque. Donec vel aliquam arcu. Sed aliquam placerat odio, nec placerat enim rhoncus ut. Nullam a faucibus magna, ac ultrices magna. Duis eget sem justo. Fusce suscipit at augue ut aliquam. Aliquam vel fringilla dolor. Nulla felis lorem, aliquam eget euismod quis, iaculis id erat.",
+      "dimensions": {
+        "concept": "vsme:DescriptionOfSignificantGroupsOfProductsAndOrServicesOffered",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00"
+      }
+    },
+    "f0027": {
+      "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque a enim nulla. Ut quis lorem at arcu fermentum dictum. Curabitur orci nisl, maximus quis varius nec, vestibulum sed lectus. Quisque tempor sodales sem at ullamcorper. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nullam ligula leo, ornare ac gravida nec, convallis eu lectus. Fusce at molestie ex, eget laoreet lectus. Duis scelerisque erat mi, sed placerat erat fermentum eget. Aenean volutpat risus nec gravida mollis. Aenean cursus elementum diam vitae dictum. Maecenas imperdiet imperdiet felis, vitae hendrerit nisi tempor quis. Maecenas dictum, elit ut viverra fringilla, libero quam viverra turpis, a tristique diam metus eu sapien. Suspendisse dapibus, lorem sit amet porta cursus, purus sapien sollicitudin leo, sed aliquet massa ante nec urna. Cras ultricies in erat vitae tincidunt. Nam vel suscipit dui, et convallis ex. Vivamus et efficitur est.\n\nNulla quis turpis eget turpis dapibus fermentum. Etiam et vestibulum purus, at malesuada neque. Donec vel aliquam arcu. Sed aliquam placerat odio, nec placerat enim rhoncus ut. Nullam a faucibus magna, ac ultrices magna. Duis eget sem justo. Fusce suscipit at augue ut aliquam. Aliquam vel fringilla dolor. Nulla felis lorem, aliquam eget euismod quis, iaculis id erat.",
+      "dimensions": {
+        "concept": "vsme:DescriptionOfSignificantMarketsTheUndertakingOperatesIn",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00"
+      }
+    },
+    "f0028": {
+      "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque a enim nulla. Ut quis lorem at arcu fermentum dictum. Curabitur orci nisl, maximus quis varius nec, vestibulum sed lectus. Quisque tempor sodales sem at ullamcorper. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nullam ligula leo, ornare ac gravida nec, convallis eu lectus. Fusce at molestie ex, eget laoreet lectus. Duis scelerisque erat mi, sed placerat erat fermentum eget. Aenean volutpat risus nec gravida mollis. Aenean cursus elementum diam vitae dictum. Maecenas imperdiet imperdiet felis, vitae hendrerit nisi tempor quis. Maecenas dictum, elit ut viverra fringilla, libero quam viverra turpis, a tristique diam metus eu sapien. Suspendisse dapibus, lorem sit amet porta cursus, purus sapien sollicitudin leo, sed aliquet massa ante nec urna. Cras ultricies in erat vitae tincidunt. Nam vel suscipit dui, et convallis ex. Vivamus et efficitur est.\n\nNulla quis turpis eget turpis dapibus fermentum. Etiam et vestibulum purus, at malesuada neque. Donec vel aliquam arcu. Sed aliquam placerat odio, nec placerat enim rhoncus ut. Nullam a faucibus magna, ac ultrices magna. Duis eget sem justo. Fusce suscipit at augue ut aliquam. Aliquam vel fringilla dolor. Nulla felis lorem, aliquam eget euismod quis, iaculis id erat.",
+      "dimensions": {
+        "concept": "vsme:DescriptionOfSustainabilityRelatedCertificationsOrLabels",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00"
+      }
+    },
+    "f0029": {
+      "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque a enim nulla. Ut quis lorem at arcu fermentum dictum. Curabitur orci nisl, maximus quis varius nec, vestibulum sed lectus. Quisque tempor sodales sem at ullamcorper. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nullam ligula leo, ornare ac gravida nec, convallis eu lectus. Fusce at molestie ex, eget laoreet lectus. Duis scelerisque erat mi, sed placerat erat fermentum eget. Aenean volutpat risus nec gravida mollis. Aenean cursus elementum diam vitae dictum. Maecenas imperdiet imperdiet felis, vitae hendrerit nisi tempor quis. Maecenas dictum, elit ut viverra fringilla, libero quam viverra turpis, a tristique diam metus eu sapien. Suspendisse dapibus, lorem sit amet porta cursus, purus sapien sollicitudin leo, sed aliquet massa ante nec urna. Cras ultricies in erat vitae tincidunt. Nam vel suscipit dui, et convallis ex. Vivamus et efficitur est.\n\nNulla quis turpis eget turpis dapibus fermentum. Etiam et vestibulum purus, at malesuada neque. Donec vel aliquam arcu. Sed aliquam placerat odio, nec placerat enim rhoncus ut. Nullam a faucibus magna, ac ultrices magna. Duis eget sem justo. Fusce suscipit at augue ut aliquam. Aliquam vel fringilla dolor. Nulla felis lorem, aliquam eget euismod quis, iaculis id erat.",
+      "dimensions": {
+        "concept": "vsme:DisclosureOfAnyOtherGeneralAndOrEntitySpecificInformation",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00"
+      }
+    },
+    "f0030": {
+      "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque a enim nulla. Ut quis lorem at arcu fermentum dictum. Curabitur orci nisl, maximus quis varius nec, vestibulum sed lectus. Quisque tempor sodales sem at ullamcorper. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nullam ligula leo, ornare ac gravida nec, convallis eu lectus. Fusce at molestie ex, eget laoreet lectus. Duis scelerisque erat mi, sed placerat erat fermentum eget. Aenean volutpat risus nec gravida mollis. Aenean cursus elementum diam vitae dictum. Maecenas imperdiet imperdiet felis, vitae hendrerit nisi tempor quis. Maecenas dictum, elit ut viverra fringilla, libero quam viverra turpis, a tristique diam metus eu sapien. Suspendisse dapibus, lorem sit amet porta cursus, purus sapien sollicitudin leo, sed aliquet massa ante nec urna. Cras ultricies in erat vitae tincidunt. Nam vel suscipit dui, et convallis ex. Vivamus et efficitur est.\n\nNulla quis turpis eget turpis dapibus fermentum. Etiam et vestibulum purus, at malesuada neque. Donec vel aliquam arcu. Sed aliquam placerat odio, nec placerat enim rhoncus ut. Nullam a faucibus magna, ac ultrices magna. Duis eget sem justo. Fusce suscipit at augue ut aliquam. Aliquam vel fringilla dolor. Nulla felis lorem, aliquam eget euismod quis, iaculis id erat.",
+      "dimensions": {
+        "concept": "vsme:DisclosureOfHowItHasAssessedTheExposureAndSensitivityOfItsAssetsActivitiesAndValueChainToTheseHazardsAndTransitionEvents",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00"
+      }
+    },
+    "f0031": {
+      "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque a enim nulla. Ut quis lorem at arcu fermentum dictum. Curabitur orci nisl, maximus quis varius nec, vestibulum sed lectus. Quisque tempor sodales sem at ullamcorper. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nullam ligula leo, ornare ac gravida nec, convallis eu lectus. Fusce at molestie ex, eget laoreet lectus. Duis scelerisque erat mi, sed placerat erat fermentum eget. Aenean volutpat risus nec gravida mollis. Aenean cursus elementum diam vitae dictum. Maecenas imperdiet imperdiet felis, vitae hendrerit nisi tempor quis. Maecenas dictum, elit ut viverra fringilla, libero quam viverra turpis, a tristique diam metus eu sapien. Suspendisse dapibus, lorem sit amet porta cursus, purus sapien sollicitudin leo, sed aliquet massa ante nec urna. Cras ultricies in erat vitae tincidunt. Nam vel suscipit dui, et convallis ex. Vivamus et efficitur est.\n\nNulla quis turpis eget turpis dapibus fermentum. Etiam et vestibulum purus, at malesuada neque. Donec vel aliquam arcu. Sed aliquam placerat odio, nec placerat enim rhoncus ut. Nullam a faucibus magna, ac ultrices magna. Duis eget sem justo. Fusce suscipit at augue ut aliquam. Aliquam vel fringilla dolor. Nulla felis lorem, aliquam eget euismod quis, iaculis id erat.",
+      "dimensions": {
+        "concept": "vsme:DisclosureOfListOfMainActionsTheEntitySeeksInOrderToAchieveItsTargets",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00"
+      }
+    },
+    "f0032": {
+      "value": false,
+      "dimensions": {
+        "concept": "vsme:DisclosureOfWhetherItHasUndertakenClimateChangeAdaptationActionsForAnyClimateRelatedHazardsAndTransitionEvents",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00"
+      }
+    },
+    "f0033": {
+      "value": "vsme:AverageDuringTheReportingPeriodMember",
+      "dimensions": {
+        "concept": "vsme:EmployeeCountingMethodology",
+        "entity": "lei:TestCode1234",
+        "period": "2027-01-01T00:00:00"
+      }
+    },
+    "f0034": {
+      "value": "0.2840909090909091",
+      "dimensions": {
+        "concept": "vsme:EmployeeTurnoverRate",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "xbrli:pure"
+      },
+      "decimals": 4
+    },
+    "f0035": {
+      "value": false,
+      "dimensions": {
+        "concept": "vsme:EmployeesReceivePayEqualOrAboveMinimumWageDeterminedByNationalLawOrCollectiveAgreement",
+        "entity": "lei:TestCode1234",
+        "period": "2027-01-01T00:00:00"
+      }
+    },
+    "f0036": {
+      "value": "100",
+      "dimensions": {
+        "concept": "vsme:EnergyConsumptionFromElectricity",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:MWh",
+        "vsme:BreakdownOfEnergyConsumptionAxis": "vsme:NonRenewableEnergyMember"
+      },
+      "decimals": 2
+    },
+    "f0037": {
+      "value": "0",
+      "dimensions": {
+        "concept": "vsme:EnergyConsumptionFromElectricity",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:MWh",
+        "vsme:BreakdownOfEnergyConsumptionAxis": "vsme:RenewableEnergyMember"
+      },
+      "decimals": 2
+    },
+    "f0038": {
+      "value": "100",
+      "dimensions": {
+        "concept": "vsme:EnergyConsumptionFromElectricity",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:MWh"
+      },
+      "decimals": 2,
+      "links": {
+        "footnote": {
+          "_": [
+            "n002"
+          ]
+        }
+      }
+    },
+    "f0039": {
+      "value": "10.03334136",
+      "dimensions": {
+        "concept": "vsme:EnergyConsumptionFromFuels",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:MWh",
+        "vsme:BreakdownOfEnergyConsumptionAxis": "vsme:NonRenewableEnergyMember"
+      },
+      "decimals": 2
+    },
+    "f0040": {
+      "value": "6.3750051",
+      "dimensions": {
+        "concept": "vsme:EnergyConsumptionFromFuels",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:MWh",
+        "vsme:BreakdownOfEnergyConsumptionAxis": "vsme:RenewableEnergyMember"
+      },
+      "decimals": 2
+    },
+    "f0041": {
+      "value": "16.40834646",
+      "dimensions": {
+        "concept": "vsme:EnergyConsumptionFromFuels",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:MWh"
+      },
+      "decimals": 2,
+      "links": {
+        "footnote": {
+          "_": [
+            "n002"
+          ]
+        }
+      }
+    },
+    "f0042": {
+      "value": "20",
+      "dimensions": {
+        "concept": "vsme:EnergyConsumptionFromSelfGeneratedElectricity",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:MWh",
+        "vsme:BreakdownOfEnergyConsumptionAxis": "vsme:NonRenewableEnergyMember"
+      },
+      "decimals": 2
+    },
+    "f0043": {
+      "value": "23",
+      "dimensions": {
+        "concept": "vsme:EnergyConsumptionFromSelfGeneratedElectricity",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:MWh",
+        "vsme:BreakdownOfEnergyConsumptionAxis": "vsme:RenewableEnergyMember"
+      },
+      "decimals": 2
+    },
+    "f0044": {
+      "value": "43",
+      "dimensions": {
+        "concept": "vsme:EnergyConsumptionFromSelfGeneratedElectricity",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:MWh"
+      },
+      "decimals": 2,
+      "links": {
+        "footnote": {
+          "_": [
+            "n002"
+          ]
+        }
+      }
+    },
+    "f0045": {
+      "value": "0.8",
+      "dimensions": {
+        "concept": "vsme:FemaleToMaleRatioAtManagementLevelForTheReportingPeriod",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "xbrli:pure"
+      },
+      "decimals": 2
+    },
+    "f0046": {
+      "value": "2.5",
+      "dimensions": {
+        "concept": "vsme:GenderDiversityRatioInGovernanceBody",
+        "entity": "lei:TestCode1234",
+        "period": "2027-01-01T00:00:00",
+        "unit": "xbrli:pure"
+      },
+      "decimals": 2
+    },
+    "f0047": {
+      "value": "2020",
+      "dimensions": {
+        "concept": "vsme:GreenhouseGasEmissionReductionTargetBaseYear",
+        "entity": "lei:TestCode1234",
+        "period": "2027-01-01T00:00:00"
+      }
+    },
+    "f0048": {
+      "value": "2030",
+      "dimensions": {
+        "concept": "vsme:GreenhouseGasEmissionReductionTargetYear",
+        "entity": "lei:TestCode1234",
+        "period": "2027-01-01T00:00:00"
+      }
+    },
+    "f0049": {
+      "value": "75",
+      "dimensions": {
+        "concept": "vsme:GrossLocationBasedScope2GreenhouseGasEmissions",
+        "entity": "lei:TestCode1234",
+        "period": "2020-01-01T00:00:00/2021-01-01T00:00:00",
+        "unit": "utr:tCO2e",
+        "vsme:ReportingScopesAxis": "vsme:BaselineYearMember"
+      },
+      "decimals": 2
+    },
+    "f0050": {
+      "value": "50",
+      "dimensions": {
+        "concept": "vsme:GrossLocationBasedScope2GreenhouseGasEmissions",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:tCO2e"
+      },
+      "decimals": 2
+    },
+    "f0051": {
+      "value": "15",
+      "dimensions": {
+        "concept": "vsme:GrossLocationBasedScope2GreenhouseGasEmissions",
+        "entity": "lei:TestCode1234",
+        "period": "2030-01-01T00:00:00/2031-01-01T00:00:00",
+        "unit": "utr:tCO2e",
+        "vsme:ReportingScopesAxis": "vsme:TargetYearMember"
+      },
+      "decimals": 2
+    },
+    "f0052": {
+      "value": "150",
+      "dimensions": {
+        "concept": "vsme:GrossScope1GreenhouseGasEmissions",
+        "entity": "lei:TestCode1234",
+        "period": "2020-01-01T00:00:00/2021-01-01T00:00:00",
+        "unit": "utr:tCO2e",
+        "vsme:ReportingScopesAxis": "vsme:BaselineYearMember"
+      },
+      "decimals": 2
+    },
+    "f0053": {
+      "value": "100",
+      "dimensions": {
+        "concept": "vsme:GrossScope1GreenhouseGasEmissions",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:tCO2e"
+      },
+      "decimals": 2
+    },
+    "f0054": {
+      "value": "75",
+      "dimensions": {
+        "concept": "vsme:GrossScope1GreenhouseGasEmissions",
+        "entity": "lei:TestCode1234",
+        "period": "2030-01-01T00:00:00/2031-01-01T00:00:00",
+        "unit": "utr:tCO2e",
+        "vsme:ReportingScopesAxis": "vsme:TargetYearMember"
+      },
+      "decimals": 2
+    },
+    "f0055": {
+      "value": "300",
+      "dimensions": {
+        "concept": "vsme:GrossScope3GreenhouseGasEmissions",
+        "entity": "lei:TestCode1234",
+        "period": "2020-01-01T00:00:00/2021-01-01T00:00:00",
+        "unit": "utr:tCO2e",
+        "vsme:ReportingScopesAxis": "vsme:BaselineYearMember"
+      },
+      "decimals": 2
+    },
+    "f0056": {
+      "value": "200",
+      "dimensions": {
+        "concept": "vsme:GrossScope3GreenhouseGasEmissions",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:tCO2e"
+      },
+      "decimals": 2
+    },
+    "f0057": {
+      "value": "100",
+      "dimensions": {
+        "concept": "vsme:GrossScope3GreenhouseGasEmissions",
+        "entity": "lei:TestCode1234",
+        "period": "2030-01-01T00:00:00/2031-01-01T00:00:00",
+        "unit": "utr:tCO2e",
+        "vsme:ReportingScopesAxis": "vsme:TargetYearMember"
+      },
+      "decimals": 2
+    },
+    "f0058": {
+      "value": "vsme:B6-WaterMember vsme:B6WaterConsumptionMember vsme:B6WaterWithdrawalMember",
+      "dimensions": {
+        "concept": "vsme:ListOfOmittedDisclosuresDeemedToBeClassifiedOrSensitiveInformation",
+        "entity": "lei:TestCode1234",
+        "period": "2027-01-01T00:00:00"
+      }
+    },
+    "f0059": {
+      "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque a enim nulla. Ut quis lorem at arcu fermentum dictum. Curabitur orci nisl, maximus quis varius nec, vestibulum sed lectus. Quisque tempor sodales sem at ullamcorper. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nullam ligula leo, ornare ac gravida nec, convallis eu lectus. Fusce at molestie ex, eget laoreet lectus. Duis scelerisque erat mi, sed placerat erat fermentum eget. Aenean volutpat risus nec gravida mollis. Aenean cursus elementum diam vitae dictum. Maecenas imperdiet imperdiet felis, vitae hendrerit nisi tempor quis. Maecenas dictum, elit ut viverra fringilla, libero quam viverra turpis, a tristique diam metus eu sapien. Suspendisse dapibus, lorem sit amet porta cursus, purus sapien sollicitudin leo, sed aliquet massa ante nec urna. Cras ultricies in erat vitae tincidunt. Nam vel suscipit dui, et convallis ex. Vivamus et efficitur est.\n\nNulla quis turpis eget turpis dapibus fermentum. Etiam et vestibulum purus, at malesuada neque. Donec vel aliquam arcu. Sed aliquam placerat odio, nec placerat enim rhoncus ut. Nullam a faucibus magna, ac ultrices magna. Duis eget sem justo. Fusce suscipit at augue ut aliquam. Aliquam vel fringilla dolor. Nulla felis lorem, aliquam eget euismod quis, iaculis id erat.",
+      "dimensions": {
+        "concept": "vsme:MostSeniorLevelAccountableForImplementationOfPolicies",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00"
+      }
+    },
+    "f0060": {
+      "value": "nace:NACE_G4721 nace:NACE_G4722",
+      "dimensions": {
+        "concept": "vsme:NaceSectorClassificationCodes",
+        "entity": "lei:TestCode1234",
+        "period": "2027-01-01T00:00:00"
+      }
+    },
+    "f0061": {
+      "value": "Packaging",
+      "dimensions": {
+        "concept": "vsme:NameOfMaterialUsed",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "vsme:IdentifierOfMaterialTypedAxis": "1"
+      }
+    },
+    "f0062": {
+      "value": "Wrapping, trays, containers",
+      "dimensions": {
+        "concept": "vsme:NameOfMaterialUsed",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "vsme:IdentifierOfMaterialTypedAxis": "2"
+      }
+    },
+    "f0063": {
+      "value": "Company XYZ Subsidiary 1",
+      "dimensions": {
+        "concept": "vsme:NameOfTheSubsidiary",
+        "entity": "lei:TestCode1234",
+        "period": "2027-01-01T00:00:00",
+        "vsme:IdentifierOfSubsidiaryTypedAxis": "1"
+      }
+    },
+    "f0064": {
+      "value": "151",
+      "dimensions": {
+        "concept": "vsme:NumberOfEmployees",
+        "entity": "lei:TestCode1234",
+        "period": "2027-01-01T00:00:00",
+        "unit": "xbrli:pure"
+      },
+      "decimals": 2
+    },
+    "f0065": {
+      "value": "6",
+      "dimensions": {
+        "concept": "vsme:NumberOfEmployeesForCountryOfEmploymentContract",
+        "entity": "lei:TestCode1234",
+        "period": "2027-01-01T00:00:00",
+        "unit": "xbrli:pure",
+        "vsme:CountryOfEmploymentContractAxis": "country:AL"
+      },
+      "decimals": 2
+    },
+    "f0066": {
+      "value": "5",
+      "dimensions": {
+        "concept": "vsme:NumberOfEmployeesForCountryOfEmploymentContract",
+        "entity": "lei:TestCode1234",
+        "period": "2027-01-01T00:00:00",
+        "unit": "xbrli:pure",
+        "vsme:CountryOfEmploymentContractAxis": "country:BE"
+      },
+      "decimals": 2
+    },
+    "f0067": {
+      "value": "140",
+      "dimensions": {
+        "concept": "vsme:NumberOfEmployeesForCountryOfEmploymentContract",
+        "entity": "lei:TestCode1234",
+        "period": "2027-01-01T00:00:00",
+        "unit": "xbrli:pure",
+        "vsme:CountryOfEmploymentContractAxis": "country:IT"
+      },
+      "decimals": 2
+    },
+    "f0068": {
+      "value": "0",
+      "dimensions": {
+        "concept": "vsme:NumberOfFatalitiesAsAResultOfWorkRelatedInjuriesAndWorkRelatedIllHealth",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "xbrli:pure"
+      },
+      "decimals": 2
+    },
+    "f0069": {
+      "value": "40",
+      "dimensions": {
+        "concept": "vsme:NumberOfFemaleEmployees",
+        "entity": "lei:TestCode1234",
+        "period": "2027-01-01T00:00:00",
+        "unit": "xbrli:pure"
+      },
+      "decimals": 2
+    },
+    "f0070": {
+      "value": "55",
+      "dimensions": {
+        "concept": "vsme:NumberOfMaleEmployees",
+        "entity": "lei:TestCode1234",
+        "period": "2027-01-01T00:00:00",
+        "unit": "xbrli:pure"
+      },
+      "decimals": 2
+    },
+    "f0071": {
+      "value": "51",
+      "dimensions": {
+        "concept": "vsme:NumberOfNonReportedGenderEmployees",
+        "entity": "lei:TestCode1234",
+        "period": "2027-01-01T00:00:00",
+        "unit": "xbrli:pure"
+      },
+      "decimals": 2
+    },
+    "f0072": {
+      "value": "5",
+      "dimensions": {
+        "concept": "vsme:NumberOfOtherGenderEmployees",
+        "entity": "lei:TestCode1234",
+        "period": "2027-01-01T00:00:00",
+        "unit": "xbrli:pure"
+      },
+      "decimals": 2
+    },
+    "f0073": {
+      "value": "110",
+      "dimensions": {
+        "concept": "vsme:NumberOfPermanentContractEmployees",
+        "entity": "lei:TestCode1234",
+        "period": "2027-01-01T00:00:00",
+        "unit": "xbrli:pure"
+      },
+      "decimals": 2
+    },
+    "f0074": {
+      "value": "0",
+      "dimensions": {
+        "concept": "vsme:NumberOfRecordableWorkRelatedAccidentsInTheReportingPeriod",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "xbrli:pure"
+      },
+      "decimals": 2
+    },
+    "f0075": {
+      "value": "41",
+      "dimensions": {
+        "concept": "vsme:NumberOfTemporaryContractEmployees",
+        "entity": "lei:TestCode1234",
+        "period": "2027-01-01T00:00:00",
+        "unit": "xbrli:pure"
+      },
+      "decimals": 2
+    },
+    "f0076": {
+      "value": "0.100",
+      "dimensions": {
+        "concept": "vsme:PercentageGapInPayBetweenFemaleAndMaleEmployees",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "xbrli:pure"
+      },
+      "decimals": 4
+    },
+    "f0077": {
+      "value": "0.9271523178807946",
+      "dimensions": {
+        "concept": "vsme:PercentageOfEmployeesCoveredByCollectiveBargainingAgreements",
+        "entity": "lei:TestCode1234",
+        "period": "2027-01-01T00:00:00",
+        "unit": "xbrli:pure"
+      },
+      "decimals": 4
+    },
+    "f0078": {
+      "value": "20122",
+      "dimensions": {
+        "concept": "vsme:PostalCodeOfSite",
+        "entity": "lei:TestCode1234",
+        "period": "2027-01-01T00:00:00",
+        "vsme:IdentifierOfSiteTypedAxis": "1"
+      }
+    },
+    "f0079": {
+      "value": false,
+      "dimensions": {
+        "concept": "vsme:PubliclyAvailableDisclosure",
+        "entity": "lei:TestCode1234",
+        "period": "2027-01-01T00:00:00"
+      }
+    },
+    "f0080": {
+      "value": "0",
+      "dimensions": {
+        "concept": "vsme:RateOfRecordableWorkRelatedAccidentsInTheReportingPeriod",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "xbrli:pure"
+      },
+      "decimals": 2
+    },
+    "f0081": {
+      "value": "Street XYZ, Coutry",
+      "dimensions": {
+        "concept": "vsme:RegisteredAddressOfTheSubsidiary",
+        "entity": "lei:TestCode1234",
+        "period": "2027-01-01T00:00:00",
+        "vsme:IdentifierOfSubsidiaryTypedAxis": "1"
+      }
+    },
+    "f0082": {
+      "value": false,
+      "dimensions": {
+        "concept": "vsme:ReportContainsDisclosuresFromThePreviousReportingPeriodThatRemainUnchanged",
+        "entity": "lei:TestCode1234",
+        "period": "2027-01-01T00:00:00"
+      }
+    },
+    "f0083": {
+      "value": true,
+      "dimensions": {
+        "concept": "vsme:SiteLocatedInABiodiversitySensitiveArea",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "vsme:IdentifierOfSiteTypedAxis": "1"
+      }
+    },
+    "f0084": {
+      "value": false,
+      "dimensions": {
+        "concept": "vsme:SiteLocatedNearABiodiversitySensitiveArea",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "vsme:IdentifierOfSiteTypedAxis": "1"
+      }
+    },
+    "f0085": {
+      "value": "vsme:CircularEconomyMember vsme:ClimateChangeMember vsme:ConsumersAndEndUsersMember",
+      "dimensions": {
+        "concept": "vsme:SustainabilityIssueAddressedByPracticePolicyAndOrFutureInitiative",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00"
+      }
+    },
+    "f0086": {
+      "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque a enim nulla. Ut quis lorem at arcu fermentum dictum. Curabitur orci nisl, maximus quis varius nec, vestibulum sed lectus. Quisque tempor sodales sem at ullamcorper. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nullam ligula leo, ornare ac gravida nec, convallis eu lectus. Fusce at molestie ex, eget laoreet lectus. Duis scelerisque erat mi, sed placerat erat fermentum eget. Aenean volutpat risus nec gravida mollis. Aenean cursus elementum diam vitae dictum. Maecenas imperdiet imperdiet felis, vitae hendrerit nisi tempor quis. Maecenas dictum, elit ut viverra fringilla, libero quam viverra turpis, a tristique diam metus eu sapien. Suspendisse dapibus, lorem sit amet porta cursus, purus sapien sollicitudin leo, sed aliquet massa ante nec urna. Cras ultricies in erat vitae tincidunt. Nam vel suscipit dui, et convallis ex. Vivamus et efficitur est.\n\nNulla quis turpis eget turpis dapibus fermentum. Etiam et vestibulum purus, at malesuada neque. Donec vel aliquam arcu. Sed aliquam placerat odio, nec placerat enim rhoncus ut. Nullam a faucibus magna, ac ultrices magna. Duis eget sem justo. Fusce suscipit at augue ut aliquam. Aliquam vel fringilla dolor. Nulla felis lorem, aliquam eget euismod quis, iaculis id erat.",
+      "dimensions": {
+        "concept": "vsme:TimeHorizonsOfAnyClimateRelatedHazardsAndTransitionEventsIdentified",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00"
+      }
+    },
+    "f0087": {
+      "value": "5000",
+      "dimensions": {
+        "concept": "vsme:TotalAmountOfFinesForTheViolationOfAnticorruptionAndAntibriberyLaws",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "iso4217:EUR"
+      },
+      "decimals": 2
+    },
+    "f0088": {
+      "value": "250",
+      "dimensions": {
+        "concept": "vsme:TotalEnergyConsumption",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:MWh"
+      },
+      "decimals": 2
+    },
+    "f0089": {
+      "value": "525",
+      "dimensions": {
+        "concept": "vsme:TotalGrossLocationBasedGHGEmissions",
+        "entity": "lei:TestCode1234",
+        "period": "2020-01-01T00:00:00/2021-01-01T00:00:00",
+        "unit": "utr:tCO2e",
+        "vsme:ReportingScopesAxis": "vsme:BaselineYearMember"
+      },
+      "decimals": 2
+    },
+    "f0090": {
+      "value": "350",
+      "dimensions": {
+        "concept": "vsme:TotalGrossLocationBasedGHGEmissions",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:tCO2e"
+      },
+      "decimals": 2
+    },
+    "f0091": {
+      "value": "190",
+      "dimensions": {
+        "concept": "vsme:TotalGrossLocationBasedGHGEmissions",
+        "entity": "lei:TestCode1234",
+        "period": "2030-01-01T00:00:00/2031-01-01T00:00:00",
+        "unit": "utr:tCO2e",
+        "vsme:ReportingScopesAxis": "vsme:TargetYearMember"
+      },
+      "decimals": 2
+    },
+    "f0092": {
+      "value": "225",
+      "dimensions": {
+        "concept": "vsme:TotalGrossLocationBasedScope1AndScope2GHGEmissions",
+        "entity": "lei:TestCode1234",
+        "period": "2020-01-01T00:00:00/2021-01-01T00:00:00",
+        "unit": "utr:tCO2e",
+        "vsme:ReportingScopesAxis": "vsme:BaselineYearMember"
+      },
+      "decimals": 2
+    },
+    "f0093": {
+      "value": "150",
+      "dimensions": {
+        "concept": "vsme:TotalGrossLocationBasedScope1AndScope2GHGEmissions",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:tCO2e"
+      },
+      "decimals": 2
+    },
+    "f0094": {
+      "value": "90",
+      "dimensions": {
+        "concept": "vsme:TotalGrossLocationBasedScope1AndScope2GHGEmissions",
+        "entity": "lei:TestCode1234",
+        "period": "2030-01-01T00:00:00/2031-01-01T00:00:00",
+        "unit": "utr:tCO2e",
+        "vsme:ReportingScopesAxis": "vsme:TargetYearMember"
+      },
+      "decimals": 2
+    },
+    "f0095": {
+      "value": "101200",
+      "dimensions": {
+        "concept": "vsme:TotalHazardousWasteGeneratedMass",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:kg"
+      },
+      "decimals": 2
+    },
+    "f0096": {
+      "value": "0",
+      "dimensions": {
+        "concept": "vsme:TotalHazardousWasteGeneratedVolume",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:m3"
+      },
+      "decimals": 2
+    },
+    "f0097": {
+      "value": "0.014893617021276596",
+      "dimensions": {
+        "concept": "vsme:TotalLocationBasedGreenhouseGasEmissionsIntensityValue",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:tCO2e/iso4217:EUR"
+      },
+      "decimals": 7
+    },
+    "f0098": {
+      "value": "1500",
+      "dimensions": {
+        "concept": "vsme:TotalMassOfMaterialUsed",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:kg"
+      },
+      "decimals": 2
+    },
+    "f0099": {
+      "value": "35",
+      "dimensions": {
+        "concept": "vsme:TotalNatureOrientedAreaOffSite",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:sqm"
+      },
+      "decimals": 2
+    },
+    "f0100": {
+      "value": "100",
+      "dimensions": {
+        "concept": "vsme:TotalNatureOrientedAreaOnSite",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:sqm"
+      },
+      "decimals": 2
+    },
+    "f0101": {
+      "value": "7850000",
+      "dimensions": {
+        "concept": "vsme:TotalNonHazardousWasteGeneratedMass",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:kg"
+      },
+      "decimals": 2
+    },
+    "f0102": {
+      "value": "0",
+      "dimensions": {
+        "concept": "vsme:TotalNonHazardousWasteGeneratedVolume",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:m3"
+      },
+      "decimals": 2
+    },
+    "f0103": {
+      "value": "1",
+      "dimensions": {
+        "concept": "vsme:TotalNumberOfConvictionsForTheViolationOfAntiCorruptionAndAntiBriberyLaws",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "xbrli:pure"
+      },
+      "decimals": 2
+    },
+    "f0104": {
+      "value": "4",
+      "dimensions": {
+        "concept": "vsme:TotalNumberOfSelfEmployedWorkersWithoutPersonnelThatAreWorkingExclusivelyForTheUndertaking",
+        "entity": "lei:TestCode1234",
+        "period": "2027-01-01T00:00:00",
+        "unit": "xbrli:pure"
+      },
+      "decimals": 2
+    },
+    "f0105": {
+      "value": "50",
+      "dimensions": {
+        "concept": "vsme:TotalNumberOfTemporaryWorkersProvidedByUndertakingsPrimarilyEngagedInEmploymentActivities",
+        "entity": "lei:TestCode1234",
+        "period": "2027-01-01T00:00:00",
+        "unit": "xbrli:pure"
+      },
+      "decimals": 2
+    },
+    "f0106": {
+      "value": "25",
+      "dimensions": {
+        "concept": "vsme:TotalSealedArea",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:sqm"
+      },
+      "decimals": 2
+    },
+    "f0107": {
+      "value": "200",
+      "dimensions": {
+        "concept": "vsme:TotalUseOfLand",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:sqm"
+      },
+      "decimals": 2
+    },
+    "f0108": {
+      "value": "800",
+      "dimensions": {
+        "concept": "vsme:TotalVolumeOfMaterialUsed",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:m3"
+      },
+      "decimals": 2
+    },
+    "f0109": {
+      "value": "7951200",
+      "dimensions": {
+        "concept": "vsme:TotalWasteGeneratedMass",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:kg"
+      },
+      "decimals": 2
+    },
+    "f0110": {
+      "value": "0",
+      "dimensions": {
+        "concept": "vsme:TotalWasteGeneratedVolume",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:m3"
+      },
+      "decimals": 2
+    },
+    "f0111": {
+      "value": "1200",
+      "dimensions": {
+        "concept": "vsme:TotalWasteRecycledReusedAndDirectedToDisposalMass",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:kg",
+        "vsme:TypeOfWasteAxis": "waste:W-160806-Hazardous-SpentLiquidsUsedAsCatalystsMember"
+      },
+      "decimals": 2
+    },
+    "f0112": {
+      "value": "5000",
+      "dimensions": {
+        "concept": "vsme:TotalWasteRecycledReusedAndDirectedToDisposalMass",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:t",
+        "vsme:TypeOfWasteAxis": "waste:W-040210-Non-Hazardous-OrganicMatterFromNaturalProductsForExampleGreaseWaxMember"
+      },
+      "decimals": 2
+    },
+    "f0113": {
+      "value": "250",
+      "dimensions": {
+        "concept": "vsme:TotalWasteRecycledReusedAndDirectedToDisposalMass",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:t",
+        "vsme:TypeOfWasteAxis": "waste:W-040221-Non-Hazardous-WastesFromUnprocessedTextileFibresMember"
+      },
+      "decimals": 2
+    },
+    "f0114": {
+      "value": "700",
+      "dimensions": {
+        "concept": "vsme:TotalWasteRecycledReusedAndDirectedToDisposalMass",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:t",
+        "vsme:TypeOfWasteAxis": "waste:W-101103-Non-Hazardous-WasteGlass-BasedFibrousMaterialsMember"
+      },
+      "decimals": 2
+    },
+    "f0115": {
+      "value": "100",
+      "dimensions": {
+        "concept": "vsme:TotalWasteRecycledReusedAndDirectedToDisposalMass",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:t",
+        "vsme:TypeOfWasteAxis": "waste:W-130101-Hazardous-HydraulicOilsContainingPcbsMember"
+      },
+      "decimals": 2
+    },
+    "f0116": {
+      "value": "400",
+      "dimensions": {
+        "concept": "vsme:TotalWasteRecycledReusedAndDirectedToDisposalMass",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:t",
+        "vsme:TypeOfWasteAxis": "waste:W-150104-Non-Hazardous-MetallicPackagingMember"
+      },
+      "decimals": 2
+    },
+    "f0117": {
+      "value": "1500",
+      "dimensions": {
+        "concept": "vsme:TotalWasteRecycledReusedAndDirectedToDisposalMass",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:t",
+        "vsme:TypeOfWasteAxis": "waste:W-200101-Non-Hazardous-PaperAndCardboardMember"
+      },
+      "decimals": 2
+    },
+    "f0118": {
+      "value": "23500",
+      "dimensions": {
+        "concept": "vsme:Turnover",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "iso4217:EUR"
+      },
+      "decimals": 2,
+      "links": {
+        "footnote": {
+          "_": [
+            "n001"
+          ]
+        }
+      }
+    },
+    "f0119": {
+      "value": "vsme:AccidentPreventionMember vsme:ChildLabourMember vsme:DiscriminationMember vsme:ForcedLabourMember vsme:HumanTraffickingMember",
+      "dimensions": {
+        "concept": "vsme:TypeOfContentCoveredByTheCodeOfConductOrHumanRightsPolicyForItsOwnWorkforce",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00"
+      }
+    },
+    "f0120": {
+      "value": "vsme:Full-TimeEquivalentFTEMember",
+      "dimensions": {
+        "concept": "vsme:TypeOfNumberOfEmployees",
+        "entity": "lei:TestCode1234",
+        "period": "2027-01-01T00:00:00"
+      }
+    },
+    "f0121": {
+      "value": false,
+      "dimensions": {
+        "concept": "vsme:UndertakingAppliesCircularEconomyPrinciples",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00"
+      }
+    },
+    "f0122": {
+      "value": false,
+      "dimensions": {
+        "concept": "vsme:UndertakingHasACodeOfConductOrHumanRightsPolicyForItsOwnWorkforce",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00"
+      }
+    },
+    "f0123": {
+      "value": false,
+      "dimensions": {
+        "concept": "vsme:UndertakingHasAComplaintHandlingMechanismForItsOwnWorkforce",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00"
+      }
+    },
+    "f0124": {
+      "value": false,
+      "dimensions": {
+        "concept": "vsme:UndertakingHasConfirmedHumanRightsIncidentsInItsOwnWorkforce",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00"
+      }
+    },
+    "f0125": {
+      "value": true,
+      "dimensions": {
+        "concept": "vsme:UndertakingHasSetATargetWhichIsRelatedToAPolicy",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00"
+      }
+    },
+    "f0126": {
+      "value": false,
+      "dimensions": {
+        "concept": "vsme:UndertakingIsAwareOfAnyConfirmedIncidentsInvolvingWorkersInTheValueChainAffectedCommunitiesConsumersAndEndUsers",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00"
+      }
+    },
+    "f0127": {
+      "value": false,
+      "dimensions": {
+        "concept": "vsme:UndertakingsAreExcludedFromAnyEuReferenceBenchmarksThatAreAlignedWithTheParisAgreement",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00"
+      }
+    },
+    "f0128": {
+      "value": "vsme:PrivateLimitedLiabilityUndertakingMember",
+      "dimensions": {
+        "concept": "vsme:UndertakingsLegalForm",
+        "entity": "lei:TestCode1234",
+        "period": "2027-01-01T00:00:00"
+      }
+    },
+    "f0129": {
+      "value": "800",
+      "dimensions": {
+        "concept": "vsme:VolumeOfMaterialUsed",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:m3",
+        "vsme:IdentifierOfMaterialTypedAxis": "2"
+      },
+      "decimals": 2
+    },
+    "f0130": {
+      "value": "400",
+      "dimensions": {
+        "concept": "vsme:WasteDirectedToDisposalMass",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:kg",
+        "vsme:TypeOfWasteAxis": "waste:W-160806-Hazardous-SpentLiquidsUsedAsCatalystsMember"
+      },
+      "decimals": 2
+    },
+    "f0131": {
+      "value": "1000",
+      "dimensions": {
+        "concept": "vsme:WasteDirectedToDisposalMass",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:t",
+        "vsme:TypeOfWasteAxis": "waste:W-040210-Non-Hazardous-OrganicMatterFromNaturalProductsForExampleGreaseWaxMember"
+      },
+      "decimals": 2
+    },
+    "f0132": {
+      "value": "150",
+      "dimensions": {
+        "concept": "vsme:WasteDirectedToDisposalMass",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:t",
+        "vsme:TypeOfWasteAxis": "waste:W-040221-Non-Hazardous-WastesFromUnprocessedTextileFibresMember"
+      },
+      "decimals": 2
+    },
+    "f0133": {
+      "value": "200",
+      "dimensions": {
+        "concept": "vsme:WasteDirectedToDisposalMass",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:t",
+        "vsme:TypeOfWasteAxis": "waste:W-101103-Non-Hazardous-WasteGlass-BasedFibrousMaterialsMember"
+      },
+      "decimals": 2
+    },
+    "f0134": {
+      "value": "70",
+      "dimensions": {
+        "concept": "vsme:WasteDirectedToDisposalMass",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:t",
+        "vsme:TypeOfWasteAxis": "waste:W-130101-Hazardous-HydraulicOilsContainingPcbsMember"
+      },
+      "decimals": 2
+    },
+    "f0135": {
+      "value": "100",
+      "dimensions": {
+        "concept": "vsme:WasteDirectedToDisposalMass",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:t",
+        "vsme:TypeOfWasteAxis": "waste:W-150104-Non-Hazardous-MetallicPackagingMember"
+      },
+      "decimals": 2
+    },
+    "f0136": {
+      "value": "300",
+      "dimensions": {
+        "concept": "vsme:WasteDirectedToDisposalMass",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:t",
+        "vsme:TypeOfWasteAxis": "waste:W-200101-Non-Hazardous-PaperAndCardboardMember"
+      },
+      "decimals": 2
+    },
+    "f0137": {
+      "value": "800",
+      "dimensions": {
+        "concept": "vsme:WasteDivertedToRecycleOrReuseMass",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:kg",
+        "vsme:TypeOfWasteAxis": "waste:W-160806-Hazardous-SpentLiquidsUsedAsCatalystsMember"
+      },
+      "decimals": 2
+    },
+    "f0138": {
+      "value": "4000",
+      "dimensions": {
+        "concept": "vsme:WasteDivertedToRecycleOrReuseMass",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:t",
+        "vsme:TypeOfWasteAxis": "waste:W-040210-Non-Hazardous-OrganicMatterFromNaturalProductsForExampleGreaseWaxMember"
+      },
+      "decimals": 2
+    },
+    "f0139": {
+      "value": "100",
+      "dimensions": {
+        "concept": "vsme:WasteDivertedToRecycleOrReuseMass",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:t",
+        "vsme:TypeOfWasteAxis": "waste:W-040221-Non-Hazardous-WastesFromUnprocessedTextileFibresMember"
+      },
+      "decimals": 2
+    },
+    "f0140": {
+      "value": "500",
+      "dimensions": {
+        "concept": "vsme:WasteDivertedToRecycleOrReuseMass",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:t",
+        "vsme:TypeOfWasteAxis": "waste:W-101103-Non-Hazardous-WasteGlass-BasedFibrousMaterialsMember"
+      },
+      "decimals": 2
+    },
+    "f0141": {
+      "value": "30",
+      "dimensions": {
+        "concept": "vsme:WasteDivertedToRecycleOrReuseMass",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:t",
+        "vsme:TypeOfWasteAxis": "waste:W-130101-Hazardous-HydraulicOilsContainingPcbsMember"
+      },
+      "decimals": 2
+    },
+    "f0142": {
+      "value": "300",
+      "dimensions": {
+        "concept": "vsme:WasteDivertedToRecycleOrReuseMass",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:t",
+        "vsme:TypeOfWasteAxis": "waste:W-150104-Non-Hazardous-MetallicPackagingMember"
+      },
+      "decimals": 2
+    },
+    "f0143": {
+      "value": "1200",
+      "dimensions": {
+        "concept": "vsme:WasteDivertedToRecycleOrReuseMass",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:t",
+        "vsme:TypeOfWasteAxis": "waste:W-200101-Non-Hazardous-PaperAndCardboardMember"
+      },
+      "decimals": 2
+    },
+    "f0144": {
+      "value": "1500",
+      "dimensions": {
+        "concept": "vsme:WeightOfMaterialUsed",
+        "entity": "lei:TestCode1234",
+        "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
+        "unit": "utr:kg",
+        "vsme:IdentifierOfMaterialTypedAxis": "1"
+      },
+      "decimals": 2
+    },
+    "n001": {
+      "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque a enim nulla. Ut quis lorem at arcu fermentum dictum. Curabitur orci nisl, maximus quis varius nec, vestibulum sed lectus. Quisque tempor sodales sem at ullamcorper. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nullam ligula leo, ornare ac gravida nec, convallis eu lectus. Fusce at molestie ex, eget laoreet lectus. Duis scelerisque erat mi, sed placerat erat fermentum eget. Aenean volutpat risus nec gravida mollis. Aenean cursus elementum diam vitae dictum. Maecenas imperdiet imperdiet felis, vitae hendrerit nisi tempor quis. Maecenas dictum, elit ut viverra fringilla, libero quam viverra turpis, a tristique diam metus eu sapien. Suspendisse dapibus, lorem sit amet porta cursus, purus sapien sollicitudin leo, sed aliquet massa ante nec urna. Cras ultricies in erat vitae tincidunt. Nam vel suscipit dui, et convallis ex. Vivamus et efficitur est.<br /><br />Nulla quis turpis eget turpis dapibus fermentum. Etiam et vestibulum purus, at malesuada neque. Donec vel aliquam arcu. Sed aliquam placerat odio, nec placerat enim rhoncus ut. Nullam a faucibus magna, ac ultrices magna. Duis eget sem justo. Fusce suscipit at augue ut aliquam. Aliquam vel fringilla dolor. Nulla felis lorem, aliquam eget euismod quis, iaculis id erat.",
+      "dimensions": {
+        "concept": "xbrl:note",
+        "noteId": "n001",
+        "language": "en"
+      }
+    },
+    "n002": {
+      "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque a enim nulla. Ut quis lorem at arcu fermentum dictum. Curabitur orci nisl, maximus quis varius nec, vestibulum sed lectus. Quisque tempor sodales sem at ullamcorper. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nullam ligula leo, ornare ac gravida nec, convallis eu lectus. Fusce at molestie ex, eget laoreet lectus. Duis scelerisque erat mi, sed placerat erat fermentum eget. Aenean volutpat risus nec gravida mollis. Aenean cursus elementum diam vitae dictum. Maecenas imperdiet imperdiet felis, vitae hendrerit nisi tempor quis. Maecenas dictum, elit ut viverra fringilla, libero quam viverra turpis, a tristique diam metus eu sapien. Suspendisse dapibus, lorem sit amet porta cursus, purus sapien sollicitudin leo, sed aliquet massa ante nec urna. Cras ultricies in erat vitae tincidunt. Nam vel suscipit dui, et convallis ex. Vivamus et efficitur est.<br /><br />Nulla quis turpis eget turpis dapibus fermentum. Etiam et vestibulum purus, at malesuada neque. Donec vel aliquam arcu. Sed aliquam placerat odio, nec placerat enim rhoncus ut. Nullam a faucibus magna, ac ultrices magna. Duis eget sem justo. Fusce suscipit at augue ut aliquam. Aliquam vel fringilla dolor. Nulla felis lorem, aliquam eget euismod quis, iaculis id erat.",
+      "dimensions": {
+        "concept": "xbrl:note",
+        "noteId": "n002",
+        "language": "en"
+      }
+    }
   }
- ],
- "messageSeverities": {
-  "INFO": 5,
-  "WARNING": 13
- }
 }
