@@ -5,6 +5,7 @@
       "country": "https://xbrl.org/2024/iso3166",
       "iso4217": "http://www.xbrl.org/2003/iso4217",
       "lei": "http://standards.iso.org/iso/17442",
+      "mireport": "urn:mireport:xbrl-json-extension",
       "nace": "https://xbrl.efrag.org/taxonomy/nace/2026-05-01",
       "utr": "http://www.xbrl.org/2009/utr",
       "vsme": "https://xbrl.efrag.org/taxonomy/vsme/2026-05-01/vsme",
@@ -330,7 +331,8 @@
         "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
         "unit": "xbrli:pure"
       },
-      "decimals": 4
+      "decimals": 4,
+      "mireport:scale": -2
     },
     "f0035": {
       "value": false,
@@ -771,7 +773,8 @@
         "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
         "unit": "xbrli:pure"
       },
-      "decimals": 4
+      "decimals": 4,
+      "mireport:scale": -2
     },
     "f0077": {
       "value": "0.9271523178807946",
@@ -781,7 +784,8 @@
         "period": "2027-01-01T00:00:00",
         "unit": "xbrli:pure"
       },
-      "decimals": 4
+      "decimals": 4,
+      "mireport:scale": -2
     },
     "f0078": {
       "value": "20122",
@@ -1471,5 +1475,9 @@
         "language": "en"
       }
     }
+  },
+  "mireport:messageSeverities": {
+    "INFO": 5,
+    "WARNING": 13
   }
 }

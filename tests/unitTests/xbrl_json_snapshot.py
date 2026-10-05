@@ -1,9 +1,11 @@
 """A report's facts as an xBRL-JSON document, for the snapshot (control) files.
 
-Only what the OIM says: each fact's value (the XBRL value, so a percent shown as 28.41 with
-ix:scale -2 is written 0.2840909...), its concept, entity, period, unit, taxonomy dimensions and
-decimals; footnotes as note facts linked with ``links.footnote``. Presentation (scale, layout) is not
-OIM and is not in it. Facts are in a stable order with ids ``f0001``... so a diff reads as facts.
+Each fact's value is the XBRL value (a percent shown as 28.41 with ix:scale -2 is written
+0.2840909...), with its concept, entity, period, unit, taxonomy dimensions and decimals; footnotes
+are note facts linked with ``links.footnote``. What the OIM has no place for goes in extension
+properties, which xBRL-JSON allows on the report and on facts (QName names, prefix bound to a
+namespace outside xbrl.org): ``mireport:scale`` on a fact, ``mireport:messageSeverities`` on the
+report. Facts are in a stable order with ids ``f0001``... so a diff reads as facts.
 
 This is a data-only writer for tests; a production xBRL-JSON writer would replace it.
 """
@@ -22,6 +24,7 @@ from mireport.taxonomy import QName
 XBRL_JSON_DOCUMENT_TYPE = "https://xbrl.org/2021/xbrl-json"
 XBRL_NS = "https://xbrl.org/2021"
 LEI_NS = "http://standards.iso.org/iso/17442"
+EXTENSION_NS = "urn:mireport:xbrl-json-extension"
 
 
 def _period(fact: Fact) -> str:
@@ -42,7 +45,9 @@ def _value(fact: Fact) -> Any:
 
 
 def report_to_xbrl_json(
-    report: InlineReport, entryPointSet: Iterable[str]
+    report: InlineReport,
+    entryPointSet: Iterable[str],
+    messageSeverities: dict[str, int] | None = None,
 ) -> dict[str, Any]:
     namespaces: dict[str, str] = {}
 
@@ -91,6 +96,8 @@ def report_to_xbrl_json(
         entry: dict[str, Any] = {"value": _value(fact), "dimensions": dims}
         if fact.decimals is not None:
             entry["decimals"] = fact.decimals
+        if fact.scale is not None:
+            entry["mireport:scale"] = fact.scale
         if fact.footnotes:
             ids = []
             for footnote in fact.footnotes:
@@ -115,7 +122,8 @@ def report_to_xbrl_json(
             },
         }
     namespaces["xbrl"] = XBRL_NS
-    return {
+    namespaces["mireport"] = EXTENSION_NS
+    document: dict[str, Any] = {
         "documentInfo": {
             "documentType": XBRL_JSON_DOCUMENT_TYPE,
             "namespaces": dict(sorted(namespaces.items())),
@@ -123,3 +131,6 @@ def report_to_xbrl_json(
         },
         "facts": facts,
     }
+    if messageSeverities is not None:
+        document["mireport:messageSeverities"] = dict(sorted(messageSeverities.items()))
+    return document

@@ -65,43 +65,15 @@ def _results() -> ConversionResultsBuilder:
 
 
 def _snapshotDocument(sample: Path) -> dict:
-    """The sample's facts as xBRL-JSON (see tests/unitTests/xbrl_json_snapshot.py)."""
+    """The sample's facts as xBRL-JSON (see tests/unitTests/xbrl_json_snapshot.py), with the scale
+    of each fact and the conversion's message counts as extension properties."""
     results = _results()
     report = XlsxProcessor.from_file(sample, results, VSME_DEFAULTS).createReport()
-    return report_to_xbrl_json(report, report.taxonomy.entryPointSet)
-
-
-def _extras(sample: Path) -> dict:
-    """What the OIM document cannot say: ix:scale per concept, and how many messages of each
-    severity the conversion gave."""
-    results = _results()
-    report = XlsxProcessor.from_file(sample, results, VSME_DEFAULTS).createReport()
-    return {
-        "scales": {
-            str(f.concept.qname): f.scale for f in report.facts if f.scale is not None
-        },
-        "messageSeverities": dict(
-            sorted(Counter(m.severity.name for m in results.messages).items())
-        ),
-    }
-
-
-# Not OIM, so not in the xBRL-JSON snapshot: the percent facts are shown x100 (ix:scale -2).
-_PERCENT_SCALES = {
-    "vsme:EmployeeTurnoverRate": -2,
-    "vsme:PercentageGapInPayBetweenFemaleAndMaleEmployees": -2,
-    "vsme:PercentageOfEmployeesCoveredByCollectiveBargainingAgreements": -2,
-}
-EXPECTED_EXTRAS = {
-    SAMPLE_1_2_0: {
-        "scales": _PERCENT_SCALES,
-        "messageSeverities": {"INFO": 4, "WARNING": 14},
-    },
-    SAMPLE_1_3_0: {
-        "scales": _PERCENT_SCALES,
-        "messageSeverities": {"INFO": 5, "WARNING": 13},
-    },
-}
+    return report_to_xbrl_json(
+        report,
+        report.taxonomy.entryPointSet,
+        dict(Counter(m.severity.name for m in results.messages)),
+    )
 
 
 @pytest.mark.slow
@@ -121,13 +93,16 @@ class TestFactSnapshot:
         actual = _snapshotDocument(sample)
 
         assert actual["documentInfo"] == expected["documentInfo"]
+        assert (
+            actual["mireport:messageSeverities"]
+            == expected["mireport:messageSeverities"]
+        )
         expected_facts = list(expected["facts"].items())
         actual_facts = list(actual["facts"].items())
         # Compare pairwise for a readable diff before falling back to counts.
         for exp, act in zip(expected_facts, actual_facts):
             assert act == exp
         assert len(actual_facts) == len(expected_facts)
-        assert _extras(sample) == EXPECTED_EXTRAS[sample]
 
     @pytest.mark.parametrize(
         "snapshot",
