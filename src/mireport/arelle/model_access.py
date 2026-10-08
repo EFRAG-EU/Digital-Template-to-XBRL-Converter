@@ -42,6 +42,12 @@ _NO_NAMESPACE_HINT = (
     "(without it, locally declared elements end up in no namespace)"
 )
 
+# XML Schema's implicit type for an element with no type attribute and no
+# inline type -- see typeQNamesOfTypedDomainElement(). Prefix-less:
+# canonicalisation assigns one per namespace, same as any other QName
+# without a source prefix.
+_QNAME_XSD_ANY_TYPE = QName(None, XbrlConst.xsd, "anyType")
+
 
 def _requireNamespaced(qname: QName, context: Callable[[], str]) -> QName:
     """All QNames we extract must have a namespace, otherwise they cannot be
@@ -281,7 +287,13 @@ class ValidatedModel:
             ) from None
 
     def typeQNamesOf(self, concept: ModelConcept) -> tuple[QName, QName]:
-        """(type QName, base xbrli type QName) for an item concept.
+        """(type QName, base xbrli type QName) for an XBRL item concept.
+
+        For a typed dimension's typed domain element, use
+        typeQNamesOfTypedDomainElement() instead, never this one: XBRL
+        Dimensions 1.0 section 3.1.9.2 requires that element NOT be a
+        member of the xbrli:item substitution group, so it can never have
+        an xbrli item type for this method to resolve in the first place.
 
         N.B. concept.type.qname is used rather than concept.typeQname as it
         gets the namespace prefix right, i.e. something defined in
@@ -311,17 +323,67 @@ class ValidatedModel:
             ),
         )
 
-    def typedDomainQNameOf(self, concept: ModelConcept) -> QName:
-        """QName of the typed domain element of a typed dimension concept."""
+    def typeQNamesOfTypedDomainElement(
+        self, element: ModelConcept
+    ) -> tuple[QName, QName]:
+        """(declared type QName, base XML Schema type QName) for a typed
+        dimension's typed domain element.
+
+        This is entirely separate from typeQNamesOf(), not a variant of it:
+        that method resolves an XBRL item's xbrli item type, and a typed
+        domain element can never have one (XBRL Dimensions 1.0 section
+        3.1.9.2 requires it NOT be in the xbrli:item substitution group in
+        the first place) -- so there is no xbrli type here to resolve, ever,
+        and this method never calls typeQNamesOf() or touches anything
+        xbrli-flavoured.
+
+        element.typeQname is the type="" attribute's raw parsed QName --
+        populated whenever a type is declared at all, however it's
+        declared, regardless of whether Arelle also modeled a ModelType for
+        it (which it never does for a bare XML Schema Part 2 primitive like
+        xs:string, only for an actual <xs:simpleType>/<xs:complexType>
+        *declaration* -- both ESRS's and VSME's own typed dimensions declare
+        their domain element as plain type="xs:string", confirmed against
+        real data). None means no type attribute and no inline type at all.
+
+        element.baseXsdType is Arelle's own accessor for "the XML Schema
+        primitive localName this type is ultimately derived from" -- used
+        here rather than reimplementing that walk, and rather than
+        baseXbrliTypeQname (which is the wrong tool: it exists to find an
+        xbrli type specifically, something this element can never have).
+        """
+        typeQname = element.typeQname
+        declaredType = (
+            _QNAME_XSD_ANY_TYPE
+            if typeQname is None
+            # Drop the source document's prefix, which need not be one
+            # modelXbrl.prefixedNamespaces knows -- same reasoning as
+            # _QNAME_XSD_ANY_TYPE.
+            else _requireNamespaced(
+                QName(None, typeQname.namespaceURI, typeQname.localName),
+                lambda: f"of type of {qnameOf(element)}",
+            )
+        )
+        baseType = QName(None, XbrlConst.xsd, element.baseXsdType)
+        return declaredType, baseType
+
+    def typedDomainElementOf(self, concept: ModelConcept) -> ModelConcept:
+        """The typed domain element of a typed dimension concept.
+
+        This is a plain xs:element, not an XBRL item: XBRL Dimensions 1.0
+        section 3.1.9.2 requires it NOT be a member of the xbrli:item
+        substitution group -- see typeQNamesOfTypedDomainElement() for how
+        its type is resolved, which is not the same way an item's is.
+        """
         element = concept.typedDomainElement
-        if element is None or element.qname is None:
+        if element is None:
             raise ArelleModelInconsistency(
                 ArelleDiagnostic.error(
                     "Typed dimension has no typed domain element",
                     concepts=(qnameOf(concept),),
                 )
             )
-        return element.qname
+        return element
 
     def roleType(self, roleUri: str) -> ModelRoleType:
         matching = self._modelXbrl.roleTypes.get(roleUri, [])

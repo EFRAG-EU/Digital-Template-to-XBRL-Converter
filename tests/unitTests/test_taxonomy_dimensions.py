@@ -149,10 +149,19 @@ def _build_taxonomy(
 ) -> Taxonomy:
     bits = {
         "entryPoint": entry_point,
-        "namespaces": {"vsme": _NS},
+        "namespaces": {"vsme": _NS, "xs": "http://www.w3.org/2001/XMLSchema"},
         "concepts": concepts,
         "presentation": presentation or {},
         "dimensions": dimensions or {},
+        # Every typed dimension's "other.typedElement" must resolve here --
+        # Concept._reifyUsingTaxonomy() raises otherwise -- so this is
+        # supplied unconditionally rather than only by tests that care about
+        # vsme:TypedAxis specifically. xs:string, not a made-up type, since
+        # that's what VSME's real vsme:TYP element is actually declared as
+        # (type="xs:string" directly).
+        "xs_elements": {
+            "vsme:TYP": {"dataType": "xs:string", "baseDataType": "xs:string"}
+        },
     }
     return loadTaxonomyJSON(bits)
 

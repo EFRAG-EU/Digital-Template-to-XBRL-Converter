@@ -62,6 +62,10 @@ class StubConcept:
         enumDomainQname: QName | None = None,
         isExplicitDimension: bool = False,
         isHypercubeItem: bool = False,
+        isAbstract: bool = False,
+        isDimensionItem: bool = False,
+        isNillable: bool = False,
+        isNumeric: bool = False,
     ) -> None:
         self.qname = qname
         self.isEnumeration2Item = isEnumeration2Item
@@ -69,6 +73,10 @@ class StubConcept:
         self.enumDomainQname = enumDomainQname
         self.isExplicitDimension = isExplicitDimension
         self.isHypercubeItem = isHypercubeItem
+        self.isAbstract = isAbstract
+        self.isDimensionItem = isDimensionItem
+        self.isNillable = isNillable
+        self.isNumeric = isNumeric
 
 
 class StubLabelResource:
@@ -94,6 +102,7 @@ class StubValidatedModel:
         linkrolesByArcrole: dict[str, list[str]] | None = None,
         baseSets: list[tuple[str, str]] | None = None,
         items: list[tuple[QName, Any]] | None = None,
+        typeQNamesByQName: dict[QName, tuple[QName, QName]] | None = None,
     ) -> None:
         self._relsByArcrole = relsByArcrole
         self._conceptRelSets = conceptRelSets or {}
@@ -101,11 +110,15 @@ class StubValidatedModel:
         self._baseSets = baseSets or []
         self._items = items or []
         self._conceptsByQName = dict(self._items)
+        self._typeQNamesByQName = typeQNamesByQName or {}
 
     def resourceRelationshipsFrom(
         self, source: Any, arcrole: str
     ) -> list[ResourceRelationship]:
         return self._relsByArcrole[arcrole]
+
+    def typeQNamesOfTypedDomainElement(self, concept: Any) -> tuple[QName, QName]:
+        return self._typeQNamesByQName[concept.qname]
 
     def conceptRelationshipSet(self, arcroles: Any, linkrole: str) -> Any:
         # New tests key conceptRelSets by (arcroles, linkrole) to disambiguate
@@ -145,6 +158,7 @@ def makeExtractor(
     linkrolesByArcrole: dict[str, list[str]] | None = None,
     baseSets: list[tuple[str, str]] | None = None,
     items: list[tuple[QName, Any]] | None = None,
+    typeQNamesByQName: dict[QName, tuple[QName, QName]] | None = None,
 ) -> tuple[TaxonomyInfoExtractor, str]:
     """Build an extractor over stubs, with a diagnostics collector attached."""
     token = DiagnosticCollector.open()
@@ -158,7 +172,12 @@ def makeExtractor(
     extractor.model = cast(
         ValidatedModel,
         StubValidatedModel(
-            relsByArcrole, conceptRelSets, linkrolesByArcrole, baseSets, items
+            relsByArcrole,
+            conceptRelSets,
+            linkrolesByArcrole,
+            baseSets,
+            items,
+            typeQNamesByQName,
         ),
     )
     return extractor, token
@@ -271,6 +290,60 @@ class TestAddLabels:
         )
         assert jconcept["labels"]["en"] == {role: "Assets"}
         assert diagnostics == []
+
+
+class TestExtractTypedDomainWrapperElement:
+    def test_adds_wrapper_entry_with_type_info(self) -> None:
+        elementQName = qn("SiteIdentifierDomain")
+        dataType, baseType = qn("SiteIdentifierType"), qn("string", ns=XbrlConst.xsd)
+        extractor, _ = makeExtractor(
+            {},
+            typeQNamesByQName={elementQName: (dataType, baseType)},
+        )
+        element = StubConcept(elementQName, isNillable=True)
+
+        extractor.extractTypedDomainWrapperElement(cast(ModelConcept, element))
+
+        wrapper = extractor.taxonomyJson["xs_elements"][elementQName]
+        assert wrapper["dataType"] is dataType
+        assert wrapper["baseDataType"] is baseType
+        assert wrapper["nillable"] is True
+        assert "labels" not in wrapper
+
+    def test_metadata_flags_omitted_when_false(self) -> None:
+        elementQName = qn("PlainDomain")
+        extractor, _ = makeExtractor(
+            {},
+            typeQNamesByQName={elementQName: (qn("string"), qn("string"))},
+        )
+        element = StubConcept(elementQName)
+
+        extractor.extractTypedDomainWrapperElement(cast(ModelConcept, element))
+
+        wrapper = extractor.taxonomyJson["xs_elements"][elementQName]
+        assert "nillable" not in wrapper
+        assert "abstract" not in wrapper
+        assert "dimension" not in wrapper
+        assert "hypercube" not in wrapper
+        assert "numeric" not in wrapper
+
+    def test_second_call_for_the_same_element_is_a_no_op(self) -> None:
+        elementQName = qn("SharedDomain")
+        extractor, _ = makeExtractor(
+            {}, typeQNamesByQName={elementQName: (qn("string"), qn("string"))}
+        )
+        firstElement = StubConcept(elementQName, isNillable=True)
+        extractor.extractTypedDomainWrapperElement(cast(ModelConcept, firstElement))
+        firstWrapper = extractor.taxonomyJson["xs_elements"][elementQName]
+
+        # A second typed dimension sharing the same typed domain element
+        # would see a different (canned) nillable flag if re-processed --
+        # this proves it is not.
+        secondElement = StubConcept(elementQName, isNillable=False)
+        extractor.extractTypedDomainWrapperElement(cast(ModelConcept, secondElement))
+
+        assert extractor.taxonomyJson["xs_elements"][elementQName] is firstWrapper
+        assert firstWrapper["nillable"] is True
 
 
 def conceptRel(

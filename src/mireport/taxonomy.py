@@ -120,6 +120,7 @@ class Concept:
         "_labels",
         "_qnameMaker",
         "_taxonomy",
+        "_typedElementQName",
         "baseDataType",
         "dataType",
         "periodType",
@@ -162,9 +163,10 @@ class Concept:
 
         other = details.get("other", {})
 
-        self.typedElement = None
+        self.typedElement: TypedDomainWrapperElement | None = None
+        self._typedElementQName: QName | None = None
         if (tElem := other.get("typedElement")) is not None:
-            self.typedElement = self._qnameMaker.fromString(tElem)
+            self._typedElementQName = self._qnameMaker.fromString(tElem)
 
         self._eeDomainMembers: tuple[Concept, ...] | None = None
         self._eeDomainMemberStrings: list[str] | None = None
@@ -204,6 +206,18 @@ class Concept:
                 taxonomy.getConcept(member) for member in self._eeDomainMemberStrings
             )
             self._eeDomainMemberStrings = None
+        if self._typedElementQName is not None:
+            try:
+                self.typedElement = taxonomy.getTypedDomainWrapperElement(
+                    self._typedElementQName
+                )
+            except KeyError:
+                raise TaxonomyException(
+                    f"Concept {self.qname} declares typed dimension domain "
+                    f"element {self._typedElementQName}, but the taxonomy has "
+                    "no xs_elements entry for it."
+                ) from None
+            self._typedElementQName = None
 
     def getLabelForRole(
         self,
@@ -511,6 +525,55 @@ class Concept:
         return tuple(self._eeDomainMembers) if self._eeDomainMembers is not None else ()
 
 
+class TypedDomainWrapperElement:
+    """
+    The typed domain element of a typed dimension: a plain xs:element, not an
+    XBRL concept -- XBRL Dimensions 1.0 section 3.1.9.2 requires it NOT be a
+    member of the xbrli:item substitution group, so it has no periodType, is
+    never a fact's reported concept, and cannot itself be the source or
+    target of a linkbase arc the way a Concept can. Loaded from its own
+    "xs_elements" section of the taxonomy JSON rather than "concepts", to
+    avoid misrepresenting it as one. No labels: unlike a concept, it is
+    never presented to a user by name.
+    """
+
+    __slots__ = ("baseDataType", "dataType", "isNillable", "qname")
+
+    def __init__(self, qnameMaker: QNameMaker, s_qname: str, details: dict) -> None:
+        self.qname: QName = qnameMaker.fromString(s_qname)
+        self.isNillable: bool = details.get("nillable", False)
+
+        if (data_type := details.get("dataType")) is None:
+            raise TaxonomyException(
+                f"Typed domain wrapper element {self.qname} does not specify "
+                "a data type."
+            )
+        self.dataType = qnameMaker.fromString(data_type)
+
+        if (baseDataType := details.get("baseDataType")) is None:
+            raise TaxonomyException(
+                f"Typed domain wrapper element {self.qname} does not specify "
+                "a base data type."
+            )
+        self.baseDataType = qnameMaker.fromString(baseDataType)
+
+    def __repr__(self) -> str:
+        return f"TypedDomainWrapperElement(qname={self.qname})"
+
+    def __str__(self) -> str:
+        return str(self.qname)
+
+    def __eq__(self, other: object) -> bool:
+        if self is other:
+            return True
+        if isinstance(other, TypedDomainWrapperElement):
+            return self.qname == other.qname
+        return NotImplemented
+
+    def __hash__(self) -> int:
+        return hash(self.qname)
+
+
 class Relationship(NamedTuple):
     roleUri: str
     depth: int
@@ -799,6 +862,7 @@ class Taxonomy:
         dimensions: dict[str, dict],
         qnameMaker: QNameMaker,
         utr: UTR,
+        typedDomainWrapperElements: dict[str, TypedDomainWrapperElement] | None = None,
     ) -> None:
         self._entryPoint = entryPoint
         self._dimensions = dimensions
@@ -809,6 +873,11 @@ class Taxonomy:
         # dimensional validity can be achieved using either container,
         # <xbrli:scenario> should be used for all dimensions."
         self._dimensionContainer = DimensionContainerType.Scenario
+
+        self._typedDomainWrapperElements: dict[QName, TypedDomainWrapperElement] = {
+            element.qname: element
+            for element in (typedDomainWrapperElements or {}).values()
+        }
 
         self._concepts = {concept.qname: concept for concept in concepts.values()}
         for concept in concepts.values():
@@ -1039,6 +1108,13 @@ class Taxonomy:
         if isinstance(qname, str):
             qname = self._qnameMaker.fromString(qname)
         return self._concepts[qname]
+
+    def getTypedDomainWrapperElement(
+        self, qname: QName | str
+    ) -> TypedDomainWrapperElement:
+        if isinstance(qname, str):
+            qname = self._qnameMaker.fromString(qname)
+        return self._typedDomainWrapperElements[qname]
 
     def resolveConcept(
         self,
@@ -1400,6 +1476,10 @@ def _createTaxonomyFromJSON(bits: dict) -> None:
         str_qname: Concept(qnameMaker, str_qname, jconcept)
         for str_qname, jconcept in bits["concepts"].items()
     }
+    typedDomainWrapperElements: dict[str, TypedDomainWrapperElement] = {
+        str_qname: TypedDomainWrapperElement(qnameMaker, str_qname, jelement)
+        for str_qname, jelement in bits.get("xs_elements", {}).items()
+    }
 
     _TAXONOMIES[entryPoint] = Taxonomy(
         concepts,
@@ -1410,4 +1490,5 @@ def _createTaxonomyFromJSON(bits: dict) -> None:
         utr=UTR.fromDict(
             getObject(getResource(registries, "utr.json")), qnameMaker=qnameMaker
         ),
+        typedDomainWrapperElements=typedDomainWrapperElements,
     )
