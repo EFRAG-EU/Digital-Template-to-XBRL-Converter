@@ -2,7 +2,6 @@ import argparse
 import html
 import json
 import logging
-import os
 import shutil
 import sys
 import time
@@ -37,9 +36,10 @@ from mireport.cli import (
 from mireport.conversionresults import Severity
 from mireport.diagnostics import AbstractDiagnostic, Diagnostic
 from mireport.entrypoints import EntryPointSet, entryPointSetOf
-from mireport.exceptions import TaxonomyException
+from mireport.exceptions import TaxonomyException, UtrSourceError
 from mireport.taxonomy import builtInTaxonomyJsonPaths, loadTaxonomyJSON
 from mireport.taxonomy_checker import TaxonomyChecker
+from mireport.utr_xml import UTR_URL, UtrRegistry, loadUtrXml
 
 SEVERITY_STYLES = {
     Severity.ERROR: "bold red",
@@ -55,8 +55,8 @@ def parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "taxonomy_zips",
         type=str,
-        nargs="+",
-        help="Path to the taxonomy zip files to be used (globs such as *.zip, and directories of zips, are permitted).",
+        nargs="*",
+        help="Path to the taxonomy zip files to be used (globs such as *.zip, and directories of zips, are permitted). Required except with --utr-output.",
     )
     # Not required=True: main() checks that one mode was given, after first
     # catching the removed `update-taxonomy.py out.json *.zip` form.
@@ -81,6 +81,14 @@ def parser() -> argparse.ArgumentParser:
         action="store_true",
         help="List the entry points declared by the taxonomy packages and exit.",
     )
+    mode.add_argument(
+        "--utr-output",
+        type=Path,
+        metavar="UTR_JSON",
+        help="Regenerate the Unit Type Registry JSON (src/mireport/data/registries/"
+        "utr.json) from utr.xml; see --utr-source. Needs no taxonomy packages. The "
+        "file is only replaced once utr.xml has been read and understood.",
+    )
     parser.add_argument(
         "--dry-run",
         action="store_true",
@@ -89,10 +97,12 @@ def parser() -> argparse.ArgumentParser:
         "would change.",
     )
     parser.add_argument(
-        "--utr-output",
-        type=Path,
+        "--utr-source",
+        type=str,
         default=None,
-        help="Path to the UTR JSON file to be used.",
+        metavar="URL_OR_PATH",
+        help=f"With --utr-output: where to read utr.xml from, an http(s) URL or a "
+        f"local path (default: {UTR_URL}).",
     )
     parser.add_argument(
         "--entry-point",
@@ -248,7 +258,6 @@ def regenerateOne(
     entryPointSet: EntryPointSet,
     taxonomy_zips: Sequence[Path],
     out_path: Path,
-    utr_path: Path | None,
     *,
     checkJson: bool,
     targetPath: Path | None = None,
@@ -266,7 +275,6 @@ def regenerateOne(
         if len(documents) == 1
         else "Taxonomy entry point:\n\t\t{}".format("\n\t\t".join(documents)),
         f"Taxonomy JSON path: {targetPath or out_path}",
-        f"UTR JSON path: {utr_path}" if utr_path else "No UTR processing requested",
         sep="\n\t",
     )
 
@@ -277,7 +285,7 @@ def regenerateOne(
     # plugin write it even when it found problems: they are all listed, and
     # the checker below can look at the data for more.
     results = callArelleForTaxonomyInfo(
-        entryPointSet, taxonomy_zips, out_path, utr_path, writeDataDespiteErrors=True
+        entryPointSet, taxonomy_zips, out_path, writeDataDespiteErrors=True
     )
     printMessages(results)
     printDiagnosticTable(DIAGNOSTICS_TITLE, results.diagnostics)
@@ -350,20 +358,18 @@ def regenerateBuiltIn(
     path: Path,
     entryPointSet: EntryPointSet,
     taxonomy_zips: Sequence[Path],
-    utr_path: Path | None,
     *,
     checkJson: bool,
     dryRun: bool,
 ) -> RegenerationOutcome:
     start = time.perf_counter()
-    # Same directory as the target so os.replace() is an atomic rename.
+    # Same directory as the target so Path.replace() is an atomic rename.
     with TemporaryDirectory(dir=path.parent, prefix=".regenerate-") as tmp:
         out_path = Path(tmp) / path.name
         results = regenerateOne(
             entryPointSet,
             taxonomy_zips,
             out_path,
-            utr_path,
             checkJson=checkJson,
             targetPath=path,
         )
@@ -374,9 +380,24 @@ def regenerateBuiltIn(
         elif dryRun:
             status = RegenerationStatus.WOULD_CHANGE
         else:
-            os.replace(out_path, path)
+            out_path.replace(path)
             status = RegenerationStatus.UPDATED
     return RegenerationOutcome(path, entryPointSet, status, time.perf_counter() - start)
+
+
+def regenerateUtr(out_path: Path, source: str) -> int:
+    """Regenerate the UTR JSON from utr.xml. The file is only replaced once the
+    registry has been read, understood and written out in full."""
+    print(f"UTR source: {escape(source)}")
+    try:
+        UtrRegistry.fromXml(loadUtrXml(source)).writeJson(out_path)
+    except UtrSourceError as e:
+        print(f"[bold red]UTR not written:[/] {escape(str(e))}")
+        return 1
+    except OSError as e:
+        print(f"[bold red]UTR not written:[/] {escape(str(e))}")
+        return 1
+    return 0
 
 
 def printRegenerationSummary(outcomes: Sequence[RegenerationOutcome]) -> None:
@@ -400,21 +421,18 @@ def printRegenerationSummary(outcomes: Sequence[RegenerationOutcome]) -> None:
 
 def regenerateAllBuiltIn(
     taxonomy_zips: Sequence[Path],
-    utr_path: Path | None,
     *,
     checkJson: bool,
     dryRun: bool,
 ) -> int:
     outcomes = []
-    for index, (path, entryPointSet) in enumerate(builtInTaxonomyJsonPaths()):
+    for path, entryPointSet in builtInTaxonomyJsonPaths():
         print(f"Regenerating {path.name}")
         outcomes.append(
             regenerateBuiltIn(
                 path,
                 entryPointSet,
                 taxonomy_zips,
-                # The UTR is independent of the taxonomy: write it once.
-                utr_path if index == 0 else None,
                 checkJson=checkJson,
                 dryRun=dryRun,
             )
@@ -439,7 +457,6 @@ def main() -> None:
     cli = parser()
     args = cli.parse_args()
     taxonomy_json_path: Path | None = args.output
-    utr_json_path: Path | None = args.utr_output
     # action="append" gives a list of documents.
     entry_point: Sequence[str] | None = args.entry_point
 
@@ -449,11 +466,24 @@ def main() -> None:
             f"create is given with --output (e.g. --output {jsonPaths[0]}), not "
             "as the first positional argument."
         )
-    if not (taxonomy_json_path or args.regenerate_builtin or args.list_entry_points):
+    if not (
+        taxonomy_json_path
+        or args.regenerate_builtin
+        or args.list_entry_points
+        or args.utr_output
+    ):
         cli.error(
             "one of the arguments --output --regenerate-builtin "
-            "--list-entry-points is required"
+            "--list-entry-points --utr-output is required"
         )
+    if args.utr_source is not None and args.utr_output is None:
+        cli.error("--utr-source is only supported with --utr-output.")
+    if args.utr_output is not None:
+        if args.taxonomy_zips:
+            cli.error("--utr-output reads utr.xml and takes no taxonomy packages.")
+        raise SystemExit(regenerateUtr(args.utr_output, args.utr_source or UTR_URL))
+    if not args.taxonomy_zips:
+        cli.error("taxonomy package zip files are required.")
     # Dependencies the mutually exclusive group cannot express.
     if entry_point is not None and taxonomy_json_path is None:
         cli.error("--entry-point is only supported with --output.")
@@ -477,7 +507,6 @@ def main() -> None:
         raise SystemExit(
             regenerateAllBuiltIn(
                 taxonomy_zips,
-                utr_json_path,
                 checkJson=args.check_json,
                 dryRun=args.dry_run,
             )
@@ -505,7 +534,6 @@ def main() -> None:
             entryPointSet,
             taxonomy_zips,
             staged,
-            utr_json_path,
             checkJson=args.check_json,
             targetPath=taxonomy_json_path,
             statusReportPath=args.status_report,
