@@ -16,16 +16,9 @@ from mireport.exceptions import TaxonomyPackageException
 
 METADATA_FILENAME = "META-INF/taxonomyPackage.xml"
 
-# Every namespace Arelle recognises as taxonomy package metadata. See
-# txmyPkgNSes in arelle/packages/_package_manager.py.
-TAXONOMY_PACKAGE_NAMESPACES = frozenset(
+SUPPORTED_TAXONOMY_PACKAGE_NAMESPACES = frozenset(
     {
-        "http://www.corefiling.com/xbrl/taxonomypackage/v1",
-        "http://xbrl.org/PWD/2014-01-15/taxonomy-package",
-        "http://xbrl.org/PWD/2015-01-14/taxonomy-package",
-        "http://xbrl.org/PR/2015-12-09/taxonomy-package",
         "http://xbrl.org/2016/taxonomy-package",
-        "http://xbrl.org/WGWD/YYYY-MM-DD/taxonomy-package",
     }
 )
 
@@ -48,16 +41,22 @@ class PackageEntryPoint:
 
 
 def _findMetadataMember(zf: zipfile.ZipFile, zipPath: Path) -> str:
-    names = zf.namelist()
-    # A conforming package holds its metadata inside a single top level folder.
-    for name in names:
-        if name.endswith(f"/{METADATA_FILENAME}"):
-            return name
-    if METADATA_FILENAME in names:
-        return METADATA_FILENAME
-    raise TaxonomyPackageException(
-        f"No {METADATA_FILENAME} found in taxonomy package {zipPath}."
-    )
+    """Locate the metadata file, which the spec puts directly inside the package's
+    single top level folder."""
+    names = set(zf.namelist())
+    topLevel = {name.partition("/")[0] for name in names} - {""}
+    if len(topLevel) != 1:
+        found = ", ".join(sorted(topLevel)) or "none"
+        raise TaxonomyPackageException(
+            f"Taxonomy package {zipPath} must have a single top level folder "
+            f"(found {found})."
+        )
+    member = f"{topLevel.pop()}/{METADATA_FILENAME}"
+    if member not in names:
+        raise TaxonomyPackageException(
+            f"No {member} found in taxonomy package {zipPath}."
+        )
+    return member
 
 
 def _namespaceOf(element: ElementTree.Element) -> str:
@@ -82,7 +81,7 @@ def _bestForLanguage(candidates: list[tuple[str | None, str]]) -> str | None:
     return candidates[0][1] if candidates else None
 
 
-def entryPointsFromPackage(zipPath: str | Path) -> list[PackageEntryPoint]:
+def entryPointsFromPackage(zipPath: str | Path) -> tuple[PackageEntryPoint, ...]:
     """Return every entry point declared by the taxonomy package at *zipPath*."""
     path = Path(zipPath)
     try:
@@ -100,7 +99,7 @@ def entryPointsFromPackage(zipPath: str | Path) -> list[PackageEntryPoint]:
         raise TaxonomyPackageException(f"Could not parse {member} in {path}: {e}")
 
     ns = _namespaceOf(root)
-    if ns not in TAXONOMY_PACKAGE_NAMESPACES:
+    if ns not in SUPPORTED_TAXONOMY_PACKAGE_NAMESPACES:
         raise TaxonomyPackageException(
             f"{member} in {path} uses unrecognised namespace {ns!r}."
         )
@@ -144,4 +143,4 @@ def entryPointsFromPackage(zipPath: str | Path) -> list[PackageEntryPoint]:
                 packageName=packageName,
             )
         )
-    return entryPoints
+    return tuple(entryPoints)

@@ -10,6 +10,7 @@ import re
 import warnings
 from collections import Counter, defaultdict
 from collections.abc import Callable, Iterable, Mapping
+from dataclasses import dataclass, field
 from enum import Enum, StrEnum, auto
 from functools import cache, cached_property
 from pathlib import Path
@@ -21,6 +22,7 @@ from mireport.exceptions import (
     BrokenQNameException,
     TaxonomyException,
     UnknownTaxonomyException,
+    UnsupportedTaxonomyFeatureException,
 )
 from mireport.json import getJsonFiles, getObject, getResource
 from mireport.localise import getBestSupportedLanguage
@@ -71,6 +73,13 @@ class PeriodType(StrEnum):
 class DimensionContainerType(StrEnum):
     Segment = "segment"
     Scenario = "scenario"
+
+
+class HypercubeType(StrEnum):
+    """Which of the two xbrldt hypercube arcroles declared this cube."""
+
+    Positive = "positive"  # "all": these dimension combinations are valid
+    Negative = "negative"  # "notAll": these dimension combinations are excluded
 
 
 class PresentationStyle(Enum):
@@ -652,9 +661,133 @@ class PresentationGroup(NamedTuple):
                 return PresentationStyle.Empty
 
 
-class BaseSet(NamedTuple):
+@dataclass(frozen=True)
+class ExplicitDimensionSignature:
+    """One explicit dimension and the domain members valid for it within a single
+    HypercubeDeclaration."""
+
+    dimension: Concept
+    domain: frozenset[Concept]
+
+
+@dataclass(frozen=True)
+class HypercubeDeclaration:
+    """One hypercube exactly as declared in one base set. Almost every
+    declared cube is modelled now -- open, closed, positive and negative
+    alike; see modelled's docstring for the one remaining exception.
+
+    Doubles as the per-hypercube validity predicate (dimensionsAreValid()):
+    EffectiveHypercube combines several of these per XBRL Dimensions 1.0
+    section 3.1.2, so there is no need for a separate hypercube-scoped type
+    that doesn't also know how to test a candidate against itself.
+    """
+
     roleUri: str
-    hyperCubes: frozenset[Concept]
+    hypercube: Concept
+    type: HypercubeType
+    closed: bool
+    contextElement: DimensionContainerType
+    primaryItems: frozenset[Concept]
+    explicitDimensions: frozenset[ExplicitDimensionSignature]
+    typedDimensions: frozenset[Concept]
+    modelled: bool
+    """False only for a cube whose declared context element does not match
+    this taxonomy's chosen one (see Taxonomy._unsupportedCubeReason()). Not
+    the same as usable: a modelled cube's concepts can still be rejected by
+    _rejectUnsupported() for another cube sharing this base set."""
+    _taxonomy: Taxonomy = field(repr=False, compare=False)
+
+    @cached_property
+    def _explicitDimensionsByDimension(self) -> Mapping[Concept, frozenset[Concept]]:
+        return {ed.dimension: ed.domain for ed in self.explicitDimensions}
+
+    def dimensionsAreValid(
+        self,
+        explicitDims: Mapping[Concept, Concept],
+        typedDims: Mapping[Concept, str] | Iterable[Concept],
+    ) -> bool:
+        """True if the candidate has a valid value for every one of THIS
+        hypercube's own declared dimensions: an explicit dimension is valid
+        if its chosen member is in-domain, or it is omitted and has a
+        taxonomy-wide default; a typed dimension is valid if it is present
+        (its content is not itself validated here).
+
+        Deliberately does not check for dimensions this hypercube does not
+        declare -- a dimension it knows nothing about is not its concern.
+        "Extra dimension" rejection (closedness) is EffectiveHypercube's
+        concern, evaluated once across every conjunct's own declarations,
+        not per hypercube in isolation (see EffectiveHypercube.matches())."""
+        typedKeys = (
+            frozenset(typedDims.keys())
+            if isinstance(typedDims, Mapping)
+            else frozenset(typedDims)
+        )
+        if not self.typedDimensions <= typedKeys:
+            return False  # a declared typed dimension is missing
+
+        for dimension, domain in self._explicitDimensionsByDimension.items():
+            chosen = explicitDims.get(dimension)
+            if chosen is None:
+                if self._taxonomy.getDimensionDefault(dimension) is None:
+                    return False  # required and not defaulted, but omitted
+            elif chosen not in domain:
+                return False
+        return True
+
+
+@dataclass(frozen=True)
+class EffectiveHypercube:
+    """XBRL Dimensions 1.0 section 3.1.2: one base set's combined constraint
+    for one primary item -- every hypercube it is declared in for that base
+    set, ANDed (dimensionsAreValid(), notAll conjuncts negated per section
+    2.3.1). A fact is dimensionally valid for its primary item if it matches
+    at least one EffectiveHypercube (section 3.1.1: OR across base sets).
+
+    Closedness is evaluated here, not per hypercube: if any *positive*
+    conjunct is closed, the candidate may carry no dimension outside the
+    union of every positive conjunct's own declared dimensions. A negative
+    conjunct's dimensions never grant permission to appear -- notAll only
+    ever subtracts validity from the space positive hypercubes define. With
+    no positive conjunct at all, there is no closedness restriction (WGN
+    "Guidance on the use of dimensions" section 3.3: "any combination of
+    dimension values which is not explicitly excluded will be considered
+    valid").
+    """
+
+    roleUri: str
+    primaryItem: Concept
+    hypercubes: tuple[HypercubeDeclaration, ...]
+
+    def matches(
+        self,
+        explicitDims: Mapping[Concept, Concept],
+        typedDims: Mapping[Concept, str] | Iterable[Concept],
+    ) -> bool:
+        for hc in self.hypercubes:
+            if hc.dimensionsAreValid(explicitDims, typedDims) != (
+                hc.type is HypercubeType.Positive
+            ):
+                return False
+
+        positives = [hc for hc in self.hypercubes if hc.type is HypercubeType.Positive]
+        if any(hc.closed for hc in positives):
+            permittedExplicit = frozenset(
+                ed.dimension for hc in positives for ed in hc.explicitDimensions
+            )
+            permittedTyped = frozenset(
+                td for hc in positives for td in hc.typedDimensions
+            )
+            chosenExplicitKeys = frozenset(explicitDims.keys())
+            chosenTypedKeys = (
+                frozenset(typedDims.keys())
+                if isinstance(typedDims, Mapping)
+                else frozenset(typedDims)
+            )
+            if chosenExplicitKeys - permittedExplicit:
+                return False
+            if chosenTypedKeys - permittedTyped:
+                return False
+        return True
 
 
 class Taxonomy:
@@ -716,40 +849,68 @@ class Taxonomy:
             for dimension, domainMember in dimensions.pop("_defaults", {}).items()
         }
 
-        self._baseSets: dict[BaseSet, list[dict]] = defaultdict(list)
-        self._lookupBaseSetByCube: dict[Concept, list[BaseSet]] = defaultdict(list)
-        self._lookupBaseSetByPrimaryItem: dict[Concept, list[BaseSet]] = defaultdict(
-            list
+        self._hypercubeDeclarations: list[HypercubeDeclaration] = []
+        self._declarationsByHypercube: dict[Concept, list[HypercubeDeclaration]] = (
+            defaultdict(list)
         )
-        desired_containers: set[DimensionContainerType] = set()
-        open_hcs: set[Relationship] = set()
+        self._effectiveHypercubesByPrimaryItem: dict[
+            Concept, list[EffectiveHypercube]
+        ] = defaultdict(list)
+        unsupportedRoles: dict[str, str] = {}
         domainByDimension: dict[Concept, list[Concept]] = defaultdict(list)
+        self._unsupportedRolesByConcept: dict[Concept, dict[str, str]] = defaultdict(
+            dict
+        )
+        # Every cube in the definition linkbase, whether or not we can model it.
+        self._hypercubes = frozenset(
+            concepts[cubeQname] for cubes in dimensions.values() for cubeQname in cubes
+        )
+
+        # The taxonomy's dimension container is decided from every declared
+        # cube up front (majority, ties toward Scenario per the xbrl-xml REC
+        # preference quoted above), before any cube is modelled -- so it no
+        # longer depends on which cubes happen to be modellable. A cube
+        # requesting a different container is simply unsupported on its own
+        # (see _unsupportedCubeReason()), not a reason to fail the whole
+        # taxonomy.
+        containerCounts: Counter[DimensionContainerType] = Counter(
+            DimensionContainerType(cubeDetails["xbrldt:contextElement"])
+            for cubes in dimensions.values()
+            for cubeDetails in cubes.values()
+        )
+        if containerCounts:
+            maxCount = max(containerCounts.values())
+            winners = {c for c, n in containerCounts.items() if n == maxCount}
+            self._dimensionContainer = (
+                DimensionContainerType.Scenario
+                if DimensionContainerType.Scenario in winners
+                else next(iter(winners))
+            )
 
         for role, cubes in dimensions.items():
-            cubeConcepts = frozenset(concepts[c] for c in cubes)
-            baseSet = BaseSet(role, cubeConcepts)
+            defects: list[str] = []
+            declarationsByPrimaryItem: dict[Concept, list[HypercubeDeclaration]] = (
+                defaultdict(list)
+            )
+
             for cubeQname, cubeDetails in cubes.items():
                 hc_concept = concepts[cubeQname]
-                d: dict[str, Any] = {}
                 closed = bool(cubeDetails.pop("xbrldt:closed"))
-                d["xbrldt:closed"] = closed
-                if not closed:
-                    open_hcs.add(Relationship(role, 0, hc_concept))
-
+                # Older baked JSON (and third-party JSON we have not re-baked)
+                # predates the "type" key; its absence means positive.
+                cubeType = HypercubeType(
+                    cubeDetails.pop("type", HypercubeType.Positive)
+                )
                 container = DimensionContainerType(
                     cubeDetails.pop("xbrldt:contextElement")
                 )
-                desired_containers.add(container)
-                d["xbrldt:contextElement"] = container
 
-                d["primaryItems"] = [
+                primaryItemRels = [
                     Relationship(role, depth, concepts[qname])
                     for depth, qname in cubeDetails.pop("primaryItems", [])
                 ]
-                for r in d["primaryItems"]:
-                    self._lookupBaseSetByPrimaryItem[r.concept].append(baseSet)
 
-                d["explicitDimensions"] = {
+                explicitDimensionsByName = {
                     concepts[dimQname]: frozenset(
                         concepts[member] for member in memberQnameList
                     )
@@ -757,47 +918,122 @@ class Taxonomy:
                         "explicitDimensions", {}
                     ).items()
                 }
-                for dimension, memberList in d["explicitDimensions"].items():
-                    domainByDimension[dimension].extend(memberList)
+                explicitDimensions = frozenset(
+                    ExplicitDimensionSignature(dimension=dimension, domain=domain)
+                    for dimension, domain in explicitDimensionsByName.items()
+                )
 
-                d["typedDimensions"] = [
+                typedDimensions = frozenset(
                     concepts[dimQname]
                     for dimQname in cubeDetails.pop("typedDimensions", [])
-                ]
+                )
 
-                self._lookupBaseSetByCube[hc_concept].append(baseSet)
-                self._baseSets[baseSet].append(d)
+                declaration = HypercubeDeclaration(
+                    roleUri=role,
+                    hypercube=hc_concept,
+                    type=cubeType,
+                    closed=closed,
+                    contextElement=container,
+                    primaryItems=frozenset(r.concept for r in primaryItemRels),
+                    explicitDimensions=explicitDimensions,
+                    typedDimensions=typedDimensions,
+                    modelled=(
+                        unsupportedReason := self._unsupportedCubeReason(
+                            cubeQname, container, self._dimensionContainer
+                        )
+                    )
+                    is None,
+                    _taxonomy=self,
+                )
+                self._hypercubeDeclarations.append(declaration)
+                self._declarationsByHypercube[hc_concept].append(declaration)
+
+                if unsupportedReason is not None:
+                    defects.append(unsupportedReason)
+                    for concept in (
+                        hc_concept,
+                        *(r.concept for r in primaryItemRels),
+                    ):
+                        self._unsupportedRolesByConcept[concept][role] = (
+                            unsupportedReason
+                        )
+                    continue
+
+                for dimension, memberList in explicitDimensionsByName.items():
+                    domainByDimension[dimension].extend(memberList)
+                for r in primaryItemRels:
+                    declarationsByPrimaryItem[r.concept].append(declaration)
+
+            # One EffectiveHypercube per (role, primary item) -- every hypercube
+            # the item is declared in for this role, ANDed. This is the unit a
+            # fact must satisfy at least one of (across every role), never the
+            # union of several.
+            for primaryItem, declarationsForItem in declarationsByPrimaryItem.items():
+                self._effectiveHypercubesByPrimaryItem[primaryItem].append(
+                    EffectiveHypercube(
+                        roleUri=role,
+                        primaryItem=primaryItem,
+                        hypercubes=tuple(declarationsForItem),
+                    )
+                )
+
+            if defects:
+                unsupportedRoles[role] = "; ".join(defects)
 
         self._lookupDomainByDimension: Mapping[Concept, frozenset[Concept]] = {
             dimension: frozenset(domainlist)
             for dimension, domainlist in domainByDimension.items()
         }
-        self._hypercubes = frozenset(c for x in self._baseSets for c in x.hyperCubes)
 
-        if open_hcs:
-            # Not supported by mireport (aoix doesn't care)
+        if unsupportedRoles:
+            # Warn rather than raise so the rest of the taxonomy stays usable.
+            # Using an affected concept raises -- see _rejectUnsupported().
             te = TaxonomyException(
-                f"Unsupported taxonomy [{entryPoint}] contains ({len(open_hcs)}) open hypercubes."
+                f"Unsupported taxonomy [{entryPoint}] contains ({len(unsupportedRoles)}) "
+                "base sets with parts that mireport cannot model."
             )
-            oc_str = "\n".join(
-                f"{role}\n\t{c.qname}"
-                for role, c in sorted(
-                    ((x.roleUri, x.concept) for x in open_hcs),
+            te.add_note(
+                "Unsupported base sets:\n"
+                + "\n".join(
+                    f"{role}\n\t{reason}"
+                    for role, reason in sorted(unsupportedRoles.items())
                 )
             )
-            te.add_note(f"Open hypercubes:\n{oc_str}")
             warnings.warn(UserWarning(te))
 
-        match len(desired_containers):
-            case 0:
-                pass
-            case 1:
-                self._dimensionContainer = desired_containers.pop()
-            case _:
-                # Not supported by mireport or aoix
-                raise TaxonomyException(
-                    f"Multiple dimension containers specified {desired_containers}. Not currently supported"
+    @staticmethod
+    def _unsupportedCubeReason(
+        cubeQname: str,
+        cubeContainer: DimensionContainerType,
+        chosenContainer: DimensionContainerType,
+    ) -> str | None:
+        """Why mireport cannot model this cube, or None if it can.
+
+        Open and negative cubes are no longer unsupported --
+        HypercubeDeclaration.dimensionsAreValid() and
+        EffectiveHypercube.matches() model both directly, and a primary item
+        declared in more than one hypercube of one base set is exactly what
+        EffectiveHypercube conjoins. The one remaining reason: mireport (and
+        aoix) support only a single dimension container per taxonomy, so a
+        cube declaring a different one than the taxonomy's chosen container
+        cannot be modelled.
+        """
+        if cubeContainer is not chosenContainer:
+            return (
+                f"hypercube {cubeQname} declares {cubeContainer.value} but "
+                f"this taxonomy uses {chosenContainer.value}"
+            )
+        return None
+
+    def _rejectUnsupported(self, subject: Concept) -> None:
+        if faulty := self._unsupportedRolesByConcept.get(subject):
+            raise UnsupportedTaxonomyFeatureException(
+                f"{subject.qname} is declared in base set(s) that mireport cannot "
+                "model: "
+                + "; ".join(
+                    f"{role} ({reason})" for role, reason in sorted(faulty.items())
                 )
+            )
 
     def getConcept(self, qname: QName | str) -> Concept:
         if isinstance(qname, str):
@@ -908,92 +1144,121 @@ class Taxonomy:
         all_hcs = frozenset(c for c in self._concepts.values() if c.isHypercube)
         return all_hcs - self._hypercubes
 
+    @cached_property
+    def hypercubeDeclarations(self) -> tuple[HypercubeDeclaration, ...]:
+        """Every (base set, hypercube) in the definition linkbase exactly as
+        declared, ordered by role then hypercube for stable reporting.
+
+        This does not go through _rejectUnsupported() -- it is for surveying
+        the whole taxonomy (e.g. TaxonomyChecker), not for building a fact."""
+        return tuple(
+            sorted(
+                self._hypercubeDeclarations,
+                key=lambda d: (d.roleUri, str(d.hypercube.qname)),
+            )
+        )
+
+    def getDeclarationsForHypercube(
+        self, hypercube: Concept
+    ) -> frozenset[HypercubeDeclaration]:
+        """Every HypercubeDeclaration for this hypercube, one per base set it
+        participates in.
+
+        Raises UnsupportedTaxonomyFeatureException if this hypercube declares
+        a dimension container other than the taxonomy's chosen one."""
+        self._rejectUnsupported(hypercube)
+        return frozenset(self._declarationsByHypercube.get(hypercube, ()))
+
+    def getEffectiveHypercubesForPrimaryItem(
+        self, primaryItem: Concept
+    ) -> frozenset[EffectiveHypercube]:
+        """Every EffectiveHypercube a primary item can be reported against,
+        one per base set it participates in as a primary item. A fact must
+        match at least one of these -- not their union (XBRL Dimensions 1.0
+        section 3.1.1: OR across base sets).
+
+        Raises UnsupportedTaxonomyFeatureException if this primary item is
+        declared in a hypercube whose dimension container does not match the
+        taxonomy's chosen one."""
+        self._rejectUnsupported(primaryItem)
+        return frozenset(self._effectiveHypercubesByPrimaryItem.get(primaryItem, ()))
+
     def getTypedDimensionsForHypercube(self, hypercube: Concept) -> frozenset[Concept]:
-        """This aggregates across all base-sets to give all the dimensions specified for the given hypercube."""
-        baseSets = self._lookupBaseSetByCube.get(hypercube)
-        if baseSets is None:
-            return frozenset()
-        typed = {
+        """The union, across every base-set this hypercube participates in, of its
+        typed dimensions. This is not a valid dimensional signature by itself --
+        see getDeclarationsForHypercube()."""
+        return frozenset(
             td
-            for b in baseSets
-            for cube in self._baseSets[b]
-            for td in cube["typedDimensions"]
-        }
-        return frozenset(typed)
+            for declaration in self.getDeclarationsForHypercube(hypercube)
+            for td in declaration.typedDimensions
+        )
 
     def getExplicitDimensionsForHypercube(
         self, hypercube: Concept
     ) -> frozenset[Concept]:
-        """This aggregates across all base-sets to give all the dimensions specified for the given hypercube."""
-        baseSets = self._lookupBaseSetByCube.get(hypercube)
-        if baseSets is None:
-            return frozenset()
-        explicit = {
-            ed
-            for b in baseSets
-            for cube in self._baseSets[b]
-            for ed in cube["explicitDimensions"]
-        }
-        return frozenset(explicit)
+        """The union, across every base-set this hypercube participates in, of its
+        explicit dimensions. This is not a valid dimensional signature by itself --
+        see getDeclarationsForHypercube()."""
+        return frozenset(
+            ed.dimension
+            for declaration in self.getDeclarationsForHypercube(hypercube)
+            for ed in declaration.explicitDimensions
+        )
 
     @cache  # noqa: B019 - Taxonomy lives for the life of the process. See above.
     def getDimensionsForHypercube(self, hypercube: Concept) -> frozenset[Concept]:
-        baseSets = self._lookupBaseSetByCube.get(hypercube)
-        if baseSets is None:
-            return frozenset()
-        dims: list[Concept] = []
-        for b in baseSets:
-            for cube in self._baseSets[b]:
-                dims.extend(ed for ed in cube["explicitDimensions"])
-                dims.extend(td for td in cube["typedDimensions"])
-        return frozenset(dims)
+        """The union, across every base-set this hypercube participates in, of all
+        its dimensions (explicit and typed). This is not a valid dimensional
+        signature by itself -- see getDeclarationsForHypercube()."""
+        return self.getExplicitDimensionsForHypercube(
+            hypercube
+        ) | self.getTypedDimensionsForHypercube(hypercube)
 
     def getPrimaryItemsForHypercube(self, hypercube: Concept) -> frozenset[Concept]:
         """This aggregates across all base-sets to give all the primary items specified for the given hypercube."""
-        baseSets = self._lookupBaseSetByCube.get(hypercube)
-        if baseSets is None:
-            return frozenset()
-        primary = {
-            r.concept
-            for b in baseSets
-            for cube in self._baseSets[b]
-            for r in cube["primaryItems"]
-        }
-        return frozenset(primary)
-
-    def _getHypercubesForPrimaryItem(self, primaryItem: Concept) -> frozenset[Concept]:
-        baseSets = self._lookupBaseSetByPrimaryItem.get(primaryItem)
-        if baseSets is None:
-            return frozenset()
-        return frozenset(c for x in baseSets for c in x.hyperCubes)
+        return frozenset(
+            primaryItem
+            for declaration in self.getDeclarationsForHypercube(hypercube)
+            for primaryItem in declaration.primaryItems
+        )
 
     def getExplicitDimensionsForPrimaryItem(
         self, primaryItem: Concept
     ) -> frozenset[Concept]:
-        hcs = self._getHypercubesForPrimaryItem(primaryItem)
-        eds = {ed for hc in hcs for ed in self.getExplicitDimensionsForHypercube(hc)}
-        return frozenset(eds)
+        """The union, across every applicable hypercube/base-set, of the explicit
+        dimensions a primary item can carry. This is not a valid dimensional
+        signature by itself -- see getEffectiveHypercubesForPrimaryItem()."""
+        return frozenset(
+            ed.dimension
+            for effective in self.getEffectiveHypercubesForPrimaryItem(primaryItem)
+            for hc in effective.hypercubes
+            for ed in hc.explicitDimensions
+        )
 
     def getTypedDimensionsForPrimaryItem(
         self, primaryItem: Concept
     ) -> frozenset[Concept]:
-        hcs = self._getHypercubesForPrimaryItem(primaryItem)
-        tds = {td for hc in hcs for td in self.getTypedDimensionsForHypercube(hc)}
-        return frozenset(tds)
+        """The union, across every applicable hypercube/base-set, of the typed
+        dimensions a primary item can carry. This is not a valid dimensional
+        signature by itself -- see getEffectiveHypercubesForPrimaryItem()."""
+        return frozenset(
+            td
+            for effective in self.getEffectiveHypercubesForPrimaryItem(primaryItem)
+            for hc in effective.hypercubes
+            for td in hc.typedDimensions
+        )
 
     @cache  # noqa: B019 - Taxonomy lives for the life of the process. See above.
     def getExplicitDimensionForDomainMember(
         self, primaryItem: Concept, dimensionValue: Concept
     ) -> Concept | None:
-        baseSets = self._lookupBaseSetByPrimaryItem.get(primaryItem)
-        if baseSets is None:
-            return None
-        possible: set = set()
-        for b in baseSets:
-            for cube in self._baseSets[b]:
-                for ed, domain in cube["explicitDimensions"].items():
-                    if dimensionValue in domain:
-                        possible.add(ed)
+        possible: set[Concept] = {
+            ed.dimension
+            for effective in self.getEffectiveHypercubesForPrimaryItem(primaryItem)
+            for hc in effective.hypercubes
+            for ed in hc.explicitDimensions
+            if dimensionValue in ed.domain
+        }
         match len(possible):
             case 0:
                 return None

@@ -3,6 +3,8 @@ import os
 import sys
 import warnings
 from argparse import ArgumentParser
+from collections import Counter
+from collections.abc import Iterable, Sequence
 from glob import glob
 from typing import Any
 
@@ -10,14 +12,22 @@ import rich.traceback
 from rich import box
 from rich.console import Console
 from rich.logging import RichHandler
+from rich.markup import escape
 from rich.prompt import Prompt
 from rich.table import Table
 from rich.text import Text
 
+from mireport.diagnostics import AbstractDiagnostic
 from mireport.exceptions import TaxonomyPackageException
 from mireport.taxonomy_package import PackageEntryPoint, entryPointsFromPackage
 
 _CONSOLE = Console()
+
+_DIAGNOSTIC_LEVEL_STYLES = {
+    logging.ERROR: "bold red",
+    logging.WARNING: "yellow",
+    logging.INFO: "dim",
+}
 
 
 def getListofPathsFromListOfGlobs(globs: list[str]) -> list[str]:
@@ -52,6 +62,16 @@ def get_console() -> Console:
 def console_print(*args: Any, **kwargs: Any) -> None:
     console = get_console()
     console.print(*args, **kwargs)
+
+
+def console_print_plain(lines: Iterable[object], indent: str = "\t") -> None:
+    """Print lines whose square brackets are data, not rich markup.
+
+    Arelle log lines and mireport messages contain message codes and QName lists
+    like "[xbrldie:PrimaryItemDimensionallyInvalidError]", which rich would
+    otherwise swallow as a style tag.
+    """
+    console_print(Text("\n".join(f"{indent}{line}" for line in lines)))
 
 
 def configure_rich_output(*, locals_max_length: int | None = None) -> Console:
@@ -152,3 +172,50 @@ def pickEntryPointFromPackages(
     if chosen is None:
         raise parser.error(f"{response!r} is not one of the listed entry points.")
     return chosen.hrefs
+
+
+def _diagnosticLevelName(level: int) -> str:
+    return logging.getLevelName(level).title()
+
+
+def _diagnosticDetails(diagnostic: AbstractDiagnostic[Any]) -> str:
+    lines = [f"{key}: {value}" for key, value in diagnostic.details.items()]
+    if diagnostic.hint is not None:
+        lines.append(f"hint: {diagnostic.hint}")
+    return "\n".join(lines)
+
+
+def printDiagnosticTable(
+    title: str, diagnostics: Sequence[AbstractDiagnostic[Any]]
+) -> None:
+    """Render diagnostics (extraction Diagnostics or checker findings) as a
+    table, sorted by descending severity, followed by a one-line count
+    summary."""
+    if not diagnostics:
+        console_print(f"No {title.lower()} to report.")
+        return
+
+    table = Table(title=title, show_lines=True)
+    table.add_column("Level", no_wrap=True)
+    table.add_column("Message", max_width=40)
+    table.add_column("ELR", overflow="fold")
+    table.add_column("Concepts", overflow="fold")
+    table.add_column("Details", overflow="fold")
+
+    for diagnostic in sorted(diagnostics, key=lambda d: -d.level):
+        table.add_row(
+            f"[{_DIAGNOSTIC_LEVEL_STYLES.get(diagnostic.level, '')}]"
+            f"{_diagnosticLevelName(diagnostic.level)}[/]",
+            escape(diagnostic.text),
+            escape(diagnostic.elr or ""),
+            escape("\n".join(str(qname) for qname in diagnostic.concepts)),
+            escape(_diagnosticDetails(diagnostic)),
+        )
+    console_print(table)
+
+    counts = Counter(_diagnosticLevelName(d.level) for d in diagnostics)
+    summary = ", ".join(
+        f"{count} {name.lower()}{'s' if count != 1 else ''}"
+        for name, count in counts.most_common()
+    )
+    console_print(f"{summary} ({title.lower()}).")

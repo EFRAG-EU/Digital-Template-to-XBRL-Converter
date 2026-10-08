@@ -9,7 +9,6 @@ from mireport.exceptions import TaxonomyPackageException
 from mireport.taxonomy_package import entryPointsFromPackage
 
 TP_2016 = "http://xbrl.org/2016/taxonomy-package"
-TP_PWD_2014 = "http://xbrl.org/PWD/2014-01-15/taxonomy-package"
 
 VSME_METADATA = f"""<?xml version="1.0" encoding="UTF-8"?>
 <tp:taxonomyPackage xmlns:tp="{TP_2016}" xml:lang="en">
@@ -74,15 +73,21 @@ class TestEntryPointsFromPackage:
         assert [ep.name for ep in entryPoints] == ["ESRS All", "ESRS Core"]
         assert [ep.description for ep in entryPoints] == [None, None]
 
-    def test_root_level_meta_inf(self, tmp_path):
+    def test_root_level_meta_inf_rejected(self, tmp_path):
         zipPath = makePackage(
             tmp_path, VSME_METADATA, member="META-INF/taxonomyPackage.xml"
         )
-        assert len(entryPointsFromPackage(zipPath)) == 1
+        with pytest.raises(TaxonomyPackageException, match="single top level folder"):
+            entryPointsFromPackage(zipPath)
 
-    def test_older_namespace_accepted(self, tmp_path):
-        metadata = VSME_METADATA.replace(TP_2016, TP_PWD_2014)
-        assert len(entryPointsFromPackage(makePackage(tmp_path, metadata))) == 1
+    def test_nested_meta_inf_rejected(self, tmp_path):
+        zipPath = makePackage(
+            tmp_path,
+            VSME_METADATA,
+            member="taxonomy/nested/META-INF/taxonomyPackage.xml",
+        )
+        with pytest.raises(TaxonomyPackageException, match="No taxonomy/META-INF"):
+            entryPointsFromPackage(zipPath)
 
     def test_unknown_namespace_rejected(self, tmp_path):
         metadata = VSME_METADATA.replace(TP_2016, "http://example.com/not-a-package")
@@ -165,7 +170,7 @@ class TestEntryPointsFromPackage:
         assert entryPoint.name == "Real"
 
     def test_no_metadata_file(self, tmp_path):
-        with pytest.raises(TaxonomyPackageException, match="No META-INF"):
+        with pytest.raises(TaxonomyPackageException, match="No taxonomy/META-INF"):
             entryPointsFromPackage(makePackage(tmp_path, None))
 
     def test_not_a_zip(self, tmp_path):

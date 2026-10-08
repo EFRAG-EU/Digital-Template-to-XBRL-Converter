@@ -3,6 +3,7 @@ import re
 from collections.abc import Sequence
 from contextlib import contextmanager
 from itertools import count
+from pathlib import Path
 from time import perf_counter_ns
 from typing import NamedTuple
 
@@ -13,7 +14,7 @@ from rich.table import Table
 from rich.text import Text
 
 import mireport
-from mireport.cli import configure_rich_output
+from mireport.cli import configure_rich_output, printDiagnosticTable
 from mireport.cli import console_print as print
 from mireport.data.disclosures import VSME_DEFAULTS
 from mireport.taxonomy import (
@@ -30,6 +31,7 @@ from mireport.taxonomy import (
     Taxonomy,
     getTaxonomy,
     listTaxonomies,
+    loadTaxonomyJSON,
 )
 from mireport.taxonomy_checker import TaxonomyChecker
 
@@ -363,6 +365,24 @@ def dump_translation_sheet(
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Dump taxonomy information.")
     parser.set_defaults(subcommand="dump")
+    # On the top-level parser (not just the "dump" subparser) so they also
+    # work for a bare invocation and for "translation-sheet" -- add_subparsers
+    # resets the top-level set_defaults(subcommand="dump") above to None for
+    # any invocation that doesn't explicitly name a subcommand, and every
+    # subcommand shares the same loaded taxonomies.
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="Run taxonomy checks after dumping.",
+    )
+    parser.add_argument(
+        "--taxonomy",
+        metavar="TAXONOMY",
+        type=Path,
+        nargs="+",
+        help="Path to one or more taxonomy JSON files (as produced by "
+        "update-taxonomy.py) to load in addition to the built-in ones.",
+    )
     subparsers = parser.add_subparsers(dest="subcommand")
     subparsers.required = False
 
@@ -370,11 +390,6 @@ def build_parser() -> argparse.ArgumentParser:
         "dump", help="Dump the taxonomy tree (default subcommand)."
     )
     dump_parser.set_defaults(subcommand="dump")
-    dump_parser.add_argument(
-        "--check",
-        action="store_true",
-        help="Run taxonomy checks after dumping.",
-    )
 
     ts_parser = subparsers.add_parser(
         "translation-sheet", help="Write a translation sheet Excel file."
@@ -424,7 +439,9 @@ def run_dump(taxonomy: Taxonomy, args: argparse.Namespace) -> None:
 
     if args.check:
         print()
-        TaxonomyChecker(taxonomy).reportIssues()
+        printDiagnosticTable(
+            "Taxonomy checker findings", TaxonomyChecker(taxonomy).reportIssues()
+        )
 
 
 def run_translation_sheet(taxonomy: Taxonomy, args: argparse.Namespace) -> None:
@@ -448,6 +465,8 @@ def main() -> None:
 
     with timer("Taxonomies loaded"):
         mireport.loadBuiltInTaxonomyJSON()
+        for taxonomyPath in args.taxonomy or ():
+            loadTaxonomyJSON(taxonomyPath)
 
     entry_point = pick_entry_point()
     taxonomy = getTaxonomy(entry_point)

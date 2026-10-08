@@ -8,7 +8,7 @@ from arelle.Cntlr import Cntlr
 from arelle.ModelValue import QName
 
 from mireport.arelle.diagnostics import (
-    Diagnostic,
+    ArelleDiagnostic,
     DiagnosticCollector,
     DiagnosticEmitter,
     logTo,
@@ -21,15 +21,15 @@ def qn(local: str) -> QName:
 
 class TestConstructors:
     def test_default_level_is_info(self) -> None:
-        assert Diagnostic("hello").level == logging.INFO
+        assert ArelleDiagnostic("hello").level == logging.INFO
 
     def test_level_shortcuts(self) -> None:
-        assert Diagnostic.info("x").level == logging.INFO
-        assert Diagnostic.warning("x").level == logging.WARNING
-        assert Diagnostic.error("x").level == logging.ERROR
+        assert ArelleDiagnostic.info("x").level == logging.INFO
+        assert ArelleDiagnostic.warning("x").level == logging.WARNING
+        assert ArelleDiagnostic.error("x").level == logging.ERROR
 
     def test_shortcut_kwargs_become_details(self) -> None:
-        d = Diagnostic.warning(
+        d = ArelleDiagnostic.warning(
             "x", elr="https://elr", concepts=(qn("A"),), hint="fix it", role="label"
         )
         assert d.elr == "https://elr"
@@ -38,39 +38,47 @@ class TestConstructors:
         assert d.details == {"role": "label"}
 
     def test_concepts_normalised_to_tuple(self) -> None:
-        d = Diagnostic.info("x", concepts=[qn("A"), qn("B")])
+        d = ArelleDiagnostic.info("x", concepts=[qn("A"), qn("B")])
         assert d.concepts == (qn("A"), qn("B"))
 
 
 class TestFormat:
     def test_text_only(self) -> None:
-        assert Diagnostic("Something happened").format() == "Something happened"
+        assert ArelleDiagnostic("Something happened").format() == "Something happened"
 
     def test_elr_on_own_line(self) -> None:
-        d = Diagnostic.warning("Presentation is empty", elr="https://example.com/elr")
+        d = ArelleDiagnostic.warning(
+            "Presentation is empty", elr="https://example.com/elr"
+        )
         assert d.format() == ("Presentation is empty\n  elr: https://example.com/elr")
 
     def test_single_concept(self) -> None:
-        d = Diagnostic.warning("Dimension has no domain", concepts=(qn("FooAxis"),))
+        d = ArelleDiagnostic.warning(
+            "Dimension has no domain", concepts=(qn("FooAxis"),)
+        )
         assert d.format() == ("Dimension has no domain\n  concept: vsme:FooAxis")
 
     def test_multiple_concepts_listed(self) -> None:
-        d = Diagnostic.warning("Multiple roots", concepts=(qn("RootB"), qn("RootA")))
+        d = ArelleDiagnostic.warning(
+            "Multiple roots", concepts=(qn("RootB"), qn("RootA"))
+        )
         # order is caller-controlled, not sorted here
         assert d.format() == (
             "Multiple roots\n  concepts:\n    vsme:RootB\n    vsme:RootA"
         )
 
     def test_details_in_insertion_order(self) -> None:
-        d = Diagnostic.warning("Duplicate labels", lang="en", role="std", label="X")
+        d = ArelleDiagnostic.warning(
+            "Duplicate labels", lang="en", role="std", label="X"
+        )
         assert d.format() == ("Duplicate labels\n  lang: en\n  role: std\n  label: X")
 
     def test_details_sequence_values_comma_joined(self) -> None:
-        d = Diagnostic.error("Too many defaults", members=[qn("M1"), qn("M2")])
+        d = ArelleDiagnostic.error("Too many defaults", members=[qn("M1"), qn("M2")])
         assert d.format() == ("Too many defaults\n  members: vsme:M1, vsme:M2")
 
     def test_hint_is_last(self) -> None:
-        d = Diagnostic.error(
+        d = ArelleDiagnostic.error(
             "QName has no namespace defined",
             concepts=(qn("Thing"),),
             hint="check elementFormDefault",
@@ -84,7 +92,7 @@ class TestFormat:
         )
 
     def test_field_order_elr_concepts_details(self) -> None:
-        d = Diagnostic.warning(
+        d = ArelleDiagnostic.warning(
             "Domain head oddity",
             elr="https://elr",
             concepts=(qn("FooAxis"),),
@@ -109,7 +117,7 @@ class StubCntlr:
 class TestLogTo:
     def test_passes_formatted_message_and_level(self) -> None:
         cntlr = StubCntlr()
-        d = Diagnostic.warning("Presentation is empty", elr="https://elr")
+        d = ArelleDiagnostic.warning("Presentation is empty", elr="https://elr")
         logTo(cast(Cntlr, cntlr), d)
         assert cntlr.logged == [
             ("Presentation is empty\n  elr: https://elr", logging.WARNING)
@@ -147,8 +155,8 @@ class TestDiagnosticEmitter:
         token = DiagnosticCollector.open()
         try:
             emitter = DiagnosticEmitter(cast(Cntlr, cntlr), token)
-            first = Diagnostic.warning("first")
-            second = Diagnostic.info("second")
+            first = ArelleDiagnostic.warning("first")
+            second = ArelleDiagnostic.info("second")
             emitter.emit(first)
             emitter.emit(second)
         finally:
@@ -162,5 +170,5 @@ class TestDiagnosticEmitter:
     ) -> None:
         cntlr = StubCntlr()
         emitter = DiagnosticEmitter(cast(Cntlr, cntlr), token)
-        emitter.emit(Diagnostic.warning("orphan"))
+        emitter.emit(ArelleDiagnostic.warning("orphan"))
         assert cntlr.logged == [("orphan", logging.WARNING)]

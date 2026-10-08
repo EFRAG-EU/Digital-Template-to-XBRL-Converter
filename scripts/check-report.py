@@ -5,7 +5,7 @@ import time
 from pathlib import Path
 
 from mireport.arelle.report_info import ArelleReportProcessor, getOrCreateReportPackage
-from mireport.cli import configure_rich_output
+from mireport.cli import configure_rich_output, console_print_plain
 from mireport.cli import console_print as print
 from mireport.conversionresults import (
     ConversionResults,
@@ -172,14 +172,12 @@ def main() -> None:
         else:
             print("Messages:")
 
-        for message in results.userMessages:
-            print(f"\t{message}")
+        console_print_plain(results.userMessages)
 
     if args.devinfo and results.developerMessages:
         print()
         print("All messages (including developer messages):")
-        for message in results.developerMessages:
-            print(f"\t{message}")
+        console_print_plain(results.developerMessages)
 
     final_word_and_exit(results, args.quiet)
 

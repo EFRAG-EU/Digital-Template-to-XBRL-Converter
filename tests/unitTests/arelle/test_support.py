@@ -5,7 +5,7 @@ import json
 import pytest
 from arelle.ModelValue import QName
 
-from mireport.arelle.diagnostics import Diagnostic
+from mireport.arelle.diagnostics import ArelleDiagnostic
 from mireport.arelle.support import (
     ArelleModelInconsistency,
     ArelleProcessingResult,
@@ -36,15 +36,15 @@ class TestArelleProcessingResultDiagnostics:
 
     def test_add_diagnostics_accumulates_in_order(self) -> None:
         result = ArelleProcessingResult()
-        first = Diagnostic.warning("first")
-        second = Diagnostic.info("second")
+        first = ArelleDiagnostic.warning("first")
+        second = ArelleDiagnostic.info("second")
         result.addDiagnostics([first])
         result.addDiagnostics([second])
         assert result.diagnostics == [first, second]
 
     def test_diagnostics_property_returns_copy(self) -> None:
         result = ArelleProcessingResult()
-        result.addDiagnostics([Diagnostic.warning("only")])
+        result.addDiagnostics([ArelleDiagnostic.warning("only")])
         result.diagnostics.clear()
         assert len(result.diagnostics) == 1
 
@@ -141,7 +141,7 @@ class TestArelleModelInconsistency:
         assert exc.diagnostic is None
 
     def test_from_diagnostic(self) -> None:
-        diagnostic = Diagnostic.error("Bad shape", elr="https://elr")
+        diagnostic = ArelleDiagnostic.error("Bad shape", elr="https://elr")
         exc = ArelleModelInconsistency(diagnostic)
         assert str(exc) == "Bad shape\n  elr: https://elr"
         assert exc.diagnostic is diagnostic
