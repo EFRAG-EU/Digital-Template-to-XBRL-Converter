@@ -39,6 +39,7 @@ rather than being translated on a guess — see :func:`_rejectUnknownElements`.
 
 from __future__ import annotations
 
+import codecs
 from typing import TYPE_CHECKING
 
 from lxml import etree, html
@@ -418,6 +419,29 @@ def _rejectUnknownElements(root: etree._Element) -> None:
         )
 
 
+# Byte order marks of the wide encodings, in which NUL bytes are ordinary text.
+_WIDE_ENCODING_BOMS = (
+    codecs.BOM_UTF32_LE,
+    codecs.BOM_UTF32_BE,
+    codecs.BOM_UTF16_LE,
+    codecs.BOM_UTF16_BE,
+)
+
+
+def _isBinary(content: bytes) -> bool:
+    """Whether @content is binary rather than text: it contains a NUL byte and
+    does not announce itself as UTF-16 or UTF-32 with a byte order mark.
+
+    A NUL is not a legal character in XML or HTML, but what an HTML parser does
+    with one depends on the libxml2 it was built against: the one bundled with
+    lxml on Windows refuses the document, while the HTML5-style parser in
+    libxml2 2.14 (the Linux wheels) quietly turns it into U+FFFD and carries on,
+    so garbage came out as a "recovered" document. Refusing it here makes the
+    outcome the same everywhere.
+    """
+    return b"\x00" in content and not content.startswith(_WIDE_ENCODING_BOMS)
+
+
 def _parseAsXhtml(content: bytes) -> etree._Element | None:
     """Return the root if @content is already well-formed XHTML, else None.
 
@@ -535,12 +559,17 @@ def normaliseToXhtml(content: bytes, *, injectIxHeader: bool = True) -> bytes:
         be merged into another document rather than shipped as its own
         document set member — the merged document needs exactly one header,
         supplied by the report it joins, not one per source PDF.
-    :raises PdfConversionError: if @content cannot be parsed as HTML at all, or
-        contains no ``html`` element — either means the converter produced
+    :raises PdfConversionError: if @content is empty or binary (it contains NUL
+        bytes and is not UTF-16/32 text), cannot be parsed as HTML at all, or
+        contains no ``html`` element — each means the converter produced
         something other than a document, whatever its exit code claimed.
     """
     if not content.strip():
         raise PdfConversionError("Converted PDF output was empty.")
+    if _isBinary(content):
+        raise PdfConversionError(
+            "Converted PDF output is binary (it contains NUL bytes), not HTML."
+        )
 
     # Rewriting a foreign document into XHTML is exactly the kind of work that
     # turns an unexpected input into a raw lxml ValueError, and a converted PDF

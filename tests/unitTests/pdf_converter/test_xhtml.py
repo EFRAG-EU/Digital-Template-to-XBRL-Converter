@@ -490,6 +490,21 @@ class TestRejection:
         with pytest.raises(PdfConversionError):
             normaliseToXhtml(content)
 
+    def test_nul_bytes_inside_otherwise_valid_html_are_rejected(self) -> None:
+        """Rejected by rule, not left to the HTML parser: lxml built on libxml2
+        2.14 (the Linux wheels) turns a NUL into U+FFFD and recovers a document,
+        where the Windows build refuses it. The result must not depend on which."""
+        with pytest.raises(PdfConversionError, match="NUL"):
+            normaliseToXhtml(b"<html><body><p>a\x00b</p></body></html>")
+
+    @pytest.mark.parametrize("encoding", ["utf-16", "utf-32"])
+    def test_wide_encoded_html_with_a_byte_order_mark_is_not_binary(
+        self, encoding: str
+    ) -> None:
+        """NUL bytes are ordinary in UTF-16/32, so a BOM exempts a document."""
+        source = "<html><body><p>hello</p></body></html>".encode(encoding)
+        assert b"hello" in normaliseToXhtml(source)
+
     def test_plain_text_is_recovered_rather_than_rejected(self) -> None:
         """An HTML parser's job is to make a document out of what it is given,
         and pdf2htmlEX's real output always has structure. Trying to tell
