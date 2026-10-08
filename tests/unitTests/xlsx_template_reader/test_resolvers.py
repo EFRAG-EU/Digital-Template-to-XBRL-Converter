@@ -303,11 +303,12 @@ def _errors(results):
     return [m for m in results.messages if m.severity is Severity.ERROR]
 
 
-class TestResolveExternalValues:
-    @pytest.fixture(scope="class")
-    def textblock(self, taxonomy):
-        return next(c for c in sorted(taxonomy.concepts, key=str) if c.isTextblock)
+@pytest.fixture(scope="module")
+def textblock(taxonomy):
+    return next(c for c in sorted(taxonomy.concepts, key=str) if c.isTextblock)
 
+
+class TestResolveExternalValues:
     def test_known_concept_name_resolved(self, taxonomy, textblock):
         ctx, results = _external_values_ctx([textblock.qname.localName], taxonomy)
         assert resolveExternalValues(ctx) == frozenset({textblock})
