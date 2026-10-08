@@ -92,3 +92,81 @@ def test_inf_with_locale(number, expected):
 def test_invalid_types(invalid_input):
     with pytest.raises(TypeError):
         localise_and_format_number(invalid_input, 2)
+
+
+@pytest.mark.parametrize(
+    "number,decimal_places,expected",
+    [
+        # Values needing more than 28 significant digits used to raise
+        # decimal.InvalidOperation from babel's quantize (default decimal
+        # context precision) when a locale was supplied.
+        (1e28, 0, "10,000,000,000,000,000,000,000,000,000"),
+        (1e30, 0, "1,000,000,000,000,000,000,000,000,000,000"),
+        (
+            "123456789012345678901234567890",
+            0,
+            "123,456,789,012,345,678,901,234,567,890",
+        ),
+        (1e30, 2, "1,000,000,000,000,000,000,000,000,000,000.00"),
+        # Modest value but many decimal places also exceeds 28 digits total
+        (Decimal(1234567), 25, "1,234,567." + "0" * 25),
+    ],
+)
+def test_huge_values_with_locale(number, decimal_places, expected):
+    result = localise_and_format_number(
+        number, decimal_places, locale=Locale("en", "US")
+    )
+    assert result == expected
+
+
+@pytest.mark.parametrize(
+    "number,expected",
+    [
+        (1e30, "1,000,000,000,000,000,000,000,000,000,000"),
+        (
+            Decimal("123456789012345678901234567890.5"),
+            "123,456,789,012,345,678,901,234,567,890.5",
+        ),
+    ],
+)
+def test_huge_values_inf_with_locale(number, expected):
+    result = localise_and_format_number(number, "INF", locale=Locale("en", "US"))
+    assert result == expected
+
+
+@pytest.mark.parametrize(
+    "number,decimal_places,expected",
+    [
+        # No-locale path uses plain f-string formatting; pin its behaviour
+        # for the same huge values.
+        (1e30, 0, "1,000,000,000,000,000,000,000,000,000,000"),
+        (
+            "123456789012345678901234567890",
+            0,
+            "123,456,789,012,345,678,901,234,567,890",
+        ),
+        (Decimal(1234567), 25, "1,234,567." + "0" * 25),
+    ],
+)
+def test_huge_values_no_locale(number, decimal_places, expected):
+    assert localise_and_format_number(number, decimal_places) == expected
+
+
+@pytest.mark.parametrize(
+    "non_finite",
+    [
+        Decimal("NaN"),
+        Decimal("Infinity"),
+        Decimal("-Infinity"),
+        float("nan"),
+        float("inf"),
+        float("-inf"),
+        "NaN",
+        "Infinity",
+    ],
+)
+@pytest.mark.parametrize("locale", [None, Locale("en", "US")])
+@pytest.mark.parametrize("decimal_places", [2, "INF"])
+def test_non_finite_values_raise(non_finite, locale, decimal_places):
+    with pytest.raises(ValueError):
+        localise_and_format_number(non_finite, decimal_places, locale=locale)

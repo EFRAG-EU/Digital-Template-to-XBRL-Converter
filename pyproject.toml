@@ -91,6 +91,14 @@ exclude = [
     "^tests/",
 ]
 
+# numpy is only a transitive dependency (nothing in src/ imports it) and its
+# stubs use PEP 695 `type` statements, which mypy refuses to parse while
+# python_version is 3.11. Skip them so mypy works from the 3.14 venv.
+[[tool.mypy.overrides]]
+module = ["numpy", "numpy.*"]
+follow_imports = "skip"
+follow_imports_for_stubs = true
+
 [tool.ruff]
 target-version = "py311"
 line-length = 88

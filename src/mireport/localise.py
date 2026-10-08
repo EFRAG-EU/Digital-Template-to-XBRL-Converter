@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import argparse
 import logging
-from decimal import Decimal
+from decimal import Decimal, localcontext
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -155,7 +155,8 @@ def localise_and_format_number(
 
     Raises:
         TypeError: If the number type is unsupported.
-        ValueError: If the string input cannot be converted to Decimal.
+        ValueError: If the string input cannot be converted to Decimal, or the
+            value is non-finite (NaN or Infinity).
     """
     # Normalize number to Decimal for safe formatting (avoids float artifacts)
     try:
@@ -173,24 +174,39 @@ def localise_and_format_number(
     except ValueError as e:
         raise ValueError(f"Invalid numeric string: {number}") from e
 
+    if not value.is_finite():
+        raise ValueError(f"Non-finite number cannot be formatted: {number}")
+
     if decimal_places == "INF":
         if locale:
-            return format_decimal(value, locale=locale, decimal_quantization=False)
+            # Babel derives its fractional precision from abs(exponent), so a
+            # positive exponent (e.g. Decimal("1E+30")) widens the quantum too.
+            exponent_digits = abs(int(value.as_tuple().exponent))
+            with localcontext() as ctx:
+                ctx.prec = max(ctx.prec, value.adjusted() + 1 + exponent_digits + 2)
+                return format_decimal(value, locale=locale, decimal_quantization=False)
         # No locale: use standard thousands separator, preserve full precision
         return f"{value:,}"
 
-    # Handle negative decimal places (fallback to 0)
-    decimal_places = max(decimal_places, 0)
+    # Handle negative decimal places (fallback to 0). Bound to a new name so the
+    # "INF" arm above stays narrowed away; reassigning decimal_places would widen
+    # it back to its declared DecimalPlaces union.
+    places = max(decimal_places, 0)
 
     # Normal finite case
     if locale:
-        pattern = "#,##0." + "0" * decimal_places if decimal_places > 0 else "#,##0"
-        return format_decimal(
-            value, format=pattern, locale=locale, decimal_quantization=True
-        )
+        pattern = "#,##0." + "0" * places if places > 0 else "#,##0"
+        # Babel quantizes in the active decimal context; the default 28-digit
+        # precision raises InvalidOperation for values whose formatted form
+        # needs more digits (integer digits + requested decimal places).
+        with localcontext() as ctx:
+            ctx.prec = max(ctx.prec, value.adjusted() + 1 + places + 2)
+            return format_decimal(
+                value, format=pattern, locale=locale, decimal_quantization=True
+            )
     else:
         # Use standard Python formatting without locale
-        return f"{value:,.{decimal_places}f}"
+        return f"{value:,.{places}f}"
 
 
 def decimal_symbol(locale: Locale | None = None) -> str:
