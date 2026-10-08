@@ -61,7 +61,7 @@ const jinjaTemplateProcessor = {
 };
 
 export default defineConfig([
-  { ignores: [".venv-*/**", "htmlcov/**", "**/__pycache__/**"] },
+  { ignores: [".venv/**", ".venv-*/**", "htmlcov/**", "**/__pycache__/**"] },
   // Lint the JS embedded in the webapp's Jinja templates. The processor emits
   // a virtual *.js file, so the JS config block below applies to it too.
   {
