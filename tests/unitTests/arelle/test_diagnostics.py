@@ -1,15 +1,14 @@
 """Unit tests for the structured taxonomy diagnostics."""
 
 import logging
+from dataclasses import replace
 from typing import Any, cast
 
-import pytest
 from arelle.Cntlr import Cntlr
 from arelle.ModelValue import QName
 
 from mireport.arelle.diagnostics import (
     ArelleDiagnostic,
-    DiagnosticCollector,
     DiagnosticEmitter,
     logTo,
 )
@@ -51,6 +50,17 @@ class TestFormat:
             "Presentation is empty", elr="https://example.com/elr"
         )
         assert d.format() == ("Presentation is empty\n  elr: https://example.com/elr")
+
+    def test_elr_definition_follows_elr(self) -> None:
+        d = replace(
+            ArelleDiagnostic.warning("Presentation is empty", elr="https://e.com/elr"),
+            elrDefinition="[100] General information",
+        )
+        assert d.format() == (
+            "Presentation is empty\n"
+            "  elr: https://e.com/elr\n"
+            "  elr definition: [100] General information"
+        )
 
     def test_single_concept(self) -> None:
         d = ArelleDiagnostic.warning(
@@ -124,51 +134,51 @@ class TestLogTo:
         ]
 
 
-class TestDiagnosticCollector:
-    def test_open_close_lifecycle(self) -> None:
-        token = DiagnosticCollector.open()
-        try:
-            assert DiagnosticCollector.exists(token)
-        finally:
-            assert DiagnosticCollector.close(token) == []
-        assert not DiagnosticCollector.exists(token)
-
-    def test_close_pops_and_second_close_raises(self) -> None:
-        token = DiagnosticCollector.open()
-        DiagnosticCollector.close(token)
-        with pytest.raises(KeyError):
-            DiagnosticCollector.close(token)
-
-    def test_tokens_are_unique(self) -> None:
-        first = DiagnosticCollector.open()
-        second = DiagnosticCollector.open()
-        try:
-            assert first != second
-        finally:
-            DiagnosticCollector.close(first)
-            DiagnosticCollector.close(second)
-
-
 class TestDiagnosticEmitter:
-    def test_collects_when_token_registered(self) -> None:
+    def test_collects_into_the_sink(self) -> None:
         cntlr = StubCntlr()
-        token = DiagnosticCollector.open()
-        try:
-            emitter = DiagnosticEmitter(cast(Cntlr, cntlr), token)
-            first = ArelleDiagnostic.warning("first")
-            second = ArelleDiagnostic.info("second")
-            emitter.emit(first)
-            emitter.emit(second)
-        finally:
-            collected = DiagnosticCollector.close(token)
+        collected: list[ArelleDiagnostic] = []
+        emitter = DiagnosticEmitter(cast(Cntlr, cntlr), collected)
+        first = ArelleDiagnostic.warning("first")
+        second = ArelleDiagnostic.info("second")
+        emitter.emit(first)
+        emitter.emit(second)
         assert collected == [first, second]
         assert cntlr.logged == [], "collected diagnostics must not also be logged"
 
-    @pytest.mark.parametrize("token", [None, "no-such-token"], ids=["none", "unknown"])
-    def test_falls_back_to_log_without_registered_token(
-        self, token: str | None
-    ) -> None:
+    def test_falls_back_to_log_without_a_sink(self) -> None:
         cntlr = StubCntlr()
-        emitter = DiagnosticEmitter(cast(Cntlr, cntlr), token)
+        emitter = DiagnosticEmitter(cast(Cntlr, cntlr), None)
         emitter.emit(ArelleDiagnostic.warning("orphan"))
         assert cntlr.logged == [("orphan", logging.WARNING)]
+
+    def emitted(
+        self, diagnostic: ArelleDiagnostic, definitions: dict[str, str]
+    ) -> ArelleDiagnostic:
+        collected: list[ArelleDiagnostic] = []
+        emitter = DiagnosticEmitter(
+            cast(Cntlr, StubCntlr()), collected, elrDefinition=definitions.get
+        )
+        emitter.emit(diagnostic)
+        (only,) = collected
+        return only
+
+    def test_fills_elr_definition_from_resolver(self) -> None:
+        collected = self.emitted(
+            ArelleDiagnostic.warning("w", elr="https://e.com/elr"),
+            {"https://e.com/elr": "[100] General"},
+        )
+        assert collected.elrDefinition == "[100] General"
+
+    def test_keeps_an_elr_definition_already_given(self) -> None:
+        given = replace(
+            ArelleDiagnostic.warning("w", elr="https://e.com/elr"),
+            elrDefinition="given",
+        )
+        collected = self.emitted(given, {"https://e.com/elr": "[100] General"})
+        assert collected.elrDefinition == "given"
+
+    def test_without_elr_or_definition_leaves_it_unset(self) -> None:
+        assert self.emitted(ArelleDiagnostic.warning("w"), {}).elrDefinition is None
+        unknown = ArelleDiagnostic.warning("w", elr="https://e.com/unknown")
+        assert self.emitted(unknown, {}).elrDefinition is None

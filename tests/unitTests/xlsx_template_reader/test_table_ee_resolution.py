@@ -32,7 +32,9 @@ _SHEET = "S"
 
 @pytest.fixture(scope="module")
 def taxonomy():
-    entry_point = next(ep for ep in listTaxonomies() if "vsme" in ep.lower())
+    entry_point = next(
+        ep for ep in listTaxonomies() if any("vsme" in d.lower() for d in ep)
+    )
     return getTaxonomy(entry_point)
 
 

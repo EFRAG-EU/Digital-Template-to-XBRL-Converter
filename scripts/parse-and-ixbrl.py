@@ -26,6 +26,7 @@ from mireport.conversionresults import (
     ProcessingContext,
 )
 from mireport.data.disclosures import VSME_DEFAULTS
+from mireport.entrypoints import describeEntryPointSet
 from mireport.filesupport import ImageFileLikeAndFileName
 from mireport.localise import EU_LOCALES, argparse_locale
 from mireport.report.theme import ColourPalette, DisplayMode, ReportTheme
@@ -80,7 +81,7 @@ def createArgParser() -> argparse.ArgumentParser:
         type=str,
         nargs="+",
         default=[],
-        help="Paths to the taxonomy packages to be used (globs, *.zip, are permitted).",
+        help="Paths to the taxonomy packages to be used (globs such as *.zip, and directories of zips, are permitted).",
     )
     parser.add_argument(
         "--offline",
@@ -204,7 +205,8 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, list[str]
         mireport.loadBuiltInTaxonomyJSON()
         allTaxonomies = mireport.taxonomy.listTaxonomies()
         pc.addDevInfoMessage(
-            f"Taxonomies entry points ({len(allTaxonomies)}) available: {', '.join(allTaxonomies)}"
+            f"Taxonomies entry points ({len(allTaxonomies)}) available: "
+            + ", ".join(describeEntryPointSet(eps) for eps in allTaxonomies)
         )
         pc.mark(
             "Extracting data from Excel workbook",

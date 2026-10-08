@@ -19,6 +19,12 @@ from mireport.conversionresults import (
     MessageType,
 )
 from mireport.data.disclosures import VSME_DEFAULTS
+from mireport.entrypoints import (
+    EntryPointSet,
+    describeEntryPointSet,
+    entryPointSetOf,
+    isAbsoluteUri,
+)
 from mireport.exceptions import EarlyAbortException
 from mireport.localise import as_xmllang, get_locale_from_str
 from mireport.report import InlineReport
@@ -200,26 +206,38 @@ class XlsxProcessor:
 
     def _verifyEntryPoint(self) -> None:
         name = self._defaults.get("entryPoint", "")
+        # The workbook names a single URL: a one-document entry-point set.
         entryPoint = self._reader.value(name).as_str()
-        validEntryPoints = set(listTaxonomies())
-        if not entryPoint:
+        entryPointSet: EntryPointSet | None = None
+        validEntryPoints = listTaxonomies()
+        if not entryPoint.strip():
             self._msg.error(
                 "Excel template does not specify taxonomy entry point. Please use a supported template.",
                 MessageType.ExcelParsing,
                 ref=excelDefinedNameRef(self._reader.getDefinedName(name)),
             )
-        elif entryPoint not in validEntryPoints:
+        elif not isAbsoluteUri(entryPoint):
             self._msg.error(
-                f"Excel report is for an unsupported taxonomy. Excel wants: {entryPoint=}. We support: {sorted(validEntryPoints)}",
+                f"Excel template's taxonomy entry point {entryPoint!r} is not an absolute URI. Please use a supported template.",
+                MessageType.ExcelParsing,
+                ref=excelDefinedNameRef(self._reader.getDefinedName(name)),
+            )
+        elif (entryPointSet := entryPointSetOf(entryPoint)) not in validEntryPoints:
+            supported = [describeEntryPointSet(eps) for eps in validEntryPoints]
+            self._msg.error(
+                f"Excel report is for an unsupported taxonomy. Excel wants: {entryPoint=}. We support: {supported}",
                 MessageType.ExcelParsing,
                 ref=excelDefinedNameRef(self._reader.getDefinedName(name)),
             )
 
         self.abortEarlyIfErrors()
-        taxonomy = getTaxonomy(entryPoint)
+        # abortEarlyIfErrors() raised for every case that left this None.
+        assert entryPointSet is not None
+        taxonomy = getTaxonomy(entryPointSet)
         self._determineOutputLocale(taxonomy)
         self._report = InlineReport(taxonomy, self._outputLocale)
-        self._report.addSchemaRef(entryPoint)
+        for schemaRef in taxonomy.entryPointSet:
+            self._report.addSchemaRef(schemaRef)
 
     def getAndValidateRequiredMetadata(self) -> None:
         self._setDefaultAspectsFromExcel()

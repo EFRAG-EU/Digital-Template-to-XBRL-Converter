@@ -79,7 +79,11 @@ Taxonomy metadata is **pre-baked JSON** in `src/mireport/data/taxonomies/`; noth
 repo):
 
 ```powershell
-.venv-py314/Scripts/python scripts/update-taxonomy.py --entry-point <URL> src/mireport/data/taxonomies/vsme-YYYY-MM-DD.json path/to/*.zip
+# one new taxonomy
+.venv-py314/Scripts/python scripts/update-taxonomy.py --entry-point <URL> --output src/mireport/data/taxonomies/vsme-YYYY-MM-DD.json path/to/*.zip
+
+# every built-in JSON, each from the entry point it records (--dry-run: report, don't replace)
+.venv-py314/Scripts/python scripts/update-taxonomy.py --regenerate-builtin ../webapp_taxonomies/*.zip
 ```
 
 `scripts/dump-taxonomy.py` dumps concept/presentation info (including to xlsx) from the baked JSON.

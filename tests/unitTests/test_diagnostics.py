@@ -2,7 +2,7 @@
 
 This mirrors tests/unitTests/arelle/test_diagnostics.py, which covers the
 same AbstractDiagnostic behaviour via the Arelle-facing ArelleDiagnostic
-subclass. logTo()/DiagnosticCollector/DiagnosticEmitter are Arelle-specific
+subclass. logTo()/DiagnosticEmitter are Arelle-specific
 and stay tested there.
 """
 

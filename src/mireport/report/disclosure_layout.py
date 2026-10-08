@@ -6,10 +6,12 @@ from dataclasses import dataclass
 from itertools import groupby
 from typing import TYPE_CHECKING, ClassVar
 
-from mireport.data.disclosures import getDisclosureConfig
+from mireport.data.disclosures import getLayoutStrategyName
+from mireport.entrypoints import describeEntryPointSet
 from mireport.stringutil import stripLabelPrefix
 
 if TYPE_CHECKING:
+    from mireport.entrypoints import EntryPointSet
     from mireport.report.layout import ReportSection
 
 L = logging.getLogger(__name__)
@@ -55,18 +57,17 @@ class DisclosureLayoutStrategy(ABC):
         return fallback()
 
     @classmethod
-    def for_entry_point(cls, entry_point: str) -> DisclosureLayoutStrategy:
-        if (config := getDisclosureConfig(entry_point)) is None:
+    def for_entry_point(cls, entryPointSet: EntryPointSet) -> DisclosureLayoutStrategy:
+        """The strategy for an entry-point set; each URL the config names is a
+        one-document set."""
+        if (strategy_name := getLayoutStrategyName(entryPointSet)) is None:
             return cls._fallback()
-        layout = config["layoutStrategy"]
-        ep_overrides = layout.get("entryPoints", {})
-        strategy_name = ep_overrides.get(entry_point, layout.get("default"))
         if (strategy_cls := cls._STRATEGY_MAP.get(strategy_name)) is not None:
             return strategy_cls()
         L.warning(
             "Unknown layout strategy %r for entry point %r; using fallback",
             strategy_name,
-            entry_point,
+            describeEntryPointSet(entryPointSet),
         )
         return cls._fallback()
 

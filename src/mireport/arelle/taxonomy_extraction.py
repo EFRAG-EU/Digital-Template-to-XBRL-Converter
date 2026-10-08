@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 from collections import Counter, defaultdict
 from collections.abc import Collection, Iterable, Iterator, Mapping
+from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING, NamedTuple
 
@@ -42,6 +43,8 @@ from mireport.arelle.support import (
     ArelleRelatedException,
     unique_list,
 )
+from mireport.arelle.taxonomy_info_run import TaxonomyInfoRun, TaxonomyInfoRunRegistry
+from mireport.entrypoints import entryPointSetOf
 
 # The UtrEntry attributes worth serialising (the UTR schema's primary key is
 # status + unitId).
@@ -79,6 +82,18 @@ def _overlappingPrimaryItems(
     return frozenset(
         qname for qname, count in hypercubesPerPrimaryItem.items() if count > 1
     )
+
+
+def _linkbaseOfArcrole(arcrole: str) -> str:
+    """The standard linkbase an arcrole's relationships live in, for messages.
+    Not XbrlConst.standardArcroleArcElement(): it raises on XDT arcroles."""
+    if arcrole == XbrlConst.parentChild:
+        return "presentation"
+    if arcrole in XbrlConst.summationItems:
+        return "calculation"
+    if XbrlConst.isDefinitionOrXdtArcrole(arcrole):
+        return "definition"
+    return arcrole
 
 
 def _hypercubeType(arcrole: str, elrUri: str, hypercubeQName: QName) -> str:
@@ -179,8 +194,16 @@ class TaxonomyInfoExtractor:
         self.options: RuntimeOptions = options
         self.modelXbrl: ModelXbrl = modelXbrl
         self.model: ValidatedModel = ValidatedModel(modelXbrl)
+        # None when the plugin runs from plain arelleCmdLine, not the Session API.
+        self.run: TaxonomyInfoRun | None = TaxonomyInfoRunRegistry.get(
+            getattr(options, "runToken", None)
+        )
         self.diagnostics: DiagnosticEmitter = DiagnosticEmitter(
-            cntlr, getattr(options, "diagnosticsToken", None)
+            cntlr,
+            self.run.diagnostics if self.run is not None else None,
+            # Looked up via self.model at emit time, not bound now: tests
+            # swap the model for a stub after construction.
+            elrDefinition=lambda elr: self.model.roleDefinition(elr),
         )
         self.taxonomyJson: dict[str, Any] = defaultdict(dict)
         # A plain dict here would auto-vivify each ELR's cube dict via
@@ -201,20 +224,60 @@ class TaxonomyInfoExtractor:
             tuple[str, tuple[tuple[str, str], ...]], dict[str, Any]
         ] = {}
 
+    def entryPointSetForJSON(self) -> list[str]:
+        """Every document of the entry point, as handed in by the caller's
+        run, in sorted order (the set has none). Without a run (plain
+        arelleCmdLine use) only the entrypointFile is known to be one:
+        imported files may or may not be entry-point documents, so they are
+        not guessed at."""
+        if self.run is not None:
+            return sorted(self.run.entryPointSet)
+        # RuntimeOptions.entrypointFile is Optional[str] (Arelle's types are
+        # Any to mypy -- no py.typed -- so narrow it by hand).
+        if (entrypointFile := self.options.entrypointFile) is None:
+            raise ArelleRelatedException("No run registered and no entrypointFile.")
+        entryPointSet = entryPointSetOf(entrypointFile)
+        self.diagnostics.emit(
+            ArelleDiagnostic.warning(
+                "No taxonomy-info run registered, so entryPointSet records only "
+                "the entrypointFile; any other entry-point documents are missing",
+                hint="Run via mireport.arelle.taxonomy_info.callArelleForTaxonomyInfo()",
+            )
+        )
+        return sorted(entryPointSet)
+
+    @contextmanager
+    def collectingInconsistencies(self) -> Iterator[None]:
+        """Report a structural problem with the taxonomy as an error diagnostic
+        and carry on after the block, so one run lists every problem rather
+        than stopping at the first. Anything else is a bug and propagates."""
+        try:
+            yield
+        except ArelleModelInconsistency as inconsistency:
+            self.diagnostics.emit(
+                inconsistency.diagnostic or ArelleDiagnostic.error(str(inconsistency))
+            )
+
     def extract(self) -> dict[str, Any]:
         """Extract the taxonomy information and return it as a JSON-ready
         dict with all QNames canonicalised to strings."""
-        self.taxonomyJson["entryPoint"] = self.options.entrypointFile
+        self.taxonomyJson["entryPointSet"] = self.entryPointSetForJSON()
 
-        self.extractPresentation()
-        # Extract dimension defaults before other dimension-related information
-        # (used by other dimension-related extraction methods)
-        self.extractDimensionDefaults()
-        self.extractDimensionDefinitions()
-        self.reportDomainMemberOnlyLinkroleRoots()
-        self.extractConceptsAndMetadata()
-        self.extractReferences()
-        self.reportIsolatedConcepts()
+        # A phase that finds a structural problem reports it and the next phase
+        # still runs, so the diagnostics list everything that needs fixing.
+        # Dimension defaults come before the other dimension-related phases
+        # (used by them).
+        for phase in (
+            self.extractPresentation,
+            self.extractDimensionDefaults,
+            self.extractDimensionDefinitions,
+            self.reportDomainMemberOnlyLinkroleRoots,
+            self.extractConceptsAndMetadata,
+            self.extractReferences,
+            self.reportIsolatedConcepts,
+        ):
+            with self.collectingInconsistencies():
+                phase()
 
         self.cntlr.addToLog("Processing namespaces and namespace prefixes")
         self.taxonomyJson = self.qnameConverter.convertRecursive(self.taxonomyJson)
@@ -318,6 +381,21 @@ class TaxonomyInfoExtractor:
 
         dimensionDomainRoots = dimensionDomainRelSet.rootConcepts()
         if explicitDimension not in dimensionDomainRoots:
+            if not dimensionDomainRelSet.hasRelationshipsFrom(explicitDimension):
+                # Valid XBRL Dimensions, but useless to us. Most likely a typed
+                # dimension that has lost its xbrldt:typedDomainRef, which
+                # makes it explicit by definition. Report it and carry on so
+                # that every such dimension is reported in one run.
+                self.diagnostics.emit(
+                    ArelleDiagnostic.error(
+                        "Explicit dimension has no dimension-domain relationships",
+                        elr=elrUri,
+                        concepts=(qnameOf(explicitDimension),),
+                        hint="If this dimension is meant to be typed, it is "
+                        "missing its xbrldt:typedDomainRef attribute.",
+                    )
+                )
+                return []
             raise ArelleModelInconsistency(
                 ArelleDiagnostic.error(
                     "Dimension is not a root of the dimension-domain relationship set",
@@ -714,47 +792,51 @@ class TaxonomyInfoExtractor:
             "Processing concepts (including labels; collecting references)"
         )
         for qname, concept in self.model.itemConcepts():
-            dataType, baseDataType = self.model.typeQNamesOf(concept)
-            jconcept: dict[str, Any] = {
-                "dataType": dataType,
-                "baseDataType": baseDataType,
-                "periodType": concept.periodType,
-            }
-            self.addConceptMetadata(concept, jconcept)
-            self.addLabels(concept, jconcept)
-            self.collectReferences(concept)
+            with self.collectingInconsistencies():
+                self.extractConcept(qname, concept)
 
-            if concept.isEnumeration and not concept.isEnumeration2Item:
-                self.diagnostics.emit(
-                    ArelleDiagnostic.warning(
-                        "Extensible enumerations other than 2.0 are not supported",
+    def extractConcept(self, qname: QName, concept: ModelConcept) -> None:
+        dataType, baseDataType = self.model.typeQNamesOf(concept)
+        jconcept: dict[str, Any] = {
+            "dataType": dataType,
+            "baseDataType": baseDataType,
+            "periodType": concept.periodType,
+        }
+        self.addConceptMetadata(concept, jconcept)
+        self.addLabels(concept, jconcept)
+        self.collectReferences(concept)
+
+        if concept.isEnumeration and not concept.isEnumeration2Item:
+            self.diagnostics.emit(
+                ArelleDiagnostic.warning(
+                    "Extensible enumerations other than 2.0 are not supported",
+                    concepts=(qname,),
+                ),
+            )
+        if concept.isEnumeration2Item:
+            headUsable = concept.isEnumDomainUsable
+            linkrole = concept.enumLinkrole
+            domainQName = concept.enumDomainQname
+            if linkrole is None or domainQName is None:
+                raise ArelleModelInconsistency(
+                    ArelleDiagnostic.error(
+                        "Extensible enumeration has no enumeration domain or linkrole",
                         concepts=(qname,),
-                    ),
-                )
-            if concept.isEnumeration2Item:
-                headUsable = concept.isEnumDomainUsable
-                linkrole = concept.enumLinkrole
-                domainQName = concept.enumDomainQname
-                if linkrole is None or domainQName is None:
-                    raise ArelleModelInconsistency(
-                        ArelleDiagnostic.error(
-                            "Extensible enumeration has no enumeration domain or linkrole",
-                            concepts=(qname,),
-                        )
-                    )
-                jconcept.setdefault("other", {})["ee20DomainMembers"] = (
-                    self.getDomainMembersForEnumeration(
-                        linkrole,
-                        headUsable,
-                        self.model.concept(domainQName),
-                        qname,
                     )
                 )
-            if concept.isTypedDimension:
-                typedElement = self.model.typedDomainElementOf(concept)
-                jconcept.setdefault("other", {})["typedElement"] = qnameOf(typedElement)
-                self.extractTypedDomainWrapperElement(typedElement)
-            self.taxonomyJson["concepts"][qname] = jconcept
+            jconcept.setdefault("other", {})["ee20DomainMembers"] = (
+                self.getDomainMembersForEnumeration(
+                    linkrole,
+                    headUsable,
+                    self.model.concept(domainQName),
+                    qname,
+                )
+            )
+        if concept.isTypedDimension:
+            typedElement = self.model.typedDomainElementOf(concept)
+            jconcept.setdefault("other", {})["typedElement"] = qnameOf(typedElement)
+            self.extractTypedDomainWrapperElement(typedElement)
+        self.taxonomyJson["concepts"][qname] = jconcept
 
     def extractTypedDomainWrapperElement(self, element: ModelConcept) -> None:
         """Add *element* -- a typed dimension's typed domain element -- to
@@ -807,6 +889,11 @@ class TaxonomyInfoExtractor:
         member (or domain head) of an enum2 concept or explicit dimension
         that is itself presented -- such members are not normally presented
         directly, so flagging them would be noise rather than signal.
+
+        "Not presented" is reported once per ELR the concepts do appear in,
+        naming that ELR's linkbase(s), so they can be found. Label/reference
+        arcs don't count as appearing: every labelled concept has them in
+        the standard link role.
         """
         baseSets = self.model.baseSetsInDTS()
         documentationArcroles = frozenset(
@@ -815,15 +902,18 @@ class TaxonomyInfoExtractor:
 
         presented: set[QName] = set()
         arcrolesByQName: dict[QName, set[str]] = {}
+        baseSetsByQName: dict[QName, set[tuple[str, str]]] = {}
         for qname, concept in self.model.itemConcepts():
-            touched: set[str] = set()
+            touchedBaseSets: set[tuple[str, str]] = set()
             for arcrole, linkrole in baseSets:
                 relSet = self.model.conceptRelationshipSet(arcrole, linkrole)
                 if relSet.hasRelationshipsFrom(concept) or relSet.hasRelationshipsTo(
                     concept
                 ):
-                    touched.add(arcrole)
+                    touchedBaseSets.add((arcrole, linkrole))
+            touched = {arcrole for arcrole, _ in touchedBaseSets}
             arcrolesByQName[qname] = touched
+            baseSetsByQName[qname] = touchedBaseSets
             if XbrlConst.parentChild in touched:
                 presented.add(qname)
 
@@ -850,7 +940,6 @@ class TaxonomyInfoExtractor:
         for text, qnames in (
             ("concept(s) have no relationship in any linkbase", fullyIsolated),
             (documentationOnlyText, documentationOnly),
-            ("concept(s) are absent from the presentation linkbase", notPresented),
         ):
             if qnames:
                 self.diagnostics.emit(
@@ -859,6 +948,25 @@ class TaxonomyInfoExtractor:
                         concepts=sorted(qnames),
                     ),
                 )
+
+        conceptsByELR: dict[str, set[QName]] = defaultdict(set)
+        linkbasesByELR: dict[str, set[str]] = defaultdict(set)
+        for qname in notPresented:
+            for arcrole, linkrole in baseSetsByQName[qname]:
+                if arcrole not in documentationArcroles:
+                    conceptsByELR[linkrole].add(qname)
+                    linkbasesByELR[linkrole].add(_linkbaseOfArcrole(arcrole))
+        for elr in sorted(conceptsByELR):
+            qnames = sorted(conceptsByELR[elr])
+            self.diagnostics.emit(
+                ArelleDiagnostic.warning(
+                    f"{len(qnames)} concept(s) are absent from the presentation "
+                    "linkbase",
+                    elr=elr,
+                    concepts=qnames,
+                    linkbase=", ".join(sorted(linkbasesByELR[elr])),
+                ),
+            )
 
     def _presentedDimensionalDomainMembers(
         self, presented: Collection[QName]
@@ -911,70 +1019,79 @@ class TaxonomyInfoExtractor:
         # Get the hypercubes and primary items
         hypercubeArcRoles = (XbrlConst.all, XbrlConst.notAll)
         for elrUri in self.model.linkrolesFor(*hypercubeArcRoles):
-            relSet = self.model.conceptRelationshipSet(hypercubeArcRoles, elrUri)
-            roots = relSet.rootConcepts()
-            primaryItemsByHypercube: dict[QName, set[QName]] = defaultdict(set)
-            for root_concept in roots:
-                for rel in relSet.relationshipsFrom(root_concept):
-                    concept = rel.target
-                    if not concept.isHypercubeItem:
-                        raise ArelleModelInconsistency(
-                            ArelleDiagnostic.error(
-                                "Expected a hypercube as the target of an all/notAll relationship",
-                                elr=elrUri,
-                                concepts=(rel.targetQName,),
-                            )
-                        )
-                    if rel.targetQName in self.taxonomyJson["dimensions"][elrUri]:
-                        # Two different root primary items targeting the same
-                        # hypercube in one ELR is a shape mireport doesn't
-                        # understand (which root's primary items apply?), and
-                        # would otherwise silently overwrite the first root's
-                        # cube entry -- dimensions[elrUri][hypercube] is keyed
-                        # by hypercube alone.
-                        raise ArelleModelInconsistency(
-                            ArelleDiagnostic.error(
-                                "Hypercube is targeted by all/notAll relationships from more than one root primary item",
-                                elr=elrUri,
-                                concepts=(rel.targetQName,),
-                            )
-                        )
-                    if not rel.isClosed:
-                        self.diagnostics.emit(
-                            ArelleDiagnostic.info(
-                                "Hypercube is open",
-                                elr=elrUri,
-                                concepts=(rel.targetQName,),
-                            ),
-                        )
-                    cube: dict[str, Any] = {
-                        "primaryItems": self.getPrimaryItems(
-                            rel.consecutiveLinkrole, root_concept
-                        ),
-                        "type": _hypercubeType(rel.arcrole, elrUri, rel.targetQName),
-                        "xbrldt:contextElement": rel.contextElement,
-                        "xbrldt:closed": rel.isClosed,
-                    }
-                    primaryItemsByHypercube[rel.targetQName].update(
-                        q for _, q in cube["primaryItems"]
-                    )
-                    for dimensionRel in self.getDimensions(
-                        rel.consecutiveLinkrole, concept, rel.isClosed
-                    ):
-                        dimension = dimensionRel.target
-                        if dimension.isExplicitDimension:
-                            cube.setdefault("explicitDimensions", {})[
-                                dimensionRel.targetQName
-                            ] = self.getDomainMembersForExplicitDimension(
-                                dimension, dimensionRel.consecutiveLinkrole
-                            )
-                        elif dimension.isTypedDimension:
-                            cube.setdefault("typedDimensions", []).append(
-                                dimensionRel.targetQName
-                            )
-                    self.taxonomyJson["dimensions"][elrUri][rel.targetQName] = cube
+            with self.collectingInconsistencies():
+                self.extractHypercubesForLinkrole(elrUri)
 
-            self.reportHypercubesForLinkrole(elrUri, primaryItemsByHypercube)
+    def extractHypercubesForLinkrole(self, elrUri: str) -> None:
+        hypercubeArcRoles = (XbrlConst.all, XbrlConst.notAll)
+        cubes: dict[QName, Any] = {}
+        relSet = self.model.conceptRelationshipSet(hypercubeArcRoles, elrUri)
+        roots = relSet.rootConcepts()
+        primaryItemsByHypercube: dict[QName, set[QName]] = defaultdict(set)
+        for root_concept in roots:
+            for rel in relSet.relationshipsFrom(root_concept):
+                concept = rel.target
+                if not concept.isHypercubeItem:
+                    raise ArelleModelInconsistency(
+                        ArelleDiagnostic.error(
+                            "Expected a hypercube as the target of an all/notAll relationship",
+                            elr=elrUri,
+                            concepts=(rel.targetQName,),
+                        )
+                    )
+                if rel.targetQName in cubes:
+                    # Two different root primary items targeting the same
+                    # hypercube in one ELR is a shape mireport doesn't
+                    # understand (which root's primary items apply?), and
+                    # would otherwise silently overwrite the first root's
+                    # cube entry -- dimensions[elrUri][hypercube] is keyed
+                    # by hypercube alone.
+                    raise ArelleModelInconsistency(
+                        ArelleDiagnostic.error(
+                            "Hypercube is targeted by all/notAll relationships from more than one root primary item",
+                            elr=elrUri,
+                            concepts=(rel.targetQName,),
+                        )
+                    )
+                if not rel.isClosed:
+                    self.diagnostics.emit(
+                        ArelleDiagnostic.info(
+                            "Hypercube is open",
+                            elr=elrUri,
+                            concepts=(rel.targetQName,),
+                        ),
+                    )
+                cube: dict[str, Any] = {
+                    "primaryItems": self.getPrimaryItems(
+                        rel.consecutiveLinkrole, root_concept
+                    ),
+                    "type": _hypercubeType(rel.arcrole, elrUri, rel.targetQName),
+                    "xbrldt:contextElement": rel.contextElement,
+                    "xbrldt:closed": rel.isClosed,
+                }
+                primaryItemsByHypercube[rel.targetQName].update(
+                    q for _, q in cube["primaryItems"]
+                )
+                for dimensionRel in self.getDimensions(
+                    rel.consecutiveLinkrole, concept, rel.isClosed
+                ):
+                    dimension = dimensionRel.target
+                    if dimension.isExplicitDimension:
+                        cube.setdefault("explicitDimensions", {})[
+                            dimensionRel.targetQName
+                        ] = self.getDomainMembersForExplicitDimension(
+                            dimension, dimensionRel.consecutiveLinkrole
+                        )
+                    elif dimension.isTypedDimension:
+                        cube.setdefault("typedDimensions", []).append(
+                            dimensionRel.targetQName
+                        )
+                cubes[rel.targetQName] = cube
+
+        # Only now: an ELR that raised part-way through records nothing.
+        if cubes:
+            self.taxonomyJson["dimensions"][elrUri] = cubes
+        self.reportHypercubesForLinkrole(elrUri, primaryItemsByHypercube)
 
     def reportHypercubesForLinkrole(
         self, elrUri: str, primaryItemsByHypercube: Mapping[QName, Collection[QName]]

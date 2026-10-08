@@ -1,3 +1,4 @@
+import html
 import logging
 import os
 import sys
@@ -5,7 +6,9 @@ import warnings
 from argparse import ArgumentParser
 from collections import Counter
 from collections.abc import Iterable, Sequence
+from glob import escape as escape_glob
 from glob import glob
+from pathlib import Path
 from typing import Any
 
 import rich.traceback
@@ -18,6 +21,7 @@ from rich.table import Table
 from rich.text import Text
 
 from mireport.diagnostics import AbstractDiagnostic
+from mireport.entrypoints import EntryPointSet, entryPointSetOf
 from mireport.exceptions import TaxonomyPackageException
 from mireport.taxonomy import listTaxonomies
 from mireport.taxonomy_package import PackageEntryPoint, entryPointsFromPackage
@@ -31,11 +35,29 @@ _DIAGNOSTIC_LEVEL_STYLES = {
 }
 
 
-def getListofPathsFromListOfGlobs(globs: list[str]) -> list[str]:
-    paths = [
-        glob_result for glob_candidate in globs for glob_result in glob(glob_candidate)
-    ]
+def expandPackageArgument(pattern: str) -> list[Path]:
+    """The paths one package argument stands for: a glob (PowerShell passes
+    them through unexpanded) or path, where a directory means the zips
+    directly in it. glob.glob() rather than Path.glob(): the latter rejects
+    absolute patterns."""
+    paths: list[Path] = []
+    for match in map(Path, glob(pattern)):
+        if match.is_dir():
+            paths.extend(
+                p for p in match.iterdir() if p.is_file() and p.suffix.lower() == ".zip"
+            )
+        else:
+            paths.append(match)
     return paths
+
+
+def getListofPathsFromListOfGlobs(globs: list[str]) -> list[Path]:
+    """Expand package arguments into unique paths, sorted by file name then
+    path so console output is consistent."""
+    # A set, not unique_list(): the result is sorted anyway, and unique_list
+    # lives behind the Arelle boundary.
+    paths = {path for pattern in globs for path in expandPackageArgument(pattern)}
+    return sorted(paths, key=lambda path: (path.name, str(path)))
 
 
 def configure_utf8_output() -> None:
@@ -91,20 +113,43 @@ def configure_rich_output(*, locals_max_length: int | None = None) -> Console:
     return get_console()
 
 
-def validateTaxonomyPackages(globList: list[str], parser: ArgumentParser) -> list[str]:
-    console_print("Zip files specified", " ".join(globList))
-    taxonomy_zips: list[str] = getListofPathsFromListOfGlobs(globList)
-    console_print("Zip files to use  ", " ".join(taxonomy_zips))
+def packageListLines(paths: Sequence[Path]) -> list[str]:
+    """Lines listing paths grouped by directory: each directory once, then
+    (tab-indented) the name of every file in it, in the order given. A file
+    alone in its directory is just one line, its full path."""
+    byParent: dict[Path, list[Path]] = {}
+    for path in paths:
+        byParent.setdefault(path.parent, []).append(path)
+    lines = []
+    for parent, children in byParent.items():
+        if len(children) == 1:
+            lines.append(str(children[0]))
+            continue
+        lines.append(f"{parent}{os.sep}")
+        lines.extend(f"\t{child.name}" for child in children)
+    return lines
 
-    if not all(os.path.exists(taxonomy_zip) for taxonomy_zip in taxonomy_zips):
-        raise parser.error(f"Not all specified files found: {taxonomy_zips}")
-    elif not all(taxonomy_zip.endswith(".zip") for taxonomy_zip in taxonomy_zips):
-        raise parser.error(f"Not all specified files are Zip files: {taxonomy_zips}")
+
+def validateTaxonomyPackages(globList: list[str], parser: ArgumentParser) -> list[Path]:
+    # Only worth echoing when there are patterns to expand (PowerShell passes
+    # them through); after a bash expansion it would just repeat the list.
+    if any(escape_glob(g) != g for g in globList):
+        console_print(Text(f"Zip globs specified {' '.join(globList)}"))
+    # A path, glob or directory that yields nothing would otherwise just drop
+    # out of the list, so a mistyped package would be silently left out.
+    if unmatched := [g for g in globList if not expandPackageArgument(g)]:
+        raise parser.error(f"No files found for: {' '.join(unmatched)}")
+    taxonomy_zips = getListofPathsFromListOfGlobs(globList)
+    console_print("Zip files to use:")
+    console_print_plain(packageListLines(taxonomy_zips))
+
+    if notZips := [str(z) for z in taxonomy_zips if z.suffix.lower() != ".zip"]:
+        raise parser.error(f"Specified files are not Zip files: {' '.join(notZips)}")
     return taxonomy_zips
 
 
 def getEntryPointsFromPackages(
-    taxonomy_zips: list[str], parser: ArgumentParser
+    taxonomy_zips: Sequence[Path], parser: ArgumentParser
 ) -> list[PackageEntryPoint]:
     """Read the entry points declared by each package, warning about (but not
     failing on) any package we can't read."""
@@ -125,7 +170,8 @@ def getEntryPointsFromPackages(
                 entryPoints.append(entryPoint)
     if not entryPoints:
         raise parser.error(
-            f"No taxonomy entry points declared by any of: {taxonomy_zips}"
+            "No taxonomy entry points declared by any of: "
+            + " ".join(str(z) for z in taxonomy_zips)
         )
     return entryPoints
 
@@ -153,7 +199,7 @@ def printEntryPointTable(entryPoints: list[PackageEntryPoint]) -> None:
 
 
 def pickEntryPointFromPackages(
-    taxonomy_zips: list[str], parser: ArgumentParser
+    taxonomy_zips: Sequence[Path], parser: ArgumentParser
 ) -> tuple[str, ...]:
     """Show the entry points declared by the given packages and prompt for one.
 
@@ -177,7 +223,7 @@ def pickEntryPointFromPackages(
 
 def pickEntryPointFromLoadedTaxonomies(
     parser: ArgumentParser, *, default: str | None = None
-) -> str:
+) -> EntryPointSet:
     """Show the entry point of every taxonomy already loaded (via
     loadBuiltInTaxonomyJSON()/loadTaxonomyJSON()) and prompt for one.
 
@@ -185,18 +231,20 @@ def pickEntryPointFromLoadedTaxonomies(
     involved -- this only ever offers a choice among taxonomies mireport already
     knows about.
     """
-    available = {
-        str(num): ep for num, ep in enumerate(sorted(listTaxonomies()), start=1)
-    }
+    available = {str(num): eps for num, eps in enumerate(listTaxonomies(), start=1)}
     if not available:
         raise parser.error("No taxonomies loaded.")
+    defaultSet = entryPointSetOf(default) if default is not None else None
 
     table = Table(show_header=True, box=box.SIMPLE)
     table.add_column("#", style="bold cyan", justify="right", no_wrap=True)
     table.add_column("Entry point")
-    for num, url in available.items():
-        marker = "  [bold green]← default[/bold green]" if url == default else ""
-        table.add_row(num, url + marker)
+    for num, eps in available.items():
+        # Text() not markup; one line per document of the set.
+        cell = Text("\n".join(sorted(eps)))
+        if eps == defaultSet:
+            cell.append("  ← default", style="bold green")
+        table.add_row(num, cell)
     console_print(table)
 
     prompt = (
@@ -208,15 +256,28 @@ def pickEntryPointFromLoadedTaxonomies(
         else Prompt.ask(prompt)
     ).strip()
 
-    if default is not None and response == default:
-        return default
-    if (entry_point := available.get(response, response)) in available.values():
-        return entry_point
+    # A number, or the URL of a one-document entry point.
+    if (chosen := available.get(response)) is not None:
+        return chosen
+    if response and (asSet := entryPointSetOf(response)) in available.values():
+        return asSet
     raise parser.error(f"{response!r} is not one of the loaded entry points.")
 
 
 def _diagnosticLevelName(level: int) -> str:
     return logging.getLevelName(level).title()
+
+
+def _diagnosticELR(diagnostic: AbstractDiagnostic[Any]) -> Text:
+    """The ELR URI with its role definition underneath, dimmed and on one
+    logical line (rich wraps it to the column)."""
+    if diagnostic.elr is None:
+        return Text()
+    cell = Text(diagnostic.elr)
+    if diagnostic.elrDefinition is not None:
+        definition = " ".join(diagnostic.elrDefinition.split())
+        cell.append(f"\n{definition}", style="dim")
+    return cell
 
 
 def _diagnosticDetails(diagnostic: AbstractDiagnostic[Any]) -> str:
@@ -243,20 +304,130 @@ def printDiagnosticTable(
     table.add_column("Concepts", overflow="fold")
     table.add_column("Details", overflow="fold")
 
-    for diagnostic in sorted(diagnostics, key=lambda d: -d.level):
+    for diagnostic in _sortedDiagnostics(diagnostics):
         table.add_row(
             f"[{_DIAGNOSTIC_LEVEL_STYLES.get(diagnostic.level, '')}]"
             f"{_diagnosticLevelName(diagnostic.level)}[/]",
             escape(diagnostic.text),
-            escape(diagnostic.elr or ""),
+            _diagnosticELR(diagnostic),
             escape("\n".join(str(qname) for qname in diagnostic.concepts)),
             escape(_diagnosticDetails(diagnostic)),
         )
     console_print(table)
+    console_print(f"{_diagnosticSummary(title, diagnostics)}.")
 
+
+def _sortedDiagnostics(
+    diagnostics: Sequence[AbstractDiagnostic[Any]],
+) -> list[AbstractDiagnostic[Any]]:
+    """Descending severity; the sort is stable within a level."""
+    return sorted(diagnostics, key=lambda d: -d.level)
+
+
+def _diagnosticSummary(
+    title: str, diagnostics: Sequence[AbstractDiagnostic[Any]]
+) -> str:
+    """e.g. "4 errors, 1 warning (taxonomy diagnostics)", without a full stop."""
     counts = Counter(_diagnosticLevelName(d.level) for d in diagnostics)
     summary = ", ".join(
         f"{count} {name.lower()}{'s' if count != 1 else ''}"
         for name, count in counts.most_common()
     )
-    console_print(f"{summary} ({title.lower()}).")
+    return f"{summary} ({title.lower()})"
+
+
+def _markdownCell(text: str) -> str:
+    """Make text safe for one cell of a markdown table: a literal pipe would
+    start a new cell and a newline would end the row."""
+    return text.replace("|", "\\|").replace("\n", "<br>")
+
+
+def diagnosticMarkdown(
+    title: str,
+    diagnostics: Sequence[AbstractDiagnostic[Any]],
+    *,
+    note: str | None = None,
+) -> str:
+    """The same content as printDiagnosticTable(), as a markdown table that
+    survives being pasted into GitHub, Loop or a wiki: full text, no wrapping
+    or truncation, severity-sorted, followed by the count summary and, when
+    given, a note."""
+    heading = f"### {title}\n\n"
+    noteBlock = f"\n> **Note:** {note}\n" if note else ""
+    if not diagnostics:
+        return f"{heading}No {title.lower()} to report.\n{noteBlock}"
+
+    lines = [
+        "| Level | Message | ELR | Concepts | Details |",
+        "|---|---|---|---|---|",
+    ]
+    for diagnostic in _sortedDiagnostics(diagnostics):
+        elr = f"`{diagnostic.elr}`" if diagnostic.elr is not None else ""
+        if diagnostic.elr is not None and diagnostic.elrDefinition is not None:
+            elr += "\n" + " ".join(diagnostic.elrDefinition.split())
+        concepts = "\n".join(f"`{qname}`" for qname in diagnostic.concepts)
+        cells = (
+            _diagnosticLevelName(diagnostic.level),
+            diagnostic.text,
+            elr,
+            concepts,
+            _diagnosticDetails(diagnostic),
+        )
+        lines.append("| " + " | ".join(_markdownCell(c) for c in cells) + " |")
+    table = "\n".join(lines)
+    summary = _diagnosticSummary(title, diagnostics)
+    return f"{heading}{table}\n\n{summary}.\n{noteBlock}"
+
+
+def _htmlCell(text: str) -> str:
+    """Escape text for one HTML table cell, keeping its line breaks."""
+    return "<br>".join(html.escape(line) for line in text.split("\n"))
+
+
+def diagnosticHtml(
+    title: str,
+    diagnostics: Sequence[AbstractDiagnostic[Any]],
+    *,
+    note: str | None = None,
+) -> str:
+    """The same content as printDiagnosticTable(), as an HTML fragment. Open it
+    in a browser, select all, copy and paste: rich-text boxes such as Teams chat
+    keep it as a real table, which they won't do with pasted markdown source.
+    The border is an attribute rather than CSS because pasting drops stylesheets."""
+    heading = f"<h3>{html.escape(title)}</h3>\n"
+    noteBlock = f"<p><strong>Note:</strong> {html.escape(note)}</p>\n" if note else ""
+    if not diagnostics:
+        return (
+            f"{heading}<p>No {html.escape(title.lower())} to report.</p>\n{noteBlock}"
+        )
+
+    rows = [
+        "<tr>"
+        + "".join(
+            f"<th>{column}</th>"
+            for column in ("Level", "Message", "ELR", "Concepts", "Details")
+        )
+        + "</tr>"
+    ]
+    for diagnostic in _sortedDiagnostics(diagnostics):
+        elr = f"<code>{html.escape(diagnostic.elr)}</code>" if diagnostic.elr else ""
+        if diagnostic.elr and diagnostic.elrDefinition is not None:
+            definition = " ".join(diagnostic.elrDefinition.split())
+            elr += f"<br>{html.escape(definition)}"
+        concepts = "<br>".join(
+            f"<code>{html.escape(str(qname))}</code>" for qname in diagnostic.concepts
+        )
+        cells = (
+            html.escape(_diagnosticLevelName(diagnostic.level)),
+            _htmlCell(diagnostic.text),
+            elr,
+            concepts,
+            _htmlCell(_diagnosticDetails(diagnostic)),
+        )
+        rows.append("<tr>" + "".join(f"<td>{cell}</td>" for cell in cells) + "</tr>")
+    table = "\n".join(rows)
+    summary = html.escape(_diagnosticSummary(title, diagnostics))
+    return (
+        f'{heading}<table border="1" cellpadding="4" cellspacing="0">\n'
+        f"{table}\n</table>\n<p>{summary}.</p>\n{noteBlock}"
+    )
