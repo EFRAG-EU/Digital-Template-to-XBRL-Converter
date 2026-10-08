@@ -1,7 +1,9 @@
 import argparse
 import logging
+import sys
 import time
 from collections import Counter
+from collections.abc import Sequence
 from pathlib import Path
 
 from rich.markup import escape
@@ -13,6 +15,9 @@ from mireport.arelle.taxonomy_info import callArelleForTaxonomyInfo
 from mireport.cli import (
     configure_rich_output,
     get_console,
+    getEntryPointsFromPackages,
+    pickEntryPointFromPackages,
+    printEntryPointTable,
     validateTaxonomyPackages,
 )
 from mireport.cli import (
@@ -57,8 +62,16 @@ def parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--entry-point",
         type=str,
-        required=True,
-        help="Entry point to the taxonomy.",
+        action="append",
+        default=None,
+        help="Entry point to the taxonomy. Repeat it for an entry point that names "
+        "several documents. If omitted, you are prompted to pick one of the entry "
+        "points declared by the taxonomy packages.",
+    )
+    parser.add_argument(
+        "--list-entry-points",
+        action="store_true",
+        help="List the entry points declared by the taxonomy packages and exit.",
     )
     return parser
 
@@ -117,15 +130,29 @@ def printDiagnostics(results: ArelleProcessingResult) -> None:
 def main() -> None:
     cli = parser()
     args = cli.parse_args()
-    taxonomy_json_path = args.taxonomy_json_path
-    taxonomy_zips = args.taxonomy_zips
-    utr_json_path = args.utr_output
-    entry_point = args.entry_point
+    taxonomy_json_path: str = args.taxonomy_json_path
+    taxonomy_zips: list[str] = args.taxonomy_zips
+    utr_json_path: str | None = args.utr_output
+    # action="append" gives a list; pickEntryPointFromPackages() gives a tuple.
+    entry_point: Sequence[str] | None = args.entry_point
 
     taxonomy_zips = validateTaxonomyPackages(taxonomy_zips, cli)
+
+    if args.list_entry_points:
+        printEntryPointTable(getEntryPointsFromPackages(taxonomy_zips, cli))
+        raise SystemExit(0)
+
+    if entry_point is None:
+        if not sys.stdin.isatty():
+            cli.error(
+                "--entry-point is required when not running interactively. "
+                "Use --list-entry-points to see the available entry points."
+            )
+        entry_point = pickEntryPointFromPackages(taxonomy_zips, cli)
+
     print(
         "Using:",
-        f"Taxonomy entry point: {entry_point}",
+        "Taxonomy entry point:\n\t\t{}".format("\n\t\t".join(entry_point)),
         f"Taxonomy JSON path: {taxonomy_json_path}",
         f"Taxonomy packages:\n\t\t{' '.join(taxonomy_zips)}",
         f"UTR JSON path: {utr_json_path}"
