@@ -34,13 +34,19 @@ from arelle.ModelDtsObject import (
 from arelle.ModelValue import QName
 from arelle.ModelXbrl import ModelXbrl
 
-from mireport.arelle.diagnostics import Diagnostic
-from mireport.arelle.support import ArelleModelInconsistency
+from mireport.arelle.diagnostics import ArelleDiagnostic
+from mireport.arelle.support import ArelleModelInconsistency, unique_list
 
 _NO_NAMESPACE_HINT = (
     'check that the taxonomy schemas have elementFormDefault="qualified" set '
     "(without it, locally declared elements end up in no namespace)"
 )
+
+# XML Schema's implicit type for an element with no type attribute and no
+# inline type -- see typeQNamesOfTypedDomainElement(). Prefix-less:
+# canonicalisation assigns one per namespace, same as any other QName
+# without a source prefix.
+_QNAME_XSD_ANY_TYPE = QName(None, XbrlConst.xsd, "anyType")
 
 
 def _requireNamespaced(qname: QName, context: Callable[[], str]) -> QName:
@@ -53,7 +59,7 @@ def _requireNamespaced(qname: QName, context: Callable[[], str]) -> QName:
     is only built on failure — this runs on every extracted QName."""
     if qname.namespaceURI is None:
         raise ArelleModelInconsistency(
-            Diagnostic.error(
+            ArelleDiagnostic.error(
                 "QName has no namespace defined",
                 qname=repr(qname),
                 context=context(),
@@ -68,7 +74,7 @@ def qnameOf(concept: ModelConcept) -> QName:
     have a namespace."""
     if (qname := concept.qname) is None:
         raise ArelleModelInconsistency(
-            Diagnostic.error("Concept has no QName", concept=repr(concept))
+            ArelleDiagnostic.error("Concept has no QName", concept=repr(concept))
         )
     return _requireNamespaced(qname, lambda: f"of concept {concept!r}")
 
@@ -78,7 +84,7 @@ def _asConcept(obj: object, context: Callable[[], str]) -> ModelConcept:
     failure — this runs on every extracted relationship target."""
     if not isinstance(obj, ModelConcept):
         raise ArelleModelInconsistency(
-            Diagnostic.error(
+            ArelleDiagnostic.error(
                 "Expected a ModelConcept", context=context(), got=repr(obj)
             )
         )
@@ -91,6 +97,7 @@ class ConceptRelationship:
 
     target: ModelConcept
     targetQName: QName
+    arcrole: str
     consecutiveLinkrole: str
     isUsable: bool
     preferredLabel: str | None
@@ -105,8 +112,16 @@ class ConceptRelationship:
         )
         if (consecutiveLinkrole := rel.consecutiveLinkrole) is None:
             raise ArelleModelInconsistency(
-                Diagnostic.error(
+                ArelleDiagnostic.error(
                     "Relationship has no linkrole",
+                    elr=rel.linkrole,
+                    concepts=(qnameOf(target),),
+                )
+            )
+        if (arcrole := rel.arcrole) is None:
+            raise ArelleModelInconsistency(
+                ArelleDiagnostic.error(
+                    "Relationship has no arcrole",
                     elr=rel.linkrole,
                     concepts=(qnameOf(target),),
                 )
@@ -114,6 +129,7 @@ class ConceptRelationship:
         return cls(
             target=target,
             targetQName=qnameOf(target),
+            arcrole=arcrole,
             consecutiveLinkrole=consecutiveLinkrole,
             isUsable=rel.isUsable,
             preferredLabel=rel.preferredLabel,
@@ -149,7 +165,7 @@ class ConceptRelationshipSet:
         linkrole = self._relSet.linkrole
         if not isinstance(linkrole, str):
             raise ArelleModelInconsistency(
-                Diagnostic.error(
+                ArelleDiagnostic.error(
                     "Relationship set has no single linkrole",
                     arcroles=self._arcroles,
                     got=repr(linkrole),
@@ -213,7 +229,7 @@ class ValidatedModel:
             resource = rel.toModelObject
             if not isinstance(resource, ModelResource):
                 raise ArelleModelInconsistency(
-                    Diagnostic.error(
+                    ArelleDiagnostic.error(
                         "Expected a ModelResource as relationship target",
                         arcrole=arcrole,
                         source=repr(source),
@@ -226,17 +242,30 @@ class ValidatedModel:
                 order=rel.order,
             )
 
-    def linkrolesFor(self, *arcroles: str) -> list[str]:
-        """Extended link roles that have a base set for any of `arcroles`.
-        Deduplicated, in base-set insertion order."""
-        wanted = set(arcroles)
-        seen: dict[str, None] = {}
+    def _baseSets(self) -> Iterator[tuple[str, str]]:
+        """(arcrole, linkrole) for every real base set. Arelle's baseSets is
+        also keyed by roll-up entries with a None linkrole or link/arc qname,
+        which are summaries rather than base sets in their own right."""
         for arcroleUri, linkrole, linkqname, arcqname in self._modelXbrl.baseSets:
             if linkqname is None or arcqname is None or linkrole is None:
                 continue
-            if arcroleUri in wanted:
-                seen.setdefault(linkrole)
-        return list(seen)
+            yield arcroleUri, linkrole
+
+    def linkrolesFor(self, *arcroles: str) -> list[str]:
+        """Extended link roles that have a base set for any of `arcroles`.
+        Deduplicated, in base-set insertion order."""
+        wanted = frozenset(arcroles)
+        return unique_list(
+            linkrole for arcrole, linkrole in self._baseSets() if arcrole in wanted
+        )
+
+    def baseSetsInDTS(self) -> list[tuple[str, str]]:
+        """Every (arcrole, linkrole) pair with a real base set in the DTS,
+        deduplicated, in base-set insertion order. Unlike linkrolesFor(), this
+        does not require the caller to already know which arcroles to look
+        for -- it is the primitive for "is this concept referenced by any
+        relationship anywhere"."""
+        return unique_list(self._baseSets())
 
     def itemConcepts(self) -> Iterator[tuple[QName, ModelConcept]]:
         """Yield (qname, concept) for item concepts, skipping the xbrli/xbrldt
@@ -254,11 +283,17 @@ class ValidatedModel:
             return self._modelXbrl.qnameConcepts[qname]
         except KeyError:
             raise ArelleModelInconsistency(
-                Diagnostic.error("No concept found for QName", concepts=(qname,))
+                ArelleDiagnostic.error("No concept found for QName", concepts=(qname,))
             ) from None
 
     def typeQNamesOf(self, concept: ModelConcept) -> tuple[QName, QName]:
-        """(type QName, base xbrli type QName) for an item concept.
+        """(type QName, base xbrli type QName) for an XBRL item concept.
+
+        For a typed dimension's typed domain element, use
+        typeQNamesOfTypedDomainElement() instead, never this one: XBRL
+        Dimensions 1.0 section 3.1.9.2 requires that element NOT be a
+        member of the xbrli:item substitution group, so it can never have
+        an xbrli item type for this method to resolve in the first place.
 
         N.B. concept.type.qname is used rather than concept.typeQname as it
         gets the namespace prefix right, i.e. something defined in
@@ -269,13 +304,13 @@ class ValidatedModel:
         """
         if (conceptType := concept.type) is None or conceptType.qname is None:
             raise ArelleModelInconsistency(
-                Diagnostic.error(
+                ArelleDiagnostic.error(
                     "Concept has no named type", concepts=(qnameOf(concept),)
                 )
             )
         if (baseQName := concept.baseXbrliTypeQname) is None:
             raise ArelleModelInconsistency(
-                Diagnostic.error(
+                ArelleDiagnostic.error(
                     "Concept has no base xbrli type", concepts=(qnameOf(concept),)
                 )
             )
@@ -288,23 +323,80 @@ class ValidatedModel:
             ),
         )
 
-    def typedDomainQNameOf(self, concept: ModelConcept) -> QName:
-        """QName of the typed domain element of a typed dimension concept."""
+    def typeQNamesOfTypedDomainElement(
+        self, element: ModelConcept
+    ) -> tuple[QName, QName]:
+        """(declared type QName, base XML Schema type QName) for a typed
+        dimension's typed domain element.
+
+        This is entirely separate from typeQNamesOf(), not a variant of it:
+        that method resolves an XBRL item's xbrli item type, and a typed
+        domain element can never have one (XBRL Dimensions 1.0 section
+        3.1.9.2 requires it NOT be in the xbrli:item substitution group in
+        the first place) -- so there is no xbrli type here to resolve, ever,
+        and this method never calls typeQNamesOf() or touches anything
+        xbrli-flavoured.
+
+        element.typeQname is the type="" attribute's raw parsed QName --
+        populated whenever a type is declared at all, however it's
+        declared, regardless of whether Arelle also modeled a ModelType for
+        it (which it never does for a bare XML Schema Part 2 primitive like
+        xs:string, only for an actual <xs:simpleType>/<xs:complexType>
+        *declaration* -- both ESRS's and VSME's own typed dimensions declare
+        their domain element as plain type="xs:string", confirmed against
+        real data). None means no type attribute and no inline type at all.
+
+        element.baseXsdType is Arelle's own accessor for "the XML Schema
+        primitive localName this type is ultimately derived from" -- used
+        here rather than reimplementing that walk, and rather than
+        baseXbrliTypeQname (which is the wrong tool: it exists to find an
+        xbrli type specifically, something this element can never have).
+        """
+        typeQname = element.typeQname
+        declaredType = (
+            _QNAME_XSD_ANY_TYPE
+            if typeQname is None
+            # Drop the source document's prefix, which need not be one
+            # modelXbrl.prefixedNamespaces knows -- same reasoning as
+            # _QNAME_XSD_ANY_TYPE.
+            else _requireNamespaced(
+                QName(None, typeQname.namespaceURI, typeQname.localName),
+                lambda: f"of type of {qnameOf(element)}",
+            )
+        )
+        baseType = QName(None, XbrlConst.xsd, element.baseXsdType)
+        return declaredType, baseType
+
+    def typedDomainElementOf(self, concept: ModelConcept) -> ModelConcept:
+        """The typed domain element of a typed dimension concept.
+
+        This is a plain xs:element, not an XBRL item: XBRL Dimensions 1.0
+        section 3.1.9.2 requires it NOT be a member of the xbrli:item
+        substitution group -- see typeQNamesOfTypedDomainElement() for how
+        its type is resolved, which is not the same way an item's is.
+        """
         element = concept.typedDomainElement
-        if element is None or element.qname is None:
+        if element is None:
             raise ArelleModelInconsistency(
-                Diagnostic.error(
+                ArelleDiagnostic.error(
                     "Typed dimension has no typed domain element",
                     concepts=(qnameOf(concept),),
                 )
             )
-        return element.qname
+        return element
+
+    def roleDefinition(self, roleUri: str) -> str | None:
+        """The role type's definition, or None when the role declares none --
+        or has no roleType at all, as with the standard link role."""
+        if not self._modelXbrl.roleTypes.get(roleUri):
+            return None
+        return self.roleType(roleUri).definition or None
 
     def roleType(self, roleUri: str) -> ModelRoleType:
         matching = self._modelXbrl.roleTypes.get(roleUri, [])
         if (num := len(matching)) != 1:
             raise ArelleModelInconsistency(
-                Diagnostic.error(
+                ArelleDiagnostic.error(
                     "Wrong number of role type objects found (expected 1)",
                     elr=roleUri,
                     found=num,

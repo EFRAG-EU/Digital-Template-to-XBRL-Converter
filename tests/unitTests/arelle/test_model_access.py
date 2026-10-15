@@ -6,7 +6,9 @@ tests/integrationTests/test_taxonomy_info_regeneration.py; these tests cover
 the narrowing/consistency logic using lightweight stubs.
 """
 
+from types import SimpleNamespace
 from typing import Any, cast
+from unittest.mock import MagicMock
 
 import pytest
 from arelle import XbrlConst
@@ -39,13 +41,17 @@ class StubConcept:
         *,
         isItem: bool = True,
         type: StubType | None = None,
+        typeQname: QName | None = None,
         baseXbrliTypeQname: QName | None = None,
+        baseXsdType: str = "anyType",
         typedDomainElement: Any = None,
     ) -> None:
         self.qname = qname
         self.isItem = isItem
         self.type = type
+        self.typeQname = typeQname
         self.baseXbrliTypeQname = baseXbrliTypeQname
+        self.baseXsdType = baseXsdType
         self.typedDomainElement = typedDomainElement
 
 
@@ -60,7 +66,7 @@ class StubRel:
         contextElement: str | None = None,
         isClosed: bool = False,
         order: float = 1.0,
-        arcrole: str = "https://example.com/arcrole",
+        arcrole: str | None = "https://example.com/arcrole",
         linkrole: str = "https://example.com/elr",
     ) -> None:
         self.arcrole = arcrole
@@ -154,6 +160,29 @@ class TestConceptRelationship:
                 cast(Any, StubRel(toModelObject=StubConcept(qn())))
             )
 
+    def test_raises_on_none_arcrole(self) -> None:
+        # ModelRelationship.arcrole is typed str | None (a bare xlink:arc has
+        # no required xlink:arcrole), but ConceptRelationship.arcrole is not
+        # optional -- guard it the same way consecutiveLinkrole is guarded
+        # above, rather than assigning None into a str field.
+        target = MagicMock(spec=ModelConcept)
+        target.qname = qn()
+        with pytest.raises(ArelleModelInconsistency):
+            ConceptRelationship.fromArelle(
+                cast(Any, StubRel(toModelObject=target, arcrole=None))
+            )
+
+    def test_carries_arcrole_through(self) -> None:
+        # isinstance(target, ModelConcept) must hold for _asConcept() to accept
+        # it -- StubConcept doesn't satisfy that (see test_raises_on_non_concept_
+        # target above), so use a spec'd Mock, which does.
+        target = MagicMock(spec=ModelConcept)
+        target.qname = qn()
+        rel = ConceptRelationship.fromArelle(
+            cast(Any, StubRel(toModelObject=target, arcrole=XbrlConst.notAll))
+        )
+        assert rel.arcrole == XbrlConst.notAll
+
 
 class TestConceptRelationshipSet:
     ARCROLE = XbrlConst.domainMember
@@ -215,6 +244,7 @@ class TestConceptRelationshipSet:
         rel = ConceptRelationship(
             target=cast(ModelConcept, StubConcept(qn())),
             targetQName=qn(),
+            arcrole=self.ARCROLE,
             consecutiveLinkrole=self.ELR,
             isUsable=True,
             preferredLabel=None,
@@ -238,6 +268,7 @@ class TestConceptRelationshipSet:
         rel = ConceptRelationship(
             target=cast(ModelConcept, StubConcept(qn())),
             targetQName=qn(),
+            arcrole=self.ARCROLE,
             consecutiveLinkrole=otherElr,
             isUsable=True,
             preferredLabel=None,
@@ -280,6 +311,33 @@ class TestLinkrolesFor:
         model = makeModel(StubModelXbrl(baseSets=baseSets))
         assert model.linkrolesFor(XbrlConst.all, XbrlConst.notAll) == [elr]
         assert model.linkrolesFor(XbrlConst.notAll) == []
+
+
+class TestBaseSetsInDTS:
+    LINKQNAME = qn("link")
+    ARCQNAME = qn("arc")
+
+    def test_filters_and_dedups(self) -> None:
+        elr1 = "https://example.com/elr1"
+        elr2 = "https://example.com/elr2"
+        baseSets: dict[tuple[Any, Any, Any, Any], Any] = {
+            (XbrlConst.parentChild, elr1, self.LINKQNAME, self.ARCQNAME): [],
+            # aggregate entries with None components must be ignored
+            (XbrlConst.parentChild, elr1, None, None): [],
+            (XbrlConst.parentChild, None, self.LINKQNAME, self.ARCQNAME): [],
+            (XbrlConst.summationItem, elr2, self.LINKQNAME, self.ARCQNAME): [],
+            # duplicate (different arc qname) must not repeat (parentChild, elr1)
+            (XbrlConst.parentChild, elr1, self.LINKQNAME, qn("otherArc")): [],
+        }
+        model = makeModel(StubModelXbrl(baseSets=baseSets))
+        assert model.baseSetsInDTS() == [
+            (XbrlConst.parentChild, elr1),
+            (XbrlConst.summationItem, elr2),
+        ]
+
+    def test_no_base_sets_is_empty(self) -> None:
+        model = makeModel(StubModelXbrl(baseSets={}))
+        assert model.baseSetsInDTS() == []
 
 
 class TestValidatedModel:
@@ -362,20 +420,73 @@ class TestValidatedModel:
         with pytest.raises(ArelleModelInconsistency):
             model.typeQNamesOf(cast(ModelConcept, concept))
 
-    def test_typed_domain_qname_of(self) -> None:
-        domainQName = qn("myDomain")
-        concept = StubConcept(qn(), typedDomainElement=StubConcept(domainQName))
+    def test_type_qnames_of_typed_domain_element_resolves_a_named_xsd_type(
+        self,
+    ) -> None:
+        # A taxonomy-defined named type (e.g. a restriction of xs:string):
+        # the declared type is its own name; the base comes from
+        # element.baseXsdType (Arelle's own XSD-only derivation walk, never
+        # an xbrli:*ItemType -- a typed domain element can never be of xbrli
+        # item type in the first place, XBRL Dimensions 1.0 3.1.9.2 forbids
+        # it -- which is why baseXbrliTypeQname is the wrong tool here).
+        typeQName = qn("SiteIdentifierType")
+        concept = StubConcept(qn(), typeQname=typeQName, baseXsdType="string")
         model = makeModel(StubModelXbrl())
-        assert model.typedDomainQNameOf(cast(ModelConcept, concept)) is domainQName
+        dataType, baseDataType = model.typeQNamesOfTypedDomainElement(
+            cast(ModelConcept, concept)
+        )
+        assert dataType == typeQName
+        assert baseDataType.localName == "string"
+        assert baseDataType.namespaceURI == XbrlConst.xsd
 
-    @pytest.mark.parametrize(
-        "typedDomainElement", [None, StubConcept(None)], ids=["missing", "no-qname"]
-    )
-    def test_typed_domain_qname_of_raises(self, typedDomainElement: Any) -> None:
-        concept = StubConcept(qn(), typedDomainElement=typedDomainElement)
+    def test_type_qnames_of_typed_domain_element_resolves_a_bare_xsd_primitive(
+        self,
+    ) -> None:
+        # type="xs:string" directly (not a taxonomy-defined named type) is
+        # exactly how both ESRS's and VSME's own typed-dimension domain
+        # elements are declared.
+        concept = StubConcept(
+            qn(),
+            typeQname=QName("xsd", XbrlConst.xsd, "string"),
+            baseXsdType="string",
+        )
+        model = makeModel(StubModelXbrl())
+        dataType, baseDataType = model.typeQNamesOfTypedDomainElement(
+            cast(ModelConcept, concept)
+        )
+        assert dataType == baseDataType
+        assert dataType.localName == "string"
+        assert dataType.namespaceURI == XbrlConst.xsd
+
+    def test_type_qnames_of_typed_domain_element_falls_back_when_untyped(
+        self,
+    ) -> None:
+        # No type attribute and no inline type at all (concept.typeQname is
+        # None) is legal XML Schema (implicit xs:anyType) -- not observed in
+        # ESRS or VSME, but handled for completeness.
+        concept = StubConcept(qn(), typeQname=None, baseXsdType="anyType")
+        model = makeModel(StubModelXbrl())
+        dataType, baseDataType = model.typeQNamesOfTypedDomainElement(
+            cast(ModelConcept, concept)
+        )
+        assert dataType.localName == "anyType"
+        assert dataType.namespaceURI == XbrlConst.xsd
+        assert baseDataType.localName == "anyType"
+        assert baseDataType.namespaceURI == XbrlConst.xsd
+
+    def test_typed_domain_element_of(self) -> None:
+        domainElement = StubConcept(qn("myDomain"))
+        concept = StubConcept(qn(), typedDomainElement=domainElement)
+        model = makeModel(StubModelXbrl())
+        assert model.typedDomainElementOf(cast(ModelConcept, concept)) is cast(
+            ModelConcept, domainElement
+        )
+
+    def test_typed_domain_element_of_raises_when_missing(self) -> None:
+        concept = StubConcept(qn(), typedDomainElement=None)
         model = makeModel(StubModelXbrl())
         with pytest.raises(ArelleModelInconsistency):
-            model.typedDomainQNameOf(cast(ModelConcept, concept))
+            model.typedDomainElementOf(cast(ModelConcept, concept))
 
     def test_role_type_returns_single_match(self) -> None:
         roleUri = "https://example.com/role"
@@ -389,6 +500,24 @@ class TestValidatedModel:
         model = makeModel(StubModelXbrl(roleTypes={roleUri: matches}))
         with pytest.raises(ArelleModelInconsistency):
             model.roleType(roleUri)
+
+    def test_role_definition_of_a_declared_role(self) -> None:
+        roleUri = "https://example.com/role"
+        roleType = SimpleNamespace(definition="[100] General information")
+        model = makeModel(StubModelXbrl(roleTypes={roleUri: [roleType]}))
+        assert model.roleDefinition(roleUri) == "[100] General information"
+
+    @pytest.mark.parametrize("definition", [None, ""], ids=["none", "empty"])
+    def test_role_definition_absent_is_none(self, definition: str | None) -> None:
+        roleUri = "https://example.com/role"
+        roleType = SimpleNamespace(definition=definition)
+        model = makeModel(StubModelXbrl(roleTypes={roleUri: [roleType]}))
+        assert model.roleDefinition(roleUri) is None
+
+    def test_role_definition_of_undeclared_role_is_none(self) -> None:
+        # e.g. the standard link role, which has no roleType.
+        model = makeModel(StubModelXbrl(roleTypes={}))
+        assert model.roleDefinition("http://www.xbrl.org/2003/role/link") is None
 
     def test_resource_relationships_from_raises_on_non_resource(self) -> None:
         concept = StubConcept(qn())

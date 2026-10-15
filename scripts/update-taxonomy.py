@@ -1,35 +1,50 @@
 import argparse
+import html
+import json
 import logging
+import shutil
+import sys
 import time
-from collections import Counter
+import warnings
+from collections.abc import Sequence
+from dataclasses import dataclass
+from enum import StrEnum
 from pathlib import Path
+from tempfile import TemporaryDirectory
+from typing import Any
 
 from rich.markup import escape
 from rich.table import Table
+from rich.text import Text
 
-from mireport.arelle.diagnostics import Diagnostic
 from mireport.arelle.support import ArelleProcessingResult
 from mireport.arelle.taxonomy_info import callArelleForTaxonomyInfo
 from mireport.cli import (
     configure_rich_output,
+    diagnosticHtml,
+    diagnosticMarkdown,
     get_console,
+    getEntryPointsFromPackages,
+    pickEntryPointFromPackages,
+    printDiagnosticTable,
+    printEntryPointTable,
     validateTaxonomyPackages,
 )
 from mireport.cli import (
     console_print as print,
 )
 from mireport.conversionresults import Severity
+from mireport.diagnostics import AbstractDiagnostic, Diagnostic
+from mireport.entrypoints import EntryPointSet, entryPointSetOf
+from mireport.exceptions import TaxonomyException, UtrSourceError
+from mireport.taxonomy import builtInTaxonomyJsonPaths, loadTaxonomyJSON
+from mireport.taxonomy_checker import TaxonomyChecker
+from mireport.utr_xml import UTR_URL, UtrRegistry, loadUtrXml
 
 SEVERITY_STYLES = {
     Severity.ERROR: "bold red",
     Severity.WARNING: "yellow",
     Severity.INFO: "dim",
-}
-
-LEVEL_STYLES = {
-    logging.ERROR: "bold red",
-    logging.WARNING: "yellow",
-    logging.INFO: "dim",
 }
 
 
@@ -38,27 +53,83 @@ def parser() -> argparse.ArgumentParser:
         description="Extract taxonomy information from zip files and save to JSON file."
     )
     parser.add_argument(
-        "taxonomy_json_path",
-        type=Path,
-        help="Path to the taxonomy JSON file to be created.",
-    )
-    parser.add_argument(
         "taxonomy_zips",
         type=str,
-        nargs="+",
-        help="Path to the taxonomy zip files to be used (globs, *.zip, are permitted).",
+        nargs="*",
+        help="Path to the taxonomy zip files to be used (globs such as *.zip, and directories of zips, are permitted). Required except with --utr-output.",
     )
-    parser.add_argument(
+    # Not required=True: main() checks that one mode was given, after first
+    # catching the removed `update-taxonomy.py out.json *.zip` form.
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument(
+        "--output",
+        type=Path,
+        metavar="TAXONOMY_JSON",
+        help="Path to the taxonomy JSON file to be created.",
+    )
+    mode.add_argument(
+        "--regenerate-builtin",
+        action="store_true",
+        help="Regenerate every built-in taxonomy JSON in src/mireport/data/taxonomies "
+        "in place, each from the entry point it records. The taxonomy packages "
+        "must include the supporting packages (codelists, country, nace, ...). A "
+        "file is only replaced when regeneration succeeds and its content has "
+        "changed.",
+    )
+    mode.add_argument(
+        "--list-entry-points",
+        action="store_true",
+        help="List the entry points declared by the taxonomy packages and exit.",
+    )
+    mode.add_argument(
         "--utr-output",
         type=Path,
+        metavar="UTR_JSON",
+        help="Regenerate the Unit Type Registry JSON (src/mireport/data/registries/"
+        "utr.json) from utr.xml; see --utr-source. Needs no taxonomy packages. The "
+        "file is only replaced once utr.xml has been read and understood.",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="With --regenerate-builtin: regenerate to a temporary file and report "
+        "which built-in files would change, without replacing any. Exits 1 if any "
+        "would change.",
+    )
+    parser.add_argument(
+        "--utr-source",
+        type=str,
         default=None,
-        help="Path to the UTR JSON file to be used.",
+        metavar="URL_OR_PATH",
+        help=f"With --utr-output: where to read utr.xml from, an http(s) URL or a "
+        f"local path (default: {UTR_URL}).",
     )
     parser.add_argument(
         "--entry-point",
         type=str,
-        required=True,
-        help="Entry point to the taxonomy.",
+        action="append",
+        default=None,
+        help="With --output: entry point to the taxonomy. Repeat it for an entry "
+        "point that names several documents. If omitted, you are prompted to pick "
+        "one of the entry points declared by the taxonomy packages.",
+    )
+    parser.add_argument(
+        "--status-report",
+        type=Path,
+        default=None,
+        metavar="PATH",
+        help="With --output: also write the diagnostics to PATH as tables, in the "
+        f"format given by its extension ({', '.join(STATUS_REPORT_WRITERS)}). "
+        "Markdown renders in GitHub issues and pull requests; for Teams, which "
+        "does not render pasted markdown, write HTML, open it in a browser, copy "
+        "and paste. The console output is unchanged.",
+    )
+    parser.add_argument(
+        "--check-json",
+        action="store_true",
+        help="After writing the taxonomy JSON, load it back with loadTaxonomyJSON() "
+        "and run TaxonomyChecker over it, so load-time issues (unsupported base "
+        "sets, inconsistent dimension domains, ...) are reported immediately.",
     )
     return parser
 
@@ -72,79 +143,404 @@ def printMessages(results: ArelleProcessingResult) -> None:
         )
 
 
-def levelName(level: int) -> str:
-    return logging.getLevelName(level).title()
+def diagnosticsFromWarnings(
+    caught: Sequence[warnings.WarningMessage],
+) -> list[Diagnostic]:
+    """Turn the warnings.warn(UserWarning(TaxonomyException(...))) issued by
+    Taxonomy.__init__ for unsupported base sets into Diagnostics, using the
+    exception's notes for the per-role detail."""
+    diagnostics = []
+    for caughtWarning in caught:
+        message = caughtWarning.message
+        exc = message.args[0] if isinstance(message, Warning) and message.args else None
+        if isinstance(exc, TaxonomyException):
+            notes = "\n".join(getattr(exc, "__notes__", ()))
+            diagnostics.append(Diagnostic.warning(str(exc), hint=notes or None))
+        else:
+            diagnostics.append(Diagnostic.warning(str(message)))
+    return diagnostics
 
 
-def diagnosticDetails(diagnostic: Diagnostic) -> str:
-    lines = [f"{key}: {value}" for key, value in diagnostic.details.items()]
-    if diagnostic.hint is not None:
-        lines.append(f"hint: {diagnostic.hint}")
-    return "\n".join(lines)
+DIAGNOSTICS_TITLE = "Taxonomy diagnostics"
+CHECKER_TITLE = "Taxonomy checker findings"
 
 
-def printDiagnostics(results: ArelleProcessingResult) -> None:
-    diagnostics = results.diagnostics
-    if not diagnostics:
-        print("No diagnostics from taxonomy extraction.")
-        return
+def checkTaxonomyJson(taxonomy_json_path: Path) -> list[Diagnostic]:
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        taxonomy = loadTaxonomyJSON(taxonomy_json_path)
+    diagnostics = [
+        *diagnosticsFromWarnings(caught),
+        *TaxonomyChecker(taxonomy).reportIssues(),
+    ]
+    printDiagnosticTable(CHECKER_TITLE, diagnostics)
+    return diagnostics
 
-    table = Table(title="Taxonomy diagnostics", show_lines=True)
-    table.add_column("Level", no_wrap=True)
-    table.add_column("Message", max_width=40)
-    table.add_column("ELR", overflow="fold")
-    table.add_column("Concepts", overflow="fold")
-    table.add_column("Details", overflow="fold")
 
-    for diagnostic in sorted(diagnostics, key=lambda d: -d.level):
-        table.add_row(
-            f"[{LEVEL_STYLES.get(diagnostic.level, '')}]{levelName(diagnostic.level)}[/]",
-            escape(diagnostic.text),
-            escape(diagnostic.elr or ""),
-            escape("\n".join(str(qname) for qname in diagnostic.concepts)),
-            escape(diagnosticDetails(diagnostic)),
-        )
-    get_console().print(table)
+FIRST_PROBLEMS_NOTE = (
+    "Extraction reports the first problem it meets in each phase, ELR and "
+    "concept, then carries on. Fixing the errors above may reveal further errors "
+    "and warnings on the next run."
+)
 
-    counts = Counter(levelName(diagnostic.level) for diagnostic in diagnostics)
-    summary = ", ".join(
-        f"{count} {name.lower()}{'s' if count != 1 else ''}"
-        for name, count in counts.most_common()
+
+def statusNote(results: ArelleProcessingResult) -> str | None:
+    """The note to show with the diagnostics: only errors can be hiding others."""
+    if any(d.level >= logging.ERROR for d in results.diagnostics):
+        return FIRST_PROBLEMS_NOTE
+    return None
+
+
+@dataclass(frozen=True)
+class StatusSection:
+    """One diagnostics table of the status report."""
+
+    title: str
+    diagnostics: Sequence[AbstractDiagnostic[Any]]
+    note: str | None = None
+
+
+Sections = Sequence[StatusSection]
+
+
+def writeMarkdownStatusReport(
+    path: Path, documents: Sequence[str], sections: Sections
+) -> None:
+    """Write the diagnostics as markdown, for GitHub issues and pull requests."""
+    entryPoint = ", ".join(f"`{document}`" for document in documents)
+    parts = [f"## Taxonomy update: {entryPoint}\n"]
+    parts.extend(
+        diagnosticMarkdown(section.title, section.diagnostics, note=section.note)
+        for section in sections
     )
-    print(f"{summary} from taxonomy extraction.")
+    path.write_text("\n".join(parts), encoding="utf-8")
+    print(f"Diagnostics written as markdown to {path}")
 
 
-def main() -> None:
-    cli = parser()
-    args = cli.parse_args()
-    taxonomy_json_path = args.taxonomy_json_path
-    taxonomy_zips = args.taxonomy_zips
-    utr_json_path = args.utr_output
-    entry_point = args.entry_point
+def writeHtmlStatusReport(
+    path: Path, documents: Sequence[str], sections: Sections
+) -> None:
+    """Write the diagnostics as HTML: open it in a browser, copy and paste into
+    Teams, which keeps the table."""
+    entryPoint = ", ".join(
+        f"<code>{html.escape(document)}</code>" for document in documents
+    )
+    parts = [
+        (
+            '<!DOCTYPE html>\n<html lang="en">\n<head><meta charset="utf-8">'
+            "<title>Taxonomy update status</title></head>\n<body>"
+        ),
+        f"<h2>Taxonomy update: {entryPoint}</h2>",
+        *(
+            diagnosticHtml(section.title, section.diagnostics, note=section.note)
+            for section in sections
+        ),
+        "</body>\n</html>\n",
+    ]
+    path.write_text("\n".join(parts), encoding="utf-8")
+    print(f"Diagnostics written as HTML to {path}")
 
-    taxonomy_zips = validateTaxonomyPackages(taxonomy_zips, cli)
+
+STATUS_REPORT_WRITERS = {
+    ".md": writeMarkdownStatusReport,
+    ".markdown": writeMarkdownStatusReport,
+    ".html": writeHtmlStatusReport,
+    ".htm": writeHtmlStatusReport,
+}
+
+
+def writeStatusReport(path: Path, documents: Sequence[str], sections: Sections) -> None:
+    """Write the status report in the format the extension of path names."""
+    STATUS_REPORT_WRITERS[path.suffix.lower()](path, documents, sections)
+
+
+def regenerateOne(
+    entryPointSet: EntryPointSet,
+    taxonomy_zips: Sequence[Path],
+    out_path: Path,
+    *,
+    checkJson: bool,
+    targetPath: Path | None = None,
+    statusReportPath: Path | None = None,
+) -> ArelleProcessingResult:
+    """targetPath: where the JSON ends up, when out_path is only a staging
+    file (batch mode), so the banner names the file being regenerated.
+
+    statusReportPath: where to also write the diagnostics, as markdown or HTML
+    according to its extension (see writeStatusReport)."""
+    documents = sorted(entryPointSet)
     print(
         "Using:",
-        f"Taxonomy entry point: {entry_point}",
-        f"Taxonomy JSON path: {taxonomy_json_path}",
-        f"Taxonomy packages:\n\t\t{' '.join(taxonomy_zips)}",
-        f"UTR JSON path: {utr_json_path}"
-        if utr_json_path
-        else "No UTR processing requested",
+        f"Taxonomy entry point: {documents[0]}"
+        if len(documents) == 1
+        else "Taxonomy entry point:\n\t\t{}".format("\n\t\t".join(documents)),
+        f"Taxonomy JSON path: {targetPath or out_path}",
         sep="\n\t",
     )
 
     start = time.perf_counter_ns()
 
     print("Calling into Arelle")
+    # out_path is always a staging file (see publishIfSucceeded), so have the
+    # plugin write it even when it found problems: they are all listed, and
+    # the checker below can look at the data for more.
     results = callArelleForTaxonomyInfo(
-        entry_point, taxonomy_zips, taxonomy_json_path, utr_json_path
+        entryPointSet, taxonomy_zips, out_path, writeDataDespiteErrors=True
     )
     printMessages(results)
-    printDiagnostics(results)
+    printDiagnosticTable(DIAGNOSTICS_TITLE, results.diagnostics)
+    note = statusNote(results)
+    if note is not None:
+        print(f"Note: {note}")
+    sections = [StatusSection(DIAGNOSTICS_TITLE, results.diagnostics, note)]
 
     elapsed = (time.perf_counter_ns() - start) / 1_000_000_000
     print(f"Finished querying Arelle ({elapsed:,.2f} seconds elapsed).")
+
+    if checkJson:
+        if out_path.exists():
+            print("Checking taxonomy JSON")
+            sections.append(StatusSection(CHECKER_TITLE, checkTaxonomyJson(out_path)))
+        else:
+            print("Skipping --check-json: taxonomy JSON was not written.")
+
+    if statusReportPath is not None:
+        writeStatusReport(statusReportPath, documents, sections)
+
+    return results
+
+
+class RegenerationStatus(StrEnum):
+    UNCHANGED = "unchanged"
+    UPDATED = "updated"
+    WOULD_CHANGE = "would change"
+    FAILED = "failed"
+
+
+STATUS_STYLES = {
+    RegenerationStatus.UNCHANGED: "green",
+    RegenerationStatus.UPDATED: "cyan",
+    RegenerationStatus.WOULD_CHANGE: "yellow",
+    RegenerationStatus.FAILED: "bold red",
+}
+
+
+@dataclass(frozen=True)
+class RegenerationOutcome:
+    path: Path
+    entryPointSet: EntryPointSet
+    status: RegenerationStatus
+    seconds: float
+
+
+def succeeded(results: ArelleProcessingResult, out_path: Path) -> bool:
+    return (
+        out_path.exists()
+        and not results.has_exceptions
+        and not any(m.severity == Severity.ERROR for m in results.messages)
+        and not any(d.level >= logging.ERROR for d in results.diagnostics)
+    )
+
+
+def publishIfSucceeded(
+    results: ArelleProcessingResult, staged: Path, target: Path
+) -> bool:
+    """Move the staged taxonomy JSON to target if the run had no problems.
+    Otherwise target is left exactly as it was: a taxonomy with errors is
+    reported on, but never persisted."""
+    if not succeeded(results, staged):
+        return False
+    shutil.move(staged, target)
+    return True
+
+
+def regenerateBuiltIn(
+    path: Path,
+    entryPointSet: EntryPointSet,
+    taxonomy_zips: Sequence[Path],
+    *,
+    checkJson: bool,
+    dryRun: bool,
+) -> RegenerationOutcome:
+    start = time.perf_counter()
+    # Same directory as the target so Path.replace() is an atomic rename.
+    with TemporaryDirectory(dir=path.parent, prefix=".regenerate-") as tmp:
+        out_path = Path(tmp) / path.name
+        results = regenerateOne(
+            entryPointSet,
+            taxonomy_zips,
+            out_path,
+            checkJson=checkJson,
+            targetPath=path,
+        )
+        if not succeeded(results, out_path):
+            status = RegenerationStatus.FAILED
+        elif json.loads(out_path.read_bytes()) == json.loads(path.read_bytes()):
+            status = RegenerationStatus.UNCHANGED
+        elif dryRun:
+            status = RegenerationStatus.WOULD_CHANGE
+        else:
+            out_path.replace(path)
+            status = RegenerationStatus.UPDATED
+    return RegenerationOutcome(path, entryPointSet, status, time.perf_counter() - start)
+
+
+def regenerateUtr(out_path: Path, source: str) -> int:
+    """Regenerate the UTR JSON from utr.xml. The file is only replaced once the
+    registry has been read, understood and written out in full."""
+    print(f"UTR source: {escape(source)}")
+    try:
+        UtrRegistry.fromXml(loadUtrXml(source)).writeJson(out_path)
+    except UtrSourceError as e:
+        print(f"[bold red]UTR not written:[/] {escape(str(e))}")
+        return 1
+    except OSError as e:
+        print(f"[bold red]UTR not written:[/] {escape(str(e))}")
+        return 1
+    return 0
+
+
+def printRegenerationSummary(outcomes: Sequence[RegenerationOutcome]) -> None:
+    table = Table(title="Built-in taxonomy JSON regeneration")
+    table.add_column("File", no_wrap=True)
+    table.add_column("Entry point")
+    table.add_column("Status", no_wrap=True)
+    table.add_column("Seconds", justify="right")
+    for outcome in outcomes:
+        style = STATUS_STYLES[outcome.status]
+        # Text() not markup; one line per document of the set.
+        entryPoint = Text("\n".join(sorted(outcome.entryPointSet)))
+        table.add_row(
+            outcome.path.name,
+            entryPoint,
+            f"[{style}]{outcome.status}[/]",
+            f"{outcome.seconds:,.2f}",
+        )
+    get_console().print(table)
+
+
+def regenerateAllBuiltIn(
+    taxonomy_zips: Sequence[Path],
+    *,
+    checkJson: bool,
+    dryRun: bool,
+) -> int:
+    outcomes = []
+    for path, entryPointSet in builtInTaxonomyJsonPaths():
+        print(f"Regenerating {path.name}")
+        outcomes.append(
+            regenerateBuiltIn(
+                path,
+                entryPointSet,
+                taxonomy_zips,
+                checkJson=checkJson,
+                dryRun=dryRun,
+            )
+        )
+    printRegenerationSummary(outcomes)
+    bad = {RegenerationStatus.FAILED, RegenerationStatus.WOULD_CHANGE}
+    return 1 if any(o.status in bad for o in outcomes) else 0
+
+
+def entryPointSetOrUsageError(
+    documents: Sequence[str], cli: argparse.ArgumentParser
+) -> EntryPointSet:
+    """Where a single-file run's entry point becomes a set; an unusable one
+    (e.g. not an absolute URI) is a usage error, not a traceback."""
+    try:
+        return entryPointSetOf(documents)
+    except TaxonomyException as e:
+        cli.error(str(e))
+
+
+def main() -> None:
+    cli = parser()
+    args = cli.parse_args()
+    taxonomy_json_path: Path | None = args.output
+    # action="append" gives a list of documents.
+    entry_point: Sequence[str] | None = args.entry_point
+
+    if jsonPaths := [z for z in args.taxonomy_zips if z.lower().endswith(".json")]:
+        cli.error(
+            f"{jsonPaths[0]} is not a taxonomy package. The taxonomy JSON to "
+            f"create is given with --output (e.g. --output {jsonPaths[0]}), not "
+            "as the first positional argument."
+        )
+    if not (
+        taxonomy_json_path
+        or args.regenerate_builtin
+        or args.list_entry_points
+        or args.utr_output
+    ):
+        cli.error(
+            "one of the arguments --output --regenerate-builtin "
+            "--list-entry-points --utr-output is required"
+        )
+    if args.utr_source is not None and args.utr_output is None:
+        cli.error("--utr-source is only supported with --utr-output.")
+    if args.utr_output is not None:
+        if args.taxonomy_zips:
+            cli.error("--utr-output reads utr.xml and takes no taxonomy packages.")
+        raise SystemExit(regenerateUtr(args.utr_output, args.utr_source or UTR_URL))
+    if not args.taxonomy_zips:
+        cli.error("taxonomy package zip files are required.")
+    # Dependencies the mutually exclusive group cannot express.
+    if entry_point is not None and taxonomy_json_path is None:
+        cli.error("--entry-point is only supported with --output.")
+    if args.status_report is not None:
+        if taxonomy_json_path is None:
+            cli.error("--status-report is only supported with --output.")
+        if args.status_report.suffix.lower() not in STATUS_REPORT_WRITERS:
+            cli.error(
+                f"--status-report {args.status_report} must end in one of: "
+                + ", ".join(STATUS_REPORT_WRITERS)
+            )
+    if args.dry_run and not args.regenerate_builtin:
+        cli.error("--dry-run is only supported with --regenerate-builtin.")
+    entryPointSet = (
+        entryPointSetOrUsageError(entry_point, cli) if entry_point is not None else None
+    )
+
+    taxonomy_zips = validateTaxonomyPackages(args.taxonomy_zips, cli)
+
+    if args.regenerate_builtin:
+        raise SystemExit(
+            regenerateAllBuiltIn(
+                taxonomy_zips,
+                checkJson=args.check_json,
+                dryRun=args.dry_run,
+            )
+        )
+
+    if args.list_entry_points:
+        printEntryPointTable(getEntryPointsFromPackages(taxonomy_zips, cli))
+        raise SystemExit(0)
+
+    # One mode is required, so --output is set once the other two are gone.
+    assert taxonomy_json_path is not None
+    if entryPointSet is None:
+        if not sys.stdin.isatty():
+            cli.error(
+                "--entry-point is required when not running interactively. "
+                "Use --list-entry-points to see the available entry points."
+            )
+        entryPointSet = entryPointSetOrUsageError(
+            pickEntryPointFromPackages(taxonomy_zips, cli), cli
+        )
+
+    with TemporaryDirectory() as tmp:
+        staged = Path(tmp) / taxonomy_json_path.name
+        results = regenerateOne(
+            entryPointSet,
+            taxonomy_zips,
+            staged,
+            checkJson=args.check_json,
+            targetPath=taxonomy_json_path,
+            statusReportPath=args.status_report,
+        )
+        if not publishIfSucceeded(results, staged, taxonomy_json_path):
+            print(f"Taxonomy JSON not written to {taxonomy_json_path}: see above.")
+            raise SystemExit(1)
 
 
 if __name__ == "__main__":

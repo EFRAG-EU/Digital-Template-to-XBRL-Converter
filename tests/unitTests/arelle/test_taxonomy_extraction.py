@@ -9,6 +9,9 @@ test_model_access.py for the same approach).
 from __future__ import annotations
 
 import json
+import logging
+from collections.abc import Iterator
+from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, cast
@@ -21,19 +24,25 @@ from arelle.ModelValue import QName
 from arelle.ModelXbrl import ModelXbrl
 from arelle.RuntimeOptions import RuntimeOptions
 
-from mireport.arelle.diagnostics import Diagnostic, DiagnosticCollector
+from mireport.arelle.diagnostics import ArelleDiagnostic, DiagnosticEmitter
 from mireport.arelle.model_access import (
     ConceptRelationship,
     ConceptRelationshipSet,
     ResourceRelationship,
     ValidatedModel,
 )
+from mireport.arelle.support import ArelleModelInconsistency, ArelleRelatedException
 from mireport.arelle.taxonomy_extraction import (
     DefinitionRow,
     PresentationRow,
     TaxonomyInfoExtractor,
     writeDataFile,
 )
+from mireport.arelle.taxonomy_info_run import TaxonomyInfoRunRegistry
+from mireport.entrypoints import entryPointSetOf
+from mireport.exceptions import TaxonomyException
+
+ENTRY_POINT = "https://example.com/vsme-all.xsd"
 
 
 def qn(local: str = "Thing", ns: str = "https://example.com/vsme") -> QName:
@@ -49,8 +58,30 @@ class StubCntlr:
 
 
 class StubConcept:
-    def __init__(self, qname: QName) -> None:
+    def __init__(
+        self,
+        qname: QName,
+        *,
+        isEnumeration2Item: bool = False,
+        enumLinkrole: str | None = None,
+        enumDomainQname: QName | None = None,
+        isExplicitDimension: bool = False,
+        isHypercubeItem: bool = False,
+        isAbstract: bool = False,
+        isDimensionItem: bool = False,
+        isNillable: bool = False,
+        isNumeric: bool = False,
+    ) -> None:
         self.qname = qname
+        self.isEnumeration2Item = isEnumeration2Item
+        self.enumLinkrole = enumLinkrole
+        self.enumDomainQname = enumDomainQname
+        self.isExplicitDimension = isExplicitDimension
+        self.isHypercubeItem = isHypercubeItem
+        self.isAbstract = isAbstract
+        self.isDimensionItem = isDimensionItem
+        self.isNillable = isNillable
+        self.isNumeric = isNumeric
 
 
 class StubLabelResource:
@@ -69,13 +100,60 @@ class StubRoleType:
 class StubValidatedModel:
     """Stands in for ValidatedModel; serves canned ResourceRelationships."""
 
-    def __init__(self, relsByArcrole: dict[str, list[ResourceRelationship]]) -> None:
+    def __init__(
+        self,
+        relsByArcrole: dict[str, list[ResourceRelationship]],
+        conceptRelSets: dict[Any, Any] | None = None,
+        linkrolesByArcrole: dict[str, list[str]] | None = None,
+        baseSets: list[tuple[str, str]] | None = None,
+        items: list[tuple[QName, Any]] | None = None,
+        typeQNamesByQName: dict[QName, tuple[QName, QName]] | None = None,
+        roleDefinitions: dict[str, str] | None = None,
+    ) -> None:
         self._relsByArcrole = relsByArcrole
+        self._roleDefinitions = roleDefinitions or {}
+        self._conceptRelSets = conceptRelSets or {}
+        self._linkrolesByArcrole = linkrolesByArcrole or {}
+        self._baseSets = baseSets or []
+        self._items = items or []
+        self._conceptsByQName = dict(self._items)
+        self._typeQNamesByQName = typeQNamesByQName or {}
 
     def resourceRelationshipsFrom(
         self, source: Any, arcrole: str
     ) -> list[ResourceRelationship]:
         return self._relsByArcrole[arcrole]
+
+    def typeQNamesOfTypedDomainElement(self, concept: Any) -> tuple[QName, QName]:
+        return self._typeQNamesByQName[concept.qname]
+
+    def conceptRelationshipSet(self, arcroles: Any, linkrole: str) -> Any:
+        # New tests key conceptRelSets by (arcroles, linkrole) to disambiguate
+        # several arcroles sharing one linkrole; older tests key by linkrole
+        # alone since they only ever look up one arcrole per linkrole.
+        key = (arcroles, linkrole)
+        if key in self._conceptRelSets:
+            return self._conceptRelSets[key]
+        return self._conceptRelSets[linkrole]
+
+    def linkrolesFor(self, *arcroles: str) -> list[str]:
+        return [
+            linkrole
+            for arcrole in arcroles
+            for linkrole in self._linkrolesByArcrole.get(arcrole, [])
+        ]
+
+    def baseSetsInDTS(self) -> list[tuple[str, str]]:
+        return list(self._baseSets)
+
+    def itemConcepts(self) -> Iterator[tuple[QName, Any]]:
+        yield from self._items
+
+    def concept(self, qname: QName) -> Any:
+        return self._conceptsByQName[qname]
+
+    def roleDefinition(self, roleUri: str) -> str | None:
+        return self._roleDefinitions.get(roleUri)
 
 
 def labelRel(resource: StubLabelResource) -> ResourceRelationship:
@@ -84,24 +162,76 @@ def labelRel(resource: StubLabelResource) -> ResourceRelationship:
     )
 
 
+class StubReferencePart:
+    def __init__(self, qname: QName, value: str) -> None:
+        self.qname = qname
+        self.stringValue = value
+
+
+class StubReferenceResource:
+    def __init__(self, role: str | None, parts: list[StubReferencePart]) -> None:
+        self.role = role
+        self._parts = parts
+
+    def iterchildren(self) -> list[StubReferencePart]:
+        return self._parts
+
+
+REF_NS = "http://www.xbrl.org/2006/ref"
+
+
+def refPart(local: str, value: str, ns: str = REF_NS) -> StubReferencePart:
+    return StubReferencePart(QName("ref", ns, local), value)
+
+
+def refRel(
+    resource: StubReferenceResource, *, order: float = 1.0
+) -> ResourceRelationship:
+    return ResourceRelationship(
+        resource=cast(Any, resource), role=resource.role, order=order
+    )
+
+
 def makeExtractor(
     relsByArcrole: dict[str, list[ResourceRelationship]],
+    conceptRelSets: dict[Any, Any] | None = None,
+    linkrolesByArcrole: dict[str, list[str]] | None = None,
+    baseSets: list[tuple[str, str]] | None = None,
+    items: list[tuple[QName, Any]] | None = None,
+    typeQNamesByQName: dict[QName, tuple[QName, QName]] | None = None,
+    roleDefinitions: dict[str, str] | None = None,
 ) -> tuple[TaxonomyInfoExtractor, str]:
-    """Build an extractor over stubs, with a diagnostics collector attached."""
-    token = DiagnosticCollector.open()
+    """Build an extractor over stubs, with a run (to collect diagnostics)
+    registered."""
+    token = TaxonomyInfoRunRegistry.open(entryPointSet=entryPointSetOf(ENTRY_POINT))
     stubModel = SimpleNamespace(qnameConcepts={}, qnameTypes={})
-    options = SimpleNamespace(diagnosticsToken=token)
+    options = SimpleNamespace(runToken=token)
     extractor = TaxonomyInfoExtractor(
         cast(Cntlr, StubCntlr()),
         cast(RuntimeOptions, options),
         cast(ModelXbrl, stubModel),
     )
-    extractor.model = cast(ValidatedModel, StubValidatedModel(relsByArcrole))
+    extractor.model = cast(
+        ValidatedModel,
+        StubValidatedModel(
+            relsByArcrole,
+            conceptRelSets,
+            linkrolesByArcrole,
+            baseSets,
+            items,
+            typeQNamesByQName,
+            roleDefinitions,
+        ),
+    )
     return extractor, token
 
 
-def collectedDiagnostics(token: str) -> list[Diagnostic]:
-    return DiagnosticCollector.close(token)
+def collectedDiagnostics(token: str) -> list[ArelleDiagnostic]:
+    return TaxonomyInfoRunRegistry.close(token).diagnostics
+
+
+def collectedErrors(token: str) -> list[ArelleDiagnostic]:
+    return [d for d in collectedDiagnostics(token) if d.level >= logging.ERROR]
 
 
 class TestWriteDataFile:
@@ -144,7 +274,7 @@ class TestWriteDataFile:
 class TestAddLabels:
     def addLabels(
         self, labelRels: list[ResourceRelationship]
-    ) -> tuple[dict, list[Diagnostic]]:
+    ) -> tuple[dict, list[ArelleDiagnostic]]:
         extractor, token = makeExtractor({XbrlConst.conceptLabel: labelRels})
         jconcept: dict[str, Any] = {}
         extractor.addLabels(cast(ModelConcept, StubConcept(qn())), jconcept)
@@ -209,16 +339,198 @@ class TestAddLabels:
         assert diagnostics == []
 
 
+REFERENCE_ROLE = "http://www.xbrl.org/2003/role/reference"
+EXAMPLE_ROLE = "http://www.xbrl.org/2003/role/example"
+
+
+class TestReferences:
+    def collect(
+        self,
+        extractor: TaxonomyInfoExtractor,
+        concept: QName,
+        rels: list[ResourceRelationship],
+    ) -> None:
+        # StubValidatedModel.resourceRelationshipsFrom() ignores its
+        # `source` argument and serves one canned list per arcrole, so a
+        # per-concept scenario has to swap that list in before each call.
+        cast(Any, extractor.model)._relsByArcrole[XbrlConst.conceptReference] = rels
+        extractor.collectReferences(cast(ModelConcept, StubConcept(concept)))
+
+    def test_identical_references_on_two_concepts_fold_into_one(self) -> None:
+        extractor, token = makeExtractor({XbrlConst.conceptReference: []})
+        resource = StubReferenceResource(
+            REFERENCE_ROLE, [refPart("Name", "ISO"), refPart("Number", "3166-1")]
+        )
+        self.collect(extractor, qn("A"), [refRel(resource)])
+        self.collect(extractor, qn("B"), [refRel(resource)])
+
+        extractor.extractReferences()
+
+        refs = extractor.taxonomyJson["references"]
+        assert len(refs) == 1
+        assert set(refs[0]["concepts"]) == {qn("A"), qn("B")}
+        assert "orders" not in refs[0]
+        assert collectedDiagnostics(token) == []
+
+    def test_same_parts_different_role_are_two_references(self) -> None:
+        extractor, _ = makeExtractor({XbrlConst.conceptReference: []})
+        parts = [refPart("Name", "ISO")]
+        self.collect(
+            extractor, qn("A"), [refRel(StubReferenceResource(REFERENCE_ROLE, parts))]
+        )
+        self.collect(
+            extractor, qn("B"), [refRel(StubReferenceResource(EXAMPLE_ROLE, parts))]
+        )
+
+        extractor.extractReferences()
+
+        refs = extractor.taxonomyJson["references"]
+        assert len(refs) == 2
+        assert {r["role"] for r in refs} == {REFERENCE_ROLE, EXAMPLE_ROLE}
+
+    def test_order_other_than_1_is_recorded_per_concept_with_diagnostic(self) -> None:
+        extractor, token = makeExtractor({XbrlConst.conceptReference: []})
+        resource = StubReferenceResource(REFERENCE_ROLE, [refPart("Name", "ISO")])
+        self.collect(extractor, qn("A"), [refRel(resource, order=1.0)])
+        self.collect(extractor, qn("B"), [refRel(resource, order=2.0)])
+
+        extractor.extractReferences()
+
+        refs = extractor.taxonomyJson["references"]
+        assert len(refs) == 1
+        assert refs[0]["orders"] == {qn("B"): 2.0}
+        diagnostics = collectedDiagnostics(token)
+        assert len(diagnostics) == 1
+        assert "order" in diagnostics[0].text
+
+    def test_all_order_1_has_no_orders_key(self) -> None:
+        extractor, token = makeExtractor({XbrlConst.conceptReference: []})
+        resource = StubReferenceResource(REFERENCE_ROLE, [refPart("Name", "ISO")])
+        self.collect(extractor, qn("A"), [refRel(resource, order=1.0)])
+
+        extractor.extractReferences()
+
+        assert "orders" not in extractor.taxonomyJson["references"][0]
+        assert collectedDiagnostics(token) == []
+
+    def test_empty_parts_are_dropped(self) -> None:
+        extractor, _ = makeExtractor({XbrlConst.conceptReference: []})
+        resource = StubReferenceResource(
+            REFERENCE_ROLE, [refPart("Name", "  "), refPart("Number", "3166-1")]
+        )
+        self.collect(extractor, qn("A"), [refRel(resource)])
+
+        extractor.extractReferences()
+
+        refs = extractor.taxonomyJson["references"]
+        assert len(refs) == 1
+        assert refs[0]["parts"] == [(QName("ref", REF_NS, "Number"), "3166-1")]
+
+    def test_reference_with_only_empty_parts_is_dropped_entirely(self) -> None:
+        extractor, _ = makeExtractor({XbrlConst.conceptReference: []})
+        resource = StubReferenceResource(REFERENCE_ROLE, [refPart("Name", "   ")])
+        self.collect(extractor, qn("A"), [refRel(resource)])
+
+        extractor.extractReferences()
+
+        assert extractor.taxonomyJson["references"] == []
+
+    def test_missing_role_raises(self) -> None:
+        extractor, _ = makeExtractor({XbrlConst.conceptReference: []})
+        resource = StubReferenceResource(None, [refPart("Name", "ISO")])
+        with pytest.raises(ArelleModelInconsistency, match="no role"):
+            self.collect(extractor, qn("A"), [refRel(resource)])
+
+    def test_output_is_sorted_by_role_then_parts(self) -> None:
+        extractor, _ = makeExtractor({XbrlConst.conceptReference: []})
+        self.collect(
+            extractor,
+            qn("A"),
+            [refRel(StubReferenceResource(REFERENCE_ROLE, [refPart("Name", "Z")]))],
+        )
+        self.collect(
+            extractor,
+            qn("B"),
+            [refRel(StubReferenceResource(EXAMPLE_ROLE, [refPart("Name", "A")]))],
+        )
+
+        extractor.extractReferences()
+
+        refs = extractor.taxonomyJson["references"]
+        assert [r["role"] for r in refs] == [EXAMPLE_ROLE, REFERENCE_ROLE]
+
+    def test_no_references_gives_empty_list(self) -> None:
+        extractor, _ = makeExtractor({XbrlConst.conceptReference: []})
+        extractor.extractReferences()
+        assert extractor.taxonomyJson["references"] == []
+
+
+class TestExtractTypedDomainWrapperElement:
+    def test_adds_wrapper_entry_with_type_info(self) -> None:
+        elementQName = qn("SiteIdentifierDomain")
+        dataType, baseType = qn("SiteIdentifierType"), qn("string", ns=XbrlConst.xsd)
+        extractor, _ = makeExtractor(
+            {},
+            typeQNamesByQName={elementQName: (dataType, baseType)},
+        )
+        element = StubConcept(elementQName, isNillable=True)
+
+        extractor.extractTypedDomainWrapperElement(cast(ModelConcept, element))
+
+        wrapper = extractor.taxonomyJson["xs_elements"][elementQName]
+        assert wrapper["dataType"] is dataType
+        assert wrapper["baseDataType"] is baseType
+        assert wrapper["nillable"] is True
+        assert "labels" not in wrapper
+
+    def test_metadata_flags_omitted_when_false(self) -> None:
+        elementQName = qn("PlainDomain")
+        extractor, _ = makeExtractor(
+            {},
+            typeQNamesByQName={elementQName: (qn("string"), qn("string"))},
+        )
+        element = StubConcept(elementQName)
+
+        extractor.extractTypedDomainWrapperElement(cast(ModelConcept, element))
+
+        wrapper = extractor.taxonomyJson["xs_elements"][elementQName]
+        assert "nillable" not in wrapper
+        assert "abstract" not in wrapper
+        assert "dimension" not in wrapper
+        assert "hypercube" not in wrapper
+        assert "numeric" not in wrapper
+
+    def test_second_call_for_the_same_element_is_a_no_op(self) -> None:
+        elementQName = qn("SharedDomain")
+        extractor, _ = makeExtractor(
+            {}, typeQNamesByQName={elementQName: (qn("string"), qn("string"))}
+        )
+        firstElement = StubConcept(elementQName, isNillable=True)
+        extractor.extractTypedDomainWrapperElement(cast(ModelConcept, firstElement))
+        firstWrapper = extractor.taxonomyJson["xs_elements"][elementQName]
+
+        # A second typed dimension sharing the same typed domain element
+        # would see a different (canned) nillable flag if re-processed --
+        # this proves it is not.
+        secondElement = StubConcept(elementQName, isNillable=False)
+        extractor.extractTypedDomainWrapperElement(cast(ModelConcept, secondElement))
+
+        assert extractor.taxonomyJson["xs_elements"][elementQName] is firstWrapper
+        assert firstWrapper["nillable"] is True
+
+
 def conceptRel(
     target: StubConcept,
     *,
     isUsable: bool = True,
     preferredLabel: str | None = None,
+    arcrole: str = XbrlConst.all,
 ) -> ConceptRelationship:
     assert target.qname is not None
     return ConceptRelationship(
         target=cast(Any, target),
         targetQName=target.qname,
+        arcrole=arcrole,
         consecutiveLinkrole="https://example.com/elr",
         isUsable=isUsable,
         preferredLabel=preferredLabel,
@@ -237,6 +549,32 @@ class StubConceptRelationshipSet:
         return self._relsFrom.get(id(concept), [])
 
     def consecutiveSet(self, rel: ConceptRelationship) -> StubConceptRelationshipSet:
+        return self
+
+
+class StubDomainMemberRelSet:
+    """Serves canned domain-member relationships; consecutiveSet stays in
+    this set, and hasRelationshipsFrom/To are exposed like the real
+    ConceptRelationshipSet."""
+
+    def __init__(
+        self,
+        relsFrom: dict[int, list[ConceptRelationship]],
+        targets: set[int] | None = None,
+    ) -> None:
+        self._relsFrom = relsFrom
+        self._targets = targets or set()
+
+    def hasRelationshipsFrom(self, concept: Any) -> bool:
+        return bool(self._relsFrom.get(id(concept)))
+
+    def hasRelationshipsTo(self, concept: Any) -> bool:
+        return id(concept) in self._targets
+
+    def relationshipsFrom(self, concept: Any) -> list[ConceptRelationship]:
+        return self._relsFrom.get(id(concept), [])
+
+    def consecutiveSet(self, rel: ConceptRelationship) -> StubDomainMemberRelSet:
         return self
 
 
@@ -300,10 +638,91 @@ class TestTreeWalks:
         ]
 
 
+class TestGetDomainMembersForEnumeration:
+    ELR = "https://example.com/elr"
+    ENUM_CONCEPT = qn("Choice")
+
+    def getDomainMembers(
+        self,
+        headUsable: bool,
+        domainHeadConcept: StubConcept,
+        relSet: StubDomainMemberRelSet,
+        *,
+        linkroleHasDomainMember: bool = True,
+    ) -> tuple[list[QName], list[ArelleDiagnostic]]:
+        linkrolesByArcrole = (
+            {XbrlConst.domainMember: [self.ELR]} if linkroleHasDomainMember else {}
+        )
+        extractor, token = makeExtractor(
+            {}, {self.ELR: relSet}, linkrolesByArcrole=linkrolesByArcrole
+        )
+        result = extractor.getDomainMembersForEnumeration(
+            self.ELR,
+            headUsable,
+            cast(ModelConcept, domainHeadConcept),
+            self.ENUM_CONCEPT,
+        )
+        return result, collectedDiagnostics(token)
+
+    def test_undeclared_linkrole_warns_and_resolves_no_members(self) -> None:
+        head = StubConcept(qn("Domain"))
+        relSet = StubDomainMemberRelSet({})
+        result, diagnostics = self.getDomainMembers(
+            False, head, relSet, linkroleHasDomainMember=False
+        )
+        assert result == []
+        assert len(diagnostics) == 2
+        assert "no domain-member relationships" in diagnostics[0].text
+        assert "no usable domain members" in diagnostics[1].text
+
+    def test_head_with_no_outgoing_relationships_warns(self) -> None:
+        head = StubConcept(qn("Domain"))
+        relSet = StubDomainMemberRelSet({})
+        result, diagnostics = self.getDomainMembers(True, head, relSet)
+        assert result == [qn("Domain")]
+        assert len(diagnostics) == 1
+        assert diagnostics[0].level == logging.WARNING
+        assert "no outgoing domain-member relationships" in diagnostics[0].text
+
+    def test_head_not_a_root_is_informational(self) -> None:
+        # Unlike having no outgoing relationships, this doesn't stop the
+        # domain from resolving -- it's a curiosity, not a defect.
+        head = StubConcept(qn("Domain"))
+        member = StubConcept(qn("Member"))
+        relSet = StubDomainMemberRelSet(
+            {id(head): [conceptRel(member)]}, targets={id(head)}
+        )
+        result, diagnostics = self.getDomainMembers(True, head, relSet)
+        assert result == [qn("Domain"), qn("Member")]
+        assert len(diagnostics) == 1
+        assert diagnostics[0].level == logging.INFO
+        assert "not a root" in diagnostics[0].text
+
+    def test_well_formed_domain_is_silent(self) -> None:
+        head = StubConcept(qn("Domain"))
+        member = StubConcept(qn("Member"))
+        relSet = StubDomainMemberRelSet({id(head): [conceptRel(member)]})
+        result, diagnostics = self.getDomainMembers(False, head, relSet)
+        assert result == [qn("Member")]
+        assert diagnostics == []
+
+    def test_no_usable_members_warns(self) -> None:
+        head = StubConcept(qn("Domain"))
+        member = StubConcept(qn("Member"))
+        relSet = StubDomainMemberRelSet(
+            {id(head): [conceptRel(member, isUsable=False)]}
+        )
+        result, diagnostics = self.getDomainMembers(False, head, relSet)
+        assert result == []
+        assert len(diagnostics) == 1
+        assert diagnostics[0].level == logging.WARNING
+        assert "no usable domain members" in diagnostics[0].text
+
+
 class TestGetLabelsForRoleType:
     def getLabels(
         self, labelRels: list[ResourceRelationship]
-    ) -> tuple[dict[str, str], list[Diagnostic]]:
+    ) -> tuple[dict[str, str], list[ArelleDiagnostic]]:
         extractor, token = makeExtractor({XbrlConst.elementLabel: labelRels})
         labels = extractor.getLabelsForRoleType(cast(Any, StubRoleType()))
         return labels, collectedDiagnostics(token)
@@ -336,3 +755,915 @@ class TestGetLabelsForRoleType:
         assert labels == {"en": "Energy usage"}
         assert len(diagnostics) == 1
         assert "duplicate labels" in diagnostics[0].text
+
+
+class StubHypercubeDimensionRelSet:
+    """Serves canned roots/relationships for the hypercube-dimension arcrole."""
+
+    def __init__(
+        self,
+        roots: list[StubConcept],
+        relsFrom: dict[int, list[ConceptRelationship]],
+        targets: set[int] | None = None,
+    ) -> None:
+        self._roots = roots
+        self._relsFrom = relsFrom
+        self._targets = targets or set()
+
+    def rootConcepts(self) -> list[StubConcept]:
+        return self._roots
+
+    def hasRelationshipsFrom(self, concept: Any) -> bool:
+        return bool(self._relsFrom.get(id(concept)))
+
+    def hasRelationshipsTo(self, concept: Any) -> bool:
+        return id(concept) in self._targets
+
+    def relationshipsFrom(self, concept: Any) -> list[ConceptRelationship]:
+        return self._relsFrom.get(id(concept), [])
+
+
+class TestGetDimensions:
+    ELR = "https://example.com/elr"
+
+    def getDimensions(
+        self,
+        hypercube: StubConcept,
+        hypercubeIsClosed: bool,
+        relSet: StubHypercubeDimensionRelSet,
+    ) -> tuple[list[ConceptRelationship], list[ArelleDiagnostic]]:
+        extractor, token = makeExtractor({}, {self.ELR: relSet})
+        result = extractor.getDimensions(
+            self.ELR, cast(ModelConcept, hypercube), hypercubeIsClosed
+        )
+        return result, collectedDiagnostics(token)
+
+    def test_hypercube_with_no_dimensions_returns_empty(self) -> None:
+        # A table with zero dimensions is unusual but valid: it just has no
+        # outgoing hypercube-dimension relationships, and so is absent from
+        # rootConcepts() entirely (whether or not other, dimensioned,
+        # hypercubes share the same ELR).
+        table = StubConcept(qn("EmptyTable"))
+        other = StubConcept(qn("OtherTable"))
+        dimension = StubConcept(qn("SomeDimension"))
+        relSet = StubHypercubeDimensionRelSet(
+            roots=[other],
+            relsFrom={id(other): [conceptRel(dimension)]},
+        )
+        result, diagnostics = self.getDimensions(table, False, relSet)
+        assert result == []
+        assert diagnostics == []
+
+    def test_closed_hypercube_with_no_dimensions_is_informational(self) -> None:
+        # A closed, dimensionless hypercube is the WGN section 3.4 way to give
+        # an otherwise-undimensioned concept full dimensional validity, so
+        # this must not read as something to fix.
+        table = StubConcept(qn("EmptyTable"))
+        relSet = StubHypercubeDimensionRelSet(roots=[], relsFrom={})
+        result, diagnostics = self.getDimensions(table, True, relSet)
+        assert result == []
+        assert len(diagnostics) == 1
+        assert diagnostics[0].level == logging.INFO
+        assert "no dimensions" in diagnostics[0].text
+
+    def test_hypercube_with_dimensions_returns_relationships(self) -> None:
+        # A second hypercube-dimension root sharing the ELR does not, by
+        # itself, cause getDimensions() to emit anything: reporting on an
+        # ELR having multiple hypercubes is TaxonomyInfoExtractor's job (see
+        # TestReportHypercubesForLinkrole), not this method's.
+        table = StubConcept(qn("Table"))
+        other = StubConcept(qn("OtherTable"))
+        dimension = StubConcept(qn("Dimension"))
+        rel = conceptRel(dimension)
+        relSet = StubHypercubeDimensionRelSet(
+            roots=[table, other], relsFrom={id(table): [rel]}
+        )
+        result, diagnostics = self.getDimensions(table, True, relSet)
+        assert result == [rel]
+        assert diagnostics == []
+
+    def test_hypercube_not_a_root_but_with_relationships_is_inconsistent(self) -> None:
+        # A concept that has outgoing hypercube-dimension relationships but
+        # is also the target of one (i.e. used as a dimension itself)
+        # indicates real model corruption, distinct from simply having no
+        # dimensions.
+        table = StubConcept(qn("Table"))
+        rel = conceptRel(StubConcept(qn("Dimension")))
+        relSet = StubHypercubeDimensionRelSet(
+            roots=[],
+            relsFrom={id(table): [rel]},
+            targets={id(table)},
+        )
+        with pytest.raises(ArelleModelInconsistency):
+            self.getDimensions(table, True, relSet)
+
+
+class TestReportHypercubesForLinkrole:
+    ELR = "https://example.com/elr"
+
+    def report(
+        self, primaryItemsByHypercube: dict[QName, set[QName]]
+    ) -> list[ArelleDiagnostic]:
+        extractor, token = makeExtractor({})
+        extractor.reportHypercubesForLinkrole(self.ELR, primaryItemsByHypercube)
+        return collectedDiagnostics(token)
+
+    def test_single_hypercube_is_silent(self) -> None:
+        diagnostics = self.report({qn("Table"): {qn("Item")}})
+        assert diagnostics == []
+
+    def test_no_hypercubes_is_silent(self) -> None:
+        diagnostics = self.report({})
+        assert diagnostics == []
+
+    def test_disjoint_primary_items_is_informational(self) -> None:
+        diagnostics = self.report(
+            {
+                qn("TableA"): {qn("ItemA")},
+                qn("TableB"): {qn("ItemB")},
+            }
+        )
+        assert len(diagnostics) == 1
+        [diagnostic] = diagnostics
+        assert diagnostic.level == logging.INFO
+        assert "2 hypercubes" in diagnostic.text
+        assert diagnostic.concepts == (qn("TableA"), qn("TableB"))
+        assert "primaryItems" not in diagnostic.details
+
+    def test_shared_primary_item_warns(self) -> None:
+        diagnostics = self.report(
+            {
+                qn("TableA"): {qn("Item"), qn("ItemA")},
+                qn("TableB"): {qn("Item"), qn("ItemB")},
+            }
+        )
+        assert len(diagnostics) == 1
+        [diagnostic] = diagnostics
+        assert diagnostic.level == logging.WARNING
+        assert "sharing primary items" in diagnostic.text
+        assert diagnostic.concepts == (qn("TableA"), qn("TableB"))
+        assert diagnostic.details["primaryItems"] == [qn("Item")]
+
+    def test_only_overlapping_item_is_named_among_three_hypercubes(self) -> None:
+        diagnostics = self.report(
+            {
+                qn("TableA"): {qn("Shared"), qn("ItemA")},
+                qn("TableB"): {qn("Shared"), qn("ItemB")},
+                qn("TableC"): {qn("ItemC")},
+            }
+        )
+        assert len(diagnostics) == 1
+        [diagnostic] = diagnostics
+        assert diagnostic.level == logging.WARNING
+        assert diagnostic.concepts == (qn("TableA"), qn("TableB"), qn("TableC"))
+        assert diagnostic.details["primaryItems"] == [qn("Shared")]
+
+    def test_within_hypercube_repeats_do_not_count_as_overlap(self) -> None:
+        # A primary item appearing at multiple depths within the *same*
+        # hypercube's tree is not the conjoined-hypercubes problem: the caller
+        # already de-duplicates into a set per hypercube, but this pins that
+        # collapsing a single hypercube's own repeats never trips the warning.
+        diagnostics = self.report(
+            {
+                qn("TableA"): {qn("Item"), qn("ItemA")},
+                qn("TableB"): {qn("ItemB")},
+            }
+        )
+        assert len(diagnostics) == 1
+        [diagnostic] = diagnostics
+        assert diagnostic.level == logging.INFO
+
+
+class TestExtractDimensionDefinitionsHypercubeCollision:
+    """Two different root primary items targeting the same hypercube in one
+    ELR is a shape mireport doesn't understand (which root's primary items
+    apply?) and would otherwise silently overwrite the first root's cube
+    entry -- extractDimensionDefinitions() reports it as an error and records
+    no cube for that ELR rather than guess."""
+
+    ELR = "https://example.com/elr"
+
+    def test_two_roots_targeting_same_hypercube_is_an_error_diagnostic(self) -> None:
+        rootA = StubConcept(qn("RootA"))
+        rootB = StubConcept(qn("RootB"))
+        table = StubConcept(qn("Table"), isHypercubeItem=True)
+        relA = conceptRel(table)
+        relB = conceptRel(table)
+        allNotAllRelSet = StubHypercubeDimensionRelSet(
+            roots=[rootA, rootB],
+            relsFrom={id(rootA): [relA], id(rootB): [relB]},
+        )
+        extractor, token = makeExtractor(
+            {},
+            {
+                ((XbrlConst.all, XbrlConst.notAll), self.ELR): allNotAllRelSet,
+                (XbrlConst.domainMember, self.ELR): StubDomainMemberRelSet({}),
+                (XbrlConst.hypercubeDimension, self.ELR): (
+                    StubHypercubeDimensionRelSet(roots=[], relsFrom={})
+                ),
+            },
+            linkrolesByArcrole={XbrlConst.all: [self.ELR]},
+        )
+        extractor.extractDimensionDefinitions()
+        (diagnostic,) = collectedErrors(token)
+        assert "more than one root primary item" in diagnostic.text
+        assert qn("Table") not in extractor.taxonomyJson["dimensions"][self.ELR]
+
+
+class TestExtractDimensionDefinitionsContinuesPastBadElr:
+    """One ELR with a problem must not hide the problems (or the content) of
+    the ELRs after it."""
+
+    BAD_ELR = "https://example.com/bad"
+    GOOD_ELR = "https://example.com/elr"  # the ELR conceptRel() links to
+
+    def hypercubeRelSets(
+        self, root: StubConcept, rel: ConceptRelationship, elr: str
+    ) -> dict[Any, Any]:
+        return {
+            ((XbrlConst.all, XbrlConst.notAll), elr): StubHypercubeDimensionRelSet(
+                roots=[root], relsFrom={id(root): [rel]}
+            ),
+            (XbrlConst.domainMember, elr): StubDomainMemberRelSet({}),
+            (XbrlConst.hypercubeDimension, elr): StubHypercubeDimensionRelSet(
+                roots=[], relsFrom={}
+            ),
+        }
+
+    def test_good_elr_is_extracted_after_a_bad_one_is_reported(self) -> None:
+        badRoot = StubConcept(qn("BadRoot"))
+        notACube = StubConcept(qn("NotACube"))  # isHypercubeItem is False
+        goodRoot = StubConcept(qn("GoodRoot"))
+        table = StubConcept(qn("Table"), isHypercubeItem=True)
+        extractor, token = makeExtractor(
+            {},
+            {
+                **self.hypercubeRelSets(badRoot, conceptRel(notACube), self.BAD_ELR),
+                **self.hypercubeRelSets(goodRoot, conceptRel(table), self.GOOD_ELR),
+            },
+            linkrolesByArcrole={XbrlConst.all: [self.BAD_ELR, self.GOOD_ELR]},
+        )
+
+        extractor.extractDimensionDefinitions()
+
+        (diagnostic,) = collectedErrors(token)
+        assert diagnostic.elr == self.BAD_ELR
+        assert qn("Table") in extractor.taxonomyJson["dimensions"][self.GOOD_ELR]
+
+
+class TestExtractDimensionDefinitionsType:
+    """extractDimensionDefinitions() must record which of the all/notAll
+    arcroles produced each cube, since Taxonomy silently modelled a notAll
+    cube as positive when this was unrecorded."""
+
+    ELR = "https://example.com/elr"
+
+    def makeCubeExtractor(
+        self, root: StubConcept, rel: ConceptRelationship
+    ) -> tuple[TaxonomyInfoExtractor, str]:
+        allNotAllRelSet = StubHypercubeDimensionRelSet(
+            roots=[root], relsFrom={id(root): [rel]}
+        )
+        return makeExtractor(
+            {},
+            {
+                ((XbrlConst.all, XbrlConst.notAll), self.ELR): allNotAllRelSet,
+                (XbrlConst.domainMember, self.ELR): StubDomainMemberRelSet({}),
+                (XbrlConst.hypercubeDimension, self.ELR): (
+                    StubHypercubeDimensionRelSet(roots=[], relsFrom={})
+                ),
+            },
+            linkrolesByArcrole={XbrlConst.all: [self.ELR]},
+        )
+
+    def extractCube(
+        self, root: StubConcept, rel: ConceptRelationship
+    ) -> tuple[dict[str, Any], list[ArelleDiagnostic]]:
+        extractor, token = self.makeCubeExtractor(root, rel)
+        extractor.extractDimensionDefinitions()
+        diagnostics = collectedDiagnostics(token)
+        cube = extractor.taxonomyJson["dimensions"][self.ELR][rel.targetQName]
+        return cube, diagnostics
+
+    def test_all_arc_records_positive_type(self) -> None:
+        root = StubConcept(qn("Root"))
+        table = StubConcept(qn("Table"), isHypercubeItem=True)
+        cube, _ = self.extractCube(root, conceptRel(table, arcrole=XbrlConst.all))
+        assert cube["type"] == "positive"
+
+    def test_notall_arc_records_negative_type(self) -> None:
+        root = StubConcept(qn("Root"))
+        table = StubConcept(qn("Table"), isHypercubeItem=True)
+        cube, _ = self.extractCube(root, conceptRel(table, arcrole=XbrlConst.notAll))
+        assert cube["type"] == "negative"
+
+    def test_unexpected_arcrole_is_an_error_and_records_no_cube(self) -> None:
+        # Positive must never be inferred by elimination: an arcrole that is
+        # neither all nor notAll should be impossible to reach here (the
+        # relSet is keyed by exactly those two), but if it ever happened,
+        # defaulting to "positive" would be exactly the wrong failure mode.
+        root = StubConcept(qn("Root"))
+        table = StubConcept(qn("Table"), isHypercubeItem=True)
+        rel = conceptRel(table, arcrole=XbrlConst.hypercubeDimension)
+        extractor, token = self.makeCubeExtractor(root, rel)
+        extractor.extractDimensionDefinitions()
+        collectedErrors(token)
+        assert qn("Table") not in extractor.taxonomyJson["dimensions"][self.ELR]
+
+    def test_cube_dict_has_exactly_the_legacy_keys_plus_type(self) -> None:
+        # A guard against silently growing the cube dict's shape: this is the
+        # entire dimensional vocabulary Taxonomy.__init__ understands.
+        root = StubConcept(qn("Root"))
+        table = StubConcept(qn("Table"), isHypercubeItem=True)
+        cube, _ = self.extractCube(root, conceptRel(table, arcrole=XbrlConst.all))
+        assert set(cube.keys()) == {
+            "primaryItems",
+            "type",
+            "xbrldt:contextElement",
+            "xbrldt:closed",
+        }
+
+    def test_open_hypercube_still_emits_the_info_diagnostic(self) -> None:
+        root = StubConcept(qn("Root"))
+        table = StubConcept(qn("Table"), isHypercubeItem=True)
+        rel = conceptRel(table, arcrole=XbrlConst.all)
+        rel = replace(rel, isClosed=False)
+        _, diagnostics = self.extractCube(root, rel)
+        # root has no outgoing domain-member relationships in this fixture, so
+        # getPrimaryItems() also warns -- irrelevant to this test, which is
+        # only about the "Hypercube is open" diagnostic surviving A2's change.
+        [openDiagnostic] = [d for d in diagnostics if "open" in d.text]
+        assert openDiagnostic.level == logging.INFO
+
+
+class TestReportDomainMemberOnlyLinkroleRoots:
+    ELR = "https://example.com/elr"
+
+    def report(
+        self, baseSets: list[tuple[str, str]], conceptRelSets: dict[Any, Any]
+    ) -> list[ArelleDiagnostic]:
+        extractor, token = makeExtractor({}, conceptRelSets, baseSets=baseSets)
+        extractor.reportDomainMemberOnlyLinkroleRoots()
+        return collectedDiagnostics(token)
+
+    def test_single_root_is_silent(self) -> None:
+        relSet = StubHypercubeDimensionRelSet(
+            roots=[StubConcept(qn("Root"))], relsFrom={}
+        )
+        diagnostics = self.report(
+            [(XbrlConst.domainMember, self.ELR)], {self.ELR: relSet}
+        )
+        assert diagnostics == []
+
+    def test_multiple_roots_warns(self) -> None:
+        roots = [StubConcept(qn("RootA")), StubConcept(qn("RootB"))]
+        relSet = StubHypercubeDimensionRelSet(roots=roots, relsFrom={})
+        diagnostics = self.report(
+            [(XbrlConst.domainMember, self.ELR)], {self.ELR: relSet}
+        )
+        assert len(diagnostics) == 1
+        [diagnostic] = diagnostics
+        assert "Domain-member-only" in diagnostic.text
+        assert "multiple (2) roots" in diagnostic.text
+        assert diagnostic.elr == self.ELR
+        assert diagnostic.concepts == (qn("RootA"), qn("RootB"))
+
+    def test_elr_with_dimensional_arcrole_is_skipped(self) -> None:
+        # A domain-member set that also holds a dimension-domain arc (i.e.
+        # it's the domain of an explicit dimension, not a standalone
+        # hierarchy) is not this check's concern.
+        roots = [StubConcept(qn("RootA")), StubConcept(qn("RootB"))]
+        relSet = StubHypercubeDimensionRelSet(roots=roots, relsFrom={})
+        diagnostics = self.report(
+            [
+                (XbrlConst.domainMember, self.ELR),
+                (XbrlConst.dimensionDomain, self.ELR),
+            ],
+            {self.ELR: relSet},
+        )
+        assert diagnostics == []
+
+    def test_elr_without_domain_member_is_skipped(self) -> None:
+        diagnostics = self.report([(XbrlConst.parentChild, self.ELR)], {})
+        assert diagnostics == []
+
+
+class TestPresentedDimensionalDomainMembers:
+    ELR = "https://example.com/elr"
+
+    def excluded(
+        self,
+        items: list[tuple[QName, Any]],
+        conceptRelSets: dict[Any, Any],
+        presented: set[QName],
+        linkrolesByArcrole: dict[str, list[str]] | None = None,
+    ) -> frozenset[QName]:
+        extractor, token = makeExtractor(
+            {}, conceptRelSets, linkrolesByArcrole=linkrolesByArcrole, items=items
+        )
+        result = extractor._presentedDimensionalDomainMembers(presented)
+        collectedDiagnostics(token)
+        return result
+
+    def test_enum2_domain_excluded_when_presented(self) -> None:
+        enumConcept = StubConcept(
+            qn("Choice"),
+            isEnumeration2Item=True,
+            enumLinkrole=self.ELR,
+            enumDomainQname=qn("Domain"),
+        )
+        domainHead = StubConcept(qn("Domain"))
+        member = StubConcept(qn("Member"))
+        domainMemberRelSet = StubDomainMemberRelSet(
+            {id(domainHead): [conceptRel(member)]}
+        )
+        result = self.excluded(
+            items=[
+                (qn("Choice"), enumConcept),
+                (qn("Domain"), domainHead),
+                (qn("Member"), member),
+            ],
+            conceptRelSets={(XbrlConst.domainMember, self.ELR): domainMemberRelSet},
+            presented={qn("Choice")},
+        )
+        assert result == frozenset({qn("Domain"), qn("Member")})
+
+    def test_enum2_domain_not_excluded_when_not_presented(self) -> None:
+        enumConcept = StubConcept(
+            qn("Choice"),
+            isEnumeration2Item=True,
+            enumLinkrole=self.ELR,
+            enumDomainQname=qn("Domain"),
+        )
+        domainHead = StubConcept(qn("Domain"))
+        domainMemberRelSet = StubDomainMemberRelSet({})
+        result = self.excluded(
+            items=[(qn("Choice"), enumConcept), (qn("Domain"), domainHead)],
+            conceptRelSets={(XbrlConst.domainMember, self.ELR): domainMemberRelSet},
+            presented=set(),
+        )
+        assert result == frozenset()
+
+    def test_explicit_dimension_domain_excluded_when_presented(self) -> None:
+        dimension = StubConcept(qn("Axis"), isExplicitDimension=True)
+        domainHead = StubConcept(qn("Domain"))
+        member = StubConcept(qn("Member"))
+        dimDomainRel = conceptRel(domainHead)
+        dimensionDomainRelSet = StubDomainMemberRelSet({id(dimension): [dimDomainRel]})
+        domainMemberRelSet = StubDomainMemberRelSet(
+            {id(domainHead): [conceptRel(member)]}
+        )
+        result = self.excluded(
+            items=[
+                (qn("Axis"), dimension),
+                (qn("Domain"), domainHead),
+                (qn("Member"), member),
+            ],
+            conceptRelSets={
+                (XbrlConst.dimensionDomain, self.ELR): dimensionDomainRelSet,
+                (
+                    XbrlConst.domainMember,
+                    dimDomainRel.consecutiveLinkrole,
+                ): domainMemberRelSet,
+            },
+            presented={qn("Axis")},
+            linkrolesByArcrole={XbrlConst.dimensionDomain: [self.ELR]},
+        )
+        assert result == frozenset({qn("Domain"), qn("Member")})
+
+    def test_explicit_dimension_domain_not_excluded_when_not_presented(self) -> None:
+        dimension = StubConcept(qn("Axis"), isExplicitDimension=True)
+        domainHead = StubConcept(qn("Domain"))
+        dimDomainRel = conceptRel(domainHead)
+        dimensionDomainRelSet = StubDomainMemberRelSet({id(dimension): [dimDomainRel]})
+        result = self.excluded(
+            items=[(qn("Axis"), dimension), (qn("Domain"), domainHead)],
+            conceptRelSets={
+                (XbrlConst.dimensionDomain, self.ELR): dimensionDomainRelSet,
+            },
+            presented=set(),
+            linkrolesByArcrole={XbrlConst.dimensionDomain: [self.ELR]},
+        )
+        assert result == frozenset()
+
+
+class TestReportIsolatedConcepts:
+    ELR = "https://example.com/elr"
+
+    def report(
+        self,
+        items: list[tuple[QName, Any]],
+        baseSets: list[tuple[str, str]],
+        conceptRelSets: dict[Any, Any],
+        linkrolesByArcrole: dict[str, list[str]] | None = None,
+        roleDefinitions: dict[str, str] | None = None,
+    ) -> list[ArelleDiagnostic]:
+        extractor, token = makeExtractor(
+            {},
+            conceptRelSets,
+            linkrolesByArcrole=linkrolesByArcrole,
+            baseSets=baseSets,
+            items=items,
+            roleDefinitions=roleDefinitions,
+        )
+        extractor.reportIsolatedConcepts()
+        return collectedDiagnostics(token)
+
+    def test_fully_isolated_concept_is_reported(self) -> None:
+        orphan = StubConcept(qn("Orphan"))
+        relSet = StubDomainMemberRelSet({})
+        diagnostics = self.report(
+            items=[(qn("Orphan"), orphan)],
+            baseSets=[(XbrlConst.parentChild, self.ELR)],
+            conceptRelSets={(XbrlConst.parentChild, self.ELR): relSet},
+        )
+        assert len(diagnostics) == 1
+        assert "no relationship in any linkbase" in diagnostics[0].text
+        assert diagnostics[0].concepts == (qn("Orphan"),)
+
+    def test_documentation_only_concept_is_reported(self) -> None:
+        concept = StubConcept(qn("Documented"))
+        labelRelSet = StubDomainMemberRelSet(
+            {id(concept): [conceptRel(StubConcept(qn("Resource")))]}
+        )
+        diagnostics = self.report(
+            items=[(qn("Documented"), concept)],
+            baseSets=[(XbrlConst.conceptLabel, self.ELR)],
+            conceptRelSets={(XbrlConst.conceptLabel, self.ELR): labelRelSet},
+        )
+        assert len(diagnostics) == 1
+        assert "only label/reference relationships" in diagnostics[0].text
+        assert diagnostics[0].concepts == (qn("Documented"),)
+
+    def test_not_presented_concept_is_reported(self) -> None:
+        concept = StubConcept(qn("NotPresented"))
+        relSet = StubDomainMemberRelSet(
+            {id(concept): [conceptRel(StubConcept(qn("Other")))]}
+        )
+        diagnostics = self.report(
+            items=[(qn("NotPresented"), concept)],
+            baseSets=[(XbrlConst.dimensionDefault, self.ELR)],
+            conceptRelSets={(XbrlConst.dimensionDefault, self.ELR): relSet},
+        )
+        assert len(diagnostics) == 1
+        assert "absent from the presentation linkbase" in diagnostics[0].text
+        assert diagnostics[0].concepts == (qn("NotPresented"),)
+
+    def test_not_presented_concept_names_where_it_does_appear(self) -> None:
+        concept = StubConcept(qn("NotPresented"))
+        relSet = StubDomainMemberRelSet(
+            {id(concept): [conceptRel(StubConcept(qn("Other")))]}
+        )
+        (diagnostic,) = self.report(
+            items=[(qn("NotPresented"), concept)],
+            baseSets=[(XbrlConst.domainMember, self.ELR)],
+            conceptRelSets={(XbrlConst.domainMember, self.ELR): relSet},
+        )
+        assert diagnostic.elr == self.ELR
+        assert diagnostic.details == {"linkbase": "definition"}
+
+    def test_not_presented_diagnostic_carries_the_elr_definition(self) -> None:
+        concept = StubConcept(qn("NotPresented"))
+        relSet = StubDomainMemberRelSet(
+            {id(concept): [conceptRel(StubConcept(qn("Other")))]}
+        )
+        (diagnostic,) = self.report(
+            items=[(qn("NotPresented"), concept)],
+            baseSets=[(XbrlConst.domainMember, self.ELR)],
+            conceptRelSets={(XbrlConst.domainMember, self.ELR): relSet},
+            roleDefinitions={self.ELR: "[99007] Enumeration of practices"},
+        )
+        assert diagnostic.elrDefinition == "[99007] Enumeration of practices"
+
+    def test_not_presented_concepts_are_grouped_by_elr(self) -> None:
+        otherELR = "https://example.com/another-elr"
+        a, b, c = (StubConcept(qn(name)) for name in ("A", "B", "C"))
+        definitionRelSet = StubDomainMemberRelSet(
+            {id(a): [conceptRel(b)]}, targets={id(b)}
+        )
+        calculationRelSet = StubDomainMemberRelSet(
+            {id(c): [conceptRel(a)]}, targets={id(a)}
+        )
+        diagnostics = self.report(
+            items=[(qn("A"), a), (qn("B"), b), (qn("C"), c)],
+            baseSets=[
+                (XbrlConst.domainMember, self.ELR),
+                (XbrlConst.summationItem, otherELR),
+            ],
+            conceptRelSets={
+                (XbrlConst.domainMember, self.ELR): definitionRelSet,
+                (XbrlConst.summationItem, otherELR): calculationRelSet,
+            },
+        )
+        # Sorted by ELR; C is only the source of its calculation arc, and
+        # A is the target of it, so A is in both ELRs.
+        assert [(d.elr, d.concepts, d.details) for d in diagnostics] == [
+            (otherELR, (qn("A"), qn("C")), {"linkbase": "calculation"}),
+            (self.ELR, (qn("A"), qn("B")), {"linkbase": "definition"}),
+        ]
+
+    def test_label_links_are_not_where_a_concept_appears(self) -> None:
+        # Every labelled concept has label arcs in the standard link role;
+        # naming that as where it appears would just be noise.
+        concept = StubConcept(qn("NotPresented"))
+        labelRelSet = StubDomainMemberRelSet(
+            {id(concept): [conceptRel(StubConcept(qn("Label")))]}
+        )
+        definitionRelSet = StubDomainMemberRelSet(
+            {id(concept): [conceptRel(StubConcept(qn("Other")))]}
+        )
+        standardRole = "http://www.xbrl.org/2003/role/link"
+        (diagnostic,) = self.report(
+            items=[(qn("NotPresented"), concept)],
+            baseSets=[
+                (XbrlConst.conceptLabel, standardRole),
+                (XbrlConst.domainMember, self.ELR),
+            ],
+            conceptRelSets={
+                (XbrlConst.conceptLabel, standardRole): labelRelSet,
+                (XbrlConst.domainMember, self.ELR): definitionRelSet,
+            },
+        )
+        assert diagnostic.elr == self.ELR
+
+    def test_presented_concept_is_silent(self) -> None:
+        concept = StubConcept(qn("Presented"))
+        relSet = StubDomainMemberRelSet(
+            {id(concept): [conceptRel(StubConcept(qn("Child")))]}
+        )
+        diagnostics = self.report(
+            items=[(qn("Presented"), concept)],
+            baseSets=[(XbrlConst.parentChild, self.ELR)],
+            conceptRelSets={(XbrlConst.parentChild, self.ELR): relSet},
+        )
+        assert diagnostics == []
+
+    def test_presented_dimensions_domain_members_are_excluded(self) -> None:
+        # A presented explicit dimension's domain head and members are not
+        # normally presented directly; they must not show up as "not
+        # presented" noise.
+        dimension = StubConcept(qn("Axis"), isExplicitDimension=True)
+        domainHead = StubConcept(qn("Domain"))
+        member = StubConcept(qn("Member"))
+        presentationRelSet = StubDomainMemberRelSet(
+            {id(dimension): [conceptRel(StubConcept(qn("Child")))]}
+        )
+        dimensionDomainRelSet = StubDomainMemberRelSet(
+            {id(dimension): [conceptRel(domainHead)]}, targets={id(domainHead)}
+        )
+        domainMemberRelSet = StubDomainMemberRelSet(
+            {id(domainHead): [conceptRel(member)]}, targets={id(member)}
+        )
+        diagnostics = self.report(
+            items=[
+                (qn("Axis"), dimension),
+                (qn("Domain"), domainHead),
+                (qn("Member"), member),
+            ],
+            baseSets=[
+                (XbrlConst.parentChild, self.ELR),
+                (XbrlConst.dimensionDomain, self.ELR),
+                (XbrlConst.domainMember, self.ELR),
+            ],
+            conceptRelSets={
+                (XbrlConst.parentChild, self.ELR): presentationRelSet,
+                (XbrlConst.dimensionDomain, self.ELR): dimensionDomainRelSet,
+                (XbrlConst.domainMember, self.ELR): domainMemberRelSet,
+            },
+            linkrolesByArcrole={XbrlConst.dimensionDomain: [self.ELR]},
+        )
+        assert diagnostics == []
+
+
+class TestEntryPointSetForJSON:
+    LABELS = "https://example.com/vsme-labels.xml"
+
+    def extractor(
+        self, *, run: bool, entrypointFile: str | None = ENTRY_POINT
+    ) -> tuple[TaxonomyInfoExtractor, StubCntlr, str | None]:
+        token = (
+            TaxonomyInfoRunRegistry.open(
+                entryPointSet=entryPointSetOf([self.LABELS, ENTRY_POINT])
+            )
+            if run
+            else None
+        )
+        cntlr = StubCntlr()
+        extractor = TaxonomyInfoExtractor(
+            cast(Cntlr, cntlr),
+            cast(
+                RuntimeOptions,
+                SimpleNamespace(runToken=token, entrypointFile=entrypointFile),
+            ),
+            cast(ModelXbrl, SimpleNamespace(qnameConcepts={}, qnameTypes={})),
+        )
+        return extractor, cntlr, token
+
+    def test_is_the_runs_entry_point_set_sorted(self) -> None:
+        extractor, _, token = self.extractor(run=True)
+        assert token is not None
+        try:
+            assert extractor.entryPointSetForJSON() == sorted(
+                [ENTRY_POINT, self.LABELS]
+            )
+        finally:
+            assert TaxonomyInfoRunRegistry.close(token).diagnostics == []
+
+    def test_without_a_run_is_the_entrypoint_file_with_a_warning(self) -> None:
+        # Plain arelleCmdLine use: nothing tells the plugin about imported
+        # entry-point documents, so say so rather than guess.
+        extractor, cntlr, _ = self.extractor(run=False)
+
+        assert extractor.entryPointSetForJSON() == [ENTRY_POINT]
+        (message,) = cntlr.logMessages
+        assert "entryPointSet" in message
+
+    def test_without_a_run_or_entrypoint_file_raises(self) -> None:
+        extractor, _, _ = self.extractor(run=False, entrypointFile=None)
+
+        with pytest.raises(ArelleRelatedException, match="entrypointFile"):
+            extractor.entryPointSetForJSON()
+
+    def test_without_a_run_a_non_uri_entrypoint_file_raises(self) -> None:
+        # e.g. arelleCmdLine -f some/local/path.xsd: baked JSON keyed on a
+        # local path would be unloadable, so fail here rather than there.
+        extractor, _, _ = self.extractor(run=False, entrypointFile="local/vsme.xsd")
+
+        with pytest.raises(TaxonomyException, match="not an absolute URI"):
+            extractor.entryPointSetForJSON()
+
+
+class StubDimensionDomainRelSet:
+    """Serves canned dimension-domain relationships and roots."""
+
+    def __init__(
+        self,
+        relsFrom: dict[int, list[ConceptRelationship]],
+        roots: list[StubConcept],
+    ) -> None:
+        self._relsFrom = relsFrom
+        self._roots = roots
+
+    def rootConcepts(self) -> list[StubConcept]:
+        return self._roots
+
+    def hasRelationshipsFrom(self, concept: Any) -> bool:
+        return bool(self._relsFrom.get(id(concept)))
+
+    def relationshipsFrom(self, concept: Any) -> list[ConceptRelationship]:
+        return self._relsFrom.get(id(concept), [])
+
+
+class TestExplicitDimensionWithoutDomain:
+    ELR = "https://example.com/elr"
+
+    def getDomainMembers(
+        self,
+        dimension: StubConcept,
+        dimensionDomain: StubDimensionDomainRelSet,
+    ) -> tuple[list[QName], list[ArelleDiagnostic]]:
+        extractor, token = makeExtractor(
+            {}, {(XbrlConst.dimensionDomain, self.ELR): dimensionDomain}
+        )
+        result = extractor.getDomainMembersForExplicitDimension(
+            cast(ModelConcept, dimension), self.ELR
+        )
+        return result, collectedDiagnostics(token)
+
+    def test_dimension_with_no_dimension_domain_relationships_is_an_error_diagnostic(
+        self,
+    ) -> None:
+        # What a typed axis missing xbrldt:typedDomainRef looks like: by
+        # definition an explicit dimension, but with no domain.
+        axis = StubConcept(qn("SubsidiaryTypedAxis"), isExplicitDimension=True)
+        result, diagnostics = self.getDomainMembers(
+            axis, StubDimensionDomainRelSet({}, roots=[])
+        )
+        assert result == []
+        (diagnostic,) = diagnostics
+        assert diagnostic.level == logging.ERROR
+        assert diagnostic.elr == self.ELR
+        assert diagnostic.concepts == (qn("SubsidiaryTypedAxis"),)
+        assert "no dimension-domain relationships" in diagnostic.text
+        assert diagnostic.hint is not None
+        assert "typedDomainRef" in diagnostic.hint
+
+    def test_dimension_beside_other_roots_with_no_domain_is_still_an_error_diagnostic(
+        self,
+    ) -> None:
+        axis = StubConcept(qn("SubsidiaryTypedAxis"), isExplicitDimension=True)
+        other = StubConcept(qn("OtherAxis"), isExplicitDimension=True)
+        member = StubConcept(qn("Domain"))
+        relSet = StubDimensionDomainRelSet(
+            {id(other): [conceptRel(member, arcrole=XbrlConst.dimensionDomain)]},
+            roots=[other],
+        )
+        result, diagnostics = self.getDomainMembers(axis, relSet)
+        assert result == []
+        (diagnostic,) = diagnostics
+        assert diagnostic.level == logging.ERROR
+        assert "no dimension-domain relationships" in diagnostic.text
+
+    def test_dimension_that_is_a_target_of_another_dimension_is_still_inconsistent(
+        self,
+    ) -> None:
+        # Not a root *and* has outgoing relationships: a genuine structural
+        # problem rather than a missing domain, so still a hard stop.
+        axis = StubConcept(qn("Axis"), isExplicitDimension=True)
+        other = StubConcept(qn("OtherAxis"), isExplicitDimension=True)
+        member = StubConcept(qn("Domain"))
+        relSet = StubDimensionDomainRelSet(
+            {
+                id(other): [conceptRel(axis, arcrole=XbrlConst.dimensionDomain)],
+                id(axis): [conceptRel(member, arcrole=XbrlConst.dimensionDomain)],
+            },
+            roots=[other],
+        )
+        with pytest.raises(ArelleModelInconsistency, match="not a root"):
+            self.getDomainMembers(axis, relSet)
+
+
+class TestDiagnosticEmitterHasErrors:
+    def emitter(self) -> DiagnosticEmitter:
+        return DiagnosticEmitter(cast(Cntlr, StubCntlr()), [])
+
+    def test_no_errors_initially(self) -> None:
+        assert self.emitter().hasErrors is False
+
+    def test_warnings_and_info_are_not_errors(self) -> None:
+        emitter = self.emitter()
+        emitter.emit(ArelleDiagnostic.warning("w"))
+        emitter.emit(ArelleDiagnostic.info("i"))
+        assert emitter.hasErrors is False
+
+    def test_an_error_is_remembered(self) -> None:
+        emitter = self.emitter()
+        emitter.emit(ArelleDiagnostic.error("e"))
+        emitter.emit(ArelleDiagnostic.info("i"))
+        assert emitter.hasErrors is True
+
+
+class TestCollectingInconsistencies:
+    def test_a_diagnostic_carrying_inconsistency_is_emitted_as_is(self) -> None:
+        extractor, token = makeExtractor({})
+        diagnostic = ArelleDiagnostic.error("Something is wrong", elr="https://elr")
+        with extractor.collectingInconsistencies():
+            raise ArelleModelInconsistency(diagnostic)
+        assert collectedDiagnostics(token) == [diagnostic]
+
+    def test_a_message_only_inconsistency_becomes_an_error_diagnostic(self) -> None:
+        extractor, token = makeExtractor({})
+        with extractor.collectingInconsistencies():
+            raise ArelleModelInconsistency("plain text")
+        (diagnostic,) = collectedDiagnostics(token)
+        assert diagnostic.level == logging.ERROR
+        assert diagnostic.text == "plain text"
+
+    def test_other_exceptions_propagate(self) -> None:
+        extractor, token = makeExtractor({})
+        try:
+            with (
+                pytest.raises(ValueError),
+                extractor.collectingInconsistencies(),
+            ):
+                raise ValueError("a bug, not a taxonomy problem")
+        finally:
+            collectedDiagnostics(token)
+
+    def test_code_after_the_block_still_runs(self) -> None:
+        extractor, token = makeExtractor({})
+        with extractor.collectingInconsistencies():
+            raise ArelleModelInconsistency("first")
+        with extractor.collectingInconsistencies():
+            raise ArelleModelInconsistency("second")
+        assert [d.text for d in collectedDiagnostics(token)] == ["first", "second"]
+
+
+class TestExtractRunsEveryPhase:
+    PHASES = (
+        "extractPresentation",
+        "extractDimensionDefaults",
+        "extractDimensionDefinitions",
+        "reportDomainMemberOnlyLinkroleRoots",
+        "extractConceptsAndMetadata",
+        "extractReferences",
+        "reportIsolatedConcepts",
+    )
+
+    def test_a_failing_phase_does_not_stop_the_later_ones(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        extractor, token = makeExtractor({})
+        ran: list[str] = []
+
+        def fail() -> None:
+            raise ArelleModelInconsistency("dimension problem")
+
+        for phase in self.PHASES:
+            monkeypatch.setattr(extractor, phase, lambda phase=phase: ran.append(phase))
+        monkeypatch.setattr(extractor, "extractDimensionDefinitions", fail)
+
+        extractor.extract()
+
+        assert ran == [p for p in self.PHASES if p != "extractDimensionDefinitions"]
+        assert [d.text for d in collectedDiagnostics(token)] == ["dimension problem"]

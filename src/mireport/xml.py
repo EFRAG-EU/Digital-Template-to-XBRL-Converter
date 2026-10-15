@@ -22,6 +22,7 @@ ISO4217_NS = sys.intern("http://www.xbrl.org/2003/iso4217")
 UTR_NS = sys.intern("http://www.xbrl.org/2009/utr")
 XBRLI_NS = sys.intern("http://www.xbrl.org/2003/instance")
 ENUM2_NS = sys.intern("http://xbrl.org/2020/extensible-enumerations-2.0")
+XS_NS = sys.intern("http://www.w3.org/2001/XMLSchema")
 
 
 class _QNameTuple(NamedTuple):
@@ -218,4 +219,5 @@ def getBootstrapQNameMaker() -> QNameMaker:
     boot.add("utr", UTR_NS)
     boot.add("xbrli", XBRLI_NS)
     boot.add("enum2", ENUM2_NS)
+    boot.add("xs", XS_NS)
     return QNameMaker(boot)

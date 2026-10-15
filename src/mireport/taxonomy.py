@@ -10,16 +10,24 @@ import re
 import warnings
 from collections import Counter, defaultdict
 from collections.abc import Callable, Iterable, Mapping
+from dataclasses import dataclass, field
 from enum import Enum, StrEnum, auto
 from functools import cache, cached_property
+from pathlib import Path
 from typing import TYPE_CHECKING, NamedTuple, overload
 
 from mireport.data import registries, taxonomies
+from mireport.entrypoints import (
+    EntryPointSet,
+    describeEntryPointSet,
+    entryPointSetOf,
+)
 from mireport.exceptions import (
     AmbiguousComponentException,
     BrokenQNameException,
     TaxonomyException,
     UnknownTaxonomyException,
+    UnsupportedTaxonomyFeatureException,
 )
 from mireport.json import getJsonFiles, getObject, getResource
 from mireport.localise import getBestSupportedLanguage
@@ -62,6 +70,63 @@ LABEL_SUFFIX_PATTERN = re.compile(r"\s*\[[A-Z]?[a-z ]+\]\s*$")
 ConceptPredicate = Callable[["Concept"], bool]
 
 
+@cache  # keyed on utr/qnameMaker, not a Concept, since Concept equality is qname-only and would collide across taxonomies.
+def _resolveMeasurementGuidanceUnit(
+    measurementLabel: str,
+    dataType: QName,
+    utr: UTR,
+    qnameMaker: QNameMaker,
+) -> frozenset[QName] | None:
+    """If there is a valid UTR unitId or a valid unit QName in
+    measurementLabel, return the first one found. Otherwise return None."""
+    allValidUnitQNames = frozenset({u for u in utr.getUnitsForDataType(dataType)})
+    if not allValidUnitQNames:
+        return None
+
+    # Perhaps the label is just a unitId
+    if (
+        qname := utr.getQNameForUnitId(measurementLabel)
+    ) is not None and qname in allValidUnitQNames:
+        return frozenset({qname})
+
+    # Perhaps the label is just a unit QNAME
+    if qnameMaker.isValidQName(measurementLabel):
+        qname = qnameMaker.fromString(measurementLabel)
+        if qname in allValidUnitQNames:
+            return frozenset({qname})
+
+    valid: list[QName] = []
+
+    # We might have a measurement label that is a mixture of human readable text and units in []
+    between_square_bracket_pattern = re.compile(r"\[([^\]]+)\]")
+    content = between_square_bracket_pattern.finditer(measurementLabel)
+
+    for m1 in content:
+        for m2 in QNAME_RE.finditer(m1.group(1)):
+            s = m2.group(0)
+            if qnameMaker.isValidQName(s):
+                q = qnameMaker.fromString(s)
+                if q in allValidUnitQNames:
+                    valid.append(q)
+
+    if not valid:
+        # If we're still empty, then let's see if someone has used bare unitIds
+        delimiters = [" ", ",", "*", "/"]
+        if any(c in delimiters for c in measurementLabel):
+            desired = {x for x in NCNAME_RE.findall(measurementLabel)}
+            allValidUnitIds = {u.localName: u for u in allValidUnitQNames}
+            for d in desired:
+                q2 = allValidUnitIds.get(d)
+                if q2 is not None:
+                    valid.append(q2)
+
+    match len(valid):
+        case 0:
+            return None
+        case _:
+            return frozenset(valid)
+
+
 class PeriodType(StrEnum):
     Duration = "duration"
     Instant = "instant"
@@ -70,6 +135,13 @@ class PeriodType(StrEnum):
 class DimensionContainerType(StrEnum):
     Segment = "segment"
     Scenario = "scenario"
+
+
+class HypercubeType(StrEnum):
+    """Which of the two xbrldt hypercube arcroles declared this cube."""
+
+    Positive = "positive"  # "all": these dimension combinations are valid
+    Negative = "negative"  # "notAll": these dimension combinations are excluded
 
 
 class PresentationStyle(Enum):
@@ -110,6 +182,7 @@ class Concept:
         "_labels",
         "_qnameMaker",
         "_taxonomy",
+        "_typedElementQName",
         "baseDataType",
         "dataType",
         "periodType",
@@ -152,9 +225,10 @@ class Concept:
 
         other = details.get("other", {})
 
-        self.typedElement = None
+        self.typedElement: TypedDomainWrapperElement | None = None
+        self._typedElementQName: QName | None = None
         if (tElem := other.get("typedElement")) is not None:
-            self.typedElement = self._qnameMaker.fromString(tElem)
+            self._typedElementQName = self._qnameMaker.fromString(tElem)
 
         self._eeDomainMembers: tuple[Concept, ...] | None = None
         self._eeDomainMemberStrings: list[str] | None = None
@@ -194,6 +268,18 @@ class Concept:
                 taxonomy.getConcept(member) for member in self._eeDomainMemberStrings
             )
             self._eeDomainMemberStrings = None
+        if self._typedElementQName is not None:
+            try:
+                self.typedElement = taxonomy.getTypedDomainWrapperElement(
+                    self._typedElementQName
+                )
+            except KeyError:
+                raise TaxonomyException(
+                    f"Concept {self.qname} declares typed dimension domain "
+                    f"element {self._typedElementQName}, but the taxonomy has "
+                    "no xs_elements entry for it."
+                ) from None
+            self._typedElementQName = None
 
     def getLabelForRole(
         self,
@@ -359,9 +445,6 @@ class Concept:
             for role_uri in lang_labels
         )
 
-    # N.B. B019 (cache keeps `self` alive) is not a concern: Concepts belong to a
-    # Taxonomy which is kept in a module level registry for the life of the process.
-    @cache  # noqa: B019
     def getRequiredUnitQNames(self) -> frozenset[QName] | None:
         """If there is a valid UTR unitId or a valid unit QName in the
         measurement guidance label of the concept, return the first one found.
@@ -378,54 +461,9 @@ class Concept:
             # N.B. Deals with None or empty string
             return None
 
-        allValidUnitQNames = frozenset(
-            {u for u in self._taxonomy.UTR.getUnitsForDataType(self.dataType)}
+        return _resolveMeasurementGuidanceUnit(
+            measurementLabel, self.dataType, self._taxonomy.UTR, self._qnameMaker
         )
-        if not allValidUnitQNames:
-            return None
-
-        # Perhaps the label is just a unitId
-        if (
-            qname := self._taxonomy.UTR.getQNameForUnitId(measurementLabel)
-        ) is not None and qname in allValidUnitQNames:
-            return frozenset({qname})
-
-        # Perhaps the label is just a unit QNAME
-        if self._qnameMaker.isValidQName(measurementLabel):
-            qname = self._qnameMaker.fromString(measurementLabel)
-            if qname in allValidUnitQNames:
-                return frozenset({qname})
-
-        valid: list[QName] = []
-
-        # We might have a measurement label that is a mixture of human readable text and units in []
-        between_square_bracket_pattern = re.compile(r"\[([^\]]+)\]")
-        content = between_square_bracket_pattern.finditer(measurementLabel)
-
-        for m1 in content:
-            for m2 in QNAME_RE.finditer(m1.group(1)):
-                s = m2.group(0)
-                if self._qnameMaker.isValidQName(s):
-                    q = self._qnameMaker.fromString(s)
-                    if q in allValidUnitQNames:
-                        valid.append(q)
-
-        if not valid:
-            # If we're still empty, then let's see if someone has used bare unitIds
-            delimiters = [" ", ",", "*", "/"]
-            if any(c in delimiters for c in measurementLabel):
-                desired = {x for x in NCNAME_RE.findall(measurementLabel)}
-                allValidUnitIds = {u.localName: u for u in allValidUnitQNames}
-                for d in desired:
-                    q2 = allValidUnitIds.get(d)
-                    if q2 is not None:
-                        valid.append(q2)
-
-        match len(valid):
-            case 0:
-                return None
-            case _:
-                return frozenset(valid)
 
     @property
     def isAbstract(self) -> bool:
@@ -499,6 +537,170 @@ class Concept:
 
     def getEEDomain(self) -> tuple[Concept, ...]:
         return tuple(self._eeDomainMembers) if self._eeDomainMembers is not None else ()
+
+    @property
+    def references(self) -> tuple[Reference, ...]:
+        """This concept's references, in the same order the reference
+        linkbase would present them for this concept (own arc order, then
+        role, then parts) -- see Reference and Taxonomy.getReferencesForConcept."""
+        return self._taxonomy.getReferencesForConcept(self)
+
+
+class TypedDomainWrapperElement:
+    """
+    The typed domain element of a typed dimension: a plain xs:element, not an
+    XBRL concept -- XBRL Dimensions 1.0 section 3.1.9.2 requires it NOT be a
+    member of the xbrli:item substitution group, so it has no periodType, is
+    never a fact's reported concept, and cannot itself be the source or
+    target of a linkbase arc the way a Concept can. Loaded from its own
+    "xs_elements" section of the taxonomy JSON rather than "concepts", to
+    avoid misrepresenting it as one. No labels: unlike a concept, it is
+    never presented to a user by name.
+    """
+
+    __slots__ = ("baseDataType", "dataType", "isNillable", "qname")
+
+    def __init__(self, qnameMaker: QNameMaker, s_qname: str, details: dict) -> None:
+        self.qname: QName = qnameMaker.fromString(s_qname)
+        self.isNillable: bool = details.get("nillable", False)
+
+        if (data_type := details.get("dataType")) is None:
+            raise TaxonomyException(
+                f"Typed domain wrapper element {self.qname} does not specify "
+                "a data type."
+            )
+        self.dataType = qnameMaker.fromString(data_type)
+
+        if (baseDataType := details.get("baseDataType")) is None:
+            raise TaxonomyException(
+                f"Typed domain wrapper element {self.qname} does not specify "
+                "a base data type."
+            )
+        self.baseDataType = qnameMaker.fromString(baseDataType)
+
+    def __repr__(self) -> str:
+        return f"TypedDomainWrapperElement(qname={self.qname})"
+
+    def __str__(self) -> str:
+        return str(self.qname)
+
+    def __eq__(self, other: object) -> bool:
+        if self is other:
+            return True
+        if isinstance(other, TypedDomainWrapperElement):
+            return self.qname == other.qname
+        return NotImplemented
+
+    def __hash__(self) -> int:
+        return hash(self.qname)
+
+
+class Reference:
+    """
+    A reference from the reference linkbase: a role plus an ordered set of
+    parts (e.g. Name, Number, Publisher). Reference resources are commonly
+    reused across many concepts -- the same standard or paragraph backs
+    several disclosures -- so, unlike a label, a Reference is first class
+    and shared rather than duplicated per concept: content identity (role +
+    parts) is what makes two arcs "the same reference", regardless of how
+    many link:reference resources the taxonomy actually declares or how many
+    concepts arc to them. Concept.references and
+    Taxonomy.getReferencesForConcept() are the read side; this class holds
+    the reference's own data plus which concepts cite it and, where it
+    differs from the default of 1, the arc order each of those concepts used
+    (only relevant for ordering several references on the same concept).
+
+    Concept qnames are resolved lazily via _reifyUsingTaxonomy(), the same
+    two-step construction Concept itself uses for its enumeration domain --
+    a Reference has no dependency ordering versus the concepts it cites, so
+    all concepts must already exist.
+    """
+
+    __slots__ = (
+        "_conceptQNameStrings",
+        "_ordersByConcept",
+        "_ordersByQNameString",
+        "_qnameMaker",
+        "concepts",
+        "parts",
+        "role",
+    )
+
+    def __init__(self, qnameMaker: QNameMaker, details: Mapping) -> None:
+        self._qnameMaker = qnameMaker
+
+        if (role := details.get("role")) is None:
+            raise TaxonomyException("Reference does not specify a role.")
+        self.role: str = role
+
+        if not (parts := details.get("parts")):
+            raise TaxonomyException(f"Reference (role={self.role!r}) has no parts.")
+        self.parts: tuple[tuple[QName, str], ...] = tuple(
+            (qnameMaker.fromString(name), value) for name, value in parts
+        )
+
+        self._conceptQNameStrings: tuple[str, ...] = tuple(details.get("concepts", ()))
+        self._ordersByQNameString: Mapping[str, float] = details.get("orders", {})
+        self.concepts: frozenset[Concept] = frozenset()
+        self._ordersByConcept: dict[Concept, float] = {}
+
+    def _reifyUsingTaxonomy(self, taxonomy: Taxonomy) -> None:
+        """Resolve concept qname strings to Concepts, now that every concept
+        in the taxonomy exists."""
+        concepts: list[Concept] = []
+        orders: dict[Concept, float] = {}
+        for s_qname in self._conceptQNameStrings:
+            try:
+                concept = taxonomy.getConcept(s_qname)
+            except KeyError:
+                raise TaxonomyException(
+                    f"Reference (role={self.role!r}) cites unknown concept {s_qname!r}."
+                ) from None
+            concepts.append(concept)
+            if (order := self._ordersByQNameString.get(s_qname)) is not None:
+                orders[concept] = order
+        self.concepts = frozenset(concepts)
+        self._ordersByConcept = orders
+
+    def getOrder(self, concept: Concept) -> float:
+        """The arc order this concept's reference-linkbase arc to this
+        reference used. Defaults to 1, the XBRL default and by far the
+        common case."""
+        return self._ordersByConcept.get(concept, 1.0)
+
+    def getPart(self, name: QName | str, *, fallback: str | None = None) -> str | None:
+        """The value of this reference's first part named `name`, or
+        `fallback` if there is none. A part name can legally repeat (e.g.
+        several ref:Section parts); see partValues() to get them all."""
+        if isinstance(name, str):
+            name = self._qnameMaker.fromString(name)
+        for part_name, value in self.parts:
+            if part_name == name:
+                return value
+        return fallback
+
+    def partValues(self, name: QName | str) -> tuple[str, ...]:
+        """Every value of this reference's parts named `name`, in document
+        order."""
+        if isinstance(name, str):
+            name = self._qnameMaker.fromString(name)
+        return tuple(value for part_name, value in self.parts if part_name == name)
+
+    def __repr__(self) -> str:
+        return f"Reference(role={self.role!r}, parts={self.parts!r})"
+
+    def __str__(self) -> str:
+        return f"{self.role} {self.parts}"
+
+    def __eq__(self, other: object) -> bool:
+        if self is other:
+            return True
+        if isinstance(other, Reference):
+            return self.role == other.role and self.parts == other.parts
+        return NotImplemented
+
+    def __hash__(self) -> int:
+        return hash((self.role, self.parts))
 
 
 class Relationship(NamedTuple):
@@ -651,22 +853,186 @@ class PresentationGroup(NamedTuple):
                 return PresentationStyle.Empty
 
 
-class BaseSet(NamedTuple):
+@dataclass(frozen=True)
+class ExplicitDimensionSignature:
+    """One explicit dimension and the domain members valid for it within a single
+    HypercubeDeclaration."""
+
+    dimension: Concept
+    domain: frozenset[Concept]
+
+
+@dataclass(frozen=True)
+class HypercubeDeclaration:
+    """One hypercube exactly as declared in one base set. Almost every
+    declared cube is modelled now -- open, closed, positive and negative
+    alike; see modelled's docstring for the one remaining exception.
+
+    Doubles as the per-hypercube validity predicate (dimensionsAreValid()):
+    EffectiveHypercube combines several of these per XBRL Dimensions 1.0
+    section 3.1.2, so there is no need for a separate hypercube-scoped type
+    that doesn't also know how to test a candidate against itself.
+    """
+
     roleUri: str
-    hyperCubes: frozenset[Concept]
+    hypercube: Concept
+    type: HypercubeType
+    closed: bool
+    contextElement: DimensionContainerType
+    primaryItems: frozenset[Concept]
+    explicitDimensions: frozenset[ExplicitDimensionSignature]
+    typedDimensions: frozenset[Concept]
+    modelled: bool
+    """False only for a cube whose declared context element does not match
+    this taxonomy's chosen one (see Taxonomy._unsupportedCubeReason()). Not
+    the same as usable: a modelled cube's concepts can still be rejected by
+    _rejectUnsupported() for another cube sharing this base set."""
+    _taxonomy: Taxonomy = field(repr=False, compare=False)
+
+    @cached_property
+    def _explicitDimensionsByDimension(self) -> Mapping[Concept, frozenset[Concept]]:
+        return {ed.dimension: ed.domain for ed in self.explicitDimensions}
+
+    def dimensionsAreValid(
+        self,
+        explicitDims: Mapping[Concept, Concept],
+        typedDims: Mapping[Concept, str] | Iterable[Concept],
+    ) -> bool:
+        """True if the candidate has a valid value for every one of THIS
+        hypercube's own declared dimensions: an explicit dimension is valid
+        if its chosen member is in-domain, or it is omitted and has a
+        taxonomy-wide default; a typed dimension is valid if it is present
+        (its content is not itself validated here).
+
+        Deliberately does not check for dimensions this hypercube does not
+        declare -- a dimension it knows nothing about is not its concern.
+        "Extra dimension" rejection (closedness) is EffectiveHypercube's
+        concern, evaluated once across every conjunct's own declarations,
+        not per hypercube in isolation (see EffectiveHypercube.matches())."""
+        typedKeys = (
+            frozenset(typedDims.keys())
+            if isinstance(typedDims, Mapping)
+            else frozenset(typedDims)
+        )
+        if not self.typedDimensions <= typedKeys:
+            return False  # a declared typed dimension is missing
+
+        for dimension, domain in self._explicitDimensionsByDimension.items():
+            chosen = explicitDims.get(dimension)
+            if chosen is None:
+                if self._taxonomy.getDimensionDefault(dimension) is None:
+                    return False  # required and not defaulted, but omitted
+            elif chosen not in domain:
+                return False
+        return True
+
+
+@dataclass(frozen=True)
+class EffectiveHypercube:
+    """XBRL Dimensions 1.0 section 3.1.2: one base set's combined constraint
+    for one primary item -- every hypercube it is declared in for that base
+    set, ANDed (dimensionsAreValid(), notAll conjuncts negated per section
+    2.3.1). A fact is dimensionally valid for its primary item if it matches
+    at least one EffectiveHypercube (section 3.1.1: OR across base sets).
+
+    Closedness is evaluated here, not per hypercube: if any *positive*
+    conjunct is closed, the candidate may carry no dimension outside the
+    union of every positive conjunct's own declared dimensions. A negative
+    conjunct's dimensions never grant permission to appear -- notAll only
+    ever subtracts validity from the space positive hypercubes define. With
+    no positive conjunct at all, there is no closedness restriction (WGN
+    "Guidance on the use of dimensions" section 3.3: "any combination of
+    dimension values which is not explicitly excluded will be considered
+    valid").
+    """
+
+    roleUri: str
+    primaryItem: Concept
+    hypercubes: tuple[HypercubeDeclaration, ...]
+
+    def matches(
+        self,
+        explicitDims: Mapping[Concept, Concept],
+        typedDims: Mapping[Concept, str] | Iterable[Concept],
+    ) -> bool:
+        for hc in self.hypercubes:
+            if hc.dimensionsAreValid(explicitDims, typedDims) != (
+                hc.type is HypercubeType.Positive
+            ):
+                return False
+
+        positives = [hc for hc in self.hypercubes if hc.type is HypercubeType.Positive]
+        if any(hc.closed for hc in positives):
+            permittedExplicit = frozenset(
+                ed.dimension for hc in positives for ed in hc.explicitDimensions
+            )
+            permittedTyped = frozenset(
+                td for hc in positives for td in hc.typedDimensions
+            )
+            chosenExplicitKeys = frozenset(explicitDims.keys())
+            chosenTypedKeys = (
+                frozenset(typedDims.keys())
+                if isinstance(typedDims, Mapping)
+                else frozenset(typedDims)
+            )
+            if chosenExplicitKeys - permittedExplicit:
+                return False
+            if chosenTypedKeys - permittedTyped:
+                return False
+        return True
+
+
+@cache
+def _getDimensionsForHypercube(
+    taxonomy: Taxonomy, hypercube: Concept
+) -> frozenset[Concept]:
+    """The union, across every base-set this hypercube participates in, of all
+    its dimensions (explicit and typed). This is not a valid dimensional
+    signature by itself -- see getDeclarationsForHypercube()."""
+    return taxonomy.getExplicitDimensionsForHypercube(
+        hypercube
+    ) | taxonomy.getTypedDimensionsForHypercube(hypercube)
+
+
+@cache
+def _getExplicitDimensionForDomainMember(
+    taxonomy: Taxonomy, primaryItem: Concept, dimensionValue: Concept
+) -> Concept | None:
+    possible: set[Concept] = {
+        ed.dimension
+        for effective in taxonomy.getEffectiveHypercubesForPrimaryItem(primaryItem)
+        for hc in effective.hypercubes
+        for ed in hc.explicitDimensions
+        if dimensionValue in ed.domain
+    }
+    match len(possible):
+        case 0:
+            return None
+        case 1:
+            return next(iter(possible))
+        case _:
+            ordered = sorted(possible)
+            raise AmbiguousComponentException(
+                f"Ambiguous domain member specified. Candidate dimensions: "
+                f"{', '.join(str(concept.qname) for concept in ordered)}",
+                candidates=ordered,
+            )
 
 
 class Taxonomy:
     def __init__(
         self,
         concepts: dict[str, Concept],
-        entryPoint: str,
+        entryPointSet: EntryPointSet,
         presentation: dict[str, dict[str, Any]],
         dimensions: dict[str, dict],
         qnameMaker: QNameMaker,
         utr: UTR,
+        typedDomainWrapperElements: dict[str, TypedDomainWrapperElement] | None = None,
+        references: Iterable[Mapping] | None = None,
     ) -> None:
-        self._entryPoint = entryPoint
+        self._entryPointSet = entryPointSet
+        entryPoint = describeEntryPointSet(self._entryPointSet)
         self._dimensions = dimensions
         self._qnameMaker = qnameMaker
         self._utr = utr
@@ -676,9 +1042,33 @@ class Taxonomy:
         # <xbrli:scenario> should be used for all dimensions."
         self._dimensionContainer = DimensionContainerType.Scenario
 
+        self._typedDomainWrapperElements: dict[QName, TypedDomainWrapperElement] = {
+            element.qname: element
+            for element in (typedDomainWrapperElements or {}).values()
+        }
+
         self._concepts = {concept.qname: concept for concept in concepts.values()}
         for concept in concepts.values():
             concept._reifyUsingTaxonomy(self)
+
+        self._references: tuple[Reference, ...] = tuple(
+            Reference(qnameMaker, jref) for jref in references or ()
+        )
+        referencesByConcept: dict[Concept, list[Reference]] = defaultdict(list)
+        for reference in self._references:
+            reference._reifyUsingTaxonomy(self)
+            for concept in reference.concepts:
+                referencesByConcept[concept].append(reference)
+        # Sorted per concept the way the reference linkbase would present
+        # them for that concept: that concept's own arc order first (most
+        # references never override the default of 1), then role, then
+        # parts, for a stable order when several references tie on order.
+        self._referencesByConcept: Mapping[Concept, tuple[Reference, ...]] = {
+            concept: tuple(
+                sorted(refs, key=lambda r: (r.getOrder(concept), r.role, r.parts))
+            )
+            for concept, refs in referencesByConcept.items()
+        }
 
         self._groups: tuple[PresentationGroup, ...] = tuple(
             PresentationGroup.fromJSON(self, roleUri, bits)
@@ -715,40 +1105,68 @@ class Taxonomy:
             for dimension, domainMember in dimensions.pop("_defaults", {}).items()
         }
 
-        self._baseSets: dict[BaseSet, list[dict]] = defaultdict(list)
-        self._lookupBaseSetByCube: dict[Concept, list[BaseSet]] = defaultdict(list)
-        self._lookupBaseSetByPrimaryItem: dict[Concept, list[BaseSet]] = defaultdict(
-            list
+        self._hypercubeDeclarations: list[HypercubeDeclaration] = []
+        self._declarationsByHypercube: dict[Concept, list[HypercubeDeclaration]] = (
+            defaultdict(list)
         )
-        desired_containers: set[DimensionContainerType] = set()
-        open_hcs: set[Relationship] = set()
+        self._effectiveHypercubesByPrimaryItem: dict[
+            Concept, list[EffectiveHypercube]
+        ] = defaultdict(list)
+        unsupportedRoles: dict[str, str] = {}
         domainByDimension: dict[Concept, list[Concept]] = defaultdict(list)
+        self._unsupportedRolesByConcept: dict[Concept, dict[str, str]] = defaultdict(
+            dict
+        )
+        # Every cube in the definition linkbase, whether or not we can model it.
+        self._hypercubes = frozenset(
+            concepts[cubeQname] for cubes in dimensions.values() for cubeQname in cubes
+        )
+
+        # The taxonomy's dimension container is decided from every declared
+        # cube up front (majority, ties toward Scenario per the xbrl-xml REC
+        # preference quoted above), before any cube is modelled -- so it no
+        # longer depends on which cubes happen to be modellable. A cube
+        # requesting a different container is simply unsupported on its own
+        # (see _unsupportedCubeReason()), not a reason to fail the whole
+        # taxonomy.
+        containerCounts: Counter[DimensionContainerType] = Counter(
+            DimensionContainerType(cubeDetails["xbrldt:contextElement"])
+            for cubes in dimensions.values()
+            for cubeDetails in cubes.values()
+        )
+        if containerCounts:
+            maxCount = max(containerCounts.values())
+            winners = {c for c, n in containerCounts.items() if n == maxCount}
+            self._dimensionContainer = (
+                DimensionContainerType.Scenario
+                if DimensionContainerType.Scenario in winners
+                else next(iter(winners))
+            )
 
         for role, cubes in dimensions.items():
-            cubeConcepts = frozenset(concepts[c] for c in cubes)
-            baseSet = BaseSet(role, cubeConcepts)
+            defects: list[str] = []
+            declarationsByPrimaryItem: dict[Concept, list[HypercubeDeclaration]] = (
+                defaultdict(list)
+            )
+
             for cubeQname, cubeDetails in cubes.items():
                 hc_concept = concepts[cubeQname]
-                d: dict[str, Any] = {}
                 closed = bool(cubeDetails.pop("xbrldt:closed"))
-                d["xbrldt:closed"] = closed
-                if not closed:
-                    open_hcs.add(Relationship(role, 0, hc_concept))
-
+                # Older baked JSON (and third-party JSON we have not re-baked)
+                # predates the "type" key; its absence means positive.
+                cubeType = HypercubeType(
+                    cubeDetails.pop("type", HypercubeType.Positive)
+                )
                 container = DimensionContainerType(
                     cubeDetails.pop("xbrldt:contextElement")
                 )
-                desired_containers.add(container)
-                d["xbrldt:contextElement"] = container
 
-                d["primaryItems"] = [
+                primaryItemRels = [
                     Relationship(role, depth, concepts[qname])
                     for depth, qname in cubeDetails.pop("primaryItems", [])
                 ]
-                for r in d["primaryItems"]:
-                    self._lookupBaseSetByPrimaryItem[r.concept].append(baseSet)
 
-                d["explicitDimensions"] = {
+                explicitDimensionsByName = {
                     concepts[dimQname]: frozenset(
                         concepts[member] for member in memberQnameList
                     )
@@ -756,52 +1174,139 @@ class Taxonomy:
                         "explicitDimensions", {}
                     ).items()
                 }
-                for dimension, memberList in d["explicitDimensions"].items():
-                    domainByDimension[dimension].extend(memberList)
+                explicitDimensions = frozenset(
+                    ExplicitDimensionSignature(dimension=dimension, domain=domain)
+                    for dimension, domain in explicitDimensionsByName.items()
+                )
 
-                d["typedDimensions"] = [
+                typedDimensions = frozenset(
                     concepts[dimQname]
                     for dimQname in cubeDetails.pop("typedDimensions", [])
-                ]
+                )
 
-                self._lookupBaseSetByCube[hc_concept].append(baseSet)
-                self._baseSets[baseSet].append(d)
+                declaration = HypercubeDeclaration(
+                    roleUri=role,
+                    hypercube=hc_concept,
+                    type=cubeType,
+                    closed=closed,
+                    contextElement=container,
+                    primaryItems=frozenset(r.concept for r in primaryItemRels),
+                    explicitDimensions=explicitDimensions,
+                    typedDimensions=typedDimensions,
+                    modelled=(
+                        unsupportedReason := self._unsupportedCubeReason(
+                            cubeQname, container, self._dimensionContainer
+                        )
+                    )
+                    is None,
+                    _taxonomy=self,
+                )
+                self._hypercubeDeclarations.append(declaration)
+                self._declarationsByHypercube[hc_concept].append(declaration)
+
+                if unsupportedReason is not None:
+                    defects.append(unsupportedReason)
+                    for concept in (
+                        hc_concept,
+                        *(r.concept for r in primaryItemRels),
+                    ):
+                        self._unsupportedRolesByConcept[concept][role] = (
+                            unsupportedReason
+                        )
+                    continue
+
+                for dimension, memberList in explicitDimensionsByName.items():
+                    domainByDimension[dimension].extend(memberList)
+                for r in primaryItemRels:
+                    declarationsByPrimaryItem[r.concept].append(declaration)
+
+            # One EffectiveHypercube per (role, primary item) -- every hypercube
+            # the item is declared in for this role, ANDed. This is the unit a
+            # fact must satisfy at least one of (across every role), never the
+            # union of several.
+            for primaryItem, declarationsForItem in declarationsByPrimaryItem.items():
+                self._effectiveHypercubesByPrimaryItem[primaryItem].append(
+                    EffectiveHypercube(
+                        roleUri=role,
+                        primaryItem=primaryItem,
+                        hypercubes=tuple(declarationsForItem),
+                    )
+                )
+
+            if defects:
+                unsupportedRoles[role] = "; ".join(defects)
 
         self._lookupDomainByDimension: Mapping[Concept, frozenset[Concept]] = {
             dimension: frozenset(domainlist)
             for dimension, domainlist in domainByDimension.items()
         }
-        self._hypercubes = frozenset(c for x in self._baseSets for c in x.hyperCubes)
 
-        if open_hcs:
-            # Not supported by mireport (aoix doesn't care)
+        if unsupportedRoles:
+            # Warn rather than raise so the rest of the taxonomy stays usable.
+            # Using an affected concept raises -- see _rejectUnsupported().
             te = TaxonomyException(
-                f"Unsupported taxonomy [{entryPoint}] contains ({len(open_hcs)}) open hypercubes."
+                f"Unsupported taxonomy [{entryPoint}] contains ({len(unsupportedRoles)}) "
+                "base sets with parts that mireport cannot model."
             )
-            oc_str = "\n".join(
-                f"{role}\n\t{c.qname}"
-                for role, c in sorted(
-                    ((x.roleUri, x.concept) for x in open_hcs),
+            te.add_note(
+                "Unsupported base sets:\n"
+                + "\n".join(
+                    f"{role}\n\t{reason}"
+                    for role, reason in sorted(unsupportedRoles.items())
                 )
             )
-            te.add_note(f"Open hypercubes:\n{oc_str}")
             warnings.warn(UserWarning(te))
 
-        match len(desired_containers):
-            case 0:
-                pass
-            case 1:
-                self._dimensionContainer = desired_containers.pop()
-            case _:
-                # Not supported by mireport or aoix
-                raise TaxonomyException(
-                    f"Multiple dimension containers specified {desired_containers}. Not currently supported"
+    @staticmethod
+    def _unsupportedCubeReason(
+        cubeQname: str,
+        cubeContainer: DimensionContainerType,
+        chosenContainer: DimensionContainerType,
+    ) -> str | None:
+        """Why mireport cannot model this cube, or None if it can.
+
+        Open and negative cubes are no longer unsupported --
+        HypercubeDeclaration.dimensionsAreValid() and
+        EffectiveHypercube.matches() model both directly, and a primary item
+        declared in more than one hypercube of one base set is exactly what
+        EffectiveHypercube conjoins. The one remaining reason: mireport (and
+        aoix) support only a single dimension container per taxonomy, so a
+        cube declaring a different one than the taxonomy's chosen container
+        cannot be modelled.
+        """
+        if cubeContainer is not chosenContainer:
+            return (
+                f"hypercube {cubeQname} declares {cubeContainer.value} but "
+                f"this taxonomy uses {chosenContainer.value}"
+            )
+        return None
+
+    def _rejectUnsupported(self, subject: Concept) -> None:
+        if faulty := self._unsupportedRolesByConcept.get(subject):
+            raise UnsupportedTaxonomyFeatureException(
+                f"{subject.qname} is declared in base set(s) that mireport cannot "
+                "model: "
+                + "; ".join(
+                    f"{role} ({reason})" for role, reason in sorted(faulty.items())
                 )
+            )
 
     def getConcept(self, qname: QName | str) -> Concept:
         if isinstance(qname, str):
             qname = self._qnameMaker.fromString(qname)
         return self._concepts[qname]
+
+    def getTypedDomainWrapperElement(
+        self, qname: QName | str
+    ) -> TypedDomainWrapperElement:
+        if isinstance(qname, str):
+            qname = self._qnameMaker.fromString(qname)
+        return self._typedDomainWrapperElements[qname]
+
+    def getReferencesForConcept(self, concept: Concept) -> tuple[Reference, ...]:
+        """This concept's references, or an empty tuple if it has none. See
+        Concept.references, which is the usual way to call this."""
+        return self._referencesByConcept.get(concept, ())
 
     def resolveConcept(
         self,
@@ -893,6 +1398,12 @@ class Taxonomy:
         return frozenset(self._concepts.values())
 
     @property
+    def references(self) -> tuple[Reference, ...]:
+        """Every distinct reference in the taxonomy. See
+        getReferencesForConcept() to get the ones for one concept."""
+        return self._references
+
+    @property
     def presentation(self) -> tuple[PresentationGroup, ...]:
         return self._groups
 
@@ -907,104 +1418,111 @@ class Taxonomy:
         all_hcs = frozenset(c for c in self._concepts.values() if c.isHypercube)
         return all_hcs - self._hypercubes
 
+    @cached_property
+    def hypercubeDeclarations(self) -> tuple[HypercubeDeclaration, ...]:
+        """Every (base set, hypercube) in the definition linkbase exactly as
+        declared, ordered by role then hypercube for stable reporting.
+
+        This does not go through _rejectUnsupported() -- it is for surveying
+        the whole taxonomy (e.g. TaxonomyChecker), not for building a fact."""
+        return tuple(
+            sorted(
+                self._hypercubeDeclarations,
+                key=lambda d: (d.roleUri, str(d.hypercube.qname)),
+            )
+        )
+
+    def getDeclarationsForHypercube(
+        self, hypercube: Concept
+    ) -> frozenset[HypercubeDeclaration]:
+        """Every HypercubeDeclaration for this hypercube, one per base set it
+        participates in.
+
+        Raises UnsupportedTaxonomyFeatureException if this hypercube declares
+        a dimension container other than the taxonomy's chosen one."""
+        self._rejectUnsupported(hypercube)
+        return frozenset(self._declarationsByHypercube.get(hypercube, ()))
+
+    def getEffectiveHypercubesForPrimaryItem(
+        self, primaryItem: Concept
+    ) -> frozenset[EffectiveHypercube]:
+        """Every EffectiveHypercube a primary item can be reported against,
+        one per base set it participates in as a primary item. A fact must
+        match at least one of these -- not their union (XBRL Dimensions 1.0
+        section 3.1.1: OR across base sets).
+
+        Raises UnsupportedTaxonomyFeatureException if this primary item is
+        declared in a hypercube whose dimension container does not match the
+        taxonomy's chosen one."""
+        self._rejectUnsupported(primaryItem)
+        return frozenset(self._effectiveHypercubesByPrimaryItem.get(primaryItem, ()))
+
     def getTypedDimensionsForHypercube(self, hypercube: Concept) -> frozenset[Concept]:
-        """This aggregates across all base-sets to give all the dimensions specified for the given hypercube."""
-        baseSets = self._lookupBaseSetByCube.get(hypercube)
-        if baseSets is None:
-            return frozenset()
-        typed = {
+        """The union, across every base-set this hypercube participates in, of its
+        typed dimensions. This is not a valid dimensional signature by itself --
+        see getDeclarationsForHypercube()."""
+        return frozenset(
             td
-            for b in baseSets
-            for cube in self._baseSets[b]
-            for td in cube["typedDimensions"]
-        }
-        return frozenset(typed)
+            for declaration in self.getDeclarationsForHypercube(hypercube)
+            for td in declaration.typedDimensions
+        )
 
     def getExplicitDimensionsForHypercube(
         self, hypercube: Concept
     ) -> frozenset[Concept]:
-        """This aggregates across all base-sets to give all the dimensions specified for the given hypercube."""
-        baseSets = self._lookupBaseSetByCube.get(hypercube)
-        if baseSets is None:
-            return frozenset()
-        explicit = {
-            ed
-            for b in baseSets
-            for cube in self._baseSets[b]
-            for ed in cube["explicitDimensions"]
-        }
-        return frozenset(explicit)
+        """The union, across every base-set this hypercube participates in, of its
+        explicit dimensions. This is not a valid dimensional signature by itself --
+        see getDeclarationsForHypercube()."""
+        return frozenset(
+            ed.dimension
+            for declaration in self.getDeclarationsForHypercube(hypercube)
+            for ed in declaration.explicitDimensions
+        )
 
-    @cache  # noqa: B019 - Taxonomy lives for the life of the process. See above.
     def getDimensionsForHypercube(self, hypercube: Concept) -> frozenset[Concept]:
-        baseSets = self._lookupBaseSetByCube.get(hypercube)
-        if baseSets is None:
-            return frozenset()
-        dims: list[Concept] = []
-        for b in baseSets:
-            for cube in self._baseSets[b]:
-                dims.extend(ed for ed in cube["explicitDimensions"])
-                dims.extend(td for td in cube["typedDimensions"])
-        return frozenset(dims)
+        """The union, across every base-set this hypercube participates in, of all
+        its dimensions (explicit and typed). This is not a valid dimensional
+        signature by itself -- see getDeclarationsForHypercube()."""
+        return _getDimensionsForHypercube(self, hypercube)
 
     def getPrimaryItemsForHypercube(self, hypercube: Concept) -> frozenset[Concept]:
         """This aggregates across all base-sets to give all the primary items specified for the given hypercube."""
-        baseSets = self._lookupBaseSetByCube.get(hypercube)
-        if baseSets is None:
-            return frozenset()
-        primary = {
-            r.concept
-            for b in baseSets
-            for cube in self._baseSets[b]
-            for r in cube["primaryItems"]
-        }
-        return frozenset(primary)
-
-    def _getHypercubesForPrimaryItem(self, primaryItem: Concept) -> frozenset[Concept]:
-        baseSets = self._lookupBaseSetByPrimaryItem.get(primaryItem)
-        if baseSets is None:
-            return frozenset()
-        return frozenset(c for x in baseSets for c in x.hyperCubes)
+        return frozenset(
+            primaryItem
+            for declaration in self.getDeclarationsForHypercube(hypercube)
+            for primaryItem in declaration.primaryItems
+        )
 
     def getExplicitDimensionsForPrimaryItem(
         self, primaryItem: Concept
     ) -> frozenset[Concept]:
-        hcs = self._getHypercubesForPrimaryItem(primaryItem)
-        eds = {ed for hc in hcs for ed in self.getExplicitDimensionsForHypercube(hc)}
-        return frozenset(eds)
+        """The union, across every applicable hypercube/base-set, of the explicit
+        dimensions a primary item can carry. This is not a valid dimensional
+        signature by itself -- see getEffectiveHypercubesForPrimaryItem()."""
+        return frozenset(
+            ed.dimension
+            for effective in self.getEffectiveHypercubesForPrimaryItem(primaryItem)
+            for hc in effective.hypercubes
+            for ed in hc.explicitDimensions
+        )
 
     def getTypedDimensionsForPrimaryItem(
         self, primaryItem: Concept
     ) -> frozenset[Concept]:
-        hcs = self._getHypercubesForPrimaryItem(primaryItem)
-        tds = {td for hc in hcs for td in self.getTypedDimensionsForHypercube(hc)}
-        return frozenset(tds)
+        """The union, across every applicable hypercube/base-set, of the typed
+        dimensions a primary item can carry. This is not a valid dimensional
+        signature by itself -- see getEffectiveHypercubesForPrimaryItem()."""
+        return frozenset(
+            td
+            for effective in self.getEffectiveHypercubesForPrimaryItem(primaryItem)
+            for hc in effective.hypercubes
+            for td in hc.typedDimensions
+        )
 
-    @cache  # noqa: B019 - Taxonomy lives for the life of the process. See above.
     def getExplicitDimensionForDomainMember(
         self, primaryItem: Concept, dimensionValue: Concept
     ) -> Concept | None:
-        baseSets = self._lookupBaseSetByPrimaryItem.get(primaryItem)
-        if baseSets is None:
-            return None
-        possible: set = set()
-        for b in baseSets:
-            for cube in self._baseSets[b]:
-                for ed, domain in cube["explicitDimensions"].items():
-                    if dimensionValue in domain:
-                        possible.add(ed)
-        match len(possible):
-            case 0:
-                return None
-            case 1:
-                return next(iter(possible))
-            case _:
-                ordered = sorted(possible)
-                raise AmbiguousComponentException(
-                    f"Ambiguous domain member specified. Candidate dimensions: "
-                    f"{', '.join(str(concept.qname) for concept in ordered)}",
-                    candidates=ordered,
-                )
+        return _getExplicitDimensionForDomainMember(self, primaryItem, dimensionValue)
 
     def getDomainMembersForExplicitDimension(
         self, dimension: Concept
@@ -1023,9 +1541,11 @@ class Taxonomy:
     def dimensionContainer(self) -> DimensionContainerType:
         return self._dimensionContainer
 
-    @cached_property
-    def entryPoint(self) -> str:
-        return self._entryPoint
+    @property
+    def entryPointSet(self) -> EntryPointSet:
+        """The documents that together form the entry point -- what the
+        taxonomy is registered (and so looked up) under."""
+        return self._entryPointSet
 
     @property
     def namespacePrefixesMap(self) -> Mapping[str, str]:
@@ -1078,36 +1598,98 @@ class Taxonomy:
         return self._qnameMaker
 
 
-_TAXONOMIES: dict[str, Taxonomy] = {}
+_TAXONOMIES: dict[EntryPointSet, Taxonomy] = {}
 
 
-def getTaxonomy(entryPoint: str) -> Taxonomy:
-    taxonomy = _TAXONOMIES.get(entryPoint)
+def getTaxonomy(entryPoint: str | Iterable[str]) -> Taxonomy:
+    """The taxonomy whose entry-point set is exactly entryPoint: its
+    documents in any order, or a single document as a str."""
+    entryPointSet = entryPointSetOf(entryPoint)
+    taxonomy = _TAXONOMIES.get(entryPointSet)
     if taxonomy is None:
         raise UnknownTaxonomyException(
-            f'No knowledge of taxonomy entry point "{entryPoint}"'
+            "No knowledge of taxonomy entry point "
+            f'"{describeEntryPointSet(entryPointSet)}"'
         )
     return taxonomy
 
 
-def listTaxonomies() -> tuple[str, ...]:
-    return tuple(_TAXONOMIES.keys())
+def listTaxonomies() -> tuple[EntryPointSet, ...]:
+    """The entry-point set of every loaded taxonomy, sorted by their
+    documents so listings are stable."""
+    return tuple(sorted(_TAXONOMIES, key=sorted))
 
 
 def loadBuiltInTaxonomyJSON() -> None:
     """Loads the taxonomies, unit registry and other models."""
     for f in getJsonFiles(taxonomies):
         try:
-            _createTaxonomyFromJSON(getObject(f))
+            _createTaxonomyFromJSON(getObject(f), source=f.name)
         except Exception as e:  # noqa: BLE001 - one bad file must not lose the rest
             L.error(f"Error loading taxonomy from {f.name}", exc_info=e)
 
 
-def _createTaxonomyFromJSON(bits: dict) -> None:
-    entryPoint = bits["entryPoint"]
-    if _TAXONOMIES.get(entryPoint) is not None:
+def builtInTaxonomyJsonPaths() -> list[tuple[Path, EntryPointSet]]:
+    """The built-in taxonomy JSON files, sorted by name, each with the
+    entry-point set it records -- what scripts/update-taxonomy.py --regenerate-builtin
+    regenerates in place. Raises rather than logs: a file that cannot be
+    regenerated must not be silently skipped."""
+    found = []
+    for f in getJsonFiles(taxonomies):
+        if not isinstance(f, Path):
+            raise TaxonomyException(
+                f"Built-in taxonomy JSON {f.name} is not a file on disk (is "
+                "mireport installed as a zip or non-editable package?) so it "
+                "cannot be regenerated in place."
+            )
+        found.append((f, _entryPointSetFromJSON(getObject(f), source=f.name)))
+    return sorted(found, key=lambda pair: pair[0].name)
+
+
+def _entryPointSetFromJSON(bits: dict, *, source: str) -> EntryPointSet:
+    """The "entryPointSet" list, or for JSON baked before that existed, the
+    single legacy "entryPoint"."""
+    if "entryPointSet" in bits:
+        documents = bits["entryPointSet"]
+        if not isinstance(documents, list):
+            raise TaxonomyException(
+                f"Taxonomy JSON {source} entryPointSet is not a list "
+                f"(got {documents!r})."
+            )
+    else:
+        documents = [bits.get("entryPoint")]
+    try:
+        return entryPointSetOf(documents)
+    except TaxonomyException as e:
         raise TaxonomyException(
-            f"Already loaded taxonomy. Taxonomies loaded: {' '.join(_TAXONOMIES.keys())}"
+            f"Taxonomy JSON {source} has no usable entry point: {e}"
+        ) from e
+
+
+def loadTaxonomyJSON(source: Path | dict) -> Taxonomy:
+    """Load one taxonomy from JSON that is not built in, and return it.
+
+    source may be a path to a file written by mireport.arelle.taxonomy_extraction, or
+    an already parsed dict. This is the counterpart to loadBuiltInTaxonomyJSON()
+    for callers that have just baked a taxonomy of their own: it registers the
+    taxonomy under its own entry point, so getTaxonomy() finds it afterwards.
+
+    Unlike loadBuiltInTaxonomyJSON(), failures are raised rather than logged --
+    there is only one taxonomy here, so there is no rest of the batch to save.
+    """
+    bits = source if isinstance(source, dict) else getObject(source)
+    return _createTaxonomyFromJSON(
+        bits, source=source.name if isinstance(source, Path) else "dict"
+    )
+
+
+def _createTaxonomyFromJSON(bits: dict, *, source: str) -> Taxonomy:
+    entryPointSet = _entryPointSetFromJSON(bits, source=source)
+    if entryPointSet in _TAXONOMIES:
+        loaded = "; ".join(describeEntryPointSet(eps) for eps in listTaxonomies())
+        raise TaxonomyException(
+            f"Already loaded taxonomy {describeEntryPointSet(entryPointSet)}. "
+            f"Taxonomies loaded: {loaded}"
         )
 
     qnameMaker = getBootstrapQNameMaker()
@@ -1118,14 +1700,53 @@ def _createTaxonomyFromJSON(bits: dict) -> None:
         str_qname: Concept(qnameMaker, str_qname, jconcept)
         for str_qname, jconcept in bits["concepts"].items()
     }
+    typedDomainWrapperElements: dict[str, TypedDomainWrapperElement] = {
+        str_qname: TypedDomainWrapperElement(qnameMaker, str_qname, jelement)
+        for str_qname, jelement in bits.get("xs_elements", {}).items()
+    }
+    if (references := bits.get("references")) is None:
+        # Predates the top-level "references" section (each concept carried
+        # its own "references" list instead): fold those into the same
+        # shape so old baked JSON still loads.
+        references = _foldLegacyConceptReferences(bits["concepts"])
 
-    _TAXONOMIES[entryPoint] = Taxonomy(
+    taxonomy = _TAXONOMIES[entryPointSet] = Taxonomy(
         concepts,
-        entryPoint=entryPoint,
+        entryPointSet=entryPointSet,
         presentation=bits["presentation"],
         dimensions=bits["dimensions"],
         qnameMaker=qnameMaker,
         utr=UTR.fromDict(
             getObject(getResource(registries, "utr.json")), qnameMaker=qnameMaker
         ),
+        typedDomainWrapperElements=typedDomainWrapperElements,
+        references=references,
     )
+    return taxonomy
+
+
+def _foldLegacyConceptReferences(
+    concepts_bits: Mapping[str, Mapping],
+) -> list[dict]:
+    """Fold the per-concept "references" lists that TaxonomyInfoExtractor
+    used to write into the current top-level shape, grouped by content (role
+    + parts) exactly as extractReferences() now groups them at source. Arc
+    order is not recoverable from the old shape -- a concept's position in
+    its own references list doesn't survive JSON -- so every reference here
+    is reported as order 1 for every concept that cites it; this only
+    affects the relative order of several references tying on the same
+    concept.
+    """
+    grouped: dict[tuple[str, tuple[tuple[str, str], ...]], set[str]] = defaultdict(set)
+    for str_qname, jconcept in concepts_bits.items():
+        for jref in jconcept.get("references", ()):
+            key = (jref["role"], tuple((name, value) for name, value in jref["parts"]))
+            grouped[key].add(str_qname)
+    return [
+        {
+            "role": role,
+            "parts": [list(part) for part in parts],
+            "concepts": sorted(qnames),
+        }
+        for (role, parts), qnames in grouped.items()
+    ]
