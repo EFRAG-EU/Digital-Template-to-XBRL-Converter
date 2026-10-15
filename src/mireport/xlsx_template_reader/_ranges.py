@@ -35,6 +35,9 @@ class CellRangeMetadata:
     populated_min_col: int
     populated_min_row: int
 
+    def __str__(self) -> str:
+        return excelCellRangeRef(self.worksheet, self.cellRange)
+
     @property
     def maximum_width(self) -> int:
         return self.cellRange.max_col - self.cellRange.min_col + 1

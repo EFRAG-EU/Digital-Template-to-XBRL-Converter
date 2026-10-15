@@ -364,7 +364,10 @@ class ReportLayoutOrganiser:
                 processed.add(u)
                 processed.update(inconsistent_duplicates)
                 if inconsistent_duplicates:
-                    L.warning(
+                    # Surfaced to the report preparer as an error via
+                    # InlineReport.reportInconsistentDuplicateFacts; kept here at
+                    # debug level only as a developer safety net.
+                    L.debug(
                         f"Fact has inconsistent duplicates.\nUnused: {u}\nOthers: {inconsistent_duplicates}"
                     )
 
