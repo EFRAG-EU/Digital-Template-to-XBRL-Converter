@@ -27,7 +27,9 @@ from mireport.taxonomy import (
 def taxonomy() -> Taxonomy:
     if not listTaxonomies():
         loadBuiltInTaxonomyJSON()
-    entry_point = next(ep for ep in listTaxonomies() if "vsme" in ep.lower())
+    entry_point = next(
+        ep for ep in listTaxonomies() if any("vsme" in doc.lower() for doc in ep)
+    )
     return getTaxonomy(entry_point)
 
 
