@@ -65,13 +65,13 @@
         "xbrli:decimalItemType": "xbrli:pure"
     },
     "conceptsToUnits": {
-        "vsme:TotalWasteGeneratedMass": "utr:t",
-        "vsme:TotalHazardousWasteGeneratedMass": "utr:t",
-        "vsme:TotalNonHazardousWasteGeneratedMass": "utr:t",
-        "vsme:TotalWasteGeneratedVolume": "utr:m3",
-        "vsme:TotalHazardousWasteGeneratedVolume": "utr:m3",
-        "vsme:TotalNonHazardousWasteGeneratedVolume": "utr:m3",
-        "vsme:TotalWasteRecycledReusedAndDirectedToDisposalVolume": "utr:m3"
+        "TotalWasteGeneratedMass": "utr:t",
+        "TotalHazardousWasteGeneratedMass": "utr:t",
+        "TotalNonHazardousWasteGeneratedMass": "utr:t",
+        "TotalWasteGeneratedVolume": "utr:m3",
+        "TotalHazardousWasteGeneratedVolume": "utr:m3",
+        "TotalNonHazardousWasteGeneratedVolume": "utr:m3",
+        "TotalWasteRecycledReusedAndDirectedToDisposalVolume": "utr:m3"
     },
     "unitIdsToMeasures": {
         "Emissions_per_Monetary": {
