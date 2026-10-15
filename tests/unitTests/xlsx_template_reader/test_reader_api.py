@@ -171,9 +171,7 @@ class TestCellValue:
 
     def test_as_date_from_datetime(self):
         # Excel stores naive datetimes, so that is what a cell hands us.
-        assert CellValue(datetime(2024, 6, 15, 10, 30)).as_date() == date(  # noqa: DTZ001
-            2024, 6, 15
-        )
+        assert CellValue(datetime(2024, 6, 15, 10, 30)).as_date() == date(2024, 6, 15)
 
     def test_as_date_from_iso_string(self):
         assert CellValue("2024-03-01").as_date() == date(2024, 3, 1)
