@@ -34,10 +34,18 @@ def test_builtin_files_and_entry_points() -> None:
 
     assert [(path.name, entryPointSet) for path, entryPointSet in found] == [
         (
-            f"vsme-{date}.json",
-            frozenset({f"https://xbrl.efrag.org/taxonomy/vsme/{date}/vsme-all.xsd"}),
-        )
-        for date in ("2024-12-17", "2025-07-30", "2026-02-01", "2026-05-01")
+            "vs-draft-2026-10-16.json",
+            frozenset({"https://xbrl.efrag.org/taxonomy/vs/2026-10-16/vs-all.xsd"}),
+        ),
+        *(
+            (
+                f"vsme-{date}.json",
+                frozenset(
+                    {f"https://xbrl.efrag.org/taxonomy/vsme/{date}/vsme-all.xsd"}
+                ),
+            )
+            for date in ("2024-12-17", "2025-07-30", "2026-02-01", "2026-05-01")
+        ),
     ]
     for path, _ in found:
         assert path.parent == TAXONOMY_DATA_DIR
