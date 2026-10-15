@@ -52,9 +52,13 @@ class ConverterConfig:
             for unitId, unitDict in defaults.get("unitIdsToMeasures", {}).items()
         }
 
+        # Keyed by local name: the config spans taxonomies with different
+        # prefixes, and not every taxonomy defines every listed concept.
         conceptsToUnits = {
-            taxonomy.getConcept(conceptQname): qname(unitQname)
-            for conceptQname, unitQname in defaults.get("conceptsToUnits", {}).items()
+            concept: qname(unitQname)
+            for conceptName, unitQname in defaults.get("conceptsToUnits", {}).items()
+            if (concept := taxonomy.resolveConcept(conceptName, by_name=True))
+            is not None
         }
 
         return cls(
