@@ -68,6 +68,7 @@ class ArelleProcessingResult:
         self._validationMessages: list[Message] = []
         self._textLogLines: list[str] = []
         self._viewer: FilelikeAndFileName | None = None
+        self._viewerDocumentSetMembers: list[FilelikeAndFileName] = []
         self._xbrlJson: FilelikeAndFileName | None = None
         self._exceptions: list[Exception] = []
         self._diagnostics: list[Diagnostic] = []
@@ -138,6 +139,17 @@ class ArelleProcessingResult:
         if self._viewer is not None:
             return self._viewer
         raise ArelleRelatedException("No viewer available.")
+
+    @property
+    def viewer_document_set_members(self) -> list[FilelikeAndFileName]:
+        """The non-primary documents of an Inline XBRL document set viewer.
+
+        Empty for an ordinary single-document report. When non-empty these must
+        be served alongside @viewer, under these filenames, from the same
+        location: the viewer data embedded in @viewer lists them by name and
+        fetches them relative to itself.
+        """
+        return list(self._viewerDocumentSetMembers)
 
     @property
     def xbrl_json(self) -> FilelikeAndFileName:
