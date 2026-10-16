@@ -82,6 +82,7 @@ def addFactToReport(
     holder: XbrlConceptCellRangeMetadata,
 ) -> bool:
     try:
+        factBuilder.setProvenance(holder)
         report.addFact(factBuilder.buildFact())
         return True
     except InlineReportException as i:
