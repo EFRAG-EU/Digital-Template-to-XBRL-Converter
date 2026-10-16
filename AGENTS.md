@@ -86,10 +86,26 @@ Taxonomy metadata is **pre-baked JSON** in `src/mireport/data/taxonomies/`; noth
 repo):
 
 ```powershell
-.venv-py314/Scripts/python scripts/update-taxonomy.py --entry-point <URL> src/mireport/data/taxonomies/vsme-YYYY-MM-DD.json path/to/*.zip
+# one new taxonomy
+.venv-py314/Scripts/python scripts/update-taxonomy.py --entry-point <URL> --output src/mireport/data/taxonomies/vsme-YYYY-MM-DD.json path/to/*.zip
+
+# every built-in JSON, each from the entry point it records (--dry-run: report, don't replace)
+.venv-py314/Scripts/python scripts/update-taxonomy.py --regenerate-builtin ../webapp_taxonomies/*.zip
 ```
 
 `scripts/dump-taxonomy.py` dumps concept/presentation info (including to xlsx) from the baked JSON.
+
+The Unit Type Registry JSON (`src/mireport/data/registries/utr.json`) is baked
+separately, from `utr.xml` read by `mireport.utr_xml`. It needs no taxonomy
+packages and fetches <https://www.xbrl.org/utr/utr.xml> unless told otherwise:
+
+```powershell
+.venv-py314/Scripts/python scripts/update-taxonomy.py --utr-output src/mireport/data/registries/utr.json
+# --utr-source <URL or local utr.xml> to read from somewhere else
+```
+
+A taxonomy run can also write `--status-report report.md` (or `.html`, which pastes into Teams as
+a table) with everything it found.
 
 ### Front-end assets
 

@@ -109,7 +109,9 @@ def test_complete_partial_fact_finalizes_it(external_values_case):
 
 @pytest.fixture(scope="module")
 def taxonomy():
-    entry_point = next(ep for ep in listTaxonomies() if "vsme" in ep.lower())
+    entry_point = next(
+        ep for ep in listTaxonomies() if any("vsme" in d.lower() for d in ep)
+    )
     return getTaxonomy(entry_point)
 
 

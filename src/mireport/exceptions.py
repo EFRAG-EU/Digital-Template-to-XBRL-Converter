@@ -16,6 +16,11 @@ class UnitException(MIReportException):
     """Exception raised when a unit is not found in the UTR."""
 
 
+class UtrSourceError(MIReportException):
+    """Exception raised when the Unit Type Registry (utr.xml) can't be fetched, read
+    or understood."""
+
+
 class TaxonomyException(MIReportException):
     """All taxonomy related exceptions"""
 
@@ -26,6 +31,10 @@ class InlineReportException(MIReportException):
 
 class UnknownTaxonomyException(TaxonomyException):
     """Exception raised when a taxonomy entry point is unknown."""
+
+
+class TaxonomyPackageException(TaxonomyException):
+    """Exception raised when a taxonomy package zip can't be read or understood."""
 
 
 class BrokenNamespacePrefixException(MIReportException):
@@ -47,9 +56,21 @@ class AmbiguousComponentException(TaxonomyException):
         self.candidates: tuple[Concept, ...] = tuple(candidates)
 
 
+class UnsupportedTaxonomyFeatureException(TaxonomyException):
+    """Exception raised when something in the taxonomy that mireport cannot model
+    is actually used. Loading such a taxonomy only warns, so the supported parts
+    of it remain usable."""
+
+
 class OpenPyXlRelatedException(MIReportException):
     """Exception raised when dealing with an issue in OpenPyXL"""
 
 
 class EarlyAbortException(MIReportException):
     """Exception raised when a required field is missing in the report."""
+
+
+class SampleGenerationException(MIReportException):
+    """Exception raised by mireport.fact_sampling when it has no configured sample
+    value or unit for a concept's data type, or when a generated fact turns out not
+    to be dimensionally valid."""
