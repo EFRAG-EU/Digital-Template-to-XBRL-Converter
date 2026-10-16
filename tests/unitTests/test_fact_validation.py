@@ -13,8 +13,12 @@ from typing import Any
 
 import pytest
 from tests.unitTests.synthetic_taxonomy import (
+    NAMESPACE,
     concept,
     cube,
+    fact,
+    group_document,
+    group_taxonomy_json,
     qname,
     taxonomy_json,
 )
@@ -135,3 +139,53 @@ def test_a_concept_in_two_cubes_is_valid_for_either(report: InlineReport) -> Non
     # Neither cube accepts a fact with neither dimension.
     with pytest.raises(InlineReportException):
         _builder(report, qname("Both")).buildFact()
+
+
+def test_a_fact_valid_for_the_other_cube_is_not_forced_into_the_typed_table(
+    register_taxonomy: Callable[[dict[str, Any]], Taxonomy],
+) -> None:
+    """``Intensity`` sits in a typed-dimension cube (a table) and in an explicit one (another
+    group). A fact for the explicit cube has no typed dimension, which is valid for it: the typed
+    table must neither take it nor fail on it. (A concept in several groups shows its facts in each
+    group, by whichever of its own dimensions fit; that is the layout's existing design.)"""
+    import re
+
+    from mireport.conversionresults import ConversionResultsBuilder
+    from mireport.xbrljson_reader import XbrlJsonProcessor
+
+    other_role = f"{NAMESPACE}/role/Other"
+    taxonomy = group_taxonomy_json()
+    taxonomy["concepts"][qname("KindCube")] = concept("Kind cube", hypercube=True)
+    taxonomy["presentation"][other_role] = {
+        "definition": "Other",
+        "rows": [[0, qname("Group")], [1, qname("Intensity")]],
+    }
+    taxonomy["dimensions"][other_role] = {
+        qname("KindCube"): cube(
+            [qname("Intensity")],
+            {qname("ScopeAxis"): [qname("ScopeA"), qname("ScopeB")]},
+        )
+    }
+    register_taxonomy(taxonomy)
+    doc = group_document()
+    doc["facts"]["kind"] = fact(
+        qname("Intensity"),
+        "55",
+        dimensions={qname("ScopeAxis"): qname("ScopeA")},
+    )
+    html = (
+        XbrlJsonProcessor(doc, ConversionResultsBuilder(), strict=True)
+        .createReport()
+        .getInlineReport()
+        .fileContent.decode("utf-8")
+    )
+    tagged = re.findall(
+        rf'<ix:non(?:Fraction|Numeric)[^>]*name="{qname("Intensity")}"[^>]*>([^<]*)<',
+        html,
+    )
+    assert "55" in tagged  # shown (strict mode would have raised otherwise)
+    tables = [
+        t for t in re.findall(r"<table.*?</table>", html, re.DOTALL) if ">55<" in t
+    ]
+    assert tables
+    assert not any("T1" in t or "T2" in t for t in tables)  # never in the typed table
