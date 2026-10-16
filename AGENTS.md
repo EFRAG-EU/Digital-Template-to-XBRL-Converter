@@ -279,11 +279,12 @@ conversion id (`/conversions/<id>`, `/downloadFile/<id>/<ftype>/`, `/viewer/<id>
 `.env` + `FLASK_*` env vars in normal operation; tests pass an explicit `test_config` mapping so they
 never pick up a developer's `.env`.
 
-`__init__.py` holds `create_app()` and the routes, which stay thin. The rest is split by concern:
+`__init__.py` holds only `create_app()`. The rest is split by concern:
 
 | Module | Owns |
 |---|---|
-| `app_setup.py` | Startup configuration: logging, feature flags, session backend, Arelle/taxonomy packages, PDF converter report, `brokenApp`, `getArelle` |
+| `routes.py` | The routes and request hooks on the `basic` blueprint, and `register_routes(app)`, which `create_app` calls. Handlers stay thin. It imports `migration`, so the migration routes come with it |
+| `app_setup.py` | Startup configuration: logging, feature flags, session backend, Arelle/taxonomy packages, PDF converter report, `brokenApp`, `getArelle`, `DEPLOYMENT_DATETIME` |
 | `conversion.py` | `Conversion` / `ConversionStore`, the typed view over the per-id session dicts |
 | `conversion_service.py` | The Excel → Inline XBRL pipeline (`doConversion`) and the viewer / xBRL-JSON generated from it. Flask-free: the caller passes in the Arelle processor and PDF mode |
 | `captcha.py` | The id-keyed math captcha and the captcha + CSRF check for `/upload` |

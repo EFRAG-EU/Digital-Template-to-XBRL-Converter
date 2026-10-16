@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 
 from cachelib.file import FileSystemCache
 from flask import Flask, Response, current_app, make_response
@@ -20,6 +20,10 @@ from mireport.stringutil import truthy
 from .migration import MIGRATION_WORKING
 
 L = logging.getLogger(__name__)
+
+# When this process started; shown by base.html.jinja and sent as the
+# X-Deployment-Datetime header so you can tell which deployment answered.
+DEPLOYMENT_DATETIME = datetime.now(UTC)
 
 
 def configure_logging() -> None:
