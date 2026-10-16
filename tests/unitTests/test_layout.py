@@ -413,20 +413,40 @@ class TestCheckAllFactsUsed:
         o.report.getFacts.return_value = [unused]
         o.checkAllFactsUsed()  # must not raise
 
-    def test_unused_fact_with_inconsistent_duplicate_logs_debug(self, caplog):
-        # User-facing surfacing now happens via
-        # InlineReport.reportInconsistentDuplicateFacts; this is kept only as a
-        # debug-level developer safety net.
-        concept = MagicMock(spec=Concept)
-        context = ("2024",)
-        unused = _fact(value="v1", concept=concept, context=context)
-        duplicate = _fact(value="v2", concept=concept, context=context)
-        o = _organiser(facts_by_concept={concept: [unused, duplicate]})
-        o.reportSections = []
-        o.report.getFacts.return_value = [unused, duplicate]
+    def _duplicates(self, lost_value, *, numeric=False):
+        """A fact shown in a list section, and a duplicate of it that is left out."""
+        shown = _fact(value="v1", numeric=numeric)
+        lost = _fact(value=lost_value, concept=shown.concept, numeric=numeric)
+        for fact in (shown, lost):
+            fact.duplicateKey = ("same", "key")
+            fact.enumeration = None
+            fact.decimals = None
+            fact.concept.isBoolean = False
+        pres = MagicMock()
+        pres.style = PresentationStyle.List
+        o = _organiser(facts_by_concept={shown.concept: [shown, lost]})
+        o.reportSections = [
+            ReportSection(relationshipToFact={MagicMock(): [shown]}, presentation=pres)
+        ]
+        return o
+
+    def test_unused_inconsistent_duplicate_of_a_shown_fact_logs_debug_only(
+        self, caplog
+    ):
+        # User-facing surfacing is InlineReport.reportInconsistentDuplicateFacts; this
+        # is kept only as a debug-level developer safety net.
+        o = self._duplicates("v2")
         with caplog.at_level(logging.DEBUG, logger="mireport.report.layout"):
             o.checkAllFactsUsed()
-        assert any("inconsistent" in r.message.lower() for r in caplog.records)
+        records = [r for r in caplog.records if "inconsistent" in r.message.lower()]
+        assert records
+        assert all(r.levelno == logging.DEBUG for r in records)
+
+    def test_unused_complete_duplicate_of_a_shown_fact_is_no_loss(self, caplog):
+        o = self._duplicates("v1")
+        with caplog.at_level(logging.DEBUG, logger="mireport.report.layout"):
+            o.checkAllFactsUsed()
+        assert not caplog.records
 
 
 class TestCreateReportSections:
