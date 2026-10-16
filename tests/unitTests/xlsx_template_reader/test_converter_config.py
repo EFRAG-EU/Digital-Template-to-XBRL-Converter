@@ -67,3 +67,31 @@ class TestConverterConfig:
         assert cfg.conceptsToUnits == {}
         assert cfg.cellValuesToTaxonomyLabels == {}
         assert cfg.cellUnitReplacements == {}
+
+
+VS_DRAFT_ENTRY_POINT = "https://xbrl.efrag.org/taxonomy/vs/2026-10-16/vs-all.xsd"
+
+
+class TestConceptsToUnitsAcrossTaxonomies:
+    def test_vs_draft_resolves_concepts_despite_different_prefix(self):
+        vs = getTaxonomy(VS_DRAFT_ENTRY_POINT)
+        cfg = ConverterConfig.fromDefaults(VSME_DEFAULTS, vs)
+        concept = vs.getConcept("vs:TotalWasteGeneratedMass")
+        assert cfg.conceptsToUnits[concept] == vs.QNameMaker.fromString("utr:t")
+
+    def test_concept_missing_from_taxonomy_is_skipped(self, taxonomy):
+        cfg = ConverterConfig.fromDefaults(
+            {"conceptsToUnits": {"NoSuchConcept": "utr:t"}}, taxonomy
+        )
+        assert cfg.conceptsToUnits == {}
+
+    def test_vs_draft_skips_concepts_it_dropped(self):
+        vs = getTaxonomy(VS_DRAFT_ENTRY_POINT)
+        cfg = ConverterConfig.fromDefaults(VSME_DEFAULTS, vs)
+        assert {c.qname.localName for c in cfg.conceptsToUnits} >= {
+            "TotalWasteGeneratedMass"
+        }
+        assert all(
+            c.qname.localName != "TotalWasteRecycledReusedAndDirectedToDisposalVolume"
+            for c in cfg.conceptsToUnits
+        )

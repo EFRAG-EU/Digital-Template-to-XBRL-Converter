@@ -1,7 +1,6 @@
 {
     "recommendations": [
         "charliermarsh.ruff",
-        "ms-edgedevtools.vscode-edge-devtools",
         "ms-python.mypy-type-checker",
         "ms-python.vscode-pylance",
         "ms-python.python",
