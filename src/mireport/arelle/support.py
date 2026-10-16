@@ -10,6 +10,8 @@ from typing import TYPE_CHECKING, TypeVar
 if TYPE_CHECKING:
     from typing import Any, ClassVar, Self
 
+    from arelle.ModelDocument import ModelDocument
+
 from arelle.api.Session import Session
 from arelle.ModelValue import QName
 from arelle.ModelXbrl import ModelXbrl
@@ -264,9 +266,18 @@ class ArelleQNameCanonicaliser:
             for qname in arelle_model.qnameConcepts.keys()
             | arelle_model.qnameTypes.keys()
             if qname is not None
-            and (prefix := qname.prefix) is not None
+            # `prefix` (not just `is not None`): an element declared under a
+            # default `xmlns="..."` binding -- entirely legal, and exactly
+            # what a schema authored as `xs:schema targetNamespace="NS"
+            # xmlns="NS" xmlns:foo="NS"` produces, one binding for local use
+            # and one for everyone else to reference it by -- gives Arelle a
+            # QName with prefix "" rather than None. "" is not a namespace
+            # prefix any more than None is; NamespaceManager.add() rejects it
+            # (correctly: "" is not an NCName), so it must be filtered here
+            # alongside None rather than reaching that validation as a crash.
+            and (prefix := qname.prefix)
             and (ns := qname.namespaceURI) is not None
-        )
+        ) | cls._recoverDefaultBoundPrefixes(arelle_model)
 
         prefix_namespace_count: Counter[str] = Counter(
             prefix for prefix, _ in all_existing_used_prefixes_set
@@ -277,6 +288,74 @@ class ArelleQNameCanonicaliser:
                 qnameMaker.addNamespacePrefix(prefix, namespace)
 
         return cls(qnameMaker)
+
+    @staticmethod
+    def _recoverDefaultBoundPrefixes(
+        arelle_model: ModelXbrl,
+    ) -> frozenset[tuple[str, str]]:
+        """Recover a real prefix for each namespace whose concepts/types all
+        carry the empty prefix.
+
+        Arelle gives a global element or type the *first* prefix, in
+        declaration order, that its schema's root element binds to the
+        targetNamespace -- and "" if that first binding is the default
+        `xmlns="NS"` (XmlUtil.xmlnsprefix). So `xmlns="NS" xmlns:foo="NS"`
+        yields "", where the same bindings the other way round yield "foo".
+        ModelXbrl.prefixedNamespaces is built by the same function, so it
+        omits such a namespace entirely rather than helping.
+
+        The prefix Arelle skipped is still on that root element's nsmap, so
+        read it from there -- but only for a namespace for which no concept
+        or type was recorded with any non-empty prefix (one that was keeps
+        its existing behaviour untouched), and only if the documents
+        concerned bind the namespace to exactly one non-empty prefix between
+        them. Two or more is a genuine ambiguity: nothing is recovered and
+        the namespace gets a generated prefix in convert(), as before.
+
+        Recovery only ever adds a binding: a recovered prefix that some
+        concept or type already carries for another namespace is dropped
+        rather than let the clash rule in bootstrap() unbind that one too.
+        Only bindings of namespaces that concepts or types are actually
+        declared in are considered, so no unused binding is imported.
+        """
+        explicitNamespaces: set[str] = set()
+        explicitPrefixes: set[str] = set()
+        defaultBoundDocuments: dict[str, set[ModelDocument]] = {}
+        for declarations in (arelle_model.qnameConcepts, arelle_model.qnameTypes):
+            for qname, declaration in declarations.items():
+                if qname is None or (ns := qname.namespaceURI) is None:
+                    continue
+                if qname.prefix:
+                    explicitNamespaces.add(ns)
+                    explicitPrefixes.add(qname.prefix)
+                elif qname.prefix == "" and declaration is not None:
+                    defaultBoundDocuments.setdefault(ns, set()).add(
+                        declaration.modelDocument
+                    )
+
+        recovered: set[tuple[str, str]] = set()
+        for ns, documents in defaultBoundDocuments.items():
+            if ns in explicitNamespaces:
+                continue
+            candidates = {
+                prefix
+                for document in documents
+                if document is not None and document.xmlRootElement is not None
+                for prefix, bound in document.xmlRootElement.nsmap.items()
+                if prefix and bound == ns
+            }
+            if len(candidates) == 1:
+                if (prefix := candidates.pop()) not in explicitPrefixes:
+                    recovered.add((prefix, ns))
+            elif candidates:
+                L.debug(
+                    "Namespace %s is bound to several prefixes (%s) by the "
+                    "documents declaring its concepts/types under a default "
+                    "namespace binding; not choosing between them",
+                    ns,
+                    ", ".join(sorted(candidates)),
+                )
+        return frozenset(recovered)
 
     def convert(self, qname: QName) -> MireportQName:
         if qname.namespaceURI is None:

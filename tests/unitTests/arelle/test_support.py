@@ -1,9 +1,11 @@
 """Unit tests for support.py's Arelle session/QName support classes."""
 
 import json
+from typing import cast
 
 import pytest
 from arelle.ModelValue import QName
+from arelle.ModelXbrl import ModelXbrl
 
 from mireport.arelle.diagnostics import ArelleDiagnostic
 from mireport.arelle.support import (
@@ -227,3 +229,167 @@ class TestConvert:
             QName(None, "https://example.com/vsme", "Thing")
         )
         assert str(converted) == "vsme:Thing"
+
+
+FOO_NS = "https://example.com/foo"
+
+
+class StubRootElement:
+    def __init__(self, nsmap: dict[str | None, str]) -> None:
+        self.nsmap = nsmap
+
+
+class StubDocument:
+    """The one piece of a ModelDocument bootstrap() reads: its root nsmap."""
+
+    def __init__(self, nsmap: dict[str | None, str]) -> None:
+        self.xmlRootElement = StubRootElement(nsmap)
+
+
+class StubDeclaration:
+    """A ModelConcept or ModelType, as far as bootstrap() is concerned."""
+
+    def __init__(self, modelDocument: StubDocument) -> None:
+        self.modelDocument = modelDocument
+
+
+class StubModelXbrl:
+    def __init__(
+        self,
+        qnameConcepts: dict[QName, StubDeclaration] | None = None,
+        qnameTypes: dict[QName, StubDeclaration] | None = None,
+    ) -> None:
+        self.qnameConcepts = qnameConcepts or {}
+        self.qnameTypes = qnameTypes or {}
+
+
+def defaultFirstDocument(*prefixes: str, ns: str = FOO_NS) -> StubDocument:
+    """A schema root declaring xmlns="ns" before xmlns:prefix="ns" -- the
+    order that makes Arelle give its declarations the prefix ""."""
+    return StubDocument({None: ns, **dict.fromkeys(prefixes, ns)})
+
+
+def declaredIn(document: StubDocument, *locals: str) -> dict[QName, StubDeclaration]:
+    ns = document.xmlRootElement.nsmap[None]
+    return {QName("", ns, local): StubDeclaration(document) for local in locals}
+
+
+def bootstrapped(model: StubModelXbrl) -> dict[str, str]:
+    canonicaliser = ArelleQNameCanonicaliser.bootstrap(cast(ModelXbrl, model))
+    return canonicaliser.getNamespacePrefixMap()
+
+
+def prefixesOf(prefixMap: dict[str, str], namespace: str = FOO_NS) -> list[str]:
+    return [prefix for prefix, ns in prefixMap.items() if ns == namespace]
+
+
+class TestBootstrapDefaultBoundNamespace:
+    def test_recovers_the_explicit_prefix_of_the_declaring_document(self) -> None:
+        document = defaultFirstDocument("foo")
+        model = StubModelXbrl(qnameConcepts=declaredIn(document, "One", "Two"))
+        assert prefixesOf(bootstrapped(model)) == ["foo"]
+
+    def test_recovered_prefix_is_used_by_convert(self) -> None:
+        document = defaultFirstDocument("foo")
+        model = StubModelXbrl(qnameConcepts=declaredIn(document, "Thing"))
+        canonicaliser = ArelleQNameCanonicaliser.bootstrap(cast(ModelXbrl, model))
+        converted = canonicaliser.convert(QName("", FOO_NS, "Thing"))
+        assert str(converted) == "foo:Thing"
+
+    def test_types_are_considered_as_well_as_concepts(self) -> None:
+        document = defaultFirstDocument("foo")
+        model = StubModelXbrl(qnameTypes=declaredIn(document, "ThingType"))
+        assert prefixesOf(bootstrapped(model)) == ["foo"]
+
+    def test_documents_agreeing_on_the_prefix_are_not_ambiguous(self) -> None:
+        model = StubModelXbrl(
+            qnameConcepts={
+                **declaredIn(defaultFirstDocument("foo"), "One"),
+                **declaredIn(defaultFirstDocument("foo"), "Two"),
+            }
+        )
+        assert prefixesOf(bootstrapped(model)) == ["foo"]
+
+    def test_documents_disagreeing_on_the_prefix_recover_nothing(self) -> None:
+        model = StubModelXbrl(
+            qnameConcepts={
+                **declaredIn(defaultFirstDocument("a"), "One"),
+                **declaredIn(defaultFirstDocument("b"), "Two"),
+            }
+        )
+        prefixMap = bootstrapped(model)
+        assert prefixesOf(prefixMap) == []
+        assert "a" not in prefixMap
+        assert "b" not in prefixMap
+
+    def test_one_document_binding_two_prefixes_recovers_nothing(self) -> None:
+        document = defaultFirstDocument("a", "b")
+        model = StubModelXbrl(qnameConcepts=declaredIn(document, "Thing"))
+        assert prefixesOf(bootstrapped(model)) == []
+
+    def test_ambiguous_namespace_falls_back_to_a_generated_prefix(self) -> None:
+        model = StubModelXbrl(
+            qnameConcepts={
+                **declaredIn(defaultFirstDocument("a"), "One"),
+                **declaredIn(defaultFirstDocument("b"), "Two"),
+            }
+        )
+        canonicaliser = ArelleQNameCanonicaliser.bootstrap(cast(ModelXbrl, model))
+        converted = canonicaliser.convert(QName("", FOO_NS, "One"))
+        assert str(converted) == "ns0:One"
+
+    def test_default_binding_alone_recovers_nothing_and_does_not_crash(
+        self,
+    ) -> None:
+        document = defaultFirstDocument()
+        model = StubModelXbrl(qnameConcepts=declaredIn(document, "Thing"))
+        assert prefixesOf(bootstrapped(model)) == []
+
+    def test_explicitly_prefixed_declaration_wins_over_recovery(self) -> None:
+        # Some declaration in the namespace already carries a real prefix:
+        # that is used as before, and no alternative is recovered alongside.
+        model = StubModelXbrl(
+            qnameConcepts={
+                **declaredIn(defaultFirstDocument("other"), "One"),
+                QName("foo", FOO_NS, "Two"): StubDeclaration(StubDocument({})),
+            }
+        )
+        prefixMap = bootstrapped(model)
+        assert prefixesOf(prefixMap) == ["foo"]
+        assert "other" not in prefixMap
+
+    def test_unrelated_bindings_on_the_document_are_not_imported(self) -> None:
+        document = StubDocument(
+            {None: FOO_NS, "foo": FOO_NS, "unused": "https://example.com/unused"}
+        )
+        model = StubModelXbrl(qnameConcepts=declaredIn(document, "Thing"))
+        assert "unused" not in bootstrapped(model)
+
+    def test_recovered_prefix_never_displaces_an_explicit_one(self) -> None:
+        # "foo" would be recovered for FOO_NS but is already used, explicitly,
+        # for another namespace: that binding stands and FOO_NS gets nothing,
+        # rather than the clash rule unbinding both.
+        other = "https://example.com/other"
+        model = StubModelXbrl(
+            qnameConcepts={
+                **declaredIn(defaultFirstDocument("foo"), "One"),
+                QName("foo", other, "Two"): StubDeclaration(StubDocument({})),
+            }
+        )
+        prefixMap = bootstrapped(model)
+        assert prefixesOf(prefixMap) == []
+        assert prefixesOf(prefixMap, other) == ["foo"]
+
+    def test_namespaces_recovering_the_same_prefix_both_go_without(self) -> None:
+        # Two namespaces, each only default-bound, each recovering "foo" from
+        # its own document: the existing clash rule applies, binding neither.
+        other = "https://example.com/other"
+        model = StubModelXbrl(
+            qnameConcepts={
+                **declaredIn(defaultFirstDocument("foo"), "One"),
+                **declaredIn(defaultFirstDocument("foo", ns=other), "Two"),
+            }
+        )
+        prefixMap = bootstrapped(model)
+        assert prefixesOf(prefixMap) == []
+        assert prefixesOf(prefixMap, other) == []
