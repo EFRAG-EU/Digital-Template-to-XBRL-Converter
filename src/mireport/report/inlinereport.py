@@ -6,7 +6,7 @@ import time
 from collections import defaultdict
 from collections.abc import Mapping, Sequence
 from datetime import UTC, date, datetime
-from itertools import count
+from itertools import combinations, count
 from typing import TYPE_CHECKING, Protocol
 from unicodedata import name as unicode_name
 
@@ -30,6 +30,7 @@ from mireport.localise import (
 )
 from mireport.report.aoix import aoix_quote
 from mireport.report.disclosure_layout import DisclosureLayoutStrategy
+from mireport.report.duplicates import DuplicateClass, duplicateClass
 from mireport.report.fact import Fact, Symbol
 from mireport.report.factbuilder import FactBuilder
 from mireport.report.footnote import Footnote, FootnoteManager
@@ -52,8 +53,8 @@ L = logging.getLogger(__name__)
 
 class InconsistentDuplicateHandler(Protocol):
     """
-    Callback invoked once per set of inconsistent duplicate facts (facts sharing
-    a concept and all aspects but holding different values).
+    Callback invoked once per set of inconsistent duplicate facts (see
+    :meth:`InlineReport.reportInconsistentDuplicateFacts`).
     """
 
     def __call__(self, concept: Concept, facts: Sequence[Fact]) -> None: ...
@@ -344,23 +345,22 @@ class InlineReport:
         self, handler: InconsistentDuplicateHandler
     ) -> None:
         """
-        Find inconsistent duplicate facts and report each set via handler.
+        Find sets of duplicate facts that are inconsistent and report each via handler.
 
-        Facts are inconsistent duplicates when they share a concept and all
-        aspects (dimensions, period, unit, ...), i.e. their context_key, but hold
-        different values. Such
-        facts cannot both be rendered, so one is silently dropped downstream;
-        this surfaces the conflict so the caller can warn the report preparer.
+        Duplicates and consistency are those of the OIM and the "Handling Duplicate
+        Facts" WGN (see mireport.report.duplicates): facts equal in every aspect but
+        the value are duplicates, and a set is inconsistent when two of its facts
+        are (e.g. different values at the same accuracy, or numbers whose intervals
+        do not overlap). Such facts cannot both be rendered, so one is dropped
+        downstream; this surfaces the conflict so the caller can warn the report
+        preparer. Each set is reported whole, in the order its first fact was added.
         """
-        for concept, facts in self._factsByConcept.items():
-            if len(facts) < 2:
-                continue
-            byContext: dict[tuple, list[Fact]] = defaultdict(list)
-            for fact in facts:
-                byContext[fact.context_key].append(fact)
-            for group in byContext.values():
-                if len({fact.value for fact in group}) > 1:
-                    handler(concept, group)
+        for group in self.duplicates():
+            if any(
+                duplicateClass(a, b) is DuplicateClass.INCONSISTENT
+                for a, b in combinations(group, 2)
+            ):
+                handler(group[0].concept, group)
 
     def _createFootnote(self, content: Markup) -> Footnote:
         fn = Footnote(id=next(self._footnoteCounter), content=content)
@@ -456,6 +456,14 @@ class InlineReport:
     @property
     def facts(self) -> list[Fact]:
         return list(self._facts)
+
+    def duplicates(self) -> list[list[Fact]]:
+        """Groups of two or more facts that are duplicates of one another (see
+        mireport.report.duplicates), in the order the first of each group was added."""
+        groups: dict[tuple, list[Fact]] = defaultdict(list)
+        for fact in self._facts:
+            groups[fact.duplicateKey].append(fact)
+        return [group for group in groups.values() if len(group) > 1]
 
     def getFacts(self, concept: Concept) -> list[Fact]:
         result = self._factsByConcept.get(concept)
