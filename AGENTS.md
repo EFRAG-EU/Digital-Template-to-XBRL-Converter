@@ -190,12 +190,46 @@ used inside the xlsx reader. Errors accumulate; `abortEarlyIfErrors()` raises `E
 defined checkpoints rather than failing at the first problem. Dev-info messages are hidden from users
 (`--devinfo` on the CLI reveals them).
 
-### Layout (`mireport/report/layout.py`, `disclosure_layout.py`)
+### The fact model (`mireport/report/model.py`, `fact.py`, `factbuilder.py`, `aoix.py`)
+
+A `Fact` is typed values, not aoix strings: `concept`, `value`, a `FactPeriod`, a `Unit` (measures over
+measures; `Unit.fromUnitString("(a*b)/c", resolve)` / `unit.toUnitString()` are the strict OIM Common unit
+string), `decimals`, `scale`, `ExplicitDimensionValue`s, `TypedDimensionValue`s (the member's text,
+unescaped) and enumeration members. Build one with a `FactBuilder`, which keeps its setters
+(`setSimpleUnit`, `setCurrency`, `setNamedPeriod`, `setTypedDimension`,
+`setEnumerationValue`/`setEnumerationSet`...) and does the validation. **aoix text is written in exactly
+one place, `mireport/report/aoix.py`**, from those fields and in the current syntax only
+(`typed-value-wrapper=`, `units=a/b`); `period-type`, `escape`, `transform` and `fn-refs` are derived there,
+not stored. A typed value that aoix cannot quote (a double quote) is refused rather than written with the
+deprecated `typed` keyword. A monetary fact carries its currency (the report's default, unless it says
+otherwise).
+
+Periods are OIM's: datetimes, a duration running up to (not including) its end, so the start of one year *is*
+the end of the one before (`mireport/report/periods.py`, the only place with day arithmetic: `fromDays` in,
+`firstDay`/`lastDay` out for aoix and for people). A report declares named `ReportPeriod`s; a fact holds a
+`FactPeriod`, a report period and which `PeriodPart` of it (`Whole` for a duration concept, `Start` or `End` for
+an instant one). `oim` is what XBRL calls it and is what duplicates and headings compare, `part` is what the
+producer meant: an opening balance of 2025 and a closing balance of 2024 are one instant but two statements,
+shown as the first day of 2025 and the last of 2024, and told to aoix as `instant-start` and `instant`. A
+producer that knows says so (`setNamedPeriod(name, at=PeriodPart.Start)`); one that has only an OIM period
+(xBRL-JSON) uses `setPeriod(oim)`, which `InlineReport.locatePeriod` resolves, preferring the end.
+
+`setPercentageFact(fraction, decimals)` takes XBRL's own value and decimals (0.1250 at 4 is shown as 12.50
+with `ix:scale -2`); `setPercentageValue` takes a spreadsheet's display decimals.
+
+### Layout (`mireport/report/layout/`, `disclosure_layout.py`)
 
 The report's structure is derived from the taxonomy's presentation linkbase:
-`ReportLayoutOrganiser.organise()` turns presentation groups into sections and tables, guided by a
-`DisclosureLayoutStrategy` selected per entry point (`layoutStrategy` in the disclosure JSON), which
-also builds the table of contents and section labels.
+`ReportLayoutOrganiser.organise()` turns presentation groups into sections, guided by a
+`DisclosureLayoutStrategy` selected per entry point (`layoutStrategy` in the disclosure JSON), which also
+builds the table of contents and section labels. The package is `model` (sections, tables), `grid` (one
+`GridBuilder`: say which row and column each fact belongs to, and it fills the grid), `headers` (pure
+functions: what a table says once and what it says per column) and `organiser`. A *list* group shows one
+line per concept; a *table* group follows its hypercube. A dimensional fact in a list group gets a table
+built from its own dimensions ("... - by Target Category and Target Identifier"), so a taxonomy that
+defines its hypercubes only in the definition linkbase still renders everything.
+`report.requireAllFactsRendered = True` turns any fact that would appear nowhere into an error instead
+of leaving it out.
 
 ### Arelle boundary (`mireport/arelle/`)
 
