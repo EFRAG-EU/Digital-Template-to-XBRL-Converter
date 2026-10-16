@@ -38,7 +38,8 @@ The three test trees are run separately in CI and are best run separately locall
 - After any change to the conversion pipeline, run `tests/integrationTests/test_expectedFactCounts.py`
   — it pins per-template fact counts and catches silent fact loss.
 - `tests/unitTests/xlsx_template_reader/test_fact_creator_characterization.py` snapshots every fact
-  (concept, value, aspects, footnotes) from the 1.2.0 and 1.3.0 samples. Regenerate deliberately, only
+  (as an xBRL-JSON document: concept, value, period, unit, dimensions, footnotes) from the 1.2.0 and
+  1.3.0 samples. Regenerate deliberately, only
   when a change to the output is intended:
   `.venv-py314/Scripts/python tests/unitTests/xlsx_template_reader/test_fact_creator_characterization.py`
 - `tests/unitTests/test_import_cycles.py` fails on any new circular import inside `mireport`.
@@ -245,6 +246,17 @@ their own column) nothing changes. **The VSME Excel template reports one period*
 no Excel data for a prior one: the disclosure config's `periods[].role` (`current`, the default, or
 `prior`) and the skip-if-absent rule are the groundwork, and reading prior *values* needs a template
 contract from EFRAG.
+
+### xBRL-JSON reader (`mireport/xbrljson_reader/`)
+
+`XbrlJsonProcessor` is the counterpart of `XlsxProcessor` for a report that already exists as xBRL-JSON:
+it maps OIM facts onto `FactBuilder` and returns an `InlineReport`, so the same themed Inline XBRL comes
+out. `scripts/xbrljson-to-ixbrl.py` drives it. The document's `documentInfo.taxonomy` is the report's
+entry point (a set of documents), and a taxonomy baked for exactly that set must already be loaded. It
+reads one entity; the current period is the latest duration to end and the prior one is the duration
+ending a year earlier. A percent is shown x100 with `ix:scale -2` but keeps its value and decimals as
+given. In strict mode (`--strict`) anything that cannot be added or would appear nowhere in the rendered
+report is an error.
 
 ### Arelle boundary (`mireport/arelle/`)
 
