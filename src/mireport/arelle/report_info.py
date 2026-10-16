@@ -9,6 +9,7 @@ from pathlib import Path, PurePath
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
     from typing import BinaryIO
 
 from arelle import PackageManager, PluginManager
@@ -21,12 +22,16 @@ from mireport.arelle.support import (
     ArelleVersionHolder,
 )
 from mireport.filesupport import FilelikeAndFileName
-from mireport.report.inlinereport import UNCONSTRAINED_REPORT_PACKAGE_JSON
+from mireport.report.reportpackage import UNCONSTRAINED_REPORT_PACKAGE_JSON
 from mireport.version import VersionInformationTuple
 
 BIG_ARELLE_LOCK = threading.Lock()
 
 L = logging.getLogger(__name__)
+
+# Arelle splits its --plugins option on "|" (see CntlrCmdLine.run()).
+PLUGIN_SEPARATOR = "|"
+INLINE_DOCUMENT_SET_PLUGIN = "inlineXbrlDocumentSet"
 
 
 def _singleFileFromResponseZip(stream: BytesIO, what: str) -> bytes:
@@ -40,6 +45,26 @@ def _singleFileFromResponseZip(stream: BytesIO, what: str) -> bytes:
                 f"{what} has gone wrong. Zip contents: {zf.namelist()}"
             )
         return zf.read(entries[0])
+
+
+def _filesFromResponseZip(stream: BytesIO, what: str) -> list[FilelikeAndFileName]:
+    """Return every file Arelle wrote to its response zip, in zip order.
+
+    Order matters and is not incidental: for an Inline XBRL document set the
+    viewer plug-in writes one file per member, ordered as the documents were
+    specified, and injects the viewer script and taxonomy data into the first
+    one only (iXBRLViewer.py:657). The rest are plain member documents that the
+    first navigates to, by the filenames recorded here.
+    """
+    stream.seek(0)
+    with zipfile.ZipFile(stream, "r") as zf:
+        entries = zf.infolist()
+        if not entries:
+            raise ArelleRelatedException(f"{what} has gone wrong. Zip was empty.")
+        return [
+            FilelikeAndFileName(fileContent=zf.read(entry), filename=entry.filename)
+            for entry in entries
+        ]
 
 
 def _determineViewerUrl() -> str:
@@ -161,12 +186,21 @@ class ArelleReportProcessor:
         self,
         *,
         calcs: str = "c11r",
-        plugins: str | None = None,
+        plugins: Sequence[str] = (),
         pluginOptions: dict | None = None,
     ) -> RuntimeOptions:
         """RuntimeOptions shared by all report processing: validation on
         (calcs 1.1 round-to-nearest unless overridden, UTR, inconsistent
-        duplicate facts warned) and logging to buffer."""
+        duplicate facts warned) and logging to buffer.
+
+        INLINE_DOCUMENT_SET_PLUGIN is always enabled. Our packages put the
+        report in a subdirectory of "reports/" whenever it has document set
+        members (see mireport.report.reportpackage), and Arelle refuses to load
+        a multi-file report entry without it — "Loading error. Inline document
+        set encountered. Enable 'InlineXbrlDocumentSet' plug-in". It is
+        unconditional rather than per-call because nothing here inspects the
+        package, and it is inert for a single-document report.
+        """
         return RuntimeOptions(
             internetConnectivity="offline" if self.workOffline else "online",
             keepOpen=True,
@@ -174,7 +208,7 @@ class ArelleReportProcessor:
             logFormat="%(message)s",
             logPropagate=False,
             packages=[str(t) for t in self.taxonomyPackages],
-            plugins=plugins,
+            plugins=PLUGIN_SEPARATOR.join([INLINE_DOCUMENT_SET_PLUGIN, *plugins]),
             pluginOptions=pluginOptions if pluginOptions is not None else {},
             validate=True,
             calcs=calcs,
@@ -193,7 +227,7 @@ class ArelleReportProcessor:
 
     def generateXBRLJson(self, source: FilelikeAndFileName) -> ArelleProcessingResult:
         options = self._makeOptions(
-            plugins="saveLoadableOIM",
+            plugins=["saveLoadableOIM"],
             pluginOptions={"saveLoadableOIM": "report.json"},
         )
         jsonBytesIO = BytesIO()
@@ -215,7 +249,7 @@ class ArelleReportProcessor:
     ) -> ArelleProcessingResult:
         viewerBytesIO = BytesIO()
         options = self._makeOptions(
-            plugins="ixbrl-viewer",
+            plugins=["ixbrl-viewer"],
             pluginOptions={
                 "saveViewerDest": viewerBytesIO,
                 "viewer_feature_review": False,
@@ -228,11 +262,18 @@ class ArelleReportProcessor:
         )
         result = self._run(source, options)
         try:
-            viewer = _singleFileFromResponseZip(viewerBytesIO, "Arelle & inline-viewer")
+            primary, *members = _filesFromResponseZip(
+                viewerBytesIO, "Arelle & inline-viewer"
+            )
             viewerFilename = f"{PurePath(source.filename).stem}_viewer.html"
             result._viewer = FilelikeAndFileName(
-                fileContent=viewer, filename=viewerFilename
+                fileContent=primary.fileContent, filename=viewerFilename
             )
+            # Renaming the primary is safe — nothing refers to it by name — but
+            # the remaining document set members must keep theirs: the viewer
+            # data in the primary lists them by filename and fetches them
+            # relative to itself.
+            result._viewerDocumentSetMembers = members
         except Exception as e:
             result.addException(
                 e,
