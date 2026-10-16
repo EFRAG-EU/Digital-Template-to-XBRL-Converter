@@ -221,3 +221,49 @@ def test_a_concept_in_two_cubes_is_valid_for_either(report: InlineReport) -> Non
     # Neither cube accepts a fact with neither dimension.
     with pytest.raises(InlineReportException):
         _builder(report, "vsme:Both").buildFact()
+
+
+def test_a_fact_valid_for_the_other_cube_is_not_forced_into_the_typed_table() -> None:
+    """``tp:Intensity`` sits in a typed-dimension cube (a table) and in an explicit one (another
+    group). A fact for the explicit cube has no typed dimension, which is valid for it: the typed
+    table must neither take it nor fail on it. (A concept in several groups shows its facts in each
+    group, by whichever of its own dimensions fit; that is the layout's existing design.)"""
+    import re
+
+    from tests.unitTests.xbrljson_reader import test_dimensional_fallback as base
+
+    from mireport.conversionresults import ConversionResultsBuilder
+    from mireport.xbrljson_reader import XbrlJsonProcessor
+
+    other_role = "https://example.com/tp/role/Other"
+    taxonomy = base._taxonomy_json()
+    taxonomy["concepts"]["tp:KindCube"] = base._concept("Kind cube", hypercube=True)
+    taxonomy["presentation"][other_role] = {
+        "definition": "Other",
+        "rows": [[0, "tp:Group"], [1, "tp:Intensity"]],
+    }
+    taxonomy["dimensions"][other_role] = {
+        "tp:KindCube": base._cube(
+            ["tp:Intensity"], {"tp:ScopeAxis": ["tp:ScopeA", "tp:ScopeB"]}
+        )
+    }
+    loadTaxonomyJSON(taxonomy)
+    doc = base._document()
+    doc["facts"]["kind"] = base._fact(
+        "tp:Intensity", "55", **{"tp:ScopeAxis": "tp:ScopeA"}
+    )
+    html = (
+        XbrlJsonProcessor(doc, ConversionResultsBuilder(), strict=True)
+        .createReport()
+        .getInlineReport()
+        .fileContent.decode("utf-8")
+    )
+    tagged = re.findall(
+        r'<ix:non(?:Fraction|Numeric)[^>]*name="tp:Intensity"[^>]*>([^<]*)<', html
+    )
+    assert "55" in tagged  # shown (strict mode would have raised otherwise)
+    tables = [
+        t for t in re.findall(r"<table.*?</table>", html, re.DOTALL) if ">55<" in t
+    ]
+    assert tables
+    assert not any("T1" in t or "T2" in t for t in tables)  # never in the typed table
