@@ -6,7 +6,7 @@ import re
 
 from flask import session
 
-from digital_converter_webapp import MAX_LIVE_CAPTCHAS, generate_captcha
+from digital_converter_webapp.captcha import MAX_LIVE_CAPTCHAS, generate_captcha
 
 _QUESTION = re.compile(r"What is (\d+) \+ (\d+)\?")
 

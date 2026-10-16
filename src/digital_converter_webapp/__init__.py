@@ -1,12 +1,17 @@
+"""Flask app for the Excel → Inline XBRL converter.
+
+``create_app`` and the routes live here; configuration, the session model, the
+conversion pipeline and the other helpers are in the sibling modules.
+"""
+
+from __future__ import annotations
+
 import logging
 from collections.abc import Mapping
-from datetime import UTC, datetime, timedelta
-from random import randint
+from datetime import UTC, datetime
 from secrets import token_hex
 from typing import Any
 
-import mammoth
-from cachelib.file import FileSystemCache
 from dotenv import load_dotenv
 from flask import (
     Flask,
@@ -24,52 +29,37 @@ from flask import (
     url_for,
 )
 from flask_session import Session  # type: ignore
-from markupsafe import Markup
 
 import mireport
 from mireport import loadBuiltInTaxonomyJSON
-from mireport.arelle.report_info import (
-    ARELLE_VERSION_INFORMATION,
-    ArelleReportProcessor,
-)
 from mireport.conversionresults import (
-    ConversionResults,
     ConversionResultsBuilder,
     MessageType,
     Severity,
 )
-from mireport.data.disclosures import VSME_DEFAULTS
-from mireport.filesupport import FilelikeAndFileName, ImageFileLikeAndFileName
-from mireport.localise import (
-    EU_LOCALES,
-    extract_base_languages,
-    get_locale_from_str,
-    get_locale_list,
-)
-from mireport.pdf_converter import (
-    PATH_ENV_VAR,
-    PdfSupplementaryMode,
-    PdfToolNotFoundError,
-    convertSupplementaryPdfs,
-    findConverter,
-    mergeAnnexesIntoReport,
-)
-from mireport.report.reportpackage import buildReportPackage
-from mireport.report.theme import ColourPalette, DisplayMode, ReportTheme
+from mireport.filesupport import FilelikeAndFileName
+from mireport.report.theme import ColourPalette, ReportTheme
 from mireport.stringutil import truthy
-from mireport.taxonomy import getTaxonomy, listTaxonomies
-from mireport.xlsx_template_reader.processor import XlsxProcessor
 
-from .blueprints import convert_bp
-from .migration import (
-    MIGRATION_WORKING,
-    MigrationOutcome,
-    checkMigration,
+from .app_setup import (
+    brokenApp,
+    configure_arelle,
+    configure_logging,
+    configure_session_backend,
+    getArelle,
+    normalise_feature_flags,
+    report_pdf_converter,
 )
+from .blueprints import convert_bp
+from .captcha import generate_captcha, validateCaptchaAndCsrf
+from .conversion import ConversionStore
+from .conversion_service import doConversion, ensureViewer, ensureXbrlJson
+from .forms import IMAGE_UPLOAD_FIELDS, MAX_FILE_SIZE, MAX_PDF_COUNT, first_str
+from .locales import make_locale_json
+from .migration import MigrationOutcome, checkMigration
+from .template_helpers import format_timedelta, getUploadFilename
+from .viewer import MEMBER_CSP, serveViewerFile
 
-MAX_LIVE_CAPTCHAS = 20  # answers kept per session (multiple tabs/reloads)
-MAX_FILE_SIZE = 16 * 2**20  # 16 MiB
-MAX_PDF_COUNT = 10  # supplementary PDFs per conversion
 DEPLOYMENT_DATETIME = datetime.now(UTC)
 
 L = logging.getLogger(__name__)
@@ -77,12 +67,7 @@ L = logging.getLogger(__name__)
 
 def create_app(test_config: Mapping[str, Any] | None = None) -> Flask:
     # Get logging working
-    logging.basicConfig(
-        format="%(asctime)s %(levelname)-8s %(message)s",
-        datefmt="[%Y-%m-%d %H:%M:%S]",
-        level=logging.INFO,
-    )
-    logging.captureWarnings(True)
+    configure_logging()
 
     # Get taxonomy related objects loaded
     loadBuiltInTaxonomyJSON()
@@ -100,49 +85,19 @@ def create_app(test_config: Mapping[str, Any] | None = None) -> Flask:
         load_dotenv()
         app.config.from_prefixed_env()
 
-    if not _configure_session_backend(app):
+    if not configure_session_backend(app):
         return brokenApp()
 
     # Normalise feature flags so request-time checks can rely on real booleans
-    app.config["ENABLE_CAPTCHA"] = truthy(app.config.get("ENABLE_CAPTCHA", False))
-    app.config["ENABLE_MIGRATION"] = (
-        truthy(app.config.get("ENABLE_MIGRATION", False)) and MIGRATION_WORKING
-    )
-    app.config["ENABLE_SUPPLEMENTARY_PDFS"] = truthy(
-        app.config.get("ENABLE_SUPPLEMENTARY_PDFS", False)
-    )
-    pdfMode = app.config.get("PDF_SUPPLEMENTARY_MODE", PdfSupplementaryMode.DOCSET)
-    try:
-        pdfMode = PdfSupplementaryMode(pdfMode)
-    except ValueError:
-        L.warning(
-            f"Ignoring unknown PDF_SUPPLEMENTARY_MODE={pdfMode!r}; using "
-            f"{PdfSupplementaryMode.DOCSET!r}."
-        )
-        pdfMode = PdfSupplementaryMode.DOCSET
-    app.config["PDF_SUPPLEMENTARY_MODE"] = pdfMode
+    normalise_feature_flags(app)
 
     # app looks to be working, install routes
     app.register_blueprint(convert_bp, url_prefix=app.config.get("PREFIX", "/"))
 
     # Discover all the taxonomy packages up front
-    taxonomyPackageList = ArelleReportProcessor.getTaxonomyPackagesFromDir(
-        app.config.get("TAXONOMY_PACKAGE_DIR")
-    )
+    configure_arelle(app)
 
-    app.config["TAXONOMY_PACKAGES"] = taxonomyPackageList
-
-    _report_pdf_converter(app)
-
-    # If config specified work online/offline, respect it otherwise, if not
-    # specified, work offline iff we have been given some taxonomy packages
-    offline = app.config["ARELLE_WORK_OFFLINE"] = app.config.get(
-        "ARELLE_WORK_OFFLINE", bool(taxonomyPackageList)
-    )
-    if offline:
-        L.info(
-            f"Configured to use Arelle offline with {len(taxonomyPackageList)} taxonomy packages: [{', '.join(str(a) for a in sorted(taxonomyPackageList))}]"
-        )
+    report_pdf_converter(app)
 
     # Install enumeration classes for use in templates
     app.jinja_env.globals.update(
@@ -161,149 +116,6 @@ def create_app(test_config: Mapping[str, Any] | None = None) -> Flask:
     return app
 
 
-def _configure_session_backend(app: Flask) -> bool:
-    """Configure server-side session storage (filesystem in developer mode,
-    redis otherwise). Returns False if the configuration is unusable."""
-    if (
-        "development" == app.config.get("DEPLOYMENT", "development")
-        and "SESSION_TYPE" not in app.config
-    ):
-        # DEVELOPER MODE. Insecure. DO NOT USE IN PRODUCTION.
-        # Defaults that respect any SECRET_KEY/SESSION_CACHELIB already
-        # configured (e.g. by a test config). "cachelib" with an explicit
-        # FileSystemCache replaces the deprecated "filesystem" backend.
-        if "SESSION_FILE_DIR" in app.config:
-            L.warning(
-                "SESSION_FILE_DIR is no longer supported and will be ignored;"
-                " set SESSION_CACHELIB to a cachelib instance instead."
-            )
-        app.config.from_mapping(
-            SECRET_KEY=app.config.get("SECRET_KEY") or "dev",
-            SESSION_TYPE="cachelib",
-            SESSION_CACHELIB=app.config.get("SESSION_CACHELIB")
-            or FileSystemCache("flask_session", threshold=500),
-            SESSION_PERMANENT=True,
-            PERMANENT_SESSION_LIFETIME=timedelta(hours=1),
-        )
-        L.critical("Deployed in DEVELOPER mode. Insecure.")
-        return True
-
-    if app.config.get("SESSION_TYPE") == "redis" and "SESSION_REDIS" not in app.config:
-        return _configure_redis_sessions(app)
-
-    L.critical(f"Can't work with current configuration. {app.config=}")
-    return False
-
-
-def _configure_redis_sessions(app: Flask) -> bool:
-    """Connect to redis for session storage and set up RQ. Returns False if
-    redis support is unavailable or the connection fails."""
-    try:
-        try:
-            from flask_rq import RQ
-            from redis import ConnectionError, Redis  # type: ignore
-        except ImportError:
-            L.critical(
-                "Redis and/or RQ support isn't available. App startup aborted. You need to fix your configuration.".upper()
-            )
-            return False
-
-        redisUrl = app.config.get("REDIS_URL", "redis://127.0.0.1:6379")
-        try:
-            rs = Redis.from_url(redisUrl)
-            rs.ping()
-        except ConnectionError:
-            L.critical(
-                "Redis isn't running. App startup aborted. You need to fix your configuration.".upper()
-            )
-            return False
-
-        # Should have a working Redis connection and RQ instance at this point.
-        app.config["SESSION_REDIS"] = rs
-        app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=1)
-        rq = RQ()
-        rq.init_app(app)
-        return True
-
-    except Exception as e:
-        L.critical(
-            "An unknown exception occurred while configuring support for redis and RQ. App startup aborted. You need to fix your configuration.".upper(),
-            exc_info=e,
-        )
-        return False
-
-
-def _report_pdf_converter(app: Flask) -> None:
-    """Say at startup which PDF converter uploads will get, if any.
-
-    Missing or misconfigured is not fatal — supplementary PDFs are attached
-    unconverted — but silence until the first upload is not helpful.
-    """
-    if not app.config["ENABLE_SUPPLEMENTARY_PDFS"]:
-        L.info("Supplementary PDF uploads are disabled.")
-        return
-    try:
-        converter = findConverter()
-    except PdfToolNotFoundError as e:
-        L.warning(
-            f"Supplementary PDFs will be attached unconverted. {e} Set "
-            f"{PATH_ENV_VAR} if a converter is installed somewhere off PATH."
-        )
-        return
-    L.info(f"Using PDF converter {converter}.")
-
-
-def brokenApp() -> Flask:
-    """Only used when normal configuration is busted so you get a working
-    webserver with a reasonable explanation to visitors."""
-    broken = Flask(__name__)
-
-    @broken.route("/", defaults={"path": ""})
-    @broken.route("/<path:path>")
-    def catch_all(path: str) -> Response:
-        return make_response(
-            {
-                "error": "Service unavailable due to configuration issue.",
-            },
-            503,
-        )
-
-    return broken
-
-
-def getArelle() -> ArelleReportProcessor:
-    return ArelleReportProcessor(
-        taxonomyPackages=current_app.config["TAXONOMY_PACKAGES"],
-        workOffline=current_app.config["ARELLE_WORK_OFFLINE"],
-    )
-
-
-def format_timedelta(td: timedelta) -> str:
-    total_seconds = int(td.total_seconds())
-    parts = []
-
-    days, remainder = divmod(total_seconds, 86400)  # 86400 seconds in a day
-    hours, remainder = divmod(remainder, 3600)
-    minutes, seconds = divmod(remainder, 60)
-
-    def plural(amount: int, unit_singular: str) -> str:
-        if amount > 1:
-            return f"{amount} {unit_singular}s"
-        else:
-            return f"{amount} {unit_singular}"
-
-    if days:
-        parts.append(plural(days, "day"))
-    if hours:
-        parts.append(plural(hours, "hour"))
-    if minutes:
-        parts.append(plural(minutes, "minute"))
-    if seconds:
-        parts.append(plural(seconds, "second"))
-
-    return " ".join(parts)
-
-
 @convert_bp.route("/")
 def index() -> Response:
     enable_captcha = current_app.config["ENABLE_CAPTCHA"]
@@ -313,7 +125,7 @@ def index() -> Response:
     return Response(
         render_template(
             "excel-to-xbrl-converter.html.jinja",
-            existing_conversions=hasConversions(),
+            existing_conversions=ConversionStore.fromFlask().hasActive(),
             ENABLE_CAPTCHA=enable_captcha,
             captcha_id=captcha_id,
             captcha_question=captcha_question,
@@ -335,24 +147,6 @@ def request_entity_too_large(error: type[Exception] | int) -> Response:
     )
 
 
-def generate_captcha() -> tuple[str, str]:
-    """Generate a simple math captcha and stash its answer in the session.
-
-    Answers are kept in an id-keyed map (capped at MAX_LIVE_CAPTCHAS, oldest
-    evicted first) so concurrently open forms (multiple tabs, reloads) each
-    validate against their own question.
-    """
-    num1 = randint(1, 10)
-    num2 = randint(1, 10)
-    captcha_id = token_hex(8)
-    answers = session.setdefault("captcha_answers", {})
-    answers[captcha_id] = num1 + num2
-    while len(answers) > MAX_LIVE_CAPTCHAS:
-        answers.pop(next(iter(answers)))
-    session.modified = True
-    return captcha_id, f"What is {num1} + {num2}?"
-
-
 @convert_bp.before_request
 def generate_csrf_token() -> None:
     """Generate a CSRF token and store it in the session."""
@@ -366,17 +160,6 @@ def add_deployment_header(response: Response) -> Response:
         timespec="seconds"
     )
     return response
-
-
-def make_locale_json() -> list[dict[str, str]]:
-    allPossibleTaxonomyLanguages: set[str] = {
-        lang for ep in listTaxonomies() for lang in getTaxonomy(ep).supportedLanguages
-    }
-    localeMetadata = get_locale_list(
-        EU_LOCALES,
-        supportedLanguages=extract_base_languages(allPossibleTaxonomyLanguages),
-    )
-    return localeMetadata
 
 
 @convert_bp.route(f"/locales/available_{mireport.__version__}.json")
@@ -417,32 +200,16 @@ def debug_session() -> Response:
     return jsonify(interesting)
 
 
-def _first_str(form: Mapping[str, str], *fields: str) -> str:
-    return next((v for f in fields if (v := form.get(f, "").strip())), "")
-
-
 @convert_bp.route("/upload", methods=["POST"])
 def upload() -> Response:
     if "file" not in request.files:
         return make_response({"error": "No file part"}, 400)
 
-    if current_app.config["ENABLE_CAPTCHA"]:
-        # Validate captcha (single use: the answer is removed on first attempt)
-        captcha_input = request.form.get("captcha", type=int)
-        captcha_id = request.form.get("captcha_id", "")
-        captcha_answer = session.get("captcha_answers", {}).pop(captcha_id, None)
-        session.modified = True
-        if captcha_answer is None or captcha_input != captcha_answer:
-            flash(
-                message="Invalid captcha. Please confirm you are human by calculating the correct result and try again.",
-                category="error",
-            )
-            return make_response(redirect(url_for("basic.index")))
-        # Validate CSRF token
-        csrf_token = request.form.get("csrf_token")
-        if not csrf_token or csrf_token != session.get("csrf_token"):
-            flash(message="Invalid CSRF token. Please try again.", category="error")
-            return make_response(redirect(url_for("basic.index")))
+    if (
+        current_app.config["ENABLE_CAPTCHA"]
+        and (rejection := validateCaptchaAndCsrf()) is not None
+    ):
+        return rejection
 
     xlsx_blobs = request.files.getlist("file")
     if len(xlsx_blobs) > 1:
@@ -464,26 +231,19 @@ def upload() -> Response:
             },
             400,
         )
-    result = ConversionResultsBuilder()
-    conversion = session.setdefault(result.conversionId, {"id": result.conversionId})
-    conversion["date"] = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")
-    conversion["excel"] = FilelikeAndFileName(
+    conv = ConversionStore.fromFlask().create(ConversionResultsBuilder().conversionId)
+    conv.date = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")
+    conv.excel = FilelikeAndFileName(
         fileContent=blob.stream.read(), filename=blob.filename
     )
 
-    if _first_str(request.form, "localeOption") == "manual":
-        conversion["locale_str"] = _first_str(request.form, "locale")
+    if first_str(request.form, "localeOption") == "manual":
+        conv.locale_str = first_str(request.form, "locale")
 
-    conversion["style_palette"] = _first_str(
-        request.form, "style_colour", "style_palette"
-    )
-    conversion["style_mode"] = _first_str(request.form, "style_mode")
+    conv.style_palette = first_str(request.form, "style_colour", "style_palette")
+    conv.style_mode = first_str(request.form, "style_mode")
 
-    for field_name, conv_key in [
-        ("logo", "image_logo"),
-        ("cover", "image_cover"),
-        ("background", "image_background"),
-    ]:
+    for field_name, conv_key in IMAGE_UPLOAD_FIELDS:
         if field_name not in request.files:
             continue
         img_files = request.files.getlist(field_name)
@@ -491,8 +251,11 @@ def upload() -> Response:
             return make_response({"error": f"Too many {field_name} files"}, 400)
         img_file = img_files[0]
         if img_file.filename:
-            conversion[conv_key] = FilelikeAndFileName(
-                fileContent=img_file.stream.read(), filename=img_file.filename
+            conv.setImage(
+                conv_key,
+                FilelikeAndFileName(
+                    fileContent=img_file.stream.read(), filename=img_file.filename
+                ),
             )
 
     # Supplementary PDFs. An untouched file input still submits an empty part,
@@ -515,16 +278,14 @@ def upload() -> Response:
                 400,
             )
     if pdf_files:
-        conversion["pdfs"] = [
+        conv.pdfs = [
             FilelikeAndFileName(
                 fileContent=f.stream.read(), filename=f.filename or "annex.pdf"
             )
             for f in pdf_files
         ]
 
-    return make_response(
-        redirect(url_for("basic.convert", id=result.conversionId), code=303)
-    )
+    return make_response(redirect(url_for("basic.convert", id=conv.id), code=303))
 
 
 @convert_bp.route("/conversions/<string:id>", methods=["GET"])
@@ -532,7 +293,7 @@ def convert(id: str) -> Response:
     try:
         skip_migration = truthy(request.args.get("skip_migration", ""))
 
-        if id not in session:
+        if (conv := ConversionStore.fromFlask().get(id)) is None:
             return make_response(
                 render_template(
                     "conversion-results.html.jinja",
@@ -542,43 +303,38 @@ def convert(id: str) -> Response:
                 404,
             )
 
-        conversion = session[id]
-        if "results" not in conversion:
+        if not conv.has_results:
             if (
                 not skip_migration
                 and current_app.config["ENABLE_MIGRATION"]
-                and (migrationResponse := checkMigration(conversion)) is not None
+                and (migrationResponse := checkMigration(conv)) is not None
             ):
                 # Migration deemed to be required so no conversion done at this stage.
                 return migrationResponse
 
-            results = doConversion(conversion, id)
-            if (
-                "partial_fact_concepts" in conversion
-                and "external_values" not in conversion
-            ):
+            results = doConversion(
+                conv, getArelle(), current_app.config["PDF_SUPPLEMENTARY_MODE"]
+            )
+            if conv.has_partial_fact_concepts and not conv.has_external_values:
                 return make_response(
                     redirect(url_for("basic.partial_facts", id=id), code=303)
                 )
-            conversion["results"] = results.toDict()
-            conversion["successful"] = results.conversionSuccessful
+            conv.results = results
 
-        results = ConversionResults.fromDict(conversion["results"])
         devInfo = request.args.get("show_developer_messages") == "true"
 
         offer_migration: bool = current_app.config["ENABLE_MIGRATION"] and (
-            conversion.get("migration_outcome", "")
-            == str(MigrationOutcome.MIGRATION_OPTIONAL)
+            conv.migration_outcome == str(MigrationOutcome.MIGRATION_OPTIONAL)
         )
 
         return Response(
             render_template(
                 "conversion-results.html.jinja",
-                conversion_result=results,
+                conversion_result=conv.results,
                 offer_migration=offer_migration,
                 conversion_id=id,
                 dev=devInfo,
-                conversion_date=conversion["date"],
+                conversion_date=conv.date,
                 upload_filename=getUploadFilename(id),
             )
         )
@@ -590,178 +346,11 @@ def convert(id: str) -> Response:
             return make_response({"error": str(e)}, 500)
 
 
-def getUploadFilename(id: str) -> str:
-    conversion = session.get(id)
-    if not (conversion and "excel" in conversion):
-        return ""
-
-    excel = FilelikeAndFileName.from_tuple(conversion["excel"])
-    return excel.filename
-
-
-def storedPdfs(conversion: dict) -> list[FilelikeAndFileName]:
-    """The uploaded PDFs, recovered from the server-side session.
-
-    from_tuple because the session backend serialises NamedTuples as lists, so
-    these come back as lists of lists rather than FilelikeAndFileNames.
-    """
-    return [FilelikeAndFileName.from_tuple(p) for p in conversion.get("pdfs") or []]
-
-
-def doConversion(conversion: dict, id: str) -> ConversionResults:
-    resultBuilder = ConversionResultsBuilder(conversionId=id)
-    try:
-        with resultBuilder.processingContext(f"Conversion {id}") as pc:
-            upload = FilelikeAndFileName.from_tuple(conversion["excel"])
-
-            pc.mark(
-                "Extracting data from Excel",
-                additionalInfo=f"Using file: {upload.filename}",
-            )
-            if locale_str := conversion.get("locale_str"):
-                requestedOutputLocale = get_locale_from_str(locale_str)
-            else:
-                requestedOutputLocale = None
-
-            xl_processor = XlsxProcessor.from_file(
-                upload.fileLike(),
-                resultBuilder,
-                VSME_DEFAULTS,
-                outputLocale=requestedOutputLocale,
-            )
-
-            report = xl_processor.createReport()
-
-            if report.hasPartialFacts and "external_values" not in conversion:
-                label_lang = report.taxonomy.getBestSupportedLanguage(report.language)
-                concept_infos = [
-                    {
-                        "qname": str(c.qname),
-                        "label": c.getStandardLabel(
-                            lang=label_lang,
-                            fallbackToAnyLang=True,
-                            fallbackToQName=True,
-                        )
-                        or str(c.qname),
-                    }
-                    for c in report.partialFactsByConcept
-                ]
-                conversion["partial_fact_concepts"] = concept_infos
-                labels = ", ".join(info["label"] for info in concept_infos)
-                resultBuilder.addMessage(
-                    f"Conversion paused: {len(concept_infos)} disclosure field(s) require supplementary Word documents ({labels}).",
-                    Severity.INFO,
-                    MessageType.Conversion,
-                )
-                return resultBuilder.build()
-
-            if report.hasPartialFacts and "external_values" in conversion:
-                for concept in report.partialFactsByConcept:
-                    qname_str = str(concept.qname)
-                    if qname_str in conversion["external_values"]:
-                        docx_data = FilelikeAndFileName.from_tuple(
-                            conversion["external_values"][qname_str]
-                        )
-                        mammoth_result = mammoth.convert_to_html(docx_data.fileLike())
-                        report.completePartialFact(
-                            concept, Markup(mammoth_result.value)
-                        )
-                if report.hasPartialFacts:
-                    missing = ", ".join(
-                        str(c.qname) for c in report.partialFactsByConcept
-                    )
-                    resultBuilder.addMessage(
-                        f"Conversion failed: no Word document was provided for the following disclosure field(s): {missing}.",
-                        Severity.ERROR,
-                        MessageType.Conversion,
-                    )
-                    return resultBuilder.build()
-
-            if not report.hasFacts:
-                resultBuilder.addMessage(
-                    "No facts found in InlineReport (likely due to earlier errors). Stopping here.",
-                    Severity.ERROR,
-                    MessageType.Conversion,
-                )
-                return resultBuilder.build()
-
-            raw_colour = conversion.get(
-                "style_palette", ReportTheme.DEFAULT_COLOUR.label
-            )
-            colour = ColourPalette.parse(raw_colour, default=ReportTheme.DEFAULT_COLOUR)
-            mode = DisplayMode.parse(conversion.get("style_mode", ""))
-            report.theme.setColour(colour).setDisplayMode(mode)
-
-            for key, setter in [
-                ("image_logo", report.theme.setLogoImage),
-                ("image_cover", report.theme.setCoverImage),
-                ("image_background", report.theme.setBackgroundImage),
-            ]:
-                if key in conversion:
-                    image, err = ImageFileLikeAndFileName.prepare(conversion[key])
-                    if err:
-                        resultBuilder.addMessage(
-                            err,
-                            Severity.WARNING,
-                            MessageType.Conversion,
-                        )
-                    elif image:
-                        pc.addDevInfoMessage(f"Adding {key} to report {image}")
-                        setter(image)
-
-            pdfs = convertSupplementaryPdfs(
-                storedPdfs(conversion),
-                resultBuilder,
-                pc,
-                mode=current_app.config["PDF_SUPPLEMENTARY_MODE"],
-            )
-
-            pc.mark(
-                "Generating Inline Report",
-                additionalInfo=f"({report.factCount} facts to include)",
-            )
-            reportFile = report.getInlineReport()
-            if pdfs.mergedAnnexes:
-                reportFile = mergeAnnexesIntoReport(reportFile, pdfs.mergedAnnexes)
-            report_package = buildReportPackage(
-                reportFile,
-                topLevel=report.packageTopLevelName,
-                docsetMembers=pdfs.docsetMembers,
-                attachments=pdfs.attachments,
-            )
-            resultBuilder.addMessage(
-                f"Inline XBRL report {report_package} created (containing {report.factCount} facts)",
-                Severity.INFO,
-                MessageType.Conversion,
-            )
-            if not resultBuilder.conversionSuccessful:
-                return resultBuilder.build()
-
-            pc.mark(
-                "Validating Inline Report",
-                additionalInfo=f"Using Arelle (XBRL Certified Software™) [{ARELLE_VERSION_INFORMATION}]",
-            )
-            arelle_results = getArelle().validateReportPackage(report_package)
-            resultBuilder.addMessages(arelle_results.messages)
-            conversion["zip"] = report_package
-    except Exception as e:
-        message = next(iter(e.args), "")
-        resultBuilder.addMessage(
-            f"Exception encountered during processing. {message}",
-            Severity.ERROR,
-            MessageType.Conversion,
-        )
-        L.exception("Exception encountered", exc_info=e)
-
-    return resultBuilder.build()
-
-
 @convert_bp.route("/conversions/<string:id>/partial-facts", methods=["GET"])
 def partial_facts(id: str) -> Response:
-    if id not in session:
+    if (conv := ConversionStore.fromFlask().get(id)) is None:
         return make_response(redirect(url_for("basic.index")))
-    conversion = session[id]
-    concepts = conversion.get("partial_fact_concepts", [])
+    concepts = conv.partial_fact_concepts
     if not concepts:
         return make_response(redirect(url_for("basic.convert", id=id), code=303))
     return Response(
@@ -776,12 +365,10 @@ def partial_facts(id: str) -> Response:
 
 @convert_bp.route("/conversions/<string:id>/partial-facts", methods=["POST"])
 def partial_facts_submit(id: str) -> Response:
-    if id not in session:
+    if (conv := ConversionStore.fromFlask().get(id)) is None:
         return make_response(redirect(url_for("basic.index")))
-    conversion = session[id]
-    concepts = conversion.get("partial_fact_concepts", [])
-    external_values: dict[str, Any] = {}
-    for concept_info in concepts:
+    external_values: dict[str, FilelikeAndFileName] = {}
+    for concept_info in conv.partial_fact_concepts:
         qname = concept_info["qname"]
         field_name = f"docx_{qname}"
         files = request.files.getlist(field_name)
@@ -797,74 +384,34 @@ def partial_facts_submit(id: str) -> Response:
         external_values[qname] = FilelikeAndFileName(
             fileContent=docx_file.stream.read(), filename=docx_file.filename
         )
-    conversion["external_values"] = external_values
+    conv.external_values = external_values
     return make_response(redirect(url_for("basic.convert", id=id), code=303))
-
-
-def ensureViewer(
-    session_data: dict[str, Any],
-) -> tuple[FilelikeAndFileName, dict[str, FilelikeAndFileName]]:
-    """Generate (once) and return the viewer plus any document set members."""
-    if "viewer" not in session_data:
-        arelle_result = getArelle().generateInlineViewer(
-            FilelikeAndFileName.from_tuple(session_data["zip"])
-        )
-        session_data["viewer"] = arelle_result.viewer
-        session_data["viewer_members"] = {
-            member.filename: member
-            for member in arelle_result.viewer_document_set_members
-        }
-        # Mutating the nested dict isn't noticed by the session implementation.
-        session.modified = True
-
-    return (
-        FilelikeAndFileName.from_tuple(session_data["viewer"]),
-        {
-            filename: FilelikeAndFileName.from_tuple(member)
-            for filename, member in session_data.get("viewer_members", {}).items()
-        },
-    )
-
-
-def ensureXbrlJson(session_data: dict[str, Any]) -> FilelikeAndFileName:
-    """Generate (once) and return the xBRL-JSON rendering of the report."""
-    if "json" not in session_data:
-        session_data["json"] = (
-            getArelle()
-            .generateXBRLJson(FilelikeAndFileName.from_tuple(session_data["zip"]))
-            .xbrl_json
-        )
-        # Mutating the nested dict isn't noticed by the session implementation.
-        session.modified = True
-
-    return FilelikeAndFileName.from_tuple(session_data["json"])
 
 
 @convert_bp.route("/downloadFile/<string:id>/<string:ftype>/", methods=["GET", "HEAD"])
 def downloadFile(id: str, ftype: str) -> Response:
     """Download the converted file from the session."""
-    if id not in session:
+    if (conv := ConversionStore.fromFlask().get(id)) is None:
         return make_response({"error": "No file found"}, 404)
 
-    session_data = session[id]
-    if "zip" not in session_data:
+    if not conv.has_zip:
         return make_response(
             {"error": "No report generated. Nothing to download."}, 404
         )
 
     match ftype:
         case "viewer":
-            stuff, members = ensureViewer(session_data)
+            stuff, members = ensureViewer(conv, getArelle())
             if members and request.method != "HEAD":
                 # A document set viewer fetches its members by name relative to
                 # itself, so it has to be served in place rather than downloaded.
                 return make_response(redirect(url_for("basic.viewer", id=id), code=303))
         case "json":
-            stuff = ensureXbrlJson(session_data)
+            stuff = ensureXbrlJson(conv, getArelle())
         case "zip" | "excel":
-            if ftype not in session_data:
+            if (cached := conv.cachedOutput(ftype)) is None:
                 return make_response({"error": "No file found"}, 404)
-            stuff = FilelikeAndFileName.from_tuple(session_data[ftype])
+            stuff = cached
         case _:
             return make_response({"error": f"File type {ftype} not found."}, 404)
 
@@ -879,33 +426,12 @@ def downloadFile(id: str, ftype: str) -> Response:
     )
 
 
-def hasConversions() -> bool:
-    return bool(getConversions())
-
-
-def getConversions() -> dict[str, Any]:
-    conversions = {
-        key: value
-        for key, value in session.items()
-        if key not in {"_permanent", "csrf_token", "captcha_answers"}
-    }
-    # Strip out any "conversions" that are actually aborted as they turned in to
-    # mandatory migrations
-    for uuid in tuple(conversions):
-        details = dict(conversions[uuid])
-        if details.get("migration_outcome", "") == str(
-            MigrationOutcome.MIGRATION_REQUIRED
-        ):
-            conversions.pop(uuid)
-    return conversions
-
-
 @convert_bp.route("/conversions/")
 def conversions() -> Response:
     return Response(
         render_template(
             "conversions.html.jinja",
-            conversions=getConversions(),
+            conversions=ConversionStore.fromFlask().active(),
             lifetime=current_app.config["PERMANENT_SESSION_LIFETIME"],
         )
     )
@@ -913,42 +439,23 @@ def conversions() -> Response:
 
 @convert_bp.route("/delete/<string:id>", methods=["POST"])
 def delete(id: str) -> Response:
-    session.pop(id, None)
+    ConversionStore.fromFlask().delete(id)
     return make_response(redirect(url_for("basic.conversions"), code=303))
 
 
 @convert_bp.route("/delete/_all", methods=["POST"])
 def delete_all() -> Response:
-    for k in getConversions():
-        session.pop(k, None)
+    ConversionStore.fromFlask().deleteActive()
     return make_response(redirect(url_for("basic.conversions"), code=303))
 
 
 @convert_bp.route("/viewer/<string:id>/", methods=["GET", "HEAD"])
 def viewer(id: str) -> Response:
-    if id not in session or "zip" not in session[id]:
+    if (conv := ConversionStore.fromFlask().get(id)) is None or not conv.has_zip:
         return make_response({"error": "No file found"}, 404)
 
-    stuff, _ = ensureViewer(session[id])
+    stuff, _ = ensureViewer(conv, getArelle())
     return serveViewerFile(stuff)
-
-
-# A document set member is content extracted from a user-supplied PDF, served
-# same-origin. mireport.pdf_converter strips script out of it; this is the
-# second line of that defence, and takes away nothing an annex uses. The origin
-# stays 'self' rather than sandboxed so the viewer can still reach into the
-# member's DOM, and the viewer itself is served without this — it *is* script.
-MEMBER_CSP = (
-    "default-src 'none'; "
-    "img-src 'self' data:; "
-    "style-src 'self' 'unsafe-inline'; "
-    "font-src 'self' data:; "
-    "script-src 'none'; "
-    "object-src 'none'; "
-    "form-action 'none'; "
-    "base-uri 'none'; "
-    "frame-ancestors 'self'"
-)
 
 
 @convert_bp.route("/viewer/<string:id>/<string:filename>", methods=["GET", "HEAD"])
@@ -958,28 +465,16 @@ def viewerDocumentSetMember(id: str, filename: str) -> Response:
     The viewer data lists its fellow document set members by filename and
     fetches them relative to itself, i.e. from this route.
     """
-    if id not in session or "zip" not in session[id]:
+    if (conv := ConversionStore.fromFlask().get(id)) is None or not conv.has_zip:
         return make_response({"error": "No file found"}, 404)
 
-    _, members = ensureViewer(session[id])
+    _, members = ensureViewer(conv, getArelle())
     if (member := members.get(filename)) is None:
         return make_response({"error": f"File {filename} not found."}, 404)
     response = serveViewerFile(member)
     response.headers["Content-Security-Policy"] = MEMBER_CSP
     response.headers["X-Content-Type-Options"] = "nosniff"
     return response
-
-
-def serveViewerFile(stuff: FilelikeAndFileName) -> Response:
-    if request.method == "HEAD":
-        return Response(status=200, headers={"X-File-Ready": "true"})
-
-    return send_file(
-        stuff.fileLike(),
-        as_attachment=False,
-        download_name=stuff.filename,
-        mimetype="text/html",
-    )
 
 
 if __name__ == "__main__":

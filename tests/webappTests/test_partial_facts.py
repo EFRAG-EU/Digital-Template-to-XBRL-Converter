@@ -9,6 +9,8 @@ to the convert step. These tests cover that GET/POST behaviour.
 
 import io
 
+from digital_converter_webapp.conversion import ConversionStore
+
 CONVERSION_ID = "test-conversion"
 
 CONCEPTS = [
@@ -19,7 +21,12 @@ CONCEPTS = [
 
 def _seed(client, concepts):
     with client.session_transaction() as sess:
-        sess[CONVERSION_ID] = {"partial_fact_concepts": concepts}
+        ConversionStore(sess).create(CONVERSION_ID).partial_fact_concepts = concepts
+
+
+def _stored(client):
+    with client.session_transaction() as sess:
+        return ConversionStore(sess).get(CONVERSION_ID)
 
 
 def _docx(content=b"docx-bytes", filename="doc.docx"):
@@ -71,9 +78,7 @@ def test_post_stores_uploads_and_redirects_to_convert(client):
     )
     assert resp.status_code == 303
     assert resp.location.endswith(f"/conversions/{CONVERSION_ID}")
-    with client.session_transaction() as sess:
-        external = sess[CONVERSION_ID]["external_values"]
-    assert set(external) == {c["qname"] for c in CONCEPTS}
+    assert set(_stored(client).external_values) == {c["qname"] for c in CONCEPTS}
 
 
 def test_post_missing_file_flashes_error_and_redirects_back(client):
@@ -86,5 +91,4 @@ def test_post_missing_file_flashes_error_and_redirects_back(client):
     )
     assert resp.status_code == 303
     assert resp.location.endswith(f"/conversions/{CONVERSION_ID}/partial-facts")
-    with client.session_transaction() as sess:
-        assert "external_values" not in sess[CONVERSION_ID]
+    assert not _stored(client).has_external_values
