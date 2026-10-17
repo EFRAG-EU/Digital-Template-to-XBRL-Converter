@@ -10,7 +10,8 @@ on:
 jobs:
   lint:
     name: Ruff Lint and Format Check
-    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
+    # Skip draft PRs; pushes to main have no pull_request, so they always run
+    if: github.event.pull_request.draft != true
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -28,7 +29,8 @@ jobs:
 
   test:
     name: Tests
-    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
+    # Skip draft PRs; pushes to main have no pull_request, so they always run
+    if: github.event.pull_request.draft != true
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
