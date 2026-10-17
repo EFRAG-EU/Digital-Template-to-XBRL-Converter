@@ -6,6 +6,9 @@ from cachelib.file import FileSystemCache
 
 from digital_converter_webapp import create_app
 from digital_converter_webapp.conversion import Conversion, ConversionStore
+from mireport.arelle.report_info import ArelleReportProcessor
+from mireport.arelle.support import ArelleProcessingResult
+from mireport.conversionresults import Message, MessageType, Severity
 from mireport.filesupport import FilelikeAndFileName
 from mireport.pdf_converter import PdfToolNotFoundError
 from mireport.pdf_converter._xhtml import normaliseToXhtml
@@ -218,3 +221,34 @@ def viewed_docset(app):
         client.get(f"/conversions/{conversion.id}")
         client.get(f"/downloadFile/{conversion.id}/viewer/")
     return client, conversion.id
+
+
+class FakeArelleProcessingResult(ArelleProcessingResult):
+    """Stands in for a real Arelle validation in tests that never look at it.
+
+    Carries an XBRL-validation ERROR saying so, so a test that comes to depend
+    on the validation outcome (isXbrlValid, overall severity, the results-page
+    banner) fails loudly rather than passing against a validation that never
+    ran. XBRL-validation errors don't count against ``conversionSuccessful``.
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._validationMessages.append(
+            Message(
+                messageText="Arelle validation was not run (test stub)",
+                severity=Severity.ERROR,
+                messageType=MessageType.XbrlValidation,
+            )
+        )
+
+
+@pytest.fixture
+def skipArelle(monkeypatch):
+    """Skip the several-second Arelle validation in a conversion the test only
+    inspects for package layout, attachments or PDF warnings."""
+    monkeypatch.setattr(
+        ArelleReportProcessor,
+        "validateReportPackage",
+        lambda self, source, **kwargs: FakeArelleProcessingResult(),
+    )

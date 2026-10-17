@@ -130,6 +130,7 @@ class TestPdfConversion:
         assert any(n.endswith("/annex1.xhtml") for n in names), names
         assert any(n.endswith("/attachments/annex1.pdf") for n in names), names
 
+    @pytest.mark.usefixtures("skipArelle")
     def test_report_moves_into_the_docset_directory(
         self, client, upload, make_pdf, conversion_of, convertedOk
     ) -> None:
@@ -138,6 +139,7 @@ class TestPdfConversion:
         directlyInReports = [n for n in names if "/reports/" in n and n.count("/") == 2]
         assert directlyInReports == [], names
 
+    @pytest.mark.usefixtures("skipArelle")
     def test_no_pdfs_leaves_the_package_layout_alone(
         self, client, upload, conversion_of
     ) -> None:
@@ -151,6 +153,7 @@ class TestPdfConversion:
         [PdfToolNotFoundError("no binary"), PdfConversionError("bad pdf")],
         ids=["no-binary", "bad-pdf"],
     )
+    @pytest.mark.usefixtures("skipArelle")
     def test_conversion_failure_is_a_warning_not_an_error(
         self, client, upload, make_pdf, conversion_of, monkeypatch, error
     ) -> None:
@@ -181,6 +184,7 @@ class TestPdfConversion:
         ]
         assert len(pdfWarnings) == 1, results["m"]
 
+    @pytest.mark.usefixtures("skipArelle")
     def test_the_pdf_still_ships_when_conversion_fails(
         self, client, upload, make_pdf, conversion_of, noBinary
     ) -> None:
@@ -190,6 +194,7 @@ class TestPdfConversion:
         assert any(n.endswith("/attachments/annex1.pdf") for n in names), names
         assert not any(n.endswith(".xhtml") for n in names), names
 
+    @pytest.mark.usefixtures("skipArelle")
     def test_report_layout_unchanged_when_conversion_fails(
         self, client, upload, make_pdf, conversion_of, noBinary
     ) -> None:
@@ -198,6 +203,7 @@ class TestPdfConversion:
         names = _packageNames(_convert(client, conversion_of))
         assert any(n.count("/") == 2 and "/reports/" in n for n in names), names
 
+    @pytest.mark.usefixtures("skipArelle")
     def test_all_pdfs_still_attached_without_a_binary(
         self, client, upload, make_pdf, conversion_of, noBinary
     ) -> None:
