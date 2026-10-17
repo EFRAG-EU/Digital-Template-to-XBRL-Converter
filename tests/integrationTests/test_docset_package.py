@@ -141,34 +141,22 @@ def errorsAndWarnings(messages: list[Message]) -> set[str]:
 
 # Each Arelle session costs several seconds, so every distinct operation on a
 # package runs once per module and the tests below assert on the result.
+# One validating session per package also hands back the xBRL-JSON
+# (getReportAsJson), so validation and JSON tests share a single run.
 
 
 @pytest.fixture(scope="module")
-def plainValidation(
+def plainRun(
     arelle: ArelleReportProcessor, plainPackage: FilelikeAndFileName
 ) -> ArelleProcessingResult:
-    return arelle.validateReportPackage(plainPackage)
+    return arelle.validateReportPackage(plainPackage, getReportAsJson=True)
 
 
 @pytest.fixture(scope="module")
-def docsetValidation(
+def docsetRun(
     arelle: ArelleReportProcessor, docsetPackage: FilelikeAndFileName
 ) -> ArelleProcessingResult:
-    return arelle.validateReportPackage(docsetPackage)
-
-
-@pytest.fixture(scope="module")
-def plainJson(
-    arelle: ArelleReportProcessor, plainPackage: FilelikeAndFileName
-) -> ArelleProcessingResult:
-    return arelle.generateXBRLJson(plainPackage)
-
-
-@pytest.fixture(scope="module")
-def docsetJson(
-    arelle: ArelleReportProcessor, docsetPackage: FilelikeAndFileName
-) -> ArelleProcessingResult:
-    return arelle.generateXBRLJson(docsetPackage)
+    return arelle.validateReportPackage(docsetPackage, getReportAsJson=True)
 
 
 @pytest.fixture(scope="module")
@@ -189,31 +177,29 @@ def docsetViewer(
 
 
 class TestValidation:
-    def test_plain_package_validates(
-        self, plainValidation: ArelleProcessingResult
-    ) -> None:
+    def test_plain_package_validates(self, plainRun: ArelleProcessingResult) -> None:
         """The baseline. If this fails the comparison below means nothing."""
-        assert not plainValidation.has_exceptions, plainValidation.log_lines
+        assert not plainRun.has_exceptions, plainRun.log_lines
 
     def test_docset_package_raises_no_exception(
-        self, docsetValidation: ArelleProcessingResult
+        self, docsetRun: ArelleProcessingResult
     ) -> None:
-        assert not docsetValidation.has_exceptions, docsetValidation.log_lines
+        assert not docsetRun.has_exceptions, docsetRun.log_lines
 
     def test_docset_introduces_no_new_messages(
         self,
-        plainValidation: ArelleProcessingResult,
-        docsetValidation: ArelleProcessingResult,
+        plainRun: ArelleProcessingResult,
+        docsetRun: ArelleProcessingResult,
     ) -> None:
-        before = errorsAndWarnings(plainValidation.messages)
-        after = errorsAndWarnings(docsetValidation.messages)
+        before = errorsAndWarnings(plainRun.messages)
+        after = errorsAndWarnings(docsetRun.messages)
         assert after - before == set()
 
     def test_no_entry_point_or_document_set_complaint(
-        self, docsetValidation: ArelleProcessingResult
+        self, docsetRun: ArelleProcessingResult
     ) -> None:
         """The specific failure modes this design risks, named explicitly."""
-        text = "\n".join(docsetValidation.log_lines)
+        text = "\n".join(docsetRun.log_lines)
         assert "InlineXbrlDocumentSet" not in text, (
             "Arelle asked for the document set plug-in to be enabled"
         )
@@ -233,7 +219,7 @@ class TestValidation:
 
 class TestFactsUnchanged:
     def test_fact_count_is_identical(
-        self, plainJson: ArelleProcessingResult, docsetJson: ArelleProcessingResult
+        self, plainRun: ArelleProcessingResult, docsetRun: ArelleProcessingResult
     ) -> None:
         import json
 
@@ -241,7 +227,7 @@ class TestFactsUnchanged:
             assert result.has_json, result.log_lines
             return len(json.loads(result.xbrl_json.fileContent)["facts"])
 
-        assert factCount(docsetJson) == factCount(plainJson)
+        assert factCount(docsetRun) == factCount(plainRun)
 
 
 # ── viewer and JSON outputs ───────────────────────────────────────────────────
@@ -249,9 +235,9 @@ class TestFactsUnchanged:
 
 class TestGeneratedOutputs:
     def test_json_is_generated_for_a_docset(
-        self, docsetJson: ArelleProcessingResult
+        self, docsetRun: ArelleProcessingResult
     ) -> None:
-        assert docsetJson.has_json, docsetJson.log_lines
+        assert docsetRun.has_json, docsetRun.log_lines
 
     def test_viewer_is_generated_for_a_docset(
         self, docsetViewer: ArelleProcessingResult
