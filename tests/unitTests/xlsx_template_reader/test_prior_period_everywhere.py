@@ -17,8 +17,7 @@ from dateutil.relativedelta import relativedelta
 from mireport.conversionresults import ConversionResultsBuilder
 from mireport.data.disclosures import VSME_DEFAULTS
 from mireport.report import InlineReport
-from mireport.report.fact import Fact
-from mireport.report.model import FactPeriod
+from mireport.report.factbuilder import FactBuilder
 from mireport.report.periods import DurationPeriodHolder
 from mireport.xlsx_template_reader.processor import XlsxProcessor
 
@@ -44,33 +43,20 @@ def _with_a_prior_period(sample: str) -> tuple[InlineReport, int, int]:
         ),
     )
     report.setPriorPeriodName("prior")
-    prior = report.getReportPeriod("prior")
 
     before = len(report.facts)
     for fact in list(report.facts):
         if fact.period.reportPeriod != report.defaultReportPeriod:
             continue  # a baseline or target year is not a current-period fact to compare
+        fb = FactBuilder.fromFact(report, fact).setNamedPeriod("prior")
         value = fact.value
         if (
             fact.concept.isNumeric
             and isinstance(value, (int, float))
             and not isinstance(value, bool)
         ):
-            value = value * 0.9
-        report.addFact(
-            Fact(
-                fact.concept,
-                value,
-                report,
-                period=FactPeriod(prior, fact.period.part),
-                unit=fact.unit,
-                decimals=fact.decimals,
-                scale=fact.scale,
-                explicit_dimensions=fact.explicit_values,
-                typed_dimensions=fact.typed_values,
-                enumeration=fact.enumeration,
-            )
-        )
+            fb.setValue(value * 0.9)
+        report.addFact(fb.buildFact())
     return report, before, len(report.facts)
 
 

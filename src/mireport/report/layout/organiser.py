@@ -15,6 +15,7 @@ from collections import defaultdict
 from typing import TYPE_CHECKING
 
 from mireport.exceptions import InlineReportException
+from mireport.report.duplicates import DuplicateClass, duplicateClass
 from mireport.report.fact import Fact
 from mireport.report.layout.entries import list_entries
 from mireport.report.layout.grid import GridBuilder
@@ -63,10 +64,10 @@ class ReportLayoutOrganiser:
         Checks that all facts in the report have been used in the report sections.
         Raises an InlineReportException if any facts are not used (and the report says they must be).
         """
-        unused = set(self.report.facts)
+        shown: set[Fact] = set()
         for section in self.reportSections:
             if isinstance(section, TabularReportSection):
-                unused.difference_update(
+                shown.update(
                     cell.fact
                     for row in section.table.rows
                     for cell in row.cells
@@ -74,34 +75,45 @@ class ReportLayoutOrganiser:
                 )
             else:
                 for facts in section.relationshipToFact.values():
-                    unused.difference_update(facts)
-        if not unused:
+                    shown.update(facts)
+
+        # A fact left out is no loss if a complete duplicate of it is shown: the report says the
+        # same thing (OIM). Anything else left out is lost.
+        shownByKey: dict[tuple, list[Fact]] = defaultdict(list)
+        for fact in shown:
+            shownByKey[fact.duplicateKey].append(fact)
+        lost = [
+            fact
+            for fact in dict.fromkeys(self.report.facts)
+            if fact not in shown
+            and not any(
+                duplicateClass(fact, other) is DuplicateClass.COMPLETE
+                for other in shownByKey.get(fact.duplicateKey, ())
+            )
+        ]
+        if not lost:
             return
 
-        processed: set[Fact] = set()
-        for fact in unused:
-            if fact in processed:
-                continue
-            others = list(self.report.getFacts(fact.concept))
-            others.remove(fact)
-            inconsistent = [
-                f
-                for f in others
-                if f.context_key == fact.context_key and f.value != fact.value  # type: ignore[operator]
-            ]
-            processed.add(fact)
-            processed.update(inconsistent)
-            if inconsistent:
+        for fact in lost:
+            classes = {
+                c
+                for other in shownByKey.get(fact.duplicateKey, ())
+                if (c := duplicateClass(fact, other)) is not None
+            }
+            if DuplicateClass.INCONSISTENT in classes:
                 # Surfaced to the report preparer as an error via
                 # InlineReport.reportInconsistentDuplicateFacts; kept here at
                 # debug level only as a developer safety net.
                 L.debug(
-                    f"Fact has inconsistent duplicates.\nUnused: {fact}\nOthers: {inconsistent}"
+                    f"Fact is not in the report (an inconsistent duplicate): {fact}"
                 )
+                continue
+            how = "a consistent duplicate" if classes else "not shown"
+            L.warning(f"Fact is not in the report ({how}): {fact}")
         if self.report.requireAllFactsRendered:
             raise InlineReportException(
-                f"{len(unused)} fact(s) appear nowhere in the report: "
-                + "; ".join(sorted(repr(f) for f in unused))
+                f"{len(lost)} fact(s) appear nowhere in the report: "
+                + "; ".join(sorted(repr(f) for f in lost))
             )
 
     # -- sections ------------------------------------------------------------------------------
