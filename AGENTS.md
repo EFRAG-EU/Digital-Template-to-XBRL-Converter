@@ -279,6 +279,32 @@ conversion id (`/conversions/<id>`, `/downloadFile/<id>/<ftype>/`, `/viewer/<id>
 `.env` + `FLASK_*` env vars in normal operation; tests pass an explicit `test_config` mapping so they
 never pick up a developer's `.env`.
 
+`__init__.py` holds only `create_app()`. The rest is split by concern:
+
+| Module | Owns |
+|---|---|
+| `routes.py` | The routes and request hooks on the `basic` blueprint, and `register_routes(app)`, which `create_app` calls. Handlers stay thin. It imports `migration`, so the migration routes come with it |
+| `app_setup.py` | Startup configuration: logging, feature flags, session backend, Arelle/taxonomy packages, PDF converter report, `brokenApp`, `getArelle`, `DEPLOYMENT_DATETIME` |
+| `conversion.py` | `Conversion` / `ConversionStore`, the typed view over the per-id session dicts |
+| `conversion_service.py` | The Excel → Inline XBRL pipeline (`doConversion`) and the viewer / xBRL-JSON generated from it. Flask-free: the caller passes in the Arelle processor and PDF mode |
+| `captcha.py` | The id-keyed math captcha and the captcha + CSRF check for `/upload` |
+| `forms.py` | Upload limits (`MAX_FILE_SIZE`, `MAX_PDF_COUNT`), image field map, form parsing |
+| `viewer.py` | Serving the viewer and its document set members (with the member CSP) |
+| `migration.py` | Template migration checks and routes |
+| `locales.py`, `template_helpers.py` | Locale list for the UI; Jinja helpers |
+
+Route handlers reach conversion state through `ConversionStore.fromFlask()` and the `Conversion`
+properties, never raw `session[id]` dicts. Its setters mark the session modified, which a nested dict
+write would not do on its own, and they keep stored values to what the session backend can round-trip
+(it hands `NamedTuple`s back as lists, hence `FilelikeAndFileName.from_tuple` on every read). Only the
+CSRF token and captcha answers are read from `session` directly.
+
+Web app tests are grouped by the module they exercise: Flask-free modules in
+`tests/unitTests/digital_converter_webapp/`, routes and end-to-end behaviour in `tests/webappTests/`
+(`test_upload.py`, `test_conversion_service.py`, `test_viewer.py`, …). Shared helpers are fixtures in
+`tests/webappTests/conftest.py` (`upload`, `make_pdf`, `conversion_of`, the session-scoped
+`converted_id`).
+
 ## Conventions
 
 - `from __future__ import annotations` at the top of modules, with type-only imports under

@@ -1,10 +1,8 @@
 """GET-only route smoke tests — no conversion required."""
 
 import json
-import logging
 
 import mireport
-from digital_converter_webapp import create_app
 
 
 class TestHomePage:
@@ -19,16 +17,6 @@ class TestHomePage:
     def test_home_contains_file_input(self, client):
         resp = client.get("/")
         assert b'type="file"' in resp.data
-
-
-class TestConversionsList:
-    def test_conversions_list_loads(self, client):
-        resp = client.get("/conversions/")
-        assert resp.status_code == 200
-
-    def test_unknown_conversion_is_404(self, client):
-        resp = client.get("/conversions/does-not-exist")
-        assert resp.status_code == 404
 
 
 class TestLocales:
@@ -52,20 +40,6 @@ class TestLocales:
             assert "label" in entry
 
 
-class TestBrokenConfig:
-    def test_unusable_session_config_yields_broken_app(self):
-        # Session backend selection sees test_config: a deployment with no
-        # usable SESSION_TYPE must degrade to the 503 brokenApp, not limp on
-        app = create_app({"TESTING": True, "DEPLOYMENT": "production"})
-        resp = app.test_client().get("/")
-        assert resp.status_code == 503
-
-    def test_dropped_session_file_dir_warns(self, caplog, tmp_path):
-        with caplog.at_level(logging.WARNING, logger="digital_converter_webapp"):
-            create_app({"TESTING": True, "SESSION_FILE_DIR": str(tmp_path)})
-        assert any("SESSION_FILE_DIR" in r.message for r in caplog.records)
-
-
 class TestDebugSession:
     def test_not_found_when_debug_off(self, client):
         resp = client.get("/debug_session")
@@ -76,9 +50,3 @@ class TestDebugSession:
         resp = client.get("/debug_session")
         assert resp.status_code == 200
         assert resp.is_json
-
-
-class TestDeploymentHeader:
-    def test_response_includes_deployment_header(self, client):
-        resp = client.get("/")
-        assert "X-Deployment-Datetime" in resp.headers
