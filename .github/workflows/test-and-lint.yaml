@@ -10,6 +10,7 @@ on:
 jobs:
   lint:
     name: Ruff Lint and Format Check
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -27,6 +28,7 @@ jobs:
 
   test:
     name: Tests
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
