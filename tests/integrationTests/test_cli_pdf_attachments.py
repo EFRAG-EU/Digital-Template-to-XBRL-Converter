@@ -12,7 +12,6 @@ test_real_pdf2htmlex.py.
 from __future__ import annotations
 
 import json
-import os
 import shutil
 import subprocess
 import sys
@@ -37,15 +36,7 @@ def runCli(outputDir: Path, extraData: Path | None) -> subprocess.CompletedProce
     ]
     if extraData is not None:
         argv.extend(["--extra-data", str(extraData)])
-    # A wide console keeps rich from wrapping a long temp path (and so the file
-    # name the tests look for) across lines.
-    return subprocess.run(
-        argv,
-        capture_output=True,
-        encoding="utf-8",
-        check=False,
-        env={**os.environ, "COLUMNS": "400"},
-    )
+    return subprocess.run(argv, capture_output=True, encoding="utf-8", check=False)
 
 
 def writeExtraData(directory: Path, paths: list[str]) -> Path:
@@ -96,7 +87,8 @@ class TestPdfAttachments:
         extra.write_text(json.dumps({"pdfAttachments": [{"path": "nope.pdf"}]}))
         result = runCli(tmp_path / "out", extra)
         assert result.returncode != 0
-        assert "nope.pdf" in (result.stdout + result.stderr)
+        assert "nope.pdf" in result.stderr
+        assert "Traceback" not in result.stderr
 
     @pytest.mark.skipif(
         shutil.which("pdf2htmlEX") is not None,

@@ -49,11 +49,16 @@ def _convert_docx_to_markup(docx_path: Path, pc: ProcessingContext) -> Markup:
     return Markup(result.value)
 
 
+class ExtraDataFileError(FileNotFoundError):
+    """A file named in the --extra-data JSON is missing: a mistake in the
+    input, reported as a usage error rather than a crash."""
+
+
 def _resolve_extra_path(extra_file: Path, relative_path: str) -> Path:
     """Resolve a relative path from extra_data JSON and verify the file exists."""
     resolved = extra_file.parent / relative_path
     if not resolved.is_file():
-        raise FileNotFoundError(f"Referenced file does not exist: {resolved}")
+        raise ExtraDataFileError(f"Referenced file does not exist: {resolved}")
     return resolved
 
 
@@ -437,7 +442,10 @@ def main() -> None:
     load_dotenv()
     parser = createArgParser()
     args = parseArgs(parser)
-    result, excel = doConversion(args)
+    try:
+        result, excel = doConversion(args)
+    except ExtraDataFileError as e:
+        parser.error(str(e))
     outputMessages(args, result, excel)
 
 
