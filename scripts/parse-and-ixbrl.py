@@ -387,7 +387,9 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, list[str]
                     pc.addDevInfoMessage("Failed to create viewer.")
 
             if args.json:
-                arelleResults = arp.generateXBRLJson(reportPackage)
+                arelleResults = arp.validateReportPackage(
+                    reportPackage, getReportAsJson=True
+                )
                 resultsBuilder.addMessages(arelleResults.messages)
 
                 if arelleResults.has_json:

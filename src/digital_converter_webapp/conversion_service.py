@@ -283,6 +283,8 @@ def ensureXbrlJson(
     if (json := conv.json) is None:
         zip_ = conv.zip
         assert zip_ is not None, "No report package to render as xBRL-JSON"
-        conv.json = json = arelle.generateXBRLJson(zip_).xbrl_json
+        conv.json = json = arelle.validateReportPackage(
+            zip_, getReportAsJson=True
+        ).xbrl_json
 
     return json

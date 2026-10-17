@@ -1,6 +1,5 @@
-"""validateReportPackage(getReportAsJson=True) must be validation and
-generateXBRLJson in one Arelle session, so callers needing both can stop
-paying for two."""
+"""validateReportPackage(getReportAsJson=True) must be validation plus the
+xBRL-JSON in one Arelle session, so callers needing both pay for one."""
 
 from __future__ import annotations
 
@@ -75,13 +74,3 @@ def test_the_same_session_still_validates(
 ) -> None:
     assert not validatedWithJson.has_exceptions, validatedWithJson.log_lines
     assert _errorsAndWarnings(validatedWithJson) == _errorsAndWarnings(validated)
-
-
-def test_generate_xbrl_json_is_the_same_thing(
-    arelle: ArelleReportProcessor,
-    package: FilelikeAndFileName,
-    validatedWithJson: ArelleProcessingResult,
-) -> None:
-    viaWrapper = arelle.generateXBRLJson(package)
-    assert viaWrapper.xbrl_json.fileContent == validatedWithJson.xbrl_json.fileContent
-    assert viaWrapper.xbrl_json.filename == validatedWithJson.xbrl_json.filename

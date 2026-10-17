@@ -132,7 +132,7 @@ def main() -> None:
                 print("Failed to create inline viewer.")
 
         if json_path:
-            arelle_result = arp.generateXBRLJson(source)
+            arelle_result = arp.validateReportPackage(source, getReportAsJson=True)
             arelle_messages.extend(arelle_result.messages)
             if arelle_result.has_json:
                 if json_path.is_file():

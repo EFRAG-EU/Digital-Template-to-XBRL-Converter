@@ -255,10 +255,6 @@ class ArelleReportProcessor:
             result.addException(e)
         return result
 
-    def generateXBRLJson(self, source: FilelikeAndFileName) -> ArelleProcessingResult:
-        """Validate the report package and return its xBRL-JSON rendering."""
-        return self.validateReportPackage(source, getReportAsJson=True)
-
     def generateInlineViewer(
         self, source: FilelikeAndFileName
     ) -> ArelleProcessingResult:
