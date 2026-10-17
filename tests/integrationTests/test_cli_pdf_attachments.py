@@ -12,6 +12,7 @@ test_real_pdf2htmlex.py.
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -36,7 +37,15 @@ def runCli(outputDir: Path, extraData: Path | None) -> subprocess.CompletedProce
     ]
     if extraData is not None:
         argv.extend(["--extra-data", str(extraData)])
-    return subprocess.run(argv, capture_output=True, encoding="utf-8", check=False)
+    # A wide console keeps rich from wrapping a long temp path (and so the file
+    # name the tests look for) across lines.
+    return subprocess.run(
+        argv,
+        capture_output=True,
+        encoding="utf-8",
+        check=False,
+        env={**os.environ, "COLUMNS": "400"},
+    )
 
 
 def writeExtraData(directory: Path, paths: list[str]) -> Path:

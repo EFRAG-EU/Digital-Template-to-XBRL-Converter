@@ -25,8 +25,12 @@ jobs:
           args: format --check .
 
   test:
-    name: Tests
+    name: Tests (${{ matrix.suite }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [unitTests, integrationTests, webappTests]
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -57,7 +61,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install .[dev] pytest-github-actions-annotate-failures
 
-      - name: Run Tests
-        run: pytest tests -n auto --dist worksteal --durations=20 --tb=short --color=yes
+      - name: Run ${{ matrix.suite }}
+        run: pytest tests/${{ matrix.suite }} -n auto --dist worksteal --durations=20 --tb=short --color=yes
         env:
           PYTEST_GITHUB_ACTIONS_ANNOTATE: "true"
