@@ -1,8 +1,36 @@
+"""XBRL periods as OIM has them: datetimes, with a duration running up to (not including) its end.
+
+``2025-01-01`` to ``2025-12-31`` as people say it is ``2025-01-01T00:00`` to ``2026-01-01T00:00`` here, so
+the start of one year *is* the end of the one before, and an instant is just a datetime. The only
+day arithmetic is in this module: ``DurationPeriodHolder.fromDays`` going in, ``firstDay``/``lastDay``
+coming out for whoever (aoix, a reader of the page) can only say whole days.
+"""
+
 from __future__ import annotations
 
 from abc import ABC
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, time, timedelta
+
+from mireport.exceptions import InlineReportException
+
+_ONE_DAY = timedelta(days=1)
+
+
+def _require_datetime(value: object, what: str) -> None:
+    if not isinstance(value, datetime):
+        raise InlineReportException(
+            f"{what} must be a datetime (a date is a whole day, so say which end of it), "
+            f"not {value!r}."
+        )
+
+
+def _whole_day(value: datetime, what: str) -> date:
+    if value.time() != time.min:
+        raise InlineReportException(
+            f"{what} {value.isoformat()} is not at midnight; only whole days can be written as dates."
+        )
+    return value.date()
 
 
 class PeriodHolder(ABC):
@@ -23,13 +51,56 @@ class PeriodHolder(ABC):
 
 @dataclass(slots=True, frozen=True, eq=True)
 class DurationPeriodHolder(PeriodHolder):
-    start: datetime | date
-    end: datetime | date
+    start: datetime
+    end: datetime
+
+    def __post_init__(self) -> None:
+        _require_datetime(self.start, "A duration's start")
+        _require_datetime(self.end, "A duration's end")
+        if self.end <= self.start:
+            raise InlineReportException(
+                f"A duration must end after it starts, not {self.start} to {self.end}."
+            )
+
+    def __str__(self) -> str:
+        return f"{self.start.isoformat()}/{self.end.isoformat()}"
+
+    @classmethod
+    def fromDays(cls, first: date, last: date) -> DurationPeriodHolder:
+        """The duration that includes ``first`` and ``last``, both whole days."""
+        return cls(
+            datetime.combine(first, time.min),
+            datetime.combine(last, time.min) + _ONE_DAY,
+        )
+
+    @property
+    def startInstant(self) -> InstantPeriodHolder:
+        return InstantPeriodHolder(self.start)
+
+    @property
+    def endInstant(self) -> InstantPeriodHolder:
+        return InstantPeriodHolder(self.end)
+
+    @property
+    def firstDay(self) -> date:
+        """The first day included, for aoix and for people."""
+        return _whole_day(self.start, "The start")
+
+    @property
+    def lastDay(self) -> date:
+        """The last day included, for aoix and for people."""
+        return _whole_day(self.end, "The end") - _ONE_DAY
 
 
 @dataclass(slots=True, frozen=True, eq=True)
 class InstantPeriodHolder(PeriodHolder):
-    instant: datetime | date
+    instant: datetime
+
+    def __post_init__(self) -> None:
+        _require_datetime(self.instant, "An instant")
+
+    def __str__(self) -> str:
+        return self.instant.isoformat()
 
 
 _Period = InstantPeriodHolder | DurationPeriodHolder

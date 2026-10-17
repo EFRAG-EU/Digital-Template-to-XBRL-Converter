@@ -163,7 +163,7 @@ class FactCreator:
     def getOrAddNamedPeriodForYear(self, name: str, year: int) -> str:
         if self._report.hasNamedPeriod(name):
             return name
-        endOfDefault = self._report.defaultPeriod.end
+        endOfDefault = self._report.defaultPeriod.lastDay
         end = endOfDefault + relativedelta(year=year)
         start = end + relativedelta(years=-1, days=+1)
         self._report.addDurationPeriod(name, start, end)

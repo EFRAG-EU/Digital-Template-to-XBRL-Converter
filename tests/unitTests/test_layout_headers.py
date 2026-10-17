@@ -18,8 +18,8 @@ from mireport.report.layout.model import FactGrid, TableHeadingCell, TableStyle
 from mireport.report.periods import DurationPeriodHolder
 from mireport.taxonomy import Concept
 
-CURRENT = DurationPeriodHolder(date(2025, 1, 1), date(2025, 12, 31))
-PRIOR = DurationPeriodHolder(date(2024, 1, 1), date(2024, 12, 31))
+CURRENT = DurationPeriodHolder.fromDays(date(2025, 1, 1), date(2025, 12, 31))
+PRIOR = DurationPeriodHolder.fromDays(date(2024, 1, 1), date(2024, 12, 31))
 
 
 def _fact(*, numeric: bool = True, unit: str | None = "t", period=CURRENT) -> Fact:

@@ -192,11 +192,15 @@ class InlineReport:
         self._defaultPeriodName = name
 
     def addDurationPeriod(self, name: str, periodStart: date, periodEnd: date) -> bool:
+        """Declare a period from its first and last day, both included."""
+        return self.addPeriod(
+            name, DurationPeriodHolder.fromDays(periodStart, periodEnd)
+        )
+
+    def addPeriod(self, name: str, duration: DurationPeriodHolder) -> bool:
         if name in self._periods:
             return False
-        self._periods[name] = ReportPeriod(
-            name, DurationPeriodHolder(periodStart, periodEnd)
-        )
+        self._periods[name] = ReportPeriod(name, duration)
         return True
 
     def hasNamedPeriod(self, name: str) -> bool:
@@ -237,7 +241,9 @@ class InlineReport:
         p = []
         for name, reportPeriod in self._periods.items():
             duration = reportPeriod.duration
-            p.append(f'{{{{ period {name} "{duration.start}" "{duration.end}" }}}}')
+            p.append(
+                f'{{{{ period {name} "{duration.firstDay}" "{duration.lastDay}" }}}}'
+            )
         p.append(f"{{{{ default period = {self._defaultPeriodName} }}}}")
         return "\n".join(p)
 
@@ -600,7 +606,7 @@ class InlineReport:
         for this report, e.g. for a caller assembling a package itself
         (merging supplementary content into the report bytes first) rather
         than going through :meth:`getInlineReportPackage`."""
-        return f"{self._getSafeEntityName()}_{self.defaultPeriod.end.year}"
+        return f"{self._getSafeEntityName()}_{self.defaultPeriod.lastDay.year}"
 
     def getInlineReportPackage(
         self,
@@ -623,7 +629,7 @@ class InlineReport:
         )
 
     def getInlineReport(self) -> FilelikeAndFileName:
-        yearEnd = self.defaultPeriod.end.year
+        yearEnd = self.defaultPeriod.lastDay.year
         filename = f"{self._getSafeEntityName()}_{yearEnd}_XBRL_Report.html"
         return FilelikeAndFileName(
             fileContent=self._constructInlineReport().encode("UTF-8"), filename=filename

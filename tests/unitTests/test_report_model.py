@@ -187,7 +187,7 @@ def test_explicit_dimension_values_compare_by_dimension_and_member() -> None:
 
 
 def test_a_report_period_is_a_name_for_a_duration() -> None:
-    duration = DurationPeriodHolder(date(2025, 1, 1), date(2025, 12, 31))
+    duration = DurationPeriodHolder.fromDays(date(2025, 1, 1), date(2025, 12, 31))
     period = ReportPeriod("cur", duration)
     assert period.name == "cur" and period.duration == duration
     assert period == ReportPeriod("cur", duration)

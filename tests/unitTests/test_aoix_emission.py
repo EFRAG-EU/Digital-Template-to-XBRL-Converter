@@ -33,7 +33,9 @@ T = _Q.fromString("utr:tCO2e")
 EUR = _Q.fromString("iso4217:EUR")
 M = _Q.fromString("utr:m")
 S = _Q.fromString("utr:s")
-PERIOD = ReportPeriod("cur", DurationPeriodHolder(date(2025, 1, 1), date(2025, 12, 31)))
+PERIOD = ReportPeriod(
+    "cur", DurationPeriodHolder.fromDays(date(2025, 1, 1), date(2025, 12, 31))
+)
 
 
 def _concept(

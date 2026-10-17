@@ -13,16 +13,16 @@
     {%- if fact.concept.periodType.value == "duration" -%}
         {{ render_duration_period(fact.period.duration) }}
     {%- else -%}
-        {{- fact.period.duration.end -}}
+        {{- fact.period.duration.lastDay -}}
     {%- endif -%}
 {%- endmacro %}
 
 {% macro render_duration_period(period) -%}
-    {{- period.start }} &#8211; {{ period.end -}}
+    {{- period.firstDay }} &#8211; {{ period.lastDay -}}
 {%- endmacro %}
 
 {% macro render_duration_period_endyear(period) -%}
-    {{- period.end.year -}}
+    {{- period.lastDay.year -}}
 {%- endmacro %}
 
 {% macro render_instant_period(period) -%}
