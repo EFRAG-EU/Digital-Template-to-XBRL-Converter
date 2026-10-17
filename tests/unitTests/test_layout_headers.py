@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from datetime import date
-from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 from mireport.report.fact import Fact
@@ -12,14 +11,26 @@ from mireport.report.layout.headers import (
     build_header_rows,
     build_table_rows,
     column_flags,
+    column_periods,
     drop_empty_columns,
+    table_period,
 )
 from mireport.report.layout.model import FactGrid, TableHeadingCell, TableStyle
+from mireport.report.model import FactPeriod, PeriodPart, ReportPeriod
 from mireport.report.periods import DurationPeriodHolder
 from mireport.taxonomy import Concept
 
-CURRENT = DurationPeriodHolder.fromDays(date(2025, 1, 1), date(2025, 12, 31))
-PRIOR = DurationPeriodHolder.fromDays(date(2024, 1, 1), date(2024, 12, 31))
+CUR = ReportPeriod(
+    "cur", DurationPeriodHolder.fromDays(date(2025, 1, 1), date(2025, 12, 31))
+)
+PRIOR_RP = ReportPeriod(
+    "prior", DurationPeriodHolder.fromDays(date(2024, 1, 1), date(2024, 12, 31))
+)
+CURRENT = FactPeriod(CUR)
+PRIOR = FactPeriod(PRIOR_RP)
+CUR_END = FactPeriod(CUR, PeriodPart.End)
+CUR_START = FactPeriod(CUR, PeriodPart.Start)
+PRIOR_END = FactPeriod(PRIOR_RP, PeriodPart.End)
 
 
 def _fact(*, numeric: bool = True, unit: str | None = "t", period=CURRENT) -> Fact:
@@ -27,7 +38,7 @@ def _fact(*, numeric: bool = True, unit: str | None = "t", period=CURRENT) -> Fa
     fact.concept = MagicMock(spec=Concept)
     fact.concept.isNumeric = numeric
     fact.unitSymbol = unit
-    fact.period = SimpleNamespace(duration=period)
+    fact.period = period
     return fact
 
 
@@ -203,3 +214,45 @@ class TestAssembleTable:
             ["x", "y"],
         )
         assert assemble_table(grid).numeric is False
+
+
+class TestHeadingPeriods:
+    """What a table or column says its period is, when its facts are not all in one."""
+
+    @staticmethod
+    def _grid(*periods: FactPeriod) -> list[list[Fact | None]]:
+        return [[_fact(period=p) for p in periods]]
+
+    def test_facts_in_the_same_period_share_it(self) -> None:
+        assert table_period(self._grid(CUR_END, CUR_END)) == CUR_END
+
+    def test_an_end_instant_sits_under_the_whole_period(self) -> None:
+        assert table_period(self._grid(CURRENT, CUR_END)) == CURRENT
+
+    def test_a_start_instant_is_a_different_date_and_is_not_folded_in(self) -> None:
+        assert table_period(self._grid(CURRENT, CUR_START)) is None
+        assert table_period(self._grid(CUR_END, CUR_START)) is None
+
+    def test_a_table_of_opening_balances_is_headed_by_the_start(self) -> None:
+        assert table_period(self._grid(CUR_START, CUR_START)) == CUR_START
+
+    def test_different_report_periods_have_no_one_period(self) -> None:
+        assert table_period(self._grid(CUR_END, PRIOR_END)) is None
+
+    def test_the_start_of_one_year_and_the_end_of_the_year_before_are_both_kept(
+        self,
+    ) -> None:
+        # the same OIM instant, but one is an opening balance of 2025 and the other a closing
+        # balance of 2024, and each column says which
+        assert CUR_START.oim == PRIOR_END.oim
+        assert column_periods(self._grid(CUR_START, PRIOR_END)) == [
+            CUR_START,
+            PRIOR_END,
+        ]
+
+    def test_each_column_folds_its_own_facts(self) -> None:
+        data = [
+            [_fact(period=CURRENT), _fact(period=CUR_START)],
+            [_fact(period=CUR_END), _fact(period=CUR_START)],
+        ]
+        assert column_periods(data) == [CURRENT, CUR_START]

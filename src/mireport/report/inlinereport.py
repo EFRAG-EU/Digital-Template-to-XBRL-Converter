@@ -33,8 +33,13 @@ from mireport.report.fact import Fact, Symbol
 from mireport.report.factbuilder import FactBuilder
 from mireport.report.footnote import Footnote, FootnoteManager
 from mireport.report.layout import ReportLayoutOrganiser, TableStyle
-from mireport.report.model import ReportPeriod
-from mireport.report.periods import DurationPeriodHolder, PeriodHolder
+from mireport.report.model import FactPeriod, PeriodPart, ReportPeriod
+from mireport.report.periods import (
+    DurationPeriodHolder,
+    InstantPeriodHolder,
+    PeriodHolder,
+    _Period,
+)
 from mireport.report.reportpackage import buildReportPackage
 from mireport.report.theme import ReportTheme
 from mireport.stringutil import NumberGroupingApostrophes
@@ -219,6 +224,24 @@ class InlineReport:
             raise InlineReportException(
                 f"Period '{name}' does not exist in the report."
             ) from None
+
+    def locatePeriod(self, oim: _Period) -> FactPeriod:
+        """Where an OIM period falls among the report's periods, for a producer that was not told
+        which part of one it means (an xBRL-JSON fact, say). An instant that is both the end of one
+        period and the start of the next is taken as the end."""
+        match oim:
+            case DurationPeriodHolder():
+                for reportPeriod in self._periods.values():
+                    if reportPeriod.duration == oim:
+                        return FactPeriod(reportPeriod, PeriodPart.Whole)
+            case InstantPeriodHolder():
+                for part in (PeriodPart.End, PeriodPart.Start):
+                    for reportPeriod in self._periods.values():
+                        if (found := FactPeriod(reportPeriod, part)).oim == oim:
+                            return found
+        raise InlineReportException(
+            f"{oim} is not one of the report's periods, nor the start or end of one."
+        )
 
     @property
     def defaultReportPeriod(self) -> ReportPeriod:

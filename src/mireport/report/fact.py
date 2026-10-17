@@ -10,7 +10,7 @@ from mireport.localise import localise_and_format_number
 from mireport.report.aoix import fact_to_aoix
 from mireport.report.model import (
     ExplicitDimensionValue,
-    ReportPeriod,
+    FactPeriod,
     TypedDimensionValue,
     Unit,
 )
@@ -59,7 +59,7 @@ class Fact:
         value: FactValue,
         report: InlineReport,
         *,
-        period: ReportPeriod,
+        period: FactPeriod,
         unit: Unit | None = None,
         decimals: DecimalPlaces | None = None,
         scale: int | None = None,
@@ -72,7 +72,12 @@ class Fact:
         self.value: FactValue = value
         self.provenance: Provenance | None = provenance
         self._report = report
-        self.period: ReportPeriod = period
+        if not period.fitsConcept(concept):
+            raise InlineReportException(
+                f"{concept.qname} is a {concept.periodType.value} concept, which cannot be "
+                f"reported for {period.part.value!r} of period {period.reportPeriod.name!r}."
+            )
+        self.period: FactPeriod = period
         self.unit: Unit | None = unit
         self.decimals: DecimalPlaces | None = decimals
         self.scale: int | None = scale
@@ -94,7 +99,9 @@ class Fact:
         )
 
     def _describe_context(self) -> str:
-        bits = [f"period={self.period.name}"]
+        bits = [f"period={self.period.reportPeriod.name}"]
+        if self.period.isInstant:
+            bits[0] += f" ({self.period.part.value})"
         if (unit := self.unit) is not None:
             bits.append(f"unit={unit}")
         if (decimals := self.decimals) is not None:
@@ -215,7 +222,12 @@ class Fact:
 
     @property
     def hasNonDefaultPeriod(self) -> bool:
-        return self.period != self._report.defaultReportPeriod
+        """Whether the page has to say this fact's period: it is not the report's own, or it is the
+        start of it (an opening balance, which would read as a closing one if it said nothing)."""
+        return (
+            self.period.reportPeriod != self._report.defaultReportPeriod
+            or self.period.isStart
+        )
 
     @property
     def unitSymbol(self) -> str:

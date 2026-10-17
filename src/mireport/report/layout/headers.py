@@ -9,7 +9,7 @@ each fact.
 from __future__ import annotations
 
 from collections import defaultdict
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from itertools import compress
 
 from mireport.report.fact import Fact
@@ -21,7 +21,7 @@ from mireport.report.layout.model import (
     TableHeadingCell,
     TableRow,
 )
-from mireport.report.periods import _Period
+from mireport.report.model import FactPeriod, PeriodPart
 from mireport.taxonomy import Concept
 
 Data = list[list[Fact | None]]
@@ -40,10 +40,23 @@ def table_unit(data: Data) -> str | None:
     return None
 
 
-def table_period(data: Data) -> _Period | None:
+def _heading_period(periods: Iterable[FactPeriod]) -> FactPeriod | None:
+    """The one period that can stand for all of ``periods``, if there is one: the period they all
+    are, or the whole of the report period when they are that and its end (a balance at the
+    end of a year sits comfortably under that year). The start of a period is a different date
+    from any of its other parts, so it is never folded into another."""
+    found = set(periods)
+    if len(found) == 1:
+        return next(iter(found))
+    reports = {fp.reportPeriod for fp in found}
+    if len(reports) == 1 and not any(fp.isStart for fp in found):
+        return FactPeriod(next(iter(reports)), PeriodPart.Whole)
+    return None
+
+
+def table_period(data: Data) -> FactPeriod | None:
     """The period every fact shares, if there is exactly one."""
-    periods = {fact.period.duration for row in data for fact in row if fact}
-    return next(iter(periods)) if len(periods) == 1 else None
+    return _heading_period(fact.period for row in data for fact in row if fact)
 
 
 def column_units(data: Data) -> list[str | None]:
@@ -63,20 +76,16 @@ def column_units(data: Data) -> list[str | None]:
     return result if any(unit is not None for unit in result) else []
 
 
-def column_periods(data: Data) -> list[_Period | None]:
+def column_periods(data: Data) -> list[FactPeriod | None]:
     """Each column's period (None where it has none or several), or [] if no column has one."""
-    by_column: dict[int, set[_Period]] = defaultdict(set)
+    by_column: dict[int, set[FactPeriod]] = defaultdict(set)
     for row in data:
         for col, fact in enumerate(row):
             if fact:
-                by_column[col].add(fact.period.duration)
-    result: list[_Period | None] = []
-    for col in range(len(data[0]) if data else 0):
-        match by_column[col]:
-            case periods if len(periods) == 1:
-                result.append(next(iter(periods)))
-            case _:
-                result.append(None)
+                by_column[col].add(fact.period)
+    result = [
+        _heading_period(by_column[col]) for col in range(len(data[0]) if data else 0)
+    ]
     return result if any(period is not None for period in result) else []
 
 
@@ -113,9 +122,9 @@ def build_header_rows(
     col_numeric: list[bool],
     all_numeric: bool,
     unit: str | None,
-    period: _Period | None,
+    period: FactPeriod | None,
     units: list[str | None],
-    periods: list[_Period | None],
+    periods: list[FactPeriod | None],
 ) -> list[list[TableHeadingCell]]:
     """The header rows, top to bottom: a table-wide period, a table-wide unit, the column labels,
     then a period and a unit per column where those were not said once for the table."""

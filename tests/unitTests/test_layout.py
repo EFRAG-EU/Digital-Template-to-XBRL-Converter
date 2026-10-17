@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import date, datetime
-from types import SimpleNamespace
+from datetime import date
 from unittest.mock import MagicMock
 
 from mireport.report.disclosure_layout import (
@@ -24,7 +23,8 @@ from mireport.report.layout.headers import (
     table_period,
     table_unit,
 )
-from mireport.report.periods import DurationPeriodHolder, InstantPeriodHolder
+from mireport.report.model import FactPeriod, PeriodPart, ReportPeriod
+from mireport.report.periods import DurationPeriodHolder
 from mireport.taxonomy import (
     Concept,
     PresentationGroup,
@@ -45,14 +45,14 @@ def _fact(
     context=None,
     value="x",
 ):
-    """A fact as layout sees it. `period` is the duration a ReportPeriod would hold, `explicit`
+    """A fact as layout sees it. `period` is a FactPeriod, `explicit`
     maps an explicit dimension to its member, `typed` a typed dimension to its text, and `context`
     stands in for everything that makes two facts duplicates of each other."""
     f = MagicMock(spec=Fact)
     f.concept = concept or MagicMock(spec=Concept)
     f.concept.isNumeric = numeric
     f.unitSymbol = unit
-    f.period = SimpleNamespace(duration=period)
+    f.period = period
     f.explicit_dimensions = dict(explicit or {})
     f.typed_dimensions = dict(typed or {})
     f.context_key = context
@@ -84,23 +84,25 @@ def _section(definition: str, style=PresentationStyle.List, label=None):
     return ReportSection(relationshipToFact={}, presentation=pres)
 
 
-_DUR = DurationPeriodHolder.fromDays(date(2024, 1, 1), date(2024, 12, 31))
-_INST = InstantPeriodHolder(datetime(2025, 1, 1))
+_RP_2024 = ReportPeriod(
+    "prior", DurationPeriodHolder.fromDays(date(2024, 1, 1), date(2024, 12, 31))
+)
+_RP_2025 = ReportPeriod(
+    "cur", DurationPeriodHolder.fromDays(date(2025, 1, 1), date(2025, 12, 31))
+)
+_DUR = FactPeriod(_RP_2024)
+_INST = FactPeriod(_RP_2025, PeriodPart.End)
 
 
 class TestTableHeadingCell:
     def test_duration_period(self):
         cell = TableHeadingCell(_DUR)
-        assert cell.isDuration
-        assert not cell.isInstant
         assert cell.isPeriod
         assert not cell.isConcept
         assert not cell.isRelationship
 
     def test_instant_period(self):
         cell = TableHeadingCell(_INST)
-        assert not cell.isDuration
-        assert cell.isInstant
         assert cell.isPeriod
         assert not cell.isConcept
         assert not cell.isRelationship
@@ -121,8 +123,7 @@ class TestTableHeadingCell:
 
     def test_string_value(self):
         cell = TableHeadingCell("some label")
-        assert not cell.isDuration
-        assert not cell.isInstant
+        assert not cell.isPeriod
         assert not cell.isConcept
         assert not cell.isRelationship
 

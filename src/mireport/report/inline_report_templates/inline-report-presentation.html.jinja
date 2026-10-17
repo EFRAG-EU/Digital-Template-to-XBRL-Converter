@@ -185,12 +185,8 @@
                             {# nothing to do #}
                         {% elif column.value is string %}
                            {{ column.value | default("") }}
-                        {% elif rowloop.first and column.isDuration %}
-                            {{ macros.render_duration_period(column.value) }}
-                        {% elif column.isDuration %}
-                            {{ macros.render_duration_period_endyear(column.value) }}
-                        {% elif column.isInstant %}
-                            {{ macros.render_instant_period(column.value) }}
+                        {% elif column.isPeriod %}
+                            {{ macros.render_period(column.value, short=not rowloop.first) }}
                         {% elif column.isConcept %}
                             {{ macros.concept_label(column.value) | e }}
                         {% elif column.isRelationship %}

@@ -64,8 +64,8 @@ def fact_aspects(fact: Fact) -> list[str]:
     """Every aspect of the fact, as aoix text, in a fixed order."""
     concept = fact.concept
     aspects = [
-        f"period={fact.period.name}",
-        f"period-type={concept.periodType.value}",
+        f"period={fact.period.reportPeriod.name}",
+        f"period-type={fact.period.aoixPeriodType}",
     ]
     if (unit := fact.unit) is not None:
         aspects.append(unit_aspect(unit))

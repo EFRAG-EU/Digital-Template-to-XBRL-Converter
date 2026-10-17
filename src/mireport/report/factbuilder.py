@@ -11,11 +11,14 @@ from mireport.report.aoix import check_typed_value_expressible, coerce_boolean
 from mireport.report.fact import Fact, Provenance
 from mireport.report.model import (
     ExplicitDimensionValue,
+    FactPeriod,
+    PeriodPart,
     ReportPeriod,
     TypedDimensionValue,
     Unit,
 )
-from mireport.taxonomy import Concept, QName, Taxonomy
+from mireport.report.periods import _Period
+from mireport.taxonomy import Concept, PeriodType, QName, Taxonomy
 from mireport.typealiases import DecimalPlaces, FactValue
 
 if TYPE_CHECKING:
@@ -38,6 +41,7 @@ class FactBuilder:
         self._value: FactValue | None = None
         self._provenance: Provenance | None = None
         self._period: ReportPeriod | None = None
+        self._part: PeriodPart | None = None
         self._unit: Unit | None = None
         self._decimals: DecimalPlaces | None = None
         self._scale: int | None = None
@@ -46,7 +50,7 @@ class FactBuilder:
         self._enumeration: tuple[Concept, ...] | None = None
 
     def __repr__(self) -> str:
-        bits = (self._concept, self._value, self._period, self._unit)
+        bits = (self._concept, self._value, self._period, self._part, self._unit)
         return f"FactBuilder{bits}"
 
     @property
@@ -142,15 +146,36 @@ class FactBuilder:
         self._scale = scale
         return self
 
-    def setNamedPeriod(self, periodName: str) -> Self:
+    def setNamedPeriod(self, periodName: str, *, at: PeriodPart | None = None) -> Self:
         """
         Sets the period for the fact to a named period in the InlineReport.
+
+        An instant concept is reported at the end of the period unless ``at`` says
+        ``PeriodPart.Start``: an opening balance is the instant the period starts at, which is also
+        where the one before ended, but it is not that period's closing balance and is rendered as
+        the start of this one.
         """
         if not self._report.hasNamedPeriod(periodName):
             raise InlineReportException(
                 f"Period '{periodName}' does not exist in the report."
             )
+        if at is PeriodPart.Whole:
+            raise InlineReportException(
+                "A fact is reported for the whole of a period by being a duration concept; "
+                "'at' is for choosing between the start and the end."
+            )
         self._period = self._report.getReportPeriod(periodName)
+        self._part = at
+        return self
+
+    def setPeriod(self, period: _Period) -> Self:
+        """
+        Sets the period for the fact from an OIM period (a duration, or an instant), which has to be
+        a declared period or the end or start of one (see ``InlineReport.locatePeriod``).
+        """
+        located = self._report.locatePeriod(period)
+        self._period = located.reportPeriod
+        self._part = located.part
         return self
 
     def setEnumerationValue(self, member: Concept) -> Self:
@@ -336,7 +361,11 @@ class FactBuilder:
         for typed in self._typed.values():
             check_typed_value_expressible(typed)
         self.validateTaxonomyDimensions()
-        period = self._period or self._report.defaultReportPeriod
+        reportPeriod = self._period or self._report.defaultReportPeriod
+        if concept.periodType is PeriodType.Instant:
+            part = self._part or PeriodPart.End
+        else:
+            part = self._part or PeriodPart.Whole
         unit = self._unit
         if unit is None and concept.isMonetary:
             # No currency given: the report's own, which validateNumeric has checked exists.
@@ -347,7 +376,7 @@ class FactBuilder:
             concept,
             self._value,
             self._report,
-            period=period,
+            period=FactPeriod(reportPeriod, part),
             unit=unit,
             decimals=self._decimals,
             scale=self._scale,
