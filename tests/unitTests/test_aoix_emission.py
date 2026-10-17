@@ -178,7 +178,9 @@ class TestDimensions:
 
     def test_quotes_and_backslashes_are_escaped_not_refused(self) -> None:
         dimension = _dimension("xbrli:Axis", "xbrli:Wrapper")
-        fact = _fact(typed_values=(TypedDimensionValue.of(dimension, 'say "hi" \\ R&D'),))
+        fact = _fact(
+            typed_values=(TypedDimensionValue.of(dimension, 'say "hi" \\ R&D'),)
+        )
         assert fact_aspects(fact)[-2:] == [
             "typed-value-wrapper=xbrli:Wrapper",
             r'xbrli:Axis="say \"hi\" \\ R&D"',
