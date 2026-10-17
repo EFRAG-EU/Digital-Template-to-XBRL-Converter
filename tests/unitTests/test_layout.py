@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import date
+from datetime import date, datetime
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
@@ -84,8 +84,8 @@ def _section(definition: str, style=PresentationStyle.List, label=None):
     return ReportSection(relationshipToFact={}, presentation=pres)
 
 
-_DUR = DurationPeriodHolder(start=date(2024, 1, 1), end=date(2024, 12, 31))
-_INST = InstantPeriodHolder(instant=date(2024, 12, 31))
+_DUR = DurationPeriodHolder.fromDays(date(2024, 1, 1), date(2024, 12, 31))
+_INST = InstantPeriodHolder(datetime(2025, 1, 1))
 
 
 class TestTableHeadingCell:
