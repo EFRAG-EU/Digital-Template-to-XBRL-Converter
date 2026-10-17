@@ -8,13 +8,25 @@
     {%- endif -%}
 {%- endmacro %}
 
-{#- A fact's period: its whole duration, or for an instant fact the day that duration ends. -#}
-{% macro render_fact_period(fact) -%}
-    {%- if fact.concept.periodType.value == "duration" -%}
-        {{ render_duration_period(fact.period.duration) }}
+{#- A FactPeriod as a person reads it: the whole of its report period (or just the year, when
+    short), or for an instant the day it falls on: the first day of the report period for its
+    start, the last day for its end. -#}
+{% macro render_period(factPeriod, short=false) -%}
+    {%- set duration = factPeriod.reportPeriod.duration -%}
+    {%- if factPeriod.isStart -%}
+        {{- duration.firstDay -}}
+    {%- elif factPeriod.isEnd -%}
+        {{- duration.lastDay -}}
+    {%- elif short -%}
+        {{ render_duration_period_endyear(duration) }}
     {%- else -%}
-        {{- fact.period.duration.lastDay -}}
+        {{ render_duration_period(duration) }}
     {%- endif -%}
+{%- endmacro %}
+
+{% macro render_fact_period(fact) -%}
+    {%- if fact.period.isInstant %}At {% endif -%}
+    {{- render_period(fact.period) -}}
 {%- endmacro %}
 
 {% macro render_duration_period(period) -%}
@@ -23,10 +35,6 @@
 
 {% macro render_duration_period_endyear(period) -%}
     {{- period.lastDay.year -}}
-{%- endmacro %}
-
-{% macro render_instant_period(period) -%}
-    {{- period.instant -}}
 {%- endmacro %}
 
 {#- Emit a superscript ref for fn. -#}

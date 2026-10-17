@@ -71,7 +71,7 @@ def _canonicalFacts(report: InlineReport) -> list[dict]:
         entry: dict = {
             "concept": str(fact.concept.qname),
             "value": value,
-            "period": fact.period.name,
+            "period": fact.period.reportPeriod.name,
         }
         # Only what a fact actually has, so an entry reads as what is special about it.
         if fact.unit is not None:

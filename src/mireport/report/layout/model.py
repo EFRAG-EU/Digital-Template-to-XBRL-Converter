@@ -8,7 +8,7 @@ from enum import Enum, auto
 from typing import NamedTuple
 
 from mireport.report.fact import Fact
-from mireport.report.periods import DurationPeriodHolder, InstantPeriodHolder, _Period
+from mireport.report.model import FactPeriod
 from mireport.taxonomy import (
     Concept,
     PresentationGroup,
@@ -16,7 +16,7 @@ from mireport.taxonomy import (
     Relationship,
 )
 
-HeadingValue = Concept | Relationship | _Period | str | None
+HeadingValue = Concept | Relationship | FactPeriod | str | None
 
 
 class TableHeadingCell(NamedTuple):
@@ -28,16 +28,8 @@ class TableHeadingCell(NamedTuple):
     numeric: bool = False
 
     @property
-    def isDuration(self) -> bool:
-        return isinstance(self.value, DurationPeriodHolder)
-
-    @property
-    def isInstant(self) -> bool:
-        return isinstance(self.value, InstantPeriodHolder)
-
-    @property
     def isPeriod(self) -> bool:
-        return self.isDuration or self.isInstant
+        return isinstance(self.value, FactPeriod)
 
     @property
     def isConcept(self) -> bool:

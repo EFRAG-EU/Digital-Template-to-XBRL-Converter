@@ -20,6 +20,8 @@ from mireport.report.aoix import (
 )
 from mireport.report.model import (
     ExplicitDimensionValue,
+    FactPeriod,
+    PeriodPart,
     ReportPeriod,
     TypedDimensionValue,
     Unit,
@@ -33,9 +35,10 @@ T = _Q.fromString("utr:tCO2e")
 EUR = _Q.fromString("iso4217:EUR")
 M = _Q.fromString("utr:m")
 S = _Q.fromString("utr:s")
-PERIOD = ReportPeriod(
+REPORT_PERIOD = ReportPeriod(
     "cur", DurationPeriodHolder.fromDays(date(2025, 1, 1), date(2025, 12, 31))
 )
+PERIOD = FactPeriod(REPORT_PERIOD)
 
 
 def _concept(
@@ -85,8 +88,19 @@ def _fact(concept: Concept | None = None, **fields: object) -> SimpleNamespace:
 
 def test_a_fact_always_says_its_period_and_period_type() -> None:
     assert fact_aspects(_fact()) == ["period=cur", "period-type=duration"]
-    instant = _fact(_concept(period_type="instant"))
-    assert fact_aspects(instant)[1] == "period-type=instant"
+    instant = _fact(
+        _concept(period_type="instant"),
+        period=FactPeriod(REPORT_PERIOD, PeriodPart.End),
+    )
+    assert fact_aspects(instant) == ["period=cur", "period-type=instant"]
+
+
+def test_the_start_of_a_period_is_its_own_period_type() -> None:
+    opening = _fact(
+        _concept(period_type="instant"),
+        period=FactPeriod(REPORT_PERIOD, PeriodPart.Start),
+    )
+    assert fact_aspects(opening) == ["period=cur", "period-type=instant-start"]
 
 
 class TestUnits:

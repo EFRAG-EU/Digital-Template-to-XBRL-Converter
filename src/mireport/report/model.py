@@ -10,10 +10,11 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
+from enum import Enum
 
 from mireport.exceptions import InlineReportException
-from mireport.report.periods import DurationPeriodHolder
-from mireport.taxonomy import Concept, QName
+from mireport.report.periods import DurationPeriodHolder, _Period
+from mireport.taxonomy import Concept, PeriodType, QName
 from mireport.typealiases import FactValue
 from mireport.xml import ISO4217_NS
 
@@ -189,3 +190,70 @@ class ReportPeriod:
 
     name: str
     duration: DurationPeriodHolder
+
+
+class PeriodPart(Enum):
+    """Which part of a report period a fact is about: all of it, or the instant it starts or ends at."""
+
+    Whole = "whole"
+    Start = "start"
+    End = "end"
+
+
+@dataclass(frozen=True, slots=True)
+class FactPeriod:
+    """Where a fact was reported: a report period, and the part of it that was meant.
+
+    The start of one year and the end of the year before are the same OIM instant, but a producer
+    that says "opening balance" and one that says "closing balance" mean different things, and a
+    page shows them differently. ``oim`` is what XBRL calls the period, ``part`` is what the producer
+    meant by it: two FactPeriods can differ and still have the same ``oim``.
+    """
+
+    reportPeriod: ReportPeriod
+    part: PeriodPart = PeriodPart.Whole
+
+    @property
+    def oim(self) -> _Period:
+        duration = self.reportPeriod.duration
+        match self.part:
+            case PeriodPart.Whole:
+                return duration
+            case PeriodPart.Start:
+                return duration.startInstant
+            case PeriodPart.End:
+                return duration.endInstant
+
+    @property
+    def partRank(self) -> int:
+        """Within one report period: its opening instant, then the period as a whole, then its
+        closing instant."""
+        return (PeriodPart.Start, PeriodPart.Whole, PeriodPart.End).index(self.part)
+
+    @property
+    def isInstant(self) -> bool:
+        return self.part is not PeriodPart.Whole
+
+    @property
+    def isStart(self) -> bool:
+        return self.part is PeriodPart.Start
+
+    @property
+    def isEnd(self) -> bool:
+        return self.part is PeriodPart.End
+
+    @property
+    def aoixPeriodType(self) -> str:
+        """aoix's ``period-type``: the start of a period is its own instant, one day before the
+        period's first day, which aoix works out itself."""
+        match self.part:
+            case PeriodPart.Whole:
+                return PeriodType.Duration.value
+            case PeriodPart.Start:
+                return "instant-start"
+            case PeriodPart.End:
+                return PeriodType.Instant.value
+
+    def fitsConcept(self, concept: Concept) -> bool:
+        """A duration concept is reported for the whole period, an instant one at a point in it."""
+        return self.isInstant == (concept.periodType is PeriodType.Instant)
