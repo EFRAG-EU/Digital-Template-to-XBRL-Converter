@@ -90,6 +90,24 @@ class FactGrid:
     row_labels: Sequence[Concept | str]
     row_heading_label: Concept | str | None
     col_labels: Sequence[Concept | str]
+    period_axis: bool = False
+    """Whether the columns are each column of the table once per period (the same label repeated),
+    because a column held facts from more than one period."""
+
+
+@dataclass(slots=True, frozen=True)
+class ListEntry:
+    """One line of a list section: a concept's fact, with the same concept's facts from other
+    periods (the comparatives) alongside it."""
+
+    relationship: Relationship
+    fact: Fact
+    """The fact the entry leads with: the current period's if there is one, else the next in
+    the report's period order."""
+    others: tuple[Fact, ...]
+    """The facts in the other periods, in the report's period order."""
+    group: int
+    """Which relationship of the section this belongs to; entries of one relationship share a shade."""
 
 
 @dataclass(slots=True, frozen=True, eq=True)
@@ -100,6 +118,8 @@ class ReportSection:
     presentation: PresentationGroup
     # Set when one presentation group yields several sections, e.g. a table per dimension set.
     heading_suffix: str = field(default="", kw_only=True)
+    # What a list section shows, line by line; empty for any other kind of section.
+    entries: tuple[ListEntry, ...] = field(default=(), kw_only=True, compare=False)
 
     def getLabel(self, language: str) -> str:
         label = self.presentation.getLabel(language)

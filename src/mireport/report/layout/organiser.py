@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING
 
 from mireport.exceptions import InlineReportException
 from mireport.report.fact import Fact
+from mireport.report.layout.entries import list_entries
 from mireport.report.layout.grid import GridBuilder
 from mireport.report.layout.headers import assemble_table
 from mireport.report.layout.model import (
@@ -23,6 +24,7 @@ from mireport.report.layout.model import (
     ReportSection,
     TabularReportSection,
 )
+from mireport.report.model import ReportPeriod
 from mireport.taxonomy import Concept, PresentationStyle, Relationship, Taxonomy
 
 if TYPE_CHECKING:
@@ -41,7 +43,7 @@ class ReportLayoutOrganiser:
         self.report = report
         self.presentation = self.taxonomy.presentation
         self.reportSections: list[ReportSection] = []
-        self._grids = GridBuilder(report.getFacts, self._label)
+        self._grids = GridBuilder(report.getFacts, self._label, self._period_rank)
         # Facts a List group cannot show in its list because they carry taxonomy dimensions, in
         # presentation order, keyed by the group's role.
         self._dimensional: dict[str, list[Placed]] = {}
@@ -129,7 +131,15 @@ class ReportLayoutOrganiser:
                     case PresentationStyle.Hybrid | PresentationStyle.Table:
                         factsForRel[rel].extend(facts)
             self.reportSections.append(
-                ReportSection(relationshipToFact=factsForRel, presentation=group)
+                ReportSection(
+                    relationshipToFact=factsForRel,
+                    presentation=group,
+                    entries=(
+                        list_entries(factsForRel, self._period_rank)
+                        if group.style == PresentationStyle.List
+                        else ()
+                    ),
+                )
             )
 
     def createReportTables(self) -> None:
@@ -255,6 +265,13 @@ class ReportLayoutOrganiser:
             presentation=section.presentation,
             heading_suffix=heading_suffix,
             table=assemble_table(grid),
+        )
+
+    def _period_rank(self, period: ReportPeriod) -> int:
+        """Where a period comes among a report's periods: current, prior, then the rest."""
+        return next(
+            (n for n, p in enumerate(self.report.reportingPeriods) if p == period),
+            len(self.report.reportingPeriods),
         )
 
     def _label(self, concept: Concept) -> str:
