@@ -8,7 +8,10 @@ from mireport.report.inlinereport import InlineReport
 
 def _fact(concept, value, aspects, provenance=None):
     return SimpleNamespace(
-        concept=concept, value=value, aspects=aspects, provenance=provenance
+        concept=concept,
+        value=value,
+        context_key=frozenset(aspects.items()),
+        provenance=provenance,
     )
 
 

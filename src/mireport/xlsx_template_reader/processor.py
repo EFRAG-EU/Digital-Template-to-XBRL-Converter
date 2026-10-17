@@ -47,6 +47,9 @@ from mireport.xlsx_template_reader.util import (
     loadExcelFromPathOrFileLike,
 )
 
+# The defaults a disclosure configuration may name (the names are aoix's).
+_KNOWN_DEFAULTS = frozenset({"entity-identifier", "entity-scheme", "monetary-units"})
+
 L = logging.getLogger(__name__)
 
 
@@ -245,11 +248,12 @@ class XlsxProcessor:
         self._setReportMetadata()
 
     def _setDefaultAspectsFromExcel(self) -> None:
-        """Read the aoix default aspects (entity id, currency, ...) from their
-        named ranges into the report."""
+        """Read the report's defaults (entity identifier and scheme, currency) from their
+        named ranges into the report. The config names them as aoix does."""
         schemeLabelToURI: dict[str, str] = dict(
             self._defaults["entityIdentifierLabelsToSchemes"]
         )
+        found: dict[str, str] = {}
         for aoixName, namedRangeName in self._defaults.get("aoix", {}).items():
             if self._reader.getDefinedName(namedRangeName) is None:
                 self._msg.error(
@@ -277,7 +281,17 @@ class XlsxProcessor:
                     ),
                 )
                 continue
-            self._report.setDefaultAspect(aoixName, aoixValue)
+            found[aoixName] = aoixValue
+
+        if "entity-identifier" in found and "entity-scheme" in found:
+            self._report.setEntity(found["entity-scheme"], found["entity-identifier"])
+        if "monetary-units" in found:
+            self._report.setDefaultCurrency(found["monetary-units"])
+        for unknown in sorted(found.keys() - _KNOWN_DEFAULTS):
+            self._msg.error(
+                f"Unsupported default '{unknown}' in the disclosure configuration.",
+                MessageType.DevInfo,
+            )
 
     def _addReportingPeriods(self) -> None:
         for period in self._defaults.get("periods", []):

@@ -1,50 +1,26 @@
 from __future__ import annotations
 
-import re
-from enum import StrEnum
-from html import unescape
-from typing import TYPE_CHECKING, NamedTuple, Protocol, cast, runtime_checkable
+from collections.abc import Iterable
+from typing import TYPE_CHECKING, NamedTuple, Protocol, runtime_checkable
 
 from markupsafe import Markup, escape
 
 from mireport.exceptions import InlineReportException
 from mireport.localise import localise_and_format_number
-from mireport.report.periods import DurationPeriodHolder, InstantPeriodHolder
+from mireport.report.aoix import fact_to_aoix
+from mireport.report.model import (
+    ExplicitDimensionValue,
+    FactPeriod,
+    TypedDimensionValue,
+    Unit,
+)
 from mireport.stringutil import str_to_markupsafe, unicodeSpaceNormalize
-from mireport.taxonomy import Concept, QName
+from mireport.taxonomy import Concept
 from mireport.typealiases import DecimalPlaces, FactValue
 
 if TYPE_CHECKING:
     from mireport.report.footnote import Footnote
     from mireport.report.inlinereport import InlineReport
-
-TD_VALUE_RE = re.compile(r">(.*?)</")
-
-
-_TYPED_XML_RE = re.compile(r'"<([^>]+)>(.*)</\1>"', re.DOTALL)
-
-
-def _aoixTypedDimension(dimension: str, held: str) -> list[str]:
-    """A typed dimension as aoix wants it: a typed-value-wrapper naming the element, then the
-    dimension with its plain value, which aoix wraps and escapes itself.
-
-    aoix's quoted strings cannot contain a double quote, which the older pre-built-XML form
-    could (as &quot;). That rare value keeps the deprecated 'typed' keyword rather than being
-    lost or corrupted."""
-    if (m := _TYPED_XML_RE.fullmatch(held)) is not None:
-        wrapper, escaped = m.groups()
-        raw = unescape(escaped)
-        if '"' not in raw:
-            return [f"typed-value-wrapper={wrapper}", f'{dimension}="{raw}"']
-    return [f"typed {dimension}={held}"]
-
-
-def tidyTdValue(original: str) -> str:
-    new = TD_VALUE_RE.search(original)
-    if new is not None:
-        return new.group(1)
-    else:
-        return original
 
 
 def numeric_string_key(value: str) -> tuple[int, str | int]:
@@ -52,14 +28,6 @@ def numeric_string_key(value: str) -> tuple[int, str | int]:
         return (0, int(value))  # numeric values get priority
     except ValueError:
         return (1, value)  # fallback to lexicographic
-
-
-class CoreDimension(StrEnum):
-    Concept = "concept"
-    Entity = "entity"
-    Period = "period"
-    Unit = "unit"
-    Language = "language"
 
 
 class Symbol(NamedTuple):
@@ -81,7 +49,8 @@ class Provenance(Protocol):
 
 class Fact:
     """
-    Represents a fact in an XBRL instance document.
+    A fact in an XBRL instance document: a concept's value in a period, with the unit, accuracy and
+    dimensions that qualify it. Build one with a FactBuilder, which does the validation.
     """
 
     def __init__(
@@ -89,55 +58,84 @@ class Fact:
         concept: Concept,
         value: FactValue,
         report: InlineReport,
-        aspects: dict[str | QName, str | QName] | None = None,
+        *,
+        period: FactPeriod,
+        unit: Unit | None = None,
+        decimals: DecimalPlaces | None = None,
+        scale: int | None = None,
+        explicit_dimensions: Iterable[ExplicitDimensionValue] = (),
+        typed_dimensions: Iterable[TypedDimensionValue] = (),
+        enumeration: Iterable[Concept] | None = None,
         provenance: Provenance | None = None,
     ):
         self.concept: Concept = concept
         self.value: FactValue = value
         self.provenance: Provenance | None = provenance
         self._report = report
-        self._aspects: dict[str | QName, str | QName] = {}
-        if aspects is not None:
-            self._aspects.update(aspects)
-        for key in list(self._aspects.keys()):
-            if isinstance(key, QName):
-                keyConcept = self._report.taxonomy.getConcept(key)
-                if keyConcept.isTypedDimension:
-                    dimvalue = self._aspects.pop(key)
-                    self._aspects[f"typed {keyConcept.qname}"] = dimvalue
-
-        self._decimals: DecimalPlaces | None
-        if aspect_value := str(self._aspects.get("decimals", "")):
-            if aspect_value == "INF":
-                self._decimals = "INF"
-            else:
-                self._decimals = int(aspect_value)
-            self._aspects["decimals"] = f'"{aspect_value}"'
-        else:
-            self._decimals = None
-
-        self._numeric_scale: int | None = None
-        if aspect_value := str(self._aspects.get("numeric-scale", "")):
-            self._numeric_scale = int(aspect_value)
-            self._aspects["numeric-scale"] = f'"{aspect_value}"'
-
+        if not period.fitsConcept(concept):
+            raise InlineReportException(
+                f"{concept.qname} is a {concept.periodType.value} concept, which cannot be "
+                f"reported for {period.part.value!r} of period {period.reportPeriod.name!r}."
+            )
+        self.period: FactPeriod = period
+        self.unit: Unit | None = unit
+        self.decimals: DecimalPlaces | None = decimals
+        self.scale: int | None = scale
+        # In the order they were given: that is the order they are written in, so reordering
+        # them would change the output. Identity (context_key) does not depend on the order.
+        self.explicit_values: tuple[ExplicitDimensionValue, ...] = tuple(
+            explicit_dimensions
+        )
+        self.typed_values: tuple[TypedDimensionValue, ...] = tuple(typed_dimensions)
+        # The members an enumeration fact holds: one for a single, any number for a set.
+        self.enumeration: tuple[Concept, ...] | None = (
+            None if enumeration is None else tuple(enumeration)
+        )
         self.footnotes: list[Footnote] = []
 
     def __repr__(self) -> str:
         return (
-            f"Fact(concept={self.concept}, value={self.value}, aspects={self._aspects})"
+            f"Fact({self.concept.qname} = {self.value!r}, {self._describe_context()})"
         )
 
-    def __lt__(self, other: Fact) -> bool:
-        if self.concept is None or other.concept is None:
-            return False
-        return self.__key() < other.__key()
+    def _describe_context(self) -> str:
+        bits = [f"period={self.period.reportPeriod.name}"]
+        if self.period.isInstant:
+            bits[0] += f" ({self.period.part.value})"
+        if (unit := self.unit) is not None:
+            bits.append(f"unit={unit}")
+        if (decimals := self.decimals) is not None:
+            bits.append(f"decimals={decimals}")
+        if (scale := self.scale) is not None:
+            bits.append(f"scale={scale}")
+        bits += [f"{d.dimension.qname}={d.member.qname}" for d in self.explicit_values]
+        bits += [f"{d.dimension.qname}={d.value!r}" for d in self.typed_values]
+        if (enumeration := self.enumeration) is not None:
+            bits.append(f"members={[str(m.qname) for m in enumeration]}")
+        return ", ".join(bits)
 
-    def __key(
-        self,
-    ) -> tuple[QName, FactValue, frozenset[tuple[str | QName, str | QName]]]:
-        aspects_flattened = frozenset((k, v) for k, v in self.aspects.items())
-        return (self.concept.qname, self.value, aspects_flattened)
+    @property
+    def context_key(self) -> tuple:
+        """Everything about the fact except its concept and value: facts with the same concept
+        and the same context_key are duplicates of one another."""
+        return (
+            self.period,
+            self.unit,
+            self.decimals,
+            self.scale,
+            frozenset(self.explicit_values),
+            frozenset(self.typed_values),
+            None if self.enumeration is None else frozenset(self.enumeration),
+        )
+
+    def __key(self) -> tuple:
+        return (self.concept.qname, self.value, *self.context_key)
+
+    def __lt__(self, other: Fact) -> bool:
+        return (str(self.concept.qname), str(self.value)) < (
+            str(other.concept.qname),
+            str(other.value),
+        )
 
     def __eq__(self, other: object) -> bool:
         if self is other:
@@ -175,10 +173,10 @@ class Fact:
 
     def _format_numeric_value(self) -> Markup:
         decimal_places: DecimalPlaces
-        if self._decimals and self._decimals != "INF" and self._numeric_scale:
-            decimal_places = self._decimals + self._numeric_scale
+        if self.decimals and self.decimals != "INF" and self.scale:
+            decimal_places = self.decimals + self.scale
         else:
-            decimal_places = self._decimals or "INF"
+            decimal_places = self.decimals or "INF"
 
         try:
             match self.value:
@@ -207,137 +205,51 @@ class Fact:
 
     def as_aoix(self) -> Markup:
         """Returns the AOIX representation of the fact."""
-        aoix_verb = "string"
-        if self.concept.isMonetary:
-            aoix_verb = "monetary"
-        elif self.concept.isNumeric:
-            aoix_verb = "num"
-        aspects = self._aspects.copy()
-        if self.footnotes:
-            aspects["fn-refs"] = f'"{"|".join(str(fn.id) for fn in self.footnotes)}"'
-        aspects_str = ", ".join(self._aoixAspects(aspects))
-        value = self.html_format_value()
-        return Markup(
-            f"{{{{ {aoix_verb} {self.concept.qname}[{aspects_str}] }}}}{value}{{{{ end }}}}"
-        )
-
-    @staticmethod
-    def _aoixAspects(aspects: dict[str | QName, str | QName]) -> list[str]:
-        """The aspects as aoix wants them written. Held internally in the older shapes (a
-        typed dimension as pre-built XML, a divide unit as a quoted string) that the layout
-        code reads; only what is handed to aoix is converted."""
-        out: list[str] = []
-        for key, value in aspects.items():
-            if key == "complex-units":
-                # units=u1/u2, unquoted; the 'complex-units' aspect is deprecated.
-                out.append(f"units={str(value).strip(chr(34))}")
-            elif isinstance(key, str) and key.startswith("typed "):
-                out.extend(_aoixTypedDimension(key.removeprefix("typed "), str(value)))
-            else:
-                out.append(f"{key}={value}")
-        return out
+        return Markup(fact_to_aoix(self, self.html_format_value()))
 
     def __html__(self) -> Markup:
         return self.as_aoix()
 
     @property
-    def aspects(self) -> dict[str | QName, str | QName]:
-        return dict(self._aspects)
+    def explicit_dimensions(self) -> dict[Concept, Concept]:
+        """Explicit dimension to its member."""
+        return {d.dimension: d.member for d in self.explicit_values}
+
+    @property
+    def typed_dimensions(self) -> dict[Concept, str]:
+        """Typed dimension to its member's text."""
+        return {d.dimension: d.value for d in self.typed_values}
 
     @property
     def hasNonDefaultPeriod(self) -> bool:
-        return bool(
-            (period := self.aspects.get("period")) is not None
-            and period != self._report._defaultPeriodName
+        """Whether the page has to say this fact's period: it is not the report's own, or it is the
+        start of it (an opening balance, which would read as a closing one if it said nothing)."""
+        return (
+            self.period.reportPeriod != self._report.defaultReportPeriod
+            or self.period.isStart
         )
 
     @property
-    def period(self) -> DurationPeriodHolder | InstantPeriodHolder:
-        if (period := self.aspects.get("period")) is not None:
-            period = cast(str, period)
-            return self._report._periods[period]
-        else:
-            return self._report._periods[self._report._defaultPeriodName]
-
-    @property
     def unitSymbol(self) -> str:
-        if "complex-units" in self.aspects:
-            complexUnit = cast(str, self.aspects["complex-units"])
-            complexUnit = complexUnit[1:-1]  # remove quotes at start and end
-            numString, _, denString = complexUnit.rpartition("/")
-            numQName = self._report.taxonomy.QNameMaker.fromString(numString)
-            numSymbol = self._report.taxonomy.UTR.getSymbolForUnit(
-                numQName, self.concept.dataType
-            )
-            denQName = self._report.taxonomy.QNameMaker.fromString(denString)
-            denSymbol = self._report.taxonomy.UTR.getSymbolForUnit(
-                denQName, self.concept.dataType
-            )
-            symbol = f"{numSymbol} per {denSymbol}"
-            return symbol
+        unit = self.unit
+        utr = self._report.taxonomy.UTR
+        dataType = self.concept.dataType
 
-        units: QName | str | None = None
-        if self.concept.isMonetary:
-            currency = self.aspects.get(
-                "monetary-units", self._report.defaultAspects.get("monetary-units")
-            )
-            if isinstance(currency, str):
-                units = self._report.taxonomy.QNameMaker.fromString(
-                    f"iso4217:{currency}"
-                )
-            else:
-                raise InlineReportException(
-                    f"Monetary concept with non-string currency unit {currency=}"
-                )
-        elif self.concept.isNumeric:
-            units = self.aspects.get("units")
+        def symbols(measures: Iterable) -> str:
+            return "·".join(utr.getSymbolForUnit(m, dataType) for m in measures)
+
+        if unit is not None and unit.is_divide:
+            return f"{symbols(unit.numerator)} per {symbols(unit.denominator)}"
 
         symbol = ""
-        if units and isinstance(units, QName):
-            symbol = self._report.taxonomy.UTR.getSymbolForUnit(
-                units, self.concept.dataType
-            )
+        if unit is not None and (self.concept.isMonetary or self.concept.isNumeric):
+            symbol = symbols(unit.numerator)
 
-        if not symbol and "percentItemType" == self.concept.dataType.localName:
+        if not symbol and "percentItemType" == dataType.localName:
             # No UTR unit for % so hack it in here.
             symbol = "%"
         return symbol
 
     def hasTaxonomyDimensions(self) -> bool:
-        """Whether the fact is qualified by any taxonomy dimension, explicit or typed
-        (a typed dimension is held under a "typed <qname>" key, not a QName)."""
-        for name in self.aspects:
-            if isinstance(name, QName) or name.startswith("typed "):
-                return True
-        return False
-
-    def getTaxonomyDimensions(self) -> dict[QName, QName]:
-        dims: dict[QName, QName] = {}
-        for name, value in self.aspects.items():
-            if isinstance(name, QName):
-                if not isinstance(value, QName):
-                    raise InlineReportException(
-                        f"Invalid dimension value {value=} found for dimension {name=}"
-                    )
-                dims[name] = value
-        return dims
-
-    def getCoreDimensions(self) -> dict[CoreDimension, Concept | QName | str]:
-        oimD: dict[CoreDimension, Concept | QName | str] = {}
-        oimD[CoreDimension.Concept] = self.concept
-        oimD[CoreDimension.Entity] = self._report._entityName
-        oimD[CoreDimension.Period] = self._report.getPeriodsForAoix()
-        if self.concept.isNumeric:
-            unit_aspect_names = ("monetary-units", "units", "complex-units")
-            defaults = self._report.defaultAspects
-            for name in unit_aspect_names:
-                if (unit := self.aspects.get(name)) is not None:
-                    break
-                if (unit := defaults.get(name)) is not None:
-                    break
-            else:
-                raise InlineReportException(
-                    f"Numeric concept without a unit is not good! {self}"
-                )
-            oimD[CoreDimension.Unit] = unit
-        return oimD
+        """Whether the fact is qualified by any taxonomy dimension, explicit or typed."""
+        return bool(self.explicit_values or self.typed_values)

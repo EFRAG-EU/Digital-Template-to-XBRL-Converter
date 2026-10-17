@@ -2,12 +2,23 @@ from __future__ import annotations
 
 import logging
 import math
+from collections.abc import Iterable
+from decimal import Decimal
 from typing import TYPE_CHECKING
 
 from mireport.exceptions import InlineReportException
+from mireport.report.aoix import coerce_boolean
 from mireport.report.fact import Fact, Provenance
-from mireport.stringutil import xml_clean
-from mireport.taxonomy import Concept, QName, Taxonomy
+from mireport.report.model import (
+    ExplicitDimensionValue,
+    FactPeriod,
+    PeriodPart,
+    ReportPeriod,
+    TypedDimensionValue,
+    Unit,
+)
+from mireport.report.periods import _Period
+from mireport.taxonomy import Concept, PeriodType, QName, Taxonomy
 from mireport.typealiases import DecimalPlaces, FactValue
 
 if TYPE_CHECKING:
@@ -27,12 +38,19 @@ class FactBuilder:
     def __init__(self, report: InlineReport):
         self._report: InlineReport = report
         self._concept: Concept | None = None
-        self._aspects: dict[str | QName, str | QName] = {}
         self._value: FactValue | None = None
         self._provenance: Provenance | None = None
+        self._period: ReportPeriod | None = None
+        self._part: PeriodPart | None = None
+        self._unit: Unit | None = None
+        self._decimals: DecimalPlaces | None = None
+        self._scale: int | None = None
+        self._explicit: dict[Concept, Concept] = {}
+        self._typed: dict[Concept, TypedDimensionValue] = {}
+        self._enumeration: tuple[Concept, ...] | None = None
 
     def __repr__(self) -> str:
-        bits = (self._concept, self._aspects, self._value)
+        bits = (self._concept, self._value, self._period, self._part, self._unit)
         return f"FactBuilder{bits}"
 
     @property
@@ -45,7 +63,7 @@ class FactBuilder:
         assert explicitDimension.isExplicitDimension, (
             f"Concept {explicitDimension=} is not an explicit dimension."
         )
-        self._aspects[explicitDimension.qname] = explicitDimensionValue.qname
+        self._explicit[explicitDimension] = explicitDimensionValue
         return self
 
     def setTypedDimension(
@@ -57,12 +75,9 @@ class FactBuilder:
         assert typedDimension.typedElement is not None, (
             f"Typed dimension {typedDimension=} has no wrapper element defined."
         )
-        if isinstance(typedDimensionValue, bool):
-            s_value = str(typedDimensionValue).lower()
-        else:
-            s_value = str(typedDimensionValue)
-        value = f'"<{typedDimension.typedElement}>{xml_clean(s_value)}</{typedDimension.typedElement}>"'
-        self._aspects[typedDimension.qname] = value
+        self._typed[typedDimension] = TypedDimensionValue.of(
+            typedDimension, typedDimensionValue
+        )
         return self
 
     def setValue(self, value: object) -> Self:
@@ -85,46 +100,92 @@ class FactBuilder:
         """Use instead of setValue() when you don't want to think about what to
         do with percentage values.
 
+        `decimals` here is the number of decimals the percentage is *displayed*
+        with (a spreadsheet's number format): 0.125 at 2 shows 12.50%. If you have
+        XBRL's own decimals instead (4 for 0.1250), use setPercentageFact().
+
         If @inputIsDecimalForm is set to false then
         input is assumed to be whole-number form."""
         if inputIsDecimalForm:
-            # HTML needs the display value for humans (100% stored as "100")
-            human_value = value * 10**2
-            # And use ix:scale attribute to reduce it down again as XBRL stores
-            # same way as Excel (100% stored as "1.0")
-            self.setValue(human_value).setScale(-2)
-
-            if decimals != "INF":
-                # Add on the scale amount
-                decimals += 2
-        else:
-            self.setValue(value)
+            # The fact carries two more decimals than the page shows, the scale amount.
+            return self.setPercentageFact(
+                value, decimals if decimals == "INF" else decimals + 2
+            )
+        self.setValue(value)
         self.setDecimals(decimals)
         return self
 
+    def setPercentageFact(
+        self, fraction: float | Decimal, decimals: DecimalPlaces
+    ) -> Self:
+        """Set a percentage from what the XBRL fact holds: a fraction, and its decimals.
+
+        0.1250 at decimals 4 is 12.50%. The page shows 12.50 (the fraction x100, which is
+        what a human reads) and tags it ix:scale="-2", so the fact stays 0.1250 at decimals 4
+        exactly as given -- the decimals are XBRL's, not the display's, so none are added.
+
+        Use this when the value and decimals come from XBRL (an xBRL-JSON fact, say).
+        setPercentageValue() is the one for a spreadsheet's display decimals. Pass a Decimal
+        when exactness matters: a float times 100 can pick up noise (0.07 -> 7.000000000000001).
+        """
+        match fraction:
+            case Decimal() if (shown := fraction * 100) == shown.to_integral_value():
+                value: int | float = int(shown)
+            case Decimal():
+                value = float(fraction * 100)
+            case _:
+                value = fraction * 10**2
+        self.setValue(value).setScale(-2).setDecimals(decimals)
+        return self
+
     def setDecimals(self, decimals: DecimalPlaces) -> Self:
-        self._aspects["decimals"] = f"{decimals}"
+        self._decimals = decimals
         return self
 
     def setScale(self, scale: int) -> Self:
-        self._aspects["numeric-scale"] = f"{scale}"
+        self._scale = scale
         return self
 
-    def setNamedPeriod(self, periodName: str) -> Self:
+    def setNamedPeriod(self, periodName: str, *, at: PeriodPart | None = None) -> Self:
         """
         Sets the period for the fact to a named period in the InlineReport.
+
+        An instant concept is reported at the end of the period unless ``at`` says
+        ``PeriodPart.Start``: an opening balance is the instant the period starts at, which is also
+        where the one before ended, but it is not that period's closing balance and is rendered as
+        the start of this one.
         """
         if not self._report.hasNamedPeriod(periodName):
             raise InlineReportException(
                 f"Period '{periodName}' does not exist in the report."
             )
-        self._aspects["period"] = periodName
+        if at is PeriodPart.Whole:
+            raise InlineReportException(
+                "A fact is reported for the whole of a period by being a duration concept; "
+                "'at' is for choosing between the start and the end."
+            )
+        self._period = self._report.getReportPeriod(periodName)
+        self._part = at
         return self
 
-    def setHiddenValue(self, value: str) -> Self:
-        if not value.startswith('"') and not value.endswith('"'):
-            value = f'"{value}"'
-        self._aspects["hidden-value"] = value
+    def setPeriod(self, period: _Period) -> Self:
+        """
+        Sets the period for the fact from an OIM period (a duration, or an instant), which has to be
+        a declared period or the end or start of one (see ``InlineReport.locatePeriod``).
+        """
+        located = self._report.locatePeriod(period)
+        self._period = located.reportPeriod
+        self._part = located.part
+        return self
+
+    def setEnumerationValue(self, member: Concept) -> Self:
+        """The member an enumeration (single) fact holds."""
+        self._enumeration = (member,)
+        return self
+
+    def setEnumerationSet(self, members: Iterable[Concept]) -> Self:
+        """The members an enumeration set fact holds, which may be none."""
+        self._enumeration = tuple(dict.fromkeys(members))
         return self
 
     def setProvenance(self, provenance: Provenance) -> Self:
@@ -140,79 +201,43 @@ class FactBuilder:
             )
         return self
 
-    def setSimpleUnit(self, measure: QName) -> Self:
-        self._aspects["units"] = measure
+    def setUnit(self, unit: Unit) -> Self:
+        self._unit = unit
         return self
+
+    def setSimpleUnit(self, measure: QName) -> Self:
+        return self.setUnit(Unit.simple(measure))
 
     def setCurrency(self, code: QName | str) -> Self:
         if not self._report.taxonomy.UTR.validCurrency(code):
             raise InlineReportException(
                 f"Currency '{code}' does not look like a valid currency code."
             )
-        if isinstance(code, QName):
-            code = code.localName
-        self._aspects["monetary-units"] = code
-        return self
+        match code:
+            case QName():
+                code = code.localName
+        return self.setSimpleUnit(
+            self._report.taxonomy.QNameMaker.fromString(f"iso4217:{code}")
+        )
 
     def setComplexUnit(
         self,
         numerator: QName | Collection[QName],
         denominator: QName | Collection[QName],
     ) -> Self:
-        if isinstance(numerator, QName):
-            numerator = [numerator]
-        if isinstance(denominator, QName):
-            denominator = [denominator]
-
-        match (len(numerator), len(denominator)):
-            case (0, 0) | (0, _) | (_, 0):
-                raise InlineReportException(
-                    f"At least one numerator ({numerator=}) and denominator ({denominator=}) required for a complex unit."
-                )
-            case (1, 1):
-                self._aspects["complex-units"] = (
-                    f'"{next(iter(numerator))}/{next(iter(denominator))}"'
-                )
-            case _:
-                raise InlineReportException(
-                    f"More than one measure in the numerator ({numerator=}) or denominator ({denominator=}) is not currently supported.  "
-                )
-        return self
-
-    @property
-    def hasAspects(self) -> bool:
-        return bool(self._aspects)
+        return self.setUnit(Unit.divide(numerator, denominator))
 
     @property
     def hasTaxonomyDimensions(self) -> bool:
-        for name in self._aspects:
-            if isinstance(name, QName):
-                return True
-        return False
+        return bool(self._explicit or self._typed)
 
     def validateBoolean(self) -> None:
         if (value := self._value) is None:
             raise InlineReportException(f"Facts must have values {value=}")
-
-        b_value: bool | None = None
-        if isinstance(value, bool):
-            b_value = value
-        else:
-            s_value = str(value).strip().lower()
-            if s_value in {"true", "1", "yes"}:
-                b_value = True
-            elif s_value in {"false", "0", "no"}:
-                b_value = False
-
-            if b_value is None:
-                raise InlineReportException(
-                    f"Unable to determine boolean value for string value {s_value=}"
-                )
-
-        if b_value is True:
-            self._aspects["transform"] = "fixed-true"
-        else:
-            self._aspects["transform"] = "fixed-false"
+        if coerce_boolean(value) is None:
+            raise InlineReportException(
+                f"Unable to determine boolean value for string value {str(value).strip().lower()=}"
+            )
 
     def validateNumeric(self) -> None:
         if self._concept is None:
@@ -229,18 +254,10 @@ class FactBuilder:
             raise InlineReportException(
                 f"Unable to create numeric fact from non-finite value {value=}"
             )
-        if self._concept.isMonetary:
-            units = self._aspects.get(
-                "monetary-units", self._report.defaultAspects.get("monetary-units")
-            )
-            if not units:
+        match (self._concept.isMonetary, self._unit, self._report.defaultCurrency):
+            case (True, None, None):
                 raise InlineReportException("Monetary concepts require a currency unit")
-        else:
-            units = self._aspects.get("units", self._report.defaultAspects.get("units"))
-            complex_units = self._aspects.get(
-                "complex-units", self._report.defaultAspects.get("complex-units")
-            )
-            if not (units or complex_units):
+            case (False, None, _):
                 raise InlineReportException("Numeric concepts require a unit")
 
     def validateEESingleFact(self) -> None:
@@ -248,9 +265,9 @@ class FactBuilder:
             raise InlineReportException(
                 f"Unable to create EE item fact with no human readable value {text_value=}"
             )
-        if (ee_value := self._aspects.get("hidden-value")) is None or not ee_value:
+        if not self._enumeration:
             raise InlineReportException(
-                f"Domain members not specified for EE fact {ee_value=}"
+                f"Domain members not specified for EE fact {self._enumeration=}"
             )
 
     def validateEESetFact(self) -> None:
@@ -258,35 +275,29 @@ class FactBuilder:
             raise InlineReportException(
                 f"Unable to create EE fact with no human readable value {text_value=}"
             )
-        if (ee_value := self._aspects.get("hidden-value")) is None:
+        if self._enumeration is None:
             # Technically an empty EE set is a valid EE set
             raise InlineReportException(
-                f"Unable to create EE fact with no machine-readable (expanded name) value {ee_value=}"
+                f"Unable to create EE fact with no machine-readable (expanded name) value {self._enumeration=}"
             )
 
     def validateTaxonomyDimensions(self) -> None:
         if self._concept is None:
             raise InlineReportException("Concept must be set before validating a Fact.")
         taxonomy = self._report.taxonomy
-        typedDims: dict[Concept, str] = {}
-        explicitDims: dict[Concept, Concept] = {}
-        for name, value in self._aspects.items():
-            if isinstance(name, QName):
-                dimension = taxonomy.getConcept(name)
-                if isinstance(value, str):
-                    typedDims[dimension] = value
-                elif isinstance(value, QName):
-                    explicitDims[dimension] = taxonomy.getConcept(value)
 
         # An explicit dimension explicitly set to its own taxonomy-declared default
         # is equivalent to omitting it, and must be omitted -- OIM (xBRL-JSON)
         # forbids writing a dimension explicitly at its default member.
-        for dimName, chosenValue in list(explicitDims.items()):
-            if taxonomy.getDimensionDefault(dimName) == chosenValue:
-                explicitDims.pop(dimName)
-                self._aspects.pop(dimName.qname)
+        for dimension, member in list(self._explicit.items()):
+            if taxonomy.getDimensionDefault(dimension) == member:
+                del self._explicit[dimension]
 
-        self.validateDimensions(taxonomy, explicitDims, typedDims)
+        self.validateDimensions(
+            taxonomy,
+            dict(self._explicit),
+            {dimension: typed.value for dimension, typed in self._typed.items()},
+        )
 
     def validateDimensions(
         self,
@@ -336,26 +347,41 @@ class FactBuilder:
             raise InlineReportException("Concept must be set before building a Fact.")
         if self._value is None:
             raise InlineReportException("Value must be set before building a Fact.")
-        if self._concept.isBoolean:
-            self.validateBoolean()
-        elif self._concept.isEnumerationSingle:
-            self.validateEESingleFact()
-        elif self._concept.isEnumerationSet:
-            self.validateEESetFact()
-        elif self._concept.isNumeric:
-            self.validateNumeric()
-        self._aspects["period-type"] = self._concept.periodType.value
-
-        if self._concept.isTextblock:
-            # https://www.xbrl.org/WGN/html-for-ixbrl-wgn/WGN-2024-11-05/html-for-ixbrl-wgn-2024-11-05.html#sec-text-block-tags
-            self._aspects["escape"] = "true"
+        concept = self._concept
+        match concept:
+            case _ if concept.isBoolean:
+                self.validateBoolean()
+            case _ if concept.isEnumerationSingle:
+                self.validateEESingleFact()
+            case _ if concept.isEnumerationSet:
+                self.validateEESetFact()
+            case _ if concept.isNumeric:
+                self.validateNumeric()
 
         self.validateTaxonomyDimensions()
-        # TODO: check aspect validity before creating fact and raise Exception if invalid
+        reportPeriod = self._period or self._report.defaultReportPeriod
+        if concept.periodType is PeriodType.Instant:
+            part = self._part or PeriodPart.End
+        else:
+            part = self._part or PeriodPart.Whole
+        unit = self._unit
+        if unit is None and concept.isMonetary:
+            # No currency given: the report's own, which validateNumeric has checked exists.
+            if (currency := self._report.defaultCurrency) is None:
+                raise InlineReportException("Monetary concepts require a currency unit")
+            unit = Unit.simple(currency)
         return Fact(
-            self._concept,
+            concept,
             self._value,
             self._report,
-            self._aspects,
-            self._provenance,
+            period=FactPeriod(reportPeriod, part),
+            unit=unit,
+            decimals=self._decimals,
+            scale=self._scale,
+            explicit_dimensions=(
+                ExplicitDimensionValue(d, m) for d, m in self._explicit.items()
+            ),
+            typed_dimensions=self._typed.values(),
+            enumeration=self._enumeration,
+            provenance=self._provenance,
         )
