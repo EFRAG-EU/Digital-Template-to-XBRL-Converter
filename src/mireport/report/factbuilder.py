@@ -7,7 +7,7 @@ from decimal import Decimal
 from typing import TYPE_CHECKING
 
 from mireport.exceptions import InlineReportException
-from mireport.report.aoix import check_typed_value_expressible, coerce_boolean
+from mireport.report.aoix import coerce_boolean
 from mireport.report.fact import Fact, Provenance
 from mireport.report.model import (
     ExplicitDimensionValue,
@@ -358,8 +358,6 @@ class FactBuilder:
             case _ if concept.isNumeric:
                 self.validateNumeric()
 
-        for typed in self._typed.values():
-            check_typed_value_expressible(typed)
         self.validateTaxonomyDimensions()
         reportPeriod = self._period or self._report.defaultReportPeriod
         if concept.periodType is PeriodType.Instant:

@@ -176,11 +176,13 @@ class TestDimensions:
             'xbrli:AxisB="2"',
         ]
 
-    def test_a_value_aoix_cannot_quote_is_refused_not_written_deprecated(self) -> None:
+    def test_quotes_and_backslashes_are_escaped_not_refused(self) -> None:
         dimension = _dimension("xbrli:Axis", "xbrli:Wrapper")
-        fact = _fact(typed_values=(TypedDimensionValue.of(dimension, 'say "hi"'),))
-        with pytest.raises(InlineReportException, match="double quote"):
-            fact_aspects(fact)
+        fact = _fact(typed_values=(TypedDimensionValue.of(dimension, 'say "hi" \\ R&D'),))
+        assert fact_aspects(fact)[-2:] == [
+            "typed-value-wrapper=xbrli:Wrapper",
+            r'xbrli:Axis="say \"hi\" \\ R&D"',
+        ]
 
 
 class TestEnumerations:

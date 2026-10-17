@@ -43,20 +43,17 @@ def unit_aspect(unit: Unit) -> str:
             return f"units={unit.toUnitString()}"
 
 
-def check_typed_value_expressible(typed: TypedDimensionValue) -> None:
-    """aoix writes a typed value inside a quoted string, which cannot hold a double quote."""
-    if '"' in typed.value:
-        raise InlineReportException(
-            f"Typed dimension {typed.dimension.qname} has the value {typed.value!r}, which has a "
-            "double quote in it; aoix cannot write that without its deprecated 'typed' keyword."
-        )
+def aoix_quote(text: str) -> str:
+    """``text`` as an aoix quoted string, where a backslash escapes ``"`` and itself.
+
+    Nothing else is escaped: aoix XML-escapes the value itself when it writes it out."""
+    return '"' + text.replace("\\", "\\\\").replace('"', '\\"') + '"'
 
 
 def _typed_aspects(typed: TypedDimensionValue) -> list[str]:
-    check_typed_value_expressible(typed)
     return [
         f"typed-value-wrapper={typed.wrapper}",
-        f'{typed.dimension.qname}="{typed.value}"',
+        f"{typed.dimension.qname}={aoix_quote(typed.value)}",
     ]
 
 
