@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import time
 from collections import defaultdict
 from collections.abc import Mapping, Sequence
@@ -49,6 +50,14 @@ class InconsistentDuplicateHandler(Protocol):
     """
 
     def __call__(self, concept: Concept, facts: Sequence[Fact]) -> None: ...
+
+
+def _now_utc() -> datetime:
+    """The report's generation time. SOURCE_DATE_EPOCH (https://reproducible-builds.org/specs/
+    source-date-epoch/) pins it, so a build can be made byte-for-byte reproducible."""
+    if epoch := os.environ.get("SOURCE_DATE_EPOCH", "").strip():
+        return datetime.fromtimestamp(int(epoch), UTC)
+    return datetime.now(UTC)
 
 
 class InlineReport:
@@ -396,10 +405,12 @@ class InlineReport:
             "Entity Name": self._entityName,
             "Entity Identifier": self._defaultAspects["entity-identifier"],
             "Entity Identifier Scheme": self._defaultAspects["entity-scheme"],
-            "Report currency": self._defaultAspects["monetary-units"],
+            # Not every taxonomy has monetary facts, so there may be no report currency.
+            "Report currency": self._defaultAspects.get("monetary-units"),
         }
         for k, v in meta.items():
-            addDict(k, v)
+            if v is not None:
+                addDict(k, v)
         addDict("Report period", self.defaultPeriod, "render_duration_period")
 
         separator = decimal_symbol(self._outputLocale)
@@ -445,7 +456,7 @@ class InlineReport:
             {
                 PresentationStyle.__name__: PresentationStyle,
                 TableStyle.__name__: TableStyle,
-                "now_utc": lambda: datetime.now(UTC),
+                "now_utc": _now_utc,
                 "labelLanguage": label_language,
                 "labelQNameFallback": label_language is None,
                 "label_overrides_by_concept": self._labelOverrides,
