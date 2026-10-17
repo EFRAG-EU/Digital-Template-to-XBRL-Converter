@@ -28,6 +28,7 @@ from mireport.localise import (
     get_locale_from_str,
     group_symbol,
 )
+from mireport.report.aoix import aoix_quote
 from mireport.report.disclosure_layout import DisclosureLayoutStrategy
 from mireport.report.fact import Fact, Symbol
 from mireport.report.factbuilder import FactBuilder
@@ -173,9 +174,11 @@ class InlineReport:
         if (currency := self._defaultCurrency) is not None:
             defaults.append(f"{{{{ default monetary-units = {currency.localName} }}}}")
         if (identifier := self._entityIdentifier) is not None:
-            defaults.append(f'{{{{ default entity-identifier = "{identifier}" }}}}')
+            defaults.append(
+                f"{{{{ default entity-identifier = {aoix_quote(identifier)} }}}}"
+            )
         if (scheme := self._entityScheme) is not None:
-            defaults.append(f'{{{{ default entity-scheme = "{scheme}" }}}}')
+            defaults.append(f"{{{{ default entity-scheme = {aoix_quote(scheme)} }}}}")
         return "\n".join(defaults)
 
     @property
