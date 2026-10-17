@@ -218,18 +218,29 @@ class ArelleReportProcessor:
         )
 
     def validateReportPackage(
-        self, source: FilelikeAndFileName, *, disableCalculationValidation: bool = False
+        self,
+        source: FilelikeAndFileName,
+        *,
+        disableCalculationValidation: bool = False,
+        getReportAsJson: bool = False,
     ) -> ArelleProcessingResult:
+        """Validate the report package with Arelle.
+
+        With getReportAsJson the same validating session also produces the
+        xBRL-JSON rendering (result.has_json / result.xbrl_json), so a caller
+        wanting both pays for one Arelle session rather than two. Validation
+        is never switched off: Arelle needs it to build the PSVI.
+        """
         options = self._makeOptions(
             calcs="none" if disableCalculationValidation else "c11r",
+            plugins=["saveLoadableOIM"] if getReportAsJson else (),
+            pluginOptions=(
+                {"saveLoadableOIM": "report.json"} if getReportAsJson else None
+            ),
         )
-        return self._run(source, options)
+        if not getReportAsJson:
+            return self._run(source, options)
 
-    def generateXBRLJson(self, source: FilelikeAndFileName) -> ArelleProcessingResult:
-        options = self._makeOptions(
-            plugins=["saveLoadableOIM"],
-            pluginOptions={"saveLoadableOIM": "report.json"},
-        )
         jsonBytesIO = BytesIO()
         result = self._run(source, options, jsonBytesIO)
         try:
@@ -243,6 +254,10 @@ class ArelleReportProcessor:
         except Exception as e:
             result.addException(e)
         return result
+
+    def generateXBRLJson(self, source: FilelikeAndFileName) -> ArelleProcessingResult:
+        """Validate the report package and return its xBRL-JSON rendering."""
+        return self.validateReportPackage(source, getReportAsJson=True)
 
     def generateInlineViewer(
         self, source: FilelikeAndFileName
