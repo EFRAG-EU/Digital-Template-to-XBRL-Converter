@@ -1,10 +1,8 @@
 """Unit tests for TaxonomyChecker, built over hand-written taxonomy JSON via
 loadTaxonomyJSON() -- this needs no Arelle DTS at all.
 
-Taxonomy.__init__ mutates the `dimensions` dict it is given (several .pop()
-calls), and _TAXONOMIES is a process-lifetime registry that rejects a
-duplicate entryPoint, so every test builds its own fresh dicts and uses its
-own unique entry point.
+_TAXONOMIES is a process-lifetime registry that rejects a duplicate
+entryPoint, so every test uses its own unique entry point.
 """
 
 from __future__ import annotations

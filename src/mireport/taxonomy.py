@@ -1024,13 +1024,15 @@ class Taxonomy:
         self,
         concepts: dict[str, Concept],
         entryPointSet: EntryPointSet,
-        presentation: dict[str, dict[str, Any]],
-        dimensions: dict[str, dict],
+        presentation: Mapping[str, Mapping[str, Any]],
+        dimensions: Mapping[str, Mapping[str, Any]],
         qnameMaker: QNameMaker,
         utr: UTR,
         typedDomainWrapperElements: dict[str, TypedDomainWrapperElement] | None = None,
         references: Iterable[Mapping] | None = None,
     ) -> None:
+        # presentation and dimensions are only ever read, never modified, so
+        # the same parsed JSON can back any number of Taxonomy objects.
         self._entryPointSet = entryPointSet
         entryPoint = describeEntryPointSet(self._entryPointSet)
         self._dimensions = dimensions
@@ -1102,7 +1104,11 @@ class Taxonomy:
 
         self._dimensionDefaults: Mapping[Concept, Concept] = {
             self.getConcept(dimension): self.getConcept(domainMember)
-            for dimension, domainMember in dimensions.pop("_defaults", {}).items()
+            for dimension, domainMember in dimensions.get("_defaults", {}).items()
+        }
+        # Every other key of "dimensions" is a role; "_defaults" is not.
+        cubesByRole: Mapping[str, Mapping[str, Any]] = {
+            role: cubes for role, cubes in dimensions.items() if role != "_defaults"
         }
 
         self._hypercubeDeclarations: list[HypercubeDeclaration] = []
@@ -1119,7 +1125,7 @@ class Taxonomy:
         )
         # Every cube in the definition linkbase, whether or not we can model it.
         self._hypercubes = frozenset(
-            concepts[cubeQname] for cubes in dimensions.values() for cubeQname in cubes
+            concepts[cubeQname] for cubes in cubesByRole.values() for cubeQname in cubes
         )
 
         # The taxonomy's dimension container is decided from every declared
@@ -1131,7 +1137,7 @@ class Taxonomy:
         # taxonomy.
         containerCounts: Counter[DimensionContainerType] = Counter(
             DimensionContainerType(cubeDetails["xbrldt:contextElement"])
-            for cubes in dimensions.values()
+            for cubes in cubesByRole.values()
             for cubeDetails in cubes.values()
         )
         if containerCounts:
@@ -1143,7 +1149,7 @@ class Taxonomy:
                 else next(iter(winners))
             )
 
-        for role, cubes in dimensions.items():
+        for role, cubes in cubesByRole.items():
             defects: list[str] = []
             declarationsByPrimaryItem: dict[Concept, list[HypercubeDeclaration]] = (
                 defaultdict(list)
@@ -1151,26 +1157,24 @@ class Taxonomy:
 
             for cubeQname, cubeDetails in cubes.items():
                 hc_concept = concepts[cubeQname]
-                closed = bool(cubeDetails.pop("xbrldt:closed"))
+                closed = bool(cubeDetails["xbrldt:closed"])
                 # Older baked JSON (and third-party JSON we have not re-baked)
                 # predates the "type" key; its absence means positive.
                 cubeType = HypercubeType(
-                    cubeDetails.pop("type", HypercubeType.Positive)
+                    cubeDetails.get("type", HypercubeType.Positive)
                 )
-                container = DimensionContainerType(
-                    cubeDetails.pop("xbrldt:contextElement")
-                )
+                container = DimensionContainerType(cubeDetails["xbrldt:contextElement"])
 
                 primaryItemRels = [
                     Relationship(role, depth, concepts[qname])
-                    for depth, qname in cubeDetails.pop("primaryItems", [])
+                    for depth, qname in cubeDetails.get("primaryItems", [])
                 ]
 
                 explicitDimensionsByName = {
                     concepts[dimQname]: frozenset(
                         concepts[member] for member in memberQnameList
                     )
-                    for dimQname, memberQnameList in cubeDetails.pop(
+                    for dimQname, memberQnameList in cubeDetails.get(
                         "explicitDimensions", {}
                     ).items()
                 }
@@ -1181,7 +1185,7 @@ class Taxonomy:
 
                 typedDimensions = frozenset(
                     concepts[dimQname]
-                    for dimQname in cubeDetails.pop("typedDimensions", [])
+                    for dimQname in cubeDetails.get("typedDimensions", [])
                 )
 
                 declaration = HypercubeDeclaration(
@@ -1256,6 +1260,59 @@ class Taxonomy:
                 )
             )
             warnings.warn(UserWarning(te))
+
+    @classmethod
+    def fromJSON(cls, source: Path | dict) -> Self:
+        """Build a taxonomy from JSON and return it, without registering it.
+
+        source may be a path to a file written by mireport.arelle.taxonomy_extraction, or
+        an already parsed dict, exactly as for loadTaxonomyJSON(). Unlike that,
+        getTaxonomy() does not find the result afterwards, and whether some
+        taxonomy with the same entry point is already registered is irrelevant:
+        each call builds a new, independent Taxonomy, so the same entry point
+        (or the same dict) can be built as many times as a caller likes. source
+        is only read, never modified.
+
+        Failures are raised, as for loadTaxonomyJSON().
+        """
+        bits = source if isinstance(source, dict) else getObject(source)
+        entryPointSet = _entryPointSetFromJSON(
+            bits, source=source.name if isinstance(source, Path) else "dict"
+        )
+        return cls._fromBits(bits, entryPointSet)
+
+    @classmethod
+    def _fromBits(cls, bits: dict, entryPointSet: EntryPointSet) -> Self:
+        qnameMaker = getBootstrapQNameMaker()
+        for prefix, namespace in bits["namespaces"].items():
+            qnameMaker.addNamespacePrefix(prefix, namespace)
+
+        concepts: dict[str, Concept] = {
+            str_qname: Concept(qnameMaker, str_qname, jconcept)
+            for str_qname, jconcept in bits["concepts"].items()
+        }
+        typedDomainWrapperElements: dict[str, TypedDomainWrapperElement] = {
+            str_qname: TypedDomainWrapperElement(qnameMaker, str_qname, jelement)
+            for str_qname, jelement in bits.get("xs_elements", {}).items()
+        }
+        if (references := bits.get("references")) is None:
+            # Predates the top-level "references" section (each concept carried
+            # its own "references" list instead): fold those into the same
+            # shape so old baked JSON still loads.
+            references = _foldLegacyConceptReferences(bits["concepts"])
+
+        return cls(
+            concepts,
+            entryPointSet=entryPointSet,
+            presentation=bits["presentation"],
+            dimensions=bits["dimensions"],
+            qnameMaker=qnameMaker,
+            utr=UTR.fromDict(
+                getObject(getResource(registries, "utr.json")), qnameMaker=qnameMaker
+            ),
+            typedDomainWrapperElements=typedDomainWrapperElements,
+            references=references,
+        )
 
     @staticmethod
     def _unsupportedCubeReason(
@@ -1676,6 +1733,8 @@ def loadTaxonomyJSON(source: Path | dict) -> Taxonomy:
 
     Unlike loadBuiltInTaxonomyJSON(), failures are raised rather than logged --
     there is only one taxonomy here, so there is no rest of the batch to save.
+
+    To build a taxonomy without registering it, use Taxonomy.fromJSON().
     """
     bits = source if isinstance(source, dict) else getObject(source)
     return _createTaxonomyFromJSON(
@@ -1691,37 +1750,7 @@ def _createTaxonomyFromJSON(bits: dict, *, source: str) -> Taxonomy:
             f"Already loaded taxonomy {describeEntryPointSet(entryPointSet)}. "
             f"Taxonomies loaded: {loaded}"
         )
-
-    qnameMaker = getBootstrapQNameMaker()
-    for prefix, namespace in bits["namespaces"].items():
-        qnameMaker.addNamespacePrefix(prefix, namespace)
-
-    concepts: dict[str, Concept] = {
-        str_qname: Concept(qnameMaker, str_qname, jconcept)
-        for str_qname, jconcept in bits["concepts"].items()
-    }
-    typedDomainWrapperElements: dict[str, TypedDomainWrapperElement] = {
-        str_qname: TypedDomainWrapperElement(qnameMaker, str_qname, jelement)
-        for str_qname, jelement in bits.get("xs_elements", {}).items()
-    }
-    if (references := bits.get("references")) is None:
-        # Predates the top-level "references" section (each concept carried
-        # its own "references" list instead): fold those into the same
-        # shape so old baked JSON still loads.
-        references = _foldLegacyConceptReferences(bits["concepts"])
-
-    taxonomy = _TAXONOMIES[entryPointSet] = Taxonomy(
-        concepts,
-        entryPointSet=entryPointSet,
-        presentation=bits["presentation"],
-        dimensions=bits["dimensions"],
-        qnameMaker=qnameMaker,
-        utr=UTR.fromDict(
-            getObject(getResource(registries, "utr.json")), qnameMaker=qnameMaker
-        ),
-        typedDomainWrapperElements=typedDomainWrapperElements,
-        references=references,
-    )
+    taxonomy = _TAXONOMIES[entryPointSet] = Taxonomy._fromBits(bits, entryPointSet)
     return taxonomy
 
 
