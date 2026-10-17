@@ -87,7 +87,8 @@ class TestPdfAttachments:
         extra.write_text(json.dumps({"pdfAttachments": [{"path": "nope.pdf"}]}))
         result = runCli(tmp_path / "out", extra)
         assert result.returncode != 0
-        assert "nope.pdf" in (result.stdout + result.stderr)
+        assert "nope.pdf" in result.stderr
+        assert "Traceback" not in result.stderr
 
     @pytest.mark.skipif(
         shutil.which("pdf2htmlEX") is not None,

@@ -28,10 +28,14 @@ jobs:
           args: format --check .
 
   test:
-    name: Tests
+    name: Tests (${{ matrix.suite }})
     # Skip draft PRs; pushes to main have no pull_request, so they always run
     if: github.event.pull_request.draft != true
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [unitTests, integrationTests, webappTests]
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -54,17 +58,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install .[dev] pytest-github-actions-annotate-failures
 
-      - name: Run Unit Tests
-        run: pytest tests/unitTests --tb=short --color=yes
-        env:
-          PYTEST_GITHUB_ACTIONS_ANNOTATE: "true"
-
-      - name: Run Integration Tests
-        run: pytest tests/integrationTests --tb=short --color=yes
-        env:
-          PYTEST_GITHUB_ACTIONS_ANNOTATE: "true"
-
-      - name: Run WebApp Tests
-        run: pytest tests/webappTests --tb=short --color=yes
+      - name: Run ${{ matrix.suite }}
+        run: pytest tests/${{ matrix.suite }} -n auto --dist loadgroup --durations=20 --tb=short --color=yes
         env:
           PYTEST_GITHUB_ACTIONS_ANNOTATE: "true"

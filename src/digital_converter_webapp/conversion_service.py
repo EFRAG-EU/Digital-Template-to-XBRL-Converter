@@ -60,7 +60,8 @@ def doConversion(
 
     Side effects on ``conv``: may populate ``partial_fact_concepts`` (which
     tells the caller to ask the user for Word documents), and on success stores
-    the generated report package as ``conv.zip``.
+    the generated report package as ``conv.zip`` and the xBRL-JSON Arelle
+    produced while validating it as ``conv.json``.
     """
     builder = ConversionResultsBuilder(conversionId=conv.id)
     try:
@@ -83,7 +84,7 @@ def doConversion(
             reportPackage = _buildReportPackage(report, conv, builder, pc, pdfMode)
             if not builder.conversionSuccessful:
                 return builder.build()
-            _validate(reportPackage, arelle, builder, pc)
+            conv.json = _validate(reportPackage, arelle, builder, pc)
             conv.zip = reportPackage
     except Exception as e:
         message = next(iter(e.args), "")
@@ -244,13 +245,18 @@ def _validate(
     arelle: ArelleReportProcessor,
     builder: ConversionResultsBuilder,
     pc: ProcessingContext,
-) -> None:
+) -> FilelikeAndFileName | None:
+    """Validate the report package, returning the xBRL-JSON the same Arelle
+    session produced (None if it could not), so a later JSON download costs
+    nothing. A missing JSON never fails the conversion: ``ensureXbrlJson``
+    generates it on demand."""
     pc.mark(
         "Validating Inline Report",
         additionalInfo=f"Using Arelle (XBRL Certified Software™) [{ARELLE_VERSION_INFORMATION}]",
     )
-    arelleResults = arelle.validateReportPackage(reportPackage)
+    arelleResults = arelle.validateReportPackage(reportPackage, getReportAsJson=True)
     builder.addMessages(arelleResults.messages)
+    return arelleResults.xbrl_json if arelleResults.has_json else None
 
 
 def ensureViewer(
@@ -277,6 +283,8 @@ def ensureXbrlJson(
     if (json := conv.json) is None:
         zip_ = conv.zip
         assert zip_ is not None, "No report package to render as xBRL-JSON"
-        conv.json = json = arelle.generateXBRLJson(zip_).xbrl_json
+        conv.json = json = arelle.validateReportPackage(
+            zip_, getReportAsJson=True
+        ).xbrl_json
 
     return json

@@ -34,6 +34,7 @@ class TestDownloadErrors:
 
 
 @pytest.mark.slow
+@pytest.mark.xdist_group("webapp-converted")
 class TestDownloadHappyPath:
     def test_download_zip_returns_200(self, converted_id):
         conv_id, c = converted_id
@@ -54,6 +55,14 @@ class TestDownloadHappyPath:
         conv_id, c = converted_id
         resp = c.get(f"/downloadFile/{conv_id}/json/")
         assert resp.status_code == 200
+
+    def test_conversion_already_holds_the_json(self, converted_id, conversion_of):
+        """The validating Arelle session also produces the JSON, so the
+        download above costs no second session."""
+        _, c = converted_id
+        conv = conversion_of(c)
+        assert conv.json is not None
+        assert conv.json.filename.endswith(".json")
 
     def test_download_viewer_returns_200(self, converted_id):
         conv_id, c = converted_id

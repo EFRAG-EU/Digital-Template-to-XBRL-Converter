@@ -97,6 +97,7 @@ class TestDocumentSetViewer:
 
 
 @pytest.mark.slow
+@pytest.mark.xdist_group("webapp-converted")
 class TestViewerAfterConversion:
     def test_viewer_page_returns_html(self, converted_id):
         conv_id, c = converted_id
@@ -106,38 +107,33 @@ class TestViewerAfterConversion:
 
 
 @pytest.mark.slow
+@pytest.mark.xdist_group("webapp-viewed-docset")
 class TestDocumentSetViewerAfterConversion:
     """Against a real conversion of a workbook with a supplementary PDF."""
 
-    @pytest.fixture
-    def viewedConversion(self, client, upload, make_pdf, conversion_of, convertedOk):
-        upload(client, pdfs=[make_pdf("annex1.pdf")])
-        conversionId = conversion_of(client).id
-        client.get(f"/conversions/{conversionId}")
-        client.get(f"/downloadFile/{conversionId}/viewer/")
-        return conversionId
-
     def test_viewer_has_document_set_members(
-        self, client, conversion_of, viewedConversion
+        self, viewed_docset, conversion_of
     ) -> None:
+        client, _ = viewed_docset
         assert list(conversion_of(client).viewer_members) == ["annex1.xhtml"]
 
-    def test_download_redirects_to_the_served_viewer(
-        self, client, viewedConversion
-    ) -> None:
-        resp = client.get(f"/downloadFile/{viewedConversion}/viewer/")
+    def test_download_redirects_to_the_served_viewer(self, viewed_docset) -> None:
+        client, conversionId = viewed_docset
+        resp = client.get(f"/downloadFile/{conversionId}/viewer/")
         assert resp.status_code == 303
-        assert resp.location.endswith(f"/viewer/{viewedConversion}/")
+        assert resp.location.endswith(f"/viewer/{conversionId}/")
 
     def test_members_are_served_where_the_viewer_looks_for_them(
-        self, client, conversion_of, viewedConversion
+        self, viewed_docset, conversion_of
     ) -> None:
+        client, conversionId = viewed_docset
         for name in conversion_of(client).viewer_members:
-            resp = client.get(f"/viewer/{viewedConversion}/{name}")
+            resp = client.get(f"/viewer/{conversionId}/{name}")
             assert resp.status_code == 200, name
             assert resp.data
 
-    def test_primary_viewer_names_its_members(self, client, viewedConversion) -> None:
-        resp = client.get(f"/viewer/{viewedConversion}/")
+    def test_primary_viewer_names_its_members(self, viewed_docset) -> None:
+        client, conversionId = viewed_docset
+        resp = client.get(f"/viewer/{conversionId}/")
         assert resp.status_code == 200
         assert b"annex1.xhtml" in resp.data

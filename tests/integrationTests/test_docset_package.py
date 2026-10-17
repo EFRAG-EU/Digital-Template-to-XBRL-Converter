@@ -23,6 +23,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from mireport.arelle.report_info import ArelleReportProcessor
+from mireport.arelle.support import ArelleProcessingResult
 from mireport.conversionresults import ConversionResultsBuilder, Severity
 from mireport.data.disclosures import VSME_DEFAULTS
 from mireport.filesupport import FilelikeAndFileName
@@ -37,7 +38,10 @@ SAMPLE = Path("tests/data/VSME-Digital-Template-Sample-1.2.0.xlsx")
 STUB = Path("tests/data/docset-member-stub.xhtml")
 STUB_CONVERTER = Path("tests/data/stub-pdf-converter.py")
 
-pytestmark = pytest.mark.slow
+# Module-scoped fixtures here are slow Arelle runs. With ``--dist loadgroup``
+# the whole module stays on one worker, so each runs once rather than once per
+# worker that happens to pick up one of its tests.
+pytestmark = [pytest.mark.slow, pytest.mark.xdist_group("docset-package")]
 
 
 @pytest.fixture(scope="module")
@@ -138,38 +142,67 @@ def errorsAndWarnings(messages: list[Message]) -> set[str]:
     }
 
 
+# Each Arelle session costs several seconds, so every distinct operation on a
+# package runs once per module and the tests below assert on the result.
+# One validating session per package also hands back the xBRL-JSON
+# (getReportAsJson), so validation and JSON tests share a single run.
+
+
+@pytest.fixture(scope="module")
+def plainRun(
+    arelle: ArelleReportProcessor, plainPackage: FilelikeAndFileName
+) -> ArelleProcessingResult:
+    return arelle.validateReportPackage(plainPackage, getReportAsJson=True)
+
+
+@pytest.fixture(scope="module")
+def docsetRun(
+    arelle: ArelleReportProcessor, docsetPackage: FilelikeAndFileName
+) -> ArelleProcessingResult:
+    return arelle.validateReportPackage(docsetPackage, getReportAsJson=True)
+
+
+@pytest.fixture(scope="module")
+def plainViewer(
+    arelle: ArelleReportProcessor, plainPackage: FilelikeAndFileName
+) -> ArelleProcessingResult:
+    return arelle.generateInlineViewer(plainPackage)
+
+
+@pytest.fixture(scope="module")
+def docsetViewer(
+    arelle: ArelleReportProcessor, docsetPackage: FilelikeAndFileName
+) -> ArelleProcessingResult:
+    return arelle.generateInlineViewer(docsetPackage)
+
+
 # ── validation ────────────────────────────────────────────────────────────────
 
 
 class TestValidation:
-    def test_plain_package_validates(
-        self, arelle: ArelleReportProcessor, plainPackage: FilelikeAndFileName
-    ) -> None:
+    def test_plain_package_validates(self, plainRun: ArelleProcessingResult) -> None:
         """The baseline. If this fails the comparison below means nothing."""
-        result = arelle.validateReportPackage(plainPackage)
-        assert not result.has_exceptions, result.log_lines
+        assert not plainRun.has_exceptions, plainRun.log_lines
 
     def test_docset_package_raises_no_exception(
-        self, arelle: ArelleReportProcessor, docsetPackage: FilelikeAndFileName
+        self, docsetRun: ArelleProcessingResult
     ) -> None:
-        result = arelle.validateReportPackage(docsetPackage)
-        assert not result.has_exceptions, result.log_lines
+        assert not docsetRun.has_exceptions, docsetRun.log_lines
 
     def test_docset_introduces_no_new_messages(
         self,
-        arelle: ArelleReportProcessor,
-        plainPackage: FilelikeAndFileName,
-        docsetPackage: FilelikeAndFileName,
+        plainRun: ArelleProcessingResult,
+        docsetRun: ArelleProcessingResult,
     ) -> None:
-        before = errorsAndWarnings(arelle.validateReportPackage(plainPackage).messages)
-        after = errorsAndWarnings(arelle.validateReportPackage(docsetPackage).messages)
+        before = errorsAndWarnings(plainRun.messages)
+        after = errorsAndWarnings(docsetRun.messages)
         assert after - before == set()
 
     def test_no_entry_point_or_document_set_complaint(
-        self, arelle: ArelleReportProcessor, docsetPackage: FilelikeAndFileName
+        self, docsetRun: ArelleProcessingResult
     ) -> None:
         """The specific failure modes this design risks, named explicitly."""
-        text = "\n".join(arelle.validateReportPackage(docsetPackage).log_lines)
+        text = "\n".join(docsetRun.log_lines)
         assert "InlineXbrlDocumentSet" not in text, (
             "Arelle asked for the document set plug-in to be enabled"
         )
@@ -189,19 +222,15 @@ class TestValidation:
 
 class TestFactsUnchanged:
     def test_fact_count_is_identical(
-        self,
-        arelle: ArelleReportProcessor,
-        plainPackage: FilelikeAndFileName,
-        docsetPackage: FilelikeAndFileName,
+        self, plainRun: ArelleProcessingResult, docsetRun: ArelleProcessingResult
     ) -> None:
         import json
 
-        def factCount(package: FilelikeAndFileName) -> int:
-            result = arelle.generateXBRLJson(package)
+        def factCount(result: ArelleProcessingResult) -> int:
             assert result.has_json, result.log_lines
             return len(json.loads(result.xbrl_json.fileContent)["facts"])
 
-        assert factCount(docsetPackage) == factCount(plainPackage)
+        assert factCount(docsetRun) == factCount(plainRun)
 
 
 # ── viewer and JSON outputs ───────────────────────────────────────────────────
@@ -209,47 +238,39 @@ class TestFactsUnchanged:
 
 class TestGeneratedOutputs:
     def test_json_is_generated_for_a_docset(
-        self, arelle: ArelleReportProcessor, docsetPackage: FilelikeAndFileName
+        self, docsetRun: ArelleProcessingResult
     ) -> None:
-        result = arelle.generateXBRLJson(docsetPackage)
-        assert result.has_json, result.log_lines
+        assert docsetRun.has_json, docsetRun.log_lines
 
     def test_viewer_is_generated_for_a_docset(
-        self, arelle: ArelleReportProcessor, docsetPackage: FilelikeAndFileName
+        self, docsetViewer: ArelleProcessingResult
     ) -> None:
         """The viewer writes one file per set member, so the single-file
         response-zip reader has to cope with more than one."""
-        result = arelle.generateInlineViewer(docsetPackage)
-        assert result.has_viewer, result.log_lines
+        assert docsetViewer.has_viewer, docsetViewer.log_lines
 
     def test_viewer_carries_the_member_alongside_the_primary(
-        self,
-        arelle: ArelleReportProcessor,
-        docsetPackage: FilelikeAndFileName,
-        marker: bytes,
+        self, docsetViewer: ArelleProcessingResult, marker: bytes
     ) -> None:
         """Proves the annex actually reached the viewer rather than merely
         failing to break it."""
-        members = arelle.generateInlineViewer(docsetPackage).viewer_document_set_members
+        members = docsetViewer.viewer_document_set_members
         assert [m.filename for m in members] == ["annex1.xhtml"]
         assert marker in members[0].fileContent
 
     def test_viewer_primary_references_the_member_by_name(
-        self, arelle: ArelleReportProcessor, docsetPackage: FilelikeAndFileName
+        self, docsetViewer: ArelleProcessingResult
     ) -> None:
         """Which is why the member keeps its filename when served."""
-        result = arelle.generateInlineViewer(docsetPackage)
-        assert b"annex1.xhtml" in result.viewer.fileContent
+        assert b"annex1.xhtml" in docsetViewer.viewer.fileContent
 
     def test_viewer_is_still_generated_for_a_plain_report(
-        self, arelle: ArelleReportProcessor, plainPackage: FilelikeAndFileName
+        self, plainViewer: ArelleProcessingResult
     ) -> None:
         """Enabling the document set plug-in must not disturb the common case."""
-        result = arelle.generateInlineViewer(plainPackage)
-        assert result.has_viewer, result.log_lines
+        assert plainViewer.has_viewer, plainViewer.log_lines
 
     def test_plain_report_has_no_document_set_members(
-        self, arelle: ArelleReportProcessor, plainPackage: FilelikeAndFileName
+        self, plainViewer: ArelleProcessingResult
     ) -> None:
-        result = arelle.generateInlineViewer(plainPackage)
-        assert result.viewer_document_set_members == []
+        assert plainViewer.viewer_document_set_members == []
