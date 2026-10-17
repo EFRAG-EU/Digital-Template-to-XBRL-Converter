@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from mireport.arelle.report_info import ArelleReportProcessor
+from mireport.arelle.support import ArelleProcessingResult
 from mireport.conversionresults import ConversionResultsBuilder, Severity
 from mireport.data.disclosures import VSME_DEFAULTS
 from mireport.pdf_converter import MergedAnnex, buildMergedAnnex, mergeAnnexesIntoReport
@@ -79,6 +80,45 @@ def mergedPackage(report: InlineReport, annex: MergedAnnex) -> FilelikeAndFileNa
     return buildReportPackage(reportFile, topLevel=report.packageTopLevelName)
 
 
+# Each Arelle session costs several seconds, so every distinct operation on a
+# package runs once per module and the tests below assert on the result.
+
+
+@pytest.fixture(scope="module")
+def plainValidation(
+    arelle: ArelleReportProcessor, plainPackage: FilelikeAndFileName
+) -> ArelleProcessingResult:
+    return arelle.validateReportPackage(plainPackage)
+
+
+@pytest.fixture(scope="module")
+def mergedValidation(
+    arelle: ArelleReportProcessor, mergedPackage: FilelikeAndFileName
+) -> ArelleProcessingResult:
+    return arelle.validateReportPackage(mergedPackage)
+
+
+@pytest.fixture(scope="module")
+def plainJson(
+    arelle: ArelleReportProcessor, plainPackage: FilelikeAndFileName
+) -> ArelleProcessingResult:
+    return arelle.generateXBRLJson(plainPackage)
+
+
+@pytest.fixture(scope="module")
+def mergedJson(
+    arelle: ArelleReportProcessor, mergedPackage: FilelikeAndFileName
+) -> ArelleProcessingResult:
+    return arelle.generateXBRLJson(mergedPackage)
+
+
+@pytest.fixture(scope="module")
+def mergedViewer(
+    arelle: ArelleReportProcessor, mergedPackage: FilelikeAndFileName
+) -> ArelleProcessingResult:
+    return arelle.generateInlineViewer(mergedPackage)
+
+
 def errorsAndWarnings(messages: list[Message]) -> set[str]:
     return {
         m.messageText
@@ -101,34 +141,31 @@ def _reportHtml(package: FilelikeAndFileName) -> bytes:
 
 class TestValidation:
     def test_plain_package_validates(
-        self, arelle: ArelleReportProcessor, plainPackage: FilelikeAndFileName
+        self, plainValidation: ArelleProcessingResult
     ) -> None:
         """The baseline. If this fails the comparison below means nothing."""
-        result = arelle.validateReportPackage(plainPackage)
-        assert not result.has_exceptions, result.log_lines
+        assert not plainValidation.has_exceptions, plainValidation.log_lines
 
     def test_merged_package_raises_no_exception(
-        self, arelle: ArelleReportProcessor, mergedPackage: FilelikeAndFileName
+        self, mergedValidation: ArelleProcessingResult
     ) -> None:
-        result = arelle.validateReportPackage(mergedPackage)
-        assert not result.has_exceptions, result.log_lines
+        assert not mergedValidation.has_exceptions, mergedValidation.log_lines
 
     def test_merge_introduces_no_new_messages(
         self,
-        arelle: ArelleReportProcessor,
-        plainPackage: FilelikeAndFileName,
-        mergedPackage: FilelikeAndFileName,
+        plainValidation: ArelleProcessingResult,
+        mergedValidation: ArelleProcessingResult,
     ) -> None:
-        before = errorsAndWarnings(arelle.validateReportPackage(plainPackage).messages)
-        after = errorsAndWarnings(arelle.validateReportPackage(mergedPackage).messages)
+        before = errorsAndWarnings(plainValidation.messages)
+        after = errorsAndWarnings(mergedValidation.messages)
         assert after - before == set()
 
     def test_no_document_set_complaint(
-        self, arelle: ArelleReportProcessor, mergedPackage: FilelikeAndFileName
+        self, mergedValidation: ArelleProcessingResult
     ) -> None:
         """A merged report is still a single-document entry point — it must
         never need the document-set plug-in the way docset mode does."""
-        text = "\n".join(arelle.validateReportPackage(mergedPackage).log_lines)
+        text = "\n".join(mergedValidation.log_lines)
         assert "InlineXbrlDocumentSet" not in text
 
 
@@ -137,19 +174,15 @@ class TestValidation:
 
 class TestFactsUnchanged:
     def test_fact_count_is_identical(
-        self,
-        arelle: ArelleReportProcessor,
-        plainPackage: FilelikeAndFileName,
-        mergedPackage: FilelikeAndFileName,
+        self, plainJson: ArelleProcessingResult, mergedJson: ArelleProcessingResult
     ) -> None:
         import json
 
-        def factCount(package: FilelikeAndFileName) -> int:
-            result = arelle.generateXBRLJson(package)
+        def factCount(result: ArelleProcessingResult) -> int:
             assert result.has_json, result.log_lines
             return len(json.loads(result.xbrl_json.fileContent)["facts"])
 
-        assert factCount(mergedPackage) == factCount(plainPackage)
+        assert factCount(mergedJson) == factCount(plainJson)
 
 
 # ── layout and content ────────────────────────────────────────────────────────
@@ -194,22 +227,15 @@ class TestMergedContent:
 
 
 class TestGeneratedOutputs:
-    def test_json_is_generated(
-        self, arelle: ArelleReportProcessor, mergedPackage: FilelikeAndFileName
-    ) -> None:
-        result = arelle.generateXBRLJson(mergedPackage)
-        assert result.has_json, result.log_lines
+    def test_json_is_generated(self, mergedJson: ArelleProcessingResult) -> None:
+        assert mergedJson.has_json, mergedJson.log_lines
 
-    def test_viewer_is_generated(
-        self, arelle: ArelleReportProcessor, mergedPackage: FilelikeAndFileName
-    ) -> None:
-        result = arelle.generateInlineViewer(mergedPackage)
-        assert result.has_viewer, result.log_lines
+    def test_viewer_is_generated(self, mergedViewer: ArelleProcessingResult) -> None:
+        assert mergedViewer.has_viewer, mergedViewer.log_lines
 
     def test_viewer_has_no_extra_document_set_members(
-        self, arelle: ArelleReportProcessor, mergedPackage: FilelikeAndFileName
+        self, mergedViewer: ArelleProcessingResult
     ) -> None:
         """A merged annex is not a document set member: it travels inside the
         one file the viewer already serves."""
-        result = arelle.generateInlineViewer(mergedPackage)
-        assert result.viewer_document_set_members == []
+        assert mergedViewer.viewer_document_set_members == []

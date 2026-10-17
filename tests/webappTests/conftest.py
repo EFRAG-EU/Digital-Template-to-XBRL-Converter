@@ -156,8 +156,7 @@ def converted_id(app):
     return conv_id, c
 
 
-@pytest.fixture
-def convertedOk(monkeypatch):
+def patchConverterPresent(monkeypatch):
     """pdf2htmlEX present and working. Patched on mireport.pdf_converter._batch,
     where the conversion policy actually lives — the web app only supplies the
     uploaded files and consumes the result."""
@@ -187,6 +186,11 @@ def convertedOk(monkeypatch):
 
 
 @pytest.fixture
+def convertedOk(monkeypatch):
+    patchConverterPresent(monkeypatch)
+
+
+@pytest.fixture
 def noBinary(monkeypatch):
     from mireport.pdf_converter import _batch
 
@@ -194,3 +198,23 @@ def noBinary(monkeypatch):
         raise PdfToolNotFoundError("pdf2htmlEX was not found")
 
     monkeypatch.setattr(_batch, "findConverter", raiser)
+
+
+@pytest.fixture(scope="module")
+def viewed_docset(app):
+    """``(client, conversion id)`` for one real conversion of the sample workbook
+    with a supplementary PDF, viewer already generated.
+
+    Each conversion runs Arelle (~13s), so tests that only read the result share
+    one per module. Module scoped, so ``monkeypatch`` is unavailable and a
+    ``MonkeyPatch.context()`` stands in.
+    """
+    client = app.test_client()
+    with pytest.MonkeyPatch.context() as monkeypatch:
+        patchConverterPresent(monkeypatch)
+        postWorkbook(client, pdfs=[(io.BytesIO(PDF_BYTES), "annex1.pdf")])
+        with client.session_transaction() as sess:
+            (conversion,) = ConversionStore(sess).active().values()
+        client.get(f"/conversions/{conversion.id}")
+        client.get(f"/downloadFile/{conversion.id}/viewer/")
+    return client, conversion.id

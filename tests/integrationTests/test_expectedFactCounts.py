@@ -1,6 +1,5 @@
 import subprocess
 import sys
-from collections.abc import Generator
 from pathlib import Path
 from typing import Any
 
@@ -23,49 +22,45 @@ def format_subprocess_output(result: subprocess.CompletedProcess) -> str:
     return f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
 
 
-@pytest.fixture(scope="module")
-def parsed_reports(
-    tmp_path_factory: pytest.TempPathFactory,
-) -> Generator[dict, None, None]:
-    """Run parse-and-ixbrl.py on all test cases once, yield dict of input_file -> output_file."""
-    outputs = {}
-    base_tmp = tmp_path_factory.mktemp("parsed_reports")
+@pytest.fixture(scope="module", params=TEST_CASES, ids=[t[0] for t in TEST_CASES])
+def parsed_report(
+    request: pytest.FixtureRequest, tmp_path_factory: pytest.TempPathFactory
+) -> tuple[str, Path, int]:
+    """Run parse-and-ixbrl.py on one test case; yield (input, output, expected count).
 
-    for input_file, _ in TEST_CASES:
-        input_path = Path(input_file)
-        output_file = base_tmp / (Path(input_file).stem + ".html")
+    One fixture instance per input file lets the six conversions run on
+    different workers instead of back to back in one setup.
+    """
+    input_file, expected_fact_count = request.param
+    output_file = (
+        tmp_path_factory.mktemp("parsed_reports") / f"{Path(input_file).stem}.html"
+    )
 
-        result = subprocess.run(
-            [
-                sys.executable,
-                "scripts/parse-and-ixbrl.py",
-                "--skip-validation",
-                str(input_path),
-                str(output_file),
-            ],
-            capture_output=True,
-            encoding="utf-8",
-            check=False,
-        )
+    result = subprocess.run(
+        [
+            sys.executable,
+            "scripts/parse-and-ixbrl.py",
+            "--skip-validation",
+            input_file,
+            str(output_file),
+        ],
+        capture_output=True,
+        encoding="utf-8",
+        check=False,
+    )
 
-        assert result.returncode == 0, (
-            f"Script failed for {input_file}:\n{format_subprocess_output(result)}"
-        )
-        assert output_file.exists(), (
-            f"Output HTML file was not created for {input_file}.\n"
-            f"{format_subprocess_output(result)}"
-        )
-
-        outputs[input_file] = output_file
-
-    yield outputs
+    assert result.returncode == 0, (
+        f"Script failed for {input_file}:\n{format_subprocess_output(result)}"
+    )
+    assert output_file.exists(), (
+        f"Output HTML file was not created for {input_file}.\n"
+        f"{format_subprocess_output(result)}"
+    )
+    return input_file, output_file, expected_fact_count
 
 
-@pytest.mark.parametrize("input_file,expected_fact_count", TEST_CASES)
-def test_fact_count(
-    parsed_reports: dict[str, Path], input_file: str, expected_fact_count: int
-) -> None:
-    output_file = parsed_reports[input_file]
+def test_fact_count(parsed_report: tuple[str, Path, int]) -> None:
+    input_file, output_file, expected_fact_count = parsed_report
 
     parser = etree.XMLParser()
     tree = etree.parse(str(output_file), parser)
@@ -83,9 +78,8 @@ def test_fact_count(
 
 
 @pytest.mark.slow
-@pytest.mark.parametrize("input_file,_", TEST_CASES)
-def test_validation(parsed_reports: dict[str, Path], input_file: str, _: int) -> None:
-    output_file = parsed_reports[input_file]
+def test_validation(parsed_report: tuple[str, Path, int]) -> None:
+    _, output_file, _ = parsed_report
 
     validate_result = subprocess.run(
         [

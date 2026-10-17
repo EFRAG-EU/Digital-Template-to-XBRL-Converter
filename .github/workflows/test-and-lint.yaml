@@ -44,22 +44,20 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
+      - name: Cache Arelle web cache
+        uses: actions/cache@v6
+        with:
+          path: ~/.config/arelle/cache
+          key: ${{ runner.os }}-arelle-${{ hashFiles('src/mireport/data/taxonomies/**/*.json') }}
+          restore-keys: |
+            ${{ runner.os }}-arelle-
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install .[dev] pytest-github-actions-annotate-failures
 
-      - name: Run Unit Tests
-        run: pytest tests/unitTests --tb=short --color=yes
-        env:
-          PYTEST_GITHUB_ACTIONS_ANNOTATE: "true"
-
-      - name: Run Integration Tests
-        run: pytest tests/integrationTests --tb=short --color=yes
-        env:
-          PYTEST_GITHUB_ACTIONS_ANNOTATE: "true"
-
-      - name: Run WebApp Tests
-        run: pytest tests/webappTests --tb=short --color=yes
+      - name: Run Tests
+        run: pytest tests -n auto --dist worksteal --durations=20 --tb=short --color=yes
         env:
           PYTEST_GITHUB_ACTIONS_ANNOTATE: "true"
