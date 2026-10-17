@@ -53,14 +53,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      - name: Cache Arelle web cache
-        uses: actions/cache@v6
-        with:
-          path: ~/.config/arelle/cache
-          key: ${{ runner.os }}-arelle-${{ hashFiles('src/mireport/data/taxonomies/**/*.json') }}
-          restore-keys: |
-            ${{ runner.os }}-arelle-
-
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
