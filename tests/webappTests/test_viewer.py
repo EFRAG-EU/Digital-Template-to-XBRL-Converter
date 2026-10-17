@@ -97,6 +97,7 @@ class TestDocumentSetViewer:
 
 
 @pytest.mark.slow
+@pytest.mark.xdist_group("webapp-converted")
 class TestViewerAfterConversion:
     def test_viewer_page_returns_html(self, converted_id):
         conv_id, c = converted_id
@@ -106,6 +107,7 @@ class TestViewerAfterConversion:
 
 
 @pytest.mark.slow
+@pytest.mark.xdist_group("webapp-viewed-docset")
 class TestDocumentSetViewerAfterConversion:
     """Against a real conversion of a workbook with a supplementary PDF."""
 

@@ -34,6 +34,7 @@ class TestDownloadErrors:
 
 
 @pytest.mark.slow
+@pytest.mark.xdist_group("webapp-converted")
 class TestDownloadHappyPath:
     def test_download_zip_returns_200(self, converted_id):
         conv_id, c = converted_id

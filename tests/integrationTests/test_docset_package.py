@@ -38,7 +38,10 @@ SAMPLE = Path("tests/data/VSME-Digital-Template-Sample-1.2.0.xlsx")
 STUB = Path("tests/data/docset-member-stub.xhtml")
 STUB_CONVERTER = Path("tests/data/stub-pdf-converter.py")
 
-pytestmark = pytest.mark.slow
+# Module-scoped fixtures here are slow Arelle runs. With ``--dist loadgroup``
+# the whole module stays on one worker, so each runs once rather than once per
+# worker that happens to pick up one of its tests.
+pytestmark = [pytest.mark.slow, pytest.mark.xdist_group("docset-package")]
 
 
 @pytest.fixture(scope="module")

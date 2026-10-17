@@ -22,7 +22,15 @@ def format_subprocess_output(result: subprocess.CompletedProcess) -> str:
     return f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
 
 
-@pytest.fixture(scope="module", params=TEST_CASES, ids=[t[0] for t in TEST_CASES])
+@pytest.fixture(
+    scope="module",
+    params=[
+        # One xdist group per workbook, so its conversion runs on one worker
+        # (see test_docset_package.py) while the workbooks spread across them.
+        pytest.param(case, id=case[0], marks=pytest.mark.xdist_group(case[0]))
+        for case in TEST_CASES
+    ],
+)
 def parsed_report(
     request: pytest.FixtureRequest, tmp_path_factory: pytest.TempPathFactory
 ) -> tuple[str, Path, int]:

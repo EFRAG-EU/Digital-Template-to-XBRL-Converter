@@ -37,6 +37,7 @@ class TestConversionResultsPageExpired:
 
 
 @pytest.mark.slow
+@pytest.mark.xdist_group("webapp-converted")
 class TestConversionResultsPage:
     """Checks that /conversions/<id> renders the right messages after a real conversion."""
 
