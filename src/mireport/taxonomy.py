@@ -983,15 +983,15 @@ class EffectiveHypercube:
 
 
 @cache
-def _getDimensionsForHypercube(
+def _getAllDimensionsForHypercube(
     taxonomy: Taxonomy, hypercube: Concept
 ) -> frozenset[Concept]:
     """The union, across every base-set this hypercube participates in, of all
     its dimensions (explicit and typed). This is not a valid dimensional
     signature by itself -- see getDeclarationsForHypercube()."""
-    return taxonomy.getExplicitDimensionsForHypercube(
+    return taxonomy.getAllExplicitDimensionsForHypercube(
         hypercube
-    ) | taxonomy.getTypedDimensionsForHypercube(hypercube)
+    ) | taxonomy.getAllTypedDimensionsForHypercube(hypercube)
 
 
 @cache
@@ -1514,7 +1514,9 @@ class Taxonomy:
         self._rejectUnsupported(primaryItem)
         return frozenset(self._effectiveHypercubesByPrimaryItem.get(primaryItem, ()))
 
-    def getTypedDimensionsForHypercube(self, hypercube: Concept) -> frozenset[Concept]:
+    def getAllTypedDimensionsForHypercube(
+        self, hypercube: Concept
+    ) -> frozenset[Concept]:
         """The union, across every base-set this hypercube participates in, of its
         typed dimensions. This is not a valid dimensional signature by itself --
         see getDeclarationsForHypercube()."""
@@ -1524,7 +1526,7 @@ class Taxonomy:
             for td in declaration.typedDimensions
         )
 
-    def getExplicitDimensionsForHypercube(
+    def getAllExplicitDimensionsForHypercube(
         self, hypercube: Concept
     ) -> frozenset[Concept]:
         """The union, across every base-set this hypercube participates in, of its
@@ -1536,13 +1538,13 @@ class Taxonomy:
             for ed in declaration.explicitDimensions
         )
 
-    def getDimensionsForHypercube(self, hypercube: Concept) -> frozenset[Concept]:
+    def getAllDimensionsForHypercube(self, hypercube: Concept) -> frozenset[Concept]:
         """The union, across every base-set this hypercube participates in, of all
         its dimensions (explicit and typed). This is not a valid dimensional
         signature by itself -- see getDeclarationsForHypercube()."""
-        return _getDimensionsForHypercube(self, hypercube)
+        return _getAllDimensionsForHypercube(self, hypercube)
 
-    def getPrimaryItemsForHypercube(self, hypercube: Concept) -> frozenset[Concept]:
+    def getAllPrimaryItemsForHypercube(self, hypercube: Concept) -> frozenset[Concept]:
         """This aggregates across all base-sets to give all the primary items specified for the given hypercube."""
         return frozenset(
             primaryItem
@@ -1550,7 +1552,7 @@ class Taxonomy:
             for primaryItem in declaration.primaryItems
         )
 
-    def getExplicitDimensionsForPrimaryItem(
+    def getAllExplicitDimensionsForPrimaryItem(
         self, primaryItem: Concept
     ) -> frozenset[Concept]:
         """The union, across every applicable hypercube/base-set, of the explicit
@@ -1563,7 +1565,7 @@ class Taxonomy:
             for ed in hc.explicitDimensions
         )
 
-    def getTypedDimensionsForPrimaryItem(
+    def getAllTypedDimensionsForPrimaryItem(
         self, primaryItem: Concept
     ) -> frozenset[Concept]:
         """The union, across every applicable hypercube/base-set, of the typed

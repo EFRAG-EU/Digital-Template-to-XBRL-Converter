@@ -71,8 +71,10 @@ def rich_hypercube(taxonomy):
     """A hypercube with at least two reportable primary items and a dimension,
     plus those items — the raw material for classification scenarios."""
     for hc in sorted(taxonomy.hypercubes, key=str):
-        pris = [c for c in taxonomy.getPrimaryItemsForHypercube(hc) if c.isReportable]
-        dims = sorted(taxonomy.getDimensionsForHypercube(hc), key=str)
+        pris = [
+            c for c in taxonomy.getAllPrimaryItemsForHypercube(hc) if c.isReportable
+        ]
+        dims = sorted(taxonomy.getAllDimensionsForHypercube(hc), key=str)
         if len(pris) >= 2 and dims:
             return hc, sorted(pris, key=str), dims
     pytest.skip("no hypercube with >=2 reportable primary items and a dimension")
@@ -168,8 +170,8 @@ class TestXBRLTableResolverClassification:
 
     def test_unpermitted_concept_inside_table_is_extra(self, taxonomy, rich_hypercube):
         hc, pris, _dims = rich_hypercube
-        permitted = taxonomy.getDimensionsForHypercube(hc).union(
-            taxonomy.getPrimaryItemsForHypercube(hc)
+        permitted = taxonomy.getAllDimensionsForHypercube(hc).union(
+            taxonomy.getAllPrimaryItemsForHypercube(hc)
         )
         outsider = next(
             c
