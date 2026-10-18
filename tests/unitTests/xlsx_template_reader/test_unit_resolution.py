@@ -17,6 +17,7 @@ from openpyxl.workbook.defined_name import DefinedName
 from mireport.conversionresults import ConversionResultsBuilder, Severity
 from mireport.data.disclosures import VSME_DEFAULTS
 from mireport.report import InlineReport
+from mireport.report.model import Unit
 from mireport.taxonomy import getTaxonomy, listTaxonomies
 from mireport.xlsx_template_reader._config import ConverterConfig
 from mireport.xlsx_template_reader._messages import Messenger
@@ -104,7 +105,8 @@ class TestUnitFromNamedRange:
     def test_valid_unit_for_data_type_is_used(self, taxonomy, config, energy_concept):
         env = _Env(taxonomy, config, energy_concept, "MWh")
         assert env.resolver.setUnitForName(env.holder, env.fb) is True
-        assert env.fb._aspects["units"].localName == "MWh"
+        assert env.fb._unit is not None and not env.fb._unit.is_divide
+        assert env.fb._unit.measure.localName == "MWh"
 
     def test_wrong_unit_via_specified_holder_warns_and_fails(
         self, taxonomy, config, energy_concept
@@ -141,8 +143,8 @@ class TestUnitFromNamedRange:
         to the data-type/UTR fallback instead of failing."""
         env = _Env(taxonomy, config, energy_concept, "kg")
         assert env.resolver.setUnitForName(env.holder, env.fb) is True
-        assert "units" in env.fb._aspects
-        assert env.fb._aspects["units"].localName != "kg"
+        assert env.fb._unit is not None
+        assert env.fb._unit.measure.localName != "kg"
 
     def test_empty_unit_cell_fails(self, taxonomy, config, energy_concept):
         env = _Env(taxonomy, config, energy_concept, None)
@@ -157,7 +159,7 @@ class TestConfiguredConceptUnit:
         )
         env = _Env(taxonomy, config, concept, "wibbles per parsec")
         assert env.resolver.setUnitForName(env.holder, env.fb) is True
-        assert env.fb._aspects["units"] == unit
+        assert env.fb._unit == Unit.simple(unit)
 
 
 class TestNoUnitRange:
@@ -177,7 +179,7 @@ class TestNoUnitRange:
             pytest.skip("taxonomy has no concept with exactly one required unit")
         env = _Env(taxonomy, config, concept, None, with_unit_map=False)
         assert env.resolver.setUnitForName(env.holder, env.fb) is True
-        assert env.fb._aspects["units"] == next(iter(concept.getRequiredUnitQNames()))
+        assert env.fb._unit == Unit.simple(next(iter(concept.getRequiredUnitQNames())))
 
     def test_complex_unit_uses_default_currency_denominator(self, taxonomy, config):
         concept = next(
@@ -198,6 +200,7 @@ class TestNoUnitRange:
         if concept is None:
             pytest.skip("taxonomy has no complex-unit (per-monetary) concept")
         env = _Env(taxonomy, config, concept, None, with_unit_map=False)
-        env.report.setDefaultAspect("monetary-units", "EUR")
+        env.report.setDefaultCurrency("EUR")
         assert env.resolver.setUnitForName(env.holder, env.fb) is True
-        assert "EUR" in env.fb._aspects["complex-units"]
+        assert env.fb._unit is not None and env.fb._unit.is_divide
+        assert [m.localName for m in env.fb._unit.denominator] == ["EUR"]

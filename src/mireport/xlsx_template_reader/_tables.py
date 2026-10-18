@@ -197,7 +197,7 @@ class TableFactCreator:
                 cell,
             )
             if member is not None:
-                factBuilder.setHiddenValue(member.expandedName)
+                factBuilder.setEnumerationValue(member)
             else:
                 broken = True
                 self._msg.error(
@@ -228,9 +228,7 @@ class TableFactCreator:
                         concept=priItem.concept,
                         ref=priItem.excelRef(cell),
                     )
-            factBuilder.setHiddenValue(
-                " ".join(sorted({e.expandedName for e in eeValues}))
-            )
+            factBuilder.setEnumerationSet(eeValues)
 
         if broken:
             self._msg.warning(
