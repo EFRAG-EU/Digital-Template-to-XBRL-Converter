@@ -33,10 +33,10 @@
 <!-- Version Boxes -->
 <div class="flex justify-center gap-x-4 my-8">
     <div class="bg-gray-50 rounded-xl p-8 text-center" style="min-width: 300px;">
-        <p class="text-3xl font-bold text-gray-800">Your Version: {{ version | default("X.X.X") }}</p>
+        <p class="text-3xl font-bold text-gray-800">Your Version: {{ report_template_version | default("X.X.X") }}</p>
     </div>
     <div class="bg-blue-50 rounded-xl p-8 text-center" style="min-width: 300px;">
-        <p class="text-3xl font-bold text-blue-800">Newest Version: {{ newest_version | default("X.X.X") }}</p>
+        <p class="text-3xl font-bold text-blue-800">Newest Version: {{ migration_target_template_version | default("X.X.X") }}</p>
     </div>
 </div>
 

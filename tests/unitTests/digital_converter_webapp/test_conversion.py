@@ -157,7 +157,7 @@ class TestConversion:
         assert conv.date == ""
         assert conv.style_palette == ""
         assert conv.style_mode == ""
-        assert conv.template_version == ""
+        assert conv.report_template_version == ""
         assert conv.migration_outcome == ""
         assert conv.successful is False
         assert not conv.has_zip

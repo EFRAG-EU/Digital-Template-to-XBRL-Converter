@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from enum import StrEnum
 from pathlib import PurePath
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, assert_never
 
 from flask import (
     Response,
@@ -33,8 +33,10 @@ except ImportError:
 
 
 from mireport.filesupport import FilelikeAndFileName
+from mireport.template_versions import migrationTargetTemplateVersion
+from mireport.version import OUR_VERSION_HOLDER
 from mireport.xlsx_template_reader.processor import (
-    OUR_VERSION_HOLDER,
+    VersionRelation,
     XlsxProcessor,
 )
 
@@ -55,35 +57,46 @@ class MigrationOutcome(StrEnum):
     NOT_REFRESHED = "report_not_refreshed"
     MIGRATION_OPTIONAL = "migration_optional"
     MIGRATION_REQUIRED = "migration_required"
+    VERSION_TOO_NEW = "version_too_new"
+    NO_MIGRATION = "no_migration_available"
 
 
 def doMigrationChecks(conv: Conversion) -> tuple[MigrationOutcome, str]:
     upload = conv.excel
     assert upload is not None, "doMigrationChecks needs an uploaded Excel file"
-    check_results = XlsxProcessor.checkReport(upload.fileLike())
-    version = str(check_results.reported_version) if check_results else "unknown"
-
-    if check_results is None:
+    check = XlsxProcessor.checkReport(upload.fileLike())
+    if check is None:
         # can't do anything if we can't read the report
-        return MigrationOutcome.MISSING, version
-    if version == "0.0.0":
-        # can't determine version, likely invalid report
-        return MigrationOutcome.INVALID_FORMAT, version
-    if check_results.migration_status is False:
+        return MigrationOutcome.MISSING, "unknown"
+
+    report_template_version = str(check.report_template_version)
+    if check.migration_status is False:
         # report not refreshed after migration
-        return MigrationOutcome.NOT_REFRESHED, version
-    if check_results.version_is_same:
-        # up-to-date version
-        return MigrationOutcome.SUCCESS, version
-    if check_results.version_major_minor_same:
-        # optional migration offered
-        return MigrationOutcome.MIGRATION_OPTIONAL, version
-    # Definitely an old report that we want to force migrate to the latest version
-    if check_results.validation_is_incomplete:
-        # invalid report, migration cannot proceed.
-        return MigrationOutcome.NOT_COMPLETE, version
-    # older (major) version, must migrate
-    return MigrationOutcome.MIGRATION_REQUIRED, version
+        return MigrationOutcome.NOT_REFRESHED, report_template_version
+
+    relation = check.report_template_version_relation
+    match relation:
+        case VersionRelation.MISSING | VersionRelation.INVALID:
+            # can't determine version, likely invalid report
+            outcome = MigrationOutcome.INVALID_FORMAT
+        case VersionRelation.NEWER:
+            outcome = MigrationOutcome.VERSION_TOO_NEW
+        case VersionRelation.SAME:
+            outcome = MigrationOutcome.SUCCESS
+        case _ if not check.migration_enabled:
+            # an older report, but migrating it wouldn't reach the supported version
+            outcome = MigrationOutcome.NO_MIGRATION
+        case VersionRelation.PATCH_BEHIND:
+            outcome = MigrationOutcome.MIGRATION_OPTIONAL
+        case VersionRelation.OLDER if check.validation_is_incomplete:
+            # invalid report, migration cannot proceed.
+            outcome = MigrationOutcome.NOT_COMPLETE
+        case VersionRelation.OLDER:
+            # Definitely an old report that we want to force migrate
+            outcome = MigrationOutcome.MIGRATION_REQUIRED
+        case _:
+            assert_never(relation)
+    return outcome, report_template_version
 
 
 def checkMigration(conv: Conversion) -> Response | None:
@@ -91,7 +104,7 @@ def checkMigration(conv: Conversion) -> Response | None:
 
     Returns a redirect if the conversion must not go ahead, otherwise None.
     """
-    outcome, conv.template_version = doMigrationChecks(conv)
+    outcome, conv.report_template_version = doMigrationChecks(conv)
     conv.migration_outcome = outcome
     match outcome:
         case MigrationOutcome.NOT_REFRESHED:
@@ -104,15 +117,20 @@ def checkMigration(conv: Conversion) -> Response | None:
         case MigrationOutcome.NOT_COMPLETE:
             flash("Report validation is not complete", "error")
             return make_response(redirect(url_for("basic.index")))
-        case MigrationOutcome.INVALID_FORMAT:
-            flash("Invalid report format", "error")
-            return make_response(redirect(url_for("basic.index")))
         case MigrationOutcome.MISSING:
             flash(
                 "The uploaded file is not recognised as a valid digital template.",
                 "error",
             )
             return make_response(redirect(url_for("basic.index")))
+        case (
+            MigrationOutcome.INVALID_FORMAT
+            | MigrationOutcome.VERSION_TOO_NEW
+            | MigrationOutcome.NO_MIGRATION
+        ):
+            # Migration can't help, and the conversion reports exactly what is
+            # wrong with the version (and where) on the results page.
+            return None
         case MigrationOutcome.MIGRATION_OPTIONAL | MigrationOutcome.SUCCESS:
             return None  # Continue with conversion
     return None
@@ -125,7 +143,9 @@ def migrationPage(id: str) -> Response:
             flash("Conversion session expired", "error")
             return make_response(redirect(url_for("basic.index")))
 
-        version = request.args.get("version", conv.template_version or "unknown")
+        report_template_version = request.args.get(
+            "report_template_version", conv.report_template_version or "unknown"
+        )
         excel = conv.excel
         assert excel is not None
 
@@ -134,8 +154,11 @@ def migrationPage(id: str) -> Response:
                 "migration_page.html.jinja",
                 conversion_id=id,
                 filename=excel.filename,
-                version=version,
-                newest_version=OUR_VERSION_HOLDER.strip_build_metadata,
+                report_template_version=report_template_version,
+                migration_target_template_version=(
+                    migrationTargetTemplateVersion()
+                    or OUR_VERSION_HOLDER.strip_build_metadata
+                ),
                 has_migration_results=conv.has_migration_results,
                 elapsed=conv.migration_elapsed,
                 migration_issues=conv.migration_issues,

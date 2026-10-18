@@ -15,6 +15,13 @@
             "https://xbrl.efrag.org/taxonomy/vsme/2026-02-01/vsme-all.xsd": "old_vsme"
         }
     },
+    "templateVersions": {
+        "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/vsme-entry-point.xsd": "auto",
+        "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/vsme-all.xsd": "auto",
+        "https://xbrl.efrag.org/taxonomy/vsme/2026-02-01/vsme-all.xsd": "auto",
+        "https://xbrl.efrag.org/taxonomy/vsme/2026-05-01/vsme-all.xsd": "auto",
+        "https://xbrl.efrag.org/taxonomy/vs/2026-10-16/vs-all.xsd": "2.0.0"
+    },
     "aoix": {
         "monetary-units": "template_currency",
         "entity-identifier": "template_reporting_entity_identifier",

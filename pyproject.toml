@@ -81,6 +81,10 @@ markers = [
 addopts = [
     "-ra -q",
     "--import-mode=importlib",
+    # Parallel by default, as CI runs it; pass -n0 to debug serially. loadgroup
+    # keeps tests that share a slow fixture on one worker (xdist_group).
+    "--numprocesses=auto",
+    "--dist=loadgroup",
 ]
 
 [tool.mypy]
