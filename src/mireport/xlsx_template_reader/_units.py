@@ -190,9 +190,12 @@ class UnitResolver:
             complex_unit = self._config.unitIdsToMeasures.get(c)
             if complex_unit is not None:
                 denominator: list
-                if c.endswith("_per_Monetary") and (
-                    currency := self.taxonomy.UTR.getQNameForUnitId(
-                        self._report.defaultAspects.get("monetary-units")
+                monetaryUnitId = self._report.defaultAspects.get("monetary-units")
+                if (
+                    c.endswith("_per_Monetary")
+                    and monetaryUnitId is not None
+                    and (
+                        currency := self.taxonomy.UTR.getQNameForUnitId(monetaryUnitId)
                     )
                 ):
                     denominator = [currency]

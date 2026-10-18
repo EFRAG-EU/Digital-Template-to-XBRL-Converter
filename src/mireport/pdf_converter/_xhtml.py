@@ -67,13 +67,25 @@ def _elements(root: etree._Element) -> Iterator[etree._Element]:
     return (e for e in root.iter() if isinstance(e.tag, str))
 
 
+def _tagText(element: etree._Element) -> str:
+    """@element's tag, which is text for every element _elements() yields.
+
+    lxml types ``tag`` as ``str | bytes | bytearray | QName`` because comments and
+    processing instructions carry a function there; narrow it once, here.
+    """
+    tag = element.tag
+    if not isinstance(tag, str):
+        raise TypeError(f"Element tag is not text: {tag!r}")
+    return tag
+
+
 def _localName(element: etree._Element) -> str:
     """@element's name without its namespace.
 
     Split rather than etree.QName, which refuses to parse exactly the names
     worth reporting — the prefixed ones the HTML parser took literally.
     """
-    return element.tag.rpartition("}")[2]
+    return _tagText(element).rpartition("}")[2]
 
 
 _HIDDEN_STYLE = "display:none"
@@ -335,7 +347,7 @@ def _repairHead(root: etree._Element) -> None:
 
 def _hasIxContent(root: etree._Element) -> bool:
     ixPrefix = f"{{{IX_NAMESPACE}}}"
-    return any(element.tag.startswith(ixPrefix) for element in _elements(root))
+    return any(_tagText(element).startswith(ixPrefix) for element in _elements(root))
 
 
 # Every element XHTML 1.0 Strict defines — not what is welcome, but what the
@@ -399,7 +411,7 @@ def _rejectUnknownElements(root: etree._Element) -> None:
     unknown = {
         localName
         for element in _elements(root)
-        if not element.tag.startswith(f"{{{IX_NAMESPACE}}}")
+        if not _tagText(element).startswith(f"{{{IX_NAMESPACE}}}")
         and (localName := _localName(element)) not in _XHTML_STRICT_ELEMENTS
     }
     if unknown:
@@ -525,8 +537,9 @@ def _moveIntoXhtmlNamespace(root: etree._Element) -> etree._Element:
     we want and moving the parsed content into it, rather than editing in place.
     """
     for element in _elements(root):
-        if not element.tag.startswith("{"):
-            element.tag = _tag(element.tag)
+        tag = _tagText(element)
+        if not tag.startswith("{"):
+            element.tag = _tag(tag)
         _fixPrefixedAttributes(element)
 
     replacement = etree.Element(

@@ -356,8 +356,8 @@ def pickExplicitRepresentative(
     """
     return {
         dim: (
-            defaultByDim[dim]
-            if defaultByDim[dim] is not None and defaultByDim[dim] in members
+            default
+            if (default := defaultByDim[dim]) is not None and default in members
             else members[0]
         )
         for dim, members in membersByDim.items()
