@@ -9,20 +9,27 @@ L = logging.getLogger(__name__)
 
 
 def _loadConfigs() -> tuple[
-    dict[str, dict], dict[EntryPointSet, dict], dict[EntryPointSet, str]
+    dict[str, dict],
+    dict[EntryPointSet, dict],
+    dict[EntryPointSet, str],
+    dict[EntryPointSet, str],
 ]:
-    """Configs by file name and by entry-point set, and the per-entry-point
-    layout strategy overrides; each URL a config names is a one-document
-    set. Parsed once, here, so lookups never re-normalise config URLs."""
+    """Configs by file name and by entry-point set, the per-entry-point
+    layout strategy overrides and the per-entry-point template version
+    settings; each URL a config names is a one-document set. Parsed once,
+    here, so lookups never re-normalise config URLs."""
     byFilename: dict[str, dict] = {}
     byEntryPoint: dict[EntryPointSet, dict] = {}
     layoutOverrides: dict[EntryPointSet, str] = {}
+    templateVersionSettings: dict[EntryPointSet, str] = {}
     for resource in getJsonFiles(__name__):
         config = byFilename[resource.name] = getObject(resource)
         for url, strategyName in (
             config.get("layoutStrategy", {}).get("entryPoints", {}).items()
         ):
             layoutOverrides[entryPointSetOf(url)] = strategyName
+        for url, setting in config.get("templateVersions", {}).items():
+            templateVersionSettings[entryPointSetOf(url)] = setting
         entryPoints = config.get("taxonomyEntryPoints", {})
         for ep in (
             entryPoints.get("supportedEntryPoint"),
@@ -38,15 +45,27 @@ def _loadConfigs() -> tuple[
                 )
             else:
                 byEntryPoint[entryPointSet] = config
-    return byFilename, byEntryPoint, layoutOverrides
+    return byFilename, byEntryPoint, layoutOverrides, templateVersionSettings
 
 
-_CONFIG_BY_FILENAME, _CONFIG_BY_ENTRY_POINT, _LAYOUT_OVERRIDES = _loadConfigs()
+(
+    _CONFIG_BY_FILENAME,
+    _CONFIG_BY_ENTRY_POINT,
+    _LAYOUT_OVERRIDES,
+    _TEMPLATE_VERSION_SETTINGS,
+) = _loadConfigs()
 
 
 def getDisclosureConfig(entryPointSet: EntryPointSet) -> dict | None:
     """The config for exactly this entry-point set, if any."""
     return _CONFIG_BY_ENTRY_POINT.get(entryPointSet)
+
+
+def getTemplateVersionSetting(entryPointSet: EntryPointSet) -> str | None:
+    """How the latest Digital Template version for this entry-point set is
+    determined: a version number, ``"auto"`` (ask the migration tool) or
+    ``"none"`` (no migration); None when the config says nothing."""
+    return _TEMPLATE_VERSION_SETTINGS.get(entryPointSet)
 
 
 def getLayoutStrategyName(entryPointSet: EntryPointSet) -> str | None:

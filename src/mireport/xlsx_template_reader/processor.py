@@ -3,8 +3,9 @@ from __future__ import annotations
 import logging
 import re
 from collections.abc import Mapping
+from enum import StrEnum
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, NamedTuple
+from typing import TYPE_CHECKING, Any, NamedTuple, assert_never
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -33,7 +34,11 @@ from mireport.taxonomy import (
     getTaxonomy,
     listTaxonomies,
 )
-from mireport.version import OUR_VERSION_HOLDER, VersionHolder
+from mireport.template_versions import (
+    SupportedVersionSource,
+    resolveSupportedTemplate,
+)
+from mireport.version import VersionHolder
 from mireport.xlsx_template_reader._binder import WorkbookBinder
 from mireport.xlsx_template_reader._bindings import WorkbookBindings
 from mireport.xlsx_template_reader._constants import (
@@ -50,12 +55,44 @@ from mireport.xlsx_template_reader.util import (
 L = logging.getLogger(__name__)
 
 
+class VersionRelation(StrEnum):
+    """How the report's Digital Template version relates to the supported one."""
+
+    MISSING = "missing"  # blank
+    INVALID = "invalid"  # not a version at all
+    SAME = "same"
+    NEWER = "newer"
+    PATCH_BEHIND = "patch_behind"  # older, but the same major.minor
+    OLDER = "older"  # a different (earlier) major.minor
+
+
 class TemplateCheckResult(NamedTuple):
+    report_template_version: VersionHolder
+    supported_template_version: VersionHolder
+    supported_template_version_source: SupportedVersionSource
+    migration_enabled: bool
     validation_is_incomplete: bool
-    version_is_same: bool
-    version_major_minor_same: bool
-    reported_version: VersionHolder
     migration_status: bool | None
+
+    @property
+    def report_template_version_relation(self) -> VersionRelation:
+        report, supported = (
+            self.report_template_version,
+            self.supported_template_version,
+        )
+        if not report.is_valid:
+            return (
+                VersionRelation.INVALID
+                if str(report).strip()
+                else VersionRelation.MISSING
+            )
+        if report == supported:
+            return VersionRelation.SAME
+        if report > supported:
+            return VersionRelation.NEWER
+        if report.same_major_minor(supported):
+            return VersionRelation.PATCH_BEHIND
+        return VersionRelation.OLDER
 
 
 class XlsxProcessor:
@@ -372,78 +409,71 @@ class XlsxProcessor:
                 ),
             )
 
-        # warn if template version is not the current version
+        # compare the report's template version with the supported one
         template_version_name = "template_reporting_template_version"
-        template_version_string = self._reader.value(template_version_name).as_str()
-        excel_version = VersionHolder.parse_safe(template_version_string)
-        converter_version = OUR_VERSION_HOLDER.strip_build_metadata
-
-        major_minor_match = (
-            excel_version is not None
-            and converter_version.major == excel_version.major
-            and converter_version.minor == excel_version.minor
+        report_template_version = VersionHolder.parse_or_invalid(
+            self._reader.value(template_version_name).as_str()
         )
-
-        if not template_version_string.strip():
-            self._msg.error(
-                f"The Digital Template has no version recorded. Please use a supported template (the latest version is {converter_version}).",
-                MessageType.ExcelParsing,
-                ref=excelDefinedNameRef(
-                    self._reader.getDefinedName(template_version_name)
-                ),
-            )
-        elif not excel_version:
-            self._msg.error(
-                f"The Digital Template does not have a valid version identifier: '{template_version_string}'. Please use a supported template (the latest version is {converter_version}).",
-                MessageType.ExcelParsing,
-                ref=excelDefinedNameRef(
-                    self._reader.getDefinedName(template_version_name)
-                ),
-            )
-        elif excel_version == converter_version:
-            self._msg.info(
-                f"The Digital Template is the same version as the converter {converter_version}.",
-                MessageType.DevInfo,
-                ref=excelDefinedNameRef(
-                    self._reader.getDefinedName(template_version_name)
-                ),
-            )
-        elif excel_version != converter_version:
-            if major_minor_match:
-                self._msg.info(
-                    f"The Digital Template is based on version {excel_version}. The latest version available is {converter_version}, consider updating the template to the latest version.",
-                    MessageType.ExcelParsing,
-                    ref=excelDefinedNameRef(
-                        self._reader.getDefinedName(template_version_name)
-                    ),
-                )
-            elif excel_version < converter_version:
-                self._msg.warning(
-                    f"The Digital Template is based on version {excel_version}. The latest version available is {converter_version}, please update/migrate to the latest version of the Digital Template, in order to avoid any error message and data loss.",
-                    MessageType.ExcelParsing,
-                    ref=excelDefinedNameRef(
-                        self._reader.getDefinedName(template_version_name)
-                    ),
-                )
-            else:
-                self._msg.warning(
-                    f"The Digital Template is based on version {excel_version}, which is newer than the converter version {converter_version}. This may cause errors during conversion. Please use a supported template (the latest version supported by this converter deployment is {converter_version}).",
-                    MessageType.ExcelParsing,
-                    ref=excelDefinedNameRef(
-                        self._reader.getDefinedName(template_version_name)
-                    ),
-                )
-        return TemplateCheckResult(
+        supported = resolveSupportedTemplate(
+            self._reader.value(self._defaults.get("entryPoint", "")).as_str()
+        )
+        supported_template_version = supported.supported_template_version
+        latest = (
+            f"{supported_template_version} "
+            f"(from {supported.supported_template_version_source})"
+        )
+        result = TemplateCheckResult(
+            report_template_version=report_template_version,
+            supported_template_version=supported_template_version,
+            supported_template_version_source=supported.supported_template_version_source,
+            migration_enabled=supported.migration_enabled,
             validation_is_incomplete=is_incomplete,
-            version_is_same=excel_version == converter_version
-            if excel_version
-            else False,
-            version_major_minor_same=major_minor_match,
-            reported_version=excel_version
-            if excel_version
-            else VersionHolder(0, 0, 0, template_version_string),
             migration_status=self.checkMigrationStatus(),
         )
+        versionRef = excelDefinedNameRef(
+            self._reader.getDefinedName(template_version_name)
+        )
+        relation = result.report_template_version_relation
+        match relation:
+            case VersionRelation.MISSING:
+                self._msg.error(
+                    f"The Digital Template has no version recorded. Please use a supported template; the latest version is {latest}.",
+                    MessageType.ExcelParsing,
+                    ref=versionRef,
+                )
+            case VersionRelation.INVALID:
+                self._msg.error(
+                    f"The Digital Template does not have a valid version identifier: '{report_template_version}'. Please use a supported template; the latest version is {latest}.",
+                    MessageType.ExcelParsing,
+                    ref=versionRef,
+                )
+            case VersionRelation.SAME:
+                self._msg.info(
+                    f"The Digital Template is the latest version, {latest}.",
+                    MessageType.DevInfo,
+                    ref=versionRef,
+                )
+            case VersionRelation.NEWER:
+                self._msg.error(
+                    f"The Digital Template is based on version {report_template_version}, which is newer than the latest version this converter supports for this taxonomy, {latest}. Please use a more recent converter that supports it.",
+                    MessageType.ExcelParsing,
+                    ref=versionRef,
+                )
+            case VersionRelation.PATCH_BEHIND:
+                self._msg.info(
+                    f"The Digital Template is based on version {report_template_version}. The latest version available is {latest}, consider updating the template to the latest version.",
+                    MessageType.ExcelParsing,
+                    ref=versionRef,
+                )
+            case VersionRelation.OLDER:
+                self._msg.warning(
+                    f"The Digital Template is based on version {report_template_version}. The latest version available is {latest}, please update/migrate to the latest version of the Digital Template, in order to avoid any error message and data loss.",
+                    MessageType.ExcelParsing,
+                    ref=versionRef,
+                )
+            case _:
+                assert_never(relation)
+        return result
 
     @classmethod
     def checkReport(cls, excelBlob: BinaryIO) -> TemplateCheckResult | None:

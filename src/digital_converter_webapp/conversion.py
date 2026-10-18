@@ -114,12 +114,12 @@ class Conversion:
         self._setStr("style_mode", value)
 
     @property
-    def template_version(self) -> str:
-        return self._str("template_version")
+    def report_template_version(self) -> str:
+        return self._str("report_template_version")
 
-    @template_version.setter
-    def template_version(self, value: str) -> None:
-        self._setStr("template_version", value)
+    @report_template_version.setter
+    def report_template_version(self, value: str) -> None:
+        self._setStr("report_template_version", value)
 
     @property
     def migration_outcome(self) -> str:

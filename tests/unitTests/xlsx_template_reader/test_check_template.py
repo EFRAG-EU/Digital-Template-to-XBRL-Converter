@@ -9,17 +9,27 @@ hardcoded.
 
 from io import BytesIO
 
+import pytest
 from openpyxl import Workbook
 from openpyxl.utils.cell import absolute_coordinate, quote_sheetname
 from openpyxl.workbook.defined_name import DefinedName
 
 from mireport.conversionresults import ConversionResultsBuilder, Severity
 from mireport.data.disclosures import VSME_DEFAULTS
+from mireport.template_versions import SupportedVersionSource
 from mireport.version import OUR_VERSION_HOLDER, VersionHolder
-from mireport.xlsx_template_reader.processor import XlsxProcessor
+from mireport.xlsx_template_reader.processor import VersionRelation, XlsxProcessor
 
 _SHEET = "S"
 CONVERTER_VERSION = OUR_VERSION_HOLDER.strip_build_metadata
+
+
+@pytest.fixture(autouse=True)
+def _no_migration_tool(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Judge versions against the converter's own, whatever tool is installed."""
+    monkeypatch.setattr(
+        "mireport.template_versions.migrationTargetTemplateVersion", lambda: None
+    )
 
 
 def _check(named_cells: dict[str, object]):
@@ -42,57 +52,107 @@ class TestVersionComparison:
         check, _ = _check(
             {"template_reporting_template_version": str(CONVERTER_VERSION)}
         )
-        assert check.version_is_same is True
-        assert check.version_major_minor_same is True
-        assert check.reported_version == CONVERTER_VERSION
-
-    def test_same_major_minor_different_patch(self):
-        older = VersionHolder(
-            CONVERTER_VERSION.major,
-            CONVERTER_VERSION.minor,
-            CONVERTER_VERSION.patch + 1,
-            CONVERTER_VERSION.suffix,
-        )
-        check, _ = _check({"template_reporting_template_version": str(older)})
-        assert check.version_is_same is False
-        assert check.version_major_minor_same is True
-
-    def test_newer_major_warns_template_is_ahead(self):
-        """A template from the future is a warning about the converter, not a
-        prompt to migrate: there is nothing newer for the user to migrate to."""
-        newer = VersionHolder(CONVERTER_VERSION.major + 1, 0, 0, "")
-        check, results = _check({"template_reporting_template_version": str(newer)})
-        assert check.version_is_same is False
-        assert check.version_major_minor_same is False
-        assert any(
-            m.severity is Severity.WARNING
-            and "newer than the converter version" in str(m.messageText)
-            for m in results.messages
+        assert check.report_template_version_relation is VersionRelation.SAME
+        assert check.report_template_version == CONVERTER_VERSION
+        assert check.report_template_version.is_valid is True
+        assert check.supported_template_version == CONVERTER_VERSION
+        assert (
+            check.supported_template_version_source is SupportedVersionSource.CONVERTER
         )
 
-    def test_older_major_warns_to_migrate(self):
+    def test_older_same_major_minor_is_supported(self):
+        # An older version within the same major.minor: still supported, non-error path.
+        if CONVERTER_VERSION.patch > 0:
+            older = VersionHolder(
+                CONVERTER_VERSION.major,
+                CONVERTER_VERSION.minor,
+                CONVERTER_VERSION.patch - 1,
+                CONVERTER_VERSION.suffix,
+            )
+        else:
+            # patch 0: a prerelease of the same core is older than the release (semver §11.3)
+            older = VersionHolder(
+                CONVERTER_VERSION.major,
+                CONVERTER_VERSION.minor,
+                CONVERTER_VERSION.patch,
+                "-alpha",
+            )
+        if older >= CONVERTER_VERSION:
+            pytest.skip("no strictly-older same-major.minor version to construct")
+        check, results = _check({"template_reporting_template_version": str(older)})
+        assert check.report_template_version_relation is VersionRelation.PATCH_BEHIND
+        assert check.report_template_version.is_valid is True
+        assert not any(m.severity is Severity.ERROR for m in results.messages)
+
+    def test_older_different_major_warns_to_migrate(self):
         older = VersionHolder(max(CONVERTER_VERSION.major - 1, 0), 0, 0, "")
         assert older < CONVERTER_VERSION, (
             f"test needs a version below {CONVERTER_VERSION}"
         )
         check, results = _check({"template_reporting_template_version": str(older)})
-        assert check.version_is_same is False
-        assert check.version_major_minor_same is False
+        assert check.report_template_version_relation is VersionRelation.OLDER
         assert any(
             m.severity is Severity.WARNING and "migrate" in str(m.messageText)
             for m in results.messages
         )
 
-    def test_invalid_version_string(self):
-        check, _ = _check({"template_reporting_template_version": "not-a-version"})
-        assert check.version_is_same is False
-        assert check.version_major_minor_same is False
-        assert check.reported_version == VersionHolder(0, 0, 0, "not-a-version")
+    def test_newer_major_is_an_error(self):
+        newer = VersionHolder(CONVERTER_VERSION.major + 1, 0, 0, "")
+        check, results = _check({"template_reporting_template_version": str(newer)})
+        assert check.report_template_version_relation is VersionRelation.NEWER
+        assert any(
+            m.severity is Severity.ERROR
+            and "newer than the latest version" in str(m.messageText)
+            for m in results.messages
+        )
 
-    def test_missing_version_is_an_error(self):
+    def test_newer_patch_same_major_minor_is_an_error(self):
+        newer = VersionHolder(
+            CONVERTER_VERSION.major,
+            CONVERTER_VERSION.minor,
+            CONVERTER_VERSION.patch + 1,
+            "",
+        )
+        check, results = _check({"template_reporting_template_version": str(newer)})
+        assert check.report_template_version_relation is VersionRelation.NEWER
+        assert any(m.severity is Severity.ERROR for m in results.messages)
+
+    def test_newer_message_says_where_the_supported_version_came_from(self):
+        newer = VersionHolder(CONVERTER_VERSION.major + 1, 0, 0, "")
+        _, results = _check({"template_reporting_template_version": str(newer)})
+        assert any(
+            f"{CONVERTER_VERSION} (from this converter)" in str(m.messageText)
+            for m in results.messages
+        )
+
+    def test_invalid_version_string(self):
+        check, results = _check(
+            {"template_reporting_template_version": "not-a-version"}
+        )
+        assert check.report_template_version_relation is VersionRelation.INVALID
+        assert check.report_template_version.is_valid is False
+        # the invalid sentinel carries the raw string but never == a real version
+        assert check.report_template_version == VersionHolder.parse_or_invalid(
+            "not-a-version"
+        )
+        assert str(check.report_template_version) == "not-a-version"
+        assert any(m.severity is Severity.ERROR for m in results.messages)
+
+    def test_blank_version_is_an_error_naming_the_cell(self):
+        check, results = _check({"template_reporting_template_version": None})
+        assert check.report_template_version_relation is VersionRelation.MISSING
+        assert [
+            m
+            for m in results.messages
+            if m.severity is Severity.ERROR
+            and "no version recorded" in str(m.messageText)
+            and "$A$1" in str(m.excelReference)
+        ]
+
+    def test_missing_version_range_is_an_error(self):
         check, results = _check({})
-        assert check.version_is_same is False
-        assert check.version_major_minor_same is False
+        assert check.report_template_version_relation is VersionRelation.MISSING
+        assert check.report_template_version.is_valid is False
         assert any(m.severity is Severity.ERROR for m in results.messages)
 
 
