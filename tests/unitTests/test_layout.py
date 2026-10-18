@@ -26,7 +26,9 @@ from mireport.report.layout.headers import (
 from mireport.report.model import FactPeriod, PeriodPart, ReportPeriod
 from mireport.report.periods import DurationPeriodHolder
 from mireport.taxonomy import (
+    BlockKind,
     Concept,
+    PresentationBlock,
     PresentationGroup,
     PresentationStyle,
     Relationship,
@@ -460,6 +462,7 @@ class TestCreateReportSections:
         group = MagicMock()
         group.style = PresentationStyle.List
         group.relationships = [rel]
+        group.blocks = (PresentationBlock(BlockKind.LINE_ITEMS, (rel,), (rel,)),)
 
         o = _organiser(
             facts_by_concept={concept: [plain, dimensional]},
@@ -483,6 +486,7 @@ class TestCreateReportSections:
         group = MagicMock()
         group.style = PresentationStyle.Table
         group.relationships = [rel]
+        group.blocks = (PresentationBlock(BlockKind.CUBE, (rel,), (rel,)),)
 
         o = _organiser(
             facts_by_concept={concept: [plain, dimensional]},

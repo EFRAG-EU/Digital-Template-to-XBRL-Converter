@@ -10,7 +10,9 @@ from typing import NamedTuple
 from mireport.report.fact import Fact
 from mireport.report.model import FactPeriod
 from mireport.taxonomy import (
+    BlockKind,
     Concept,
+    PresentationBlock,
     PresentationGroup,
     PresentationStyle,
     Relationship,
@@ -118,6 +120,8 @@ class ReportSection:
     presentation: PresentationGroup
     # Set when one presentation group yields several sections, e.g. a table per dimension set.
     heading_suffix: str = field(default="", kw_only=True)
+    # The block of the group this section shows, when the group is laid out block by block.
+    block: PresentationBlock | None = field(default=None, kw_only=True)
     # What a list section shows, line by line; empty for any other kind of section.
     entries: tuple[ListEntry, ...] = field(default=(), kw_only=True, compare=False)
 
@@ -127,7 +131,13 @@ class ReportSection:
 
     @property
     def style(self) -> PresentationStyle:
-        return self.presentation.style
+        # A block is shown as what it is, whatever the group as a whole is (a hybrid group is
+        # lists and tables); a section with no block is shown as its group is.
+        if self.block is None:
+            return self.presentation.style
+        if self.block.kind is BlockKind.CUBE:
+            return PresentationStyle.Table
+        return PresentationStyle.List
 
     @property
     def hasFacts(self) -> bool:
