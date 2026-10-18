@@ -22,7 +22,7 @@ from mireport.report.layout.model import (
     TableRow,
 )
 from mireport.report.model import FactPeriod, PeriodPart
-from mireport.taxonomy import Concept
+from mireport.taxonomy import Concept, Relationship
 
 Data = list[list[Fact | None]]
 
@@ -186,6 +186,7 @@ def build_table_rows(
                     suppress_unit=(
                         unit is not None or (j < len(units) and units[j] is not None)
                     ),
+                    negated=isinstance(label, Relationship) and label.isNegated,
                 )
                 for j, fact in enumerate(row)
             ],

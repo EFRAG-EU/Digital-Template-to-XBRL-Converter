@@ -62,6 +62,8 @@ class TableCell:
 
     fact: Fact | None
     suppress_unit: bool
+    negated: bool = False
+    """Whether the number is shown with the opposite sign to its value, as its row's label says."""
 
 
 @dataclass(slots=True, frozen=True)

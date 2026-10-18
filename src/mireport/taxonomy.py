@@ -718,10 +718,22 @@ class Relationship(NamedTuple):
         fallbackToAnyLang: bool = False,
         fallbackToQName: bool = False,
     ) -> str | None:
-        """Get the label for this relationship's concept."""
-        labelRole = self.preferredLabel or STANDARD_LABEL_ROLE
+        """Get the label for this relationship's concept: in its preferred label role, else (as
+        XBRL does for a concept with no label in that role) its standard label."""
+        for labelRole in dict.fromkeys(
+            (self.preferredLabel or STANDARD_LABEL_ROLE, STANDARD_LABEL_ROLE)
+        ):
+            if (
+                label := self.concept.getLabelForRole(
+                    labelRole,
+                    requestedLanguage,
+                    removeSuffix=removeSuffix,
+                    fallbackToAnyLang=fallbackToAnyLang,
+                )
+            ) is not None:
+                return label
         return self.concept.getLabelForRole(
-            labelRole,
+            STANDARD_LABEL_ROLE,
             requestedLanguage,
             removeSuffix=removeSuffix,
             fallbackLabel=fallbackLabel,

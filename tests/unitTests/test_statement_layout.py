@@ -214,3 +214,95 @@ def test_one_period_is_said_once_over_the_table(statements: Taxonomy) -> None:
     ]
     assert len([c for row in cash_flow for c in row if "2025" in c]) == 1
     assert problems(html) == []
+
+
+NEGATED = f"{LABEL_ROOT}/negatedLabel"
+NEGATED_TOTAL = f"{LABEL_ROOT}/negatedTotalLabel"
+COSTS_ROLE = f"{NAMESPACE}/role/Costs"
+
+
+def _costs() -> dict[str, Any]:
+    """A statement of costs: three duration items, two of them shown with the opposite sign."""
+    concepts = {
+        qname("CostsCube"): concept("Costs [Table]", hypercube=True),
+        qname("CostsLines"): concept("Costs line items", abstract=True),
+        qname("Staff"): concept("Staff costs", numeric=True),
+        qname("Rent"): concept("Rent", numeric=True),
+        qname("Total"): concept("Total costs", numeric=True),
+    }
+    return taxonomy_json(
+        "test://synthetic/costs",
+        concepts=concepts,
+        presentation={
+            COSTS_ROLE: {
+                "definition": "Costs",
+                "rows": [
+                    [0, qname("CostsCube")],
+                    [1, qname("CostsLines")],
+                    [2, qname("Staff"), NEGATED],
+                    [2, qname("Rent")],
+                    [2, qname("Total"), NEGATED_TOTAL],
+                ],
+            }
+        },
+        dimensions={
+            COSTS_ROLE: {
+                qname("CostsCube"): cube(
+                    [qname("Staff"), qname("Rent"), qname("Total")], {}
+                )
+            }
+        },
+    )
+
+
+def _costs_report(taxonomy: Taxonomy, values: dict[str, int]) -> InlineReport:
+    report = InlineReport(taxonomy)
+    report.setEntity("http://standards.iso.org/iso/17442", "529900T8BM49AURSDO55")
+    report.addDurationPeriod("cur", date(2025, 1, 1), date(2025, 12, 31))
+    report.setDefaultPeriodName("cur")
+    report.requireAllFactsRendered = True
+    for name, value in values.items():
+        fb = FactBuilder(report).setConcept(taxonomy.getConcept(qname(name)))
+        fb.setValue(value).setDecimals(0).setNamedPeriod("cur")
+        fb.setSimpleUnit(_Q.fromString("utr:kg"))
+        report.addFact(fb.buildFact())
+    return report
+
+
+@pytest.fixture
+def costs(register_taxonomy: Register) -> Taxonomy:
+    return register_taxonomy(_costs())
+
+
+def test_a_row_with_a_negated_label_shows_the_opposite_sign_to_the_fact(
+    costs: Taxonomy,
+) -> None:
+    html = _html(_costs_report(costs, {"Staff": 30, "Rent": 20, "Total": 50}))
+    (table,) = _tables(html)
+    rows = {row[0]: row[1:] for row in _body(table)}
+    assert rows == {"Staff costs": ["-30"], "Rent": ["20"], "Total costs": ["-50"]}
+    assert problems(html) == []
+
+
+def test_a_negative_fact_in_a_negated_row_is_shown_unsigned(costs: Taxonomy) -> None:
+    html = _html(_costs_report(costs, {"Staff": -30, "Rent": -20, "Total": -50}))
+    (table,) = _tables(html)
+    rows = {row[0]: row[1:] for row in _body(table)}
+    assert rows == {"Staff costs": ["30"], "Rent": ["-20"], "Total costs": ["50"]}
+
+
+def test_a_zero_in_a_negated_row_is_just_zero(costs: Taxonomy) -> None:
+    html = _html(_costs_report(costs, {"Staff": 0, "Rent": 0, "Total": 0}))
+    (table,) = _tables(html)
+    assert {row[0]: row[1:] for row in _body(table)}["Staff costs"] == ["0"]
+
+
+def test_the_fact_keeps_its_value_whatever_the_row_shows(costs: Taxonomy) -> None:
+    html = _html(_costs_report(costs, {"Staff": 30, "Rent": 20, "Total": 50}))
+    staff = re.search(r"<ix:nonFraction[^>]*name=\"[^\"]*Staff\"[^>]*>", html)
+    assert staff is not None
+    assert 'sign="-"' not in staff.group(0)
+    html = _html(_costs_report(costs, {"Staff": -30, "Rent": 20, "Total": 50}))
+    staff = re.search(r"<ix:nonFraction[^>]*name=\"[^\"]*Staff\"[^>]*>", html)
+    assert staff is not None
+    assert 'sign="-"' in staff.group(0)

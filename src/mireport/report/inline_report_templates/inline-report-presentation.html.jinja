@@ -224,7 +224,7 @@
                         <td></td>
                             {% else %}
                         <td {% if cell.fact.concept.isNumeric %}class="numeric"{% endif %}>
-                        {{ macros.render_fact_value(cell.fact, cell.suppress_unit) }}{{ macros.footnote_refs(cell.fact.footnotes, footnote_manager) }}{% set ns.fact_count = ns.fact_count + 1 %}
+                        {{ macros.render_fact_value(cell.fact, cell.suppress_unit, cell.negated) }}{{ macros.footnote_refs(cell.fact.footnotes, footnote_manager) }}{% set ns.fact_count = ns.fact_count + 1 %}
                         </td>
                             {% endif %}
                         {% endfor %}
