@@ -119,6 +119,9 @@ def drop_empty_columns(
             row_heading_label=grid.row_heading_label,
             col_labels=list(compress(grid.col_labels, keep)),
             period_axis=grid.period_axis,
+            col_periods=list(compress(grid.col_periods, keep))
+            if grid.col_periods
+            else (),
         ),
         list(compress(numeric, keep)),
     )
@@ -126,7 +129,7 @@ def drop_empty_columns(
 
 def build_header_rows(
     row_heading_label: HeadingValue,
-    col_labels: Sequence[Concept | str],
+    col_labels: Sequence[Concept | str | None],
     col_numeric: list[bool],
     all_numeric: bool,
     unit: str | None,
@@ -157,7 +160,8 @@ def build_header_rows(
             for n, v in enumerate(values)
         ]
 
-    rows.append(per_column(col_labels))
+    if any(label is not None for label in col_labels):
+        rows.append(per_column(col_labels))
     if not period and not groups and periods:
         rows.append(per_column(periods))
     if not unit and units:
@@ -197,18 +201,27 @@ def assemble_table(grid: FactGrid) -> Table:
         grid, numeric = drop_empty_columns(grid, empty, numeric)
 
     unit, units = table_unit(grid.data), column_units(grid.data)
-    periods = column_periods(grid.data)
+    period: FactPeriod | None
+    if grid.col_periods:
+        # The grid says which period each column is for: one for the table if it is one throughout.
+        periods = list(grid.col_periods)
+        period = periods[0] if len(set(periods)) == 1 else None
+        groups: Sequence[tuple[FactPeriod | None, int]] = ()
+    else:
+        periods = column_periods(grid.data)
+        period = None if grid.period_axis else table_period(grid.data)
+        # Columns repeated per period: say each period once over its columns.
+        groups = period_groups(periods) if grid.period_axis else ()
     header_rows = build_header_rows(
         grid.row_heading_label,
         grid.col_labels,
         numeric,
         all_numeric,
         unit,
-        None if grid.period_axis else table_period(grid.data),
+        period,
         units,
         periods,
-        # Columns repeated per period: say each period once over its columns.
-        period_groups(periods) if grid.period_axis else (),
+        groups,
     )
     return Table(
         style=grid.style,

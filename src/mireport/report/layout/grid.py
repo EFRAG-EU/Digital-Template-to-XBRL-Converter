@@ -16,8 +16,8 @@ from typing import TypeVar
 
 from mireport.report.fact import Fact, numeric_string_key
 from mireport.report.layout.model import FactGrid, TableStyle
-from mireport.report.model import FactPeriod, ReportPeriod
-from mireport.taxonomy import Concept, Relationship
+from mireport.report.model import FactPeriod, PeriodPart, ReportPeriod
+from mireport.taxonomy import Concept, PeriodType, Relationship
 
 L = logging.getLogger(__name__)
 
@@ -167,6 +167,58 @@ class GridBuilder:
             dimension,
             columns,
             spread,
+        )
+
+    def statement(self, rows: Sequence[Relationship]) -> FactGrid:
+        """A hypercube with no dimension: a row for each relationship, in presentation order,
+        against a column for each of the report's periods.
+
+        Rows are relationships, not concepts, because one concept can be several rows: a
+        roll-forward shows it at the start of the period and again at the end, and each row
+        takes the facts of its own part of the period. A fact with taxonomy dimensions has no
+        place in a table of none, and is left for the layout to show elsewhere."""
+        cells: dict[tuple[int, ReportPeriod], Fact] = {}
+        for index, rel in enumerate(rows):
+            part = self._part_shown(rel)
+            for fact in self._facts_for(rel.concept):
+                if fact.hasTaxonomyDimensions() or fact.period.part is not part(fact):
+                    continue
+                key = (index, fact.period.reportPeriod)
+                if key in cells:
+                    L.warning(
+                        f"Several facts for {fact.concept.qname} belong in the same table "
+                        f"cell; showing the first.\n{cells[key]=}\n{fact=}"
+                    )
+                    continue
+                cells[key] = fact
+
+        periods = sorted(
+            {period for _, period in cells},
+            key=lambda p: (self._period_rank(p), p.duration.start, p.duration.end),
+        )
+        kept = [n for n in range(len(rows)) if any((n, p) in cells for p in periods)]
+        return FactGrid(
+            TableStyle.Statement,
+            [[cells.get((n, p)) for p in periods] for n in kept],
+            [rows[n] for n in kept],
+            None,
+            [None] * len(periods),
+            False,
+            [FactPeriod(p, PeriodPart.Whole) for p in periods],
+        )
+
+    @staticmethod
+    def _part_shown(rel: Relationship) -> Callable[[Fact], PeriodPart]:
+        """Which part of a report period a row shows: the one its preferred label names, else
+        the whole of it for a duration concept and its end for an instant one."""
+        if rel.isPeriodStart:
+            return lambda fact: PeriodPart.Start
+        if rel.isPeriodEnd:
+            return lambda fact: PeriodPart.End
+        return lambda fact: (
+            PeriodPart.End
+            if fact.concept.periodType is PeriodType.Instant
+            else PeriodPart.Whole
         )
 
     def dimension_set(

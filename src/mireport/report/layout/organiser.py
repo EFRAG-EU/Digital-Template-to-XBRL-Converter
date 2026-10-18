@@ -209,8 +209,10 @@ class ReportLayoutOrganiser:
                     [c for c in concepts if c in domain_set],
                     self.taxonomy.getDimensionDefault(explicitDim),
                 )
+            case ([], []):
+                grid = self._grids.statement(block.rows)
             case _:
-                # No dimension, or several: nothing for a one-dimension grid to follow.
+                # Several dimensions: nothing for a one-dimension grid to follow.
                 grid = None
 
         if grid is None or not grid.data:

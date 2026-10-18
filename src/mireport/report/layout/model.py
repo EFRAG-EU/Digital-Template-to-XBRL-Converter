@@ -48,6 +48,9 @@ class TableStyle(Enum):
     SingleTypedDimensionColumn = auto()
     SingleExplicitDimensionColumn = auto()
     SingleExplicitDimensionRow = auto()
+    Statement = auto()
+    """A hypercube with no dimension: a row for each of its relationships in presentation order,
+    a column for each of the report's periods."""
     Other = auto()
     """Derived from the facts' own dimensions, because the taxonomy's presentation gave no
     hypercube to follow."""
@@ -89,12 +92,15 @@ class FactGrid:
 
     style: TableStyle
     data: list[list[Fact | None]]
-    row_labels: Sequence[Concept | str]
+    row_labels: Sequence[Concept | Relationship | str]
     row_heading_label: Concept | str | None
-    col_labels: Sequence[Concept | str]
+    col_labels: Sequence[Concept | str | None]
     period_axis: bool = False
     """Whether the columns are each column of the table once per period (the same label repeated),
     because a column held facts from more than one period."""
+    col_periods: Sequence[FactPeriod | None] = ()
+    """The period each column is for, when the grid knows it. Otherwise it is worked out from the
+    facts in the column, which cannot be done for one that holds a period and its start."""
 
 
 @dataclass(slots=True, frozen=True)
