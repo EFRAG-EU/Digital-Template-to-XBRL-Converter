@@ -23,13 +23,17 @@ a bare `python`.
 
 The three test trees are run separately in CI and are best run separately locally too.
 
+Tests run in parallel by default (`-n auto --dist loadgroup` is in pytest's `addopts`, matching CI);
+`loadgroup` keeps tests that share a slow fixture on one worker. Pass `-n0` to run serially, which is
+quicker for a single test and needed for a debugger.
+
 ```powershell
 .venv-py314/Scripts/python -m pytest tests/unitTests
 .venv-py314/Scripts/python -m pytest tests/integrationTests
 .venv-py314/Scripts/python -m pytest tests/webappTests
 
 # single test / single case
-.venv-py314/Scripts/python -m pytest tests/unitTests/xlsx_template_reader/test_ranges.py::test_name
+.venv-py314/Scripts/python -m pytest tests/unitTests/xlsx_template_reader/test_ranges.py::test_name -n0
 ```
 
 - Tests marked `@pytest.mark.slow` (notably full Arelle validation in
