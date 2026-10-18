@@ -235,6 +235,21 @@ defines its hypercubes only in the definition linkbase still renders everything.
 `report.requireAllFactsRendered = True` turns any fact that would appear nowhere into an error instead
 of leaving it out.
 
+### Periods and a prior period
+
+A report has a current period (`setDefaultPeriodName`), an optional prior period (`setPriorPeriodName`),
+and any other periods (such as the VSME baseline and target years); `periodRole` and `reportingPeriods` say
+which is which. A fact's period (its `FactPeriod`: the report period, and
+which `PeriodPart` of it) is part of its table cell, so a current and a prior value for the same
+concept and dimension sit side by side, and so do the opening and the closing balance of one period (the start
+of `cur` and the end of `prior` are one OIM instant, but each is its own cell and its own heading): a column holding facts from more than one period is laid out once
+per period, each period said once over its columns; a list shows a concept's prior value, and an
+opening balance, beside the closing one that leads the line. When every column is in a single period (one period, or baseline and target years each in
+their own column) nothing changes. **The VSME Excel template reports one period** (FAQ item 7), so there is
+no Excel data for a prior one: the disclosure config's `periods[].role` (`current`, the default, or
+`prior`) and the skip-if-absent rule are the groundwork, and reading prior *values* needs a template
+contract from EFRAG.
+
 ### Arelle boundary (`mireport/arelle/`)
 
 All Arelle usage is confined here. `report_info.ArelleReportProcessor` validates report packages and

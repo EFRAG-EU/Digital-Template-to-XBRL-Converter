@@ -34,7 +34,7 @@ from mireport.report.fact import Fact, Symbol
 from mireport.report.factbuilder import FactBuilder
 from mireport.report.footnote import Footnote, FootnoteManager
 from mireport.report.layout import ReportLayoutOrganiser, TableStyle
-from mireport.report.model import FactPeriod, PeriodPart, ReportPeriod
+from mireport.report.model import FactPeriod, PeriodPart, PeriodRole, ReportPeriod
 from mireport.report.periods import (
     DurationPeriodHolder,
     InstantPeriodHolder,
@@ -82,6 +82,7 @@ class InlineReport:
         self.requireAllFactsRendered: bool = False
         self._generatedReport: str | None = None
         self._defaultPeriodName: str = ""
+        self._priorPeriodName: str = ""
         self._schemaRefs: set[str] = set()
         self._reportTitle: str = ""
         self._reportSubtitle: str = ""
@@ -193,11 +194,28 @@ class InlineReport:
         self._entityName = name
 
     def setDefaultPeriodName(self, name: str) -> None:
+        """The report's own (current) period, which a fact with no period of its own is in."""
         if name not in self._periods:
             raise InlineReportException(
                 f"Can't set default period as no such period {name=} exists."
             )
+        if name == self._priorPeriodName:
+            raise InlineReportException(
+                f"Period {name=} is the prior period, so cannot also be the current one."
+            )
         self._defaultPeriodName = name
+
+    def setPriorPeriodName(self, name: str) -> None:
+        """The period before the report's own, which comparative facts are in."""
+        if name not in self._periods:
+            raise InlineReportException(
+                f"Can't set prior period as no such period {name=} exists."
+            )
+        if name == self._defaultPeriodName:
+            raise InlineReportException(
+                f"Period {name=} is the current period, so cannot also be the prior one."
+            )
+        self._priorPeriodName = name
 
     def addDurationPeriod(self, name: str, periodStart: date, periodEnd: date) -> bool:
         """Declare a period from its first and last day, both included."""
@@ -247,6 +265,10 @@ class InlineReport:
         )
 
     @property
+    def hasDefaultPeriod(self) -> bool:
+        return bool(self._defaultPeriodName)
+
+    @property
     def defaultReportPeriod(self) -> ReportPeriod:
         if not (name := self._defaultPeriodName):
             raise InlineReportException("The report has no default period yet.")
@@ -255,6 +277,38 @@ class InlineReport:
     @property
     def defaultPeriod(self) -> DurationPeriodHolder:
         return self.defaultReportPeriod.duration
+
+    @property
+    def priorReportPeriod(self) -> ReportPeriod | None:
+        return self._periods[name] if (name := self._priorPeriodName) else None
+
+    @property
+    def priorPeriod(self) -> DurationPeriodHolder | None:
+        return prior.duration if (prior := self.priorReportPeriod) else None
+
+    def periodRole(self, period: ReportPeriod) -> PeriodRole:
+        match period.name:
+            case name if name == self._defaultPeriodName:
+                return PeriodRole.CURRENT
+            case name if name == self._priorPeriodName:
+                return PeriodRole.PRIOR
+            case _:
+                return PeriodRole.OTHER
+
+    @property
+    def reportingPeriods(self) -> tuple[ReportPeriod, ...]:
+        """Every period, in the order a reader should meet them: current, prior, then the rest in
+        the order they were declared."""
+        return tuple(
+            sorted(
+                self._periods.values(),
+                key=lambda p: (
+                    {PeriodRole.CURRENT: 0, PeriodRole.PRIOR: 1}.get(
+                        self.periodRole(p), 2
+                    ),
+                ),
+            )
+        )
 
     @property
     def language(self) -> str:
@@ -490,6 +544,8 @@ class InlineReport:
             if v is not None:
                 addDict(k, v)
         addDict("Report period", self.defaultPeriod, "render_duration_period")
+        if (prior := self.priorPeriod) is not None:
+            addDict("Prior period", prior, "render_duration_period")
 
         separator = decimal_symbol(self._outputLocale)
         bits.append(
@@ -573,6 +629,7 @@ class InlineReport:
             reportInfo={
                 "entityName": self._entityName,
                 "defaultPeriod": self.defaultPeriod,
+                "priorPeriod": self.priorPeriod,
                 "factCount": self.factCount,
                 "title": self._reportTitle,
                 "subtitle": self._reportSubtitle,

@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
-from enum import Enum
+from enum import Enum, StrEnum
 
 from mireport.exceptions import InlineReportException
 from mireport.report.periods import DurationPeriodHolder, _Period
@@ -257,3 +257,15 @@ class FactPeriod:
     def fitsConcept(self, concept: Concept) -> bool:
         """A duration concept is reported for the whole period, an instant one at a point in it."""
         return self.isInstant == (concept.periodType is PeriodType.Instant)
+
+
+class PeriodRole(StrEnum):
+    """What a period is to the report as a whole. The report decides (InlineReport.periodRole), so
+    a ReportPeriod, and the facts that refer to it, never change."""
+
+    CURRENT = "current"
+    """The period the report is about; where a fact with no period of its own goes."""
+    PRIOR = "prior"
+    """The period before, for comparatives."""
+    OTHER = "other"
+    """Any other period a report declares, such as a baseline or target year."""
