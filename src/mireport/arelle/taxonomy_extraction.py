@@ -720,15 +720,9 @@ class TaxonomyInfoExtractor:
             concept, XbrlConst.conceptReference
         ):
             ref_resource = refRel.resource
-            if not refRel.role:
-                raise ArelleModelInconsistency(
-                    ArelleDiagnostic.error(
-                        "Reference resource has no role",
-                        concepts=(conceptQName,),
-                        resource=repr(ref_resource),
-                    )
-                )
-            role: str = str(refRel.role)
+            # A reference with no xlink:role is in the standard reference role, as a label with
+            # none is in the standard label role (see addLabels).
+            role: str = str(refRel.role or XbrlConst.standardReference)
 
             ref_parts: tuple[tuple[QName, str], ...] = tuple(
                 (part.qname, value)
