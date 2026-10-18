@@ -19,6 +19,10 @@ LABEL_ROLE = "http://www.xbrl.org/2003/role/label"
 GROUP_ROLE = f"{NAMESPACE}/role/Group"
 GROUP_ENTRY_POINT = "test://synthetic/group"
 
+ENTITY = "lei:529900T8BM49AURSDO55"
+ENTITY_SCHEME = "http://standards.iso.org/iso/17442"
+DURATION = "2025-01-01T00:00:00/2026-01-01T00:00:00"
+
 
 def qname(localName: str) -> str:
     """The prefixed name of a concept in the synthetic taxonomy."""
@@ -143,5 +147,54 @@ def group_taxonomy_json(entryPoint: str = GROUP_ENTRY_POINT) -> dict[str, Any]:
                     [qname("Intensity"), qname("Note")], {}, [qname("TargetAxis")]
                 ),
             },
+        },
+    )
+
+
+def fact(
+    concept: str,
+    value: str | int,
+    *,
+    period: str = DURATION,
+    decimals: int | str = 0,
+    dimensions: dict[str, str] | None = None,
+) -> dict[str, Any]:
+    """One fact of an xBRL-JSON document, with a prefixed ``concept`` and dimension names."""
+    return {
+        "value": value,
+        "decimals": decimals,
+        "dimensions": {
+            "concept": concept,
+            "entity": ENTITY,
+            "period": period,
+            **(dimensions or {}),
+        },
+    }
+
+
+def document(entryPoint: str, facts: dict[str, dict[str, Any]]) -> dict[str, Any]:
+    """An xBRL-JSON document over the synthetic taxonomy with these facts."""
+    return {
+        "documentInfo": {
+            "documentType": "https://xbrl.org/2021/xbrl-json",
+            "namespaces": {PREFIX: NAMESPACE, "lei": ENTITY_SCHEME},
+            "taxonomy": [entryPoint],
+        },
+        "facts": facts,
+    }
+
+
+def group_document() -> dict[str, Any]:
+    """Facts for ``group_taxonomy_json``: two by scope, one plain, two by target, one note."""
+    scope, target = qname("ScopeAxis"), qname("TargetAxis")
+    return document(
+        GROUP_ENTRY_POINT,
+        {
+            "f1": fact(qname("Emissions"), "10", dimensions={scope: qname("ScopeA")}),
+            "f2": fact(qname("Emissions"), "20", dimensions={scope: qname("ScopeB")}),
+            "f3": fact(qname("Total"), "30"),
+            "f4": fact(qname("Intensity"), "5", dimensions={target: "T1"}),
+            "f5": fact(qname("Intensity"), "7", dimensions={target: "T2"}),
+            "f6": fact(qname("Note"), "note one", dimensions={target: "T1"}),
         },
     )
