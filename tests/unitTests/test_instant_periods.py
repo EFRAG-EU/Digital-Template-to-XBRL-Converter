@@ -9,14 +9,19 @@ other.
 from __future__ import annotations
 
 import re
-from collections.abc import Iterator
+from collections.abc import Callable
 from datetime import date
 from typing import Any
 
 import pytest
 from jinja2 import Environment, PackageLoader
+from tests.unitTests.synthetic_taxonomy import (
+    GROUP_ROLE,
+    concept,
+    qname,
+    taxonomy_json,
+)
 
-import mireport.taxonomy as _taxonomy_module
 from mireport.exceptions import InlineReportException
 from mireport.report import InlineReport
 from mireport.report.factbuilder import FactBuilder
@@ -25,55 +30,37 @@ from mireport.report.periods import DurationPeriodHolder, InstantPeriodHolder
 from mireport.taxonomy import Taxonomy, loadTaxonomyJSON
 from mireport.xml import getBootstrapQNameMaker
 
-_NS = "https://example.com/tp"
-_ENTRY = "test://periods/instants"
-_ROLE = "https://example.com/tp/role/Group"
-_LABEL = "http://www.xbrl.org/2003/role/label"
+_ENTRY = "test://synthetic/instants"
+STOCK = qname("Stock")
+EMISSIONS = qname("Emissions")
 _Q = getBootstrapQNameMaker()
 _Q.addNamespacePrefix("utr", "http://www.xbrl.org/2009/utr")
 
 
 @pytest.fixture(autouse=True)
-def _isolated_taxonomy_registry() -> Iterator[None]:
-    before = set(_taxonomy_module._TAXONOMIES)
-    yield
-    for entryPoint in set(_taxonomy_module._TAXONOMIES) - before:
-        del _taxonomy_module._TAXONOMIES[entryPoint]
-
-
-def _concept(label: str, *, period: str, abstract: bool = False) -> dict[str, Any]:
-    kind = "xbrli:stringItemType" if abstract else "xbrli:decimalItemType"
-    concept: dict[str, Any] = {
-        "labels": {"en": {_LABEL: label}},
-        "dataType": kind,
-        "baseDataType": kind,
-        "periodType": period,
-    }
-    if abstract:
-        concept["abstract"] = True
-    else:
-        concept["numeric"] = True
-    return concept
+def _taxonomy_registry_restored(
+    register_taxonomy: Callable[[dict[str, Any]], Taxonomy],
+) -> None:
+    """The tests load their taxonomy themselves (see _taxonomy); this makes sure it is removed
+    again afterwards."""
 
 
 def _taxonomy() -> Taxonomy:
     return loadTaxonomyJSON(
-        {
-            "entryPoint": _ENTRY,
-            "namespaces": {"tp": _NS, "xs": "http://www.w3.org/2001/XMLSchema"},
-            "concepts": {
-                "tp:Group": _concept("Group", period="duration", abstract=True),
-                "tp:Stock": _concept("Stock", period="instant"),
-                "tp:Emissions": _concept("Emissions", period="duration"),
+        taxonomy_json(
+            _ENTRY,
+            concepts={
+                qname("Group"): concept("Group", abstract=True),
+                STOCK: concept("Stock", numeric=True, periodType="instant"),
+                EMISSIONS: concept("Emissions", numeric=True),
             },
-            "presentation": {
-                _ROLE: {
+            presentation={
+                GROUP_ROLE: {
                     "definition": "Group",
-                    "rows": [[0, "tp:Group"], [1, "tp:Stock"], [1, "tp:Emissions"]],
+                    "rows": [[0, qname("Group")], [1, STOCK], [1, EMISSIONS]],
                 }
             },
-            "dimensions": {"_defaults": {}},
-        }
+        )
     )
 
 
@@ -107,12 +94,12 @@ def _html(report: InlineReport) -> str:
 class TestFactPeriodsFromTheBuilder:
     def test_an_instant_concept_is_reported_at_the_end_by_default(self) -> None:
         report = _report()
-        fact = _builder(report, "tp:Stock", 5).setNamedPeriod("cur").buildFact()
+        fact = _builder(report, STOCK, 5).setNamedPeriod("cur").buildFact()
         assert fact.period == FactPeriod(report.getReportPeriod("cur"), PeriodPart.End)
 
     def test_a_duration_concept_is_reported_for_the_whole_period(self) -> None:
         report = _report()
-        fact = _builder(report, "tp:Emissions", 5).setNamedPeriod("cur").buildFact()
+        fact = _builder(report, EMISSIONS, 5).setNamedPeriod("cur").buildFact()
         assert fact.period == FactPeriod(
             report.getReportPeriod("cur"), PeriodPart.Whole
         )
@@ -120,7 +107,7 @@ class TestFactPeriodsFromTheBuilder:
     def test_the_start_of_a_period_can_be_asked_for(self) -> None:
         report = _report()
         fact = (
-            _builder(report, "tp:Stock", 5)
+            _builder(report, STOCK, 5)
             .setNamedPeriod("cur", at=PeriodPart.Start)
             .buildFact()
         )
@@ -128,7 +115,7 @@ class TestFactPeriodsFromTheBuilder:
 
     def test_a_duration_concept_has_no_start(self) -> None:
         report = _report()
-        builder = _builder(report, "tp:Emissions", 5).setNamedPeriod(
+        builder = _builder(report, EMISSIONS, 5).setNamedPeriod(
             "cur", at=PeriodPart.Start
         )
         with pytest.raises(InlineReportException, match="cannot be reported"):
@@ -136,13 +123,11 @@ class TestFactPeriodsFromTheBuilder:
 
     def test_the_whole_of_a_period_is_not_a_choice_of_start_or_end(self) -> None:
         with pytest.raises(InlineReportException, match="'at'"):
-            _builder(_report(), "tp:Stock", 5).setNamedPeriod(
-                "cur", at=PeriodPart.Whole
-            )
+            _builder(_report(), STOCK, 5).setNamedPeriod("cur", at=PeriodPart.Whole)
 
     def test_a_duration_period_is_no_use_to_an_instant_concept(self) -> None:
         report = _report()
-        builder = _builder(report, "tp:Stock", 5).setPeriod(
+        builder = _builder(report, STOCK, 5).setPeriod(
             report.getReportPeriod("cur").duration
         )
         with pytest.raises(InlineReportException, match="cannot be reported"):
@@ -210,18 +195,14 @@ class TestInTheReport:
     def _facts(report: InlineReport) -> None:
         for at, value in ((PeriodPart.End, 11), (PeriodPart.Start, 7)):
             report.addFact(
-                _builder(report, "tp:Stock", value)
-                .setNamedPeriod("cur", at=at)
-                .buildFact()
+                _builder(report, STOCK, value).setNamedPeriod("cur", at=at).buildFact()
             )
-        report.addFact(
-            _builder(report, "tp:Emissions", 3).setNamedPeriod("cur").buildFact()
-        )
+        report.addFact(_builder(report, EMISSIONS, 3).setNamedPeriod("cur").buildFact())
 
     def test_both_instants_of_a_period_are_facts_in_their_own_right(self) -> None:
         report = _report()
         self._facts(report)
-        assert len(report.getFacts(report.taxonomy.getConcept("tp:Stock"))) == 2
+        assert len(report.getFacts(report.taxonomy.getConcept(STOCK))) == 2
 
     def test_each_goes_into_the_context_xbrl_would_give_it(self) -> None:
         report = _report()
@@ -272,11 +253,11 @@ class TestRenderMacros:
         report = _report()
         macros = self._macros()
         opening = (
-            _builder(report, "tp:Stock", 1)
+            _builder(report, STOCK, 1)
             .setNamedPeriod("cur", at=PeriodPart.Start)
             .buildFact()
         )
-        whole = _builder(report, "tp:Emissions", 1).buildFact()
+        whole = _builder(report, EMISSIONS, 1).buildFact()
         assert str(macros.render_fact_period(opening)).strip() == "At 2025-01-01"
         assert str(macros.render_fact_period(whole)).strip() == (
             "2025-01-01 &#8211; 2025-12-31"
