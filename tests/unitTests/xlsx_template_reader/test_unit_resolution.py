@@ -198,8 +198,7 @@ class TestNoUnitRange:
                 if c.isReportable
                 and c.isNumeric
                 and c.getRequiredUnitQNames() is None
-                and taxonomy.UTR.complexUnitFor(c.dataType) is not None
-                and not taxonomy.UTR.getUnitsForDataType(c.dataType)
+                and taxonomy.UTR.requiresComplexUnit(c.dataType)
                 and taxonomy.UTR.complexUnitFor(c.dataType).denominator.localName
                 == "monetaryItemType"
             ),

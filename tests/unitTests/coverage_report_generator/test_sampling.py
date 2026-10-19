@@ -275,6 +275,11 @@ class FakeUTR:
             return None
         return FakeComplexUnit(*sides)
 
+    def requiresComplexUnit(self, dataType: FakeQName) -> bool:
+        return self.complexUnitFor(dataType) is not None and not (
+            self.getUnitsForDataType(dataType)
+        )
+
     def validComplexUnit(
         self, dataType: FakeQName, numerator: FakeQName, denominator: FakeQName
     ) -> bool:

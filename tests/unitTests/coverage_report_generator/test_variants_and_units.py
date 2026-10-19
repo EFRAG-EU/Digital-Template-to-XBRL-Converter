@@ -203,10 +203,8 @@ def test_a_built_in_taxonomys_report_has_no_repeated_context_and_valid_units(
         if concept is None:
             continue
         unit = fact["dimensions"].get("unit")
-        complexUnit = taxonomy.UTR.complexUnitFor(concept.dataType)
         if (
-            complexUnit is not None
-            and not taxonomy.UTR.getUnitsForDataType(concept.dataType)
+            taxonomy.UTR.requiresComplexUnit(concept.dataType)
             and concept.getRequiredUnitQNames() is None
         ):
             # a per-unit type has no named units and may not be reported without a unit

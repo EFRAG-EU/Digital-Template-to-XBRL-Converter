@@ -188,21 +188,11 @@ class UnitResolver:
             conceptHolder.definedName, concept, factBuilder
         )
 
-    def _requiresComplexUnit(self, concept: Concept) -> bool:
-        """Whether the UTR gives the concept's type a divide unit (emissions per monetary unit,
-        say) rather than named units."""
-        utr = self.taxonomy.UTR
-        return utr.complexUnitFor(
-            concept.dataType
-        ) is not None and not utr.getUnitsForDataType(concept.dataType)
-
-    def _unitForItemType(self, itemType: QName | str) -> QName | None:
+    def _unitForItemType(self, itemType: QName) -> QName | None:
         """The unit to use for one side of a complex unit: the report's currency for a
         monetary side, else the configured unit for that item type (matched by local name,
         since the config spans taxonomies and the UTR and DTR namespaces differ), else the
         UTR's only unit for it."""
-        if isinstance(itemType, str):
-            return None
         if itemType.localName == "monetaryItemType":
             return self._report.defaultCurrency
         for dataType, unit in self._config.dataTypesToUnits.items():
@@ -251,7 +241,7 @@ class UnitResolver:
         if not concept.isNumeric:
             return False
 
-        if self._requiresComplexUnit(concept):
+        if self.taxonomy.UTR.requiresComplexUnit(concept.dataType):
             return self.setComplexUnitForName(dn, concept, factBuilder)
 
         if (

@@ -23,7 +23,7 @@ def _getQNameForUnitId(utr: UTR, unitId: str) -> QName | None:
         return None
     elif len(namespaces) > 1:
         raise UnitException(
-            "Found non unique unit identifier {unitId}. Specify a QName not a name to avoid this exception."
+            f"Found non unique unit identifier {unitId}. Specify a QName not a name to avoid this exception."
         )
     return utr._qnameMaker.fromNamespaceAndLocalName(
         namespace=namespaces[0], localName=unitId
@@ -38,8 +38,8 @@ def _byDataType(table: dict[str | QName, _T], dataType: QName) -> _T | None:
 
 @cache
 def _getUnitsForDataType(utr: UTR, dataType: QName) -> frozenset[QName]:
-    """The named units the UTR permits for a given data type. Empty for a type the UTR does
-    not constrain, and for one that takes a complex unit (see ``UTR.complexUnitFor``)."""
+    """The simple units the UTR permits for a given data type. Empty for a type the UTR does
+    not constrain, and for one that only takes a complex unit (see ``UTR.complexUnitFor``)."""
     return frozenset(
         unitQName
         for unitId in _byDataType(utr._lookupUnitIdByDataType, dataType) or ()
@@ -54,8 +54,8 @@ class ComplexUnit:
     unit valid for ``numerator`` over a denominator unit valid for ``denominator``."""
 
     unitId: str
-    numerator: QName | str
-    denominator: QName | str
+    numerator: QName
+    denominator: QName
 
 
 class UTR:
@@ -84,32 +84,22 @@ class UTR:
         complexUnits: dict[str | QName, ComplexUnit] = {}
         for entry in utr["utr"]:
             unitId = entry["unitId"]
-            localName = entry["itemType"]
+            # The UTR lists some item types without a namespace: keep those by local name.
+            dataType: str | QName = entry["itemType"]
             if (namespace := entry.get("nsItemType")) is not None:
                 dataType = qnameMaker.fromNamespaceAndLocalName(
-                    namespace=namespace, localName=localName
+                    namespace, entry["itemType"]
                 )
-                dataTypeToUnit[dataType].append(unitId)
-            else:
-                dataType = localName
-                dataTypeToUnit[localName].append(unitId)
 
             if "numeratorItemType" in entry:
                 complexUnits[dataType] = ComplexUnit(
                     unitId,
-                    cls._itemType(
-                        qnameMaker,
-                        entry["numeratorItemType"],
-                        entry.get("nsNumeratorItemType"),
-                    ),
-                    cls._itemType(
-                        qnameMaker,
-                        entry["denominatorItemType"],
-                        entry.get("nsDenominatorItemType"),
-                    ),
+                    cls._itemType(qnameMaker, entry, "numerator"),
+                    cls._itemType(qnameMaker, entry, "denominator"),
                 )
             else:
                 # simple unit
+                dataTypeToUnit[dataType].append(unitId)
                 unitNamespace = entry["nsUnit"]
                 unitToNamespaces.setdefault(unitId, []).append(unitNamespace)
                 unitQName = qnameMaker.fromNamespaceAndLocalName(unitNamespace, unitId)
@@ -128,18 +118,29 @@ class UTR:
         )
 
     @staticmethod
-    def _itemType(
-        qnameMaker: QNameMaker, localName: str, namespace: str | None
-    ) -> QName | str:
-        if namespace is None:
-            return localName
+    def _itemType(qnameMaker: QNameMaker, entry: dict, side: str) -> QName:
+        """One side's item type of a complex unit, which the UTR always qualifies."""
+        localName = entry[f"{side}ItemType"]
+        if (namespace := entry.get(f"ns{side.capitalize()}ItemType")) is None:
+            raise UnitException(
+                f"UTR complex unit {entry['unitId']} gives its {side} item type "
+                f"{localName} no namespace."
+            )
         return qnameMaker.fromNamespaceAndLocalName(namespace, localName)
 
     def complexUnitFor(self, dataType: QName) -> ComplexUnit | None:
-        """The complex (per-unit) UTR unit for ``dataType``, if the UTR gives it one rather
-        than a list of named units. ``getUnitsForDataType`` knows only named units, so it is
-        empty for these types; that does *not* make them unconstrained."""
+        """The complex (per-unit) UTR unit for ``dataType``, if the UTR gives it one.
+        ``getUnitsForDataType`` knows only simple units, so it is empty for these types; that
+        does *not* make them unconstrained."""
         return _byDataType(self._complexUnits, dataType)
+
+    def requiresComplexUnit(self, dataType: QName) -> bool:
+        """Whether a fact of ``dataType`` must be reported in a divide unit: the UTR gives the
+        type a complex unit and no simple one (``pureItemType`` has both, so a simple unit
+        will do for it)."""
+        return self.complexUnitFor(dataType) is not None and not (
+            self.getUnitsForDataType(dataType)
+        )
 
     def validComplexUnit(
         self, dataType: QName, numeratorUnit: QName, denominatorUnit: QName
@@ -153,17 +154,14 @@ class UTR:
             complexUnit.numerator, numeratorUnit
         ) and self._validForItemType(complexUnit.denominator, denominatorUnit)
 
-    def _validForItemType(self, itemType: QName | str, unit: QName) -> bool:
-        if isinstance(itemType, str):
-            unitIds = self._lookupUnitIdByDataType.get(itemType, [])
-            return any(self.getQNameForUnitId(unitId) == unit for unitId in unitIds)
+    def _validForItemType(self, itemType: QName, unit: QName) -> bool:
         return unit in self.getUnitsForDataType(itemType)
 
     def getQNameForUnitId(self, unitId: str) -> QName | None:
         return _getQNameForUnitId(self, unitId)
 
     def getUnitsForDataType(self, dataType: QName) -> frozenset[QName]:
-        """Get the unit IDs for a given data type."""
+        """The simple units the UTR permits for ``dataType``; empty if it lists none."""
         return _getUnitsForDataType(self, dataType)
 
     def getSymbolForUnit(self, unit: QName) -> str:
@@ -180,7 +178,7 @@ class UTR:
 
     def validCurrency(self, unit: QName | str) -> bool:
         if isinstance(unit, QName):
-            if unit.namespace is not ISO4217_NS:
+            if unit.namespace != ISO4217_NS:
                 return False
             code = unit.localName
         else:
@@ -190,9 +188,9 @@ class UTR:
     def valid(self, dataType: QName, unitType: QName) -> bool:
         """Whether the single unit ``unitType`` is one the UTR permits for ``dataType``.
 
-        A type the UTR does not list is unconstrained, so any unit is valid. A type with a complex unit
-        (see ``complexUnitFor``) is listed, but with no named unit, so no single unit is valid
+        A type the UTR does not list is unconstrained, so any unit is valid. A type that only
+        has a complex unit (see ``requiresComplexUnit``) is listed, so no single unit is valid
         for it: it takes a divide unit, checked with ``validComplexUnit``."""
-        if units_for_dataType := self.getUnitsForDataType(dataType):
-            return unitType in units_for_dataType
+        if units := self.getUnitsForDataType(dataType):
+            return unitType in units
         return self.complexUnitFor(dataType) is None

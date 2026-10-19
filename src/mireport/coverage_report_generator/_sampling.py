@@ -236,19 +236,14 @@ def complexUnitFor(taxonomy: Taxonomy, concept: Concept) -> tuple[QName, QName] 
     """
     if not concept.isNumeric or concept.getRequiredUnitQNames() is not None:
         return None
-    if taxonomy.UTR.getUnitsForDataType(concept.dataType):
+    if not taxonomy.UTR.requiresComplexUnit(concept.dataType):
         return None
-    if (complexUnit := taxonomy.UTR.complexUnitFor(concept.dataType)) is None:
-        return None
-    sides: list[QName] = []
-    for itemType in (complexUnit.numerator, complexUnit.denominator):
-        if isinstance(itemType, str):
-            raise SampleGenerationException(
-                f"The UTR names {itemType} without a namespace as a side of "
-                f"{concept.dataType.localName} (concept {concept.qname})."
-            )
-        sides.append(_preferredUnit(taxonomy, itemType, concept))
-    return sides[0], sides[1]
+    complexUnit = taxonomy.UTR.complexUnitFor(concept.dataType)
+    assert complexUnit is not None
+    return (
+        _preferredUnit(taxonomy, complexUnit.numerator, concept),
+        _preferredUnit(taxonomy, complexUnit.denominator, concept),
+    )
 
 
 def extraUnitsFor(taxonomy: Taxonomy, concept: Concept) -> list[QName]:
