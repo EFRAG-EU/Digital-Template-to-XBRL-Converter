@@ -25,6 +25,10 @@ ENUM2_NS = sys.intern("http://xbrl.org/2020/extensible-enumerations-2.0")
 XS_NS = sys.intern("http://www.w3.org/2001/XMLSchema")
 # The scheme of a Legal Entity Identifier (ISO 17442).
 LEI_NS = sys.intern("http://standards.iso.org/iso/17442")
+# What OIM's reserved ``xbrl`` prefix is bound to (xbrl:note, xbrl:canonicalValues).
+XBRL_NS = sys.intern("https://xbrl.org/2021")
+# An absolute URI (RFC 3986): a scheme, then something. Covers http(s) and urn: namespaces.
+_ABSOLUTE_URI_RE = re.compile(r"[A-Za-z][A-Za-z0-9+.-]*:\S+")
 
 
 class _QNameTuple(NamedTuple):
@@ -49,6 +53,15 @@ class NamespaceManager:
         # only the first binding is kept here (first prefix wins).
         self._namespaceToPrefix: dict[str, str] = {}
 
+    @classmethod
+    def fromMapping(cls, prefixToNamespace: Mapping[str, str]) -> NamespaceManager:
+        """A new manager with these bindings, to add to without touching where they came
+        from (a taxonomy's, say)."""
+        manager = cls()
+        for prefix, namespace in prefixToNamespace.items():
+            manager.add(prefix, namespace)
+        return manager
+
     def getNamespaceForPrefix(self, prefix: str) -> str:
         return self._prefixToNamespaces[prefix]
 
@@ -60,8 +73,7 @@ class NamespaceManager:
 
     def _validate(self, prefix: str, namespace: str) -> _NSPrefixTuple:
         """Validates the namespace and prefix and intern()s them."""
-        if not (namespace and namespace.startswith(("https://", "http://"))):
-            # TODO: use a proper URI / URN validator.
+        if not (namespace and _ABSOLUTE_URI_RE.fullmatch(namespace)):
             raise BrokenNamespacePrefixException(
                 f"Namespace does not look valid: {namespace}"
             )
@@ -222,4 +234,5 @@ def getBootstrapQNameMaker() -> QNameMaker:
     boot.add("xbrli", XBRLI_NS)
     boot.add("enum2", ENUM2_NS)
     boot.add("xs", XS_NS)
+    boot.add("xbrl", XBRL_NS)
     return QNameMaker(boot)
