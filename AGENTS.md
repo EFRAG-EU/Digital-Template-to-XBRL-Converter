@@ -42,8 +42,8 @@ quicker for a single test and needed for a debugger.
 - After any change to the conversion pipeline, run `tests/integrationTests/test_expectedFactCounts.py`
   — it pins per-template fact counts and catches silent fact loss.
 - `tests/unitTests/xlsx_template_reader/test_fact_creator_characterization.py` snapshots every fact
-  (as an xBRL-JSON document: concept, value, period, unit, dimensions, footnotes) from the 1.2.0 and
-  1.3.0 samples. Regenerate deliberately, only when a change to the output is intended:
+  (written by `mireport.xbrljson_writer`, sorted, with `mireport:scale` and the message counts as
+  extension properties) from the 1.2.0 and 1.3.0 samples. Regenerate deliberately, only when a change to the output is intended:
   `.venv-py314/Scripts/python -m tests.unitTests.xlsx_template_reader.test_fact_creator_characterization`
 - A test that needs a taxonomy shaped differently from the baked ones (a presentation group with no
   hypercube, say) builds it with `tests/unitTests/synthetic_taxonomy.py` and registers it with the
@@ -63,7 +63,8 @@ CI runs ruff only, but mypy config is strict-ish for `src/` (`disallow_untyped_d
 ### Running the converter
 
 ```powershell
-# Excel -> Inline XBRL (add --viewer / --json; output path may be a file or a directory)
+# Excel -> Inline XBRL (add --viewer / --json, or --xbrl-json PATH for xBRL-JSON straight from the
+# report; output path may be a file or a directory)
 .venv-py314/Scripts/python scripts/parse-and-ixbrl.py example.xlsx output.html
 
 # dump named ranges from a workbook (debugging what the reader sees)
@@ -302,14 +303,23 @@ The document is read first into `document.XbrlJsonDocument` / `XbrlJsonFact` (sh
 taxonomy; `fromDict`/`fromFile`, `toDict`/`toFile`); anything that writes xBRL-JSON builds one of these,
 so the reader never depends on a writer. Only a document that is not xBRL-JSON raises; a fact the reader
 cannot take (bad shape or period, time zone, non-finite number, unit the UTR forbids, monetary without a
-currency, member outside its domain, explicit dimension at its default, nil, another language) costs that
-fact alone, with a warning carrying the OIM error code. `T24:00:00` is parsed by hand (`_periods.py`),
-since Python before 3.14 cannot.
+currency, member outside its domain, explicit dimension at its default, a nil typed dimension value,
+another language) costs that fact alone, with a warning carrying the OIM error code. `T24:00:00` is parsed by hand (`_periods.py`),
+since Python before 3.14 cannot. A nil fact is read for a nillable concept.
+
+### Report and the xBRL-JSON writer (`mireport/report/report.py`, `mireport/xbrljson_writer/`)
+
+`Report` is a report as data (taxonomy, entity, periods, facts, footnotes, nil facts); `InlineReport`
+subclasses it with everything about how it looks (locale, theme, titles, aoix, rendering, package).
+`toXbrlJson(report)` writes any `Report` as the reader's `XbrlJsonDocument`, in canonical form
+(`xbrl:canonicalValues`): facts in report order (or sorted, `sortFacts`) with ids `f1`..., a
+dimensionless number with no unit (OIM's `xbrli:pure`), namespaces only for prefixes used, footnotes as
+`xbrl:note` facts. `scripts/parse-and-ixbrl.py --xbrl-json PATH` writes one for a converted workbook.
 
 ### Coverage reports (`mireport/coverage_report_generator/`)
 
-`buildCoverageReportSet` writes the xBRL-JSON reports the taxonomy repo pins (`no-facts`, `all-nil`,
-`all-values`): a fact for every reportable concept and one for each hypercube dimension value it carries,
+`buildCoverageReportSet` builds, as `Report`s written with the xBRL-JSON writer, the reports the
+taxonomy repo pins (`no-facts`, `all-nil`, `all-values`): a fact for every reportable concept and one for each hypercube dimension value it carries,
 in a taxonomy-agnostic way (everything comes from the baked `Taxonomy`). Two properties hold by
 construction. **No two facts share a context** (concept, period, dimensions): a fact for dimensions already
 covered is skipped, since duplicates and alternative facts do not belong in a coverage report. **No fact

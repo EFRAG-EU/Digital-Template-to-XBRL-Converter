@@ -37,6 +37,7 @@ from mireport.pdf_converter import (
 )
 from mireport.report.reportpackage import buildReportPackage
 from mireport.report.theme import ColourPalette, DisplayMode, ReportTheme
+from mireport.xbrljson_writer import toXbrlJson
 from mireport.xlsx_template_reader.processor import XlsxProcessor
 
 
@@ -118,6 +119,14 @@ def createArgParser() -> argparse.ArgumentParser:
         action=argparse.BooleanOptionalAction,
         default=False,
         help="Generate JSON output as well.",
+    )
+    parser.add_argument(
+        "--xbrl-json",
+        type=Path,
+        default=None,
+        metavar="PATH",
+        help="Also write the report's facts to PATH as xBRL-JSON, straight from the report "
+        "(--json instead has Arelle produce it from the Inline Report).",
     )
     parser.add_argument(
         "--style-mode",
@@ -333,6 +342,11 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, list[str]
         pdfs = convertSupplementaryPdfs(
             supplementary_pdfs, resultsBuilder, pc, mode=args.pdf_mode
         )
+
+        if xbrlJsonPath := args.xbrl_json:
+            pc.mark("Writing xBRL-JSON", additionalInfo=f"To {xbrlJsonPath}")
+            xbrlJsonPath.parent.mkdir(parents=True, exist_ok=True)
+            toXbrlJson(report).toFile(xbrlJsonPath)
 
         pc.mark("Generating Inline Report")
         reportFile = report.getInlineReport()
