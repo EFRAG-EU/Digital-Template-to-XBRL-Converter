@@ -3,13 +3,15 @@ from __future__ import annotations
 from collections import defaultdict
 from dataclasses import dataclass
 from functools import cache, cached_property
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar
 
 if TYPE_CHECKING:
     from typing import Self
 
 from mireport.exceptions import UnitException
 from mireport.xml import ISO4217_NS, XBRLI_NS, QName, QNameMaker
+
+_T = TypeVar("_T")
 
 
 @cache
@@ -28,28 +30,21 @@ def _getQNameForUnitId(utr: UTR, unitId: str) -> QName | None:
     )
 
 
+def _byDataType(table: dict[str | QName, _T], dataType: QName) -> _T | None:
+    """The entry for ``dataType``: under its QName if the UTR gave the item type a namespace,
+    else under its local name, which is how the UTR lists some of them."""
+    return table.get(dataType) or table.get(dataType.localName)
+
+
 @cache
 def _getUnitsForDataType(utr: UTR, dataType: QName) -> frozenset[QName]:
-    """Get the unit IDs for a given data type."""
-    possible = utr._lookupUnitIdByDataType.get(dataType)
-    if not possible:
-        possible = utr._lookupUnitIdByDataType.get(dataType.localName)
-    if possible:
-        return frozenset(
-            unitQName
-            for unitId in possible
-            if (unitQName := utr.getQNameForUnitId(unitId)) is not None
-        )
-    return frozenset()
-
-
-@cache
-def _getUnitIdsForDataType(utr: UTR, dataType: QName) -> frozenset[str]:
-    """Get the unit ID for a given data type."""
-    possible: list[str] = []
-    possible.extend(utr._lookupUnitIdByDataType.get(dataType, []))
-    possible.extend(utr._lookupUnitIdByDataType.get(dataType.localName, []))
-    return frozenset(possible)
+    """The named units the UTR permits for a given data type. Empty for a type the UTR does
+    not constrain, and for a composite one (see ``UTR.compositeFor``)."""
+    return frozenset(
+        unitQName
+        for unitId in _byDataType(utr._lookupUnitIdByDataType, dataType) or ()
+        if (unitQName := utr.getQNameForUnitId(unitId)) is not None
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -144,9 +139,7 @@ class UTR:
         """The composite (per-unit) definition for ``dataType``, if the UTR gives it one rather
         than a list of named units. ``getUnitsForDataType`` knows only named units, so it is
         empty for these types; that does *not* make them unconstrained."""
-        return self._composites.get(dataType) or self._composites.get(
-            dataType.localName
-        )
+        return _byDataType(self._composites, dataType)
 
     def validComposite(
         self, dataType: QName, numeratorUnit: QName, denominatorUnit: QName
@@ -173,11 +166,7 @@ class UTR:
         """Get the unit IDs for a given data type."""
         return _getUnitsForDataType(self, dataType)
 
-    def getUnitIdsForDataType(self, dataType: QName) -> frozenset[str]:
-        """Get the unit ID for a given data type."""
-        return _getUnitIdsForDataType(self, dataType)
-
-    def getSymbolForUnit(self, unit: QName, dataType: QName) -> str:
+    def getSymbolForUnit(self, unit: QName) -> str:
         unitEntry = self._lookupUnitEntriesByQName[unit]
         return unitEntry.get("symbol", "")
 
@@ -199,10 +188,12 @@ class UTR:
         return code in self._currencies
 
     def valid(self, dataType: QName, unitType: QName) -> bool:
+        """Whether the single unit ``unitType`` is one the UTR permits for ``dataType``.
+
+        A type the UTR does not list is unconstrained, so any unit is valid. A composite type
+        (see ``compositeFor``) is listed, but with no named unit, so no single unit is valid
+        for it: it takes a divide unit, checked with ``validComposite``."""
         units_for_dataType = self.getUnitsForDataType(dataType)
         if not units_for_dataType:
-            # If the data type is not in the UTR, there is no UTR validation,
-            # i.e. it is a valid combination.
             return True
-        else:
-            return unitType in units_for_dataType
+        return unitType in units_for_dataType
