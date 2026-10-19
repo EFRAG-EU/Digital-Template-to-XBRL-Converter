@@ -67,13 +67,11 @@ def test_every_generated_value_fact_is_read_back(coverage: dict[str, Any]) -> No
     assert not [m for m in results.messages if m.severity is Severity.ERROR]
 
 
-def test_nil_facts_are_reported_not_silently_dropped(coverage: dict[str, Any]) -> None:
-    processor, results = _read(coverage["nil"])
-    assert processor.factsAdded == 0
-    assert processor.factsSkipped == len(coverage["nil"]["facts"])
-    assert len(results.messages) == processor.factsSkipped
-    with pytest.raises(XbrlJsonException, match="could not be added"):
-        _read(coverage["nil"], strict=True)
+def test_every_generated_nil_fact_is_read_back(coverage: dict[str, Any]) -> None:
+    processor, _ = _read(coverage["nil"], strict=True)
+    assert processor.factsAdded == len(coverage["nil"]["facts"])
+    assert processor.factsSkipped == 0
+    assert all(fact.isNil for fact in processor.report.facts)
 
 
 def test_wrong_document_type_is_refused(coverage: dict[str, Any]) -> None:

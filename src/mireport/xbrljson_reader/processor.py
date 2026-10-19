@@ -4,7 +4,7 @@ The xlsx reader builds facts from workbook cells; this one builds the same facts
 fact objects, so the two share everything downstream (layout, theming, aoix, Arelle).
 
 Deliberately narrow: one entity, durations that declare the report's periods (an instant fact must
-be at the start or end of one), and facts that carry a value. A fact outside that, or one the
+be at the start or end of one), and facts with a value or nil. A fact outside that, or one the
 taxonomy or the UTR does not allow, is skipped with a message saying why (and, where the
 specifications name one, the error code); only a document that cannot be a report at all raises.
 """
@@ -307,11 +307,12 @@ class XbrlJsonProcessor:
         concept: Concept | None = None
         try:
             concept = self._concept(fact.concept)
-            if fact.value is None:
-                raise FactProblem(UNSUPPORTED, "Nil facts are not supported yet.")
             self._checkLanguage(fact)
             fb = self.report.getFactBuilder().setConcept(concept).setPeriod(period)
-            self._setValue(fb, concept, fact)
+            if fact.isNil:
+                self._setNil(fb, concept, fact)
+            else:
+                self._setValue(fb, concept, fact)
             for name, member in fact.dimensions.items():
                 self._setDimension(fb, name, member)
             built = fb.buildFact()
@@ -333,6 +334,14 @@ class XbrlJsonProcessor:
                 INVALID_LANGUAGE,
                 f"The fact is in {fact.language}; the report is in {self.report.language}.",
             )
+
+    def _setNil(self, fb: FactBuilder, concept: Concept, fact: XbrlJsonFact) -> None:
+        """A nil fact: no value, and so no decimals, but a number still has its unit."""
+        if fact.decimals is not None:
+            raise FactProblem(INVALID_JSON_STRUCTURE, "A nil fact has no decimals.")
+        if concept.isNumeric:
+            self._setUnit(fb, concept, fact.unit)
+        fb.setNil()  # building it checks the concept is nillable
 
     def _setValue(self, fb: FactBuilder, concept: Concept, fact: XbrlJsonFact) -> None:
         value = fact.value

@@ -260,6 +260,26 @@ def test_an_explicit_dimension_at_its_default_is_refused(
     assert "default" in message and "oime:invalidDimensionValue" in message
 
 
+def test_a_nil_fact_with_decimals_is_skipped(
+    doc: dict[str, Any], taxonomy: Taxonomy
+) -> None:
+    factId, fact = _first(doc, taxonomy, lambda c, f: c.isNumeric and "decimals" in f)
+    fact["value"] = None
+    _, message = _skipped(doc, factId)
+    assert "nil fact has no decimals" in message
+
+
+def test_a_nil_monetary_fact_still_needs_its_currency(
+    doc: dict[str, Any], taxonomy: Taxonomy
+) -> None:
+    factId, fact = _first(doc, taxonomy, lambda c, f: c.isMonetary)
+    fact["value"] = None
+    del fact["decimals"]
+    del fact["dimensions"]["unit"]
+    _, message = _skipped(doc, factId)
+    assert "currency" in message
+
+
 def test_a_nil_typed_dimension_value_is_skipped_not_read_as_none(
     doc: dict[str, Any], taxonomy: Taxonomy
 ) -> None:
