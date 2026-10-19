@@ -138,7 +138,7 @@ def doConversion(args: argparse.Namespace) -> ConversionResults:
             loadTaxonomyJSON(path)
 
         pc.mark("Reading xBRL-JSON", additionalInfo=f"Using file: {args.json_file}")
-        processor = XbrlJsonProcessor.from_file(
+        processor = XbrlJsonProcessor.fromFile(
             args.json_file,
             resultsBuilder,
             strict=args.strict,

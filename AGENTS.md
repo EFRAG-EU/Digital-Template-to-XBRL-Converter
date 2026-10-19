@@ -292,6 +292,14 @@ the prior one: every OIM fact says its own period, so the reader infers nothing.
 x100 with `ix:scale -2` but keeps its value and decimals as given. In strict mode (`--strict`)
 anything that cannot be added or would appear nowhere in the rendered report is an error.
 
+The document is read first into `document.XbrlJsonDocument` / `XbrlJsonFact` (shape-checked data, no
+taxonomy; `fromDict`/`fromFile`, `toDict`/`toFile`); anything that writes xBRL-JSON builds one of these,
+so the reader never depends on a writer. Only a document that is not xBRL-JSON raises; a fact the reader
+cannot take (bad shape or period, time zone, non-finite number, unit the UTR forbids, monetary without a
+currency, member outside its domain, explicit dimension at its default, nil, another language) costs that
+fact alone, with a warning carrying the OIM error code. `T24:00:00` is parsed by hand (`_periods.py`),
+since Python before 3.14 cannot.
+
 ### Coverage reports (`mireport/coverage_report_generator/`)
 
 `buildCoverageReportSet` writes the xBRL-JSON reports the taxonomy repo pins (`no-facts`, `all-nil`,

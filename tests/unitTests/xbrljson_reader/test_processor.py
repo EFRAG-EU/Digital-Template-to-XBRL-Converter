@@ -23,7 +23,8 @@ from mireport.taxonomy import (
     loadBuiltInTaxonomyJSON,
 )
 from mireport.xbrljson_reader import XbrlJsonProcessor
-from mireport.xbrljson_reader.processor import XbrlJsonException
+from mireport.xbrljson_reader._periods import parseDuration
+from mireport.xbrljson_reader.document import FactProblem, XbrlJsonException
 
 DURATION = "2025-01-01T00:00:00/2026-01-01T00:00:00"
 SAMPLE = SampleEntityPeriod(
@@ -163,7 +164,7 @@ def test_instant_written_as_next_day_midnight_is_the_same_instant(
 
 
 def test_a_period_is_the_oim_one_with_the_end_not_included() -> None:
-    duration = XbrlJsonProcessor._parseDuration(DURATION)
+    duration = parseDuration(DURATION)
     assert (duration.start.isoformat(), duration.end.isoformat()) == (
         "2025-01-01T00:00:00",
         "2026-01-01T00:00:00",
@@ -173,20 +174,18 @@ def test_a_period_is_the_oim_one_with_the_end_not_included() -> None:
         "2025-01-01",
         "2025-12-31",
     )
-    with pytest.raises(XbrlJsonException, match="duration"):
-        XbrlJsonProcessor._parseDuration("2025-12-31T24:00:00")
+    with pytest.raises(FactProblem, match="not a duration"):
+        parseDuration("2025-12-31T24:00:00")
 
 
 def test_the_end_of_a_day_may_be_written_as_24_hundred() -> None:
-    duration = XbrlJsonProcessor._parseDuration(
-        "2024-12-31T24:00:00/2025-12-31T24:00:00"
-    )
-    assert duration == XbrlJsonProcessor._parseDuration(DURATION)
+    duration = parseDuration("2024-12-31T24:00:00/2025-12-31T24:00:00")
+    assert duration == parseDuration(DURATION)
 
 
 def test_a_report_period_that_is_not_whole_days_is_refused() -> None:
-    with pytest.raises(XbrlJsonException, match="whole days"):
-        XbrlJsonProcessor._parseDuration("2025-01-01T09:00:00/2026-01-01T00:00:00")
+    with pytest.raises(FactProblem, match="whole days"):
+        parseDuration("2025-01-01T09:00:00/2026-01-01T00:00:00")
 
 
 def test_an_instant_at_the_start_of_the_period_is_an_opening_balance(

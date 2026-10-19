@@ -59,14 +59,16 @@ def test_every_fact_is_tagged_though_presentation_has_no_hypercube(
 
 def test_a_fact_that_appears_nowhere_is_an_error_when_strict(group: None) -> None:
     doc = group_document()
-    doc["facts"]["f9"] = fact(qname("Orphan"), "lost")  # in no presentation group
+    doc["facts"]["f9"] = fact(
+        qname("Orphan"), "lost", decimals=None
+    )  # in no presentation group
     with pytest.raises(InlineReportException, match="appear nowhere"):
         _render(doc, strict=True)
 
 
 def test_a_fact_that_appears_nowhere_is_left_out_when_not_strict(group: None) -> None:
     doc = group_document()
-    doc["facts"]["f9"] = fact(qname("Orphan"), "lost")
+    doc["facts"]["f9"] = fact(qname("Orphan"), "lost", decimals=None)
     assert qname("Orphan") not in _tagged(_render(doc))
 
 

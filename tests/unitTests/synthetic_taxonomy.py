@@ -156,13 +156,14 @@ def fact(
     value: str | int,
     *,
     period: str = DURATION,
-    decimals: int | str = 0,
+    decimals: int | str | None = 0,
     dimensions: dict[str, str] | None = None,
 ) -> dict[str, Any]:
-    """One fact of an xBRL-JSON document, with a prefixed ``concept`` and dimension names."""
+    """One fact of an xBRL-JSON document, with a prefixed ``concept`` and dimension names.
+    Pass ``decimals=None`` for a non-numeric fact, which may not have them."""
     return {
         "value": value,
-        "decimals": decimals,
+        **({} if decimals is None else {"decimals": decimals}),
         "dimensions": {
             "concept": concept,
             "entity": ENTITY,
@@ -195,6 +196,8 @@ def group_document() -> dict[str, Any]:
             "f3": fact(qname("Total"), "30"),
             "f4": fact(qname("Intensity"), "5", dimensions={target: "T1"}),
             "f5": fact(qname("Intensity"), "7", dimensions={target: "T2"}),
-            "f6": fact(qname("Note"), "note one", dimensions={target: "T1"}),
+            "f6": fact(
+                qname("Note"), "note one", decimals=None, dimensions={target: "T1"}
+            ),
         },
     )

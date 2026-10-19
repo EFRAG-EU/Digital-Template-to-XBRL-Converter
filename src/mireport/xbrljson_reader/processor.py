@@ -4,17 +4,16 @@ The xlsx reader builds facts from workbook cells; this one builds the same facts
 fact objects, so the two share everything downstream (layout, theming, aoix, Arelle).
 
 Deliberately narrow: one entity, durations that declare the report's periods (an instant fact must
-be at the start or end of one), and facts that carry a value. Anything else is reported as an
-error rather than guessed at.
+be at the start or end of one), and facts that carry a value. A fact outside that, or one the
+taxonomy or the UTR does not allow, is skipped with a message saying why (and, where the
+specifications name one, the error code); only a document that cannot be a report at all raises.
 """
 
 from __future__ import annotations
 
-import json
 import logging
-from collections import Counter
+from collections import Counter, defaultdict
 from collections.abc import Mapping
-from datetime import datetime, timedelta
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
@@ -24,63 +23,67 @@ from markupsafe import Markup
 
 from mireport.conversionresults import ConversionResultsBuilder, MessageType, Severity
 from mireport.entrypoints import describeEntryPointSet, entryPointSetOf
-from mireport.exceptions import InlineReportException, TaxonomyException
+from mireport.exceptions import InlineReportException, TaxonomyException, UnitException
 from mireport.report import InlineReport
+from mireport.report.fact import Fact
 from mireport.report.factbuilder import FactBuilder
 from mireport.report.model import Unit
-from mireport.report.periods import (
-    DurationPeriodHolder,
-    InstantPeriodHolder,
-    _Period,
-)
+from mireport.report.periods import DurationPeriodHolder, _Period
 from mireport.taxonomy import Concept, QName, Taxonomy, getTaxonomy, listTaxonomies
 from mireport.typealiases import DecimalPlaces
-from mireport.xml import ISO4217_NS, XBRLI_NS
+from mireport.xbrljson_reader._periods import parseDuration, parsePeriod
+from mireport.xbrljson_reader.document import (
+    INVALID_DIMENSION_VALUE,
+    INVALID_JSON_STRUCTURE,
+    INVALID_LANGUAGE,
+    INVALID_UNIT,
+    UNSUPPORTED,
+    FactProblem,
+    XbrlJsonDocument,
+    XbrlJsonException,
+    XbrlJsonFact,
+)
+from mireport.xml import XBRLI_NS
 
 L = logging.getLogger(__name__)
 
 XHTML_NS = "http://www.w3.org/1999/xhtml"
-XBRL_JSON_DOCUMENT_TYPE = "https://xbrl.org/2021/xbrl-json"
+# Extension properties the snapshot files write (see tests/unitTests/xbrl_json_snapshot.py).
+EXTENSION_NS = "urn:mireport:xbrl-json-extension"
+FACT_FOOTNOTE_ARCROLE = "http://www.xbrl.org/2003/arcrole/fact-footnote"
 # What the xlsx reader shows for an empty enumeration set (EE_SET_DESIRED_EMPTY_PLACEHOLDER_VALUE).
 EMPTY_SET_TEXT = "None"
-# The core aspects of an OIM fact; every other key under "dimensions" is a taxonomy dimension.
-_CORE_ASPECTS = frozenset({"concept", "entity", "period", "unit", "language"})
+# Features that change nothing about how a document is read here.
+_KNOWN_FEATURES = frozenset({"xbrl:canonicalValues", "xbrl:allowedDuplicates"})
+_BOOLEANS = {"true": True, "1": True, "false": False, "0": False}
 
-
-class XbrlJsonException(Exception):
-    """The document cannot be turned into a report at all."""
-
-
-def _parseDateTime(text: str) -> datetime:
-    """An OIM dateTime. xBRL-JSON may write the end of a day as ``T24:00:00``, which is the start
-    of the next one."""
-    if text.endswith("T24:00:00"):
-        return datetime.fromisoformat(text.removesuffix("T24:00:00")) + timedelta(
-            days=1
-        )
-    return datetime.fromisoformat(text)
+__all__ = ["XbrlJsonException", "XbrlJsonProcessor"]
 
 
 class XbrlJsonProcessor:
     def __init__(
         self,
-        document: Mapping[str, Any],
+        document: XbrlJsonDocument | Mapping[str, Any],
         results: ConversionResultsBuilder,
         *,
         strict: bool = False,
         entityNameConcept: str | None = None,
     ) -> None:
-        self._document = document
+        self._document = (
+            document
+            if isinstance(document, XbrlJsonDocument)
+            else XbrlJsonDocument.fromDict(document)
+        )
         self._entityNameConcept = entityNameConcept
         self._results = results
         self._strict = strict
         self._report: InlineReport | None = None
-        self._namespaces: dict[str, str] = {}
         self.factsAdded = 0
         self.factsSkipped = 0
+        self._skippedBy: Counter[str] = Counter()
 
     @classmethod
-    def from_file(
+    def fromFile(
         cls,
         path: Path | str,
         results: ConversionResultsBuilder,
@@ -88,52 +91,80 @@ class XbrlJsonProcessor:
         strict: bool = False,
         entityNameConcept: str | None = None,
     ) -> XbrlJsonProcessor:
-        with open(path, encoding="utf-8") as f:
-            return cls(
-                json.load(f),
-                results,
-                strict=strict,
-                entityNameConcept=entityNameConcept,
-            )
+        return cls(
+            XbrlJsonDocument.fromFile(path),
+            results,
+            strict=strict,
+            entityNameConcept=entityNameConcept,
+        )
+
+    @property
+    def document(self) -> XbrlJsonDocument:
+        return self._document
 
     @property
     def taxonomy(self) -> Taxonomy:
         assert self._report is not None
         return self._report.taxonomy
 
+    @property
+    def report(self) -> InlineReport:
+        assert self._report is not None
+        return self._report
+
     def createReport(self) -> InlineReport:
+        self.factsAdded = self.factsSkipped = 0
+        self._skippedBy.clear()
         self._report = self._startReport()
-        facts = self._document.get("facts", {})
-        if not isinstance(facts, Mapping) or not facts:
-            raise XbrlJsonException("The document has no facts.")
-        self._setEntityAndPeriods(facts)
-        self._setEntityName(facts)
-        self._setDefaultCurrency(facts)
-        for factId, fact in facts.items():
-            if self._addFact(str(factId), fact):
-                self.factsAdded += 1
-            else:
-                self.factsSkipped += 1
+        self._reportIgnoredProperties()
+        for invalid in self._document.invalidFacts:
+            self._skip(invalid.id, invalid.problem)
+
+        facts = [f for f in self._document.facts if not f.isNote]
+        notes = {f.id: f for f in self._document.facts if f.isNote}
+        if facts:
+            periods = self._parsePeriods(facts)
+            facts = [f for f in facts if f.id in periods]
+            self._setEntity(facts)
+            self._setPeriods(periods)
+            self._setEntityName(facts)
+            self._setDefaultCurrency(facts)
+            built: dict[str, Fact] = {}
+            for fact in facts:
+                if (added := self._addFact(fact, periods[fact.id])) is not None:
+                    built[fact.id] = added
+            self.factsAdded = len(built)
+            self._addFootnotes(facts, notes, built)
+
+        total = len(self._document.facts) + len(self._document.invalidFacts)
         if self.factsSkipped and self._strict:
+            reasons = ", ".join(
+                f"{count} {code}" for code, count in sorted(self._skippedBy.items())
+            )
             raise XbrlJsonException(
-                f"{self.factsSkipped} of {len(facts)} facts could not be added; see the messages."
+                f"{self.factsSkipped} of {total} facts could not be added ({reasons}); see the messages."
             )
         return self._report
+
+    def _skip(
+        self, factId: str, problem: Exception, concept: Concept | None = None
+    ) -> None:
+        self.factsSkipped += 1
+        self._skippedBy[getattr(problem, "code", UNSUPPORTED)] += 1
+        self._results.addMessage(
+            f"Fact {factId} not added: {problem}",
+            Severity.WARNING,
+            MessageType.Conversion,
+            taxonomy_concept=concept,
+        )
+
+    def _devInfo(self, message: str) -> None:
+        self._results.addMessage(message, Severity.INFO, MessageType.DevInfo)
 
     # -- report level ---------------------------------------------------------------------------
 
     def _startReport(self) -> InlineReport:
-        info = self._document.get("documentInfo", {})
-        if info.get("documentType") != XBRL_JSON_DOCUMENT_TYPE:
-            raise XbrlJsonException(
-                f"documentType must be {XBRL_JSON_DOCUMENT_TYPE}, not {info.get('documentType')!r}."
-            )
-        self._namespaces = dict(info.get("namespaces", {}))
-        documents = info.get("taxonomy", [])
-        if not isinstance(documents, list):
-            raise XbrlJsonException(
-                f"documentInfo.taxonomy must be an array of entry point documents, not {documents!r}."
-            )
+        documents = list(self._document.taxonomy)
         try:
             entryPointSet = entryPointSetOf(documents)
         except TaxonomyException as e:
@@ -150,41 +181,78 @@ class XbrlJsonProcessor:
             report.addSchemaRef(document)
         return report
 
-    def _setEntityAndPeriods(self, facts: Mapping[str, Any]) -> None:
-        assert self._report is not None
-        entities = {f["dimensions"].get("entity") for f in facts.values()}
+    def _reportIgnoredProperties(self) -> None:
+        """Say what in the document is not acted on, rather than ignore it silently."""
+        doc = self._document
+        for feature in sorted(set(doc.features) - _KNOWN_FEATURES):
+            self._devInfo(f"documentInfo feature {feature} is not supported; ignored.")
+        for name in sorted({*doc.documentInfoExtensions, *doc.extensions}):
+            self._devInfo(f"Document property {name} is not used; ignored.")
+        factExtensions = {
+            name
+            for fact in doc.facts
+            for name in fact.extensions
+            if not self._isExtension(name, "scale")
+        }
+        for name in sorted(factExtensions):
+            self._devInfo(f"Fact property {name} is not used; ignored.")
+
+    def _isExtension(self, prefixed: str, localName: str) -> bool:
+        prefix, _, local = prefixed.partition(":")
+        return (
+            local == localName and self._document.namespaces.get(prefix) == EXTENSION_NS
+        )
+
+    def _parsePeriods(self, facts: list[XbrlJsonFact]) -> dict[str, _Period]:
+        """Each fact's period. A fact without a usable one is skipped here, so one bad period
+        costs that fact rather than the document."""
+        periods: dict[str, _Period] = {}
+        for fact in facts:
+            try:
+                if fact.period is None:
+                    raise FactProblem(
+                        UNSUPPORTED, "A fact for all time (no period) is not supported."
+                    )
+                periods[fact.id] = (
+                    parseDuration(fact.period)
+                    if "/" in fact.period
+                    else parsePeriod(fact.period)
+                )
+            except FactProblem as problem:
+                self._skip(fact.id, problem)
+        return periods
+
+    def _setEntity(self, facts: list[XbrlJsonFact]) -> None:
+        entities = {f.entity for f in facts}
         if len(entities) != 1 or None in entities:
             raise XbrlJsonException(
                 f"Exactly one reporting entity is supported; found {sorted(map(str, entities))}."
             )
-        prefix, _, identifier = next(iter(entities)).partition(":")
-        if prefix not in self._namespaces or not identifier:
+        entity = next(iter(entities))
+        assert entity is not None
+        try:
+            scheme, identifier = self._document.resolve(entity)
+        except FactProblem as e:
             raise XbrlJsonException(
-                f"Entity {next(iter(entities))!r} has no declared scheme prefix."
-            )
-        self._report.setEntity(self._namespaces[prefix], identifier)
+                f"Entity {entity!r} has no declared scheme prefix."
+            ) from e
+        self.report.setEntity(scheme, identifier)
 
-        self._setPeriods(
-            Counter(
-                self._parseDuration(text)
-                for f in facts.values()
-                if "/" in (text := str(f["dimensions"].get("period")))
-            )
-        )
-
-    def _setPeriods(self, factsPerPeriod: Counter[DurationPeriodHolder]) -> None:
+    def _setPeriods(self, periods: Mapping[str, _Period]) -> None:
         """Declare every duration the facts are reported over, earliest first. The one with the
         most facts is the default period; a tie goes to the one that ends last.
 
         Nothing else is inferred. In OIM every fact says its own period, so no period is "the prior
         one" unless something says so."""
-        assert self._report is not None
+        factsPerPeriod = Counter(
+            p for p in periods.values() if isinstance(p, DurationPeriodHolder)
+        )
         if not factsPerPeriod:
             raise XbrlJsonException("The report has no duration period to anchor on.")
         for duration in sorted(factsPerPeriod, key=lambda d: (d.end, d.start)):
-            self._report.addPeriod(self._periodName(duration), duration)
+            self.report.addPeriod(self._periodName(duration), duration)
         default = max(factsPerPeriod, key=lambda d: (factsPerPeriod[d], d.end, d.start))
-        self._report.setDefaultPeriodName(self._periodName(default))
+        self.report.setDefaultPeriodName(self._periodName(default))
 
     @staticmethod
     def _periodName(duration: DurationPeriodHolder) -> str:
@@ -192,132 +260,124 @@ class XbrlJsonProcessor:
         same names."""
         return f"p{duration.firstDay:%Y%m%d}_{duration.lastDay:%Y%m%d}"
 
-    def _setEntityName(self, facts: Mapping[str, Any]) -> None:
+    def _setEntityName(self, facts: list[XbrlJsonFact]) -> None:
         """The report title block wants a name: take it from the fact named by
         entityNameConcept (a local name), else fall back to the entity identifier."""
-        assert self._report is not None
         name = None
         if self._entityNameConcept:
-            for fact in facts.values():
-                local = fact["dimensions"]["concept"].partition(":")[2]
-                if local == self._entityNameConcept and isinstance(
-                    fact.get("value"), str
-                ):
-                    name = fact["value"]
-                    break
-        self._report.setEntityName(name or self._report.entityIdentifier or "")
+            name = next(
+                (
+                    f.value
+                    for f in facts
+                    if f.concept.partition(":")[2] == self._entityNameConcept
+                    and f.value
+                ),
+                None,
+            )
+        self.report.setEntityName(name or self.report.entityIdentifier or "")
 
-    def _setDefaultCurrency(self, facts: Mapping[str, Any]) -> None:
+    def _setDefaultCurrency(self, facts: list[XbrlJsonFact]) -> None:
         """If the facts use exactly one currency, make it the report currency."""
-        assert self._report is not None
-        currencies = {
-            unit.partition(":")[2]
-            for fact in facts.values()
-            if (unit := fact["dimensions"].get("unit"))
-            and "/" not in unit
-            and self._namespaces.get(unit.partition(":")[0]) == ISO4217_NS
-        }
+        currencies: set[QName] = set()
+        for fact in facts:
+            if fact.unit is None:
+                continue
+            try:
+                unit = Unit.fromUnitString(fact.unit, self._qname)
+            except (UnitException, FactProblem, ValueError):
+                continue  # the fact itself will say what is wrong
+            if unit.is_currency:
+                currencies.add(unit.measure)
         if len(currencies) == 1:
-            self._report.setDefaultCurrency(next(iter(currencies)))
-
-    @staticmethod
-    def _parseDuration(text: str | None) -> DurationPeriodHolder:
-        """A report period: a duration of whole days (aoix cannot say anything else)."""
-        if not text or "/" not in text:
-            raise XbrlJsonException(
-                f"Only duration periods are supported; got {text!r}."
-            )
-        startText, endText = text.split("/", 1)
-        try:
-            duration = DurationPeriodHolder(
-                _parseDateTime(startText), _parseDateTime(endText)
-            )
-            duration.firstDay, duration.lastDay  # noqa: B018 - checks they are whole days
-        except (ValueError, InlineReportException) as e:
-            raise XbrlJsonException(
-                f"Report periods must be whole days; got {text!r}: {e}"
-            ) from e
-        return duration
-
-    @staticmethod
-    def _parsePeriod(text: str) -> _Period:
-        """Any OIM period: a duration, or an instant."""
-        if "/" in text:
-            startText, endText = text.split("/", 1)
-            return DurationPeriodHolder(
-                _parseDateTime(startText), _parseDateTime(endText)
-            )
-        return InstantPeriodHolder(_parseDateTime(text))
+            self.report.setDefaultCurrency(next(iter(currencies)))
 
     # -- facts ----------------------------------------------------------------------------------
 
     def _qname(self, text: str) -> QName:
-        prefix, _, local = text.partition(":")
-        if not local or prefix not in self._namespaces:
-            raise InlineReportException(
-                f"{text!r} is not a QName with a declared prefix."
-            )
-        return self.taxonomy.QNameMaker.fromNamespaceAndLocalName(
-            self._namespaces[prefix], local
-        )
+        namespace, local = self._document.resolve(text)
+        return self.taxonomy.QNameMaker.fromNamespaceAndLocalName(namespace, local)
 
     def _concept(self, text: str) -> Concept:
         try:
             return self.taxonomy.getConcept(self._qname(text))
         except KeyError as e:
-            raise InlineReportException(f"{text!r} is not in the taxonomy.") from e
+            raise FactProblem(
+                INVALID_JSON_STRUCTURE, f"{text!r} is not in the taxonomy."
+            ) from e
 
-    def _addFact(self, factId: str, fact: Mapping[str, Any]) -> bool:
-        assert self._report is not None
-        dims = fact["dimensions"]
+    def _addFact(self, fact: XbrlJsonFact, period: _Period) -> Fact | None:
         concept: Concept | None = None
         try:
-            concept = self._concept(dims["concept"])
-            if (value := fact.get("value")) is None:
-                raise InlineReportException("Nil facts are not supported yet.")
-            fb = self._report.getFactBuilder().setConcept(concept)
-            fb.setPeriod(self._parsePeriod(dims["period"]))
-            self._setValue(fb, concept, value, fact, dims.get("unit"))
-            for name, member in dims.items():
-                if name not in _CORE_ASPECTS:
-                    self._setDimension(fb, name, member)
-            self._report.addFact(fb.buildFact())
-            return True
-        except (InlineReportException, KeyError, ValueError, InvalidOperation) as e:
-            self._results.addMessage(
-                f"Fact {factId} not added: {e}",
-                Severity.WARNING,
-                MessageType.Conversion,
-                taxonomy_concept=concept,
-            )
-            return False
+            concept = self._concept(fact.concept)
+            if fact.value is None:
+                raise FactProblem(UNSUPPORTED, "Nil facts are not supported yet.")
+            self._checkLanguage(fact)
+            fb = self.report.getFactBuilder().setConcept(concept).setPeriod(period)
+            self._setValue(fb, concept, fact)
+            for name, member in fact.dimensions.items():
+                self._setDimension(fb, name, member)
+            built = fb.buildFact()
+            self.report.addFact(built)
+            return built
+        except (FactProblem, InlineReportException, UnitException) as e:
+            self._skip(fact.id, e, concept)
+            return None
 
-    def _setValue(
-        self,
-        fb: FactBuilder,
-        concept: Concept,
-        value: Any,
-        fact: Mapping[str, Any],
-        unit: str | None,
-    ) -> None:
+    def _checkLanguage(self, fact: XbrlJsonFact) -> None:
+        """A text fact may say its language; the report is in one language."""
+        if fact.language is None:
+            return
+        if (
+            fact.language.split("-")[0].lower()
+            != self.report.language.split("-")[0].lower()
+        ):
+            raise FactProblem(
+                INVALID_LANGUAGE,
+                f"The fact is in {fact.language}; the report is in {self.report.language}.",
+            )
+
+    def _setValue(self, fb: FactBuilder, concept: Concept, fact: XbrlJsonFact) -> None:
+        value = fact.value
+        assert value is not None
+        if fact.decimals is not None and not concept.isNumeric:
+            raise FactProblem(
+                INVALID_JSON_STRUCTURE, "decimals is only for numeric facts."
+            )
         if concept.isEnumerationSingle:
-            member = self._concept(str(value))
+            member = self._member(concept, value)
             fb.setEnumerationValue(member).setValue(self._label(member))
         elif concept.isEnumerationSet:
-            members = [self._concept(m) for m in str(value).split()]
+            tokens = value.split()
+            if len(set(tokens)) != len(tokens):
+                raise FactProblem(
+                    INVALID_DIMENSION_VALUE, f"The set {value!r} names a member twice."
+                )
+            members = [self._member(concept, m) for m in tokens]
             fb.setEnumerationSet(members)
             # An empty set is a valid value, but a fact needs something human readable.
             fb.setValue("\n".join(self._label(m) for m in members) or EMPTY_SET_TEXT)
         elif concept.isBoolean:
-            fb.setValue(
-                value if isinstance(value, bool) else str(value).lower() == "true"
-            )
+            if (flag := _BOOLEANS.get(value.strip())) is None:
+                raise FactProblem(
+                    INVALID_JSON_STRUCTURE, f"{value!r} is not a boolean."
+                )
+            fb.setValue(flag)
         elif concept.isNumeric:
-            self._setNumeric(fb, concept, value, fact.get("decimals"), unit)
+            self._setNumeric(fb, concept, fact)
         elif concept.isTextblock:
-            fb.setValue(self._xhtml(str(value)))
+            fb.setValue(self._xhtml(value))
         else:
-            fb.setValue(str(value))
+            fb.setValue(value)
+
+    def _member(self, concept: Concept, text: str) -> Concept:
+        """An enumeration value: a member of the concept's domain."""
+        member = self._concept(text)
+        if (domain := concept.getEEDomain()) and member not in domain:
+            raise FactProblem(
+                INVALID_DIMENSION_VALUE,
+                f"{text} is not in the domain of {concept.qname}.",
+            )
+        return member
 
     @staticmethod
     def _xhtml(text: str) -> Markup:
@@ -326,8 +386,8 @@ class XbrlJsonProcessor:
         try:
             etree.fromstring(f"<div xmlns='{XHTML_NS}'>{text}</div>")
         except etree.XMLSyntaxError as e:
-            raise InlineReportException(
-                f"Text block is not well-formed XHTML: {e}"
+            raise FactProblem(
+                INVALID_JSON_STRUCTURE, f"Text is not well-formed XHTML: {e}"
             ) from e
         return Markup(text)
 
@@ -337,48 +397,140 @@ class XbrlJsonProcessor:
         return member.getStandardLabel(fallbackIfMissing=str(member.qname))
 
     def _setNumeric(
-        self,
-        fb: FactBuilder,
-        concept: Concept,
-        value: Any,
-        decimals: Any,
-        unit: str | None,
+        self, fb: FactBuilder, concept: Concept, fact: XbrlJsonFact
     ) -> None:
-        # OIM convention: a dimensionless value omits the unit, and xbrli:pure is implied.
-        self._setUnit(fb, unit or "xbrli:pure")
-        number = Decimal(str(value))
-        asNumber: int | float = (
-            int(number) if number == number.to_integral() else float(number)
-        )
+        assert fact.value is not None
+        self._setUnit(fb, concept, fact.unit)
+        try:
+            number = Decimal(fact.value.strip())
+        except InvalidOperation as e:
+            raise FactProblem(
+                INVALID_JSON_STRUCTURE, f"{fact.value!r} is not a number."
+            ) from e
+        if not number.is_finite():
+            raise FactProblem(
+                INVALID_JSON_STRUCTURE, f"{fact.value!r} is not a finite number."
+            )
         # No decimals means no accuracy was claimed; INF keeps every digit as written.
-        places: DecimalPlaces = (
-            "INF"
-            if decimals is None or str(decimals).upper() == "INF"
-            else int(decimals)
-        )
+        places: DecimalPlaces = "INF" if fact.decimals is None else fact.decimals
         if concept.dataType.localName == "percentItemType":
             # A fraction with XBRL decimals, shown x100 with ix:scale -2; see setPercentageFact.
             fb.setPercentageFact(number, places)
-        else:
-            fb.setValue(asNumber).setDecimals(places)
+            return
+        scale = self._scale(fact)
+        shown = number.scaleb(-scale)
+        fb.setValue(
+            int(shown) if shown == shown.to_integral() else float(shown)
+        ).setDecimals(places)
+        if scale:
+            fb.setScale(scale)
 
-    def _setUnit(self, fb: FactBuilder, unit: str) -> None:
-        if unit == "xbrli:pure":
+    def _scale(self, fact: XbrlJsonFact) -> int:
+        """The ix:scale a snapshot file records in its extension property, else 0."""
+        for name, value in fact.extensions.items():
+            if self._isExtension(name, "scale"):
+                if isinstance(value, bool) or not isinstance(value, int):
+                    raise FactProblem(
+                        INVALID_JSON_STRUCTURE, f"{name} must be an integer."
+                    )
+                return value
+        return 0
+
+    def _setUnit(self, fb: FactBuilder, concept: Concept, text: str | None) -> None:
+        if text is None:
+            if concept.isMonetary:
+                raise FactProblem(
+                    INVALID_UNIT, "A monetary fact needs a currency unit."
+                )
+            # OIM convention: a dimensionless value omits the unit, and xbrli:pure is implied.
             fb.setSimpleUnit(
                 self.taxonomy.QNameMaker.fromNamespaceAndLocalName(XBRLI_NS, "pure")
             )
             return
-        parsed = Unit.fromUnitString(unit, self._qname)
-        if parsed.is_currency:
-            fb.setCurrency(parsed.measure)  # checks it is a real currency
-        else:
-            fb.setUnit(parsed)
+        try:
+            unit = Unit.fromUnitString(text, self._qname)
+        except (UnitException, ValueError) as e:
+            raise FactProblem(INVALID_UNIT, f"Unit {text!r}: {e}") from e
+        if unit.is_currency:
+            fb.setCurrency(unit.measure)  # checks it is a real currency
+            return
+        if concept.isMonetary:
+            raise FactProblem(
+                INVALID_UNIT, f"A monetary fact needs a currency unit, not {text}."
+            )
+        isSimple = not unit.is_divide and len(unit.numerator) == 1
+        if isSimple and not self.taxonomy.UTR.valid(concept.dataType, unit.measure):
+            raise FactProblem(
+                INVALID_UNIT,
+                f"The UTR does not allow {text} for {concept.dataType.localName}.",
+            )
+        fb.setUnit(unit)
 
-    def _setDimension(self, fb: FactBuilder, name: str, member: Any) -> None:
+    def _setDimension(self, fb: FactBuilder, name: str, member: str | None) -> None:
         dimension = self._concept(name)
         if dimension.isTypedDimension:
-            fb.setTypedDimension(dimension, str(member))
+            if member is None:
+                raise FactProblem(
+                    UNSUPPORTED, f"A nil value for {name} is not supported."
+                )
+            fb.setTypedDimension(dimension, member)
         elif dimension.isExplicitDimension:
-            fb.setExplicitDimension(dimension, self._concept(str(member)))
+            if member is None:
+                raise FactProblem(
+                    INVALID_DIMENSION_VALUE, f"Explicit dimension {name} has no member."
+                )
+            value = self._concept(member)
+            if self.taxonomy.getDimensionDefault(dimension) == value:
+                raise FactProblem(
+                    INVALID_DIMENSION_VALUE,
+                    f"{member} is the default of {name}, which is written by leaving "
+                    f"the dimension out.",
+                )
+            fb.setExplicitDimension(dimension, value)
         else:
-            raise InlineReportException(f"{name} is not a dimension.")
+            raise FactProblem(INVALID_JSON_STRUCTURE, f"{name} is not a dimension.")
+
+    # -- footnotes ------------------------------------------------------------------------------
+
+    def _footnoteLinkTypes(self) -> set[str]:
+        """The link type names that mean fact-to-footnote: those the document binds to the
+        arcrole, and ``footnote``, the name xBRL-JSON predefines for it."""
+        return {"footnote"} | {
+            name
+            for name, uri in self._document.linkTypes.items()
+            if uri == FACT_FOOTNOTE_ARCROLE
+        }
+
+    def _addFootnotes(
+        self,
+        facts: list[XbrlJsonFact],
+        notes: Mapping[str, XbrlJsonFact],
+        built: Mapping[str, Fact],
+    ) -> None:
+        """A footnote for each note fact, attached to the facts that link to it."""
+        linkTypes = self._footnoteLinkTypes()
+        linked: dict[str, list[Fact]] = defaultdict(list)
+        for fact in facts:
+            if (target := built.get(fact.id)) is None:
+                continue
+            for linkType, groups in fact.links.items():
+                if linkType not in linkTypes:
+                    self._devInfo(
+                        f"Fact {fact.id} has {linkType} links, which are not supported; ignored."
+                    )
+                    continue
+                for noteIds in groups.values():
+                    for noteId in noteIds:
+                        linked[noteId].append(target)
+        for noteId, targets in linked.items():
+            if (note := notes.get(noteId)) is None or note.value is None:
+                self._devInfo(
+                    f"Footnote {noteId} is linked to but is not a note fact; ignored."
+                )
+                continue
+            try:
+                content = self._xhtml(note.value)
+            except FactProblem as problem:
+                self._devInfo(f"Footnote {noteId} not added: {problem}")
+                continue
+            self.report.addFootnoteToFacts(content, targets)
