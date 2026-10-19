@@ -51,7 +51,12 @@ class ReportLayoutOrganiser:
         self.report = report
         self.presentation = self.taxonomy.presentation
         self.reportSections: list[ReportSection] = []
-        self._grids = GridBuilder(report.getFacts, self._label, self._period_rank)
+        self._grids = GridBuilder(
+            report.getFacts,
+            self._label,
+            self._period_rank,
+            lambda: report.reportingPeriods,
+        )
         # Facts a List group cannot show in its list because they carry taxonomy dimensions, in
         # presentation order, keyed by the group's role.
         self._dimensional: dict[str, list[Placed]] = {}
@@ -224,19 +229,20 @@ class ReportLayoutOrganiser:
     ) -> list[ReportSection]:
         """Tables for facts that no section shows, each in the first group holding its concept.
         `groups` are the sections as the groups made them, before any became a table or none."""
-        shown: set[int] = set()
+        # A fact is shown if it or an equal one is: a repeat of a fact adds nothing to show.
+        shown: set[Fact] = set()
         for section in self.reportSections:
             match section:
                 case TabularReportSection(table=table):
                     shown.update(
-                        id(cell.fact)
+                        cell.fact
                         for row in table.rows
                         for cell in row.cells
                         if cell.fact is not None
                     )
                 case _:
                     shown.update(
-                        id(f)
+                        f
                         for facts in section.relationshipToFact.values()
                         for f in facts
                     )
@@ -253,7 +259,7 @@ class ReportLayoutOrganiser:
 
         leftovers: dict[int, tuple[ReportSection, list[Placed]]] = {}
         for fact in self.report.facts:
-            if id(fact) not in shown and (found := home.get(fact.concept)) is not None:
+            if fact not in shown and (found := home.get(fact.concept)) is not None:
                 section, rel = found
                 leftovers.setdefault(id(section), (section, []))[1].append((rel, fact))
         return [

@@ -306,3 +306,44 @@ def test_the_fact_keeps_its_value_whatever_the_row_shows(costs: Taxonomy) -> Non
     staff = re.search(r"<ix:nonFraction[^>]*name=\"[^\"]*Staff\"[^>]*>", html)
     assert staff is not None
     assert 'sign="-"' in staff.group(0)
+
+
+def _only_ends(taxonomy: Taxonomy, repeat: bool = False) -> InlineReport:
+    """Cash only at the end of each period, as a producer that tags the opening balance of a year
+    as the closing balance of the year before does; optionally with every fact given twice."""
+    report = InlineReport(taxonomy)
+    report.setEntity("http://standards.iso.org/iso/17442", "529900T8BM49AURSDO55")
+    report.addDurationPeriod("cur", date(2025, 1, 1), date(2025, 12, 31))
+    report.addDurationPeriod("prior", date(2024, 1, 1), date(2024, 12, 31))
+    report.setDefaultPeriodName("cur")
+    report.setPriorPeriodName("prior")
+    report.requireAllFactsRendered = True
+    for name, value, period, at in [
+        ("Cash", 1000, "prior", PeriodPart.End),
+        ("Cash", 1200, "cur", PeriodPart.End),
+        ("Flow", 50, "cur", None),
+    ]:
+        for _ in range(2 if repeat else 1):
+            fb = FactBuilder(report).setConcept(taxonomy.getConcept(qname(name)))
+            fb.setValue(value).setDecimals(0).setSimpleUnit(_Q.fromString("utr:kg"))
+            fb.setNamedPeriod(period, at=at) if at else fb.setNamedPeriod(period)
+            report.addFact(fb.buildFact())
+    return report
+
+
+def test_an_opening_row_takes_the_closing_balance_of_the_period_before(
+    statements: Taxonomy,
+) -> None:
+    _, cash_flow = _tables(_html(_only_ends(statements)))
+    rows = {row[0]: row[1:] for row in cash_flow if len(row) > 1}
+    # the end of 2024 is the start of 2025: the current column's opening balance
+    assert rows["Cash at the start of the period"] == ["1,000", ""]
+    assert rows["Cash at the end of the period"] == ["1,200", "1,000"]
+
+
+def test_a_repeated_fact_is_shown_once_and_is_not_left_over(
+    statements: Taxonomy, caplog: pytest.LogCaptureFixture
+) -> None:
+    html = _html(_only_ends(statements, repeat=True))
+    assert html.count('<table class="thematic-table">') == 2
+    assert "belong in the same table cell" not in caplog.text

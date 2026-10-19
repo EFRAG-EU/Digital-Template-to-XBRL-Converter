@@ -42,10 +42,11 @@ def _place(
         if row is None or column is None:
             continue
         if (held := cells.get((row, column, fact.period))) is not None:
-            L.warning(
-                f"Several facts for {fact.concept.qname} belong in the same table cell; "
-                f"showing the first.\n{held=}\n{fact=}"
-            )
+            if held != fact:  # a repeat of the same fact has nothing to report
+                L.warning(
+                    f"Several facts for {fact.concept.qname} belong in the same table cell; "
+                    f"showing the first.\n{held=}\n{fact=}"
+                )
             continue
         cells[row, column, fact.period] = fact
     return cells
@@ -75,10 +76,12 @@ class GridBuilder:
         facts_for: Callable[[Concept], Sequence[Fact]],
         label: Callable[[Concept], str],
         period_rank: Callable[[ReportPeriod], int] = lambda period: 0,
+        report_periods: Callable[[], Sequence[ReportPeriod]] = lambda: (),
     ) -> None:
         self._facts_for = facts_for
         self._label = label
         self._period_rank = period_rank
+        self._report_periods = report_periods
 
     def _arrange(
         self, rows: Sequence[R], columns: Sequence[C], cells: Cells[R, C]
@@ -181,16 +184,20 @@ class GridBuilder:
         for index, rel in enumerate(rows):
             part = self._part_shown(rel)
             for fact in self._facts_for(rel.concept):
-                if fact.hasTaxonomyDimensions() or fact.period.part is not part(fact):
+                if fact.hasTaxonomyDimensions():
                     continue
-                key = (index, fact.period.reportPeriod)
-                if key in cells:
-                    L.warning(
-                        f"Several facts for {fact.concept.qname} belong in the same table "
-                        f"cell; showing the first.\n{cells[key]=}\n{fact=}"
-                    )
-                    continue
-                cells[key] = fact
+                for period in self._columns_for(rel, fact, part(fact)):
+                    key = (index, period)
+                    if key in cells:
+                        if (
+                            cells[key] != fact
+                        ):  # a repeat of a fact has nothing to report
+                            L.warning(
+                                f"Several facts for {fact.concept.qname} belong in the same "
+                                f"table cell; showing the first.\n{cells[key]=}\n{fact=}"
+                            )
+                        continue
+                    cells[key] = fact
 
         periods = sorted(
             {period for _, period in cells},
@@ -206,6 +213,22 @@ class GridBuilder:
             False,
             [FactPeriod(p, PeriodPart.Whole) for p in periods],
         )
+
+    def _columns_for(
+        self, rel: Relationship, fact: Fact, part: PeriodPart
+    ) -> list[ReportPeriod]:
+        """The periods whose column a row shows a fact in: the one the fact says, if it is the part
+        the row shows. A row for the start of a period also takes the end of the one before: that
+        closing balance is this opening balance, and a producer may have tagged it as either."""
+        columns = [fact.period.reportPeriod] if fact.period.part is part else []
+        if rel.isPeriodStart and fact.period.part is PeriodPart.End:
+            columns += [
+                period
+                for period in self._report_periods()
+                if period not in columns
+                and FactPeriod(period, part).oim == fact.period.oim
+            ]
+        return columns
 
     @staticmethod
     def _part_shown(rel: Relationship) -> Callable[[Fact], PeriodPart]:
