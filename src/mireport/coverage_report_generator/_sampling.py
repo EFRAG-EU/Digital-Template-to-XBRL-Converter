@@ -801,6 +801,26 @@ def _setValue(
         fb.setValue(value)
 
 
+def effectiveHypercubeOrder(effective: EffectiveHypercube) -> tuple[object, ...]:
+    """The order buildFacts() takes a concept's EffectiveHypercubes in: by hypercubes, then
+    dimensions, then base set (role). The role comes last but must be there: two base sets can
+    hold the same hypercube with the same dimensions (different domains), and the taxonomy gives
+    them as a set, so without it which comes first -- and so which facts are written -- would
+    change from run to run with Python's string hashing."""
+    return (
+        tuple(sorted(hc.hypercube for hc in effective.hypercubes)),
+        tuple(
+            sorted(
+                ed.dimension
+                for hc in effective.hypercubes
+                for ed in hc.explicitDimensions
+            )
+        ),
+        tuple(sorted(td for hc in effective.hypercubes for td in hc.typedDimensions)),
+        effective.roleUri,
+    )
+
+
 def anchorShiftedPeriods(
     sink: _FactSink, anchor: Callable[..., FactShape] | None
 ) -> None:
@@ -927,17 +947,7 @@ def buildFacts(
 
         effectiveHypercubes = sorted(
             taxonomy.getEffectiveHypercubesForPrimaryItem(concept),
-            key=lambda eh: (
-                tuple(sorted(hc.hypercube for hc in eh.hypercubes)),
-                tuple(
-                    sorted(
-                        ed.dimension
-                        for hc in eh.hypercubes
-                        for ed in hc.explicitDimensions
-                    )
-                ),
-                tuple(sorted(td for hc in eh.hypercubes for td in hc.typedDimensions)),
-            ),
+            key=effectiveHypercubeOrder,
         )
         proof: Callable[..., FactShape]
         if not effectiveHypercubes:

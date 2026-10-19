@@ -29,6 +29,7 @@ from mireport.coverage_report_generator._sampling import (
     buildFacts,
     complexUnitFor,
     coreShapeFor,
+    effectiveHypercubeOrder,
     reportableConcepts,
 )
 from mireport.exceptions import SampleGenerationException
@@ -290,3 +291,23 @@ def test_a_generated_report_goes_through_the_strict_reader() -> None:
         json.loads(json.dumps(document)), ConversionResultsBuilder(), strict=True
     ).createReport()
     assert read.getInlineReport().fileContent
+
+
+def test_a_concepts_base_sets_are_taken_in_the_same_order_every_run() -> None:
+    """Two base sets that share a hypercube and its dimensions (different domains) are told
+    apart by their role, not by the order a set happens to iterate in."""
+    if not listTaxonomies():
+        loadBuiltInTaxonomyJSON()
+    taxonomy = getTaxonomy(
+        next(e for e in listTaxonomies() if any("/vsme/2026-05-01/" in u for u in e))
+    )
+    effective = list(
+        taxonomy.getEffectiveHypercubesForPrimaryItem(
+            taxonomy.getConcept("vsme:GrossScope1GreenhouseGasEmissions")
+        )
+    )
+    assert len(effective) == 2
+    first = sorted(effective, key=effectiveHypercubeOrder)
+    swapped = [effective[1], effective[0]]
+    assert sorted(swapped, key=effectiveHypercubeOrder) == first
+    assert [e.roleUri for e in first] == sorted(e.roleUri for e in effective)
