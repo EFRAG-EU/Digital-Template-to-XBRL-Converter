@@ -1,5 +1,7 @@
 """Duplicate facts, in the terms of the XBRL OIM and the "Handling Duplicate Facts" WGN (2025-01-14).
 
+The WGN: https://www.xbrl.org/WGN/xbrl-duplicates/WGN-2025-01-14/xbrl-duplicates-2025-01-14.html
+
 *Duplicate facts* are facts equal in every aspect that is not the value: concept, entity, period,
 unit and the taxonomy-defined dimensions (OIM, "Duplicate facts"). Two duplicates are
 

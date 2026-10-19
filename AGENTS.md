@@ -222,9 +222,10 @@ producer that knows says so (`setNamedPeriod(name, at=PeriodPart.Start)`); one t
 (xBRL-JSON) uses `setPeriod(oim)`, which `InlineReport.locatePeriod` resolves, preferring the end.
 
 Dimensional validity (a matching hypercube; a declared typed dimension must be present; typed value
-*content* is not checked) runs in `FactBuilder.buildFact` and again in `InlineReport.addFact`, so a
-directly built `Fact` is checked too; `FactBuilder.fromFact` copies one to change. Duplicates follow the
-OIM / XBRL WGN (`report/duplicates.py`): `duplicateClass(a, b)` is complete, consistent, inconsistent, or
+*content* is not checked) runs in `FactBuilder.buildFact`, the only place a `Fact` is made;
+`FactBuilder.fromFact` copies one to change. Duplicates follow the
+OIM / the "Handling Duplicate Facts" WGN
+(<https://www.xbrl.org/WGN/xbrl-duplicates/WGN-2025-01-14/xbrl-duplicates-2025-01-14.html>; `report/duplicates.py`): `duplicateClass(a, b)` is complete, consistent, inconsistent, or
 None (alternative facts, e.g. differing only in unit). Periods compare as OIM's (`FactPeriod.oim`), so the opening
 balance of one period and the closing balance of the one before are duplicates of each other, though each keeps
 its own cell and heading. `InlineReport.reportInconsistentDuplicateFacts`

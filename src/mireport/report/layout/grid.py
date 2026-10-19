@@ -24,6 +24,7 @@ L = logging.getLogger(__name__)
 
 R = TypeVar("R", bound=Hashable)  # what identifies a row
 C = TypeVar("C", bound=Hashable)  # what identifies a column
+K = TypeVar("K", bound=Hashable)  # what identifies a cell
 DimensionKey = tuple["Concept | str", ...]
 
 
@@ -46,31 +47,38 @@ def _place(
         if row is None or column is None:
             continue
         key = (row, column, fact.period)
-        if (held := cells.get(key)) is None:
-            cells[key] = fact
-            continue
-        match duplicateClass(held, fact):
-            case DuplicateClass.COMPLETE:
-                pass
-            case DuplicateClass.CONSISTENT:
-                keep = fact if precision(fact) > precision(held) else held
-                L.info(
-                    f"Consistent duplicate facts for {fact.concept.qname} belong in the same "
-                    f"table cell; showing the more precise.\n{held=}\n{fact=}"
-                )
-                cells[key] = keep
-            case DuplicateClass.INCONSISTENT:
-                L.warning(
-                    f"Inconsistent duplicate facts for {fact.concept.qname} belong in the same "
-                    f"table cell; showing the first.\n{held=}\n{fact=}"
-                )
-            case None:
-                L.warning(
-                    f"Different facts for {fact.concept.qname} (not duplicates: alternative "
-                    f"facts, or dimensions this table does not show) belong in the same table "
-                    f"cell; showing the first.\n{held=}\n{fact=}"
-                )
+        _settle(cells, key, fact)
     return cells
+
+
+def _settle(cells: dict[K, Fact], key: K, fact: Fact) -> None:
+    """Put ``fact`` in the cell ``key``, or, if the cell holds one already, keep whichever of the
+    two the duplicate class says to (see ``_place``). Duplicates are the OIM's, classed as in the
+    "Handling Duplicate Facts" WGN: https://www.xbrl.org/WGN/xbrl-duplicates/WGN-2025-01-14/xbrl-duplicates-2025-01-14.html"""
+    if (held := cells.get(key)) is None:
+        cells[key] = fact
+        return
+    match duplicateClass(held, fact):
+        case DuplicateClass.COMPLETE:
+            pass
+        case DuplicateClass.CONSISTENT:
+            L.info(
+                f"Consistent duplicate facts for {fact.concept.qname} belong in the same "
+                f"table cell; showing the more precise.\n{held=}\n{fact=}"
+            )
+            if precision(fact) > precision(held):
+                cells[key] = fact
+        case DuplicateClass.INCONSISTENT:
+            L.warning(
+                f"Inconsistent duplicate facts for {fact.concept.qname} belong in the same "
+                f"table cell; showing the first.\n{held=}\n{fact=}"
+            )
+        case None:
+            L.warning(
+                f"Different facts for {fact.concept.qname} (not duplicates: alternative "
+                f"facts, or dimensions this table does not show) belong in the same table "
+                f"cell; showing the first.\n{held=}\n{fact=}"
+            )
 
 
 def _swap(cells: Cells[R, C]) -> Cells[C, R]:
@@ -208,17 +216,7 @@ class GridBuilder:
                 if fact.hasTaxonomyDimensions():
                     continue
                 for period in self._columns_for(rel, fact, part(fact)):
-                    key = (index, period)
-                    if key in cells:
-                        if (
-                            cells[key] != fact
-                        ):  # a repeat of a fact has nothing to report
-                            L.warning(
-                                f"Several facts for {fact.concept.qname} belong in the same "
-                                f"table cell; showing the first.\n{cells[key]=}\n{fact=}"
-                            )
-                        continue
-                    cells[key] = fact
+                    _settle(cells, (index, period), fact)
 
         periods = sorted(
             {period for _, period in cells},

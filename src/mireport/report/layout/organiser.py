@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import logging
 from collections import defaultdict
+from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
 from mireport.exceptions import InlineReportException
@@ -72,37 +73,53 @@ class ReportLayoutOrganiser:
 
     # -- checking ------------------------------------------------------------------------------
 
+    def _shown_facts(self) -> set[Fact]:
+        """The facts that a section shows."""
+        shown: set[Fact] = set()
+        for section in self.reportSections:
+            match section:
+                case TabularReportSection(table=table):
+                    shown.update(
+                        cell.fact
+                        for row in table.rows
+                        for cell in row.cells
+                        if cell.fact is not None
+                    )
+                case _:
+                    for facts in section.relationshipToFact.values():
+                        shown.update(facts)
+        return shown
+
+    @staticmethod
+    def _by_duplicate_key(facts: Iterable[Fact]) -> dict[tuple, list[Fact]]:
+        byKey: dict[tuple, list[Fact]] = defaultdict(list)
+        for fact in facts:
+            byKey[fact.duplicateKey].append(fact)
+        return byKey
+
+    @staticmethod
+    def _is_covered(
+        fact: Fact, shown: set[Fact], shownByKey: dict[tuple, list[Fact]]
+    ) -> bool:
+        """Whether the report shows what ``fact`` says: it is shown, or a complete duplicate of a
+        shown fact is (the same thing again, in OIM terms; see the "Handling Duplicate Facts" WGN,
+        https://www.xbrl.org/WGN/xbrl-duplicates/WGN-2025-01-14/xbrl-duplicates-2025-01-14.html). Anything else left out is lost."""
+        return fact in shown or any(
+            duplicateClass(fact, other) is DuplicateClass.COMPLETE
+            for other in shownByKey.get(fact.duplicateKey, ())
+        )
+
     def checkAllFactsUsed(self) -> None:
         """
         Checks that all facts in the report have been used in the report sections.
         Raises an InlineReportException if any facts are not used (and the report says they must be).
         """
-        shown: set[Fact] = set()
-        for section in self.reportSections:
-            if isinstance(section, TabularReportSection):
-                shown.update(
-                    cell.fact
-                    for row in section.table.rows
-                    for cell in row.cells
-                    if cell.fact is not None
-                )
-            else:
-                for facts in section.relationshipToFact.values():
-                    shown.update(facts)
-
-        # A fact left out is no loss if a complete duplicate of it is shown: the report says the
-        # same thing (OIM). Anything else left out is lost.
-        shownByKey: dict[tuple, list[Fact]] = defaultdict(list)
-        for fact in shown:
-            shownByKey[fact.duplicateKey].append(fact)
+        shown = self._shown_facts()
+        shownByKey = self._by_duplicate_key(shown)
         lost = [
             fact
             for fact in dict.fromkeys(self.report.facts)
-            if fact not in shown
-            and not any(
-                duplicateClass(fact, other) is DuplicateClass.COMPLETE
-                for other in shownByKey.get(fact.duplicateKey, ())
-            )
+            if not self._is_covered(fact, shown, shownByKey)
         ]
         if not lost:
             return
@@ -241,23 +258,8 @@ class ReportLayoutOrganiser:
     ) -> list[ReportSection]:
         """Tables for facts that no section shows, each in the first group holding its concept.
         `groups` are the sections as the groups made them, before any became a table or none."""
-        # A fact is shown if it or an equal one is: a repeat of a fact adds nothing to show.
-        shown: set[Fact] = set()
-        for section in self.reportSections:
-            match section:
-                case TabularReportSection(table=table):
-                    shown.update(
-                        cell.fact
-                        for row in table.rows
-                        for cell in row.cells
-                        if cell.fact is not None
-                    )
-                case _:
-                    shown.update(
-                        f
-                        for facts in section.relationshipToFact.values()
-                        for f in facts
-                    )
+        shown = self._shown_facts()
+        shownByKey = self._by_duplicate_key(shown)
 
         home: dict[Concept, tuple[ReportSection, Relationship]] = {}
         for section in groups:
@@ -271,7 +273,10 @@ class ReportLayoutOrganiser:
 
         leftovers: dict[int, tuple[ReportSection, list[Placed]]] = {}
         for fact in self.report.facts:
-            if fact not in shown and (found := home.get(fact.concept)) is not None:
+            if (
+                not self._is_covered(fact, shown, shownByKey)
+                and (found := home.get(fact.concept)) is not None
+            ):
                 section, rel = found
                 leftovers.setdefault(id(section), (section, []))[1].append((rel, fact))
         return [

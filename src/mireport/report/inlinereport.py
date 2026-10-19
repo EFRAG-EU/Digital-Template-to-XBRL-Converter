@@ -348,7 +348,7 @@ class InlineReport:
         Find sets of duplicate facts that are inconsistent and report each via handler.
 
         Duplicates and consistency are those of the OIM and the "Handling Duplicate
-        Facts" WGN (see mireport.report.duplicates): facts equal in every aspect but
+        Facts" WGN (see mireport.report.duplicates; https://www.xbrl.org/WGN/xbrl-duplicates/WGN-2025-01-14/xbrl-duplicates-2025-01-14.html): facts equal in every aspect but
         the value are duplicates, and a set is inconsistent when two of its facts
         are (e.g. different values at the same accuracy, or numbers whose intervals
         do not overlap). Such facts cannot both be rendered, so one is dropped
