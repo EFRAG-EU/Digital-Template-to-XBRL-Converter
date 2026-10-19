@@ -301,13 +301,13 @@ class XbrlJsonDocument:
         document["facts"] = {fact.id: fact.toDict() for fact in self.facts}
         return document
 
+    def toJson(self) -> str:
+        """The document as JSON text: indented, LF line ends, ending in a newline."""
+        return json.dumps(self.toDict(), indent=2, ensure_ascii=False) + "\n"
+
     def toFile(self, path: Path | str) -> None:
-        """Write the document as UTF-8 JSON with LF line ends, indented, ending in a newline."""
-        Path(path).write_text(
-            json.dumps(self.toDict(), indent=2, ensure_ascii=False) + "\n",
-            encoding="utf-8",
-            newline="\n",
-        )
+        """Write the document as UTF-8 JSON (see ``toJson``)."""
+        Path(path).write_text(self.toJson(), encoding="utf-8", newline="\n")
 
     def resolve(self, prefixed: str) -> tuple[str, str]:
         """The (namespace, local name) a prefixed name stands for in this document."""

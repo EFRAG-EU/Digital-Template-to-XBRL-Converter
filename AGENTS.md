@@ -63,8 +63,8 @@ CI runs ruff only, but mypy config is strict-ish for `src/` (`disallow_untyped_d
 ### Running the converter
 
 ```powershell
-# Excel -> Inline XBRL (add --viewer / --json, or --xbrl-json PATH for xBRL-JSON straight from the
-# report; output path may be a file or a directory)
+# Excel -> Inline XBRL (add --viewer, or --json for xBRL-JSON written from the report and validated by
+# Arelle unless --skip-validation; output path may be a file or a directory)
 .venv-py314/Scripts/python scripts/parse-and-ixbrl.py example.xlsx output.html
 
 # dump named ranges from a workbook (debugging what the reader sees)
@@ -314,7 +314,10 @@ subclasses it with everything about how it looks (locale, theme, titles, aoix, r
 `toXbrlJson(report)` writes any `Report` as the reader's `XbrlJsonDocument`, in canonical form
 (`xbrl:canonicalValues`): facts in report order (or sorted, `sortFacts`) with ids `f1`..., a
 dimensionless number with no unit (OIM's `xbrli:pure`), namespaces only for prefixes used, footnotes as
-`xbrl:note` facts. `scripts/parse-and-ixbrl.py --xbrl-json PATH` writes one for a converted workbook.
+`xbrl:note` facts, with the `footnote` link type and group declared (xBRL-JSON predefines neither;
+Arelle reports `xbrlje:unknownLinkType` otherwise). `scripts/parse-and-ixbrl.py --json` writes one for a
+converted workbook, beside the output, and `ArelleReportProcessor.validateXbrlJson` validates it (loaded
+through Arelle's `loadFromOIM`) unless `--skip-validation`; Arelle no longer writes the script's JSON.
 
 ### Coverage reports (`mireport/coverage_report_generator/`)
 
