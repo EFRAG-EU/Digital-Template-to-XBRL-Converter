@@ -49,11 +49,16 @@
 {%- endmacro %}
 
 {% macro create_h2_title(section, loop, fn_manager, fn=none) -%}
+{%- if not section.continuation %}
             <h2 id="section-class{{loop.index}}">
             {{ section_label(section) | e }}
             {%- if fn %} {{ footnote_ref(fn, fn_manager) }}{% endif %}
             <a href="#table-of-contents" class="toc-back-link no-print">⮌</a>
             </h2>
+{%- endif %}
+{%- if section.subheading %}
+            <h3 class="block-heading">{{ section.subheading | e }}</h3>
+{%- endif %}
 {%- endmacro %}
 
 {% macro render_symbol(symbol) -%}

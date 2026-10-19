@@ -85,8 +85,10 @@ def test_every_fact_is_shown_though_presentation_has_no_hypercube(
 def test_each_dimension_set_gets_its_own_titled_table(taxonomy: Taxonomy) -> None:
     html = _render(_report(taxonomy))
     titles = [t.strip() for t in re.findall(r"<h2[^>]*>\s*([^<]*)", html)]
-    assert "Group - by Scope" in titles
-    assert "Group - by Target" in titles
+    subheadings = re.findall(r'<h3 class="block-heading">\s*([^<]*)', html)
+    # The group's own section, then one per dimension set; the title is never suffixed.
+    assert titles.count("Group") == 3
+    assert subheadings == ["By Scope", "By Target"]
     assert html.count('<table class="thematic-table">') == 2
 
 

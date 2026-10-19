@@ -203,6 +203,12 @@ def _titles(html: str) -> list[str]:
     ]
 
 
+def _subheadings(html: str) -> list[str]:
+    return [
+        t.strip() for t in re.findall(r'<h3 class="block-heading">\s*([^<]*)', html)
+    ]
+
+
 def _tagged(html: str) -> list[str]:
     return re.findall(r'<ix:non(?:Fraction|Numeric)[^>]*name="([^"]+)"', html)
 
@@ -261,10 +267,9 @@ class TestTwoHypercubesInOneRole:
     ) -> None:
         taxonomy = register_taxonomy(_two_cubes())
         html = _html(_report(taxonomy, self.FACTS))  # strict: raises if a fact is lost
-        assert _titles(html) == [
-            "Group - Emissions by scope",
-            "Group - Intensity by target",
-        ]
+        assert _titles(html) == ["Group"]
+        assert _subheadings(html) == ["Emissions by scope", "Intensity by target"]
+        assert html.count('href="#section-class') == 1  # one table-of-contents entry
         assert html.count('<table class="thematic-table">') == 2
         assert sorted(_tagged(html)) == sorted(
             [qname("Emissions")] * 2 + [qname("Intensity")] * 2 + [qname("Note")]
@@ -314,10 +319,11 @@ class TestHybridRole:
         self, register_taxonomy: Register
     ) -> None:
         html = _html(_report(register_taxonomy(_hybrid()), self.FACTS))
-        assert _titles(html) == [
-            "Group - Before the table",
-            "Group - The table",
-            "Group - After the table",
+        assert _titles(html) == ["Group"]
+        assert _subheadings(html) == [
+            "Before the table",
+            "The table",
+            "After the table",
         ]
         assert sorted(_tagged(html)) == sorted(
             [qname("Plain"), qname("Other")] + [qname("Emissions")] * 2
@@ -336,7 +342,7 @@ class TestHybridRole:
     ) -> None:
         facts = [*self.FACTS, (qname("Hidden"), 3, {SCOPE: qname("ScopeA")})]
         html = _html(_report(register_taxonomy(_hybrid()), facts))
-        assert sum("by Scope" in t for t in _titles(html)) == 1
+        assert _subheadings(html).count("By Scope") == 1
         assert sorted(_tagged(html)).count(qname("Hidden")) == 1
 
 

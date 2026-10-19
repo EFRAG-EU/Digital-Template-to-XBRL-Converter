@@ -126,16 +126,19 @@ class ReportSection:
 
     relationshipToFact: dict[Relationship, list[Fact]]
     presentation: PresentationGroup
-    # Set when one presentation group yields several sections, e.g. a table per dimension set.
-    heading_suffix: str = field(default="", kw_only=True)
     # The block of the group this section shows, when the group is laid out block by block.
     block: PresentationBlock | None = field(default=None, kw_only=True)
+    # Sub-heading over this section's table or list when its group yields several; the group's
+    # own title, which is never altered, is shown once, over the first.
+    subheading: str = field(default="", kw_only=True)
+    # True for every block after the first of its group: it shares the first block's section
+    # title and table-of-contents entry.
+    continuation: bool = field(default=False, kw_only=True)
     # What a list section shows, line by line; empty for any other kind of section.
     entries: tuple[ListEntry, ...] = field(default=(), kw_only=True, compare=False)
 
     def getLabel(self, language: str) -> str:
-        label = self.presentation.getLabel(language)
-        return f"{label} - {self.heading_suffix}" if self.heading_suffix else label
+        return self.presentation.getLabel(language)
 
     @property
     def style(self) -> PresentationStyle:

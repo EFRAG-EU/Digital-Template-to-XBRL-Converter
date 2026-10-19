@@ -113,5 +113,5 @@ def test_a_hypercube_with_two_dimensions_shows_every_fact_in_a_table_of_its_own(
 ) -> None:
     html = _render(register_taxonomy, ["A", "B"])  # strict: raises if a fact is lost
     assert _tagged(html) == [qname("Value")] * 4
-    titles = [t.strip() for t in re.findall(r"<h2[^>]*>\s*([^<]*)", html)]
-    assert "Table - by A and B" in titles
+    assert "Table" in [t.strip() for t in re.findall(r"<h2[^>]*>\s*([^<]*)", html)]
+    assert re.findall(r'<h3 class="block-heading">\s*([^<]*)', html) == ["By A and B"]

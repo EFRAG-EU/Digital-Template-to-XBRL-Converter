@@ -29,7 +29,10 @@ from mireport.localise import (
     group_symbol,
 )
 from mireport.report.aoix import aoix_quote
-from mireport.report.disclosure_layout import DisclosureLayoutStrategy
+from mireport.report.disclosure_layout import (
+    DisclosureLayoutStrategy,
+    withoutContinuations,
+)
 from mireport.report.duplicates import DuplicateClass, duplicateClass
 from mireport.report.fact import Fact, Symbol
 from mireport.report.factbuilder import FactBuilder
@@ -585,7 +588,7 @@ class InlineReport:
         layout = DisclosureLayoutStrategy.for_entry_point(self._taxonomy.entryPointSet)
         rl = ReportLayoutOrganiser(self._taxonomy, self)
         sections = rl.organise(layout)
-        toc = layout.build_toc(sections, lang)
+        toc = withoutContinuations(layout.build_toc(sections, lang), sections)
 
         env = Environment(
             loader=PackageLoader("mireport.report", "inline_report_templates"),
