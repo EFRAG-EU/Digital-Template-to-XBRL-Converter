@@ -177,11 +177,12 @@ class InlineReport(Report):
         return footnote
 
     def getNamespacesForAoix(self) -> str:
+        """Declarations for the prefixes the facts use (see Report.usedNamespaces); aoix adds
+        those of the elements it writes itself."""
         # {{ namespace utr = "http://www.xbrl.org/2009/utr" }}
-        lines = []
-        for p, n in self.taxonomy.namespacePrefixesMap.items():
-            lines.append(f'{{{{ namespace {p} = "{n}" }}}}')
-        return "\n".join(lines)
+        return "\n".join(
+            f'{{{{ namespace {p} = "{n}" }}}}' for p, n in self.usedNamespaces().items()
+        )
 
     def getSchemaRefForAoix(self) -> str:
         # {{ schema-ref "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/vsme-all.xsd" }}
