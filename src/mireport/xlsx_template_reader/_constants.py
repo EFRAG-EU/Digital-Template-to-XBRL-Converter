@@ -22,6 +22,7 @@ IGNORED_DEFINED_NAME_PREFIXES = ("enum_", "template_")
 # name; the value is the concept local name to bind them to instead.
 TAXONOMY_NAME_ALIASES: dict[str, str] = {
     "IdentifierOfSitesInBiodiversitySensitiveAreasTypedAxis": "IdentifierOfSiteTypedAxis",
+    "NameOfOtherPollutantsTypedAxis": "NameOfOtherPollutantTypedAxis",
 }
 # Named ranges that are expected to go unhandled without warranting a message.
 UNHANDLED_NAMES_TO_IGNORE: frozenset[str] = frozenset(

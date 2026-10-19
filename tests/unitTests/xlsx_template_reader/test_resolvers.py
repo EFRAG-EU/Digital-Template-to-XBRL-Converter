@@ -12,7 +12,10 @@ from mireport.conversionresults import ConversionResultsBuilder, Severity
 from mireport.data.disclosures import VSME_DEFAULTS
 from mireport.taxonomy import getTaxonomy
 from mireport.xlsx_template_reader._binder import WorkbookBinder
-from mireport.xlsx_template_reader._constants import ALL_ERROR_VALUES
+from mireport.xlsx_template_reader._constants import (
+    ALL_ERROR_VALUES,
+    TAXONOMY_NAME_ALIASES,
+)
 from mireport.xlsx_template_reader._messages import Messenger
 from mireport.xlsx_template_reader._ranges import XbrlConceptCellRangeMetadata
 from mireport.xlsx_template_reader._reader import WorkbookReader
@@ -33,6 +36,7 @@ SAMPLE = (
 
 ALIASED_NAME = "IdentifierOfSitesInBiodiversitySensitiveAreasTypedAxis"
 ALIAS_TARGET = "IdentifierOfSiteTypedAxis"
+VS_DRAFT_ENTRY_POINT = "https://xbrl.efrag.org/taxonomy/vs/2026-10-16/vs-all.xsd"
 
 
 def _results() -> ConversionResultsBuilder:
@@ -411,3 +415,18 @@ class TestTaxonomyNameAliases:
         assert aliased, f"sample should contain the {ALIASED_NAME} named range"
         for crm in aliased:
             assert crm.concept.qname.localName == ALIAS_TARGET
+
+
+def test_other_pollutants_template_name_binds_to_vs_typed_axis():
+    """VS 2.0.0 templates name the range NameOfOtherPollutantsTypedAxis; the
+    taxonomy concept is NameOfOtherPollutantTypedAxis."""
+    vs = getTaxonomy(VS_DRAFT_ENTRY_POINT)
+    concept = vs.resolveConcept(
+        TAXONOMY_NAME_ALIASES.get(
+            "NameOfOtherPollutantsTypedAxis", "NameOfOtherPollutantsTypedAxis"
+        ),
+        by_name=True,
+        only_reportable=False,
+    )
+    assert concept is not None
+    assert concept.qname.localName == "NameOfOtherPollutantTypedAxis"
