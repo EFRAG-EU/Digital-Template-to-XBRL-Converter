@@ -188,16 +188,16 @@ class UnitResolver:
             conceptHolder.definedName, concept, factBuilder
         )
 
-    def _isCompositeType(self, concept: Concept) -> bool:
+    def _requiresComplexUnit(self, concept: Concept) -> bool:
         """Whether the UTR gives the concept's type a divide unit (emissions per monetary unit,
         say) rather than named units."""
         utr = self.taxonomy.UTR
-        return utr.compositeFor(
+        return utr.complexUnitFor(
             concept.dataType
         ) is not None and not utr.getUnitsForDataType(concept.dataType)
 
     def _unitForItemType(self, itemType: QName | str) -> QName | None:
-        """The unit to use for one side of a composite type: the report's currency for a
+        """The unit to use for one side of a complex unit: the report's currency for a
         monetary side, else the configured unit for that item type (matched by local name,
         since the config spans taxonomies and the UTR and DTR namespaces differ), else the
         UTR's only unit for it."""
@@ -212,27 +212,27 @@ class UnitResolver:
             return next(iter(units))
         return None
 
-    def setCompositeUnitForName(
+    def setComplexUnitForName(
         self, dn: DefinedName, concept: Concept, factBuilder: FactBuilder
     ) -> bool:
-        """Report a concept whose UTR type is composite in a divide unit, each side's unit
+        """Report a concept whose type takes a complex UTR unit in a divide unit, each side's unit
         chosen as _unitForItemType() says. Without one the fact is not created, with a
         warning: a single unit, or xbrli:pure, is not valid for these types."""
-        composite = self.taxonomy.UTR.compositeFor(concept.dataType)
-        assert composite is not None
-        numerator = self._unitForItemType(composite.numerator)
-        denominator = self._unitForItemType(composite.denominator)
+        complexUnit = self.taxonomy.UTR.complexUnitFor(concept.dataType)
+        assert complexUnit is not None
+        numerator = self._unitForItemType(complexUnit.numerator)
+        denominator = self._unitForItemType(complexUnit.denominator)
         if (
             numerator is None
             or denominator is None
-            or not self.taxonomy.UTR.validComposite(
+            or not self.taxonomy.UTR.validComplexUnit(
                 concept.dataType, numerator, denominator
             )
         ):
             self._msg.warning(
                 f"No unit could be chosen for {dn.name}, so its facts have not been created: "
-                f"the UTR gives {concept.dataType.localName} as {composite.numerator} per "
-                f"{composite.denominator}"
+                f"the UTR gives {concept.dataType.localName} as {complexUnit.numerator} per "
+                f"{complexUnit.denominator}"
                 + (
                     " and the report has no default currency."
                     if denominator is None and numerator is not None
@@ -251,8 +251,8 @@ class UnitResolver:
         if not concept.isNumeric:
             return False
 
-        if self._isCompositeType(concept):
-            return self.setCompositeUnitForName(dn, concept, factBuilder)
+        if self._requiresComplexUnit(concept):
+            return self.setComplexUnitForName(dn, concept, factBuilder)
 
         if (
             unit := self._config.dataTypesToUnits.get(concept.dataType)

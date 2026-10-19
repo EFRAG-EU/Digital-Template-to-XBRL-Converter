@@ -1,6 +1,6 @@
 """No two facts of a coverage report share a context, and none carries a unit the UTR forbids.
 
-The unit tests here use fakes for the pure decisions (rotation, shifted periods, composite
+The unit tests here use fakes for the pure decisions (rotation, shifted periods, complex
 units). The whole-report tests run the generator over every built-in taxonomy and check the
 two properties directly, and the round trip pushes a small generated report through the
 strict xBRL-JSON reader, which refuses an instant that is not at the start or end of a declared
@@ -26,7 +26,7 @@ from mireport.coverage_report_generator._sampling import (
     _Rotation,
     _Variant,
     buildFacts,
-    compositeUnitFor,
+    complexUnitFor,
     coreDimensionsFor,
     reportableConcepts,
 )
@@ -100,7 +100,7 @@ class TestRotation:
         assert rotation.uncovered() == []
 
 
-def _composite_concept() -> FakeConcept:
+def _complex_unit_concept() -> FakeConcept:
     return FakeConcept(
         qname=FakeQName("esrs", "Intensity"),
         isNumeric=True,
@@ -108,12 +108,12 @@ def _composite_concept() -> FakeConcept:
     )
 
 
-def _composite_taxonomy() -> FakeTaxonomy:
+def _complex_unit_taxonomy() -> FakeTaxonomy:
     tco2e, eur = FakeQName("utr", "tCO2e"), FakeQName("iso4217", "EUR")
     return FakeTaxonomy(
         UTR=FakeUTR(
             unitByPreferredId={"tCO2e": tco2e, "EUR": eur},
-            composites={
+            complexUnits={
                 "ghgEmissionsPerMonetaryItemType": (
                     FakeQName("utr", "ghgEmissionsItemType"),
                     FakeQName("xbrli", "monetaryItemType"),
@@ -127,34 +127,34 @@ def _composite_taxonomy() -> FakeTaxonomy:
     )
 
 
-class TestCompositeUnits:
+class TestComplexUnits:
     def test_a_per_unit_type_gets_a_divide_unit_of_each_sides_preferred_unit(
         self,
     ) -> None:
-        taxonomy = _composite_taxonomy()
-        numerator, denominator = compositeUnitFor(taxonomy, _composite_concept())  # type: ignore[misc]
+        taxonomy = _complex_unit_taxonomy()
+        numerator, denominator = complexUnitFor(taxonomy, _complex_unit_concept())  # type: ignore[misc]
         assert (str(numerator), str(denominator)) == ("utr:tCO2e", "iso4217:EUR")
 
     def test_the_fact_is_written_in_that_unit_not_left_unitless(self) -> None:
         dimensions, used = coreDimensionsFor(
-            _composite_taxonomy(), _composite_concept(), PERIOD
+            _complex_unit_taxonomy(), _complex_unit_concept(), PERIOD
         )
         assert dimensions["unit"] == "utr:tCO2e/iso4217:EUR"
         assert FakeQName("iso4217", "EUR") in used
 
-    def test_a_concept_with_its_own_documented_unit_is_not_composite(self) -> None:
+    def test_a_concept_with_its_own_documented_unit_is_not_complex(self) -> None:
         concept = FakeConcept(
             qname=FakeQName("esrs", "Intensity"),
             isNumeric=True,
             dataTypeLocalName="ghgEmissionsPerMonetaryItemType",
             requiredUnits=frozenset({FakeQName("utr", "x")}),
         )
-        assert compositeUnitFor(_composite_taxonomy(), concept) is None
+        assert complexUnitFor(_complex_unit_taxonomy(), concept) is None
 
     def test_a_side_with_no_preferred_unit_raises_rather_than_guessing(self) -> None:
         taxonomy = FakeTaxonomy(
             UTR=FakeUTR(
-                composites={
+                complexUnits={
                     "ghgEmissionsPerMonetaryItemType": (
                         FakeQName("utr", "mysteryItemType"),
                         FakeQName("xbrli", "monetaryItemType"),
@@ -164,7 +164,7 @@ class TestCompositeUnits:
             )
         )
         with pytest.raises(SampleGenerationException):
-            compositeUnitFor(taxonomy, _composite_concept())
+            complexUnitFor(taxonomy, _complex_unit_concept())
 
 
 def _contexts(facts: dict[str, dict]) -> Counter[tuple]:
@@ -203,9 +203,9 @@ def test_a_built_in_taxonomys_report_has_no_repeated_context_and_valid_units(
         if concept is None:
             continue
         unit = fact["dimensions"].get("unit")
-        composite = taxonomy.UTR.compositeFor(concept.dataType)
+        complexUnit = taxonomy.UTR.complexUnitFor(concept.dataType)
         if (
-            composite is not None
+            complexUnit is not None
             and not taxonomy.UTR.getUnitsForDataType(concept.dataType)
             and concept.getRequiredUnitQNames() is None
         ):
@@ -214,7 +214,9 @@ def test_a_built_in_taxonomys_report_has_no_repeated_context_and_valid_units(
             numerator, denominator = (
                 taxonomy.QNameMaker.fromString(part) for part in unit.split("/")
             )
-            assert taxonomy.UTR.validComposite(concept.dataType, numerator, denominator)
+            assert taxonomy.UTR.validComplexUnit(
+                concept.dataType, numerator, denominator
+            )
         elif unit is not None:
             assert taxonomy.UTR.valid(
                 concept.dataType, taxonomy.QNameMaker.fromString(unit)

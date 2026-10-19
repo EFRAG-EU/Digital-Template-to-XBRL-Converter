@@ -244,7 +244,7 @@ class TestTypedDimensionSampleValue:
 
 
 @dataclass(frozen=True)
-class FakeComposite:
+class FakeComplexUnit:
     numerator: FakeQName
     denominator: FakeQName
 
@@ -256,13 +256,13 @@ class FakeUTR:
         permitted: frozenset[FakeQName] = frozenset(),
         unitByPreferredId: dict[str, FakeQName] | None = None,
         preferredIsValid: bool = True,
-        composites: dict[str, tuple[FakeQName, FakeQName]] | None = None,
+        complexUnits: dict[str, tuple[FakeQName, FakeQName]] | None = None,
         permittedByType: dict[str, frozenset[FakeQName]] | None = None,
     ) -> None:
         self._permitted = permitted
         self._unitByPreferredId = unitByPreferredId or {}
         self._preferredIsValid = preferredIsValid
-        self._composites = composites or {}
+        self._complexUnits = complexUnits or {}
         self._permittedByType = permittedByType
 
     def getUnitsForDataType(self, dataType: FakeQName) -> frozenset[FakeQName]:
@@ -270,15 +270,15 @@ class FakeUTR:
             return self._permittedByType.get(dataType.localName, frozenset())
         return self._permitted
 
-    def compositeFor(self, dataType: FakeQName) -> FakeComposite | None:
-        if (sides := self._composites.get(dataType.localName)) is None:
+    def complexUnitFor(self, dataType: FakeQName) -> FakeComplexUnit | None:
+        if (sides := self._complexUnits.get(dataType.localName)) is None:
             return None
-        return FakeComposite(*sides)
+        return FakeComplexUnit(*sides)
 
-    def validComposite(
+    def validComplexUnit(
         self, dataType: FakeQName, numerator: FakeQName, denominator: FakeQName
     ) -> bool:
-        return self._composites.get(dataType.localName) is not None
+        return self._complexUnits.get(dataType.localName) is not None
 
     def getQNameForUnitId(self, unitId: str) -> FakeQName | None:
         return self._unitByPreferredId.get(unitId)

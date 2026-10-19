@@ -2,7 +2,7 @@
 
     unit named range (direct/parenthesised/config-corrected text)
     -> per-concept config override -> taxonomy required units
-    -> data-type/UTR fallbacks, where a composite UTR type (emissions per monetary
+    -> data-type/UTR fallbacks, where a type with a complex UTR unit (emissions per monetary
     unit) takes a divide unit
 
 The endpoints (getSimpleUnit, setFallbackUnitForName) are covered in
@@ -198,18 +198,18 @@ class TestNoUnitRange:
                 if c.isReportable
                 and c.isNumeric
                 and c.getRequiredUnitQNames() is None
-                and taxonomy.UTR.compositeFor(c.dataType) is not None
+                and taxonomy.UTR.complexUnitFor(c.dataType) is not None
                 and not taxonomy.UTR.getUnitsForDataType(c.dataType)
-                and taxonomy.UTR.compositeFor(c.dataType).denominator.localName
+                and taxonomy.UTR.complexUnitFor(c.dataType).denominator.localName
                 == "monetaryItemType"
             ),
             None,
         )
         if concept is None:
-            pytest.skip("taxonomy has no composite per-monetary concept")
+            pytest.skip("taxonomy has no per-monetary complex-unit concept")
         return concept
 
-    def test_composite_unit_uses_default_currency_denominator(
+    def test_complex_unit_uses_default_currency_denominator(
         self, taxonomy, config, per_monetary_concept
     ):
         env = _Env(taxonomy, config, per_monetary_concept, None, with_unit_map=False)
@@ -217,13 +217,13 @@ class TestNoUnitRange:
         assert env.resolver.setUnitForName(env.holder, env.fb) is True
         assert env.fb._unit is not None and env.fb._unit.is_divide
         assert [m.localName for m in env.fb._unit.denominator] == ["EUR"]
-        assert taxonomy.UTR.validComposite(
+        assert taxonomy.UTR.validComplexUnit(
             per_monetary_concept.dataType,
             env.fb._unit.numerator[0],
             env.fb._unit.denominator[0],
         )
 
-    def test_composite_unit_without_a_default_currency_creates_no_fact(
+    def test_complex_unit_without_a_default_currency_creates_no_fact(
         self, taxonomy, config, per_monetary_concept
     ):
         env = _Env(taxonomy, config, per_monetary_concept, None, with_unit_map=False)
@@ -231,7 +231,7 @@ class TestNoUnitRange:
         assert env.fb._unit is None
         assert any("no default currency" in w for w in env.warnings())
 
-    def test_a_single_unit_in_the_cell_is_not_valid_for_a_composite_type(
+    def test_a_single_unit_in_the_cell_is_not_valid_for_a_complex_type(
         self, taxonomy, config, per_monetary_concept
     ):
         """A named unit typed into the unit cell cannot be valid for a per-unit type; the

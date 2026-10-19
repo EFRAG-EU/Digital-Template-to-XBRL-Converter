@@ -1,4 +1,4 @@
-"""Composite UTR types: a unit that is one item type's unit over another's.
+"""Complex UTR units: a unit that is one item type's unit over another's.
 
 The UTR lists a few item types (emissions per monetary unit, say) with no named unit, only a
 numerator and a denominator item type. ``getUnitsForDataType`` knows named units only, so it is
@@ -64,35 +64,35 @@ def q():
     return maker.fromNamespaceAndLocalName
 
 
-def test_a_composite_type_is_found_by_its_name_in_any_namespace(utr: UTR, q) -> None:
-    composite = utr.compositeFor(q(DTR, "ghgEmissionsPerMonetaryItemType"))
-    assert composite is not None
-    assert composite.unitId == "Emissions_per_Monetary"
-    assert composite.numerator.localName == "ghgEmissionsItemType"
-    assert composite.denominator.localName == "monetaryItemType"
+def test_a_complex_type_is_found_by_its_name_in_any_namespace(utr: UTR, q) -> None:
+    complexUnit = utr.complexUnitFor(q(DTR, "ghgEmissionsPerMonetaryItemType"))
+    assert complexUnit is not None
+    assert complexUnit.unitId == "Emissions_per_Monetary"
+    assert complexUnit.numerator.localName == "ghgEmissionsItemType"
+    assert complexUnit.denominator.localName == "monetaryItemType"
 
 
-def test_a_simple_type_is_not_composite(utr: UTR, q) -> None:
-    assert utr.compositeFor(q(UTR_NS, "massItemType")) is None
+def test_a_simple_type_is_not_complex(utr: UTR, q) -> None:
+    assert utr.complexUnitFor(q(UTR_NS, "massItemType")) is None
 
 
-def test_a_composite_type_has_no_named_units_but_is_not_unconstrained(
+def test_a_complex_type_has_no_named_units_but_is_not_unconstrained(
     utr: UTR, q
 ) -> None:
     dataType = q(DTR, "ghgEmissionsPerMonetaryItemType")
     assert utr.getUnitsForDataType(dataType) == frozenset()
-    assert utr.compositeFor(dataType) is not None
+    assert utr.complexUnitFor(dataType) is not None
 
 
 def test_each_side_must_be_valid_for_its_own_item_type(utr: UTR, q) -> None:
     dataType = q(DTR, "ghgEmissionsPerMonetaryItemType")
     tco2e, kg, eur = q(UTR_NS, "tCO2e"), q(UTR_NS, "kg"), q(ISO, "EUR")
-    assert utr.validComposite(dataType, tco2e, eur)
-    assert not utr.validComposite(dataType, kg, eur)  # a mass is not an emission
-    assert not utr.validComposite(dataType, eur, tco2e)  # the wrong way up
+    assert utr.validComplexUnit(dataType, tco2e, eur)
+    assert not utr.validComplexUnit(dataType, kg, eur)  # a mass is not an emission
+    assert not utr.validComplexUnit(dataType, eur, tco2e)  # the wrong way up
 
 
-def test_no_single_unit_is_valid_for_a_composite_type(utr: UTR, q) -> None:
+def test_no_single_unit_is_valid_for_a_complex_type(utr: UTR, q) -> None:
     dataType = q(DTR, "ghgEmissionsPerMonetaryItemType")
     for unit in (q(UTR_NS, "tCO2e"), q(ISO, "EUR"), q(XBRLI, "pure")):
         assert not utr.valid(dataType, unit)
@@ -106,25 +106,25 @@ def test_a_named_type_still_checks_its_units_and_an_unlisted_one_takes_any(
     assert utr.valid(q(DTR, "percentItemType"), q(XBRLI, "pure"))  # not in the UTR
 
 
-def test_a_simple_type_is_never_a_valid_composite(utr: UTR, q) -> None:
-    assert not utr.validComposite(
+def test_a_simple_type_is_never_a_valid_complex_unit(utr: UTR, q) -> None:
+    assert not utr.validComplexUnit(
         q(UTR_NS, "massItemType"), q(UTR_NS, "kg"), q(ISO, "EUR")
     )
 
 
-def test_the_real_utr_models_every_composite_it_lists() -> None:
+def test_the_real_utr_models_every_complex_unit_it_lists() -> None:
     entries = json.loads(getResource(registries, "utr.json").read_text("utf-8"))["utr"]
-    composites = [e for e in entries if "numeratorItemType" in e]
+    complexUnits = [e for e in entries if "numeratorItemType" in e]
     real = UTR.fromDict({"utr": entries}, qnameMaker=getBootstrapQNameMaker())
     maker = getBootstrapQNameMaker()
     # an item type the UTR gives a namespace is looked up in it; the others come from the DTR
     found = {
         e["itemType"]
-        for e in composites
-        if real.compositeFor(
+        for e in complexUnits
+        if real.complexUnitFor(
             maker.fromNamespaceAndLocalName(e.get("nsItemType", DTR), e["itemType"])
         )
         is not None
     }
-    assert found == {e["itemType"] for e in composites}
+    assert found == {e["itemType"] for e in complexUnits}
     assert "ghgEmissionsPerMonetaryItemType" in found

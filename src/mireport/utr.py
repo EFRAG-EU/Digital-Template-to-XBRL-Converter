@@ -39,7 +39,7 @@ def _byDataType(table: dict[str | QName, _T], dataType: QName) -> _T | None:
 @cache
 def _getUnitsForDataType(utr: UTR, dataType: QName) -> frozenset[QName]:
     """The named units the UTR permits for a given data type. Empty for a type the UTR does
-    not constrain, and for a composite one (see ``UTR.compositeFor``)."""
+    not constrain, and for one that takes a complex unit (see ``UTR.complexUnitFor``)."""
     return frozenset(
         unitQName
         for unitId in _byDataType(utr._lookupUnitIdByDataType, dataType) or ()
@@ -48,7 +48,7 @@ def _getUnitsForDataType(utr: UTR, dataType: QName) -> frozenset[QName]:
 
 
 @dataclass(frozen=True, slots=True)
-class CompositeUnit:
+class ComplexUnit:
     """A UTR unit that is one item type's unit over another's (emissions per monetary unit),
     not a single named unit: a fact of such a type is reported in a divide unit, a numerator
     unit valid for ``numerator`` over a denominator unit valid for ``denominator``."""
@@ -65,9 +65,9 @@ class UTR:
         dataTypeToUnit: dict[str | QName, list[str]],
         unitQNamesToEntries: dict[QName, dict[str, str]],
         qnameMaker: QNameMaker,
-        composites: dict[str | QName, CompositeUnit] | None = None,
+        complexUnits: dict[str | QName, ComplexUnit] | None = None,
     ) -> None:
-        self._composites: dict[str | QName, CompositeUnit] = composites or {}
+        self._complexUnits: dict[str | QName, ComplexUnit] = complexUnits or {}
         self._lookupNamespacesByUnitId: dict[str, list[str]] = unitToNamespaces
         self._lookupUnitIdByDataType: dict[str | QName, list[str]] = dataTypeToUnit
         self._lookupUnitEntriesByQName: dict[QName, dict[str, str]] = (
@@ -81,7 +81,7 @@ class UTR:
         unitToNamespaces: dict[str, list[str]] = {}
         dataTypeToUnit: dict[str | QName, list[str]] = defaultdict(list)
         unitQNamesToEntries: dict[QName, dict[str, str]] = {}
-        composites: dict[str | QName, CompositeUnit] = {}
+        complexUnits: dict[str | QName, ComplexUnit] = {}
         for entry in utr["utr"]:
             unitId = entry["unitId"]
             localName = entry["itemType"]
@@ -95,7 +95,7 @@ class UTR:
                 dataTypeToUnit[localName].append(unitId)
 
             if "numeratorItemType" in entry:
-                composites[dataType] = CompositeUnit(
+                complexUnits[dataType] = ComplexUnit(
                     unitId,
                     cls._itemType(
                         qnameMaker,
@@ -124,7 +124,7 @@ class UTR:
             dataTypeToUnit,
             unitQNamesToEntries,
             qnameMaker,
-            composites,
+            complexUnits,
         )
 
     @staticmethod
@@ -135,23 +135,23 @@ class UTR:
             return localName
         return qnameMaker.fromNamespaceAndLocalName(namespace, localName)
 
-    def compositeFor(self, dataType: QName) -> CompositeUnit | None:
-        """The composite (per-unit) definition for ``dataType``, if the UTR gives it one rather
+    def complexUnitFor(self, dataType: QName) -> ComplexUnit | None:
+        """The complex (per-unit) UTR unit for ``dataType``, if the UTR gives it one rather
         than a list of named units. ``getUnitsForDataType`` knows only named units, so it is
         empty for these types; that does *not* make them unconstrained."""
-        return _byDataType(self._composites, dataType)
+        return _byDataType(self._complexUnits, dataType)
 
-    def validComposite(
+    def validComplexUnit(
         self, dataType: QName, numeratorUnit: QName, denominatorUnit: QName
     ) -> bool:
         """Whether ``numeratorUnit`` over ``denominatorUnit`` is a unit the UTR permits for the
-        composite ``dataType``: each side valid for its own item type."""
-        composite = self.compositeFor(dataType)
-        if composite is None:
+        ``dataType``: each side valid for its own item type."""
+        complexUnit = self.complexUnitFor(dataType)
+        if complexUnit is None:
             return False
         return self._validForItemType(
-            composite.numerator, numeratorUnit
-        ) and self._validForItemType(composite.denominator, denominatorUnit)
+            complexUnit.numerator, numeratorUnit
+        ) and self._validForItemType(complexUnit.denominator, denominatorUnit)
 
     def _validForItemType(self, itemType: QName | str, unit: QName) -> bool:
         if isinstance(itemType, str):
@@ -190,9 +190,9 @@ class UTR:
     def valid(self, dataType: QName, unitType: QName) -> bool:
         """Whether the single unit ``unitType`` is one the UTR permits for ``dataType``.
 
-        A type the UTR does not list is unconstrained, so any unit is valid. A composite type
-        (see ``compositeFor``) is listed, but with no named unit, so no single unit is valid
-        for it: it takes a divide unit, checked with ``validComposite``."""
+        A type the UTR does not list is unconstrained, so any unit is valid. A type with a complex unit
+        (see ``complexUnitFor``) is listed, but with no named unit, so no single unit is valid
+        for it: it takes a divide unit, checked with ``validComplexUnit``."""
         if units_for_dataType := self.getUnitsForDataType(dataType):
             return unitType in units_for_dataType
-        return self.compositeFor(dataType) is None
+        return self.complexUnitFor(dataType) is None
