@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import tempfile
 import threading
 import zipfile
 from importlib.metadata import PackageNotFoundError, metadata, version
@@ -32,6 +33,8 @@ L = logging.getLogger(__name__)
 # Arelle splits its --plugins option on "|" (see CntlrCmdLine.run()).
 PLUGIN_SEPARATOR = "|"
 INLINE_DOCUMENT_SET_PLUGIN = "inlineXbrlDocumentSet"
+# Loads an xBRL-JSON (or xBRL-CSV) report as an instance, checking the OIM rules on the way.
+LOAD_FROM_OIM_PLUGIN = "loadFromOIM"
 
 
 def _singleFileFromResponseZip(stream: BytesIO, what: str) -> bytes:
@@ -118,6 +121,18 @@ class ArelleReportProcessor:
         options: RuntimeOptions,
         responseZipStream: BinaryIO | None = None,
     ) -> ArelleProcessingResult:
+        """Run Arelle on a report package, given as the request zip stream."""
+        with reportPackage.fileLike() as requestZipStream:
+            result = self._runSession(options, requestZipStream, responseZipStream)
+        assert requestZipStream.closed, "Forgot to close the stream."
+        return result
+
+    def _runSession(
+        self,
+        options: RuntimeOptions,
+        requestZipStream: BinaryIO | None = None,
+        responseZipStream: BinaryIO | None = None,
+    ) -> ArelleProcessingResult:
         ###############################
         #  Arelle is _NOT_ thread safe.
         ###############################
@@ -164,19 +179,14 @@ class ArelleReportProcessor:
                     PluginManager.close()
                 except Exception:
                     L.exception("Failed to reset Arelle package and plugin managers")
-                with (
-                    Session() as session,
-                    reportPackage.fileLike() as requestZipStream,
-                ):
+                with Session() as session:
                     session.run(
                         options,
                         sourceZipStream=requestZipStream,
                         responseZipStream=responseZipStream,
                         logFilters=[],
                     )
-                    result = ArelleProcessingResult.fromSession(session)
-                assert requestZipStream.closed, "Forgot to close the stream."
-                return result
+                    return ArelleProcessingResult.fromSession(session)
             except Exception as arelle_exception:
                 message = "Exception encountered while calling Arelle for report."
                 L.exception(message, exc_info=arelle_exception)
@@ -188,6 +198,7 @@ class ArelleReportProcessor:
         calcs: str = "c11r",
         plugins: Sequence[str] = (),
         pluginOptions: dict | None = None,
+        entrypointFile: str | None = None,
     ) -> RuntimeOptions:
         """RuntimeOptions shared by all report processing: validation on
         (calcs 1.1 round-to-nearest unless overridden, UTR, inconsistent
@@ -202,6 +213,7 @@ class ArelleReportProcessor:
         package, and it is inert for a single-document report.
         """
         return RuntimeOptions(
+            entrypointFile=entrypointFile,
             internetConnectivity="offline" if self.workOffline else "online",
             keepOpen=True,
             logFile="logToBuffer",
@@ -254,6 +266,18 @@ class ArelleReportProcessor:
         except Exception as e:
             result.addException(e)
         return result
+
+    def validateXbrlJson(self, document: FilelikeAndFileName) -> ArelleProcessingResult:
+        """Validate an xBRL-JSON document with Arelle: the OIM and xBRL-JSON rules as it loads,
+        then the same instance validation (calculations, UTR, duplicates) a report package
+        gets. Arelle reads it from a file, so it is written to a temporary one first."""
+        with tempfile.TemporaryDirectory(prefix="mireport-xbrl-json-") as directory:
+            path = Path(directory) / PurePath(document.filename).name
+            path.write_bytes(document.fileContent)
+            options = self._makeOptions(
+                plugins=[LOAD_FROM_OIM_PLUGIN], entrypointFile=str(path)
+            )
+            return self._runSession(options)
 
     def generateInlineViewer(
         self, source: FilelikeAndFileName
