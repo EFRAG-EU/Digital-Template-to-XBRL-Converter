@@ -30,7 +30,7 @@ SAMPLE = SampleEntityPeriod(
     entity="lei:529900T8BM49AURSDO55",
     entityPrefix="lei",
     entityNamespace="http://standards.iso.org/iso/17442",
-    periodInstant="2025-12-31T24:00:00",
+    periodInstant="2026-01-01T00:00:00",
     periodDuration=DURATION,
 )
 

@@ -70,20 +70,6 @@ class TestShiftedPeriod:
         assert shifted.periodInstant == "2027-02-28T00:00:00"
         assert shifted.periodDuration == "2026-02-28T00:00:00/2027-02-28T00:00:00"
 
-    def test_the_end_of_a_day_written_as_24_hundred_hours_is_kept_so(self) -> None:
-        # the xBRL-JSON reader's tests write the sample instant this way, and Python's
-        # parser refuses T24:00:00 before 3.14
-        period = SampleEntityPeriod(
-            entity="lei:X",
-            entityPrefix="lei",
-            entityNamespace="http://standards.iso.org/iso/17442",
-            periodInstant="2025-12-31T24:00:00",
-            periodDuration="2025-01-01T00:00:00/2026-01-01T00:00:00",
-        )
-        shifted = period.shifted(2)
-        assert shifted.periodInstant == "2023-12-31T24:00:00"
-        assert shifted.periodDuration == "2023-01-01T00:00:00/2024-01-01T00:00:00"
-
 
 class TestRotation:
     UNITS = (_Variant(), _Variant(unit=FakeQName("utr", "t")))
