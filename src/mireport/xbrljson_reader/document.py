@@ -139,10 +139,10 @@ class XbrlJsonFact:
             if (text := getattr(self, name)) is not None:
                 dimensions[name] = text
         dimensions.update(self.dimensions)
-        fact: dict[str, Any] = {"value": self.value}
+        # Dimensions first: the order the coverage reports pinned elsewhere were written in.
+        fact: dict[str, Any] = {"dimensions": dimensions, "value": self.value}
         if self.decimals is not None:
             fact["decimals"] = self.decimals
-        fact["dimensions"] = dimensions
         if self.links:
             fact["links"] = {
                 linkType: {group: list(targets) for group, targets in groups.items()}
