@@ -40,7 +40,7 @@ class Report:
     """An XBRL report as data: its taxonomy, entity, periods, facts and footnotes.
 
     Nothing here is about how the report looks; InlineReport adds that, and an xBRL-JSON writer
-    (mireport.xbrljson) needs nothing more than this.
+    (mireport.xbrljson_writer) needs nothing more than this.
     """
 
     def __init__(self, taxonomy: Taxonomy, *, language: str | None = None):
