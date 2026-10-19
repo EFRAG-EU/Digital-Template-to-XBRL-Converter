@@ -120,9 +120,10 @@ class UnitResolver:
         if unitHolder:
             cell = self._reader.getSingleCell(unitHolder, row=row)
             if cell is None or cell.value is None:
-                self._msg.error(
-                    f"Unable to find unit in expected part of {unitHolder.definedName.name}. Related concept {conceptHolder.definedName.name} has coordinates {conceptHolder.excelRef()}.",
-                    MessageType.DevInfo,
+                self._msg.warning(
+                    f"No unit selected in {unitHolder.definedName.name} for {conceptHolder.definedName.name} ({conceptHolder.excelRef()}), so its facts have not been created.",
+                    MessageType.Conversion,
+                    concept=concept,
                     ref=unitHolder,
                 )
                 return False

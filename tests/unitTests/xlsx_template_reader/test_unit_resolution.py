@@ -150,6 +150,13 @@ class TestUnitFromNamedRange:
         env = _Env(taxonomy, config, energy_concept, None)
         assert env.resolver.setUnitForName(env.holder, env.fb) is False
 
+    def test_empty_unit_cell_warns_the_fact_is_dropped(
+        self, taxonomy, config, energy_concept
+    ):
+        env = _Env(taxonomy, config, energy_concept, None)
+        env.resolver.setUnitForName(env.holder, env.fb)
+        assert any("no unit" in w.lower() for w in env.warnings())
+
 
 class TestConfiguredConceptUnit:
     def test_unresolvable_text_uses_concepts_to_units_override(self, taxonomy, config):
