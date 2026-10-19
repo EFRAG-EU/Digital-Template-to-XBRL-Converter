@@ -201,6 +201,49 @@ class TestAspects:
         assert note.dimensions == {qname("TargetAxis"): "T1"}
 
 
+class TestUsedNamespaces:
+    """Report.usedNamespaces, which the writer and aoix take their bindings from."""
+
+    def test_an_empty_report_uses_none(self, report: Report) -> None:
+        assert report.usedNamespaces() == {}
+
+    def test_concepts_dimensions_members_and_unit_measures_are_used(
+        self, report: Report
+    ) -> None:
+        _add(
+            report,
+            _fact(report, "Emissions")
+            .setValue(1)
+            .setUnit(
+                Unit.divide(
+                    [_pure(report).measure],
+                    [report.taxonomy.QNameMaker.fromString("iso4217:EUR")],
+                )
+            )
+            .setExplicitDimension(_c(report, "ScopeAxis"), _c(report, "ScopeA")),
+        )
+        assert report.usedNamespaces() == {
+            "iso4217": "http://www.xbrl.org/2003/iso4217",
+            "syn": NAMESPACE,
+            "xbrli": "http://www.xbrl.org/2003/instance",
+        }
+
+    def test_the_taxonomys_other_bindings_are_not(self, report: Report) -> None:
+        _add(report, _fact(report, "Orphan").setValue("x"))
+        assert "dtr" in report.taxonomy.namespacePrefixesMap
+        assert report.usedNamespaces() == {"syn": NAMESPACE}
+
+    def test_it_cannot_be_changed(self, report: Report) -> None:
+        with pytest.raises(TypeError):
+            report.usedNamespaces()["x"] = "urn:x"  # type: ignore[index]
+
+    def test_the_writer_names_only_what_it_writes(self, report: Report) -> None:
+        """xBRL-JSON leaves a pure unit out, so it needs no xbrli prefix for one."""
+        _add(report, _fact(report, "Total").setValue(1).setUnit(_pure(report)))
+        assert "xbrli" in report.usedNamespaces()
+        assert "xbrli" not in toXbrlJson(report).namespaces
+
+
 class TestDocument:
     def test_an_empty_report_declares_only_the_xbrl_prefix(
         self, report: Report

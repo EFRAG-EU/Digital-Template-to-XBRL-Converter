@@ -4,6 +4,7 @@ from collections import defaultdict
 from collections.abc import Mapping, Sequence
 from datetime import date
 from itertools import combinations, count
+from types import MappingProxyType
 from typing import TYPE_CHECKING, Protocol
 
 from markupsafe import Markup
@@ -381,6 +382,26 @@ class Report:
     def getFacts(self, concept: Concept) -> list[Fact]:
         result = self._factsByConcept.get(concept)
         return [] if result is None else result.copy()
+
+    def usedNamespaces(self) -> Mapping[str, str]:
+        """The prefix bindings the facts use, by prefix: their concepts, dimensions and members
+        (a typed dimension's wrapper element too), unit measures and enumeration members.
+
+        Not the entity's scheme, which is a URI rather than a QName, nor whatever an output
+        format adds of its own (``xbrl`` for xBRL-JSON, ``ix`` for Inline XBRL)."""
+        qnames: set[QName] = set()
+        for fact in self._facts:
+            qnames.add(fact.concept.qname)
+            for explicit in fact.explicit_values:
+                qnames.update((explicit.dimension.qname, explicit.member.qname))
+            for typed in fact.typed_values:
+                qnames.update((typed.dimension.qname, typed.wrapper))
+            if fact.unit is not None:
+                qnames.update(fact.unit.numerator, fact.unit.denominator)
+            qnames.update(member.qname for member in fact.enumeration or ())
+        return MappingProxyType(
+            dict(sorted({q.prefix: q.namespace for q in qnames}.items()))
+        )
 
     def addPartialFact(self, concept: Concept, fb: FactBuilder) -> None:
         """Register a partial FactBuilder whose value must be supplied externally.
