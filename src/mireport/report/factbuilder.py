@@ -25,18 +25,18 @@ if TYPE_CHECKING:
     from collections.abc import Collection
     from typing import Self
 
-    from mireport.report.inlinereport import InlineReport
+    from mireport.report.report import Report
 
 L = logging.getLogger(__name__)
 
 
 class FactBuilder:
     """
-    Represents a builder for Fact objects: an easy way to build and add facts to an InlineReport.
+    Represents a builder for Fact objects: an easy way to build and add facts to a Report.
     """
 
-    def __init__(self, report: InlineReport):
-        self._report: InlineReport = report
+    def __init__(self, report: Report):
+        self._report: Report = report
         self._concept: Concept | None = None
         self._value: FactValue | None = None
         self._provenance: Provenance | None = None
@@ -50,7 +50,7 @@ class FactBuilder:
         self._enumeration: tuple[Concept, ...] | None = None
 
     @classmethod
-    def fromFact(cls, report: InlineReport, fact: Fact) -> Self:
+    def fromFact(cls, report: Report, fact: Fact) -> Self:
         """A builder holding a copy of ``fact``, to change (a new period, a new value) and build.
 
         Building re-runs every check, so the copy is validated like any other fact.
@@ -167,7 +167,7 @@ class FactBuilder:
 
     def setNamedPeriod(self, periodName: str, *, at: PeriodPart | None = None) -> Self:
         """
-        Sets the period for the fact to a named period in the InlineReport.
+        Sets the period for the fact to a named period in the Report.
 
         An instant concept is reported at the end of the period unless ``at`` says
         ``PeriodPart.Start`` (without ``at`` a part already there, from a copied fact, is kept): an opening balance is the instant the period starts at, which is also
@@ -191,7 +191,7 @@ class FactBuilder:
     def setPeriod(self, period: _Period) -> Self:
         """
         Sets the period for the fact from an OIM period (a duration, or an instant), which has to be
-        a declared period or the end or start of one (see ``InlineReport.locatePeriod``).
+        a declared period or the end or start of one (see ``Report.locatePeriod``).
         """
         located = self._report.locatePeriod(period)
         self._period = located.reportPeriod

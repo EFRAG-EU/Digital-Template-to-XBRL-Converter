@@ -21,7 +21,7 @@ from mireport.typealiases import DecimalPlaces, FactValue
 
 if TYPE_CHECKING:
     from mireport.report.footnote import Footnote
-    from mireport.report.inlinereport import InlineReport
+    from mireport.report.report import Report
 
 
 def numeric_string_key(value: str) -> tuple[int, str | int]:
@@ -58,7 +58,7 @@ class Fact:
         self,
         concept: Concept,
         value: FactValue,
-        report: InlineReport,
+        report: Report,
         *,
         period: FactPeriod,
         unit: Unit | None = None,
@@ -212,7 +212,7 @@ class Fact:
             if negated:
                 number = -Decimal(str(number))
             output = localise_and_format_number(
-                number, decimal_places, self._report._outputLocale
+                number, decimal_places, self._report.outputLocale
             )
         except (ValueError, TypeError, ArithmeticError) as e:
             raise InlineReportException(
