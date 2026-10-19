@@ -1,7 +1,8 @@
 """Turn an xBRL-JSON report into a themed Inline XBRL report.
 
-The taxonomy the report names must already be baked (scripts/update-taxonomy.py); pass its JSON
-with --taxonomy-json. The report is rendered and, unless --skip-validation, validated with Arelle.
+Built-in taxonomies are always available. Any other taxonomy the report names must already be
+baked (scripts/update-taxonomy.py); pass its JSON with --taxonomy-json. The report is rendered
+and, unless --skip-validation, validated with Arelle.
 """
 
 import argparse
@@ -42,8 +43,9 @@ def createArgParser() -> argparse.ArgumentParser:
         "--taxonomy-json",
         type=Path,
         nargs="+",
-        required=True,
-        help="Baked taxonomy JSON file(s); one must be for the report's entry point.",
+        default=[],
+        help="Baked taxonomy JSON file(s) for a taxonomy that is not built in. "
+        "Built-in taxonomies are always loaded, so leave this out for them.",
     )
     parser.add_argument(
         "--entity-name-concept",
