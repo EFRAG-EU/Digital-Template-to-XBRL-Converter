@@ -16,7 +16,6 @@ from mireport.arelle.report_info import (
     INLINE_DOCUMENT_SET_PLUGIN,
     ArelleReportProcessor,
     _filesFromResponseZip,
-    _singleFileFromResponseZip,
 )
 from mireport.arelle.support import ArelleRelatedException
 
@@ -27,27 +26,6 @@ def makeZip(entries: dict[str, bytes]) -> BytesIO:
         for name, content in entries.items():
             zf.writestr(name, content)
     return stream
-
-
-class TestSingleFileFromResponseZip:
-    def test_returns_single_entry_content(self) -> None:
-        stream = makeZip({"foo.json": b'{"documentInfo": {}}'})
-        assert _singleFileFromResponseZip(stream, "test") == b'{"documentInfo": {}}'
-
-    def test_rewinds_before_reading(self) -> None:
-        stream = makeZip({"foo.json": b"content"})
-        stream.seek(0, 2)  # simulate a fully-written, unrewound stream
-        assert _singleFileFromResponseZip(stream, "test") == b"content"
-
-    def test_raises_on_empty_zip(self) -> None:
-        with pytest.raises(ArelleRelatedException, match="test thing"):
-            _singleFileFromResponseZip(makeZip({}), "test thing")
-
-    def test_raises_on_multiple_entries(self) -> None:
-        """xBRL-JSON is still one file per report; more than one is a bug."""
-        stream = makeZip({"foo.json": b"{}", "viewer.html": b"<html/>"})
-        with pytest.raises(ArelleRelatedException, match="viewer.html"):
-            _singleFileFromResponseZip(stream, "test thing")
 
 
 class TestFilesFromResponseZip:
@@ -108,12 +86,14 @@ class TestMakeOptions:
     def test_overrides(self) -> None:
         options = self.makeProcessor()._makeOptions(
             calcs="none",
-            plugins=["saveLoadableOIM"],
-            pluginOptions={"saveLoadableOIM": "out.json"},
+            plugins=["ixbrl-viewer"],
+            pluginOptions={"viewerURL": "viewer.js"},
+            entrypointFile="report.json",
         )
         assert options.calcs == "none"
+        assert options.entrypointFile == "report.json"
         # RuntimeOptions flattens pluginOptions into attributes via setattr
-        assert options.saveLoadableOIM == "out.json"
+        assert options.viewerURL == "viewer.js"
 
 
 class TestDocumentSetPlugin:

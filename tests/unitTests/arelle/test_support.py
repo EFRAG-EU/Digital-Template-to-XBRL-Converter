@@ -15,7 +15,6 @@ from mireport.arelle.support import (
     ArelleRelatedException,
 )
 from mireport.conversionresults import MessageType, Severity
-from mireport.filesupport import FilelikeAndFileName
 from mireport.xml import getBootstrapQNameMaker
 
 
@@ -105,18 +104,8 @@ class TestImportArelleMessages:
 
 
 class TestArelleProcessingResultOutputs:
-    def test_xbrl_json_raises_when_absent(self) -> None:
-        result = ArelleProcessingResult()
-        assert result.has_json is False
-        with pytest.raises(ArelleRelatedException):
-            _ = result.xbrl_json
-
-    def test_xbrl_json_returns_stored_file(self) -> None:
-        result = ArelleProcessingResult()
-        stored = FilelikeAndFileName(fileContent=b"{}", filename="report.json")
-        result._xbrlJson = stored
-        assert result.has_json is True
-        assert result.xbrl_json is stored
+    def test_no_fact_count_without_a_session(self) -> None:
+        assert ArelleProcessingResult().factCount is None
 
     def test_duplicate_xBRL_JSON_property_is_gone(self) -> None:
         result = ArelleProcessingResult()

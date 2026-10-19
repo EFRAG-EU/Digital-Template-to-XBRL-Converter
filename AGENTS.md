@@ -137,7 +137,7 @@ driving the same pipeline.
 .xlsx  ──XlsxProcessor──▶  InlineReport (facts + aspects)
        ──Jinja templates──▶  HTML in the aoix template dialect
        ──ixbrltemplates.Parser──▶  Inline XBRL
-       ──▶ report package (.zip)  ──Arelle──▶  validation messages / viewer / xBRL-JSON
+       ──▶ report package (.zip)  ──Arelle──▶  validation messages / viewer
 ```
 
 `InlineReport.getInlineReport()` renders `mireport/report/inline_report_templates/` and then hands the
@@ -315,9 +315,11 @@ subclasses it with everything about how it looks (locale, theme, titles, aoix, r
 (`xbrl:canonicalValues`): facts in report order (or sorted, `sortFacts`) with ids `f1`..., a
 dimensionless number with no unit (OIM's `xbrli:pure`), namespaces only for prefixes used, footnotes as
 `xbrl:note` facts, with the `footnote` link type and group declared (xBRL-JSON predefines neither;
-Arelle reports `xbrlje:unknownLinkType` otherwise). `scripts/parse-and-ixbrl.py --json` writes one for a
-converted workbook, beside the output, and `ArelleReportProcessor.validateXbrlJson` validates it (loaded
-through Arelle's `loadFromOIM`) unless `--skip-validation`; Arelle no longer writes the script's JSON.
+Arelle reports `xbrlje:unknownLinkType` otherwise). This is the only xBRL-JSON the project produces:
+Arelle's `saveLoadableOIM` is not used. `scripts/parse-and-ixbrl.py --json` writes one for a converted
+workbook, beside the output, and the webapp writes one for every conversion; each is validated by
+`ArelleReportProcessor.validateXbrlJson` (Arelle loads OIM natively), in the webapp always and in the
+script unless `--skip-validation`. `scripts/check-report.py` validates a `.json` report the same way.
 
 ### Coverage reports (`mireport/coverage_report_generator/`)
 
@@ -340,7 +342,7 @@ declared duration.
 ### Arelle boundary (`mireport/arelle/`)
 
 All Arelle usage is confined here. `report_info.ArelleReportProcessor` validates report packages and
-generates viewers/xBRL-JSON via `arelle.api.Session`; `taxonomy_info` is the build-time side that
+generates viewers and validates packages and xBRL-JSON via `arelle.api.Session`; `taxonomy_info` is the build-time side that
 produces the taxonomy JSON; `support.py` adapts Arelle to the rest of the codebase —
 `ArelleProcessingResult` translates Arelle log records into `Message`s, and
 `ArelleQNameCanonicaliser` maps Arelle's per-document QName prefixes onto `mireport.xml.QName`'s
@@ -426,7 +428,7 @@ never pick up a developer's `.env`.
 | `routes.py` | The routes and request hooks on the `basic` blueprint, and `register_routes(app)`, which `create_app` calls. Handlers stay thin. It imports `migration`, so the migration routes come with it |
 | `app_setup.py` | Startup configuration: logging, feature flags, session backend, Arelle/taxonomy packages, PDF converter report, `brokenApp`, `getArelle`, `DEPLOYMENT_DATETIME` |
 | `conversion.py` | `Conversion` / `ConversionStore`, the typed view over the per-id session dicts |
-| `conversion_service.py` | The Excel → Inline XBRL pipeline (`doConversion`) and the viewer / xBRL-JSON generated from it. Flask-free: the caller passes in the Arelle processor and PDF mode |
+| `conversion_service.py` | The Excel → Inline XBRL pipeline (`doConversion`, which also writes the report as xBRL-JSON and has Arelle validate the package and the JSON) and the viewer generated from it. Flask-free: the caller passes in the Arelle processor and PDF mode |
 | `captcha.py` | The id-keyed math captcha and the captcha + CSRF check for `/upload` |
 | `forms.py` | Upload limits (`MAX_FILE_SIZE`, `MAX_PDF_COUNT`), image field map, form parsing |
 | `viewer.py` | Serving the viewer and its document set members (with the member CSP) |

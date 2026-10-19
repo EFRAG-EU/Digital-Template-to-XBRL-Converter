@@ -33,21 +33,6 @@ L = logging.getLogger(__name__)
 # Arelle splits its --plugins option on "|" (see CntlrCmdLine.run()).
 PLUGIN_SEPARATOR = "|"
 INLINE_DOCUMENT_SET_PLUGIN = "inlineXbrlDocumentSet"
-# Loads an xBRL-JSON (or xBRL-CSV) report as an instance, checking the OIM rules on the way.
-LOAD_FROM_OIM_PLUGIN = "loadFromOIM"
-
-
-def _singleFileFromResponseZip(stream: BytesIO, what: str) -> bytes:
-    """Return the content of the single file Arelle wrote to its response
-    zip, raising if the zip does not contain exactly one file."""
-    stream.seek(0)
-    with zipfile.ZipFile(stream, "r") as zf:
-        entries = zf.infolist()
-        if len(entries) != 1:
-            raise ArelleRelatedException(
-                f"{what} has gone wrong. Zip contents: {zf.namelist()}"
-            )
-        return zf.read(entries[0])
 
 
 def _filesFromResponseZip(stream: BytesIO, what: str) -> list[FilelikeAndFileName]:
@@ -234,49 +219,22 @@ class ArelleReportProcessor:
         source: FilelikeAndFileName,
         *,
         disableCalculationValidation: bool = False,
-        getReportAsJson: bool = False,
     ) -> ArelleProcessingResult:
-        """Validate the report package with Arelle.
-
-        With getReportAsJson the same validating session also produces the
-        xBRL-JSON rendering (result.has_json / result.xbrl_json), so a caller
-        wanting both pays for one Arelle session rather than two. Validation
-        is never switched off: Arelle needs it to build the PSVI.
-        """
+        """Validate the report package with Arelle."""
         options = self._makeOptions(
-            calcs="none" if disableCalculationValidation else "c11r",
-            plugins=["saveLoadableOIM"] if getReportAsJson else (),
-            pluginOptions=(
-                {"saveLoadableOIM": "report.json"} if getReportAsJson else None
-            ),
+            calcs="none" if disableCalculationValidation else "c11r"
         )
-        if not getReportAsJson:
-            return self._run(source, options)
-
-        jsonBytesIO = BytesIO()
-        result = self._run(source, options, jsonBytesIO)
-        try:
-            json = _singleFileFromResponseZip(
-                jsonBytesIO, "Arelle xBRL JSON generation"
-            )
-            jsonFilename = PurePath(source.filename).with_suffix(".json").name
-            result._xbrlJson = FilelikeAndFileName(
-                fileContent=json, filename=jsonFilename
-            )
-        except Exception as e:
-            result.addException(e)
-        return result
+        return self._run(source, options)
 
     def validateXbrlJson(self, document: FilelikeAndFileName) -> ArelleProcessingResult:
-        """Validate an xBRL-JSON document with Arelle: the OIM and xBRL-JSON rules as it loads,
-        then the same instance validation (calculations, UTR, duplicates) a report package
-        gets. Arelle reads it from a file, so it is written to a temporary one first."""
+        """Validate an xBRL-JSON document with Arelle, which loads OIM natively: the OIM and
+        xBRL-JSON rules as it loads, then the same instance validation (calculations, UTR,
+        duplicates) a report package gets. Arelle reads it from a file, so it is written to a
+        temporary one first."""
         with tempfile.TemporaryDirectory(prefix="mireport-xbrl-json-") as directory:
             path = Path(directory) / PurePath(document.filename).name
             path.write_bytes(document.fileContent)
-            options = self._makeOptions(
-                plugins=[LOAD_FROM_OIM_PLUGIN], entrypointFile=str(path)
-            )
+            options = self._makeOptions(entrypointFile=str(path))
             return self._runSession(options)
 
     def generateInlineViewer(
