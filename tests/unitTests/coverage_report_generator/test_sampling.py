@@ -243,6 +243,12 @@ class TestTypedDimensionSampleValue:
         assert typedDimensionSampleValue(dim, 35) == "2026-02-05"
 
 
+@dataclass(frozen=True)
+class FakeComposite:
+    numerator: FakeQName
+    denominator: FakeQName
+
+
 class FakeUTR:
     def __init__(
         self,
@@ -250,13 +256,29 @@ class FakeUTR:
         permitted: frozenset[FakeQName] = frozenset(),
         unitByPreferredId: dict[str, FakeQName] | None = None,
         preferredIsValid: bool = True,
+        composites: dict[str, tuple[FakeQName, FakeQName]] | None = None,
+        permittedByType: dict[str, frozenset[FakeQName]] | None = None,
     ) -> None:
         self._permitted = permitted
         self._unitByPreferredId = unitByPreferredId or {}
         self._preferredIsValid = preferredIsValid
+        self._composites = composites or {}
+        self._permittedByType = permittedByType
 
     def getUnitsForDataType(self, dataType: FakeQName) -> frozenset[FakeQName]:
+        if self._permittedByType is not None:
+            return self._permittedByType.get(dataType.localName, frozenset())
         return self._permitted
+
+    def compositeFor(self, dataType: FakeQName) -> FakeComposite | None:
+        if (sides := self._composites.get(dataType.localName)) is None:
+            return None
+        return FakeComposite(*sides)
+
+    def validComposite(
+        self, dataType: FakeQName, numerator: FakeQName, denominator: FakeQName
+    ) -> bool:
+        return self._composites.get(dataType.localName) is not None
 
     def getQNameForUnitId(self, unitId: str) -> FakeQName | None:
         return self._unitByPreferredId.get(unitId)

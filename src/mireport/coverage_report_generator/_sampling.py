@@ -16,9 +16,9 @@ sensibly default, so callers supply them via SampleEntityPeriod.
 from __future__ import annotations
 
 import functools
-from dataclasses import dataclass
-from datetime import date, timedelta
-from typing import TYPE_CHECKING, Any
+from dataclasses import dataclass, replace
+from datetime import date, datetime, timedelta
+from typing import TYPE_CHECKING, Any, NamedTuple
 
 from mireport.exceptions import SampleGenerationException
 from mireport.taxonomy import HypercubeType, PeriodType
@@ -136,6 +136,31 @@ class SampleEntityPeriod:
     periodInstant: str
     periodDuration: str
 
+    def shifted(self, years: int) -> SampleEntityPeriod:
+        """The same entity and period ``years`` earlier (a 29 February becomes the 28th).
+
+        Variant facts, which must not share a context with the fact they vary, go in
+        these earlier periods: see buildFacts()."""
+        if years == 0:
+            return self
+        return replace(
+            self,
+            periodInstant=_shiftYears(self.periodInstant, years),
+            periodDuration="/".join(
+                _shiftYears(part, years) for part in self.periodDuration.split("/")
+            ),
+        )
+
+
+def _shiftYears(moment: str, years: int) -> str:
+    """An OIM dateTime moved ``years`` back, in the same ``YYYY-MM-DDThh:mm:ss`` form."""
+    when = datetime.fromisoformat(moment)
+    try:
+        moved = when.replace(year=when.year - years)
+    except ValueError:  # 29 February
+        moved = when.replace(year=when.year - years, day=28)
+    return moved.isoformat(timespec="seconds")
+
 
 def unitFor(taxonomy: Taxonomy, concept: Concept) -> QName | None:
     """
@@ -165,26 +190,67 @@ def unitFor(taxonomy: Taxonomy, concept: Concept) -> QName | None:
     if (required := concept.getRequiredUnitQNames()) is not None:
         return min(required)
 
-    permitted = taxonomy.UTR.getUnitsForDataType(concept.dataType)
-    if not permitted:
+    if not taxonomy.UTR.getUnitsForDataType(concept.dataType):
+        # Either the UTR does not constrain this type (dimensionless), or it is a
+        # composite type whose unit is a divide (see compositeUnitFor()).
         return None
+    return _preferredUnit(taxonomy, concept.dataType, concept)
 
-    dataTypeName = concept.dataType.localName
+
+def _preferredUnit(taxonomy: Taxonomy, dataType: QName, concept: Concept) -> QName:
+    """The curated, else the only sensible, UTR unit for *dataType*; raises rather than
+    guessing among many. *concept* is only named in the messages."""
+    permitted = taxonomy.UTR.getUnitsForDataType(dataType)
+    dataTypeName = dataType.localName
     if (unitId := PREFERRED_UNIT_IDS.get(dataTypeName)) is not None:
         unit = taxonomy.UTR.getQNameForUnitId(unitId)
-        if unit is None or not taxonomy.UTR.valid(concept.dataType, unit):
+        if unit is None or not taxonomy.UTR.valid(dataType, unit):
             raise SampleGenerationException(
                 f"Preferred unit {unitId!r} is not valid for {dataTypeName} "
                 f"(concept {concept.qname})."
             )
         return unit
 
+    if not permitted:
+        raise SampleGenerationException(
+            f"The UTR permits no unit for {dataTypeName} (concept {concept.qname})."
+        )
     if len(permitted) > UNIT_AMBIGUITY_CUTOFF:
         raise SampleGenerationException(
             f"No preferred unit for {dataTypeName} (concept {concept.qname}). "
             f"The UTR permits {len(permitted)}; add one to PREFERRED_UNIT_IDS."
         )
     return min(permitted)
+
+
+def compositeUnitFor(
+    taxonomy: Taxonomy, concept: Concept
+) -> tuple[QName, QName] | None:
+    """
+    The (numerator, denominator) units to report *concept* in, if its type is a UTR
+    composite (emissions per monetary unit, say) and the taxonomy gives it no unit of its
+    own; else None.
+
+    Such a type has no named units, so unitFor() returns None for it, but that is not
+    "dimensionless": OIM reads a missing unit as xbrli:pure, which the UTR forbids for
+    these types. Each side takes the preferred unit of its own item type (see
+    PREFERRED_UNIT_IDS), and a side with none still raises rather than guessing.
+    """
+    if not concept.isNumeric or concept.getRequiredUnitQNames() is not None:
+        return None
+    if taxonomy.UTR.getUnitsForDataType(concept.dataType):
+        return None
+    if (composite := taxonomy.UTR.compositeFor(concept.dataType)) is None:
+        return None
+    sides: list[QName] = []
+    for itemType in (composite.numerator, composite.denominator):
+        if isinstance(itemType, str):
+            raise SampleGenerationException(
+                f"The UTR names {itemType} without a namespace as a side of "
+                f"{concept.dataType.localName} (concept {concept.qname})."
+            )
+        sides.append(_preferredUnit(taxonomy, itemType, concept))
+    return sides[0], sides[1]
 
 
 def extraUnitsFor(taxonomy: Taxonomy, concept: Concept) -> list[QName]:
@@ -436,6 +502,7 @@ def coreDimensionsFor(
     samplePeriod: SampleEntityPeriod,
     *,
     unitOverride: QName | None = None,
+    periodShift: int = 0,
 ) -> tuple[dict[str, str], set[QName]]:
     """
     The concept/entity/period/unit dimensions common to every fact for *concept*, and
@@ -446,7 +513,12 @@ def coreDimensionsFor(
     *unitOverride* reports the fact with that unit instead of unitFor()'s own choice --
     for exercising a UTR-permitted unit other than the one every other fact uses, not
     for anything unitFor() itself wouldn't already consider valid.
+
+    *periodShift* puts the fact that many years earlier (see SampleEntityPeriod.shifted()).
+    The unit is checked against the UTR here, so a fact the UTR would refuse is never
+    written.
     """
+    samplePeriod = samplePeriod.shifted(periodShift)
     qnames = {concept.qname}
     dimensions: dict[str, str] = {
         "concept": str(concept.qname),
@@ -459,8 +531,22 @@ def coreDimensionsFor(
     }
     unit = unitOverride if unitOverride is not None else unitFor(taxonomy, concept)
     if unit is not None:
+        if not taxonomy.UTR.valid(concept.dataType, unit):
+            raise SampleGenerationException(
+                f"Unit {unit} is not valid in the UTR for {concept.dataType.localName} "
+                f"(concept {concept.qname})."
+            )
         dimensions["unit"] = str(unit)
         qnames.add(unit)
+    elif (composite := compositeUnitFor(taxonomy, concept)) is not None:
+        numerator, denominator = composite
+        if not taxonomy.UTR.validComposite(concept.dataType, numerator, denominator):
+            raise SampleGenerationException(
+                f"Unit {numerator}/{denominator} is not valid in the UTR for "
+                f"{concept.dataType.localName} (concept {concept.qname})."
+            )
+        dimensions["unit"] = f"{numerator}/{denominator}"
+        qnames.update(composite)
     return dimensions, qnames
 
 
@@ -476,6 +562,7 @@ def buildFactDimensions(
     explicitOverrides: dict[Concept, Concept] | None = None,
     typedOverrides: dict[Concept, str] | None = None,
     unitOverride: QName | None = None,
+    periodShift: int = 0,
 ) -> tuple[dict[str, str], set[QName]]:
     """
     One fact's dimensions: every explicit dimension in *explicitRepresentative*
@@ -511,7 +598,11 @@ def buildFactDimensions(
         )
 
     dimensions, used = coreDimensionsFor(
-        taxonomy, concept, samplePeriod, unitOverride=unitOverride
+        taxonomy,
+        concept,
+        samplePeriod,
+        unitOverride=unitOverride,
+        periodShift=periodShift,
     )
     extraDimensions, extraUsed = buildDimensionValues(
         explicitChosen, defaultByDim, typedChosen
@@ -519,6 +610,133 @@ def buildFactDimensions(
     dimensions.update(extraDimensions)
     used.update(extraUsed)
     return dimensions, used
+
+
+class _Variant(NamedTuple):
+    """One more shape a concept's facts must show: a unit other than its usual one, or an
+    enumeration set's empty selection."""
+
+    unit: QName | None = None
+    emptySet: bool = False
+
+
+def variantsFor(taxonomy: Taxonomy, concept: Concept, *, nil: bool) -> list[_Variant]:
+    """
+    Every shape *concept*'s facts have to show, the usual one first: each unit
+    extraUnitsFor() names, or, for an enumeration set with members, its empty selection
+    (a valued report only; a nil fact has no value to be empty). A concept is one kind or
+    the other.
+    """
+    variants = [_Variant()]
+    variants.extend(_Variant(unit=unit) for unit in extraUnitsFor(taxonomy, concept))
+    if not nil and concept.isEnumerationSet and concept.getEEDomain():
+        variants.append(_Variant(emptySet=True))
+    return variants
+
+
+class _Rotation:
+    """Which variant the next fact for one concept shows, and which dimensions it already
+    has facts for.
+
+    A concept's facts are the proof-of-reportability fact and then one per dimension value
+    varied. The first takes the usual variant; each later one takes the next, round and
+    round, so units and the empty selection are shown at the same time as the dimension
+    values, not by facts of their own. What the facts did not reach is left over for
+    ``uncovered()``. A fact for dimensions already covered is skipped: two facts for one
+    context are duplicates, or alternatives, which a coverage report must not contain.
+    """
+
+    def __init__(self, variants: list[_Variant]) -> None:
+        self.variants = variants
+        self.count = 0
+        self._contexts: set[tuple[tuple[str, str], ...]] = set()
+
+    def take(self, dimensions: dict[str, str]) -> _Variant | None:
+        """The variant for a fact with *dimensions*, or None if there is one already.
+        The unit is not part of the context: facts differing only in unit share it."""
+        context = tuple(sorted((k, v) for k, v in dimensions.items() if k != "unit"))
+        if context in self._contexts:
+            return None
+        self._contexts.add(context)
+        variant = self.variants[self.count % len(self.variants)]
+        self.count += 1
+        return variant
+
+    def peek(self) -> _Variant:
+        return self.variants[self.count % len(self.variants)]
+
+    def uncovered(self) -> list[_Variant]:
+        return self.variants[self.count :]
+
+
+class _FactSink:
+    """The facts of one report as buildFacts() builds them, and what it noticed."""
+
+    def __init__(self, *, nil: bool) -> None:
+        self.nil = nil
+        self.facts: dict[str, Any] = {}
+        self.qnames: set[QName] = set()
+        self.emptyDomains: list[str] = []
+        self.emptySetDomains: list[str] = []
+        self.seenEmptyValue: set[Concept] = set()
+        # For each period shift used by a variant fact, whether it holds an instant fact
+        # and whether a duration one: see anchorShiftedPeriods().
+        self.shiftKinds: dict[int, set[bool]] = {}
+
+    def add(
+        self,
+        concept: Concept,
+        dimensions: dict[str, str],
+        used: set[QName],
+        *,
+        emptySet: bool = False,
+        shift: int = 0,
+    ) -> None:
+        self.qnames.update(used)
+        if emptySet:
+            value: str | None = ""
+            decimals: int | None = None
+            usedByValue: frozenset[QName] = frozenset()
+        else:
+            value, decimals, usedByValue = valueAndDecimalsFor(concept, nil=self.nil)
+            if not self.nil and value is None and concept not in self.seenEmptyValue:
+                # An enumeration *single* whose domain resolved to no members -- a
+                # property of the concept itself, not of whichever dimension this
+                # fact happens to vary, so it is only worth recording once per
+                # concept.
+                self.seenEmptyValue.add(concept)
+                self.emptyDomains.append(str(concept.qname))
+        self.qnames.update(usedByValue)
+        fact: dict[str, Any] = {"dimensions": dimensions, "value": value}
+        if decimals is not None:
+            fact["decimals"] = decimals
+        self.facts[f"f{len(self.facts) + 1}"] = fact
+        if shift:
+            self.shiftKinds.setdefault(shift, set()).add(
+                concept.periodType is PeriodType.Instant
+            )
+
+
+def anchorShiftedPeriods(
+    sink: _FactSink,
+    anchor: tuple[Concept, Callable[..., tuple[dict[str, str], set[QName]]]] | None,
+) -> None:
+    """
+    Give every shifted period that holds an instant fact a duration fact too.
+
+    A shifted instant is the end of the shifted year, and the xBRL-JSON reader needs an
+    instant to sit at the start or end of a duration the report declares. The first
+    shift always does (it is the start of the report's own year); a later one only if
+    some duration fact lives there. *anchor* is a duration concept and the function that
+    builds its proof-of-reportability dimensions; None when the taxonomy has no
+    duration concept, in which case there is nothing to anchor with.
+    """
+    if anchor is None:
+        return
+    concept, proof = anchor
+    for shift, kinds in sorted(sink.shiftKinds.items()):
+        if shift >= 2 and True in kinds and False not in kinds:
+            sink.add(concept, *proof(periodShift=shift), shift=shift)
 
 
 def buildFacts(
@@ -588,16 +806,16 @@ def buildFacts(
     its own default has nothing to vary it to and sits out of this fact rather than
     suppressing it.
 
-    An enumeration *set* concept whose domain is not empty also gets one further fact
-    with the empty-set value (see valueFor()), on top of whatever a plain fact would
-    otherwise carry -- an empty selection is a distinct, deliberately-valid shape, not
-    something a concept falls back to only when its domain happens to be empty.
-
-    A numeric concept with more than one UTR-permitted unit and no curated
-    PREFERRED_UNIT_IDS entry also gets one further fact per unit extraUnitsFor()
-    names, alongside the proof-of-reportability fact -- units are a per-concept
-    property, not a hypercube dimension, so this happens once per concept rather
-    than once per EffectiveHypercube.
+    No two facts share a context (concept, period and dimensions): a repeat of one
+    already emitted is skipped, and a coverage report must hold no duplicates and no
+    alternative facts. What each fact *shows* is a per-concept rotation (see
+    variantsFor() and _Rotation): the proof fact takes the usual unit and value, and
+    each further fact takes the next variant, so the other permitted units of a numeric
+    concept, and an enumeration set's empty selection, are shown by the same facts that
+    vary the dimensions. A variant no fact reached (a concept with no dimensions, or
+    fewer varied facts than variants) gets its own fact at the proof-of-reportability
+    dimensions in an earlier period, one further year back for each (see
+    SampleEntityPeriod.shifted()), so its context is its own.
 
     Returns (facts, namespaces used -- including the reserved xbrl alias and the
     sample entity's own namespace, "concept" entries left nil because an enumeration
@@ -606,50 +824,30 @@ def buildFacts(
     empty-set value rather than left nil, see valueFor() -- or "concept (dimension)"
     entries skipped because an explicit dimension's domain resolved to no members).
     """
-    facts: dict[str, Any] = {}
-    qnames: set[QName] = set()
-    emptyDomains: list[str] = []
-    emptySetDomains: list[str] = []
-    seenEmptyValue: set[Concept] = set()
-    index = 1
-
-    def addFact(
-        dimensions: dict[str, str],
-        used: set[QName],
-        *,
-        valueOverride: tuple[str | None, int | None, frozenset[QName]] | None = None,
-    ) -> None:
-        nonlocal index
-        qnames.update(used)
-        if valueOverride is not None:
-            value, decimals, usedByValue = valueOverride
-        else:
-            value, decimals, usedByValue = valueAndDecimalsFor(concept, nil=nil)
-            if not nil and value is None and concept not in seenEmptyValue:
-                # An enumeration *single* whose domain resolved to no members -- a
-                # property of the concept itself, not of whichever dimension this
-                # fact happens to vary, so it is only worth recording once per
-                # concept.
-                seenEmptyValue.add(concept)
-                emptyDomains.append(str(concept.qname))
-        qnames.update(usedByValue)
-        fact: dict[str, Any] = {"dimensions": dimensions, "value": value}
-        if decimals is not None:
-            fact["decimals"] = decimals
-        facts[f"f{index}"] = fact
-        index += 1
+    sink = _FactSink(nil=nil)
+    durationAnchor: (
+        tuple[Concept, Callable[..., tuple[dict[str, str], set[QName]]]] | None
+    ) = None
 
     for concept in concepts:
-        # Whether to add the extra empty-set fact below: only for the valued report,
-        # only for a set concept, and only when its domain has members -- a domain
-        # with none already gets the empty-set value from its one and only fact
-        # (valueFor()), so adding it again here would just be a duplicate.
         eeSetMembers = concept.getEEDomain() if concept.isEnumerationSet else None
-        addEmptySetFact = not nil and bool(eeSetMembers)
         if not nil and eeSetMembers is not None and not eeSetMembers:
-            emptySetDomains.append(str(concept.qname))
+            sink.emptySetDomains.append(str(concept.qname))
 
-        extraUnits = extraUnitsFor(taxonomy, concept)
+        rotation = _Rotation(variantsFor(taxonomy, concept, nil=nil))
+
+        def place(
+            make: Callable[..., tuple[dict[str, str], set[QName]]],
+            *,
+            _concept: Concept = concept,
+            _rotation: _Rotation = rotation,
+        ) -> None:
+            """Add the fact *make* builds, showing whichever variant is next, unless
+            there is a fact for those dimensions already."""
+            dimensions, used = make(unitOverride=_rotation.peek().unit)
+            if (variant := _rotation.take(dimensions)) is None:
+                return
+            sink.add(_concept, dimensions, used, emptySet=variant.emptySet)
 
         effectiveHypercubes = sorted(
             taxonomy.getEffectiveHypercubesForPrimaryItem(concept),
@@ -665,21 +863,14 @@ def buildFacts(
                 tuple(sorted(td for hc in eh.hypercubes for td in hc.typedDimensions)),
             ),
         )
+        proof: Callable[..., tuple[dict[str, str], set[QName]]]
         if not effectiveHypercubes:
             # No hypercube attaches to this concept at all, so there is no XBRL
             # Dimensions constraint to satisfy: every dimension is simply absent.
-            addFact(*coreDimensionsFor(taxonomy, concept, samplePeriod))
-            if addEmptySetFact:
-                addFact(
-                    *coreDimensionsFor(taxonomy, concept, samplePeriod),
-                    valueOverride=("", None, frozenset()),
-                )
-            for altUnit in extraUnits:
-                addFact(
-                    *coreDimensionsFor(
-                        taxonomy, concept, samplePeriod, unitOverride=altUnit
-                    )
-                )
+            proof = functools.partial(
+                coreDimensionsFor, taxonomy, concept, samplePeriod
+            )
+            place(proof)
 
         seenExplicit: set[tuple[Concept, Concept]] = set()
         seenTyped: set[Concept] = set()
@@ -730,18 +921,15 @@ def buildFacts(
                 # The proof-of-reportability fact for this concept: every
                 # dimension in this EffectiveHypercube at its representative/
                 # placeholder value, nothing varied.
-                addFact(*dimensionsWith())
-                if addEmptySetFact:
-                    addFact(*dimensionsWith(), valueOverride=("", None, frozenset()))
-                for altUnit in extraUnits:
-                    addFact(*dimensionsWith(unitOverride=altUnit))
+                proof = dimensionsWith
+                place(proof)
 
             for variedDim in explicitDims:
                 members = membersByDim[variedDim]
                 if not members:
                     if variedDim not in seenEmptyDomains:
                         seenEmptyDomains.add(variedDim)
-                        emptyDomains.append(f"{concept.qname} ({variedDim.qname})")
+                        sink.emptyDomains.append(f"{concept.qname} ({variedDim.qname})")
                     continue
 
                 variedDefault = defaultByDim[variedDim]
@@ -758,7 +946,11 @@ def buildFacts(
                         # shares this (dimension, member) -- no need to repeat it.
                         continue
                     seenExplicit.add(key)
-                    addFact(*dimensionsWith(explicitOverrides={variedDim: member}))
+                    place(
+                        functools.partial(
+                            dimensionsWith, explicitOverrides={variedDim: member}
+                        )
+                    )
 
             for variedDim in typedDims:
                 if variedDim in seenTyped:
@@ -766,7 +958,11 @@ def buildFacts(
                 seenTyped.add(variedDim)
                 for row in range(1, TYPED_DIMENSION_SAMPLE_ROWS + 1):
                     value = typedDimensionSampleValue(variedDim, row)
-                    addFact(*dimensionsWith(typedOverrides={variedDim: value}))
+                    place(
+                        functools.partial(
+                            dimensionsWith, typedOverrides={variedDim: value}
+                        )
+                    )
 
             explicitVariedAll: dict[Concept, Concept] = {}
             for variedDim in explicitDims:
@@ -785,19 +981,30 @@ def buildFacts(
                 for variedDim in typedDims
             }
             if len(explicitVariedAll) + len(typedVariedAll) > 1:
-                addFact(
-                    *dimensionsWith(
+                place(
+                    functools.partial(
+                        dimensionsWith,
                         explicitOverrides=explicitVariedAll,
                         typedOverrides=typedVariedAll,
                     )
                 )
 
+        # Variants the dimension facts did not reach, each in its own earlier period.
+        for shift, variant in enumerate(rotation.uncovered(), start=1):
+            dimensions, used = proof(unitOverride=variant.unit, periodShift=shift)
+            sink.add(concept, dimensions, used, emptySet=variant.emptySet, shift=shift)
+
+        if durationAnchor is None and concept.periodType is not PeriodType.Instant:
+            durationAnchor = (concept, proof)
+
+    anchorShiftedPeriods(sink, durationAnchor)
+
     namespaces = {
         "xbrl": NS_XBRL,
         samplePeriod.entityPrefix: samplePeriod.entityNamespace,
-        **namespacesFor(qnames),
+        **namespacesFor(sink.qnames),
     }
-    return facts, namespaces, emptyDomains, emptySetDomains
+    return sink.facts, namespaces, sink.emptyDomains, sink.emptySetDomains
 
 
 def makeDocument(
