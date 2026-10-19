@@ -1,11 +1,11 @@
 """Characterization tests pinning FactCreator behaviour before decomposition.
 
-The snapshot test captures every fact (concept, value, period, unit, decimals, scale, dimensions, enumeration) produced from
-the 1.2.0 sample, so any refactor that changes a value, unit, dimension or
+The snapshot test captures every fact the samples produce as an xBRL-JSON document (concept, XBRL value, entity,
+period, unit, decimals, dimensions, footnotes), so any refactor that changes a value, unit, dimension or
 period — not just the fact count — fails loudly. Regenerate the snapshot by
 running this module directly:
 
-    python tests/unitTests/xlsx_template_reader/test_fact_creator_characterization.py
+    python -m tests.unitTests.xlsx_template_reader.test_fact_creator_characterization
 """
 
 from __future__ import annotations
@@ -16,12 +16,14 @@ from pathlib import Path
 from typing import ClassVar, NamedTuple
 
 import pytest
+from tests.unitTests.xbrl_json_snapshot import report_to_xbrl_json
 
 from mireport.conversionresults import ConversionResultsBuilder, Severity
 from mireport.data.disclosures import VSME_DEFAULTS
 from mireport.exceptions import AmbiguousComponentException, InlineReportException
 from mireport.report import InlineReport
 from mireport.taxonomy import getTaxonomy, loadBuiltInTaxonomyJSON
+from mireport.xbrljson_reader import XbrlJsonProcessor
 from mireport.xlsx_template_reader._binder import WorkbookBinder
 from mireport.xlsx_template_reader._config import ConverterConfig
 from mireport.xlsx_template_reader._enumerations import (
@@ -62,52 +64,16 @@ def _results() -> ConversionResultsBuilder:
     return ConversionResultsBuilder(consoleOutput=False)
 
 
-def _canonicalFacts(report: InlineReport) -> list[dict]:
-    entries = []
-    for fact in report.facts:
-        value = str(fact.value)
-        if len(value) > MAX_VALUE_LENGTH:
-            value = f"{value[:MAX_VALUE_LENGTH]}…[{len(str(fact.value))} chars]"
-        entry: dict = {
-            "concept": str(fact.concept.qname),
-            "value": value,
-            "period": fact.period.reportPeriod.name,
-        }
-        # Only what a fact actually has, so an entry reads as what is special about it.
-        if fact.unit is not None:
-            entry["unit"] = str(fact.unit)
-        if fact.decimals is not None:
-            entry["decimals"] = fact.decimals
-        if fact.scale is not None:
-            entry["scale"] = fact.scale
-        if fact.explicit_values:
-            entry["explicit"] = {
-                str(d.dimension.qname): str(d.member.qname)
-                for d in fact.explicit_values
-            }
-        if fact.typed_values:
-            entry["typed"] = {
-                str(d.dimension.qname): d.value for d in fact.typed_values
-            }
-        if fact.enumeration is not None:
-            entry["enumeration"] = sorted(m.expandedName for m in fact.enumeration)
-        if fact.footnotes:
-            entry["footnotes"] = sorted(
-                str(fn.content)[:MAX_VALUE_LENGTH] for fn in fact.footnotes
-            )
-        entries.append(entry)
-    entries.sort(key=lambda e: json.dumps(e, sort_keys=True, ensure_ascii=False))
-    return entries
-
-
 def _snapshotDocument(sample: Path) -> dict:
+    """The sample's facts as xBRL-JSON (see tests/unitTests/xbrl_json_snapshot.py), with the scale
+    of each fact and the conversion's message counts as extension properties."""
     results = _results()
     report = XlsxProcessor.from_file(sample, results, VSME_DEFAULTS).createReport()
-    severities = Counter(m.severity.name for m in results.messages)
-    return {
-        "facts": _canonicalFacts(report),
-        "messageSeverities": dict(sorted(severities.items())),
-    }
+    return report_to_xbrl_json(
+        report,
+        report.taxonomy.entryPointSet,
+        dict(Counter(m.severity.name for m in results.messages)),
+    )
 
 
 @pytest.mark.slow
@@ -126,14 +92,36 @@ class TestFactSnapshot:
         expected = json.loads(snapshot.read_text(encoding="utf-8"))
         actual = _snapshotDocument(sample)
 
-        assert actual["messageSeverities"] == expected["messageSeverities"]
-
-        expected_facts = expected["facts"]
-        actual_facts = actual["facts"]
+        assert actual["documentInfo"] == expected["documentInfo"]
+        assert (
+            actual["mireport:messageSeverities"]
+            == expected["mireport:messageSeverities"]
+        )
+        expected_facts = list(expected["facts"].items())
+        actual_facts = list(actual["facts"].items())
         # Compare pairwise for a readable diff before falling back to counts.
         for exp, act in zip(expected_facts, actual_facts):
             assert act == exp
         assert len(actual_facts) == len(expected_facts)
+
+    @pytest.mark.parametrize(
+        "snapshot",
+        SNAPSHOT_CASES.values(),
+        ids=[p.stem for p in SNAPSHOT_CASES.values()],
+    )
+    def test_the_snapshot_is_a_document_our_xbrl_json_reader_accepts(
+        self, snapshot: Path
+    ):
+        """It is xBRL-JSON, not a private format: the reader takes every fact (footnotes aside)."""
+        document = json.loads(snapshot.read_text(encoding="utf-8"))
+        document["facts"] = {
+            k: {name: part for name, part in fact.items() if name != "links"}
+            for k, fact in document["facts"].items()
+            if fact["dimensions"]["concept"] != "xbrl:note"
+        }
+        processor = XbrlJsonProcessor(document, _results(), strict=True)
+        processor.createReport()
+        assert processor.factsAdded == len(document["facts"])
 
 
 # ---------------------------------------------------------------------------
@@ -689,7 +677,7 @@ if __name__ == "__main__":
     _SNAPSHOT_DIR.mkdir(parents=True, exist_ok=True)
     for sample, snapshot in SNAPSHOT_CASES.items():
         snapshot.write_text(
-            json.dumps(_snapshotDocument(sample), indent=1, ensure_ascii=False) + "\n",
+            json.dumps(_snapshotDocument(sample), indent=2, ensure_ascii=False) + "\n",
             encoding="utf-8",
         )
         print(f"Snapshot written to {snapshot}")

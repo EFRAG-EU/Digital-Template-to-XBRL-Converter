@@ -124,3 +124,11 @@ def test_tables_say_each_period_once_over_its_columns(
     assert spanning, "no table has a period spanning its columns"
     years = {start[:4] for _, start in spanning}
     assert len(years) >= 2  # the current period's and the prior's
+
+
+def test_every_table_is_sound(rendered: tuple[str, int, int]) -> None:
+    """Well-formed, every table rectangular once spans are applied, nothing loaded from outside
+    (tests/unitTests/table_integrity.py): the period headers span what they should."""
+    from tests.unitTests.table_integrity import problems
+
+    assert problems(rendered[0]) == []

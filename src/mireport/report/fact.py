@@ -172,6 +172,9 @@ class Fact:
         return output
 
     def _format_numeric_value(self) -> Markup:
+        # What is written is what is tagged: the document's number *is* the fact's value. So the
+        # digits shown follow the decimals (less any scale), except that 0 decimals, like none, shows
+        # the value whole -- rounding 12.5 to "12" would change the fact, not just its look.
         decimal_places: DecimalPlaces
         if self.decimals and self.decimals != "INF" and self.scale:
             decimal_places = self.decimals + self.scale

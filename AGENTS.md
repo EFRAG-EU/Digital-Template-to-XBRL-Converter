@@ -42,9 +42,12 @@ quicker for a single test and needed for a debugger.
 - After any change to the conversion pipeline, run `tests/integrationTests/test_expectedFactCounts.py`
   — it pins per-template fact counts and catches silent fact loss.
 - `tests/unitTests/xlsx_template_reader/test_fact_creator_characterization.py` snapshots every fact
-  (concept, value, aspects, footnotes) from the 1.2.0 and 1.3.0 samples. Regenerate deliberately, only
-  when a change to the output is intended:
-  `.venv-py314/Scripts/python tests/unitTests/xlsx_template_reader/test_fact_creator_characterization.py`
+  (as an xBRL-JSON document: concept, value, period, unit, dimensions, footnotes) from the 1.2.0 and
+  1.3.0 samples. Regenerate deliberately, only when a change to the output is intended:
+  `.venv-py314/Scripts/python -m tests.unitTests.xlsx_template_reader.test_fact_creator_characterization`
+- A test that needs a taxonomy shaped differently from the baked ones (a presentation group with no
+  hypercube, say) builds it with `tests/unitTests/synthetic_taxonomy.py` and registers it with the
+  `register_taxonomy` fixture, which removes it again. Don't hand-roll taxonomy JSON in a test file.
 - `tests/unitTests/test_import_cycles.py` fails on any new circular import inside `mireport`.
 
 ### Lint and types
@@ -249,6 +252,18 @@ their own column) nothing changes. **The VSME Excel template reports one period*
 no Excel data for a prior one: the disclosure config's `periods[].role` (`current`, the default, or
 `prior`) and the skip-if-absent rule are the groundwork, and reading prior *values* needs a template
 contract from EFRAG.
+
+### xBRL-JSON reader (`mireport/xbrljson_reader/`)
+
+`XbrlJsonProcessor` is the counterpart of `XlsxProcessor` for a report that already exists as xBRL-JSON:
+it maps OIM facts onto `FactBuilder` and returns an `InlineReport`, so the same themed Inline XBRL comes
+out. `scripts/xbrljson-to-ixbrl.py` drives it. The document's `documentInfo.taxonomy` is the report's
+entry point (a set of documents), and a taxonomy baked for exactly that set must already be loaded. It
+reads one entity. Every duration the facts use is declared as a report period, named from its dates;
+the one with the most facts is the default (a tie goes to the one that ends last). No period is ever
+the prior one: every OIM fact says its own period, so the reader infers nothing. A percent is shown
+x100 with `ix:scale -2` but keeps its value and decimals as given. In strict mode (`--strict`)
+anything that cannot be added or would appear nowhere in the rendered report is an error.
 
 ### Arelle boundary (`mireport/arelle/`)
 
