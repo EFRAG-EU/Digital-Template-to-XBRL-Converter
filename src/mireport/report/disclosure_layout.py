@@ -29,6 +29,20 @@ class TocGroup:
     items: list[TocItem]
 
 
+def withoutContinuations(
+    toc: list[TocGroup], sections: list[ReportSection]
+) -> list[TocGroup]:
+    """The table of contents without entries for blocks that continue the section above."""
+    continuations = {idx for idx, s in enumerate(sections, start=1) if s.continuation}
+    return [
+        TocGroup(
+            heading=g.heading,
+            items=[i for i in g.items if i.idx not in continuations],
+        )
+        for g in toc
+    ]
+
+
 class DisclosureLayoutStrategy(ABC):
     _STRATEGY_MAP: ClassVar[dict[str, type[DisclosureLayoutStrategy]]] = {}
     _FALLBACK_STRATEGY: ClassVar[type[DisclosureLayoutStrategy] | None] = None

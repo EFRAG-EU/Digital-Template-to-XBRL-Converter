@@ -252,8 +252,8 @@ concepts no hypercube of the role claims) and *cubes* (one hypercube's table). T
 decides which rows belong to which cube (the role's `HypercubeDeclaration`s, for the cubes the group
 presents); the presentation supplies only their order and headings, which is why a table's line items can
 sit as siblings of its hypercube. The group's style (Empty, List, Table, Hybrid) follows from its blocks,
-and the organiser makes one section per block, so a role can hold several tables (the second heading
-carries the abstract or cube that leads it) and line items before, between and after them. A line-items
+and the organiser makes one section per block, so a role can hold several tables (the role's title and table-of-contents entry come once, from the first
+block; each block's `subheading`, the abstract or cube that leads it, is an `h3` over it; later blocks are `continuation`s) and line items before, between and after them. A line-items
 block is a list; a cube block with one dimension is a table on that axis. A cube with **no** dimension is
 a *statement* (`GridBuilder.statement`): a row for each relationship in presentation order, a column for
 each period, and a row's preferred label picks its label, its part of the period (`periodStartLabel`,

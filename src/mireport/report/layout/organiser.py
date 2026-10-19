@@ -158,7 +158,7 @@ class ReportLayoutOrganiser:
                 )
                 continue
 
-            for block in group.blocks:
+            for blockNumber, block in enumerate(group.blocks):
                 factsForRel: dict[Relationship, list[Fact]] = defaultdict(list)
                 for rel in block.rows:
                     if not (facts := self.report.getFacts(rel.concept)):
@@ -178,7 +178,8 @@ class ReportLayoutOrganiser:
                         relationshipToFact=factsForRel,
                         presentation=group,
                         block=block,
-                        heading_suffix=self._block_heading(group, block),
+                        subheading=self._block_heading(group, block),
+                        continuation=blockNumber > 0,
                         entries=(
                             list_entries(factsForRel, self._period_rank)
                             if block.kind is BlockKind.LINE_ITEMS
@@ -188,7 +189,7 @@ class ReportLayoutOrganiser:
                 )
 
     def _block_heading(self, group: PresentationGroup, block: PresentationBlock) -> str:
-        """What tells a group's blocks apart in their headings: nothing for a group of one
+        """What tells a group's blocks apart in their sub-headings: nothing for a group of one
         block, otherwise the abstract heading that leads into the block, else its hypercube."""
         if len(group.blocks) <= 1:
             return ""
@@ -288,8 +289,8 @@ class ReportLayoutOrganiser:
     def _dimension_set_tables(
         self, section: ReportSection, placed: list[Placed]
     ) -> list[ReportSection]:
-        """A table for each set of dimensions among facts the group could not place, titled by
-        the dimensions ("... - by Target Category and Target Identifier")."""
+        """A table for each set of dimensions among facts the group could not place, with the
+        dimensions as its sub-heading ("By Target Category and Target Identifier")."""
         bySignature: dict[tuple[Concept, ...], list[Placed]] = {}
         for rel, fact in placed:
             dimensions = {*fact.explicit_dimensions, *fact.typed_dimensions}
@@ -299,7 +300,7 @@ class ReportLayoutOrganiser:
             self._section(
                 section,
                 self._grids.dimension_set(signature, items),
-                "by " + " and ".join(self._label(d) for d in signature)
+                "By " + " and ".join(self._label(d) for d in signature)
                 if signature
                 else "",
             )
@@ -308,13 +309,16 @@ class ReportLayoutOrganiser:
 
     @staticmethod
     def _section(
-        section: ReportSection, grid: FactGrid, heading_suffix: str = ""
+        section: ReportSection, grid: FactGrid, subheading: str | None = None
     ) -> TabularReportSection:
         return TabularReportSection(
             relationshipToFact=section.relationshipToFact,
             presentation=section.presentation,
             block=section.block,
-            heading_suffix=heading_suffix or section.heading_suffix,
+            # A table for leftover facts stands apart from its group, so it has the group's title
+            # again rather than continuing it.
+            subheading=section.subheading if subheading is None else subheading,
+            continuation=section.continuation and subheading is None,
             table=assemble_table(grid),
         )
 
