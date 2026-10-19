@@ -88,10 +88,8 @@ class TestMakeOptions:
             calcs="none",
             plugins=["ixbrl-viewer"],
             pluginOptions={"viewerURL": "viewer.js"},
-            entrypointFile="report.json",
         )
         assert options.calcs == "none"
-        assert options.entrypointFile == "report.json"
         # RuntimeOptions flattens pluginOptions into attributes via setattr
         assert options.viewerURL == "viewer.js"
 

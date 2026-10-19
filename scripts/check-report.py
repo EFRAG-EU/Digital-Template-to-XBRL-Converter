@@ -15,7 +15,6 @@ from mireport.conversionresults import (
     ConversionResultsBuilder,
     Severity,
 )
-from mireport.filesupport import FilelikeAndFileName
 
 
 def parse_args() -> argparse.Namespace:
@@ -104,23 +103,16 @@ def main() -> None:
     arp = ArelleReportProcessor(
         taxonomyPackages=taxonomy_packages, workOffline=workOffline
     )
+    # A zip, or an Inline XBRL or xBRL-JSON report, which is packaged in memory.
+    source = getOrCreateReportPackage(report_path)
     arelle_messages = []
-    if report_path.suffix.lower() == ".json":
-        # An xBRL-JSON report: Arelle loads it as it is.
-        arelle_result = arp.validateXbrlJson(
-            FilelikeAndFileName(
-                fileContent=report_path.read_bytes(), filename=report_path.name
-            )
-        )
-        arelle_messages.extend(arelle_result.messages)
-    elif not viewer_path:
-        source = getOrCreateReportPackage(report_path)
+    if not viewer_path:
         arelle_result = arp.validateReportPackage(
             source, disableCalculationValidation=args.ignore_calculation_warnings
         )
         arelle_messages.extend(arelle_result.messages)
     else:
-        arelle_result = arp.generateInlineViewer(getOrCreateReportPackage(report_path))
+        arelle_result = arp.generateInlineViewer(source)
         arelle_messages.extend(arelle_result.messages)
         if arelle_result.has_viewer:
             if viewer_path.is_file():

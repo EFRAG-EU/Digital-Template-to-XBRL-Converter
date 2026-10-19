@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import tempfile
 import threading
 import zipfile
 from importlib.metadata import PackageNotFoundError, metadata, version
@@ -23,7 +22,7 @@ from mireport.arelle.support import (
     ArelleVersionHolder,
 )
 from mireport.filesupport import FilelikeAndFileName
-from mireport.report.reportpackage import UNCONSTRAINED_REPORT_PACKAGE_JSON
+from mireport.report.reportpackage import buildReportPackage
 from mireport.version import VersionInformationTuple
 
 BIG_ARELLE_LOCK = threading.Lock()
@@ -106,18 +105,6 @@ class ArelleReportProcessor:
         options: RuntimeOptions,
         responseZipStream: BinaryIO | None = None,
     ) -> ArelleProcessingResult:
-        """Run Arelle on a report package, given as the request zip stream."""
-        with reportPackage.fileLike() as requestZipStream:
-            result = self._runSession(options, requestZipStream, responseZipStream)
-        assert requestZipStream.closed, "Forgot to close the stream."
-        return result
-
-    def _runSession(
-        self,
-        options: RuntimeOptions,
-        requestZipStream: BinaryIO | None = None,
-        responseZipStream: BinaryIO | None = None,
-    ) -> ArelleProcessingResult:
         ###############################
         #  Arelle is _NOT_ thread safe.
         ###############################
@@ -164,14 +151,19 @@ class ArelleReportProcessor:
                     PluginManager.close()
                 except Exception:
                     L.exception("Failed to reset Arelle package and plugin managers")
-                with Session() as session:
+                with (
+                    Session() as session,
+                    reportPackage.fileLike() as requestZipStream,
+                ):
                     session.run(
                         options,
                         sourceZipStream=requestZipStream,
                         responseZipStream=responseZipStream,
                         logFilters=[],
                     )
-                    return ArelleProcessingResult.fromSession(session)
+                    result = ArelleProcessingResult.fromSession(session)
+                assert requestZipStream.closed, "Forgot to close the stream."
+                return result
             except Exception as arelle_exception:
                 message = "Exception encountered while calling Arelle for report."
                 L.exception(message, exc_info=arelle_exception)
@@ -183,7 +175,6 @@ class ArelleReportProcessor:
         calcs: str = "c11r",
         plugins: Sequence[str] = (),
         pluginOptions: dict | None = None,
-        entrypointFile: str | None = None,
     ) -> RuntimeOptions:
         """RuntimeOptions shared by all report processing: validation on
         (calcs 1.1 round-to-nearest unless overridden, UTR, inconsistent
@@ -198,7 +189,6 @@ class ArelleReportProcessor:
         package, and it is inert for a single-document report.
         """
         return RuntimeOptions(
-            entrypointFile=entrypointFile,
             internetConnectivity="offline" if self.workOffline else "online",
             keepOpen=True,
             logFile="logToBuffer",
@@ -229,13 +219,8 @@ class ArelleReportProcessor:
     def validateXbrlJson(self, document: FilelikeAndFileName) -> ArelleProcessingResult:
         """Validate an xBRL-JSON document with Arelle, which loads OIM natively: the OIM and
         xBRL-JSON rules as it loads, then the same instance validation (calculations, UTR,
-        duplicates) a report package gets. Arelle reads it from a file, so it is written to a
-        temporary one first."""
-        with tempfile.TemporaryDirectory(prefix="mireport-xbrl-json-") as directory:
-            path = Path(directory) / PurePath(document.filename).name
-            path.write_bytes(document.fileContent)
-            options = self._makeOptions(entrypointFile=str(path))
-            return self._runSession(options)
+        duplicates) a report package gets. It goes in as one, built in memory."""
+        return self.validateReportPackage(packageReportDocument(document))
 
     def generateInlineViewer(
         self, source: FilelikeAndFileName
@@ -292,29 +277,30 @@ class ArelleReportProcessor:
         return taxonomyPackages
 
 
+def packageReportDocument(document: FilelikeAndFileName) -> FilelikeAndFileName:
+    """A single report document (Inline XBRL or xBRL-JSON) in an unconstrained report
+    package of its own, the only form Arelle takes a report in here."""
+    return buildReportPackage(document, topLevel=PurePath(document.filename).stem)
+
+
 def getOrCreateReportPackage(reportPackage: Path) -> FilelikeAndFileName:
-    """Return the given zip as-is, or wrap a single inline report document in an
-    unconstrained report package."""
+    """Return the given zip as-is, or wrap a single report document (Inline XBRL or
+    xBRL-JSON) in an unconstrained report package."""
     if not isinstance(reportPackage, Path):
         raise ArelleRelatedException(
             f"Passed a report package {reportPackage=} that is not a Path"
         )
 
-    zipName = reportPackage.name
     if zipfile.is_zipfile(reportPackage):
-        zipBytes = reportPackage.read_bytes()
-    elif reportPackage.suffix in {".xhtml", ".html", ".htm"}:
-        with BytesIO() as write_bio:
-            with zipfile.ZipFile(write_bio, "w") as z:
-                z.write(reportPackage, f"a/reports/{reportPackage.name}")
-                z.writestr(
-                    zinfo_or_arcname="a/META-INF/reportPackage.json",
-                    data=UNCONSTRAINED_REPORT_PACKAGE_JSON,
-                )
-            zipBytes = write_bio.getvalue()
-        zipName = reportPackage.with_suffix(".zip").name
-    else:
-        raise ArelleRelatedException(
-            f"Passed a {reportPackage=} that has an unrecognised file type."
+        return FilelikeAndFileName(
+            fileContent=reportPackage.read_bytes(), filename=reportPackage.name
         )
-    return FilelikeAndFileName(fileContent=zipBytes, filename=zipName)
+    if reportPackage.suffix in {".xhtml", ".html", ".htm", ".json"}:
+        return packageReportDocument(
+            FilelikeAndFileName(
+                fileContent=reportPackage.read_bytes(), filename=reportPackage.name
+            )
+        )
+    raise ArelleRelatedException(
+        f"Passed a {reportPackage=} that has an unrecognised file type."
+    )
