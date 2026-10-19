@@ -153,13 +153,24 @@ class SampleEntityPeriod:
 
 
 def _shiftYears(moment: str, years: int) -> str:
-    """An OIM dateTime moved ``years`` back, in the same ``YYYY-MM-DDThh:mm:ss`` form."""
+    """An OIM dateTime moved ``years`` back, in the same ``YYYY-MM-DDThh:mm:ss`` form.
+
+    xBRL-JSON may write the end of a day as ``T24:00:00``; Python's parser refuses that
+    before 3.14, so the day is shifted on its own and the suffix kept."""
+    if moment.endswith("T24:00:00"):
+        day = date.fromisoformat(moment.removesuffix("T24:00:00"))
+        return _shiftDay(day, years).isoformat() + "T24:00:00"
     when = datetime.fromisoformat(moment)
+    return datetime.combine(_shiftDay(when.date(), years), when.time()).isoformat(
+        timespec="seconds"
+    )
+
+
+def _shiftDay(day: date, years: int) -> date:
     try:
-        moved = when.replace(year=when.year - years)
+        return day.replace(year=day.year - years)
     except ValueError:  # 29 February
-        moved = when.replace(year=when.year - years, day=28)
-    return moved.isoformat(timespec="seconds")
+        return day.replace(year=day.year - years, day=28)
 
 
 def unitFor(taxonomy: Taxonomy, concept: Concept) -> QName | None:
