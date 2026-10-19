@@ -221,8 +221,9 @@ shown as the first day of 2025 and the last of 2024, and told to aoix as `instan
 producer that knows says so (`setNamedPeriod(name, at=PeriodPart.Start)`); one that has only an OIM period
 (xBRL-JSON) uses `setPeriod(oim)`, which `InlineReport.locatePeriod` resolves, preferring the end.
 
-Dimensional validity (a matching hypercube; a declared typed dimension must be present; typed value
-*content* is not checked) runs in `FactBuilder.buildFact`, the only place a `Fact` is made;
+Dimensional validity (a matching hypercube; a declared typed dimension must be present; a concept in no
+hypercube is unrestricted, as in XDT, so a taxonomy restricts it with a closed hypercube with no dimension;
+typed value *content* is not checked) runs in `FactBuilder.buildFact`, the only place a `Fact` is made;
 `FactBuilder.fromFact` copies one to change. Duplicates follow the
 OIM / the "Handling Duplicate Facts" WGN
 (<https://www.xbrl.org/WGN/xbrl-duplicates/WGN-2025-01-14/xbrl-duplicates-2025-01-14.html>; `report/duplicates.py`): `duplicateClass(a, b)` is complete, consistent, inconsistent, or

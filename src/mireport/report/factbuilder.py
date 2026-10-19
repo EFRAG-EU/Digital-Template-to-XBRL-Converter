@@ -334,6 +334,11 @@ class FactBuilder:
         (even unrelated) dimensional requirements. A declared typed dimension that is
         missing makes a fact invalid for that hypercube.
 
+        A concept in no hypercube is not restricted at all, so its facts may carry any
+        dimensions (XBRL Dimensions 1.0). A taxonomy that wants them restricted says so with
+        a closed hypercube that has no dimensions (the "Guidance on the use of dimensions"
+        WGN, section 3.4), which then matches only a fact with none.
+
         Known gap: a typed dimension's *value* is only checked to be present, not against
         the typed element's datatype.
         """
@@ -344,12 +349,6 @@ class FactBuilder:
             self._concept
         )
         if not effectiveHypercubes:
-            if explicitDims or typedDims:
-                dim_list = ", ".join(str(d.qname) for d in (*explicitDims, *typedDims))
-                raise InlineReportException(
-                    f"Unexpected dimension(s) [{dim_list}] set on FactBuilder for {self._concept}, which does not participate in any hypercube",
-                    self,
-                )
             return
 
         if any(

@@ -32,12 +32,14 @@ from mireport.taxonomy import Taxonomy
 
 def _taxonomy_document() -> dict[str, Any]:
     """``ByRegion`` needs a typed ``RegionAxis``; ``Both`` is in that cube and in another
-    (``ByKind``, explicit ``KindAxis``); ``Plain`` is in no cube."""
+    (``ByKind``, explicit ``KindAxis``); ``Plain`` is in no cube; ``Nulled`` is in a closed
+    cube with no dimension."""
     return taxonomy_json(
         "test://synthetic/fact-validation",
         concepts={
             qname("TableRegion"): concept("Table region", hypercube=True),
             qname("TableKind"): concept("Table kind", hypercube=True),
+            qname("TableNull"): concept("Table null", hypercube=True),
             qname("RegionAxis"): concept(
                 "Region [Axis]",
                 dimension=True,
@@ -48,6 +50,7 @@ def _taxonomy_document() -> dict[str, Any]:
             qname("ByRegion"): concept("By region"),
             qname("Both"): concept("Both"),
             qname("Plain"): concept("Plain"),
+            qname("Nulled"): concept("Nulled"),
         },
         presentation={},
         dimensions={
@@ -63,6 +66,7 @@ def _taxonomy_document() -> dict[str, Any]:
                     [qname("Both")], {qname("KindAxis"): [qname("KindA")]}
                 )
             },
+            "role-null": {qname("TableNull"): cube([qname("Nulled")], {})},
         },
         xsElements={
             qname("RegionType"): {"dataType": "xs:string", "baseDataType": "xs:string"}
@@ -102,6 +106,25 @@ def test_the_builder_accepts_the_typed_dimension(report: InlineReport) -> None:
         report.taxonomy.getConcept(qname("RegionAxis")), "UK"
     )
     assert fb.buildFact().typed_values[0].value == "UK"
+
+
+def test_a_concept_in_no_hypercube_may_carry_any_dimension(
+    report: InlineReport,
+) -> None:
+    fb = _builder(report, qname("Plain")).setTypedDimension(
+        report.taxonomy.getConcept(qname("RegionAxis")), "UK"
+    )
+    assert fb.buildFact().typed_values[0].value == "UK"
+
+
+def test_a_closed_hypercube_with_no_dimension_rejects_one(
+    report: InlineReport,
+) -> None:
+    _builder(report, qname("Nulled")).buildFact()
+    with pytest.raises(InlineReportException, match="No valid dimensional"):
+        _builder(report, qname("Nulled")).setTypedDimension(
+            report.taxonomy.getConcept(qname("RegionAxis")), "UK"
+        ).buildFact()
 
 
 def test_from_fact_copies_and_revalidates(report: InlineReport) -> None:
