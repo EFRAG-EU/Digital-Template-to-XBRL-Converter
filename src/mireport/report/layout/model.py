@@ -10,7 +10,9 @@ from typing import NamedTuple
 from mireport.report.fact import Fact
 from mireport.report.model import FactPeriod
 from mireport.taxonomy import (
+    BlockKind,
     Concept,
+    PresentationBlock,
     PresentationGroup,
     PresentationStyle,
     Relationship,
@@ -46,6 +48,9 @@ class TableStyle(Enum):
     SingleTypedDimensionColumn = auto()
     SingleExplicitDimensionColumn = auto()
     SingleExplicitDimensionRow = auto()
+    Statement = auto()
+    """A hypercube with no dimension: a row for each of its relationships in presentation order,
+    a column for each of the report's periods."""
     Other = auto()
     """Derived from the facts' own dimensions, because the taxonomy's presentation gave no
     hypercube to follow."""
@@ -57,6 +62,8 @@ class TableCell:
 
     fact: Fact | None
     suppress_unit: bool
+    negated: bool = False
+    """Whether the number is shown with the opposite sign to its value, as its row's label says."""
 
 
 @dataclass(slots=True, frozen=True)
@@ -87,12 +94,15 @@ class FactGrid:
 
     style: TableStyle
     data: list[list[Fact | None]]
-    row_labels: Sequence[Concept | str]
+    row_labels: Sequence[Concept | Relationship | str]
     row_heading_label: Concept | str | None
-    col_labels: Sequence[Concept | str]
+    col_labels: Sequence[Concept | str | None]
     period_axis: bool = False
     """Whether the columns are each column of the table once per period (the same label repeated),
     because a column held facts from more than one period."""
+    col_periods: Sequence[FactPeriod | None] = ()
+    """The period each column is for, when the grid knows it. Otherwise it is worked out from the
+    facts in the column, which cannot be done for one that holds a period and its start."""
 
 
 @dataclass(slots=True, frozen=True)
@@ -118,6 +128,8 @@ class ReportSection:
     presentation: PresentationGroup
     # Set when one presentation group yields several sections, e.g. a table per dimension set.
     heading_suffix: str = field(default="", kw_only=True)
+    # The block of the group this section shows, when the group is laid out block by block.
+    block: PresentationBlock | None = field(default=None, kw_only=True)
     # What a list section shows, line by line; empty for any other kind of section.
     entries: tuple[ListEntry, ...] = field(default=(), kw_only=True, compare=False)
 
@@ -127,7 +139,13 @@ class ReportSection:
 
     @property
     def style(self) -> PresentationStyle:
-        return self.presentation.style
+        # A block is shown as what it is, whatever the group as a whole is (a hybrid group is
+        # lists and tables); a section with no block is shown as its group is.
+        if self.block is None:
+            return self.presentation.style
+        if self.block.kind is BlockKind.CUBE:
+            return PresentationStyle.Table
+        return PresentationStyle.List
 
     @property
     def hasFacts(self) -> bool:

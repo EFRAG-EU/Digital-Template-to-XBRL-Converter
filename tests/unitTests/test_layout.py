@@ -26,7 +26,9 @@ from mireport.report.layout.headers import (
 from mireport.report.model import FactPeriod, PeriodPart, ReportPeriod
 from mireport.report.periods import DurationPeriodHolder
 from mireport.taxonomy import (
+    BlockKind,
     Concept,
+    PresentationBlock,
     PresentationGroup,
     PresentationStyle,
     Relationship,
@@ -168,10 +170,11 @@ class TestGetTableUnit:
         f = _fact(numeric=False, unit=None)
         assert table_unit([[f]]) is None
 
-    def test_mix_numeric_and_non_numeric(self):
+    def test_mix_numeric_and_non_numeric_has_no_table_unit(self):
         f_num = _fact(numeric=True, unit="EUR")
         f_text = _fact(numeric=False, unit=None)
-        assert table_unit([[f_num, f_text]]) == "EUR"
+        assert table_unit([[f_num, f_text]]) is None
+        assert column_units([[f_num, f_text]]) == ["EUR", None]
 
 
 class TestGetTablePeriod:
@@ -460,6 +463,7 @@ class TestCreateReportSections:
         group = MagicMock()
         group.style = PresentationStyle.List
         group.relationships = [rel]
+        group.blocks = (PresentationBlock(BlockKind.LINE_ITEMS, (rel,), (rel,)),)
 
         o = _organiser(
             facts_by_concept={concept: [plain, dimensional]},
@@ -483,6 +487,7 @@ class TestCreateReportSections:
         group = MagicMock()
         group.style = PresentationStyle.Table
         group.relationships = [rel]
+        group.blocks = (PresentationBlock(BlockKind.CUBE, (rel,), (rel,)),)
 
         o = _organiser(
             facts_by_concept={concept: [plain, dimensional]},

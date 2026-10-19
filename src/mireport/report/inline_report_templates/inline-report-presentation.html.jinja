@@ -189,7 +189,7 @@
                     {% set rowloop = loop %}
                     <tr>
                     {% for column in row %}
-                        <th colspan="{{ column.colspan }}" rowspan="{{ column.rowspan }}" class="{% if column.numeric %}numeric{% elif section.table.numeric and not loop.first %}numeric{% elif not loop.first and rowloop.first and (row | count <= 2 or column.isPeriod)  %}center{% else %}noop{% endif %}">
+                        <th colspan="{{ column.colspan }}" rowspan="{{ column.rowspan }}" class="{% if column.numeric %}numeric{% elif section.table.numeric and not loop.first %}numeric{% elif column.isPeriod and column.colspan > 1 %}numeric{% elif not loop.first and rowloop.first and (row | count <= 2 or column.isPeriod)  %}center{% else %}noop{% endif %}">
                         {% if column.value is none %}
                             {# nothing to do #}
                         {% elif column.value is string %}
@@ -224,7 +224,7 @@
                         <td></td>
                             {% else %}
                         <td {% if cell.fact.concept.isNumeric %}class="numeric"{% endif %}>
-                        {{ macros.render_fact_value(cell.fact, cell.suppress_unit) }}{{ macros.footnote_refs(cell.fact.footnotes, footnote_manager) }}{% set ns.fact_count = ns.fact_count + 1 %}
+                        {{ macros.render_fact_value(cell.fact, cell.suppress_unit, cell.negated) }}{{ macros.footnote_refs(cell.fact.footnotes, footnote_manager) }}{% set ns.fact_count = ns.fact_count + 1 %}
                         </td>
                             {% endif %}
                         {% endfor %}

@@ -125,7 +125,7 @@ def external_textblock(taxonomy):
             for c in sorted(taxonomy.concepts, key=str)
             if c.isTextblock
             and c.isReportable
-            and taxonomy.getExplicitDimensionsForPrimaryItem(c)
+            and taxonomy.getAllExplicitDimensionsForPrimaryItem(c)
             <= taxonomy.defaultedDimensions
         ),
         None,

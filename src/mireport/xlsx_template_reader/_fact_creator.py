@@ -189,7 +189,7 @@ class FactCreator:
         }
 
         for dn, stuff in reportable.copy().items():
-            required_dims = self.taxonomy.getExplicitDimensionsForPrimaryItem(
+            required_dims = self.taxonomy.getAllExplicitDimensionsForPrimaryItem(
                 stuff.concept
             )
             preset = frozenset(preset_dims.get(stuff, {}).keys())

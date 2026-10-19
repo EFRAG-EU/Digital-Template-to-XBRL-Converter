@@ -9,7 +9,7 @@ import logging
 import re
 import warnings
 from collections import Counter, defaultdict
-from collections.abc import Callable, Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from enum import Enum, StrEnum, auto
 from functools import cache, cached_property
@@ -718,10 +718,22 @@ class Relationship(NamedTuple):
         fallbackToAnyLang: bool = False,
         fallbackToQName: bool = False,
     ) -> str | None:
-        """Get the label for this relationship's concept."""
-        labelRole = self.preferredLabel or STANDARD_LABEL_ROLE
+        """Get the label for this relationship's concept: in its preferred label role, else (as
+        XBRL does for a concept with no label in that role) its standard label."""
+        for labelRole in dict.fromkeys(
+            (self.preferredLabel or STANDARD_LABEL_ROLE, STANDARD_LABEL_ROLE)
+        ):
+            if (
+                label := self.concept.getLabelForRole(
+                    labelRole,
+                    requestedLanguage,
+                    removeSuffix=removeSuffix,
+                    fallbackToAnyLang=fallbackToAnyLang,
+                )
+            ) is not None:
+                return label
         return self.concept.getLabelForRole(
-            labelRole,
+            STANDARD_LABEL_ROLE,
             requestedLanguage,
             removeSuffix=removeSuffix,
             fallbackLabel=fallbackLabel,
@@ -751,6 +763,48 @@ class Relationship(NamedTuple):
         )
 
 
+class BlockKind(Enum):
+    """What a block of a presentation group is shown as."""
+
+    LINE_ITEMS = auto()
+    """Reportable concepts that no hypercube of the role claims: a list."""
+
+    CUBE = auto()
+    """The reportable concepts one hypercube declares as primary items in this role, with the
+    hypercube's own structure (itself, its axes and their members): a table."""
+
+
+@dataclass(frozen=True, slots=True)
+class PresentationBlock:
+    """One part of a presentation group, in presentation order: a run of line items, or one
+    hypercube's table. A group is a sequence of these ("line items, table, line items")."""
+
+    kind: BlockKind
+    relationships: tuple[Relationship, ...]
+    """Every relationship of the block, in presentation order: its rows, its hypercube
+    structure, and the abstract headings that lead into it."""
+    rows: tuple[Relationship, ...]
+    """The reportable relationships of the block, in presentation order."""
+    hypercube: HypercubeDeclaration | None = None
+    """The declaration this block is the table of; None for line items."""
+    heading: Relationship | None = None
+    """The first abstract relationship leading into the block, if any."""
+
+
+class _BlockRun:
+    """A block being collected while a group's relationships are walked in order."""
+
+    __slots__ = ("declaration", "prefix", "relationships", "rows")
+
+    def __init__(
+        self, declaration: HypercubeDeclaration | None, prefix: list[Relationship]
+    ) -> None:
+        self.declaration = declaration
+        self.prefix = tuple(prefix)
+        self.relationships: list[Relationship] = list(prefix)
+        self.rows: list[Relationship] = []
+
+
 class PresentationGroup(NamedTuple):
     taxonomy: Taxonomy
     style: PresentationStyle
@@ -758,6 +812,7 @@ class PresentationGroup(NamedTuple):
     definition: str
     labels: Mapping[str, str]
     relationships: tuple[Relationship, ...]
+    blocks: tuple[PresentationBlock, ...] = ()
 
     def __eq__(self, other: object) -> bool:
         if self is other:
@@ -804,52 +859,118 @@ class PresentationGroup(NamedTuple):
                     roleUri, indent, taxonomy.getConcept(concept_qname), preferredLabel
                 )
             )
+        # A cube is a table of this group only if the group presents its hypercube. One the
+        # definition linkbase declares but the presentation never shows is left to the facts to
+        # lay out (see layout.organiser).
+        presented = {rel.concept for rel in relationships}
+        blocks = cls._identifyBlocks(
+            relationships,
+            [
+                d
+                for d in taxonomy.getDeclarationsForRole(roleUri)
+                if d.hypercube in presented
+            ],
+        )
         return cls(
             taxonomy,
-            cls._identifyPresentationStyle(relationships),
+            cls._identifyPresentationStyle(blocks),
             roleUri,
             str(metaData.get("definition", "")).strip(),
             metaData.get("labels", {}),
             tuple(relationships),
+            blocks,
+        )
+
+    @classmethod
+    def _identifyBlocks(
+        cls,
+        rels: Sequence[Relationship],
+        declarations: Sequence[HypercubeDeclaration],
+    ) -> tuple[PresentationBlock, ...]:
+        """Cut a group's relationships into blocks, in presentation order.
+
+        Which concepts are a table's rows is the definition linkbase's to say, not the
+        presentation's: for a hypercube the group presents, a reportable concept is a row of it
+        if the group's role declares it a primary item of that hypercube, wherever it sits in
+        the tree (a table's line items are commonly siblings of the table, or a branch of their
+        own); otherwise it is a line item. A hypercube's own structure (itself, its axes, their members) goes with
+        it. The presentation supplies the order, and the abstract headings that lead into a block.
+
+        A new block starts whenever the claiming hypercube changes (none, or another one)."""
+        claimedBy: dict[Concept, HypercubeDeclaration] = {}
+        structureOf: dict[Concept, list[HypercubeDeclaration]] = defaultdict(list)
+        for declaration in declarations:
+            for item in declaration.primaryItems:
+                claimedBy.setdefault(item, declaration)
+            own = {declaration.hypercube, *declaration.typedDimensions}
+            for signature in declaration.explicitDimensions:
+                own.add(signature.dimension)
+                own.update(signature.domain)
+            for concept in own:
+                structureOf[concept].append(declaration)
+
+        runs: list[_BlockRun] = []
+        current: _BlockRun | None = None
+        # Abstract headings seen since the last row or cube structure: they lead into whatever
+        # block comes next, unless that is the block already open.
+        leading: list[Relationship] = []
+
+        def attach(rel: Relationship, owner: HypercubeDeclaration | None) -> _BlockRun:
+            nonlocal current, leading
+            if current is None or current.declaration is not owner:
+                current = _BlockRun(owner, leading)
+                runs.append(current)
+            else:
+                current.relationships.extend(leading)
+            leading = []
+            current.relationships.append(rel)
+            return current
+
+        for rel in rels:
+            concept = rel.concept
+            if concept.isReportable:
+                attach(rel, claimedBy.get(concept)).rows.append(rel)
+            elif concept in structureOf:
+                owners = structureOf[concept]
+                owner = (
+                    current.declaration
+                    if current is not None and current.declaration in owners
+                    else owners[0]
+                )
+                attach(rel, owner)
+            else:
+                leading.append(rel)
+        if current is not None:
+            current.relationships.extend(leading)
+
+        return tuple(
+            PresentationBlock(
+                BlockKind.LINE_ITEMS if run.declaration is None else BlockKind.CUBE,
+                tuple(run.relationships),
+                tuple(run.rows),
+                run.declaration,
+                run.prefix[0] if run.prefix else None,
+            )
+            for run in runs
         )
 
     @classmethod
     def _identifyPresentationStyle(
-        cls, rels: Iterable[Relationship]
+        cls, blocks: Iterable[PresentationBlock]
     ) -> PresentationStyle:
-        hasHypercubes = any(rel for rel in rels if rel.concept.isHypercube)
-        hasReportable = any(rel for rel in rels if rel.concept.isReportable)
-        if not hasReportable:
-            return PresentationStyle.Empty
-        if hasReportable and not hasHypercubes:
-            return PresentationStyle.List
-
-        listStyle = False
-        tableStyle = False
-
-        inHypercube = [False]
-        hypercubeDepth = [0]
-        for rel in rels:
-            if inHypercube[-1] and (0 == rel.depth or rel.depth < hypercubeDepth[-1]):
-                hypercubeDepth.pop()
-                inHypercube.pop()
-            if rel.concept.isHypercube:
-                inHypercube.append(True)
-                hypercubeDepth.append(rel.depth)
-            if rel.concept.isReportable:
-                if inHypercube[-1] and rel.depth >= hypercubeDepth[-1]:
-                    tableStyle = True
-                else:
-                    listStyle = True
-
-        match (tableStyle, listStyle):
+        """Empty (nothing reportable), List (every reportable is a line item), Table (every
+        one is a row of a hypercube) or Hybrid (both)."""
+        blocks = tuple(blocks)
+        hasTable = any(b.kind is BlockKind.CUBE and b.rows for b in blocks)
+        hasList = any(b.kind is BlockKind.LINE_ITEMS for b in blocks)
+        match (hasTable, hasList):
             case (True, True):
                 return PresentationStyle.Hybrid
             case (True, False):
                 return PresentationStyle.Table
             case (False, True):
                 return PresentationStyle.List
-            case (False, False) | _:
+            case _:
                 return PresentationStyle.Empty
 
 
@@ -983,15 +1104,15 @@ class EffectiveHypercube:
 
 
 @cache
-def _getDimensionsForHypercube(
+def _getAllDimensionsForHypercube(
     taxonomy: Taxonomy, hypercube: Concept
 ) -> frozenset[Concept]:
     """The union, across every base-set this hypercube participates in, of all
     its dimensions (explicit and typed). This is not a valid dimensional
     signature by itself -- see getDeclarationsForHypercube()."""
-    return taxonomy.getExplicitDimensionsForHypercube(
+    return taxonomy.getAllExplicitDimensionsForHypercube(
         hypercube
-    ) | taxonomy.getTypedDimensionsForHypercube(hypercube)
+    ) | taxonomy.getAllTypedDimensionsForHypercube(hypercube)
 
 
 @cache
@@ -1072,11 +1193,6 @@ class Taxonomy:
             for concept, refs in referencesByConcept.items()
         }
 
-        self._groups: tuple[PresentationGroup, ...] = tuple(
-            PresentationGroup.fromJSON(self, roleUri, bits)
-            for roleUri, bits in presentation.items()
-        )
-
         self._lookupConceptsByName: dict[str, list[Concept]] = defaultdict(list)
         for concept in concepts.values():
             self._lookupConceptsByName[concept.qname.localName].append(concept)
@@ -1114,6 +1230,9 @@ class Taxonomy:
         self._hypercubeDeclarations: list[HypercubeDeclaration] = []
         self._declarationsByHypercube: dict[Concept, list[HypercubeDeclaration]] = (
             defaultdict(list)
+        )
+        self._declarationsByRole: dict[str, list[HypercubeDeclaration]] = defaultdict(
+            list
         )
         self._effectiveHypercubesByPrimaryItem: dict[
             Concept, list[EffectiveHypercube]
@@ -1207,6 +1326,7 @@ class Taxonomy:
                 )
                 self._hypercubeDeclarations.append(declaration)
                 self._declarationsByHypercube[hc_concept].append(declaration)
+                self._declarationsByRole[role].append(declaration)
 
                 if unsupportedReason is not None:
                     defects.append(unsupportedReason)
@@ -1244,6 +1364,12 @@ class Taxonomy:
             dimension: frozenset(domainlist)
             for dimension, domainlist in domainByDimension.items()
         }
+
+        # After the declarations: which concepts are a table's rows comes from them.
+        self._groups: tuple[PresentationGroup, ...] = tuple(
+            PresentationGroup.fromJSON(self, roleUri, bits)
+            for roleUri, bits in presentation.items()
+        )
 
         if unsupportedRoles:
             # Warn rather than raise so the rest of the taxonomy stays usable.
@@ -1500,6 +1626,18 @@ class Taxonomy:
         self._rejectUnsupported(hypercube)
         return frozenset(self._declarationsByHypercube.get(hypercube, ()))
 
+    def getDeclarationsForRole(self, roleUri: str) -> tuple[HypercubeDeclaration, ...]:
+        """The positive hypercubes this role declares that mireport can model, in declaration
+        order: the cubes whose primary items are table rows in that role's presentation.
+
+        Unlike getDeclarationsForHypercube(), never raises for an unsupported cube; such a cube
+        is simply not one of the role's tables."""
+        return tuple(
+            d
+            for d in self._declarationsByRole.get(roleUri, ())
+            if d.modelled and d.type is HypercubeType.Positive
+        )
+
     def getEffectiveHypercubesForPrimaryItem(
         self, primaryItem: Concept
     ) -> frozenset[EffectiveHypercube]:
@@ -1514,7 +1652,9 @@ class Taxonomy:
         self._rejectUnsupported(primaryItem)
         return frozenset(self._effectiveHypercubesByPrimaryItem.get(primaryItem, ()))
 
-    def getTypedDimensionsForHypercube(self, hypercube: Concept) -> frozenset[Concept]:
+    def getAllTypedDimensionsForHypercube(
+        self, hypercube: Concept
+    ) -> frozenset[Concept]:
         """The union, across every base-set this hypercube participates in, of its
         typed dimensions. This is not a valid dimensional signature by itself --
         see getDeclarationsForHypercube()."""
@@ -1524,7 +1664,7 @@ class Taxonomy:
             for td in declaration.typedDimensions
         )
 
-    def getExplicitDimensionsForHypercube(
+    def getAllExplicitDimensionsForHypercube(
         self, hypercube: Concept
     ) -> frozenset[Concept]:
         """The union, across every base-set this hypercube participates in, of its
@@ -1536,13 +1676,13 @@ class Taxonomy:
             for ed in declaration.explicitDimensions
         )
 
-    def getDimensionsForHypercube(self, hypercube: Concept) -> frozenset[Concept]:
+    def getAllDimensionsForHypercube(self, hypercube: Concept) -> frozenset[Concept]:
         """The union, across every base-set this hypercube participates in, of all
         its dimensions (explicit and typed). This is not a valid dimensional
         signature by itself -- see getDeclarationsForHypercube()."""
-        return _getDimensionsForHypercube(self, hypercube)
+        return _getAllDimensionsForHypercube(self, hypercube)
 
-    def getPrimaryItemsForHypercube(self, hypercube: Concept) -> frozenset[Concept]:
+    def getAllPrimaryItemsForHypercube(self, hypercube: Concept) -> frozenset[Concept]:
         """This aggregates across all base-sets to give all the primary items specified for the given hypercube."""
         return frozenset(
             primaryItem
@@ -1550,7 +1690,7 @@ class Taxonomy:
             for primaryItem in declaration.primaryItems
         )
 
-    def getExplicitDimensionsForPrimaryItem(
+    def getAllExplicitDimensionsForPrimaryItem(
         self, primaryItem: Concept
     ) -> frozenset[Concept]:
         """The union, across every applicable hypercube/base-set, of the explicit
@@ -1563,7 +1703,7 @@ class Taxonomy:
             for ed in hc.explicitDimensions
         )
 
-    def getTypedDimensionsForPrimaryItem(
+    def getAllTypedDimensionsForPrimaryItem(
         self, primaryItem: Concept
     ) -> frozenset[Concept]:
         """The union, across every applicable hypercube/base-set, of the typed

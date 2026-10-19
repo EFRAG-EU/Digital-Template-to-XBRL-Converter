@@ -231,10 +231,23 @@ The report's structure is derived from the taxonomy's presentation linkbase:
 `DisclosureLayoutStrategy` selected per entry point (`layoutStrategy` in the disclosure JSON), which also
 builds the table of contents and section labels. The package is `model` (sections, tables), `grid` (one
 `GridBuilder`: say which row and column each fact belongs to, and it fills the grid), `headers` (pure
-functions: what a table says once and what it says per column) and `organiser`. A *list* group shows one
-line per concept; a *table* group follows its hypercube. A dimensional fact in a list group gets a table
-built from its own dimensions ("... - by Target Category and Target Identifier"), so a taxonomy that
-defines its hypercubes only in the definition linkbase still renders everything.
+functions: what a table says once and what it says per column) and `organiser`.
+
+A presentation group is a sequence of **blocks** (`PresentationGroup.blocks`): *line items* (reportable
+concepts no hypercube of the role claims) and *cubes* (one hypercube's table). The definition linkbase
+decides which rows belong to which cube (the role's `HypercubeDeclaration`s, for the cubes the group
+presents); the presentation supplies only their order and headings, which is why a table's line items can
+sit as siblings of its hypercube. The group's style (Empty, List, Table, Hybrid) follows from its blocks,
+and the organiser makes one section per block, so a role can hold several tables (the second heading
+carries the abstract or cube that leads it) and line items before, between and after them. A line-items
+block is a list; a cube block with one dimension is a table on that axis. A cube with **no** dimension is
+a *statement* (`GridBuilder.statement`): a row for each relationship in presentation order, a column for
+each period, and a row's preferred label picks its label, its part of the period (`periodStartLabel`,
+`periodEndLabel`) and its sign (`negatedLabel`: the row shows the opposite sign to the fact's value, as
+aoix's `sign=flip`, so the tagged value is unchanged). A concept shows in every role that claims it. Rows are
+flat, not indented by depth. A dimensional fact in a line-items block gets a table built from its own
+dimensions ("... - by Target Category and Target Identifier"), so a taxonomy that defines its hypercubes
+only in the definition linkbase still renders everything.
 `report.requireAllFactsRendered = True` turns any fact that would appear nowhere into an error instead
 of leaving it out.
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from decimal import Decimal
 from typing import TYPE_CHECKING, NamedTuple, Protocol, runtime_checkable
 
 from markupsafe import Markup, escape
@@ -147,8 +148,9 @@ class Fact:
     def __hash__(self) -> int:
         return hash(self.__key())
 
-    def html_format_value(self) -> Markup:
-        """Return the value formatted for HTML with locale-aware numeric formatting."""
+    def html_format_value(self, negated: bool = False) -> Markup:
+        """Return the value formatted for HTML with locale-aware numeric formatting. ``negated``
+        shows a number with the opposite sign to its value."""
         if self.concept.isBoolean:
             match self.value:
                 case True:
@@ -160,7 +162,7 @@ class Fact:
             return output
 
         if self.concept.isNumeric:
-            output = self._format_numeric_value()
+            output = self._format_numeric_value(negated)
             return output
 
         if hasattr(self.value, "__html__"):
@@ -171,7 +173,7 @@ class Fact:
             output = escape(self.value)
         return output
 
-    def _format_numeric_value(self) -> Markup:
+    def _format_numeric_value(self, negated: bool = False) -> Markup:
         # What is written is what is tagged: the document's number *is* the fact's value. So the
         # digits shown follow the decimals (less any scale), except that 0 decimals, like none, shows
         # the value whole -- rounding 12.5 to "12" would change the fact, not just its look.
@@ -182,6 +184,7 @@ class Fact:
             decimal_places = self.decimals or "INF"
 
         try:
+            number: int | float | str | Decimal
             match self.value:
                 case bool():
                     raise TypeError(
@@ -193,6 +196,8 @@ class Fact:
                     raise TypeError(
                         f"Unsupported type for numeric formatting: {type(self.value).__name__}"
                     )
+            if negated:
+                number = -Decimal(str(number))
             output = localise_and_format_number(
                 number, decimal_places, self._report._outputLocale
             )
@@ -206,9 +211,18 @@ class Fact:
         output = unicodeSpaceNormalize(output)
         return escape(output)
 
-    def as_aoix(self) -> Markup:
-        """Returns the AOIX representation of the fact."""
-        return Markup(fact_to_aoix(self, self.html_format_value()))
+    def as_aoix(self, negated: bool = False) -> Markup:
+        """Returns the AOIX representation of the fact. A ``negated`` number is written with the
+        opposite sign to its value, and says so (aoix's ``sign=flip``), so the fact keeps its value:
+        what a negated preferred label asks of the row it is on. Zero has no sign to flip."""
+        negated = negated and self.concept.isNumeric and not self._is_zero()
+        return Markup(fact_to_aoix(self, self.html_format_value(negated), negated))
+
+    def _is_zero(self) -> bool:
+        try:
+            return Decimal(str(self.value)) == 0
+        except ArithmeticError:
+            return False
 
     def __html__(self) -> Markup:
         return self.as_aoix()

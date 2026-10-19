@@ -312,3 +312,19 @@ class TestPeriodAxis:
         grid = FactGrid(TableStyle.Other, [[_fact(), _fact()]], ["r"], None, ["x", "y"])
         top = assemble_table(grid).header_rows[0]
         assert _values(top) == [None, CURRENT] and top[1].colspan == 2
+
+
+def test_a_unit_is_said_over_the_columns_that_have_it_not_the_whole_table() -> None:
+    # one column in m², beside two yes/no columns that have no unit
+    area, yes, no = (
+        _fact(unit="m²"),
+        _fact(numeric=False, unit=None),
+        _fact(numeric=False, unit=None),
+    )
+    grid = FactGrid(
+        TableStyle.Other, [[area, yes, no]], ["1"], "Site", ["Area", "Inside", "Near"]
+    )
+    table = assemble_table(grid)
+    unit_row = table.header_rows[-1]
+    assert _values(unit_row) == ["m²", None, None]
+    assert all(cell.colspan == 1 for cell in unit_row)

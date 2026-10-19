@@ -22,19 +22,19 @@ from mireport.report.layout.model import (
     TableRow,
 )
 from mireport.report.model import FactPeriod, PeriodPart
-from mireport.taxonomy import Concept
+from mireport.taxonomy import Concept, Relationship
 
 Data = list[list[Fact | None]]
 
 
 def table_unit(data: Data) -> str | None:
-    """The unit symbol every numeric fact shares, if there is exactly one."""
-    units = {
-        fact.unitSymbol
-        for row in data
-        for fact in row
-        if fact and fact.concept.isNumeric
-    }
+    """The unit symbol every fact shares, if there is exactly one. A table with a fact that has no
+    unit (a text or yes/no column) has none for the whole table: the unit belongs to the columns
+    that have it, not over the ones that do not."""
+    facts = [fact for row in data for fact in row if fact]
+    if not all(fact.concept.isNumeric for fact in facts):
+        return None
+    units = {fact.unitSymbol for fact in facts}
     if len(units) == 1 and (unit := next(iter(units))):
         return unit
     return None
@@ -119,6 +119,9 @@ def drop_empty_columns(
             row_heading_label=grid.row_heading_label,
             col_labels=list(compress(grid.col_labels, keep)),
             period_axis=grid.period_axis,
+            col_periods=list(compress(grid.col_periods, keep))
+            if grid.col_periods
+            else (),
         ),
         list(compress(numeric, keep)),
     )
@@ -126,7 +129,7 @@ def drop_empty_columns(
 
 def build_header_rows(
     row_heading_label: HeadingValue,
-    col_labels: Sequence[Concept | str],
+    col_labels: Sequence[Concept | str | None],
     col_numeric: list[bool],
     all_numeric: bool,
     unit: str | None,
@@ -157,7 +160,8 @@ def build_header_rows(
             for n, v in enumerate(values)
         ]
 
-    rows.append(per_column(col_labels))
+    if any(label is not None for label in col_labels):
+        rows.append(per_column(col_labels))
     if not period and not groups and periods:
         rows.append(per_column(periods))
     if not unit and units:
@@ -182,6 +186,7 @@ def build_table_rows(
                     suppress_unit=(
                         unit is not None or (j < len(units) and units[j] is not None)
                     ),
+                    negated=isinstance(label, Relationship) and label.isNegated,
                 )
                 for j, fact in enumerate(row)
             ],
@@ -197,18 +202,27 @@ def assemble_table(grid: FactGrid) -> Table:
         grid, numeric = drop_empty_columns(grid, empty, numeric)
 
     unit, units = table_unit(grid.data), column_units(grid.data)
-    periods = column_periods(grid.data)
+    period: FactPeriod | None
+    if grid.col_periods:
+        # The grid says which period each column is for: one for the table if it is one throughout.
+        periods = list(grid.col_periods)
+        period = periods[0] if len(set(periods)) == 1 else None
+        groups: Sequence[tuple[FactPeriod | None, int]] = ()
+    else:
+        periods = column_periods(grid.data)
+        period = None if grid.period_axis else table_period(grid.data)
+        # Columns repeated per period: say each period once over its columns.
+        groups = period_groups(periods) if grid.period_axis else ()
     header_rows = build_header_rows(
         grid.row_heading_label,
         grid.col_labels,
         numeric,
         all_numeric,
         unit,
-        None if grid.period_axis else table_period(grid.data),
+        period,
         units,
         periods,
-        # Columns repeated per period: say each period once over its columns.
-        period_groups(periods) if grid.period_axis else (),
+        groups,
     )
     return Table(
         style=grid.style,

@@ -250,9 +250,9 @@ class XBRLTableResolver:
         taxonomy = self._ctx.taxonomy
         table_name = table.definedName.name
 
-        permitted = taxonomy.getDimensionsForHypercube(table.concept).union(
+        permitted = taxonomy.getAllDimensionsForHypercube(table.concept).union(
             concept
-            for concept in taxonomy.getPrimaryItemsForHypercube(table.concept)
+            for concept in taxonomy.getAllPrimaryItemsForHypercube(table.concept)
             if concept.isReportable or concept.isDimension
         )
         if missing := permitted - self._concepts_in_excel:

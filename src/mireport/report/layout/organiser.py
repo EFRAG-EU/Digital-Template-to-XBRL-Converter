@@ -25,7 +25,15 @@ from mireport.report.layout.model import (
     TabularReportSection,
 )
 from mireport.report.model import ReportPeriod
-from mireport.taxonomy import Concept, PresentationStyle, Relationship, Taxonomy
+from mireport.taxonomy import (
+    BlockKind,
+    Concept,
+    PresentationBlock,
+    PresentationGroup,
+    PresentationStyle,
+    Relationship,
+    Taxonomy,
+)
 
 if TYPE_CHECKING:
     from mireport.report.disclosure_layout import DisclosureLayoutStrategy
@@ -43,7 +51,12 @@ class ReportLayoutOrganiser:
         self.report = report
         self.presentation = self.taxonomy.presentation
         self.reportSections: list[ReportSection] = []
-        self._grids = GridBuilder(report.getFacts, self._label, self._period_rank)
+        self._grids = GridBuilder(
+            report.getFacts,
+            self._label,
+            self._period_rank,
+            lambda: report.reportingPeriods,
+        )
         # Facts a List group cannot show in its list because they carry taxonomy dimensions, in
         # presentation order, keyed by the group's role.
         self._dimensional: dict[str, list[Placed]] = {}
@@ -107,7 +120,8 @@ class ReportLayoutOrganiser:
     # -- sections ------------------------------------------------------------------------------
 
     def createReportSections(self) -> None:
-        """One section per presentation group, holding the facts of the group's concepts."""
+        """One section per block of each presentation group, in presentation order, holding the
+        facts of the block's rows."""
         for group in self.presentation:
             if group.style == PresentationStyle.Empty:
                 self.reportSections.append(
@@ -115,73 +129,84 @@ class ReportLayoutOrganiser:
                 )
                 continue
 
-            factsForRel: dict[Relationship, list[Fact]] = defaultdict(list)
-            for rel in group.relationships:
-                if not (facts := self.report.getFacts(rel.concept)):
-                    continue
-                match group.style:
-                    case PresentationStyle.List:
-                        for fact in facts:
-                            if fact.hasTaxonomyDimensions():
-                                self._dimensional.setdefault(group.roleUri, []).append(
-                                    (rel, fact)
-                                )
-                            else:
-                                factsForRel[rel].append(fact)
-                    case PresentationStyle.Hybrid | PresentationStyle.Table:
+            for block in group.blocks:
+                factsForRel: dict[Relationship, list[Fact]] = defaultdict(list)
+                for rel in block.rows:
+                    if not (facts := self.report.getFacts(rel.concept)):
+                        continue
+                    if block.kind is BlockKind.CUBE:
                         factsForRel[rel].extend(facts)
-            self.reportSections.append(
-                ReportSection(
-                    relationshipToFact=factsForRel,
-                    presentation=group,
-                    entries=(
-                        list_entries(factsForRel, self._period_rank)
-                        if group.style == PresentationStyle.List
-                        else ()
-                    ),
+                        continue
+                    for fact in facts:
+                        if fact.hasTaxonomyDimensions():
+                            self._dimensional.setdefault(group.roleUri, []).append(
+                                (rel, fact)
+                            )
+                        else:
+                            factsForRel[rel].append(fact)
+                self.reportSections.append(
+                    ReportSection(
+                        relationshipToFact=factsForRel,
+                        presentation=group,
+                        block=block,
+                        heading_suffix=self._block_heading(group, block),
+                        entries=(
+                            list_entries(factsForRel, self._period_rank)
+                            if block.kind is BlockKind.LINE_ITEMS
+                            else ()
+                        ),
+                    )
                 )
-            )
+
+    def _block_heading(self, group: PresentationGroup, block: PresentationBlock) -> str:
+        """What tells a group's blocks apart in their headings: nothing for a group of one
+        block, otherwise the abstract heading that leads into the block, else its hypercube."""
+        if len(group.blocks) <= 1:
+            return ""
+        if block.heading is not None:
+            return self._label(block.heading.concept)
+        if block.hypercube is not None:
+            return self._label(block.hypercube.hypercube)
+        return ""
 
     def createReportTables(self) -> None:
         """Tables for the table groups, and for whatever any group could not place."""
         groups = list(self.reportSections)
         sections: list[ReportSection] = []
         for section in groups:
-            if section.style in {PresentationStyle.Table, PresentationStyle.Hybrid}:
+            if section.style is PresentationStyle.Table:
                 if (table := self._hypercube_table(section)) is not None:
                     sections.append(table)
             else:
                 sections.append(section)
+                # Once per group, with its first block of line items.
                 sections += self._dimension_set_tables(
-                    section, self._dimensional.get(section.presentation.roleUri, [])
+                    section, self._dimensional.pop(section.presentation.roleUri, [])
                 )
         self.reportSections = sections
         self.reportSections += self._tables_for_facts_shown_nowhere(groups)
 
     def _hypercube_table(self, section: ReportSection) -> TabularReportSection | None:
-        """The table a table group's hypercube describes, if it describes one."""
-        group = section.presentation
-        if group.style is PresentationStyle.Hybrid:
-            raise InlineReportException(
-                f"Presentation group style ({group.style.name}) of [{group.roleUri}] is not currently supported."
-            )
-        if sum(r.concept.isHypercube for r in group.relationships) != 1:
-            raise InlineReportException(
-                f"Presentation structure of [{group.roleUri}] is not currently supported."
-            )
+        """The table a cube block describes, if it describes one."""
+        block = section.block
+        assert block is not None and block.hypercube is not None
 
-        concepts = [r.concept for r in group.relationships]
+        concepts = [r.concept for r in block.relationships]
         typedDims = [c for c in concepts if c.isTypedDimension]
         explicitDims = [c for c in concepts if c.isExplicitDimension]
-        reportable = [c for c in concepts if c.isReportable]
+        reportable = [r.concept for r in block.rows]
 
         grid: FactGrid | None
         match (typedDims, explicitDims):
             case ([typedDim], []):
                 grid = self._grids.typed_dimension(reportable, typedDim)
             case ([], [explicitDim]):
-                domain_set = self.taxonomy.getDomainMembersForExplicitDimension(
-                    explicitDim
+                # The members this role's hypercube allows for the dimension, not those any
+                # role's hypercube does.
+                domain_set = next(
+                    signature.domain
+                    for signature in block.hypercube.explicitDimensions
+                    if signature.dimension == explicitDim
                 )
                 grid = self._grids.explicit_dimension(
                     reportable,
@@ -189,8 +214,10 @@ class ReportLayoutOrganiser:
                     [c for c in concepts if c in domain_set],
                     self.taxonomy.getDimensionDefault(explicitDim),
                 )
+            case ([], []):
+                grid = self._grids.statement(block.rows)
             case _:
-                # No dimension, or several: nothing for a one-dimension grid to follow.
+                # Several dimensions: nothing for a one-dimension grid to follow.
                 grid = None
 
         if grid is None or not grid.data:
@@ -202,31 +229,37 @@ class ReportLayoutOrganiser:
     ) -> list[ReportSection]:
         """Tables for facts that no section shows, each in the first group holding its concept.
         `groups` are the sections as the groups made them, before any became a table or none."""
-        shown: set[int] = set()
+        # A fact is shown if it or an equal one is: a repeat of a fact adds nothing to show.
+        shown: set[Fact] = set()
         for section in self.reportSections:
             match section:
                 case TabularReportSection(table=table):
                     shown.update(
-                        id(cell.fact)
+                        cell.fact
                         for row in table.rows
                         for cell in row.cells
                         if cell.fact is not None
                     )
                 case _:
                     shown.update(
-                        id(f)
+                        f
                         for facts in section.relationshipToFact.values()
                         for f in facts
                     )
 
         home: dict[Concept, tuple[ReportSection, Relationship]] = {}
         for section in groups:
-            for rel in section.presentation.relationships:
+            own = (
+                section.block.relationships
+                if section.block is not None
+                else section.presentation.relationships
+            )
+            for rel in own:
                 home.setdefault(rel.concept, (section, rel))
 
         leftovers: dict[int, tuple[ReportSection, list[Placed]]] = {}
         for fact in self.report.facts:
-            if id(fact) not in shown and (found := home.get(fact.concept)) is not None:
+            if fact not in shown and (found := home.get(fact.concept)) is not None:
                 section, rel = found
                 leftovers.setdefault(id(section), (section, []))[1].append((rel, fact))
         return [
@@ -263,7 +296,8 @@ class ReportLayoutOrganiser:
         return TabularReportSection(
             relationshipToFact=section.relationshipToFact,
             presentation=section.presentation,
-            heading_suffix=heading_suffix,
+            block=section.block,
+            heading_suffix=heading_suffix or section.heading_suffix,
             table=assemble_table(grid),
         )
 

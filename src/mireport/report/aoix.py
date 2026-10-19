@@ -57,8 +57,9 @@ def _typed_aspects(typed: TypedDimensionValue) -> list[str]:
     ]
 
 
-def fact_aspects(fact: Fact) -> list[str]:
-    """Every aspect of the fact, as aoix text, in a fixed order."""
+def fact_aspects(fact: Fact, negated: bool = False) -> list[str]:
+    """Every aspect of the fact, as aoix text, in a fixed order. ``negated`` is for a fact shown
+    with the opposite sign to its value: aoix's ``sign=flip``."""
     concept = fact.concept
     aspects = [
         f"period={fact.period.reportPeriod.name}",
@@ -70,6 +71,8 @@ def fact_aspects(fact: Fact) -> list[str]:
         aspects.append(f'decimals="{decimals}"')
     if (scale := fact.scale) is not None:
         aspects.append(f'numeric-scale="{scale}"')
+    if negated:
+        aspects.append("sign=flip")
     aspects += [f"{d.dimension.qname}={d.member.qname}" for d in fact.explicit_values]
     for typed in fact.typed_values:
         aspects += _typed_aspects(typed)
@@ -89,7 +92,7 @@ def fact_aspects(fact: Fact) -> list[str]:
     return aspects
 
 
-def fact_to_aoix(fact: Fact, formatted_value: str) -> str:
+def fact_to_aoix(fact: Fact, formatted_value: str, negated: bool = False) -> str:
     match fact.concept:
         case concept if concept.isMonetary:
             verb = "monetary"
@@ -97,5 +100,5 @@ def fact_to_aoix(fact: Fact, formatted_value: str) -> str:
             verb = "num"
         case _:
             verb = "string"
-    aspects = ", ".join(fact_aspects(fact))
+    aspects = ", ".join(fact_aspects(fact, negated))
     return f"{{{{ {verb} {fact.concept.qname}[{aspects}] }}}}{formatted_value}{{{{ end }}}}"
