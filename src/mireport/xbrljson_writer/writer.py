@@ -28,7 +28,7 @@ from mireport.xbrljson_reader.document import (
     XbrlJsonFact,
 )
 from mireport.xbrljson_writer._values import canonicalValue
-from mireport.xml import XBRLI_NS, NamespaceManager
+from mireport.xml import XBRL_NS, XBRLI_NS, NamespaceManager
 
 if TYPE_CHECKING:
     from mireport.report.fact import Fact
@@ -59,13 +59,14 @@ def _isPure(unit: Unit) -> bool:
 
 
 class _Namespaces:
-    """The document's prefixes: the taxonomy's bindings (which already include ``xbrl``, see
-    getBootstrapQNameMaker) plus the entity's and any extension's, each prefix bound to one
-    namespace. Only the prefixes the document uses are written."""
+    """The document's prefixes: the report's (Report.usedNamespaces), OIM's ``xbrl``, the
+    entity's and any extension's, each prefix bound to one namespace. Only the prefixes the
+    document names are written: not, say, ``xbrli`` for a pure unit, which xBRL-JSON leaves out."""
 
-    def __init__(self, taxonomyBindings: Mapping[str, str]) -> None:
-        self._manager = NamespaceManager.fromMapping(taxonomyBindings)
-        self._used: set[str] = {"xbrl"}
+    def __init__(self, reportBindings: Mapping[str, str]) -> None:
+        self._manager = NamespaceManager.fromMapping(reportBindings)
+        self._used: set[str] = set()
+        self.bind("xbrl", XBRL_NS)
 
     def bind(self, prefix: str, namespace: str) -> None:
         try:
@@ -98,7 +99,7 @@ def toXbrlJson(
     than the order the report has them in, so two reports with the same facts give the same
     document whichever order they were built in: for comparing one with another.
     """
-    namespaces = _Namespaces(report.taxonomy.namespacePrefixesMap)
+    namespaces = _Namespaces(report.usedNamespaces())
     facts = report.facts
     entity = ""
     if facts:
