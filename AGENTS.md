@@ -292,6 +292,24 @@ the prior one: every OIM fact says its own period, so the reader infers nothing.
 x100 with `ix:scale -2` but keeps its value and decimals as given. In strict mode (`--strict`)
 anything that cannot be added or would appear nowhere in the rendered report is an error.
 
+### Coverage reports (`mireport/coverage_report_generator/`)
+
+`buildCoverageReportSet` writes the xBRL-JSON reports the taxonomy repo pins (`no-facts`, `all-nil`,
+`all-values`): a fact for every reportable concept and one for each hypercube dimension value it carries,
+in a taxonomy-agnostic way (everything comes from the baked `Taxonomy`). Two properties hold by
+construction. **No two facts share a context** (concept, period, dimensions): a fact for dimensions already
+covered is skipped, since duplicates and alternative facts do not belong in a coverage report. **No fact
+carries a unit the UTR forbids**: units are checked as they are written, including composite types (see
+`UTR.compositeFor`: emissions per monetary unit and the like have no named unit and are reported in a divide
+unit such as `utr:tCO2e/iso4217:EUR`; leaving them unitless would read as `xbrli:pure`). What each fact
+*shows* is a per-concept rotation: the first fact takes the concept's usual unit and value, each further
+one (each dimension value) takes the next variant, namely another permitted unit or an enumeration set's
+empty selection. A variant no dimension fact reached (a concept with no dimension) goes at the
+proof-of-reportability dimensions in an earlier period, one further year back each
+(`SampleEntityPeriod.shifted`), so it has a context of its own; a later shifted period that holds an instant
+but no duration gets an anchor duration fact, because the reader needs an instant at the start or end of a
+declared duration.
+
 ### Arelle boundary (`mireport/arelle/`)
 
 All Arelle usage is confined here. `report_info.ArelleReportProcessor` validates report packages and

@@ -30,7 +30,7 @@ SAMPLE = SampleEntityPeriod(
     entity="lei:529900T8BM49AURSDO55",
     entityPrefix="lei",
     entityNamespace="http://standards.iso.org/iso/17442",
-    periodInstant="2025-12-31T24:00:00",
+    periodInstant="2026-01-01T00:00:00",
     periodDuration=DURATION,
 )
 
@@ -195,6 +195,14 @@ def test_an_instant_at_the_start_of_the_period_is_an_opening_balance(
     """The instant a period starts at is a period of its own to XBRL, one day back. With no
     period ending there it can only be this one's opening balance."""
     doc = copy.deepcopy(coverage["values"])
+    # The report's variant facts sit in earlier periods, one of which ends where this one
+    # starts; this test is about a start with nothing ending there.
+    mainPeriod = {SAMPLE.periodDuration, SAMPLE.periodInstant}
+    doc["facts"] = {
+        key: fact
+        for key, fact in doc["facts"].items()
+        if fact["dimensions"]["period"] in mainPeriod
+    }
     instants = [
         f for f in doc["facts"].values() if "/" not in f["dimensions"]["period"]
     ]
