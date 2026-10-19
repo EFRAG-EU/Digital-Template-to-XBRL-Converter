@@ -21,6 +21,7 @@ from mireport.report.periods import (
 )
 from mireport.taxonomy import Concept, QName, Taxonomy
 from mireport.typealiases import FactValue
+from mireport.xml import LEI_NS
 
 if TYPE_CHECKING:
     from babel import Locale
@@ -57,6 +58,7 @@ class Report:
         self._partial_facts: dict[Concept, FactBuilder] = {}
         self._entityIdentifier: str | None = None
         self._entityScheme: str | None = None
+        self._entityPrefix: str | None = None
         self._defaultCurrency: QName | None = None
 
     @property
@@ -85,14 +87,26 @@ class Report:
     def entityScheme(self) -> str | None:
         return self._entityScheme
 
-    def setEntity(self, scheme: str, identifier: str) -> None:
-        """The reporting entity's identifier and the scheme (a URI) that identifier is in."""
+    @property
+    def entityPrefix(self) -> str:
+        """The prefix the entity's scheme is written with in xBRL-JSON (``lei:...``): the one
+        given with setEntity(), else ``lei`` for an LEI and ``entity`` for any other scheme."""
+        if self._entityPrefix:
+            return self._entityPrefix
+        return "lei" if self._entityScheme == LEI_NS else "entity"
+
+    def setEntity(
+        self, scheme: str, identifier: str, *, prefix: str | None = None
+    ) -> None:
+        """The reporting entity's identifier and the scheme (a URI) that identifier is in, and
+        optionally the prefix to write that scheme with (see entityPrefix)."""
         if not (scheme and identifier):
             raise InlineReportException(
                 f"Entity not configured correctly. Specifically: '{scheme=}' '{identifier=}'"
             )
         self._entityScheme = scheme
         self._entityIdentifier = identifier
+        self._entityPrefix = prefix
 
     @property
     def defaultCurrency(self) -> QName | None:

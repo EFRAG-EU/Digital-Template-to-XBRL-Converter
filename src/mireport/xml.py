@@ -23,6 +23,8 @@ UTR_NS = sys.intern("http://www.xbrl.org/2009/utr")
 XBRLI_NS = sys.intern("http://www.xbrl.org/2003/instance")
 ENUM2_NS = sys.intern("http://xbrl.org/2020/extensible-enumerations-2.0")
 XS_NS = sys.intern("http://www.w3.org/2001/XMLSchema")
+# The scheme of a Legal Entity Identifier (ISO 17442).
+LEI_NS = sys.intern("http://standards.iso.org/iso/17442")
 
 
 class _QNameTuple(NamedTuple):

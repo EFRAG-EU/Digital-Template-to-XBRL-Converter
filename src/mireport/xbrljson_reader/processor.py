@@ -26,7 +26,7 @@ from mireport.entrypoints import describeEntryPointSet, entryPointSetOf
 from mireport.exceptions import InlineReportException, TaxonomyException, UnitException
 from mireport.report import InlineReport
 from mireport.report.fact import Fact
-from mireport.report.factbuilder import FactBuilder
+from mireport.report.factbuilder import FactBuilder, enumerationText
 from mireport.report.model import Unit
 from mireport.report.periods import DurationPeriodHolder, _Period
 from mireport.taxonomy import Concept, QName, Taxonomy, getTaxonomy, listTaxonomies
@@ -51,8 +51,6 @@ XHTML_NS = "http://www.w3.org/1999/xhtml"
 # Extension properties the snapshot files write (see tests/unitTests/xbrl_json_snapshot.py).
 EXTENSION_NS = "urn:mireport:xbrl-json-extension"
 FACT_FOOTNOTE_ARCROLE = "http://www.xbrl.org/2003/arcrole/fact-footnote"
-# What the xlsx reader shows for an empty enumeration set (EE_SET_DESIRED_EMPTY_PLACEHOLDER_VALUE).
-EMPTY_SET_TEXT = "None"
 # Features that change nothing about how a document is read here.
 _KNOWN_FEATURES = frozenset({"xbrl:canonicalValues", "xbrl:allowedDuplicates"})
 _BOOLEANS = {"true": True, "1": True, "false": False, "0": False}
@@ -345,7 +343,7 @@ class XbrlJsonProcessor:
             )
         if concept.isEnumerationSingle:
             member = self._member(concept, value)
-            fb.setEnumerationValue(member).setValue(self._label(member))
+            fb.setEnumerationValue(member).setValue(enumerationText([member]))
         elif concept.isEnumerationSet:
             tokens = value.split()
             if len(set(tokens)) != len(tokens):
@@ -355,7 +353,7 @@ class XbrlJsonProcessor:
             members = [self._member(concept, m) for m in tokens]
             fb.setEnumerationSet(members)
             # An empty set is a valid value, but a fact needs something human readable.
-            fb.setValue("\n".join(self._label(m) for m in members) or EMPTY_SET_TEXT)
+            fb.setValue(enumerationText(members))
         elif concept.isBoolean:
             if (flag := _BOOLEANS.get(value.strip())) is None:
                 raise FactProblem(
@@ -390,11 +388,6 @@ class XbrlJsonProcessor:
                 INVALID_JSON_STRUCTURE, f"Text is not well-formed XHTML: {e}"
             ) from e
         return Markup(text)
-
-    @staticmethod
-    def _label(member: Concept) -> str:
-        """What a human reads for an enumeration member: its label, or its name if it has none."""
-        return member.getStandardLabel(fallbackIfMissing=str(member.qname))
 
     def _setNumeric(
         self, fb: FactBuilder, concept: Concept, fact: XbrlJsonFact

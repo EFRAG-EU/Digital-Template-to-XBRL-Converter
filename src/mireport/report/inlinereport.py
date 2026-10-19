@@ -234,6 +234,11 @@ class InlineReport(Report):
             raise InlineReportException(
                 "Cannot generate a report with no facts or period."
             )
+        if nil := [f for f in self._facts if f.isNil]:
+            concepts = ", ".join(sorted({str(f.concept.qname) for f in nil}))
+            raise InlineReportException(
+                f"Cannot render nil facts yet; the following concepts have them: {concepts}."
+            )
         if self._partial_facts:
             concepts = ", ".join(sorted(str(c) for c in self._partial_facts))
             raise InlineReportException(

@@ -80,7 +80,7 @@ def fact_aspects(fact: Fact, negated: bool = False) -> list[str]:
         members = " ".join(sorted(m.expandedName for m in enumeration))
         aspects.append(f'hidden-value="{members}"')
     if concept.isBoolean:
-        if (value := coerce_boolean(fact.value)) is None:
+        if fact.value is None or (value := coerce_boolean(fact.value)) is None:
             raise InlineReportException(
                 f"Unable to determine boolean value for {fact.value!r}."
             )

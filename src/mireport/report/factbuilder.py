@@ -29,6 +29,18 @@ if TYPE_CHECKING:
 
 L = logging.getLogger(__name__)
 
+# What an empty enumeration set reads as: none selected is a value, so it needs some text.
+EMPTY_ENUMERATION_SET_TEXT = "None"
+
+
+def enumerationText(members: Iterable[Concept]) -> str:
+    """What a human reads for an enumeration fact's members: their labels, one per line (a member
+    with no label by its name), or EMPTY_ENUMERATION_SET_TEXT when there are none."""
+    return (
+        "\n".join(m.getStandardLabel(fallbackIfMissing=str(m.qname)) for m in members)
+        or EMPTY_ENUMERATION_SET_TEXT
+    )
+
 
 class FactBuilder:
     """
@@ -39,6 +51,7 @@ class FactBuilder:
         self._report: Report = report
         self._concept: Concept | None = None
         self._value: FactValue | None = None
+        self._nil: bool = False
         self._provenance: Provenance | None = None
         self._period: ReportPeriod | None = None
         self._part: PeriodPart | None = None
@@ -58,6 +71,7 @@ class FactBuilder:
         fb = cls(report)
         fb._concept = fact.concept
         fb._value = fact.value
+        fb._nil = fact.isNil
         fb._period = fact.period.reportPeriod
         fb._part = fact.period.part
         fb._unit = fact.unit
@@ -107,6 +121,14 @@ class FactBuilder:
             value = str(value)
 
         self._value = value
+        self._nil = False
+        return self
+
+    def setNil(self) -> Self:
+        """The fact is nil (``xsi:nil``): reported, but with no value. A nil numeric fact keeps its
+        unit but has no decimals, and a nil enumeration has no members."""
+        self._value = None
+        self._nil = True
         return self
 
     def setPercentageValue(
@@ -265,12 +287,14 @@ class FactBuilder:
                 "Concept must be set before validating a FactBuilder.", self
             )
         value = self._value
-        if isinstance(value, bool) or not isinstance(value, (int, float)):
+        if self._nil:
+            pass
+        elif isinstance(value, bool) or not isinstance(value, (int, float)):
             # N.B. bool extends int
             raise InlineReportException(
                 f"Unable to create numeric fact from non-numeric value {value=}"
             )
-        if isinstance(value, float) and not math.isfinite(value):
+        elif isinstance(value, float) and not math.isfinite(value):
             raise InlineReportException(
                 f"Unable to create numeric fact from non-finite value {value=}"
             )
@@ -368,10 +392,17 @@ class FactBuilder:
     def buildFact(self) -> Fact:
         if self._concept is None:
             raise InlineReportException("Concept must be set before building a Fact.")
-        if self._value is None:
-            raise InlineReportException("Value must be set before building a Fact.")
         concept = self._concept
+        if self._nil:
+            if not concept.isNillable:
+                raise InlineReportException(f"{concept.qname} cannot be nil.")
+        elif self._value is None:
+            raise InlineReportException("Value must be set before building a Fact.")
         match concept:
+            case _ if self._nil and concept.isNumeric:
+                self.validateNumeric()
+            case _ if self._nil:
+                pass
             case _ if concept.isBoolean:
                 self.validateBoolean()
             case _ if concept.isEnumerationSingle:
@@ -399,12 +430,12 @@ class FactBuilder:
             self._report,
             period=FactPeriod(reportPeriod, part),
             unit=unit,
-            decimals=self._decimals,
-            scale=self._scale,
+            decimals=None if self._nil else self._decimals,
+            scale=None if self._nil else self._scale,
             explicit_dimensions=(
                 ExplicitDimensionValue(d, m) for d, m in self._explicit.items()
             ),
             typed_dimensions=self._typed.values(),
-            enumeration=self._enumeration,
+            enumeration=None if self._nil else self._enumeration,
             provenance=self._provenance,
         )
