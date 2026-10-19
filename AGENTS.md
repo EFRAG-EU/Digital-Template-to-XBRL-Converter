@@ -221,6 +221,20 @@ shown as the first day of 2025 and the last of 2024, and told to aoix as `instan
 producer that knows says so (`setNamedPeriod(name, at=PeriodPart.Start)`); one that has only an OIM period
 (xBRL-JSON) uses `setPeriod(oim)`, which `InlineReport.locatePeriod` resolves, preferring the end.
 
+Dimensional validity (a matching hypercube; a declared typed dimension must be present; a concept in no
+hypercube is unrestricted, as in XDT, so a taxonomy restricts it with a closed hypercube with no dimension;
+typed value *content* is not checked) runs in `FactBuilder.buildFact`, the only place a `Fact` is made;
+`FactBuilder.fromFact` copies one to change. Duplicates follow the
+OIM / the "Handling Duplicate Facts" WGN
+(<https://www.xbrl.org/WGN/xbrl-duplicates/WGN-2025-01-14/xbrl-duplicates-2025-01-14.html>; `report/duplicates.py`): `duplicateClass(a, b)` is complete, consistent, inconsistent, or
+None (alternative facts, e.g. differing only in unit). Periods compare as OIM's (`FactPeriod.oim`), so the opening
+balance of one period and the closing balance of the one before are duplicates of each other, though each keeps
+its own cell and heading. `InlineReport.reportInconsistentDuplicateFacts`
+reports each inconsistent set to the report preparer. A table cell keeps the first of complete duplicates,
+the more precise of consistent ones, and the first with a warning otherwise; only a complete duplicate
+left out counts as not lost. `tests/unitTests/table_integrity.py` checks a rendered document's structure
+(no browser needed).
+
 `setPercentageFact(fraction, decimals)` takes XBRL's own value and decimals (0.1250 at 4 is shown as 12.50
 with `ix:scale -2`); `setPercentageValue` takes a spreadsheet's display decimals.
 

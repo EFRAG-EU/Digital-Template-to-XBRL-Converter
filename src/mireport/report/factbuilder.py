@@ -49,6 +49,25 @@ class FactBuilder:
         self._typed: dict[Concept, TypedDimensionValue] = {}
         self._enumeration: tuple[Concept, ...] | None = None
 
+    @classmethod
+    def fromFact(cls, report: InlineReport, fact: Fact) -> Self:
+        """A builder holding a copy of ``fact``, to change (a new period, a new value) and build.
+
+        Building re-runs every check, so the copy is validated like any other fact.
+        """
+        fb = cls(report)
+        fb._concept = fact.concept
+        fb._value = fact.value
+        fb._period = fact.period.reportPeriod
+        fb._part = fact.period.part
+        fb._unit = fact.unit
+        fb._decimals = fact.decimals
+        fb._scale = fact.scale
+        fb._explicit = {d.dimension: d.member for d in fact.explicit_values}
+        fb._typed = {t.dimension: t for t in fact.typed_values}
+        fb._enumeration = fact.enumeration
+        return fb
+
     def __repr__(self) -> str:
         bits = (self._concept, self._value, self._period, self._part, self._unit)
         return f"FactBuilder{bits}"
@@ -151,7 +170,7 @@ class FactBuilder:
         Sets the period for the fact to a named period in the InlineReport.
 
         An instant concept is reported at the end of the period unless ``at`` says
-        ``PeriodPart.Start``: an opening balance is the instant the period starts at, which is also
+        ``PeriodPart.Start`` (without ``at`` a part already there, from a copied fact, is kept): an opening balance is the instant the period starts at, which is also
         where the one before ended, but it is not that period's closing balance and is rendered as
         the start of this one.
         """
@@ -165,7 +184,8 @@ class FactBuilder:
                 "'at' is for choosing between the start and the end."
             )
         self._period = self._report.getReportPeriod(periodName)
-        self._part = at
+        if at is not None:
+            self._part = at
         return self
 
     def setPeriod(self, period: _Period) -> Self:
@@ -311,7 +331,16 @@ class FactBuilder:
         EffectiveHypercube for the concept (XBRL Dimensions 1.0 section 3.1.1: OR
         across base sets) -- never the union of every one's dimensions, since a
         concept can participate in multiple hypercubes/base-sets with different
-        (even unrelated) dimensional requirements.
+        (even unrelated) dimensional requirements. A declared typed dimension that is
+        missing makes a fact invalid for that hypercube.
+
+        A concept in no hypercube is not restricted at all, so its facts may carry any
+        dimensions (XBRL Dimensions 1.0). A taxonomy that wants them restricted says so with
+        a closed hypercube that has no dimensions (the "Guidance on the use of dimensions"
+        WGN, section 3.4), which then matches only a fact with none.
+
+        Known gap: a typed dimension's *value* is only checked to be present, not against
+        the typed element's datatype.
         """
         if self._concept is None:
             raise InlineReportException("Concept must be set before validating a Fact.")
@@ -320,12 +349,6 @@ class FactBuilder:
             self._concept
         )
         if not effectiveHypercubes:
-            if explicitDims or typedDims:
-                dim_list = ", ".join(str(d.qname) for d in (*explicitDims, *typedDims))
-                raise InlineReportException(
-                    f"Unexpected dimension(s) [{dim_list}] set on FactBuilder for {self._concept}, which does not participate in any hypercube",
-                    self,
-                )
             return
 
         if any(
