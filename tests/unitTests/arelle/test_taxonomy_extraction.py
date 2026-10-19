@@ -435,11 +435,30 @@ class TestReferences:
 
         assert extractor.taxonomyJson["references"] == []
 
-    def test_missing_role_raises(self) -> None:
+    def test_missing_role_is_the_standard_reference_role(self) -> None:
         extractor, _ = makeExtractor({XbrlConst.conceptReference: []})
         resource = StubReferenceResource(None, [refPart("Name", "ISO")])
-        with pytest.raises(ArelleModelInconsistency, match="no role"):
-            self.collect(extractor, qn("A"), [refRel(resource)])
+        self.collect(extractor, qn("A"), [refRel(resource)])
+
+        extractor.extractReferences()
+
+        (ref,) = extractor.taxonomyJson["references"]
+        assert ref["role"] == XbrlConst.standardReference
+
+    def test_a_missing_role_and_the_standard_role_are_one_reference(self) -> None:
+        extractor, _ = makeExtractor({XbrlConst.conceptReference: []})
+        parts = [refPart("Name", "ISO")]
+        self.collect(extractor, qn("A"), [refRel(StubReferenceResource(None, parts))])
+        self.collect(
+            extractor,
+            qn("B"),
+            [refRel(StubReferenceResource(XbrlConst.standardReference, parts))],
+        )
+
+        extractor.extractReferences()
+
+        (ref,) = extractor.taxonomyJson["references"]
+        assert set(ref["concepts"]) == {qn("A"), qn("B")}
 
     def test_output_is_sorted_by_role_then_parts(self) -> None:
         extractor, _ = makeExtractor({XbrlConst.conceptReference: []})
