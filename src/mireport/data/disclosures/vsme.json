@@ -73,16 +73,6 @@
         "TotalNonHazardousWasteGeneratedVolume": "utr:m3",
         "TotalWasteRecycledReusedAndDirectedToDisposalVolume": "utr:m3"
     },
-    "unitIdsToMeasures": {
-        "Emissions_per_Monetary": {
-            "numerator": [
-                "tCO2e"
-            ],
-            "denominator": [
-                "EUR"
-            ]
-        }
-    },
     "cellValuesToTaxonomyLabels": {
         "Option A (Basic Module only)": "Basic Module (only) [member]",
         "Option B (Basic Module and Comprehensive Module)": "Basic Module and Comprehensive Module [member]",

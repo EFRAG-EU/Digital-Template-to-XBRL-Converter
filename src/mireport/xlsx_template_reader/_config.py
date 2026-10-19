@@ -4,15 +4,10 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, NamedTuple
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from mireport.taxonomy import Concept, QName, Taxonomy
-
-
-class ComplexUnit(NamedTuple):
-    numerator: list[QName]
-    denominator: list[QName]
 
 
 @dataclass(frozen=True, slots=True)
@@ -20,7 +15,6 @@ class ConverterConfig:
     """Unit and label overrides supplied by the disclosure defaults."""
 
     dataTypesToUnits: dict[QName, QName] = field(default_factory=dict)
-    unitIdsToMeasures: dict[str, ComplexUnit] = field(default_factory=dict)
     conceptsToUnits: dict[Concept, QName] = field(default_factory=dict)
     cellValuesToTaxonomyLabels: dict[str, str] = field(default_factory=dict)
     cellUnitReplacements: dict[str, str] = field(default_factory=dict)
@@ -36,22 +30,6 @@ class ConverterConfig:
             for dataType, unitType in defaults.get("dataTypesToUnits", {}).items()
         }
 
-        unitIdsToMeasures = {
-            unitId: ComplexUnit(
-                numerator=[
-                    q
-                    for m in unitDict.get("numerator", [])
-                    if (q := taxonomy.UTR.getQNameForUnitId(m)) is not None
-                ],
-                denominator=[
-                    q
-                    for m in unitDict.get("denominator", [])
-                    if (q := taxonomy.UTR.getQNameForUnitId(m)) is not None
-                ],
-            )
-            for unitId, unitDict in defaults.get("unitIdsToMeasures", {}).items()
-        }
-
         # Keyed by local name: the config spans taxonomies with different
         # prefixes, and not every taxonomy defines every listed concept.
         conceptsToUnits = {
@@ -63,7 +41,6 @@ class ConverterConfig:
 
         return cls(
             dataTypesToUnits=dataTypesToUnits,
-            unitIdsToMeasures=unitIdsToMeasures,
             conceptsToUnits=conceptsToUnits,
             cellValuesToTaxonomyLabels=dict(
                 defaults.get("cellValuesToTaxonomyLabels", {})
