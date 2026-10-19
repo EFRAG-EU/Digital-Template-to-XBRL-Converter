@@ -593,17 +593,6 @@ class TestGetSimpleUnit:
 
 
 class TestSetFallbackUnitForName:
-    def test_non_numeric_concept_returns_false(
-        self, creator_env, unit_resolver, taxonomy
-    ):
-        concept = next(
-            c
-            for c in sorted(taxonomy.concepts, key=str)
-            if c.isReportable and not c.isNumeric
-        )
-        fb = creator_env.report.getFactBuilder().setConcept(concept)
-        assert unit_resolver.setFallbackUnitForName(None, concept, fb) is False
-
     def test_numeric_concept_gets_a_unit(self, creator_env, unit_resolver, taxonomy):
         concept = next(
             c

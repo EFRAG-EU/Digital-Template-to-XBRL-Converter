@@ -2,8 +2,10 @@
 
 The resolution chain, in order: the unit named range next to the concept
 (direct id, then parenthesised, then config-corrected text), a per-concept
-config override, the taxonomy's required units, config complex units for the
-data type, and finally the data-type/UTR fallbacks.
+config override when that text names no unit, the taxonomy's required units,
+and finally the fallbacks: a divide unit for a type that requires a complex UTR
+unit, the report's currency for a monetary concept, the configured unit for the
+data type, the UTR's units for it, xbrli:pure.
 """
 
 from __future__ import annotations
@@ -18,6 +20,7 @@ if TYPE_CHECKING:
     from mireport.report import InlineReport
     from mireport.report.factbuilder import FactBuilder
     from mireport.taxonomy import Concept, QName, Taxonomy
+    from mireport.utr import UTR
     from mireport.xlsx_template_reader._config import ConverterConfig
     from mireport.xlsx_template_reader._constants import CellType
     from mireport.xlsx_template_reader._messages import Messenger
@@ -25,6 +28,7 @@ if TYPE_CHECKING:
     from mireport.xlsx_template_reader._reader import WorkbookReader
 
 from mireport.conversionresults import MessageType
+from mireport.xml import XBRLI_NS
 
 L = logging.getLogger(__name__)
 
@@ -58,6 +62,17 @@ class UnitResolver:
     def taxonomy(self) -> Taxonomy:
         return self._report.taxonomy
 
+    @property
+    def utr(self) -> UTR:
+        return self._report.taxonomy.UTR
+
+    def _unitsNamedBy(self, candidates: list[str]) -> list[QName]:
+        return [
+            unit
+            for c in candidates
+            if (unit := self.utr.getQNameForUnitId(c)) is not None
+        ]
+
     def getSimpleUnit(
         self, unitHolder: XbrlConceptCellRangeMetadata, cell: CellType
     ) -> QName | None:
@@ -66,21 +81,14 @@ class UnitResolver:
         cellValue = str(cell.value).strip()
         candidates = [cellValue]
         candidates.extend(re.findall(r"\((.*?)\)", cellValue))
-        possible_units = [
-            unit
-            for c in candidates
-            if (unit := self.taxonomy.UTR.getQNameForUnitId(c)) is not None
-        ]
+        possible_units = self._unitsNamedBy(candidates)
         if not possible_units:
-            candidates = [
-                cleanUnitTextFromExcel(c, self._config.cellUnitReplacements)
-                for c in candidates
-            ]
-            possible_units = [
-                unit
-                for c in candidates
-                if (unit := self.taxonomy.UTR.getQNameForUnitId(c)) is not None
-            ]
+            possible_units = self._unitsNamedBy(
+                [
+                    cleanUnitTextFromExcel(c, self._config.cellUnitReplacements)
+                    for c in candidates
+                ]
+            )
             if possible_units:
                 self._msg.warning(
                     f"Workaround performed for mislabelled unit for {unitHolder.concept.qname}. Cell value '{cellValue}'. Unit ids now guessed: [{', '.join(str(qname) for qname in possible_units)}]",
@@ -119,7 +127,7 @@ class UnitResolver:
 
         if unitHolder:
             cell = self._reader.getSingleCell(unitHolder, row=row)
-            if cell is None or cell.value is None:
+            if cell is None:
                 self._msg.warning(
                     f"No unit selected in {unitHolder.definedName.name} for {conceptHolder.definedName.name} ({conceptHolder.excelRef()}), so its facts have not been created.",
                     MessageType.Conversion,
@@ -128,9 +136,13 @@ class UnitResolver:
                 )
                 return False
             if (unit := self.getSimpleUnit(unitHolder, cell)) is not None:
-                if self.taxonomy.UTR.valid(concept.dataType, unit):
+                if self.utr.valid(concept.dataType, unit):
                     factBuilder.setSimpleUnit(unit)
                     return True
+                elif self.utr.requiresComplexUnit(concept.dataType):
+                    return self.setComplexUnitForName(
+                        conceptHolder.definedName, concept, factBuilder, cellUnit=unit
+                    )
                 elif specifiedUnitHolder:
                     if not sharedRange:
                         self._msg.warning(
@@ -150,8 +162,8 @@ class UnitResolver:
                         conceptHolder.definedName, concept, factBuilder
                     )
             elif (unitQname := self._config.conceptsToUnits.get(concept)) is not None:
-                if self.taxonomy.UTR.valid(concept.dataType, unitQname):
-                    self._msg.error(
+                if self.utr.valid(concept.dataType, unitQname):
+                    self._msg.info(
                         f"Using configured unit {unitQname} for {concept} as unit cell value could not be translated in to a unit. Cell value '{cell.value}'.",
                         MessageType.DevInfo,
                         ref=unitHolder.excelRef(cell),
@@ -188,80 +200,106 @@ class UnitResolver:
             conceptHolder.definedName, concept, factBuilder
         )
 
-    def _unitForItemType(self, itemType: QName) -> QName | None:
-        """The unit to use for one side of a complex unit: the report's currency for a
-        monetary side, else the configured unit for that item type (matched by local name,
-        since the config spans taxonomies and the UTR and DTR namespaces differ), else the
-        UTR's only unit for it."""
+    def _defaultUnitFor(self, itemType: QName) -> QName | None:
+        """The unit to use for ``itemType`` when the workbook gives none: the report's
+        currency for a monetary type, else the configured unit for it, else the UTR's only
+        unit for it."""
         if itemType.localName == "monetaryItemType":
             return self._report.defaultCurrency
-        for dataType, unit in self._config.dataTypesToUnits.items():
-            if dataType.localName == itemType.localName:
-                return unit
-        if len(units := self.taxonomy.UTR.getUnitsForDataType(itemType)) == 1:
+        if (unit := self._config.unitForDataType(itemType)) is not None:
+            return unit
+        if len(units := self.utr.getUnitsForDataType(itemType)) == 1:
             return next(iter(units))
         return None
 
+    def _noUnitReason(self, itemType: QName, unit: QName | None) -> str | None:
+        """Why ``unit``, chosen for ``itemType``, cannot be used; None if it can."""
+        if unit is None:
+            if itemType.localName == "monetaryItemType":
+                return "the report has no default currency"
+            return f"no unit is configured for {itemType.localName}"
+        if unit not in self.utr.getUnitsForDataType(itemType):
+            return f"{unit} is not a unit for {itemType.localName}"
+        return None
+
     def setComplexUnitForName(
-        self, dn: DefinedName, concept: Concept, factBuilder: FactBuilder
+        self,
+        dn: DefinedName,
+        concept: Concept,
+        factBuilder: FactBuilder,
+        *,
+        cellUnit: QName | None = None,
     ) -> bool:
-        """Report a concept whose type takes a complex UTR unit in a divide unit, each side's unit
-        chosen as _unitForItemType() says. Without one the fact is not created, with a
-        warning: a single unit, or xbrli:pure, is not valid for these types."""
-        complexUnit = self.taxonomy.UTR.complexUnitFor(concept.dataType)
+        """Report a concept whose type requires a complex UTR unit in a divide unit. The
+        numerator is ``cellUnit`` when the unit cell names a unit for it (tCO2e for emissions
+        per monetary unit, say), else each side takes its ``_defaultUnitFor``. Without both,
+        the fact is not created, with a warning: a single unit, or xbrli:pure, is not valid
+        for these types."""
+        complexUnit = self.utr.complexUnitFor(concept.dataType)
         assert complexUnit is not None
-        numerator = self._unitForItemType(complexUnit.numerator)
-        denominator = self._unitForItemType(complexUnit.denominator)
-        if (
-            numerator is None
-            or denominator is None
-            or not self.taxonomy.UTR.validComplexUnit(
-                concept.dataType, numerator, denominator
+        if cellUnit not in self.utr.getUnitsForDataType(complexUnit.numerator):
+            cellUnit = None
+        numerator = cellUnit or self._defaultUnitFor(complexUnit.numerator)
+        denominator = self._defaultUnitFor(complexUnit.denominator)
+        reasons = [
+            reason
+            for itemType, unit in (
+                (complexUnit.numerator, numerator),
+                (complexUnit.denominator, denominator),
             )
-        ):
+            if (reason := self._noUnitReason(itemType, unit)) is not None
+        ]
+        if reasons:
             self._msg.warning(
                 f"No unit could be chosen for {dn.name}, so its facts have not been created: "
-                f"the UTR gives {concept.dataType.localName} as {complexUnit.numerator} per "
-                f"{complexUnit.denominator}"
-                + (
-                    " and the report has no default currency."
-                    if denominator is None and numerator is not None
-                    else "."
-                ),
+                f"the UTR gives {concept.dataType.localName} as "
+                f"{complexUnit.numerator.localName} per {complexUnit.denominator.localName}, "
+                f"and {' and '.join(reasons)}.",
                 MessageType.Conversion,
                 concept=concept,
             )
             return False
+        assert numerator is not None and denominator is not None
         factBuilder.setComplexUnit([numerator], [denominator])
         return True
 
     def setFallbackUnitForName(
         self, dn: DefinedName, concept: Concept, factBuilder: FactBuilder
     ) -> bool:
-        if not concept.isNumeric:
-            return False
-
-        if self.taxonomy.UTR.requiresComplexUnit(concept.dataType):
+        """The unit for a numeric concept the workbook gives no usable unit for."""
+        if self.utr.requiresComplexUnit(concept.dataType):
             return self.setComplexUnitForName(dn, concept, factBuilder)
 
+        if concept.isMonetary:
+            if (currency := self._report.defaultCurrency) is None:
+                self._msg.warning(
+                    f"No currency could be chosen for {dn.name}, so its facts have not "
+                    "been created: the report has no default currency.",
+                    MessageType.Conversion,
+                    concept=concept,
+                )
+                return False
+            factBuilder.setSimpleUnit(currency)
+            return True
+
         if (
-            unit := self._config.dataTypesToUnits.get(concept.dataType)
-        ) is not None and self.taxonomy.UTR.valid(concept.dataType, unit):
+            unit := self._config.unitForDataType(concept.dataType)
+        ) is not None and self.utr.valid(concept.dataType, unit):
             factBuilder.setSimpleUnit(unit)
             return True
 
-        if units := self.taxonomy.UTR.getUnitsForDataType(concept.dataType):
-            chosen = next(iter(units))
+        if units := self.utr.getUnitsForDataType(concept.dataType):
+            chosen = min(units)
             self._msg.warning(
                 f"Picked fallback unit (from UTR) {chosen} for {dn.name}",
                 MessageType.DevInfo,
             )
             factBuilder.setSimpleUnit(chosen)
         else:
-            ultimateFallback = self.taxonomy.QNameMaker.fromString("xbrli:pure")
+            pure = self.taxonomy.QNameMaker.fromNamespaceAndLocalName(XBRLI_NS, "pure")
             self._msg.warning(
-                f"Used ultimate fallback unit {ultimateFallback} for {dn.name}",
+                f"Used ultimate fallback unit {pure} for {dn.name}",
                 MessageType.DevInfo,
             )
-            factBuilder.setSimpleUnit(ultimateFallback)
+            factBuilder.setSimpleUnit(pure)
         return True

@@ -265,10 +265,12 @@ class FactCreator:
                 assert cell is not None
                 processNumeric(self._msg, stuff, cell, fb, value)
 
+            # A monetary fact takes the report's currency from the FactBuilder.
             if concept.isNumeric and not concept.isMonetary:
-                self._units.setUnitForName(stuff, fb)
-            elif concept.isMonetary:
-                pass
+                if not self._units.setUnitForName(stuff, fb):
+                    # The resolver has said why.
+                    self._pending.pop(dn)
+                    continue
             elif concept.isEnumerationSingle:
                 member = resolveMemberWithMessages(
                     self._msg,

@@ -19,6 +19,21 @@ class ConverterConfig:
     cellValuesToTaxonomyLabels: dict[str, str] = field(default_factory=dict)
     cellUnitReplacements: dict[str, str] = field(default_factory=dict)
 
+    def unitForDataType(self, dataType: QName) -> QName | None:
+        """The configured unit for ``dataType``, matched by local name if not by QName: the
+        config spans taxonomies, and the UTR qualifies some item types differently from the
+        DTR."""
+        if (unit := self.dataTypesToUnits.get(dataType)) is not None:
+            return unit
+        return next(
+            (
+                unit
+                for configured, unit in self.dataTypesToUnits.items()
+                if configured.localName == dataType.localName
+            ),
+            None,
+        )
+
     @classmethod
     def fromDefaults(
         cls, defaults: Mapping[str, Any], taxonomy: Taxonomy
