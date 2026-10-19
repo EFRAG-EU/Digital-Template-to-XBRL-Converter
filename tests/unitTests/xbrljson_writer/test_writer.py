@@ -26,7 +26,12 @@ from mireport.report.factbuilder import FactBuilder
 from mireport.report.model import Unit
 from mireport.taxonomy import Concept, Taxonomy
 from mireport.xbrljson_reader import XbrlJsonProcessor
-from mireport.xbrljson_reader.document import XbrlJsonException, XbrlJsonFact
+from mireport.xbrljson_reader.document import (
+    FACT_FOOTNOTE_ARCROLE,
+    STANDARD_LINK_ROLE,
+    XbrlJsonException,
+    XbrlJsonFact,
+)
 from mireport.xbrljson_writer import XbrlJsonExtensions, toXbrlJson
 from mireport.xbrljson_writer._values import canonicalNumber
 from mireport.xml import LEI_NS, XBRL_NS
@@ -246,8 +251,12 @@ class TestDocument:
         for name in ("Orphan", "Flag"):
             _add(report, _fact(report, name).setValue("true"))
         report.addFootnoteToFacts("A <b>note</b>", report.facts)
-        orphan, flag, note = toXbrlJson(report).facts
+        document = toXbrlJson(report)
+        orphan, flag, note = document.facts
         assert orphan.links == flag.links == {"footnote": {"_": ("n1",)}}
+        # xBRL-JSON predefines no link names: Arelle reports xbrlje:unknownLinkType without these
+        assert document.linkTypes == {"footnote": FACT_FOOTNOTE_ARCROLE}
+        assert document.linkGroups == {"_": STANDARD_LINK_ROLE}
         assert note.isNote and note.id == note.noteId == "n1"
         assert note.value == "A &lt;b&gt;note&lt;/b&gt;"
         assert note.language == report.language

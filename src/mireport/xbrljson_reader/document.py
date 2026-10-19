@@ -36,6 +36,11 @@ INVALID_DIMENSION_VALUE = "oime:invalidDimensionValue"
 INVALID_LANGUAGE = "oime:invalidLanguage"
 UNSUPPORTED = "mireport:unsupported"
 
+# A footnote link: the fact-footnote arcrole, in the standard link role. xBRL-JSON predefines
+# no link type names, so a document using them declares them in linkTypes/linkGroups.
+FACT_FOOTNOTE_ARCROLE = "http://www.xbrl.org/2003/arcrole/fact-footnote"
+STANDARD_LINK_ROLE = "http://www.xbrl.org/2003/role/link"
+
 
 class XbrlJsonException(Exception):
     """The document cannot be turned into a report at all."""

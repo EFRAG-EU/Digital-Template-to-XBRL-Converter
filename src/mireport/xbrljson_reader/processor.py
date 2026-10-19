@@ -33,6 +33,7 @@ from mireport.taxonomy import Concept, QName, Taxonomy, getTaxonomy, listTaxonom
 from mireport.typealiases import DecimalPlaces
 from mireport.xbrljson_reader._periods import parseDuration, parsePeriod
 from mireport.xbrljson_reader.document import (
+    FACT_FOOTNOTE_ARCROLE,
     INVALID_DIMENSION_VALUE,
     INVALID_JSON_STRUCTURE,
     INVALID_LANGUAGE,
@@ -50,7 +51,6 @@ L = logging.getLogger(__name__)
 XHTML_NS = "http://www.w3.org/1999/xhtml"
 # Extension properties the snapshot files write (see test_fact_creator_characterization.py).
 EXTENSION_NS = "urn:mireport:xbrl-json-extension"
-FACT_FOOTNOTE_ARCROLE = "http://www.xbrl.org/2003/arcrole/fact-footnote"
 # Features that change nothing about how a document is read here.
 _KNOWN_FEATURES = frozenset({"xbrl:canonicalValues", "xbrl:allowedDuplicates"})
 _BOOLEANS = {"true": True, "1": True, "false": False, "0": False}
@@ -496,7 +496,7 @@ class XbrlJsonProcessor:
 
     def _footnoteLinkTypes(self) -> set[str]:
         """The link type names that mean fact-to-footnote: those the document binds to the
-        arcrole, and ``footnote``, the name xBRL-JSON predefines for it."""
+        arcrole, and ``footnote`` even undeclared, as older snapshot files wrote it."""
         return {"footnote"} | {
             name
             for name, uri in self._document.linkTypes.items()

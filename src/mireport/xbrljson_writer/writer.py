@@ -21,6 +21,8 @@ from typing import TYPE_CHECKING, Any
 from mireport.exceptions import BrokenNamespacePrefixException, InlineReportException
 from mireport.report.model import Unit
 from mireport.xbrljson_reader.document import (
+    FACT_FOOTNOTE_ARCROLE,
+    STANDARD_LINK_ROLE,
     XbrlJsonDocument,
     XbrlJsonException,
     XbrlJsonFact,
@@ -175,5 +177,8 @@ def toXbrlJson(
         namespaces=namespaces.sorted(),
         facts=tuple(jsonFacts),
         features=CANONICAL_VALUES,
+        # Declared only when used: xBRL-JSON predefines no link type or group names.
+        linkTypes={"footnote": FACT_FOOTNOTE_ARCROLE} if noteIds else {},
+        linkGroups={"_": STANDARD_LINK_ROLE} if noteIds else {},
         extensions=dict(extensions.document) if extensions is not None else {},
     )

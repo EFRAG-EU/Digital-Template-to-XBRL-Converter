@@ -15,6 +15,12 @@
       "waste": "https://xbrl.efrag.org/taxonomy/waste/2026-05-01/waste",
       "xbrl": "https://xbrl.org/2021"
     },
+    "linkTypes": {
+      "footnote": "http://www.xbrl.org/2003/arcrole/fact-footnote"
+    },
+    "linkGroups": {
+      "_": "http://www.xbrl.org/2003/role/link"
+    },
     "taxonomy": [
       "https://xbrl.efrag.org/taxonomy/vsme/2026-05-01/vsme-all.xsd"
     ]
