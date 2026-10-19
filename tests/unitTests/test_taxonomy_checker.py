@@ -828,7 +828,7 @@ class TestNumericConceptsWithoutMeasurementGuidance:
     def test_single_utr_candidate_is_still_flagged_and_named(self) -> None:
         # xbrli:sharesItemType has exactly one UTR candidate (shares).
         # UnitResolver already resolves that automatically (see
-        # UnitResolver.unitFor), but this is still flagged, forward-looking
+        # UnitResolver.setFallbackUnitForName), but this is still flagged, forward-looking
         # to a UTR that later adds a second candidate for the same data
         # type -- and the finding names the concrete unit to write.
         concepts = {

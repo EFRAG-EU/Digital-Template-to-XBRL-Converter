@@ -422,7 +422,7 @@ class TaxonomyChecker:
 
         This still applies with exactly one candidate today, even though
         UnitResolver already auto-resolves that case (see
-        UnitResolver.unitFor) -- the UTR can grow a second candidate for the
+        UnitResolver.setFallbackUnitForName) -- the UTR can grow a second candidate for the
         same data type in a later release, at which point resolution becomes
         ambiguous with no guidance in place to catch it. Naming today's only
         candidate now is cheap and forward-compatible; each finding lists the

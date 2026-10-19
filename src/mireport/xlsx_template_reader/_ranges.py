@@ -158,10 +158,6 @@ class _CellRangeDimensions(NamedTuple):
     populated_min_row: int
 
     @property
-    def countAccessed(self) -> int:
-        return len(self.cellsAccessed)
-
-    @property
     def countPopulated(self) -> int:
         return len(self.cellsPopulated)
 
