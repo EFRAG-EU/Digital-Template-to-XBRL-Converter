@@ -22,15 +22,18 @@ from tests.unitTests.coverage_report_generator.test_sampling import (
 
 from mireport.conversionresults import ConversionResultsBuilder
 from mireport.coverage_report_generator._sampling import (
+    FactShape,
     SampleEntityPeriod,
     _Rotation,
     _Variant,
     buildFacts,
     complexUnitFor,
-    coreDimensionsFor,
+    coreShapeFor,
     reportableConcepts,
 )
 from mireport.exceptions import SampleGenerationException
+from mireport.report import Report
+from mireport.report.model import Unit
 from mireport.taxonomy import (
     Taxonomy,
     getTaxonomy,
@@ -38,6 +41,7 @@ from mireport.taxonomy import (
     loadBuiltInTaxonomyJSON,
 )
 from mireport.xbrljson_reader import XbrlJsonProcessor
+from mireport.xbrljson_writer import toXbrlJson
 
 PERIOD = SampleEntityPeriod(
     entity="lei:529900T8BM49AURSDO55",
@@ -71,32 +75,45 @@ class TestShiftedPeriod:
         assert shifted.periodDuration == "2026-02-28T00:00:00/2027-02-28T00:00:00"
 
 
+def _shape(a: str, *, unit: str | None = None) -> FactShape:
+    """A fact of concept ``c`` with typed dimension ``a`` at ``a`` (or none), in ``unit``."""
+    concept, axis = (
+        FakeConcept(FakeQName("esrs", "c")),
+        FakeConcept(FakeQName("esrs", "a")),
+    )
+    return FactShape(
+        concept,  # type: ignore[arg-type]
+        unit=None if unit is None else Unit.simple(FakeQName("utr", unit)),  # type: ignore[arg-type]
+        typed={axis: a} if a else {},  # type: ignore[dict-item]
+    )
+
+
 class TestRotation:
     UNITS = (_Variant(), _Variant(unit=FakeQName("utr", "t")))
 
     def test_the_first_fact_shows_the_usual_variant_then_each_next_one(self) -> None:
         rotation = _Rotation(list(self.UNITS))
-        assert rotation.take({"concept": "c", "a": "1"}) == self.UNITS[0]
-        assert rotation.take({"concept": "c", "a": "2"}) == self.UNITS[1]
-        assert rotation.take({"concept": "c", "a": "3"}) == self.UNITS[0]  # round again
+        assert rotation.take(_shape("1")) == self.UNITS[0]
+        assert rotation.take(_shape("2")) == self.UNITS[1]
+        assert rotation.take(_shape("3")) == self.UNITS[0]  # round again
 
     def test_a_context_already_covered_is_skipped_and_costs_no_variant(self) -> None:
         rotation = _Rotation(list(self.UNITS))
-        assert rotation.take({"concept": "c", "a": "1"}) is not None
-        assert rotation.take({"concept": "c", "a": "1"}) is None
-        assert rotation.take({"concept": "c", "a": "2"}) == self.UNITS[1]
+        assert rotation.take(_shape("1")) is not None
+        assert rotation.take(_shape("1")) is None
+        assert rotation.take(_shape("2")) == self.UNITS[1]
 
     def test_facts_that_differ_only_in_unit_share_a_context(self) -> None:
         rotation = _Rotation(list(self.UNITS))
-        assert rotation.take({"concept": "c", "unit": "utr:kg"}) is not None
-        assert rotation.take({"concept": "c", "unit": "utr:t"}) is None
+        assert rotation.take(_shape("", unit="kg")) is not None
+        assert rotation.take(_shape("", unit="t")) is None
 
     def test_variants_no_fact_reached_are_left_over(self) -> None:
         rotation = _Rotation([*self.UNITS, _Variant(emptySet=True)])
-        rotation.take({"concept": "c", "a": "1"})
+        rotation.take(_shape("1"))
         assert rotation.uncovered() == [self.UNITS[1], _Variant(emptySet=True)]
-        rotation.take({"concept": "c", "a": "2"})
-        rotation.take({"concept": "c", "a": "3"})
+        rotation.take(_shape("2"))
+        rotation.take(_shape("3"))
         assert rotation.uncovered() == []
 
 
@@ -136,11 +153,9 @@ class TestComplexUnits:
         assert (str(numerator), str(denominator)) == ("utr:tCO2e", "iso4217:EUR")
 
     def test_the_fact_is_written_in_that_unit_not_left_unitless(self) -> None:
-        dimensions, used = coreDimensionsFor(
-            _complex_unit_taxonomy(), _complex_unit_concept(), PERIOD
-        )
-        assert dimensions["unit"] == "utr:tCO2e/iso4217:EUR"
-        assert FakeQName("iso4217", "EUR") in used
+        shape = coreShapeFor(_complex_unit_taxonomy(), _complex_unit_concept())  # type: ignore[arg-type]
+        assert shape.unit is not None
+        assert shape.unit.toUnitString() == "utr:tCO2e/iso4217:EUR"
 
     def test_a_concept_with_its_own_documented_unit_is_not_complex(self) -> None:
         concept = FakeConcept(
@@ -167,6 +182,11 @@ class TestComplexUnits:
             complexUnitFor(taxonomy, _complex_unit_concept())
 
 
+def _facts(report: Report) -> dict[str, dict]:
+    """The report's facts as xBRL-JSON writes them."""
+    return toXbrlJson(report).toDict()["facts"]
+
+
 def _contexts(facts: dict[str, dict]) -> Counter[tuple]:
     """Each fact's context: everything that identifies it but its value and its unit."""
     return Counter(
@@ -190,7 +210,8 @@ def test_a_built_in_taxonomys_report_has_no_repeated_context_and_valid_units(
     entryPoints: frozenset[str], nil: bool
 ) -> None:
     taxonomy: Taxonomy = getTaxonomy(entryPoints)
-    facts, _, _, _ = buildFacts(taxonomy, reportableConcepts(taxonomy), PERIOD, nil=nil)
+    report, _, _ = buildFacts(taxonomy, reportableConcepts(taxonomy), PERIOD, nil=nil)
+    facts = _facts(report)
 
     repeated = [ctx for ctx, n in _contexts(facts).items() if n > 1]
     assert repeated == []
@@ -229,9 +250,8 @@ def test_variants_that_need_their_own_context_are_in_earlier_periods() -> None:
     taxonomy = getTaxonomy(
         next(e for e in listTaxonomies() if any("/vsme/2026-05-01/" in u for u in e))
     )
-    facts, _, _, _ = buildFacts(
-        taxonomy, reportableConcepts(taxonomy), PERIOD, nil=False
-    )
+    report, _, _ = buildFacts(taxonomy, reportableConcepts(taxonomy), PERIOD, nil=False)
+    facts = _facts(report)
     byConcept: dict[str, list[dict]] = {}
     for fact in facts.values():
         byConcept.setdefault(fact["dimensions"]["concept"], []).append(fact)
@@ -264,17 +284,9 @@ def test_a_generated_report_goes_through_the_strict_reader() -> None:
             "Scope1AndScope2GreenhouseGasEmissionsIntensityValueLocationBased",
         }
     ]
-    facts, namespaces, _, _ = buildFacts(taxonomy, concepts, PERIOD, nil=False)
-    document = {
-        "documentInfo": {
-            "documentType": "https://xbrl.org/2021/xbrl-json",
-            "features": {"xbrl:canonicalValues": True},
-            "namespaces": namespaces,
-            "taxonomy": sorted(entryPoints),
-        },
-        "facts": facts,
-    }
-    report = XbrlJsonProcessor(
+    report, _, _ = buildFacts(taxonomy, concepts, PERIOD, nil=False)
+    document = toXbrlJson(report).toDict()
+    read = XbrlJsonProcessor(
         json.loads(json.dumps(document)), ConversionResultsBuilder(), strict=True
     ).createReport()
-    assert report.getInlineReport().fileContent
+    assert read.getInlineReport().fileContent

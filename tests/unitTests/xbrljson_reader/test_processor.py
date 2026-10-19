@@ -48,7 +48,11 @@ def taxonomy() -> Taxonomy:
 @pytest.fixture(scope="module")
 def coverage(taxonomy: Taxonomy) -> dict[str, Any]:
     reports = buildCoverageReportSet(taxonomy, SAMPLE, sorted(taxonomy.entryPointSet))
-    return {"values": reports.allValues, "nil": reports.allNil}
+    documents = reports.documents
+    return {
+        "values": documents["all-values.json"].toDict(),
+        "nil": documents["all-nil.json"].toDict(),
+    }
 
 
 def _read(

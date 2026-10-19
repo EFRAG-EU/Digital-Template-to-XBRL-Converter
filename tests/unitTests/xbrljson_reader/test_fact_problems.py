@@ -45,9 +45,8 @@ def taxonomy() -> Taxonomy:
 
 @pytest.fixture(scope="module")
 def values(taxonomy: Taxonomy) -> dict[str, Any]:
-    return buildCoverageReportSet(
-        taxonomy, SAMPLE, sorted(taxonomy.entryPointSet)
-    ).allValues
+    reports = buildCoverageReportSet(taxonomy, SAMPLE, sorted(taxonomy.entryPointSet))
+    return reports.documents["all-values.json"].toDict()
 
 
 @pytest.fixture
