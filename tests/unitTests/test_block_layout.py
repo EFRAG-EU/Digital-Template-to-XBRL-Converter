@@ -282,6 +282,15 @@ class TestTwoHypercubesInOneRole:
         assert "T1" in headings and "T2" in headings
         assert "Intensity" in headings and "Note" in headings
 
+    def test_a_period_over_several_columns_is_right_aligned_like_the_units_beside_it(
+        self, register_taxonomy: Register
+    ) -> None:
+        html = _html(_report(register_taxonomy(_two_cubes()), self.FACTS))
+        _, typed = re.findall(r"<table.*?</table>", html, re.DOTALL)
+        # Intensity is a number and Note is text, so the table is not all numeric
+        (period,) = re.findall(r'<th colspan="[2-9]"[^>]*class="([^"]*)">\s*20', typed)
+        assert period == "numeric"
+
     def test_a_role_with_only_one_cube_keeps_its_plain_heading(
         self, register_taxonomy: Register
     ) -> None:
