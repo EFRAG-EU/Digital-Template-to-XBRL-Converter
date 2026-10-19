@@ -16,7 +16,6 @@ from pathlib import Path
 from typing import ClassVar, NamedTuple
 
 import pytest
-from tests.unitTests.xbrl_json_snapshot import report_to_xbrl_json
 
 from mireport.conversionresults import ConversionResultsBuilder, Severity
 from mireport.data.disclosures import VSME_DEFAULTS
@@ -24,6 +23,9 @@ from mireport.exceptions import AmbiguousComponentException, InlineReportExcepti
 from mireport.report import InlineReport
 from mireport.taxonomy import getTaxonomy, loadBuiltInTaxonomyJSON
 from mireport.xbrljson_reader import XbrlJsonProcessor
+from mireport.xbrljson_reader.document import XbrlJsonDocument
+from mireport.xbrljson_reader.processor import EXTENSION_NS
+from mireport.xbrljson_writer import XbrlJsonExtensions, toXbrlJson
 from mireport.xlsx_template_reader._binder import WorkbookBinder
 from mireport.xlsx_template_reader._config import ConverterConfig
 from mireport.xlsx_template_reader._enumerations import (
@@ -64,15 +66,21 @@ def _results() -> ConversionResultsBuilder:
     return ConversionResultsBuilder(consoleOutput=False)
 
 
-def _snapshotDocument(sample: Path) -> dict:
-    """The sample's facts as xBRL-JSON (see tests/unitTests/xbrl_json_snapshot.py), with the scale
-    of each fact and the conversion's message counts as extension properties."""
+def _snapshotDocument(sample: Path) -> XbrlJsonDocument:
+    """The sample's facts as xBRL-JSON, sorted so a diff reads as facts, with the scale of each
+    fact and the conversion's message counts as extension properties (OIM has no place for
+    either)."""
     results = _results()
     report = XlsxProcessor.from_file(sample, results, VSME_DEFAULTS).createReport()
-    return report_to_xbrl_json(
+    severities = Counter(m.severity.name for m in results.messages)
+    return toXbrlJson(
         report,
-        report.taxonomy.entryPointSet,
-        dict(Counter(m.severity.name for m in results.messages)),
+        sortFacts=True,
+        extensions=XbrlJsonExtensions(
+            namespaces={"mireport": EXTENSION_NS},
+            document={"mireport:messageSeverities": dict(sorted(severities.items()))},
+            fact=lambda f: {} if f.scale is None else {"mireport:scale": f.scale},
+        ),
     )
 
 
@@ -90,7 +98,7 @@ class TestFactSnapshot:
             "directly, then review and commit it."
         )
         expected = json.loads(snapshot.read_text(encoding="utf-8"))
-        actual = _snapshotDocument(sample)
+        actual = _snapshotDocument(sample).toDict()
 
         assert actual["documentInfo"] == expected["documentInfo"]
         assert (
@@ -112,16 +120,13 @@ class TestFactSnapshot:
     def test_the_snapshot_is_a_document_our_xbrl_json_reader_accepts(
         self, snapshot: Path
     ):
-        """It is xBRL-JSON, not a private format: the reader takes every fact (footnotes aside)."""
-        document = json.loads(snapshot.read_text(encoding="utf-8"))
-        document["facts"] = {
-            k: {name: part for name, part in fact.items() if name != "links"}
-            for k, fact in document["facts"].items()
-            if fact["dimensions"]["concept"] != "xbrl:note"
-        }
+        """It is xBRL-JSON, not a private format: the reader takes every fact and footnote."""
+        document = XbrlJsonDocument.fromFile(snapshot)
         processor = XbrlJsonProcessor(document, _results(), strict=True)
-        processor.createReport()
-        assert processor.factsAdded == len(document["facts"])
+        report = processor.createReport()
+        notes = [f for f in document.facts if f.isNote]
+        assert len({fn.id for f in report.facts for fn in f.footnotes}) == len(notes)
+        assert processor.factsAdded == len(document.facts) - len(notes)
 
 
 # ---------------------------------------------------------------------------
@@ -665,8 +670,5 @@ if __name__ == "__main__":
     loadBuiltInTaxonomyJSON()
     _SNAPSHOT_DIR.mkdir(parents=True, exist_ok=True)
     for sample, snapshot in SNAPSHOT_CASES.items():
-        snapshot.write_text(
-            json.dumps(_snapshotDocument(sample), indent=2, ensure_ascii=False) + "\n",
-            encoding="utf-8",
-        )
+        _snapshotDocument(sample).toFile(snapshot)
         print(f"Snapshot written to {snapshot}")

@@ -48,7 +48,7 @@ from mireport.xml import XBRLI_NS
 L = logging.getLogger(__name__)
 
 XHTML_NS = "http://www.w3.org/1999/xhtml"
-# Extension properties the snapshot files write (see tests/unitTests/xbrl_json_snapshot.py).
+# Extension properties the snapshot files write (see test_fact_creator_characterization.py).
 EXTENSION_NS = "urn:mireport:xbrl-json-extension"
 FACT_FOOTNOTE_ARCROLE = "http://www.xbrl.org/2003/arcrole/fact-footnote"
 # Features that change nothing about how a document is read here.

@@ -1,6 +1,9 @@
 {
   "documentInfo": {
     "documentType": "https://xbrl.org/2021/xbrl-json",
+    "features": {
+      "xbrl:canonicalValues": true
+    },
     "namespaces": {
       "country": "https://xbrl.org/2024/iso3166",
       "iso4217": "http://www.xbrl.org/2003/iso4217",
@@ -10,25 +13,27 @@
       "utr": "http://www.xbrl.org/2009/utr",
       "vsme": "https://xbrl.efrag.org/taxonomy/vsme/2026-02-01/vsme",
       "waste": "https://xbrl.efrag.org/taxonomy/waste/2026-02-01/waste",
-      "xbrl": "https://xbrl.org/2021",
-      "xbrli": "http://www.xbrl.org/2003/instance"
+      "xbrl": "https://xbrl.org/2021"
     },
     "taxonomy": [
       "https://xbrl.efrag.org/taxonomy/vsme/2026-02-01/vsme-all.xsd"
     ]
   },
+  "mireport:messageSeverities": {
+    "INFO": 4,
+    "WARNING": 14
+  },
   "facts": {
-    "f0001": {
-      "value": "Duomo Square",
+    "f1": {
       "dimensions": {
         "concept": "vsme:AddressOfSite",
         "entity": "lei:TestCode1234",
         "period": "2026-01-01T00:00:00",
         "vsme:IdentifierOfSiteTypedAxis": "1"
-      }
+      },
+      "value": "Duomo Square"
     },
-    "f0002": {
-      "value": "10",
+    "f2": {
       "dimensions": {
         "concept": "vsme:AmountOfEmissionToAir",
         "entity": "lei:TestCode1234",
@@ -36,10 +41,10 @@
         "unit": "utr:kg",
         "vsme:TypeOfPollutantAxis": "vsme:AlachlorMember"
       },
+      "value": "10.0",
       "decimals": 2
     },
-    "f0003": {
-      "value": "10",
+    "f3": {
       "dimensions": {
         "concept": "vsme:AmountOfEmissionToAir",
         "entity": "lei:TestCode1234",
@@ -47,10 +52,10 @@
         "unit": "utr:kg",
         "vsme:TypeOfPollutantAxis": "vsme:AldrinMember"
       },
+      "value": "10.0",
       "decimals": 2
     },
-    "f0004": {
-      "value": "3",
+    "f4": {
       "dimensions": {
         "concept": "vsme:AmountOfEmissionToSoil",
         "entity": "lei:TestCode1234",
@@ -58,10 +63,10 @@
         "unit": "utr:kg",
         "vsme:TypeOfPollutantAxis": "vsme:AlachlorMember"
       },
+      "value": "3.0",
       "decimals": 2
     },
-    "f0005": {
-      "value": "5",
+    "f5": {
       "dimensions": {
         "concept": "vsme:AmountOfEmissionToSoil",
         "entity": "lei:TestCode1234",
@@ -69,10 +74,10 @@
         "unit": "utr:kg",
         "vsme:TypeOfPollutantAxis": "vsme:AldrinMember"
       },
+      "value": "5.0",
       "decimals": 2
     },
-    "f0006": {
-      "value": "5",
+    "f6": {
       "dimensions": {
         "concept": "vsme:AmountOfEmissionToWater",
         "entity": "lei:TestCode1234",
@@ -80,10 +85,10 @@
         "unit": "utr:kg",
         "vsme:TypeOfPollutantAxis": "vsme:AlachlorMember"
       },
+      "value": "5.0",
       "decimals": 2
     },
-    "f0007": {
-      "value": "3",
+    "f7": {
       "dimensions": {
         "concept": "vsme:AmountOfEmissionToWater",
         "entity": "lei:TestCode1234",
@@ -91,10 +96,10 @@
         "unit": "utr:kg",
         "vsme:TypeOfPollutantAxis": "vsme:AldrinMember"
       },
+      "value": "3.0",
       "decimals": 2
     },
-    "f0008": {
-      "value": "1200",
+    "f8": {
       "dimensions": {
         "concept": "vsme:AreaOfSiteInBiodiversitySensitiveArea",
         "entity": "lei:TestCode1234",
@@ -102,241 +107,236 @@
         "unit": "utr:sqm",
         "vsme:IdentifierOfSiteTypedAxis": "1"
       },
+      "value": "1200.0",
       "decimals": 2
     },
-    "f0009": {
-      "value": "600000",
+    "f9": {
       "dimensions": {
         "concept": "vsme:Assets",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00",
         "unit": "iso4217:EUR"
       },
+      "value": "600000.0",
       "decimals": 2
     },
-    "f0010": {
-      "value": "150",
+    "f10": {
       "dimensions": {
         "concept": "vsme:AverageNumberOfAnnualTrainingHoursPerFemaleEmployee",
         "entity": "lei:TestCode1234",
-        "period": "2025-01-01T00:00:00/2026-01-01T00:00:00",
-        "unit": "xbrli:pure"
+        "period": "2025-01-01T00:00:00/2026-01-01T00:00:00"
       },
+      "value": "150.0",
       "decimals": 2
     },
-    "f0011": {
-      "value": "100",
+    "f11": {
       "dimensions": {
         "concept": "vsme:AverageNumberOfAnnualTrainingHoursPerMaleEmployee",
         "entity": "lei:TestCode1234",
-        "period": "2025-01-01T00:00:00/2026-01-01T00:00:00",
-        "unit": "xbrli:pure"
+        "period": "2025-01-01T00:00:00/2026-01-01T00:00:00"
       },
+      "value": "100.0",
       "decimals": 2
     },
-    "f0012": {
-      "value": "120",
+    "f12": {
       "dimensions": {
         "concept": "vsme:AverageNumberOfAnnualTrainingHoursPerNonReportedGenderEmployee",
         "entity": "lei:TestCode1234",
-        "period": "2025-01-01T00:00:00/2026-01-01T00:00:00",
-        "unit": "xbrli:pure"
+        "period": "2025-01-01T00:00:00/2026-01-01T00:00:00"
       },
+      "value": "120.0",
       "decimals": 2
     },
-    "f0013": {
-      "value": "140",
+    "f13": {
       "dimensions": {
         "concept": "vsme:AverageNumberOfAnnualTrainingHoursPerOtherGenderEmployee",
         "entity": "lei:TestCode1234",
-        "period": "2025-01-01T00:00:00/2026-01-01T00:00:00",
-        "unit": "xbrli:pure"
+        "period": "2025-01-01T00:00:00/2026-01-01T00:00:00"
       },
+      "value": "140.0",
       "decimals": 2
     },
-    "f0014": {
-      "value": "vsme:OptionBBasicModuleAndComprehensiveModuleMember",
+    "f14": {
       "dimensions": {
         "concept": "vsme:BasisForPreparation",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00"
-      }
+      },
+      "value": "vsme:OptionBBasicModuleAndComprehensiveModuleMember"
     },
-    "f0015": {
-      "value": "vsme:ConsolidatedMember",
+    "f15": {
       "dimensions": {
         "concept": "vsme:BasisForReporting",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00"
-      }
+      },
+      "value": "vsme:ConsolidatedMember"
     },
-    "f0016": {
-      "value": "Milan",
+    "f16": {
       "dimensions": {
         "concept": "vsme:CityOfSite",
         "entity": "lei:TestCode1234",
         "period": "2026-01-01T00:00:00",
         "vsme:IdentifierOfSiteTypedAxis": "1"
-      }
+      },
+      "value": "Milan"
     },
-    "f0017": {
-      "value": "country:IT",
+    "f17": {
       "dimensions": {
         "concept": "vsme:CountryOfPrimaryOperationsAndLocationOfSignificantAssets",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00"
-      }
+      },
+      "value": "country:IT"
     },
-    "f0018": {
-      "value": "country:IT",
+    "f18": {
       "dimensions": {
         "concept": "vsme:CountryOfSite",
         "entity": "lei:TestCode1234",
         "period": "2026-01-01T00:00:00",
         "vsme:IdentifierOfSiteTypedAxis": "1"
-      }
+      },
+      "value": "country:IT"
     },
-    "f0019": {
-      "value": "2028-01-01",
+    "f19": {
       "dimensions": {
         "concept": "vsme:DateOfAdoptionOfTransitionPlanForUndertakingNotHavingAdoptedTransitionPlanYet",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00"
-      }
+      },
+      "value": "2028-01-01"
     },
-    "f0020": {
-      "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla at cursus arcu. Nam porttitor pulvinar vehicula. Aenean quis venenatis massa. Mauris sit amet ultricies tellus, et egestas lectus. Praesent vulputate tincidunt risus eget maximus. Sed vel enim ac mi maximus pellentesque porta quis metus. Cras bibendum odio eget maximus bibendum. Donec ut risus condimentum, placerat tortor nec, dictum risus. Donec sodales urna nec sem fringilla fermentum. Vivamus aliquet facilisis velit et suscipit.\n\nDonec pretium magna ut quam placerat, ultricies faucibus ipsum rhoncus. Donec venenatis, mi ac pharetra egestas, orci metus commodo tellus, eget dignissim nisi odio eget nisl. Phasellus turpis tellus, tincidunt sed quam et, dignissim iaculis neque. Cras consequat ante et mi dictum, a pharetra lacus rutrum. Interdum et malesuada fames ac ante ipsum primis in faucibus. Nullam facilisis, enim tempus viverra hendrerit, enim metus rutrum tellus, in dictum ligula lectus et ex. Nullam condimentum purus ac arcu aliquet, sit amet rhoncus lectus lacinia. Quisque accumsan metus et quam suscipit, quis consequat lacus luctus. Nunc id nisl id libero vulputate viverra. Nulla facilisi. Proin non mauris ut nisl posuere placerat. Integer pharetra sapien at accumsan consequat. Fusce sollicitudin, eros ac finibus pulvinar, augue dolor venenatis diam, at molestie erat tortor ut ipsum.\n\nDonec lorem risus, feugiat a semper vel, vestibulum ac purus. Vestibulum pulvinar suscipit diam, eget porttitor eros vestibulum quis. Cras eu nisi mauris. Suspendisse felis odio, tincidunt posuere placerat ac, dictum nec est. Maecenas euismod, dui sed viverra accumsan, nibh arcu rutrum velit, quis mollis nulla mauris id diam. Quisque vel quam et turpis viverra maximus at et eros. Aliquam scelerisque lorem massa, vitae bibendum nibh tincidunt at. Aenean quis gravida augue. Cras ultrices tincidunt lectus, non cursus purus interdum et.\n\nCras ac libero imperdiet, volutpat enim sed, consequat nulla. Pellentesque a egestas augue, ac ultricies nisl. Vestibulum a turpis ultrices, venenatis mi ultricies, tempus odio. Nullam eget dapibus turpis. Vestibulum faucibus ut quam non efficitur. Nam in dolor eu sem ultrices semper vitae a ligula. Curabitur sit amet nisi vitae nunc vestibulum aliquam. Aliquam posuere, purus a tincidunt congue, orci ipsum dictum nunc, eu tristique sem leo at quam. In a velit quis purus venenatis auctor. Donec faucibus odio vitae velit lacinia consequat. Aliquam felis neque, egestas vitae velit sit amet, porttitor placerat orci. In tempor dolor et odio porta, non sodales ex sodales. Phasellus ultrices augue a massa tempus commodo. Donec erat eros, tincidunt at facilisis ut, dictum a augue. Vivamus in neque nulla.\n\nCurabitur vulputate ullamcorper nisi, vitae feugiat libero tincidunt sed. Etiam erat leo, rutrum id egestas in, tempus sit amet quam. Donec ex erat, volutpat vel mollis ut, cursus commodo turpis. Nulla facilisi. Cras non pulvinar leo. Sed elementum pretium nulla, sed mattis nisl porttitor eu. Aliquam at arcu ex. Etiam volutpat velit nibh, eu suscipit augue fermentum vel. Phasellus pellentesque ipsum odio, eget suscipit mi scelerisque a. Sed bibendum tincidunt suscipit. Quisque justo ligula, sodales a justo et, rutrum tempus turpis. Mauris sit amet posuere mi. Aenean blandit, nulla id luctus pellentesque, ipsum ante ultricies tellus, non posuere ipsum arcu in nisi. Donec quis leo vel nisi tristique viverra nec sit amet ante. Donec sed dapibus velit.",
+    "f20": {
       "dimensions": {
         "concept": "vsme:DescriptionOfATargetRelatedToAPolicy",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00"
-      }
+      },
+      "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla at cursus arcu. Nam porttitor pulvinar vehicula. Aenean quis venenatis massa. Mauris sit amet ultricies tellus, et egestas lectus. Praesent vulputate tincidunt risus eget maximus. Sed vel enim ac mi maximus pellentesque porta quis metus. Cras bibendum odio eget maximus bibendum. Donec ut risus condimentum, placerat tortor nec, dictum risus. Donec sodales urna nec sem fringilla fermentum. Vivamus aliquet facilisis velit et suscipit.\n\nDonec pretium magna ut quam placerat, ultricies faucibus ipsum rhoncus. Donec venenatis, mi ac pharetra egestas, orci metus commodo tellus, eget dignissim nisi odio eget nisl. Phasellus turpis tellus, tincidunt sed quam et, dignissim iaculis neque. Cras consequat ante et mi dictum, a pharetra lacus rutrum. Interdum et malesuada fames ac ante ipsum primis in faucibus. Nullam facilisis, enim tempus viverra hendrerit, enim metus rutrum tellus, in dictum ligula lectus et ex. Nullam condimentum purus ac arcu aliquet, sit amet rhoncus lectus lacinia. Quisque accumsan metus et quam suscipit, quis consequat lacus luctus. Nunc id nisl id libero vulputate viverra. Nulla facilisi. Proin non mauris ut nisl posuere placerat. Integer pharetra sapien at accumsan consequat. Fusce sollicitudin, eros ac finibus pulvinar, augue dolor venenatis diam, at molestie erat tortor ut ipsum.\n\nDonec lorem risus, feugiat a semper vel, vestibulum ac purus. Vestibulum pulvinar suscipit diam, eget porttitor eros vestibulum quis. Cras eu nisi mauris. Suspendisse felis odio, tincidunt posuere placerat ac, dictum nec est. Maecenas euismod, dui sed viverra accumsan, nibh arcu rutrum velit, quis mollis nulla mauris id diam. Quisque vel quam et turpis viverra maximus at et eros. Aliquam scelerisque lorem massa, vitae bibendum nibh tincidunt at. Aenean quis gravida augue. Cras ultrices tincidunt lectus, non cursus purus interdum et.\n\nCras ac libero imperdiet, volutpat enim sed, consequat nulla. Pellentesque a egestas augue, ac ultricies nisl. Vestibulum a turpis ultrices, venenatis mi ultricies, tempus odio. Nullam eget dapibus turpis. Vestibulum faucibus ut quam non efficitur. Nam in dolor eu sem ultrices semper vitae a ligula. Curabitur sit amet nisi vitae nunc vestibulum aliquam. Aliquam posuere, purus a tincidunt congue, orci ipsum dictum nunc, eu tristique sem leo at quam. In a velit quis purus venenatis auctor. Donec faucibus odio vitae velit lacinia consequat. Aliquam felis neque, egestas vitae velit sit amet, porttitor placerat orci. In tempor dolor et odio porta, non sodales ex sodales. Phasellus ultrices augue a massa tempus commodo. Donec erat eros, tincidunt at facilisis ut, dictum a augue. Vivamus in neque nulla.\n\nCurabitur vulputate ullamcorper nisi, vitae feugiat libero tincidunt sed. Etiam erat leo, rutrum id egestas in, tempus sit amet quam. Donec ex erat, volutpat vel mollis ut, cursus commodo turpis. Nulla facilisi. Cras non pulvinar leo. Sed elementum pretium nulla, sed mattis nisl porttitor eu. Aliquam at arcu ex. Etiam volutpat velit nibh, eu suscipit augue fermentum vel. Phasellus pellentesque ipsum odio, eget suscipit mi scelerisque a. Sed bibendum tincidunt suscipit. Quisque justo ligula, sodales a justo et, rutrum tempus turpis. Mauris sit amet posuere mi. Aenean blandit, nulla id luctus pellentesque, ipsum ante ultricies tellus, non posuere ipsum arcu in nisi. Donec quis leo vel nisi tristique viverra nec sit amet ante. Donec sed dapibus velit."
     },
-    "f0021": {
-      "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla at cursus arcu. Nam porttitor pulvinar vehicula. Aenean quis venenatis massa. Mauris sit amet ultricies tellus, et egestas lectus. Praesent vulputate tincidunt risus eget maximus. Sed vel enim ac mi maximus pellentesque porta quis metus. Cras bibendum odio eget maximus bibendum. Donec ut risus condimentum, placerat tortor nec, dictum risus. Donec sodales urna nec sem fringilla fermentum. Vivamus aliquet facilisis velit et suscipit.\n\nDonec pretium magna ut quam placerat, ultricies faucibus ipsum rhoncus. Donec venenatis, mi ac pharetra egestas, orci metus commodo tellus, eget dignissim nisi odio eget nisl. Phasellus turpis tellus, tincidunt sed quam et, dignissim iaculis neque. Cras consequat ante et mi dictum, a pharetra lacus rutrum. Interdum et malesuada fames ac ante ipsum primis in faucibus. Nullam facilisis, enim tempus viverra hendrerit, enim metus rutrum tellus, in dictum ligula lectus et ex. Nullam condimentum purus ac arcu aliquet, sit amet rhoncus lectus lacinia. Quisque accumsan metus et quam suscipit, quis consequat lacus luctus. Nunc id nisl id libero vulputate viverra. Nulla facilisi. Proin non mauris ut nisl posuere placerat. Integer pharetra sapien at accumsan consequat. Fusce sollicitudin, eros ac finibus pulvinar, augue dolor venenatis diam, at molestie erat tortor ut ipsum.\n\nDonec lorem risus, feugiat a semper vel, vestibulum ac purus. Vestibulum pulvinar suscipit diam, eget porttitor eros vestibulum quis. Cras eu nisi mauris. Suspendisse felis odio, tincidunt posuere placerat ac, dictum nec est. Maecenas euismod, dui sed viverra accumsan, nibh arcu rutrum velit, quis mollis nulla mauris id diam. Quisque vel quam et turpis viverra maximus at et eros. Aliquam scelerisque lorem massa, vitae bibendum nibh tincidunt at. Aenean quis gravida augue. Cras ultrices tincidunt lectus, non cursus purus interdum et.\n\nCras ac libero imperdiet, volutpat enim sed, consequat nulla. Pellentesque a egestas augue, ac ultricies nisl. Vestibulum a turpis ultrices, venenatis mi ultricies, tempus odio. Nullam eget dapibus turpis. Vestibulum faucibus ut quam non efficitur. Nam in dolor eu sem ultrices semper vitae a ligula. Curabitur sit amet nisi vitae nunc vestibulum aliquam. Aliquam posuere, purus a tincidunt congue, orci ipsum dictum nunc, eu tristique sem leo at quam. In a velit quis purus venenatis auctor. Donec faucibus odio vitae velit lacinia consequat. Aliquam felis neque, egestas vitae velit sit amet, porttitor placerat orci. In tempor dolor et odio porta, non sodales ex sodales. Phasellus ultrices augue a massa tempus commodo. Donec erat eros, tincidunt at facilisis ut, dictum a augue. Vivamus in neque nulla.\n\nCurabitur vulputate ullamcorper nisi, vitae feugiat libero tincidunt sed. Etiam erat leo, rutrum id egestas in, tempus sit amet quam. Donec ex erat, volutpat vel mollis ut, cursus commodo turpis. Nulla facilisi. Cras non pulvinar leo. Sed elementum pretium nulla, sed mattis nisl porttitor eu. Aliquam at arcu ex. Etiam volutpat velit nibh, eu suscipit augue fermentum vel. Phasellus pellentesque ipsum odio, eget suscipit mi scelerisque a. Sed bibendum tincidunt suscipit. Quisque justo ligula, sodales a justo et, rutrum tempus turpis. Mauris sit amet posuere mi. Aenean blandit, nulla id luctus pellentesque, ipsum ante ultricies tellus, non posuere ipsum arcu in nisi. Donec quis leo vel nisi tristique viverra nec sit amet ante. Donec sed dapibus velit.",
+    "f21": {
       "dimensions": {
         "concept": "vsme:DescriptionOfClimateRelatedHazardsAndClimateRelatedTransitionEvents",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00"
-      }
+      },
+      "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla at cursus arcu. Nam porttitor pulvinar vehicula. Aenean quis venenatis massa. Mauris sit amet ultricies tellus, et egestas lectus. Praesent vulputate tincidunt risus eget maximus. Sed vel enim ac mi maximus pellentesque porta quis metus. Cras bibendum odio eget maximus bibendum. Donec ut risus condimentum, placerat tortor nec, dictum risus. Donec sodales urna nec sem fringilla fermentum. Vivamus aliquet facilisis velit et suscipit.\n\nDonec pretium magna ut quam placerat, ultricies faucibus ipsum rhoncus. Donec venenatis, mi ac pharetra egestas, orci metus commodo tellus, eget dignissim nisi odio eget nisl. Phasellus turpis tellus, tincidunt sed quam et, dignissim iaculis neque. Cras consequat ante et mi dictum, a pharetra lacus rutrum. Interdum et malesuada fames ac ante ipsum primis in faucibus. Nullam facilisis, enim tempus viverra hendrerit, enim metus rutrum tellus, in dictum ligula lectus et ex. Nullam condimentum purus ac arcu aliquet, sit amet rhoncus lectus lacinia. Quisque accumsan metus et quam suscipit, quis consequat lacus luctus. Nunc id nisl id libero vulputate viverra. Nulla facilisi. Proin non mauris ut nisl posuere placerat. Integer pharetra sapien at accumsan consequat. Fusce sollicitudin, eros ac finibus pulvinar, augue dolor venenatis diam, at molestie erat tortor ut ipsum.\n\nDonec lorem risus, feugiat a semper vel, vestibulum ac purus. Vestibulum pulvinar suscipit diam, eget porttitor eros vestibulum quis. Cras eu nisi mauris. Suspendisse felis odio, tincidunt posuere placerat ac, dictum nec est. Maecenas euismod, dui sed viverra accumsan, nibh arcu rutrum velit, quis mollis nulla mauris id diam. Quisque vel quam et turpis viverra maximus at et eros. Aliquam scelerisque lorem massa, vitae bibendum nibh tincidunt at. Aenean quis gravida augue. Cras ultrices tincidunt lectus, non cursus purus interdum et.\n\nCras ac libero imperdiet, volutpat enim sed, consequat nulla. Pellentesque a egestas augue, ac ultricies nisl. Vestibulum a turpis ultrices, venenatis mi ultricies, tempus odio. Nullam eget dapibus turpis. Vestibulum faucibus ut quam non efficitur. Nam in dolor eu sem ultrices semper vitae a ligula. Curabitur sit amet nisi vitae nunc vestibulum aliquam. Aliquam posuere, purus a tincidunt congue, orci ipsum dictum nunc, eu tristique sem leo at quam. In a velit quis purus venenatis auctor. Donec faucibus odio vitae velit lacinia consequat. Aliquam felis neque, egestas vitae velit sit amet, porttitor placerat orci. In tempor dolor et odio porta, non sodales ex sodales. Phasellus ultrices augue a massa tempus commodo. Donec erat eros, tincidunt at facilisis ut, dictum a augue. Vivamus in neque nulla.\n\nCurabitur vulputate ullamcorper nisi, vitae feugiat libero tincidunt sed. Etiam erat leo, rutrum id egestas in, tempus sit amet quam. Donec ex erat, volutpat vel mollis ut, cursus commodo turpis. Nulla facilisi. Cras non pulvinar leo. Sed elementum pretium nulla, sed mattis nisl porttitor eu. Aliquam at arcu ex. Etiam volutpat velit nibh, eu suscipit augue fermentum vel. Phasellus pellentesque ipsum odio, eget suscipit mi scelerisque a. Sed bibendum tincidunt suscipit. Quisque justo ligula, sodales a justo et, rutrum tempus turpis. Mauris sit amet posuere mi. Aenean blandit, nulla id luctus pellentesque, ipsum ante ultricies tellus, non posuere ipsum arcu in nisi. Donec quis leo vel nisi tristique viverra nec sit amet ante. Donec sed dapibus velit."
     },
-    "f0022": {
-      "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla at cursus arcu. Nam porttitor pulvinar vehicula. Aenean quis venenatis massa. Mauris sit amet ultricies tellus, et egestas lectus. Praesent vulputate tincidunt risus eget maximus. Sed vel enim ac mi maximus pellentesque porta quis metus. Cras bibendum odio eget maximus bibendum. Donec ut risus condimentum, placerat tortor nec, dictum risus. Donec sodales urna nec sem fringilla fermentum. Vivamus aliquet facilisis velit et suscipit.\n\nDonec pretium magna ut quam placerat, ultricies faucibus ipsum rhoncus. Donec venenatis, mi ac pharetra egestas, orci metus commodo tellus, eget dignissim nisi odio eget nisl. Phasellus turpis tellus, tincidunt sed quam et, dignissim iaculis neque. Cras consequat ante et mi dictum, a pharetra lacus rutrum. Interdum et malesuada fames ac ante ipsum primis in faucibus. Nullam facilisis, enim tempus viverra hendrerit, enim metus rutrum tellus, in dictum ligula lectus et ex. Nullam condimentum purus ac arcu aliquet, sit amet rhoncus lectus lacinia. Quisque accumsan metus et quam suscipit, quis consequat lacus luctus. Nunc id nisl id libero vulputate viverra. Nulla facilisi. Proin non mauris ut nisl posuere placerat. Integer pharetra sapien at accumsan consequat. Fusce sollicitudin, eros ac finibus pulvinar, augue dolor venenatis diam, at molestie erat tortor ut ipsum.\n\nDonec lorem risus, feugiat a semper vel, vestibulum ac purus. Vestibulum pulvinar suscipit diam, eget porttitor eros vestibulum quis. Cras eu nisi mauris. Suspendisse felis odio, tincidunt posuere placerat ac, dictum nec est. Maecenas euismod, dui sed viverra accumsan, nibh arcu rutrum velit, quis mollis nulla mauris id diam. Quisque vel quam et turpis viverra maximus at et eros. Aliquam scelerisque lorem massa, vitae bibendum nibh tincidunt at. Aenean quis gravida augue. Cras ultrices tincidunt lectus, non cursus purus interdum et.\n\nCras ac libero imperdiet, volutpat enim sed, consequat nulla. Pellentesque a egestas augue, ac ultricies nisl. Vestibulum a turpis ultrices, venenatis mi ultricies, tempus odio. Nullam eget dapibus turpis. Vestibulum faucibus ut quam non efficitur. Nam in dolor eu sem ultrices semper vitae a ligula. Curabitur sit amet nisi vitae nunc vestibulum aliquam. Aliquam posuere, purus a tincidunt congue, orci ipsum dictum nunc, eu tristique sem leo at quam. In a velit quis purus venenatis auctor. Donec faucibus odio vitae velit lacinia consequat. Aliquam felis neque, egestas vitae velit sit amet, porttitor placerat orci. In tempor dolor et odio porta, non sodales ex sodales. Phasellus ultrices augue a massa tempus commodo. Donec erat eros, tincidunt at facilisis ut, dictum a augue. Vivamus in neque nulla.\n\nCurabitur vulputate ullamcorper nisi, vitae feugiat libero tincidunt sed. Etiam erat leo, rutrum id egestas in, tempus sit amet quam. Donec ex erat, volutpat vel mollis ut, cursus commodo turpis. Nulla facilisi. Cras non pulvinar leo. Sed elementum pretium nulla, sed mattis nisl porttitor eu. Aliquam at arcu ex. Etiam volutpat velit nibh, eu suscipit augue fermentum vel. Phasellus pellentesque ipsum odio, eget suscipit mi scelerisque a. Sed bibendum tincidunt suscipit. Quisque justo ligula, sodales a justo et, rutrum tempus turpis. Mauris sit amet posuere mi. Aenean blandit, nulla id luctus pellentesque, ipsum ante ultricies tellus, non posuere ipsum arcu in nisi. Donec quis leo vel nisi tristique viverra nec sit amet ante. Donec sed dapibus velit.",
+    "f22": {
       "dimensions": {
         "concept": "vsme:DescriptionOfHowCircularEconomyPrinciplesAreApplied",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00"
-      }
+      },
+      "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla at cursus arcu. Nam porttitor pulvinar vehicula. Aenean quis venenatis massa. Mauris sit amet ultricies tellus, et egestas lectus. Praesent vulputate tincidunt risus eget maximus. Sed vel enim ac mi maximus pellentesque porta quis metus. Cras bibendum odio eget maximus bibendum. Donec ut risus condimentum, placerat tortor nec, dictum risus. Donec sodales urna nec sem fringilla fermentum. Vivamus aliquet facilisis velit et suscipit.\n\nDonec pretium magna ut quam placerat, ultricies faucibus ipsum rhoncus. Donec venenatis, mi ac pharetra egestas, orci metus commodo tellus, eget dignissim nisi odio eget nisl. Phasellus turpis tellus, tincidunt sed quam et, dignissim iaculis neque. Cras consequat ante et mi dictum, a pharetra lacus rutrum. Interdum et malesuada fames ac ante ipsum primis in faucibus. Nullam facilisis, enim tempus viverra hendrerit, enim metus rutrum tellus, in dictum ligula lectus et ex. Nullam condimentum purus ac arcu aliquet, sit amet rhoncus lectus lacinia. Quisque accumsan metus et quam suscipit, quis consequat lacus luctus. Nunc id nisl id libero vulputate viverra. Nulla facilisi. Proin non mauris ut nisl posuere placerat. Integer pharetra sapien at accumsan consequat. Fusce sollicitudin, eros ac finibus pulvinar, augue dolor venenatis diam, at molestie erat tortor ut ipsum.\n\nDonec lorem risus, feugiat a semper vel, vestibulum ac purus. Vestibulum pulvinar suscipit diam, eget porttitor eros vestibulum quis. Cras eu nisi mauris. Suspendisse felis odio, tincidunt posuere placerat ac, dictum nec est. Maecenas euismod, dui sed viverra accumsan, nibh arcu rutrum velit, quis mollis nulla mauris id diam. Quisque vel quam et turpis viverra maximus at et eros. Aliquam scelerisque lorem massa, vitae bibendum nibh tincidunt at. Aenean quis gravida augue. Cras ultrices tincidunt lectus, non cursus purus interdum et.\n\nCras ac libero imperdiet, volutpat enim sed, consequat nulla. Pellentesque a egestas augue, ac ultricies nisl. Vestibulum a turpis ultrices, venenatis mi ultricies, tempus odio. Nullam eget dapibus turpis. Vestibulum faucibus ut quam non efficitur. Nam in dolor eu sem ultrices semper vitae a ligula. Curabitur sit amet nisi vitae nunc vestibulum aliquam. Aliquam posuere, purus a tincidunt congue, orci ipsum dictum nunc, eu tristique sem leo at quam. In a velit quis purus venenatis auctor. Donec faucibus odio vitae velit lacinia consequat. Aliquam felis neque, egestas vitae velit sit amet, porttitor placerat orci. In tempor dolor et odio porta, non sodales ex sodales. Phasellus ultrices augue a massa tempus commodo. Donec erat eros, tincidunt at facilisis ut, dictum a augue. Vivamus in neque nulla.\n\nCurabitur vulputate ullamcorper nisi, vitae feugiat libero tincidunt sed. Etiam erat leo, rutrum id egestas in, tempus sit amet quam. Donec ex erat, volutpat vel mollis ut, cursus commodo turpis. Nulla facilisi. Cras non pulvinar leo. Sed elementum pretium nulla, sed mattis nisl porttitor eu. Aliquam at arcu ex. Etiam volutpat velit nibh, eu suscipit augue fermentum vel. Phasellus pellentesque ipsum odio, eget suscipit mi scelerisque a. Sed bibendum tincidunt suscipit. Quisque justo ligula, sodales a justo et, rutrum tempus turpis. Mauris sit amet posuere mi. Aenean blandit, nulla id luctus pellentesque, ipsum ante ultricies tellus, non posuere ipsum arcu in nisi. Donec quis leo vel nisi tristique viverra nec sit amet ante. Donec sed dapibus velit."
     },
-    "f0023": {
-      "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla at cursus arcu. Nam porttitor pulvinar vehicula. Aenean quis venenatis massa. Mauris sit amet ultricies tellus, et egestas lectus. Praesent vulputate tincidunt risus eget maximus. Sed vel enim ac mi maximus pellentesque porta quis metus. Cras bibendum odio eget maximus bibendum. Donec ut risus condimentum, placerat tortor nec, dictum risus. Donec sodales urna nec sem fringilla fermentum. Vivamus aliquet facilisis velit et suscipit.\n\nDonec pretium magna ut quam placerat, ultricies faucibus ipsum rhoncus. Donec venenatis, mi ac pharetra egestas, orci metus commodo tellus, eget dignissim nisi odio eget nisl. Phasellus turpis tellus, tincidunt sed quam et, dignissim iaculis neque. Cras consequat ante et mi dictum, a pharetra lacus rutrum. Interdum et malesuada fames ac ante ipsum primis in faucibus. Nullam facilisis, enim tempus viverra hendrerit, enim metus rutrum tellus, in dictum ligula lectus et ex. Nullam condimentum purus ac arcu aliquet, sit amet rhoncus lectus lacinia. Quisque accumsan metus et quam suscipit, quis consequat lacus luctus. Nunc id nisl id libero vulputate viverra. Nulla facilisi. Proin non mauris ut nisl posuere placerat. Integer pharetra sapien at accumsan consequat. Fusce sollicitudin, eros ac finibus pulvinar, augue dolor venenatis diam, at molestie erat tortor ut ipsum.\n\nDonec lorem risus, feugiat a semper vel, vestibulum ac purus. Vestibulum pulvinar suscipit diam, eget porttitor eros vestibulum quis. Cras eu nisi mauris. Suspendisse felis odio, tincidunt posuere placerat ac, dictum nec est. Maecenas euismod, dui sed viverra accumsan, nibh arcu rutrum velit, quis mollis nulla mauris id diam. Quisque vel quam et turpis viverra maximus at et eros. Aliquam scelerisque lorem massa, vitae bibendum nibh tincidunt at. Aenean quis gravida augue. Cras ultrices tincidunt lectus, non cursus purus interdum et.\n\nCras ac libero imperdiet, volutpat enim sed, consequat nulla. Pellentesque a egestas augue, ac ultricies nisl. Vestibulum a turpis ultrices, venenatis mi ultricies, tempus odio. Nullam eget dapibus turpis. Vestibulum faucibus ut quam non efficitur. Nam in dolor eu sem ultrices semper vitae a ligula. Curabitur sit amet nisi vitae nunc vestibulum aliquam. Aliquam posuere, purus a tincidunt congue, orci ipsum dictum nunc, eu tristique sem leo at quam. In a velit quis purus venenatis auctor. Donec faucibus odio vitae velit lacinia consequat. Aliquam felis neque, egestas vitae velit sit amet, porttitor placerat orci. In tempor dolor et odio porta, non sodales ex sodales. Phasellus ultrices augue a massa tempus commodo. Donec erat eros, tincidunt at facilisis ut, dictum a augue. Vivamus in neque nulla.\n\nCurabitur vulputate ullamcorper nisi, vitae feugiat libero tincidunt sed. Etiam erat leo, rutrum id egestas in, tempus sit amet quam. Donec ex erat, volutpat vel mollis ut, cursus commodo turpis. Nulla facilisi. Cras non pulvinar leo. Sed elementum pretium nulla, sed mattis nisl porttitor eu. Aliquam at arcu ex. Etiam volutpat velit nibh, eu suscipit augue fermentum vel. Phasellus pellentesque ipsum odio, eget suscipit mi scelerisque a. Sed bibendum tincidunt suscipit. Quisque justo ligula, sodales a justo et, rutrum tempus turpis. Mauris sit amet posuere mi. Aenean blandit, nulla id luctus pellentesque, ipsum ante ultricies tellus, non posuere ipsum arcu in nisi. Donec quis leo vel nisi tristique viverra nec sit amet ante. Donec sed dapibus velit.",
+    "f23": {
       "dimensions": {
         "concept": "vsme:DescriptionOfKeyElementsOfStrategyThatRelatesToOrAffectsSustainabilityIssues",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00"
-      }
+      },
+      "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla at cursus arcu. Nam porttitor pulvinar vehicula. Aenean quis venenatis massa. Mauris sit amet ultricies tellus, et egestas lectus. Praesent vulputate tincidunt risus eget maximus. Sed vel enim ac mi maximus pellentesque porta quis metus. Cras bibendum odio eget maximus bibendum. Donec ut risus condimentum, placerat tortor nec, dictum risus. Donec sodales urna nec sem fringilla fermentum. Vivamus aliquet facilisis velit et suscipit.\n\nDonec pretium magna ut quam placerat, ultricies faucibus ipsum rhoncus. Donec venenatis, mi ac pharetra egestas, orci metus commodo tellus, eget dignissim nisi odio eget nisl. Phasellus turpis tellus, tincidunt sed quam et, dignissim iaculis neque. Cras consequat ante et mi dictum, a pharetra lacus rutrum. Interdum et malesuada fames ac ante ipsum primis in faucibus. Nullam facilisis, enim tempus viverra hendrerit, enim metus rutrum tellus, in dictum ligula lectus et ex. Nullam condimentum purus ac arcu aliquet, sit amet rhoncus lectus lacinia. Quisque accumsan metus et quam suscipit, quis consequat lacus luctus. Nunc id nisl id libero vulputate viverra. Nulla facilisi. Proin non mauris ut nisl posuere placerat. Integer pharetra sapien at accumsan consequat. Fusce sollicitudin, eros ac finibus pulvinar, augue dolor venenatis diam, at molestie erat tortor ut ipsum.\n\nDonec lorem risus, feugiat a semper vel, vestibulum ac purus. Vestibulum pulvinar suscipit diam, eget porttitor eros vestibulum quis. Cras eu nisi mauris. Suspendisse felis odio, tincidunt posuere placerat ac, dictum nec est. Maecenas euismod, dui sed viverra accumsan, nibh arcu rutrum velit, quis mollis nulla mauris id diam. Quisque vel quam et turpis viverra maximus at et eros. Aliquam scelerisque lorem massa, vitae bibendum nibh tincidunt at. Aenean quis gravida augue. Cras ultrices tincidunt lectus, non cursus purus interdum et.\n\nCras ac libero imperdiet, volutpat enim sed, consequat nulla. Pellentesque a egestas augue, ac ultricies nisl. Vestibulum a turpis ultrices, venenatis mi ultricies, tempus odio. Nullam eget dapibus turpis. Vestibulum faucibus ut quam non efficitur. Nam in dolor eu sem ultrices semper vitae a ligula. Curabitur sit amet nisi vitae nunc vestibulum aliquam. Aliquam posuere, purus a tincidunt congue, orci ipsum dictum nunc, eu tristique sem leo at quam. In a velit quis purus venenatis auctor. Donec faucibus odio vitae velit lacinia consequat. Aliquam felis neque, egestas vitae velit sit amet, porttitor placerat orci. In tempor dolor et odio porta, non sodales ex sodales. Phasellus ultrices augue a massa tempus commodo. Donec erat eros, tincidunt at facilisis ut, dictum a augue. Vivamus in neque nulla.\n\nCurabitur vulputate ullamcorper nisi, vitae feugiat libero tincidunt sed. Etiam erat leo, rutrum id egestas in, tempus sit amet quam. Donec ex erat, volutpat vel mollis ut, cursus commodo turpis. Nulla facilisi. Cras non pulvinar leo. Sed elementum pretium nulla, sed mattis nisl porttitor eu. Aliquam at arcu ex. Etiam volutpat velit nibh, eu suscipit augue fermentum vel. Phasellus pellentesque ipsum odio, eget suscipit mi scelerisque a. Sed bibendum tincidunt suscipit. Quisque justo ligula, sodales a justo et, rutrum tempus turpis. Mauris sit amet posuere mi. Aenean blandit, nulla id luctus pellentesque, ipsum ante ultricies tellus, non posuere ipsum arcu in nisi. Donec quis leo vel nisi tristique viverra nec sit amet ante. Donec sed dapibus velit."
     },
-    "f0024": {
-      "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla at cursus arcu. Nam porttitor pulvinar vehicula. Aenean quis venenatis massa. Mauris sit amet ultricies tellus, et egestas lectus. Praesent vulputate tincidunt risus eget maximus. Sed vel enim ac mi maximus pellentesque porta quis metus. Cras bibendum odio eget maximus bibendum. Donec ut risus condimentum, placerat tortor nec, dictum risus. Donec sodales urna nec sem fringilla fermentum. Vivamus aliquet facilisis velit et suscipit.\n\nDonec pretium magna ut quam placerat, ultricies faucibus ipsum rhoncus. Donec venenatis, mi ac pharetra egestas, orci metus commodo tellus, eget dignissim nisi odio eget nisl. Phasellus turpis tellus, tincidunt sed quam et, dignissim iaculis neque. Cras consequat ante et mi dictum, a pharetra lacus rutrum. Interdum et malesuada fames ac ante ipsum primis in faucibus. Nullam facilisis, enim tempus viverra hendrerit, enim metus rutrum tellus, in dictum ligula lectus et ex. Nullam condimentum purus ac arcu aliquet, sit amet rhoncus lectus lacinia. Quisque accumsan metus et quam suscipit, quis consequat lacus luctus. Nunc id nisl id libero vulputate viverra. Nulla facilisi. Proin non mauris ut nisl posuere placerat. Integer pharetra sapien at accumsan consequat. Fusce sollicitudin, eros ac finibus pulvinar, augue dolor venenatis diam, at molestie erat tortor ut ipsum.\n\nDonec lorem risus, feugiat a semper vel, vestibulum ac purus. Vestibulum pulvinar suscipit diam, eget porttitor eros vestibulum quis. Cras eu nisi mauris. Suspendisse felis odio, tincidunt posuere placerat ac, dictum nec est. Maecenas euismod, dui sed viverra accumsan, nibh arcu rutrum velit, quis mollis nulla mauris id diam. Quisque vel quam et turpis viverra maximus at et eros. Aliquam scelerisque lorem massa, vitae bibendum nibh tincidunt at. Aenean quis gravida augue. Cras ultrices tincidunt lectus, non cursus purus interdum et.\n\nCras ac libero imperdiet, volutpat enim sed, consequat nulla. Pellentesque a egestas augue, ac ultricies nisl. Vestibulum a turpis ultrices, venenatis mi ultricies, tempus odio. Nullam eget dapibus turpis. Vestibulum faucibus ut quam non efficitur. Nam in dolor eu sem ultrices semper vitae a ligula. Curabitur sit amet nisi vitae nunc vestibulum aliquam. Aliquam posuere, purus a tincidunt congue, orci ipsum dictum nunc, eu tristique sem leo at quam. In a velit quis purus venenatis auctor. Donec faucibus odio vitae velit lacinia consequat. Aliquam felis neque, egestas vitae velit sit amet, porttitor placerat orci. In tempor dolor et odio porta, non sodales ex sodales. Phasellus ultrices augue a massa tempus commodo. Donec erat eros, tincidunt at facilisis ut, dictum a augue. Vivamus in neque nulla.\n\nCurabitur vulputate ullamcorper nisi, vitae feugiat libero tincidunt sed. Etiam erat leo, rutrum id egestas in, tempus sit amet quam. Donec ex erat, volutpat vel mollis ut, cursus commodo turpis. Nulla facilisi. Cras non pulvinar leo. Sed elementum pretium nulla, sed mattis nisl porttitor eu. Aliquam at arcu ex. Etiam volutpat velit nibh, eu suscipit augue fermentum vel. Phasellus pellentesque ipsum odio, eget suscipit mi scelerisque a. Sed bibendum tincidunt suscipit. Quisque justo ligula, sodales a justo et, rutrum tempus turpis. Mauris sit amet posuere mi. Aenean blandit, nulla id luctus pellentesque, ipsum ante ultricies tellus, non posuere ipsum arcu in nisi. Donec quis leo vel nisi tristique viverra nec sit amet ante. Donec sed dapibus velit.",
+    "f24": {
       "dimensions": {
         "concept": "vsme:DescriptionOfMainBusinessRelationships",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00"
-      }
+      },
+      "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla at cursus arcu. Nam porttitor pulvinar vehicula. Aenean quis venenatis massa. Mauris sit amet ultricies tellus, et egestas lectus. Praesent vulputate tincidunt risus eget maximus. Sed vel enim ac mi maximus pellentesque porta quis metus. Cras bibendum odio eget maximus bibendum. Donec ut risus condimentum, placerat tortor nec, dictum risus. Donec sodales urna nec sem fringilla fermentum. Vivamus aliquet facilisis velit et suscipit.\n\nDonec pretium magna ut quam placerat, ultricies faucibus ipsum rhoncus. Donec venenatis, mi ac pharetra egestas, orci metus commodo tellus, eget dignissim nisi odio eget nisl. Phasellus turpis tellus, tincidunt sed quam et, dignissim iaculis neque. Cras consequat ante et mi dictum, a pharetra lacus rutrum. Interdum et malesuada fames ac ante ipsum primis in faucibus. Nullam facilisis, enim tempus viverra hendrerit, enim metus rutrum tellus, in dictum ligula lectus et ex. Nullam condimentum purus ac arcu aliquet, sit amet rhoncus lectus lacinia. Quisque accumsan metus et quam suscipit, quis consequat lacus luctus. Nunc id nisl id libero vulputate viverra. Nulla facilisi. Proin non mauris ut nisl posuere placerat. Integer pharetra sapien at accumsan consequat. Fusce sollicitudin, eros ac finibus pulvinar, augue dolor venenatis diam, at molestie erat tortor ut ipsum.\n\nDonec lorem risus, feugiat a semper vel, vestibulum ac purus. Vestibulum pulvinar suscipit diam, eget porttitor eros vestibulum quis. Cras eu nisi mauris. Suspendisse felis odio, tincidunt posuere placerat ac, dictum nec est. Maecenas euismod, dui sed viverra accumsan, nibh arcu rutrum velit, quis mollis nulla mauris id diam. Quisque vel quam et turpis viverra maximus at et eros. Aliquam scelerisque lorem massa, vitae bibendum nibh tincidunt at. Aenean quis gravida augue. Cras ultrices tincidunt lectus, non cursus purus interdum et.\n\nCras ac libero imperdiet, volutpat enim sed, consequat nulla. Pellentesque a egestas augue, ac ultricies nisl. Vestibulum a turpis ultrices, venenatis mi ultricies, tempus odio. Nullam eget dapibus turpis. Vestibulum faucibus ut quam non efficitur. Nam in dolor eu sem ultrices semper vitae a ligula. Curabitur sit amet nisi vitae nunc vestibulum aliquam. Aliquam posuere, purus a tincidunt congue, orci ipsum dictum nunc, eu tristique sem leo at quam. In a velit quis purus venenatis auctor. Donec faucibus odio vitae velit lacinia consequat. Aliquam felis neque, egestas vitae velit sit amet, porttitor placerat orci. In tempor dolor et odio porta, non sodales ex sodales. Phasellus ultrices augue a massa tempus commodo. Donec erat eros, tincidunt at facilisis ut, dictum a augue. Vivamus in neque nulla.\n\nCurabitur vulputate ullamcorper nisi, vitae feugiat libero tincidunt sed. Etiam erat leo, rutrum id egestas in, tempus sit amet quam. Donec ex erat, volutpat vel mollis ut, cursus commodo turpis. Nulla facilisi. Cras non pulvinar leo. Sed elementum pretium nulla, sed mattis nisl porttitor eu. Aliquam at arcu ex. Etiam volutpat velit nibh, eu suscipit augue fermentum vel. Phasellus pellentesque ipsum odio, eget suscipit mi scelerisque a. Sed bibendum tincidunt suscipit. Quisque justo ligula, sodales a justo et, rutrum tempus turpis. Mauris sit amet posuere mi. Aenean blandit, nulla id luctus pellentesque, ipsum ante ultricies tellus, non posuere ipsum arcu in nisi. Donec quis leo vel nisi tristique viverra nec sit amet ante. Donec sed dapibus velit."
     },
-    "f0025": {
-      "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla at cursus arcu. Nam porttitor pulvinar vehicula. Aenean quis venenatis massa. Mauris sit amet ultricies tellus, et egestas lectus. Praesent vulputate tincidunt risus eget maximus. Sed vel enim ac mi maximus pellentesque porta quis metus. Cras bibendum odio eget maximus bibendum. Donec ut risus condimentum, placerat tortor nec, dictum risus. Donec sodales urna nec sem fringilla fermentum. Vivamus aliquet facilisis velit et suscipit.\n\nDonec pretium magna ut quam placerat, ultricies faucibus ipsum rhoncus. Donec venenatis, mi ac pharetra egestas, orci metus commodo tellus, eget dignissim nisi odio eget nisl. Phasellus turpis tellus, tincidunt sed quam et, dignissim iaculis neque. Cras consequat ante et mi dictum, a pharetra lacus rutrum. Interdum et malesuada fames ac ante ipsum primis in faucibus. Nullam facilisis, enim tempus viverra hendrerit, enim metus rutrum tellus, in dictum ligula lectus et ex. Nullam condimentum purus ac arcu aliquet, sit amet rhoncus lectus lacinia. Quisque accumsan metus et quam suscipit, quis consequat lacus luctus. Nunc id nisl id libero vulputate viverra. Nulla facilisi. Proin non mauris ut nisl posuere placerat. Integer pharetra sapien at accumsan consequat. Fusce sollicitudin, eros ac finibus pulvinar, augue dolor venenatis diam, at molestie erat tortor ut ipsum.\n\nDonec lorem risus, feugiat a semper vel, vestibulum ac purus. Vestibulum pulvinar suscipit diam, eget porttitor eros vestibulum quis. Cras eu nisi mauris. Suspendisse felis odio, tincidunt posuere placerat ac, dictum nec est. Maecenas euismod, dui sed viverra accumsan, nibh arcu rutrum velit, quis mollis nulla mauris id diam. Quisque vel quam et turpis viverra maximus at et eros. Aliquam scelerisque lorem massa, vitae bibendum nibh tincidunt at. Aenean quis gravida augue. Cras ultrices tincidunt lectus, non cursus purus interdum et.\n\nCras ac libero imperdiet, volutpat enim sed, consequat nulla. Pellentesque a egestas augue, ac ultricies nisl. Vestibulum a turpis ultrices, venenatis mi ultricies, tempus odio. Nullam eget dapibus turpis. Vestibulum faucibus ut quam non efficitur. Nam in dolor eu sem ultrices semper vitae a ligula. Curabitur sit amet nisi vitae nunc vestibulum aliquam. Aliquam posuere, purus a tincidunt congue, orci ipsum dictum nunc, eu tristique sem leo at quam. In a velit quis purus venenatis auctor. Donec faucibus odio vitae velit lacinia consequat. Aliquam felis neque, egestas vitae velit sit amet, porttitor placerat orci. In tempor dolor et odio porta, non sodales ex sodales. Phasellus ultrices augue a massa tempus commodo. Donec erat eros, tincidunt at facilisis ut, dictum a augue. Vivamus in neque nulla.\n\nCurabitur vulputate ullamcorper nisi, vitae feugiat libero tincidunt sed. Etiam erat leo, rutrum id egestas in, tempus sit amet quam. Donec ex erat, volutpat vel mollis ut, cursus commodo turpis. Nulla facilisi. Cras non pulvinar leo. Sed elementum pretium nulla, sed mattis nisl porttitor eu. Aliquam at arcu ex. Etiam volutpat velit nibh, eu suscipit augue fermentum vel. Phasellus pellentesque ipsum odio, eget suscipit mi scelerisque a. Sed bibendum tincidunt suscipit. Quisque justo ligula, sodales a justo et, rutrum tempus turpis. Mauris sit amet posuere mi. Aenean blandit, nulla id luctus pellentesque, ipsum ante ultricies tellus, non posuere ipsum arcu in nisi. Donec quis leo vel nisi tristique viverra nec sit amet ante. Donec sed dapibus velit.",
+    "f25": {
       "dimensions": {
         "concept": "vsme:DescriptionOfPracticesPoliciesAndOrFutureInitiatives",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00"
-      }
+      },
+      "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla at cursus arcu. Nam porttitor pulvinar vehicula. Aenean quis venenatis massa. Mauris sit amet ultricies tellus, et egestas lectus. Praesent vulputate tincidunt risus eget maximus. Sed vel enim ac mi maximus pellentesque porta quis metus. Cras bibendum odio eget maximus bibendum. Donec ut risus condimentum, placerat tortor nec, dictum risus. Donec sodales urna nec sem fringilla fermentum. Vivamus aliquet facilisis velit et suscipit.\n\nDonec pretium magna ut quam placerat, ultricies faucibus ipsum rhoncus. Donec venenatis, mi ac pharetra egestas, orci metus commodo tellus, eget dignissim nisi odio eget nisl. Phasellus turpis tellus, tincidunt sed quam et, dignissim iaculis neque. Cras consequat ante et mi dictum, a pharetra lacus rutrum. Interdum et malesuada fames ac ante ipsum primis in faucibus. Nullam facilisis, enim tempus viverra hendrerit, enim metus rutrum tellus, in dictum ligula lectus et ex. Nullam condimentum purus ac arcu aliquet, sit amet rhoncus lectus lacinia. Quisque accumsan metus et quam suscipit, quis consequat lacus luctus. Nunc id nisl id libero vulputate viverra. Nulla facilisi. Proin non mauris ut nisl posuere placerat. Integer pharetra sapien at accumsan consequat. Fusce sollicitudin, eros ac finibus pulvinar, augue dolor venenatis diam, at molestie erat tortor ut ipsum.\n\nDonec lorem risus, feugiat a semper vel, vestibulum ac purus. Vestibulum pulvinar suscipit diam, eget porttitor eros vestibulum quis. Cras eu nisi mauris. Suspendisse felis odio, tincidunt posuere placerat ac, dictum nec est. Maecenas euismod, dui sed viverra accumsan, nibh arcu rutrum velit, quis mollis nulla mauris id diam. Quisque vel quam et turpis viverra maximus at et eros. Aliquam scelerisque lorem massa, vitae bibendum nibh tincidunt at. Aenean quis gravida augue. Cras ultrices tincidunt lectus, non cursus purus interdum et.\n\nCras ac libero imperdiet, volutpat enim sed, consequat nulla. Pellentesque a egestas augue, ac ultricies nisl. Vestibulum a turpis ultrices, venenatis mi ultricies, tempus odio. Nullam eget dapibus turpis. Vestibulum faucibus ut quam non efficitur. Nam in dolor eu sem ultrices semper vitae a ligula. Curabitur sit amet nisi vitae nunc vestibulum aliquam. Aliquam posuere, purus a tincidunt congue, orci ipsum dictum nunc, eu tristique sem leo at quam. In a velit quis purus venenatis auctor. Donec faucibus odio vitae velit lacinia consequat. Aliquam felis neque, egestas vitae velit sit amet, porttitor placerat orci. In tempor dolor et odio porta, non sodales ex sodales. Phasellus ultrices augue a massa tempus commodo. Donec erat eros, tincidunt at facilisis ut, dictum a augue. Vivamus in neque nulla.\n\nCurabitur vulputate ullamcorper nisi, vitae feugiat libero tincidunt sed. Etiam erat leo, rutrum id egestas in, tempus sit amet quam. Donec ex erat, volutpat vel mollis ut, cursus commodo turpis. Nulla facilisi. Cras non pulvinar leo. Sed elementum pretium nulla, sed mattis nisl porttitor eu. Aliquam at arcu ex. Etiam volutpat velit nibh, eu suscipit augue fermentum vel. Phasellus pellentesque ipsum odio, eget suscipit mi scelerisque a. Sed bibendum tincidunt suscipit. Quisque justo ligula, sodales a justo et, rutrum tempus turpis. Mauris sit amet posuere mi. Aenean blandit, nulla id luctus pellentesque, ipsum ante ultricies tellus, non posuere ipsum arcu in nisi. Donec quis leo vel nisi tristique viverra nec sit amet ante. Donec sed dapibus velit."
     },
-    "f0026": {
-      "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla at cursus arcu. Nam porttitor pulvinar vehicula. Aenean quis venenatis massa. Mauris sit amet ultricies tellus, et egestas lectus. Praesent vulputate tincidunt risus eget maximus. Sed vel enim ac mi maximus pellentesque porta quis metus. Cras bibendum odio eget maximus bibendum. Donec ut risus condimentum, placerat tortor nec, dictum risus. Donec sodales urna nec sem fringilla fermentum. Vivamus aliquet facilisis velit et suscipit.\n\nDonec pretium magna ut quam placerat, ultricies faucibus ipsum rhoncus. Donec venenatis, mi ac pharetra egestas, orci metus commodo tellus, eget dignissim nisi odio eget nisl. Phasellus turpis tellus, tincidunt sed quam et, dignissim iaculis neque. Cras consequat ante et mi dictum, a pharetra lacus rutrum. Interdum et malesuada fames ac ante ipsum primis in faucibus. Nullam facilisis, enim tempus viverra hendrerit, enim metus rutrum tellus, in dictum ligula lectus et ex. Nullam condimentum purus ac arcu aliquet, sit amet rhoncus lectus lacinia. Quisque accumsan metus et quam suscipit, quis consequat lacus luctus. Nunc id nisl id libero vulputate viverra. Nulla facilisi. Proin non mauris ut nisl posuere placerat. Integer pharetra sapien at accumsan consequat. Fusce sollicitudin, eros ac finibus pulvinar, augue dolor venenatis diam, at molestie erat tortor ut ipsum.\n\nDonec lorem risus, feugiat a semper vel, vestibulum ac purus. Vestibulum pulvinar suscipit diam, eget porttitor eros vestibulum quis. Cras eu nisi mauris. Suspendisse felis odio, tincidunt posuere placerat ac, dictum nec est. Maecenas euismod, dui sed viverra accumsan, nibh arcu rutrum velit, quis mollis nulla mauris id diam. Quisque vel quam et turpis viverra maximus at et eros. Aliquam scelerisque lorem massa, vitae bibendum nibh tincidunt at. Aenean quis gravida augue. Cras ultrices tincidunt lectus, non cursus purus interdum et.\n\nCras ac libero imperdiet, volutpat enim sed, consequat nulla. Pellentesque a egestas augue, ac ultricies nisl. Vestibulum a turpis ultrices, venenatis mi ultricies, tempus odio. Nullam eget dapibus turpis. Vestibulum faucibus ut quam non efficitur. Nam in dolor eu sem ultrices semper vitae a ligula. Curabitur sit amet nisi vitae nunc vestibulum aliquam. Aliquam posuere, purus a tincidunt congue, orci ipsum dictum nunc, eu tristique sem leo at quam. In a velit quis purus venenatis auctor. Donec faucibus odio vitae velit lacinia consequat. Aliquam felis neque, egestas vitae velit sit amet, porttitor placerat orci. In tempor dolor et odio porta, non sodales ex sodales. Phasellus ultrices augue a massa tempus commodo. Donec erat eros, tincidunt at facilisis ut, dictum a augue. Vivamus in neque nulla.\n\nCurabitur vulputate ullamcorper nisi, vitae feugiat libero tincidunt sed. Etiam erat leo, rutrum id egestas in, tempus sit amet quam. Donec ex erat, volutpat vel mollis ut, cursus commodo turpis. Nulla facilisi. Cras non pulvinar leo. Sed elementum pretium nulla, sed mattis nisl porttitor eu. Aliquam at arcu ex. Etiam volutpat velit nibh, eu suscipit augue fermentum vel. Phasellus pellentesque ipsum odio, eget suscipit mi scelerisque a. Sed bibendum tincidunt suscipit. Quisque justo ligula, sodales a justo et, rutrum tempus turpis. Mauris sit amet posuere mi. Aenean blandit, nulla id luctus pellentesque, ipsum ante ultricies tellus, non posuere ipsum arcu in nisi. Donec quis leo vel nisi tristique viverra nec sit amet ante. Donec sed dapibus velit.",
+    "f26": {
       "dimensions": {
         "concept": "vsme:DescriptionOfSignificantGroupsOfProductsAndOrServicesOffered",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00"
-      }
+      },
+      "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla at cursus arcu. Nam porttitor pulvinar vehicula. Aenean quis venenatis massa. Mauris sit amet ultricies tellus, et egestas lectus. Praesent vulputate tincidunt risus eget maximus. Sed vel enim ac mi maximus pellentesque porta quis metus. Cras bibendum odio eget maximus bibendum. Donec ut risus condimentum, placerat tortor nec, dictum risus. Donec sodales urna nec sem fringilla fermentum. Vivamus aliquet facilisis velit et suscipit.\n\nDonec pretium magna ut quam placerat, ultricies faucibus ipsum rhoncus. Donec venenatis, mi ac pharetra egestas, orci metus commodo tellus, eget dignissim nisi odio eget nisl. Phasellus turpis tellus, tincidunt sed quam et, dignissim iaculis neque. Cras consequat ante et mi dictum, a pharetra lacus rutrum. Interdum et malesuada fames ac ante ipsum primis in faucibus. Nullam facilisis, enim tempus viverra hendrerit, enim metus rutrum tellus, in dictum ligula lectus et ex. Nullam condimentum purus ac arcu aliquet, sit amet rhoncus lectus lacinia. Quisque accumsan metus et quam suscipit, quis consequat lacus luctus. Nunc id nisl id libero vulputate viverra. Nulla facilisi. Proin non mauris ut nisl posuere placerat. Integer pharetra sapien at accumsan consequat. Fusce sollicitudin, eros ac finibus pulvinar, augue dolor venenatis diam, at molestie erat tortor ut ipsum.\n\nDonec lorem risus, feugiat a semper vel, vestibulum ac purus. Vestibulum pulvinar suscipit diam, eget porttitor eros vestibulum quis. Cras eu nisi mauris. Suspendisse felis odio, tincidunt posuere placerat ac, dictum nec est. Maecenas euismod, dui sed viverra accumsan, nibh arcu rutrum velit, quis mollis nulla mauris id diam. Quisque vel quam et turpis viverra maximus at et eros. Aliquam scelerisque lorem massa, vitae bibendum nibh tincidunt at. Aenean quis gravida augue. Cras ultrices tincidunt lectus, non cursus purus interdum et.\n\nCras ac libero imperdiet, volutpat enim sed, consequat nulla. Pellentesque a egestas augue, ac ultricies nisl. Vestibulum a turpis ultrices, venenatis mi ultricies, tempus odio. Nullam eget dapibus turpis. Vestibulum faucibus ut quam non efficitur. Nam in dolor eu sem ultrices semper vitae a ligula. Curabitur sit amet nisi vitae nunc vestibulum aliquam. Aliquam posuere, purus a tincidunt congue, orci ipsum dictum nunc, eu tristique sem leo at quam. In a velit quis purus venenatis auctor. Donec faucibus odio vitae velit lacinia consequat. Aliquam felis neque, egestas vitae velit sit amet, porttitor placerat orci. In tempor dolor et odio porta, non sodales ex sodales. Phasellus ultrices augue a massa tempus commodo. Donec erat eros, tincidunt at facilisis ut, dictum a augue. Vivamus in neque nulla.\n\nCurabitur vulputate ullamcorper nisi, vitae feugiat libero tincidunt sed. Etiam erat leo, rutrum id egestas in, tempus sit amet quam. Donec ex erat, volutpat vel mollis ut, cursus commodo turpis. Nulla facilisi. Cras non pulvinar leo. Sed elementum pretium nulla, sed mattis nisl porttitor eu. Aliquam at arcu ex. Etiam volutpat velit nibh, eu suscipit augue fermentum vel. Phasellus pellentesque ipsum odio, eget suscipit mi scelerisque a. Sed bibendum tincidunt suscipit. Quisque justo ligula, sodales a justo et, rutrum tempus turpis. Mauris sit amet posuere mi. Aenean blandit, nulla id luctus pellentesque, ipsum ante ultricies tellus, non posuere ipsum arcu in nisi. Donec quis leo vel nisi tristique viverra nec sit amet ante. Donec sed dapibus velit."
     },
-    "f0027": {
-      "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla at cursus arcu. Nam porttitor pulvinar vehicula. Aenean quis venenatis massa. Mauris sit amet ultricies tellus, et egestas lectus. Praesent vulputate tincidunt risus eget maximus. Sed vel enim ac mi maximus pellentesque porta quis metus. Cras bibendum odio eget maximus bibendum. Donec ut risus condimentum, placerat tortor nec, dictum risus. Donec sodales urna nec sem fringilla fermentum. Vivamus aliquet facilisis velit et suscipit.\n\nDonec pretium magna ut quam placerat, ultricies faucibus ipsum rhoncus. Donec venenatis, mi ac pharetra egestas, orci metus commodo tellus, eget dignissim nisi odio eget nisl. Phasellus turpis tellus, tincidunt sed quam et, dignissim iaculis neque. Cras consequat ante et mi dictum, a pharetra lacus rutrum. Interdum et malesuada fames ac ante ipsum primis in faucibus. Nullam facilisis, enim tempus viverra hendrerit, enim metus rutrum tellus, in dictum ligula lectus et ex. Nullam condimentum purus ac arcu aliquet, sit amet rhoncus lectus lacinia. Quisque accumsan metus et quam suscipit, quis consequat lacus luctus. Nunc id nisl id libero vulputate viverra. Nulla facilisi. Proin non mauris ut nisl posuere placerat. Integer pharetra sapien at accumsan consequat. Fusce sollicitudin, eros ac finibus pulvinar, augue dolor venenatis diam, at molestie erat tortor ut ipsum.\n\nDonec lorem risus, feugiat a semper vel, vestibulum ac purus. Vestibulum pulvinar suscipit diam, eget porttitor eros vestibulum quis. Cras eu nisi mauris. Suspendisse felis odio, tincidunt posuere placerat ac, dictum nec est. Maecenas euismod, dui sed viverra accumsan, nibh arcu rutrum velit, quis mollis nulla mauris id diam. Quisque vel quam et turpis viverra maximus at et eros. Aliquam scelerisque lorem massa, vitae bibendum nibh tincidunt at. Aenean quis gravida augue. Cras ultrices tincidunt lectus, non cursus purus interdum et.\n\nCras ac libero imperdiet, volutpat enim sed, consequat nulla. Pellentesque a egestas augue, ac ultricies nisl. Vestibulum a turpis ultrices, venenatis mi ultricies, tempus odio. Nullam eget dapibus turpis. Vestibulum faucibus ut quam non efficitur. Nam in dolor eu sem ultrices semper vitae a ligula. Curabitur sit amet nisi vitae nunc vestibulum aliquam. Aliquam posuere, purus a tincidunt congue, orci ipsum dictum nunc, eu tristique sem leo at quam. In a velit quis purus venenatis auctor. Donec faucibus odio vitae velit lacinia consequat. Aliquam felis neque, egestas vitae velit sit amet, porttitor placerat orci. In tempor dolor et odio porta, non sodales ex sodales. Phasellus ultrices augue a massa tempus commodo. Donec erat eros, tincidunt at facilisis ut, dictum a augue. Vivamus in neque nulla.\n\nCurabitur vulputate ullamcorper nisi, vitae feugiat libero tincidunt sed. Etiam erat leo, rutrum id egestas in, tempus sit amet quam. Donec ex erat, volutpat vel mollis ut, cursus commodo turpis. Nulla facilisi. Cras non pulvinar leo. Sed elementum pretium nulla, sed mattis nisl porttitor eu. Aliquam at arcu ex. Etiam volutpat velit nibh, eu suscipit augue fermentum vel. Phasellus pellentesque ipsum odio, eget suscipit mi scelerisque a. Sed bibendum tincidunt suscipit. Quisque justo ligula, sodales a justo et, rutrum tempus turpis. Mauris sit amet posuere mi. Aenean blandit, nulla id luctus pellentesque, ipsum ante ultricies tellus, non posuere ipsum arcu in nisi. Donec quis leo vel nisi tristique viverra nec sit amet ante. Donec sed dapibus velit.",
+    "f27": {
       "dimensions": {
         "concept": "vsme:DescriptionOfSignificantMarketsTheUndertakingOperatesIn",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00"
-      }
+      },
+      "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla at cursus arcu. Nam porttitor pulvinar vehicula. Aenean quis venenatis massa. Mauris sit amet ultricies tellus, et egestas lectus. Praesent vulputate tincidunt risus eget maximus. Sed vel enim ac mi maximus pellentesque porta quis metus. Cras bibendum odio eget maximus bibendum. Donec ut risus condimentum, placerat tortor nec, dictum risus. Donec sodales urna nec sem fringilla fermentum. Vivamus aliquet facilisis velit et suscipit.\n\nDonec pretium magna ut quam placerat, ultricies faucibus ipsum rhoncus. Donec venenatis, mi ac pharetra egestas, orci metus commodo tellus, eget dignissim nisi odio eget nisl. Phasellus turpis tellus, tincidunt sed quam et, dignissim iaculis neque. Cras consequat ante et mi dictum, a pharetra lacus rutrum. Interdum et malesuada fames ac ante ipsum primis in faucibus. Nullam facilisis, enim tempus viverra hendrerit, enim metus rutrum tellus, in dictum ligula lectus et ex. Nullam condimentum purus ac arcu aliquet, sit amet rhoncus lectus lacinia. Quisque accumsan metus et quam suscipit, quis consequat lacus luctus. Nunc id nisl id libero vulputate viverra. Nulla facilisi. Proin non mauris ut nisl posuere placerat. Integer pharetra sapien at accumsan consequat. Fusce sollicitudin, eros ac finibus pulvinar, augue dolor venenatis diam, at molestie erat tortor ut ipsum.\n\nDonec lorem risus, feugiat a semper vel, vestibulum ac purus. Vestibulum pulvinar suscipit diam, eget porttitor eros vestibulum quis. Cras eu nisi mauris. Suspendisse felis odio, tincidunt posuere placerat ac, dictum nec est. Maecenas euismod, dui sed viverra accumsan, nibh arcu rutrum velit, quis mollis nulla mauris id diam. Quisque vel quam et turpis viverra maximus at et eros. Aliquam scelerisque lorem massa, vitae bibendum nibh tincidunt at. Aenean quis gravida augue. Cras ultrices tincidunt lectus, non cursus purus interdum et.\n\nCras ac libero imperdiet, volutpat enim sed, consequat nulla. Pellentesque a egestas augue, ac ultricies nisl. Vestibulum a turpis ultrices, venenatis mi ultricies, tempus odio. Nullam eget dapibus turpis. Vestibulum faucibus ut quam non efficitur. Nam in dolor eu sem ultrices semper vitae a ligula. Curabitur sit amet nisi vitae nunc vestibulum aliquam. Aliquam posuere, purus a tincidunt congue, orci ipsum dictum nunc, eu tristique sem leo at quam. In a velit quis purus venenatis auctor. Donec faucibus odio vitae velit lacinia consequat. Aliquam felis neque, egestas vitae velit sit amet, porttitor placerat orci. In tempor dolor et odio porta, non sodales ex sodales. Phasellus ultrices augue a massa tempus commodo. Donec erat eros, tincidunt at facilisis ut, dictum a augue. Vivamus in neque nulla.\n\nCurabitur vulputate ullamcorper nisi, vitae feugiat libero tincidunt sed. Etiam erat leo, rutrum id egestas in, tempus sit amet quam. Donec ex erat, volutpat vel mollis ut, cursus commodo turpis. Nulla facilisi. Cras non pulvinar leo. Sed elementum pretium nulla, sed mattis nisl porttitor eu. Aliquam at arcu ex. Etiam volutpat velit nibh, eu suscipit augue fermentum vel. Phasellus pellentesque ipsum odio, eget suscipit mi scelerisque a. Sed bibendum tincidunt suscipit. Quisque justo ligula, sodales a justo et, rutrum tempus turpis. Mauris sit amet posuere mi. Aenean blandit, nulla id luctus pellentesque, ipsum ante ultricies tellus, non posuere ipsum arcu in nisi. Donec quis leo vel nisi tristique viverra nec sit amet ante. Donec sed dapibus velit."
     },
-    "f0028": {
-      "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla at cursus arcu. Nam porttitor pulvinar vehicula. Aenean quis venenatis massa. Mauris sit amet ultricies tellus, et egestas lectus. Praesent vulputate tincidunt risus eget maximus. Sed vel enim ac mi maximus pellentesque porta quis metus. Cras bibendum odio eget maximus bibendum. Donec ut risus condimentum, placerat tortor nec, dictum risus. Donec sodales urna nec sem fringilla fermentum. Vivamus aliquet facilisis velit et suscipit.\n\nDonec pretium magna ut quam placerat, ultricies faucibus ipsum rhoncus. Donec venenatis, mi ac pharetra egestas, orci metus commodo tellus, eget dignissim nisi odio eget nisl. Phasellus turpis tellus, tincidunt sed quam et, dignissim iaculis neque. Cras consequat ante et mi dictum, a pharetra lacus rutrum. Interdum et malesuada fames ac ante ipsum primis in faucibus. Nullam facilisis, enim tempus viverra hendrerit, enim metus rutrum tellus, in dictum ligula lectus et ex. Nullam condimentum purus ac arcu aliquet, sit amet rhoncus lectus lacinia. Quisque accumsan metus et quam suscipit, quis consequat lacus luctus. Nunc id nisl id libero vulputate viverra. Nulla facilisi. Proin non mauris ut nisl posuere placerat. Integer pharetra sapien at accumsan consequat. Fusce sollicitudin, eros ac finibus pulvinar, augue dolor venenatis diam, at molestie erat tortor ut ipsum.\n\nDonec lorem risus, feugiat a semper vel, vestibulum ac purus. Vestibulum pulvinar suscipit diam, eget porttitor eros vestibulum quis. Cras eu nisi mauris. Suspendisse felis odio, tincidunt posuere placerat ac, dictum nec est. Maecenas euismod, dui sed viverra accumsan, nibh arcu rutrum velit, quis mollis nulla mauris id diam. Quisque vel quam et turpis viverra maximus at et eros. Aliquam scelerisque lorem massa, vitae bibendum nibh tincidunt at. Aenean quis gravida augue. Cras ultrices tincidunt lectus, non cursus purus interdum et.\n\nCras ac libero imperdiet, volutpat enim sed, consequat nulla. Pellentesque a egestas augue, ac ultricies nisl. Vestibulum a turpis ultrices, venenatis mi ultricies, tempus odio. Nullam eget dapibus turpis. Vestibulum faucibus ut quam non efficitur. Nam in dolor eu sem ultrices semper vitae a ligula. Curabitur sit amet nisi vitae nunc vestibulum aliquam. Aliquam posuere, purus a tincidunt congue, orci ipsum dictum nunc, eu tristique sem leo at quam. In a velit quis purus venenatis auctor. Donec faucibus odio vitae velit lacinia consequat. Aliquam felis neque, egestas vitae velit sit amet, porttitor placerat orci. In tempor dolor et odio porta, non sodales ex sodales. Phasellus ultrices augue a massa tempus commodo. Donec erat eros, tincidunt at facilisis ut, dictum a augue. Vivamus in neque nulla.\n\nCurabitur vulputate ullamcorper nisi, vitae feugiat libero tincidunt sed. Etiam erat leo, rutrum id egestas in, tempus sit amet quam. Donec ex erat, volutpat vel mollis ut, cursus commodo turpis. Nulla facilisi. Cras non pulvinar leo. Sed elementum pretium nulla, sed mattis nisl porttitor eu. Aliquam at arcu ex. Etiam volutpat velit nibh, eu suscipit augue fermentum vel. Phasellus pellentesque ipsum odio, eget suscipit mi scelerisque a. Sed bibendum tincidunt suscipit. Quisque justo ligula, sodales a justo et, rutrum tempus turpis. Mauris sit amet posuere mi. Aenean blandit, nulla id luctus pellentesque, ipsum ante ultricies tellus, non posuere ipsum arcu in nisi. Donec quis leo vel nisi tristique viverra nec sit amet ante. Donec sed dapibus velit.",
+    "f28": {
       "dimensions": {
         "concept": "vsme:DescriptionOfSustainabilityRelatedCertificationsOrLabels",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00"
-      }
+      },
+      "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla at cursus arcu. Nam porttitor pulvinar vehicula. Aenean quis venenatis massa. Mauris sit amet ultricies tellus, et egestas lectus. Praesent vulputate tincidunt risus eget maximus. Sed vel enim ac mi maximus pellentesque porta quis metus. Cras bibendum odio eget maximus bibendum. Donec ut risus condimentum, placerat tortor nec, dictum risus. Donec sodales urna nec sem fringilla fermentum. Vivamus aliquet facilisis velit et suscipit.\n\nDonec pretium magna ut quam placerat, ultricies faucibus ipsum rhoncus. Donec venenatis, mi ac pharetra egestas, orci metus commodo tellus, eget dignissim nisi odio eget nisl. Phasellus turpis tellus, tincidunt sed quam et, dignissim iaculis neque. Cras consequat ante et mi dictum, a pharetra lacus rutrum. Interdum et malesuada fames ac ante ipsum primis in faucibus. Nullam facilisis, enim tempus viverra hendrerit, enim metus rutrum tellus, in dictum ligula lectus et ex. Nullam condimentum purus ac arcu aliquet, sit amet rhoncus lectus lacinia. Quisque accumsan metus et quam suscipit, quis consequat lacus luctus. Nunc id nisl id libero vulputate viverra. Nulla facilisi. Proin non mauris ut nisl posuere placerat. Integer pharetra sapien at accumsan consequat. Fusce sollicitudin, eros ac finibus pulvinar, augue dolor venenatis diam, at molestie erat tortor ut ipsum.\n\nDonec lorem risus, feugiat a semper vel, vestibulum ac purus. Vestibulum pulvinar suscipit diam, eget porttitor eros vestibulum quis. Cras eu nisi mauris. Suspendisse felis odio, tincidunt posuere placerat ac, dictum nec est. Maecenas euismod, dui sed viverra accumsan, nibh arcu rutrum velit, quis mollis nulla mauris id diam. Quisque vel quam et turpis viverra maximus at et eros. Aliquam scelerisque lorem massa, vitae bibendum nibh tincidunt at. Aenean quis gravida augue. Cras ultrices tincidunt lectus, non cursus purus interdum et.\n\nCras ac libero imperdiet, volutpat enim sed, consequat nulla. Pellentesque a egestas augue, ac ultricies nisl. Vestibulum a turpis ultrices, venenatis mi ultricies, tempus odio. Nullam eget dapibus turpis. Vestibulum faucibus ut quam non efficitur. Nam in dolor eu sem ultrices semper vitae a ligula. Curabitur sit amet nisi vitae nunc vestibulum aliquam. Aliquam posuere, purus a tincidunt congue, orci ipsum dictum nunc, eu tristique sem leo at quam. In a velit quis purus venenatis auctor. Donec faucibus odio vitae velit lacinia consequat. Aliquam felis neque, egestas vitae velit sit amet, porttitor placerat orci. In tempor dolor et odio porta, non sodales ex sodales. Phasellus ultrices augue a massa tempus commodo. Donec erat eros, tincidunt at facilisis ut, dictum a augue. Vivamus in neque nulla.\n\nCurabitur vulputate ullamcorper nisi, vitae feugiat libero tincidunt sed. Etiam erat leo, rutrum id egestas in, tempus sit amet quam. Donec ex erat, volutpat vel mollis ut, cursus commodo turpis. Nulla facilisi. Cras non pulvinar leo. Sed elementum pretium nulla, sed mattis nisl porttitor eu. Aliquam at arcu ex. Etiam volutpat velit nibh, eu suscipit augue fermentum vel. Phasellus pellentesque ipsum odio, eget suscipit mi scelerisque a. Sed bibendum tincidunt suscipit. Quisque justo ligula, sodales a justo et, rutrum tempus turpis. Mauris sit amet posuere mi. Aenean blandit, nulla id luctus pellentesque, ipsum ante ultricies tellus, non posuere ipsum arcu in nisi. Donec quis leo vel nisi tristique viverra nec sit amet ante. Donec sed dapibus velit."
     },
-    "f0029": {
-      "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla at cursus arcu. Nam porttitor pulvinar vehicula. Aenean quis venenatis massa. Mauris sit amet ultricies tellus, et egestas lectus. Praesent vulputate tincidunt risus eget maximus. Sed vel enim ac mi maximus pellentesque porta quis metus. Cras bibendum odio eget maximus bibendum. Donec ut risus condimentum, placerat tortor nec, dictum risus. Donec sodales urna nec sem fringilla fermentum. Vivamus aliquet facilisis velit et suscipit.\n\nDonec pretium magna ut quam placerat, ultricies faucibus ipsum rhoncus. Donec venenatis, mi ac pharetra egestas, orci metus commodo tellus, eget dignissim nisi odio eget nisl. Phasellus turpis tellus, tincidunt sed quam et, dignissim iaculis neque. Cras consequat ante et mi dictum, a pharetra lacus rutrum. Interdum et malesuada fames ac ante ipsum primis in faucibus. Nullam facilisis, enim tempus viverra hendrerit, enim metus rutrum tellus, in dictum ligula lectus et ex. Nullam condimentum purus ac arcu aliquet, sit amet rhoncus lectus lacinia. Quisque accumsan metus et quam suscipit, quis consequat lacus luctus. Nunc id nisl id libero vulputate viverra. Nulla facilisi. Proin non mauris ut nisl posuere placerat. Integer pharetra sapien at accumsan consequat. Fusce sollicitudin, eros ac finibus pulvinar, augue dolor venenatis diam, at molestie erat tortor ut ipsum.\n\nDonec lorem risus, feugiat a semper vel, vestibulum ac purus. Vestibulum pulvinar suscipit diam, eget porttitor eros vestibulum quis. Cras eu nisi mauris. Suspendisse felis odio, tincidunt posuere placerat ac, dictum nec est. Maecenas euismod, dui sed viverra accumsan, nibh arcu rutrum velit, quis mollis nulla mauris id diam. Quisque vel quam et turpis viverra maximus at et eros. Aliquam scelerisque lorem massa, vitae bibendum nibh tincidunt at. Aenean quis gravida augue. Cras ultrices tincidunt lectus, non cursus purus interdum et.\n\nCras ac libero imperdiet, volutpat enim sed, consequat nulla. Pellentesque a egestas augue, ac ultricies nisl. Vestibulum a turpis ultrices, venenatis mi ultricies, tempus odio. Nullam eget dapibus turpis. Vestibulum faucibus ut quam non efficitur. Nam in dolor eu sem ultrices semper vitae a ligula. Curabitur sit amet nisi vitae nunc vestibulum aliquam. Aliquam posuere, purus a tincidunt congue, orci ipsum dictum nunc, eu tristique sem leo at quam. In a velit quis purus venenatis auctor. Donec faucibus odio vitae velit lacinia consequat. Aliquam felis neque, egestas vitae velit sit amet, porttitor placerat orci. In tempor dolor et odio porta, non sodales ex sodales. Phasellus ultrices augue a massa tempus commodo. Donec erat eros, tincidunt at facilisis ut, dictum a augue. Vivamus in neque nulla.\n\nCurabitur vulputate ullamcorper nisi, vitae feugiat libero tincidunt sed. Etiam erat leo, rutrum id egestas in, tempus sit amet quam. Donec ex erat, volutpat vel mollis ut, cursus commodo turpis. Nulla facilisi. Cras non pulvinar leo. Sed elementum pretium nulla, sed mattis nisl porttitor eu. Aliquam at arcu ex. Etiam volutpat velit nibh, eu suscipit augue fermentum vel. Phasellus pellentesque ipsum odio, eget suscipit mi scelerisque a. Sed bibendum tincidunt suscipit. Quisque justo ligula, sodales a justo et, rutrum tempus turpis. Mauris sit amet posuere mi. Aenean blandit, nulla id luctus pellentesque, ipsum ante ultricies tellus, non posuere ipsum arcu in nisi. Donec quis leo vel nisi tristique viverra nec sit amet ante. Donec sed dapibus velit.",
+    "f29": {
       "dimensions": {
         "concept": "vsme:DisclosureOfAnyOtherGeneralAndOrEntitySpecificInformation",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00"
-      }
+      },
+      "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla at cursus arcu. Nam porttitor pulvinar vehicula. Aenean quis venenatis massa. Mauris sit amet ultricies tellus, et egestas lectus. Praesent vulputate tincidunt risus eget maximus. Sed vel enim ac mi maximus pellentesque porta quis metus. Cras bibendum odio eget maximus bibendum. Donec ut risus condimentum, placerat tortor nec, dictum risus. Donec sodales urna nec sem fringilla fermentum. Vivamus aliquet facilisis velit et suscipit.\n\nDonec pretium magna ut quam placerat, ultricies faucibus ipsum rhoncus. Donec venenatis, mi ac pharetra egestas, orci metus commodo tellus, eget dignissim nisi odio eget nisl. Phasellus turpis tellus, tincidunt sed quam et, dignissim iaculis neque. Cras consequat ante et mi dictum, a pharetra lacus rutrum. Interdum et malesuada fames ac ante ipsum primis in faucibus. Nullam facilisis, enim tempus viverra hendrerit, enim metus rutrum tellus, in dictum ligula lectus et ex. Nullam condimentum purus ac arcu aliquet, sit amet rhoncus lectus lacinia. Quisque accumsan metus et quam suscipit, quis consequat lacus luctus. Nunc id nisl id libero vulputate viverra. Nulla facilisi. Proin non mauris ut nisl posuere placerat. Integer pharetra sapien at accumsan consequat. Fusce sollicitudin, eros ac finibus pulvinar, augue dolor venenatis diam, at molestie erat tortor ut ipsum.\n\nDonec lorem risus, feugiat a semper vel, vestibulum ac purus. Vestibulum pulvinar suscipit diam, eget porttitor eros vestibulum quis. Cras eu nisi mauris. Suspendisse felis odio, tincidunt posuere placerat ac, dictum nec est. Maecenas euismod, dui sed viverra accumsan, nibh arcu rutrum velit, quis mollis nulla mauris id diam. Quisque vel quam et turpis viverra maximus at et eros. Aliquam scelerisque lorem massa, vitae bibendum nibh tincidunt at. Aenean quis gravida augue. Cras ultrices tincidunt lectus, non cursus purus interdum et.\n\nCras ac libero imperdiet, volutpat enim sed, consequat nulla. Pellentesque a egestas augue, ac ultricies nisl. Vestibulum a turpis ultrices, venenatis mi ultricies, tempus odio. Nullam eget dapibus turpis. Vestibulum faucibus ut quam non efficitur. Nam in dolor eu sem ultrices semper vitae a ligula. Curabitur sit amet nisi vitae nunc vestibulum aliquam. Aliquam posuere, purus a tincidunt congue, orci ipsum dictum nunc, eu tristique sem leo at quam. In a velit quis purus venenatis auctor. Donec faucibus odio vitae velit lacinia consequat. Aliquam felis neque, egestas vitae velit sit amet, porttitor placerat orci. In tempor dolor et odio porta, non sodales ex sodales. Phasellus ultrices augue a massa tempus commodo. Donec erat eros, tincidunt at facilisis ut, dictum a augue. Vivamus in neque nulla.\n\nCurabitur vulputate ullamcorper nisi, vitae feugiat libero tincidunt sed. Etiam erat leo, rutrum id egestas in, tempus sit amet quam. Donec ex erat, volutpat vel mollis ut, cursus commodo turpis. Nulla facilisi. Cras non pulvinar leo. Sed elementum pretium nulla, sed mattis nisl porttitor eu. Aliquam at arcu ex. Etiam volutpat velit nibh, eu suscipit augue fermentum vel. Phasellus pellentesque ipsum odio, eget suscipit mi scelerisque a. Sed bibendum tincidunt suscipit. Quisque justo ligula, sodales a justo et, rutrum tempus turpis. Mauris sit amet posuere mi. Aenean blandit, nulla id luctus pellentesque, ipsum ante ultricies tellus, non posuere ipsum arcu in nisi. Donec quis leo vel nisi tristique viverra nec sit amet ante. Donec sed dapibus velit."
     },
-    "f0030": {
-      "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla at cursus arcu. Nam porttitor pulvinar vehicula. Aenean quis venenatis massa. Mauris sit amet ultricies tellus, et egestas lectus. Praesent vulputate tincidunt risus eget maximus. Sed vel enim ac mi maximus pellentesque porta quis metus. Cras bibendum odio eget maximus bibendum. Donec ut risus condimentum, placerat tortor nec, dictum risus. Donec sodales urna nec sem fringilla fermentum. Vivamus aliquet facilisis velit et suscipit.\n\nDonec pretium magna ut quam placerat, ultricies faucibus ipsum rhoncus. Donec venenatis, mi ac pharetra egestas, orci metus commodo tellus, eget dignissim nisi odio eget nisl. Phasellus turpis tellus, tincidunt sed quam et, dignissim iaculis neque. Cras consequat ante et mi dictum, a pharetra lacus rutrum. Interdum et malesuada fames ac ante ipsum primis in faucibus. Nullam facilisis, enim tempus viverra hendrerit, enim metus rutrum tellus, in dictum ligula lectus et ex. Nullam condimentum purus ac arcu aliquet, sit amet rhoncus lectus lacinia. Quisque accumsan metus et quam suscipit, quis consequat lacus luctus. Nunc id nisl id libero vulputate viverra. Nulla facilisi. Proin non mauris ut nisl posuere placerat. Integer pharetra sapien at accumsan consequat. Fusce sollicitudin, eros ac finibus pulvinar, augue dolor venenatis diam, at molestie erat tortor ut ipsum.\n\nDonec lorem risus, feugiat a semper vel, vestibulum ac purus. Vestibulum pulvinar suscipit diam, eget porttitor eros vestibulum quis. Cras eu nisi mauris. Suspendisse felis odio, tincidunt posuere placerat ac, dictum nec est. Maecenas euismod, dui sed viverra accumsan, nibh arcu rutrum velit, quis mollis nulla mauris id diam. Quisque vel quam et turpis viverra maximus at et eros. Aliquam scelerisque lorem massa, vitae bibendum nibh tincidunt at. Aenean quis gravida augue. Cras ultrices tincidunt lectus, non cursus purus interdum et.\n\nCras ac libero imperdiet, volutpat enim sed, consequat nulla. Pellentesque a egestas augue, ac ultricies nisl. Vestibulum a turpis ultrices, venenatis mi ultricies, tempus odio. Nullam eget dapibus turpis. Vestibulum faucibus ut quam non efficitur. Nam in dolor eu sem ultrices semper vitae a ligula. Curabitur sit amet nisi vitae nunc vestibulum aliquam. Aliquam posuere, purus a tincidunt congue, orci ipsum dictum nunc, eu tristique sem leo at quam. In a velit quis purus venenatis auctor. Donec faucibus odio vitae velit lacinia consequat. Aliquam felis neque, egestas vitae velit sit amet, porttitor placerat orci. In tempor dolor et odio porta, non sodales ex sodales. Phasellus ultrices augue a massa tempus commodo. Donec erat eros, tincidunt at facilisis ut, dictum a augue. Vivamus in neque nulla.\n\nCurabitur vulputate ullamcorper nisi, vitae feugiat libero tincidunt sed. Etiam erat leo, rutrum id egestas in, tempus sit amet quam. Donec ex erat, volutpat vel mollis ut, cursus commodo turpis. Nulla facilisi. Cras non pulvinar leo. Sed elementum pretium nulla, sed mattis nisl porttitor eu. Aliquam at arcu ex. Etiam volutpat velit nibh, eu suscipit augue fermentum vel. Phasellus pellentesque ipsum odio, eget suscipit mi scelerisque a. Sed bibendum tincidunt suscipit. Quisque justo ligula, sodales a justo et, rutrum tempus turpis. Mauris sit amet posuere mi. Aenean blandit, nulla id luctus pellentesque, ipsum ante ultricies tellus, non posuere ipsum arcu in nisi. Donec quis leo vel nisi tristique viverra nec sit amet ante. Donec sed dapibus velit.",
+    "f30": {
       "dimensions": {
         "concept": "vsme:DisclosureOfHowItHasAssessedTheExposureAndSensitivityOfItsAssetsActivitiesAndValueChainToTheseHazardsAndTransitionEvents",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00"
-      }
+      },
+      "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla at cursus arcu. Nam porttitor pulvinar vehicula. Aenean quis venenatis massa. Mauris sit amet ultricies tellus, et egestas lectus. Praesent vulputate tincidunt risus eget maximus. Sed vel enim ac mi maximus pellentesque porta quis metus. Cras bibendum odio eget maximus bibendum. Donec ut risus condimentum, placerat tortor nec, dictum risus. Donec sodales urna nec sem fringilla fermentum. Vivamus aliquet facilisis velit et suscipit.\n\nDonec pretium magna ut quam placerat, ultricies faucibus ipsum rhoncus. Donec venenatis, mi ac pharetra egestas, orci metus commodo tellus, eget dignissim nisi odio eget nisl. Phasellus turpis tellus, tincidunt sed quam et, dignissim iaculis neque. Cras consequat ante et mi dictum, a pharetra lacus rutrum. Interdum et malesuada fames ac ante ipsum primis in faucibus. Nullam facilisis, enim tempus viverra hendrerit, enim metus rutrum tellus, in dictum ligula lectus et ex. Nullam condimentum purus ac arcu aliquet, sit amet rhoncus lectus lacinia. Quisque accumsan metus et quam suscipit, quis consequat lacus luctus. Nunc id nisl id libero vulputate viverra. Nulla facilisi. Proin non mauris ut nisl posuere placerat. Integer pharetra sapien at accumsan consequat. Fusce sollicitudin, eros ac finibus pulvinar, augue dolor venenatis diam, at molestie erat tortor ut ipsum.\n\nDonec lorem risus, feugiat a semper vel, vestibulum ac purus. Vestibulum pulvinar suscipit diam, eget porttitor eros vestibulum quis. Cras eu nisi mauris. Suspendisse felis odio, tincidunt posuere placerat ac, dictum nec est. Maecenas euismod, dui sed viverra accumsan, nibh arcu rutrum velit, quis mollis nulla mauris id diam. Quisque vel quam et turpis viverra maximus at et eros. Aliquam scelerisque lorem massa, vitae bibendum nibh tincidunt at. Aenean quis gravida augue. Cras ultrices tincidunt lectus, non cursus purus interdum et.\n\nCras ac libero imperdiet, volutpat enim sed, consequat nulla. Pellentesque a egestas augue, ac ultricies nisl. Vestibulum a turpis ultrices, venenatis mi ultricies, tempus odio. Nullam eget dapibus turpis. Vestibulum faucibus ut quam non efficitur. Nam in dolor eu sem ultrices semper vitae a ligula. Curabitur sit amet nisi vitae nunc vestibulum aliquam. Aliquam posuere, purus a tincidunt congue, orci ipsum dictum nunc, eu tristique sem leo at quam. In a velit quis purus venenatis auctor. Donec faucibus odio vitae velit lacinia consequat. Aliquam felis neque, egestas vitae velit sit amet, porttitor placerat orci. In tempor dolor et odio porta, non sodales ex sodales. Phasellus ultrices augue a massa tempus commodo. Donec erat eros, tincidunt at facilisis ut, dictum a augue. Vivamus in neque nulla.\n\nCurabitur vulputate ullamcorper nisi, vitae feugiat libero tincidunt sed. Etiam erat leo, rutrum id egestas in, tempus sit amet quam. Donec ex erat, volutpat vel mollis ut, cursus commodo turpis. Nulla facilisi. Cras non pulvinar leo. Sed elementum pretium nulla, sed mattis nisl porttitor eu. Aliquam at arcu ex. Etiam volutpat velit nibh, eu suscipit augue fermentum vel. Phasellus pellentesque ipsum odio, eget suscipit mi scelerisque a. Sed bibendum tincidunt suscipit. Quisque justo ligula, sodales a justo et, rutrum tempus turpis. Mauris sit amet posuere mi. Aenean blandit, nulla id luctus pellentesque, ipsum ante ultricies tellus, non posuere ipsum arcu in nisi. Donec quis leo vel nisi tristique viverra nec sit amet ante. Donec sed dapibus velit."
     },
-    "f0031": {
-      "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla at cursus arcu. Nam porttitor pulvinar vehicula. Aenean quis venenatis massa. Mauris sit amet ultricies tellus, et egestas lectus. Praesent vulputate tincidunt risus eget maximus. Sed vel enim ac mi maximus pellentesque porta quis metus. Cras bibendum odio eget maximus bibendum. Donec ut risus condimentum, placerat tortor nec, dictum risus. Donec sodales urna nec sem fringilla fermentum. Vivamus aliquet facilisis velit et suscipit.\n\nDonec pretium magna ut quam placerat, ultricies faucibus ipsum rhoncus. Donec venenatis, mi ac pharetra egestas, orci metus commodo tellus, eget dignissim nisi odio eget nisl. Phasellus turpis tellus, tincidunt sed quam et, dignissim iaculis neque. Cras consequat ante et mi dictum, a pharetra lacus rutrum. Interdum et malesuada fames ac ante ipsum primis in faucibus. Nullam facilisis, enim tempus viverra hendrerit, enim metus rutrum tellus, in dictum ligula lectus et ex. Nullam condimentum purus ac arcu aliquet, sit amet rhoncus lectus lacinia. Quisque accumsan metus et quam suscipit, quis consequat lacus luctus. Nunc id nisl id libero vulputate viverra. Nulla facilisi. Proin non mauris ut nisl posuere placerat. Integer pharetra sapien at accumsan consequat. Fusce sollicitudin, eros ac finibus pulvinar, augue dolor venenatis diam, at molestie erat tortor ut ipsum.\n\nDonec lorem risus, feugiat a semper vel, vestibulum ac purus. Vestibulum pulvinar suscipit diam, eget porttitor eros vestibulum quis. Cras eu nisi mauris. Suspendisse felis odio, tincidunt posuere placerat ac, dictum nec est. Maecenas euismod, dui sed viverra accumsan, nibh arcu rutrum velit, quis mollis nulla mauris id diam. Quisque vel quam et turpis viverra maximus at et eros. Aliquam scelerisque lorem massa, vitae bibendum nibh tincidunt at. Aenean quis gravida augue. Cras ultrices tincidunt lectus, non cursus purus interdum et.\n\nCras ac libero imperdiet, volutpat enim sed, consequat nulla. Pellentesque a egestas augue, ac ultricies nisl. Vestibulum a turpis ultrices, venenatis mi ultricies, tempus odio. Nullam eget dapibus turpis. Vestibulum faucibus ut quam non efficitur. Nam in dolor eu sem ultrices semper vitae a ligula. Curabitur sit amet nisi vitae nunc vestibulum aliquam. Aliquam posuere, purus a tincidunt congue, orci ipsum dictum nunc, eu tristique sem leo at quam. In a velit quis purus venenatis auctor. Donec faucibus odio vitae velit lacinia consequat. Aliquam felis neque, egestas vitae velit sit amet, porttitor placerat orci. In tempor dolor et odio porta, non sodales ex sodales. Phasellus ultrices augue a massa tempus commodo. Donec erat eros, tincidunt at facilisis ut, dictum a augue. Vivamus in neque nulla.\n\nCurabitur vulputate ullamcorper nisi, vitae feugiat libero tincidunt sed. Etiam erat leo, rutrum id egestas in, tempus sit amet quam. Donec ex erat, volutpat vel mollis ut, cursus commodo turpis. Nulla facilisi. Cras non pulvinar leo. Sed elementum pretium nulla, sed mattis nisl porttitor eu. Aliquam at arcu ex. Etiam volutpat velit nibh, eu suscipit augue fermentum vel. Phasellus pellentesque ipsum odio, eget suscipit mi scelerisque a. Sed bibendum tincidunt suscipit. Quisque justo ligula, sodales a justo et, rutrum tempus turpis. Mauris sit amet posuere mi. Aenean blandit, nulla id luctus pellentesque, ipsum ante ultricies tellus, non posuere ipsum arcu in nisi. Donec quis leo vel nisi tristique viverra nec sit amet ante. Donec sed dapibus velit.",
+    "f31": {
       "dimensions": {
         "concept": "vsme:DisclosureOfListOfMainActionsTheEntitySeeksInOrderToAchieveItsTargets",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00"
-      }
+      },
+      "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla at cursus arcu. Nam porttitor pulvinar vehicula. Aenean quis venenatis massa. Mauris sit amet ultricies tellus, et egestas lectus. Praesent vulputate tincidunt risus eget maximus. Sed vel enim ac mi maximus pellentesque porta quis metus. Cras bibendum odio eget maximus bibendum. Donec ut risus condimentum, placerat tortor nec, dictum risus. Donec sodales urna nec sem fringilla fermentum. Vivamus aliquet facilisis velit et suscipit.\n\nDonec pretium magna ut quam placerat, ultricies faucibus ipsum rhoncus. Donec venenatis, mi ac pharetra egestas, orci metus commodo tellus, eget dignissim nisi odio eget nisl. Phasellus turpis tellus, tincidunt sed quam et, dignissim iaculis neque. Cras consequat ante et mi dictum, a pharetra lacus rutrum. Interdum et malesuada fames ac ante ipsum primis in faucibus. Nullam facilisis, enim tempus viverra hendrerit, enim metus rutrum tellus, in dictum ligula lectus et ex. Nullam condimentum purus ac arcu aliquet, sit amet rhoncus lectus lacinia. Quisque accumsan metus et quam suscipit, quis consequat lacus luctus. Nunc id nisl id libero vulputate viverra. Nulla facilisi. Proin non mauris ut nisl posuere placerat. Integer pharetra sapien at accumsan consequat. Fusce sollicitudin, eros ac finibus pulvinar, augue dolor venenatis diam, at molestie erat tortor ut ipsum.\n\nDonec lorem risus, feugiat a semper vel, vestibulum ac purus. Vestibulum pulvinar suscipit diam, eget porttitor eros vestibulum quis. Cras eu nisi mauris. Suspendisse felis odio, tincidunt posuere placerat ac, dictum nec est. Maecenas euismod, dui sed viverra accumsan, nibh arcu rutrum velit, quis mollis nulla mauris id diam. Quisque vel quam et turpis viverra maximus at et eros. Aliquam scelerisque lorem massa, vitae bibendum nibh tincidunt at. Aenean quis gravida augue. Cras ultrices tincidunt lectus, non cursus purus interdum et.\n\nCras ac libero imperdiet, volutpat enim sed, consequat nulla. Pellentesque a egestas augue, ac ultricies nisl. Vestibulum a turpis ultrices, venenatis mi ultricies, tempus odio. Nullam eget dapibus turpis. Vestibulum faucibus ut quam non efficitur. Nam in dolor eu sem ultrices semper vitae a ligula. Curabitur sit amet nisi vitae nunc vestibulum aliquam. Aliquam posuere, purus a tincidunt congue, orci ipsum dictum nunc, eu tristique sem leo at quam. In a velit quis purus venenatis auctor. Donec faucibus odio vitae velit lacinia consequat. Aliquam felis neque, egestas vitae velit sit amet, porttitor placerat orci. In tempor dolor et odio porta, non sodales ex sodales. Phasellus ultrices augue a massa tempus commodo. Donec erat eros, tincidunt at facilisis ut, dictum a augue. Vivamus in neque nulla.\n\nCurabitur vulputate ullamcorper nisi, vitae feugiat libero tincidunt sed. Etiam erat leo, rutrum id egestas in, tempus sit amet quam. Donec ex erat, volutpat vel mollis ut, cursus commodo turpis. Nulla facilisi. Cras non pulvinar leo. Sed elementum pretium nulla, sed mattis nisl porttitor eu. Aliquam at arcu ex. Etiam volutpat velit nibh, eu suscipit augue fermentum vel. Phasellus pellentesque ipsum odio, eget suscipit mi scelerisque a. Sed bibendum tincidunt suscipit. Quisque justo ligula, sodales a justo et, rutrum tempus turpis. Mauris sit amet posuere mi. Aenean blandit, nulla id luctus pellentesque, ipsum ante ultricies tellus, non posuere ipsum arcu in nisi. Donec quis leo vel nisi tristique viverra nec sit amet ante. Donec sed dapibus velit."
     },
-    "f0032": {
-      "value": false,
+    "f32": {
       "dimensions": {
         "concept": "vsme:DisclosureOfWhetherItHasUndertakenClimateChangeAdaptationActionsForAnyClimateRelatedHazardsAndTransitionEvents",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00"
-      }
+      },
+      "value": "false"
     },
-    "f0033": {
-      "value": "vsme:AverageDuringTheReportingPeriodMember",
+    "f33": {
       "dimensions": {
         "concept": "vsme:EmployeeCountingMethodology",
         "entity": "lei:TestCode1234",
         "period": "2026-01-01T00:00:00"
-      }
+      },
+      "value": "vsme:AverageDuringTheReportingPeriodMember"
     },
-    "f0034": {
-      "value": "0.2840909090909091",
+    "f34": {
       "dimensions": {
         "concept": "vsme:EmployeeTurnoverRate",
         "entity": "lei:TestCode1234",
-        "period": "2025-01-01T00:00:00/2026-01-01T00:00:00",
-        "unit": "xbrli:pure"
+        "period": "2025-01-01T00:00:00/2026-01-01T00:00:00"
       },
+      "value": "0.2840909090909091",
       "decimals": 4,
       "mireport:scale": -2
     },
-    "f0035": {
-      "value": false,
+    "f35": {
       "dimensions": {
         "concept": "vsme:EmployeesReceivePayEqualOrAboveMinimumWageDeterminedByNationalLawOrCollectiveAgreement",
         "entity": "lei:TestCode1234",
         "period": "2026-01-01T00:00:00"
-      }
+      },
+      "value": "true"
     },
-    "f0036": {
-      "value": "100",
+    "f36": {
       "dimensions": {
         "concept": "vsme:EnergyConsumptionFromElectricity",
         "entity": "lei:TestCode1234",
@@ -344,10 +344,10 @@
         "unit": "utr:MWh",
         "vsme:BreakdownOfEnergyConsumptionAxis": "vsme:NonRenewableEnergyMember"
       },
+      "value": "100.0",
       "decimals": 2
     },
-    "f0037": {
-      "value": "0",
+    "f37": {
       "dimensions": {
         "concept": "vsme:EnergyConsumptionFromElectricity",
         "entity": "lei:TestCode1234",
@@ -355,52 +355,52 @@
         "unit": "utr:MWh",
         "vsme:BreakdownOfEnergyConsumptionAxis": "vsme:RenewableEnergyMember"
       },
+      "value": "0.0",
       "decimals": 2
     },
-    "f0038": {
-      "value": "100",
+    "f38": {
       "dimensions": {
         "concept": "vsme:EnergyConsumptionFromElectricity",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00",
         "unit": "utr:MWh"
       },
+      "value": "100.0",
       "decimals": 2
     },
-    "f0039": {
+    "f39": {
+      "dimensions": {
+        "concept": "vsme:EnergyConsumptionFromFuels",
+        "entity": "lei:TestCode1234",
+        "period": "2025-01-01T00:00:00/2026-01-01T00:00:00",
+        "unit": "utr:MWh",
+        "vsme:BreakdownOfEnergyConsumptionAxis": "vsme:NonRenewableEnergyMember"
+      },
       "value": "10.03334136",
+      "decimals": 2
+    },
+    "f40": {
       "dimensions": {
         "concept": "vsme:EnergyConsumptionFromFuels",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00",
         "unit": "utr:MWh",
-        "vsme:BreakdownOfEnergyConsumptionAxis": "vsme:NonRenewableEnergyMember"
+        "vsme:BreakdownOfEnergyConsumptionAxis": "vsme:RenewableEnergyMember"
       },
-      "decimals": 2
-    },
-    "f0040": {
       "value": "6.3750051",
-      "dimensions": {
-        "concept": "vsme:EnergyConsumptionFromFuels",
-        "entity": "lei:TestCode1234",
-        "period": "2025-01-01T00:00:00/2026-01-01T00:00:00",
-        "unit": "utr:MWh",
-        "vsme:BreakdownOfEnergyConsumptionAxis": "vsme:RenewableEnergyMember"
-      },
       "decimals": 2
     },
-    "f0041": {
-      "value": "16.40834646",
+    "f41": {
       "dimensions": {
         "concept": "vsme:EnergyConsumptionFromFuels",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00",
         "unit": "utr:MWh"
       },
+      "value": "16.40834646",
       "decimals": 2
     },
-    "f0042": {
-      "value": "20",
+    "f42": {
       "dimensions": {
         "concept": "vsme:EnergyConsumptionFromSelfGeneratedElectricity",
         "entity": "lei:TestCode1234",
@@ -408,10 +408,10 @@
         "unit": "utr:MWh",
         "vsme:BreakdownOfEnergyConsumptionAxis": "vsme:NonRenewableEnergyMember"
       },
+      "value": "20.0",
       "decimals": 2
     },
-    "f0043": {
-      "value": "23",
+    "f43": {
       "dimensions": {
         "concept": "vsme:EnergyConsumptionFromSelfGeneratedElectricity",
         "entity": "lei:TestCode1234",
@@ -419,65 +419,63 @@
         "unit": "utr:MWh",
         "vsme:BreakdownOfEnergyConsumptionAxis": "vsme:RenewableEnergyMember"
       },
+      "value": "23.0",
       "decimals": 2
     },
-    "f0044": {
-      "value": "43",
+    "f44": {
       "dimensions": {
         "concept": "vsme:EnergyConsumptionFromSelfGeneratedElectricity",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00",
         "unit": "utr:MWh"
       },
+      "value": "43.0",
       "decimals": 2
     },
-    "f0045": {
-      "value": "0.8",
+    "f45": {
       "dimensions": {
         "concept": "vsme:FemaleToMaleRatioAtManagementLevelForTheReportingPeriod",
         "entity": "lei:TestCode1234",
-        "period": "2025-01-01T00:00:00/2026-01-01T00:00:00",
-        "unit": "xbrli:pure"
+        "period": "2025-01-01T00:00:00/2026-01-01T00:00:00"
       },
+      "value": "0.8",
       "decimals": 2
     },
-    "f0046": {
-      "value": "45.4634273,9.1919874",
+    "f46": {
       "dimensions": {
         "concept": "vsme:GPSLocationOfSite",
         "entity": "lei:TestCode1234",
         "period": "2026-01-01T00:00:00",
         "vsme:IdentifierOfSiteTypedAxis": "1"
-      }
+      },
+      "value": "45.4634273,9.1919874"
     },
-    "f0047": {
-      "value": "2.5",
+    "f47": {
       "dimensions": {
         "concept": "vsme:GenderDiversityRatioInGovernanceBody",
         "entity": "lei:TestCode1234",
-        "period": "2026-01-01T00:00:00",
-        "unit": "xbrli:pure"
+        "period": "2026-01-01T00:00:00"
       },
+      "value": "2.5",
       "decimals": 2
     },
-    "f0048": {
-      "value": "2020",
+    "f48": {
       "dimensions": {
         "concept": "vsme:GreenhouseGasEmissionReductionTargetBaseYear",
         "entity": "lei:TestCode1234",
         "period": "2026-01-01T00:00:00"
-      }
+      },
+      "value": "2020"
     },
-    "f0049": {
-      "value": "2030",
+    "f49": {
       "dimensions": {
         "concept": "vsme:GreenhouseGasEmissionReductionTargetYear",
         "entity": "lei:TestCode1234",
         "period": "2026-01-01T00:00:00"
-      }
+      },
+      "value": "2030"
     },
-    "f0050": {
-      "value": "75",
+    "f50": {
       "dimensions": {
         "concept": "vsme:GrossLocationBasedScope2GreenhouseGasEmissions",
         "entity": "lei:TestCode1234",
@@ -485,20 +483,20 @@
         "unit": "utr:tCO2e",
         "vsme:ReportingScopesAxis": "vsme:BaselineYearMember"
       },
+      "value": "75.0",
       "decimals": 2
     },
-    "f0051": {
-      "value": "50",
+    "f51": {
       "dimensions": {
         "concept": "vsme:GrossLocationBasedScope2GreenhouseGasEmissions",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00",
         "unit": "utr:tCO2e"
       },
+      "value": "50.0",
       "decimals": 2
     },
-    "f0052": {
-      "value": "15",
+    "f52": {
       "dimensions": {
         "concept": "vsme:GrossLocationBasedScope2GreenhouseGasEmissions",
         "entity": "lei:TestCode1234",
@@ -506,10 +504,10 @@
         "unit": "utr:tCO2e",
         "vsme:ReportingScopesAxis": "vsme:TargetYearMember"
       },
+      "value": "15.0",
       "decimals": 2
     },
-    "f0053": {
-      "value": "150",
+    "f53": {
       "dimensions": {
         "concept": "vsme:GrossScope1GreenhouseGasEmissions",
         "entity": "lei:TestCode1234",
@@ -517,20 +515,20 @@
         "unit": "utr:tCO2e",
         "vsme:ReportingScopesAxis": "vsme:BaselineYearMember"
       },
+      "value": "150.0",
       "decimals": 2
     },
-    "f0054": {
-      "value": "100",
+    "f54": {
       "dimensions": {
         "concept": "vsme:GrossScope1GreenhouseGasEmissions",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00",
         "unit": "utr:tCO2e"
       },
+      "value": "100.0",
       "decimals": 2
     },
-    "f0055": {
-      "value": "75",
+    "f55": {
       "dimensions": {
         "concept": "vsme:GrossScope1GreenhouseGasEmissions",
         "entity": "lei:TestCode1234",
@@ -538,10 +536,10 @@
         "unit": "utr:tCO2e",
         "vsme:ReportingScopesAxis": "vsme:TargetYearMember"
       },
+      "value": "75.0",
       "decimals": 2
     },
-    "f0056": {
-      "value": "300",
+    "f56": {
       "dimensions": {
         "concept": "vsme:GrossScope3GreenhouseGasEmissions",
         "entity": "lei:TestCode1234",
@@ -549,20 +547,20 @@
         "unit": "utr:tCO2e",
         "vsme:ReportingScopesAxis": "vsme:BaselineYearMember"
       },
+      "value": "300.0",
       "decimals": 2
     },
-    "f0057": {
-      "value": "200",
+    "f57": {
       "dimensions": {
         "concept": "vsme:GrossScope3GreenhouseGasEmissions",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00",
         "unit": "utr:tCO2e"
       },
+      "value": "200.0",
       "decimals": 2
     },
-    "f0058": {
-      "value": "100",
+    "f58": {
       "dimensions": {
         "concept": "vsme:GrossScope3GreenhouseGasEmissions",
         "entity": "lei:TestCode1234",
@@ -570,304 +568,289 @@
         "unit": "utr:tCO2e",
         "vsme:ReportingScopesAxis": "vsme:TargetYearMember"
       },
+      "value": "100.0",
       "decimals": 2
     },
-    "f0059": {
-      "value": "vsme:B6-WaterMember vsme:B6WaterConsumptionMember vsme:B6WaterWithdrawalMember",
+    "f59": {
       "dimensions": {
         "concept": "vsme:ListOfOmittedDisclosuresDeemedToBeClassifiedOrSensitiveInformation",
         "entity": "lei:TestCode1234",
         "period": "2026-01-01T00:00:00"
-      }
+      },
+      "value": "vsme:B6-WaterMember vsme:B6WaterConsumptionMember vsme:B6WaterWithdrawalMember"
     },
-    "f0060": {
-      "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla at cursus arcu. Nam porttitor pulvinar vehicula. Aenean quis venenatis massa. Mauris sit amet ultricies tellus, et egestas lectus. Praesent vulputate tincidunt risus eget maximus. Sed vel enim ac mi maximus pellentesque porta quis metus. Cras bibendum odio eget maximus bibendum. Donec ut risus condimentum, placerat tortor nec, dictum risus. Donec sodales urna nec sem fringilla fermentum. Vivamus aliquet facilisis velit et suscipit.\n\nDonec pretium magna ut quam placerat, ultricies faucibus ipsum rhoncus. Donec venenatis, mi ac pharetra egestas, orci metus commodo tellus, eget dignissim nisi odio eget nisl. Phasellus turpis tellus, tincidunt sed quam et, dignissim iaculis neque. Cras consequat ante et mi dictum, a pharetra lacus rutrum. Interdum et malesuada fames ac ante ipsum primis in faucibus. Nullam facilisis, enim tempus viverra hendrerit, enim metus rutrum tellus, in dictum ligula lectus et ex. Nullam condimentum purus ac arcu aliquet, sit amet rhoncus lectus lacinia. Quisque accumsan metus et quam suscipit, quis consequat lacus luctus. Nunc id nisl id libero vulputate viverra. Nulla facilisi. Proin non mauris ut nisl posuere placerat. Integer pharetra sapien at accumsan consequat. Fusce sollicitudin, eros ac finibus pulvinar, augue dolor venenatis diam, at molestie erat tortor ut ipsum.\n\nDonec lorem risus, feugiat a semper vel, vestibulum ac purus. Vestibulum pulvinar suscipit diam, eget porttitor eros vestibulum quis. Cras eu nisi mauris. Suspendisse felis odio, tincidunt posuere placerat ac, dictum nec est. Maecenas euismod, dui sed viverra accumsan, nibh arcu rutrum velit, quis mollis nulla mauris id diam. Quisque vel quam et turpis viverra maximus at et eros. Aliquam scelerisque lorem massa, vitae bibendum nibh tincidunt at. Aenean quis gravida augue. Cras ultrices tincidunt lectus, non cursus purus interdum et.\n\nCras ac libero imperdiet, volutpat enim sed, consequat nulla. Pellentesque a egestas augue, ac ultricies nisl. Vestibulum a turpis ultrices, venenatis mi ultricies, tempus odio. Nullam eget dapibus turpis. Vestibulum faucibus ut quam non efficitur. Nam in dolor eu sem ultrices semper vitae a ligula. Curabitur sit amet nisi vitae nunc vestibulum aliquam. Aliquam posuere, purus a tincidunt congue, orci ipsum dictum nunc, eu tristique sem leo at quam. In a velit quis purus venenatis auctor. Donec faucibus odio vitae velit lacinia consequat. Aliquam felis neque, egestas vitae velit sit amet, porttitor placerat orci. In tempor dolor et odio porta, non sodales ex sodales. Phasellus ultrices augue a massa tempus commodo. Donec erat eros, tincidunt at facilisis ut, dictum a augue. Vivamus in neque nulla.\n\nCurabitur vulputate ullamcorper nisi, vitae feugiat libero tincidunt sed. Etiam erat leo, rutrum id egestas in, tempus sit amet quam. Donec ex erat, volutpat vel mollis ut, cursus commodo turpis. Nulla facilisi. Cras non pulvinar leo. Sed elementum pretium nulla, sed mattis nisl porttitor eu. Aliquam at arcu ex. Etiam volutpat velit nibh, eu suscipit augue fermentum vel. Phasellus pellentesque ipsum odio, eget suscipit mi scelerisque a. Sed bibendum tincidunt suscipit. Quisque justo ligula, sodales a justo et, rutrum tempus turpis. Mauris sit amet posuere mi. Aenean blandit, nulla id luctus pellentesque, ipsum ante ultricies tellus, non posuere ipsum arcu in nisi. Donec quis leo vel nisi tristique viverra nec sit amet ante. Donec sed dapibus velit.",
+    "f60": {
       "dimensions": {
         "concept": "vsme:MostSeniorLevelAccountableForImplementationOfPolicies",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00"
-      }
+      },
+      "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla at cursus arcu. Nam porttitor pulvinar vehicula. Aenean quis venenatis massa. Mauris sit amet ultricies tellus, et egestas lectus. Praesent vulputate tincidunt risus eget maximus. Sed vel enim ac mi maximus pellentesque porta quis metus. Cras bibendum odio eget maximus bibendum. Donec ut risus condimentum, placerat tortor nec, dictum risus. Donec sodales urna nec sem fringilla fermentum. Vivamus aliquet facilisis velit et suscipit.\n\nDonec pretium magna ut quam placerat, ultricies faucibus ipsum rhoncus. Donec venenatis, mi ac pharetra egestas, orci metus commodo tellus, eget dignissim nisi odio eget nisl. Phasellus turpis tellus, tincidunt sed quam et, dignissim iaculis neque. Cras consequat ante et mi dictum, a pharetra lacus rutrum. Interdum et malesuada fames ac ante ipsum primis in faucibus. Nullam facilisis, enim tempus viverra hendrerit, enim metus rutrum tellus, in dictum ligula lectus et ex. Nullam condimentum purus ac arcu aliquet, sit amet rhoncus lectus lacinia. Quisque accumsan metus et quam suscipit, quis consequat lacus luctus. Nunc id nisl id libero vulputate viverra. Nulla facilisi. Proin non mauris ut nisl posuere placerat. Integer pharetra sapien at accumsan consequat. Fusce sollicitudin, eros ac finibus pulvinar, augue dolor venenatis diam, at molestie erat tortor ut ipsum.\n\nDonec lorem risus, feugiat a semper vel, vestibulum ac purus. Vestibulum pulvinar suscipit diam, eget porttitor eros vestibulum quis. Cras eu nisi mauris. Suspendisse felis odio, tincidunt posuere placerat ac, dictum nec est. Maecenas euismod, dui sed viverra accumsan, nibh arcu rutrum velit, quis mollis nulla mauris id diam. Quisque vel quam et turpis viverra maximus at et eros. Aliquam scelerisque lorem massa, vitae bibendum nibh tincidunt at. Aenean quis gravida augue. Cras ultrices tincidunt lectus, non cursus purus interdum et.\n\nCras ac libero imperdiet, volutpat enim sed, consequat nulla. Pellentesque a egestas augue, ac ultricies nisl. Vestibulum a turpis ultrices, venenatis mi ultricies, tempus odio. Nullam eget dapibus turpis. Vestibulum faucibus ut quam non efficitur. Nam in dolor eu sem ultrices semper vitae a ligula. Curabitur sit amet nisi vitae nunc vestibulum aliquam. Aliquam posuere, purus a tincidunt congue, orci ipsum dictum nunc, eu tristique sem leo at quam. In a velit quis purus venenatis auctor. Donec faucibus odio vitae velit lacinia consequat. Aliquam felis neque, egestas vitae velit sit amet, porttitor placerat orci. In tempor dolor et odio porta, non sodales ex sodales. Phasellus ultrices augue a massa tempus commodo. Donec erat eros, tincidunt at facilisis ut, dictum a augue. Vivamus in neque nulla.\n\nCurabitur vulputate ullamcorper nisi, vitae feugiat libero tincidunt sed. Etiam erat leo, rutrum id egestas in, tempus sit amet quam. Donec ex erat, volutpat vel mollis ut, cursus commodo turpis. Nulla facilisi. Cras non pulvinar leo. Sed elementum pretium nulla, sed mattis nisl porttitor eu. Aliquam at arcu ex. Etiam volutpat velit nibh, eu suscipit augue fermentum vel. Phasellus pellentesque ipsum odio, eget suscipit mi scelerisque a. Sed bibendum tincidunt suscipit. Quisque justo ligula, sodales a justo et, rutrum tempus turpis. Mauris sit amet posuere mi. Aenean blandit, nulla id luctus pellentesque, ipsum ante ultricies tellus, non posuere ipsum arcu in nisi. Donec quis leo vel nisi tristique viverra nec sit amet ante. Donec sed dapibus velit."
     },
-    "f0061": {
-      "value": "nace:NACE_G4721 nace:NACE_G4722",
+    "f61": {
       "dimensions": {
         "concept": "vsme:NaceSectorClassificationCodes",
         "entity": "lei:TestCode1234",
         "period": "2026-01-01T00:00:00"
-      }
+      },
+      "value": "nace:NACE_G4721 nace:NACE_G4722"
     },
-    "f0062": {
-      "value": "Packaging",
+    "f62": {
       "dimensions": {
         "concept": "vsme:NameOfMaterialUsed",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00",
         "vsme:IdentifierOfMaterialTypedAxis": "1"
-      }
+      },
+      "value": "Packaging"
     },
-    "f0063": {
-      "value": "Wrapping, trays, containers",
+    "f63": {
       "dimensions": {
         "concept": "vsme:NameOfMaterialUsed",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00",
         "vsme:IdentifierOfMaterialTypedAxis": "2"
-      }
+      },
+      "value": "Wrapping, trays, containers"
     },
-    "f0064": {
-      "value": "Company XYZ Subsidiary 1",
+    "f64": {
       "dimensions": {
         "concept": "vsme:NameOfTheSubsidiary",
         "entity": "lei:TestCode1234",
         "period": "2026-01-01T00:00:00",
         "vsme:IdentifierOfSubsidiaryTypedAxis": "1"
-      }
+      },
+      "value": "Company XYZ Subsidiary 1"
     },
-    "f0065": {
-      "value": "151",
+    "f65": {
       "dimensions": {
         "concept": "vsme:NumberOfEmployees",
         "entity": "lei:TestCode1234",
-        "period": "2026-01-01T00:00:00",
-        "unit": "xbrli:pure"
+        "period": "2026-01-01T00:00:00"
       },
+      "value": "151.0",
       "decimals": 2
     },
-    "f0066": {
-      "value": "5",
+    "f66": {
       "dimensions": {
         "concept": "vsme:NumberOfEmployeesForCountryOfEmploymentContract",
         "entity": "lei:TestCode1234",
         "period": "2026-01-01T00:00:00",
-        "unit": "xbrli:pure",
         "vsme:CountryOfEmploymentContractAxis": "country:AL"
       },
+      "value": "5.0",
       "decimals": 2
     },
-    "f0067": {
-      "value": "6",
+    "f67": {
       "dimensions": {
         "concept": "vsme:NumberOfEmployeesForCountryOfEmploymentContract",
         "entity": "lei:TestCode1234",
         "period": "2026-01-01T00:00:00",
-        "unit": "xbrli:pure",
         "vsme:CountryOfEmploymentContractAxis": "country:BE"
       },
+      "value": "6.0",
       "decimals": 2
     },
-    "f0068": {
-      "value": "140",
+    "f68": {
       "dimensions": {
         "concept": "vsme:NumberOfEmployeesForCountryOfEmploymentContract",
         "entity": "lei:TestCode1234",
         "period": "2026-01-01T00:00:00",
-        "unit": "xbrli:pure",
         "vsme:CountryOfEmploymentContractAxis": "country:IT"
       },
+      "value": "140.0",
       "decimals": 2
     },
-    "f0069": {
-      "value": "0",
+    "f69": {
       "dimensions": {
         "concept": "vsme:NumberOfFatalitiesAsAResultOfWorkRelatedInjuriesAndWorkRelatedIllHealth",
         "entity": "lei:TestCode1234",
-        "period": "2025-01-01T00:00:00/2026-01-01T00:00:00",
-        "unit": "xbrli:pure"
+        "period": "2025-01-01T00:00:00/2026-01-01T00:00:00"
       },
+      "value": "0.0",
       "decimals": 2
     },
-    "f0070": {
-      "value": "40",
+    "f70": {
       "dimensions": {
         "concept": "vsme:NumberOfFemaleEmployees",
         "entity": "lei:TestCode1234",
-        "period": "2026-01-01T00:00:00",
-        "unit": "xbrli:pure"
+        "period": "2026-01-01T00:00:00"
       },
+      "value": "40.0",
       "decimals": 2
     },
-    "f0071": {
-      "value": "55",
+    "f71": {
       "dimensions": {
         "concept": "vsme:NumberOfMaleEmployees",
         "entity": "lei:TestCode1234",
-        "period": "2026-01-01T00:00:00",
-        "unit": "xbrli:pure"
+        "period": "2026-01-01T00:00:00"
       },
+      "value": "55.0",
       "decimals": 2
     },
-    "f0072": {
-      "value": "51",
+    "f72": {
       "dimensions": {
         "concept": "vsme:NumberOfNonReportedGenderEmployees",
         "entity": "lei:TestCode1234",
-        "period": "2026-01-01T00:00:00",
-        "unit": "xbrli:pure"
+        "period": "2026-01-01T00:00:00"
       },
+      "value": "51.0",
       "decimals": 2
     },
-    "f0073": {
-      "value": "5",
+    "f73": {
       "dimensions": {
         "concept": "vsme:NumberOfOtherGenderEmployees",
         "entity": "lei:TestCode1234",
-        "period": "2026-01-01T00:00:00",
-        "unit": "xbrli:pure"
+        "period": "2026-01-01T00:00:00"
       },
+      "value": "5.0",
       "decimals": 2
     },
-    "f0074": {
-      "value": "110",
+    "f74": {
       "dimensions": {
         "concept": "vsme:NumberOfPermanentContractEmployees",
         "entity": "lei:TestCode1234",
-        "period": "2026-01-01T00:00:00",
-        "unit": "xbrli:pure"
+        "period": "2026-01-01T00:00:00"
       },
+      "value": "110.0",
       "decimals": 2
     },
-    "f0075": {
-      "value": "0",
+    "f75": {
       "dimensions": {
         "concept": "vsme:NumberOfRecordableWorkRelatedAccidentsInTheReportingPeriod",
         "entity": "lei:TestCode1234",
-        "period": "2025-01-01T00:00:00/2026-01-01T00:00:00",
-        "unit": "xbrli:pure"
+        "period": "2025-01-01T00:00:00/2026-01-01T00:00:00"
       },
+      "value": "0.0",
       "decimals": 2
     },
-    "f0076": {
-      "value": "41",
+    "f76": {
       "dimensions": {
         "concept": "vsme:NumberOfTemporaryContractEmployees",
         "entity": "lei:TestCode1234",
-        "period": "2026-01-01T00:00:00",
-        "unit": "xbrli:pure"
+        "period": "2026-01-01T00:00:00"
       },
+      "value": "41.0",
       "decimals": 2
     },
-    "f0077": {
-      "value": "0.100",
+    "f77": {
       "dimensions": {
         "concept": "vsme:PercentageGapInPayBetweenFemaleAndMaleEmployees",
         "entity": "lei:TestCode1234",
-        "period": "2025-01-01T00:00:00/2026-01-01T00:00:00",
-        "unit": "xbrli:pure"
+        "period": "2025-01-01T00:00:00/2026-01-01T00:00:00"
       },
+      "value": "0.1",
       "decimals": 4,
       "mireport:scale": -2
     },
-    "f0078": {
-      "value": "0.9271523178807946",
+    "f78": {
       "dimensions": {
         "concept": "vsme:PercentageOfEmployeesCoveredByCollectiveBargainingAgreements",
         "entity": "lei:TestCode1234",
-        "period": "2026-01-01T00:00:00",
-        "unit": "xbrli:pure"
+        "period": "2026-01-01T00:00:00"
       },
+      "value": "0.9271523178807946",
       "decimals": 4,
       "mireport:scale": -2
     },
-    "f0079": {
-      "value": "20122",
+    "f79": {
       "dimensions": {
         "concept": "vsme:PostalCodeOfSite",
         "entity": "lei:TestCode1234",
         "period": "2026-01-01T00:00:00",
         "vsme:IdentifierOfSiteTypedAxis": "1"
-      }
+      },
+      "value": "20122"
     },
-    "f0080": {
-      "value": false,
+    "f80": {
       "dimensions": {
         "concept": "vsme:PubliclyAvailableDisclosure",
         "entity": "lei:TestCode1234",
         "period": "2026-01-01T00:00:00"
-      }
+      },
+      "value": "false"
     },
-    "f0081": {
-      "value": "0",
+    "f81": {
       "dimensions": {
         "concept": "vsme:RateOfRecordableWorkRelatedAccidentsInTheReportingPeriod",
         "entity": "lei:TestCode1234",
-        "period": "2025-01-01T00:00:00/2026-01-01T00:00:00",
-        "unit": "xbrli:pure"
+        "period": "2025-01-01T00:00:00/2026-01-01T00:00:00"
       },
+      "value": "0.0",
       "decimals": 2
     },
-    "f0082": {
-      "value": "Street XYZ, Country",
+    "f82": {
       "dimensions": {
         "concept": "vsme:RegisteredAddressOfTheSubsidiary",
         "entity": "lei:TestCode1234",
         "period": "2026-01-01T00:00:00",
         "vsme:IdentifierOfSubsidiaryTypedAxis": "1"
-      }
+      },
+      "value": "Street XYZ, Country"
     },
-    "f0083": {
-      "value": false,
+    "f83": {
       "dimensions": {
         "concept": "vsme:ReportContainsDisclosuresFromThePreviousReportingPeriodThatRemainUnchanged",
         "entity": "lei:TestCode1234",
         "period": "2026-01-01T00:00:00"
-      }
+      },
+      "value": "false"
     },
-    "f0084": {
-      "value": true,
+    "f84": {
       "dimensions": {
         "concept": "vsme:SiteLocatedInABiodiversitySensitiveArea",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00",
         "vsme:IdentifierOfSiteTypedAxis": "1"
-      }
+      },
+      "value": "true"
     },
-    "f0085": {
-      "value": false,
+    "f85": {
       "dimensions": {
         "concept": "vsme:SiteLocatedNearABiodiversitySensitiveArea",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00",
         "vsme:IdentifierOfSiteTypedAxis": "1"
-      }
+      },
+      "value": "false"
     },
-    "f0086": {
-      "value": "vsme:CircularEconomyMember vsme:ClimateChangeMember vsme:ConsumersAndEndUsersMember",
+    "f86": {
       "dimensions": {
         "concept": "vsme:SustainabilityIssueAddressedByPracticePolicyAndOrFutureInitiative",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00"
-      }
+      },
+      "value": "vsme:CircularEconomyMember vsme:ClimateChangeMember vsme:ConsumersAndEndUsersMember"
     },
-    "f0087": {
-      "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla at cursus arcu. Nam porttitor pulvinar vehicula. Aenean quis venenatis massa. Mauris sit amet ultricies tellus, et egestas lectus. Praesent vulputate tincidunt risus eget maximus. Sed vel enim ac mi maximus pellentesque porta quis metus. Cras bibendum odio eget maximus bibendum. Donec ut risus condimentum, placerat tortor nec, dictum risus. Donec sodales urna nec sem fringilla fermentum. Vivamus aliquet facilisis velit et suscipit.\n\nDonec pretium magna ut quam placerat, ultricies faucibus ipsum rhoncus. Donec venenatis, mi ac pharetra egestas, orci metus commodo tellus, eget dignissim nisi odio eget nisl. Phasellus turpis tellus, tincidunt sed quam et, dignissim iaculis neque. Cras consequat ante et mi dictum, a pharetra lacus rutrum. Interdum et malesuada fames ac ante ipsum primis in faucibus. Nullam facilisis, enim tempus viverra hendrerit, enim metus rutrum tellus, in dictum ligula lectus et ex. Nullam condimentum purus ac arcu aliquet, sit amet rhoncus lectus lacinia. Quisque accumsan metus et quam suscipit, quis consequat lacus luctus. Nunc id nisl id libero vulputate viverra. Nulla facilisi. Proin non mauris ut nisl posuere placerat. Integer pharetra sapien at accumsan consequat. Fusce sollicitudin, eros ac finibus pulvinar, augue dolor venenatis diam, at molestie erat tortor ut ipsum.\n\nDonec lorem risus, feugiat a semper vel, vestibulum ac purus. Vestibulum pulvinar suscipit diam, eget porttitor eros vestibulum quis. Cras eu nisi mauris. Suspendisse felis odio, tincidunt posuere placerat ac, dictum nec est. Maecenas euismod, dui sed viverra accumsan, nibh arcu rutrum velit, quis mollis nulla mauris id diam. Quisque vel quam et turpis viverra maximus at et eros. Aliquam scelerisque lorem massa, vitae bibendum nibh tincidunt at. Aenean quis gravida augue. Cras ultrices tincidunt lectus, non cursus purus interdum et.\n\nCras ac libero imperdiet, volutpat enim sed, consequat nulla. Pellentesque a egestas augue, ac ultricies nisl. Vestibulum a turpis ultrices, venenatis mi ultricies, tempus odio. Nullam eget dapibus turpis. Vestibulum faucibus ut quam non efficitur. Nam in dolor eu sem ultrices semper vitae a ligula. Curabitur sit amet nisi vitae nunc vestibulum aliquam. Aliquam posuere, purus a tincidunt congue, orci ipsum dictum nunc, eu tristique sem leo at quam. In a velit quis purus venenatis auctor. Donec faucibus odio vitae velit lacinia consequat. Aliquam felis neque, egestas vitae velit sit amet, porttitor placerat orci. In tempor dolor et odio porta, non sodales ex sodales. Phasellus ultrices augue a massa tempus commodo. Donec erat eros, tincidunt at facilisis ut, dictum a augue. Vivamus in neque nulla.\n\nCurabitur vulputate ullamcorper nisi, vitae feugiat libero tincidunt sed. Etiam erat leo, rutrum id egestas in, tempus sit amet quam. Donec ex erat, volutpat vel mollis ut, cursus commodo turpis. Nulla facilisi. Cras non pulvinar leo. Sed elementum pretium nulla, sed mattis nisl porttitor eu. Aliquam at arcu ex. Etiam volutpat velit nibh, eu suscipit augue fermentum vel. Phasellus pellentesque ipsum odio, eget suscipit mi scelerisque a. Sed bibendum tincidunt suscipit. Quisque justo ligula, sodales a justo et, rutrum tempus turpis. Mauris sit amet posuere mi. Aenean blandit, nulla id luctus pellentesque, ipsum ante ultricies tellus, non posuere ipsum arcu in nisi. Donec quis leo vel nisi tristique viverra nec sit amet ante. Donec sed dapibus velit.",
+    "f87": {
       "dimensions": {
         "concept": "vsme:TimeHorizonsOfAnyClimateRelatedHazardsAndTransitionEventsIdentified",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00"
-      }
+      },
+      "value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla at cursus arcu. Nam porttitor pulvinar vehicula. Aenean quis venenatis massa. Mauris sit amet ultricies tellus, et egestas lectus. Praesent vulputate tincidunt risus eget maximus. Sed vel enim ac mi maximus pellentesque porta quis metus. Cras bibendum odio eget maximus bibendum. Donec ut risus condimentum, placerat tortor nec, dictum risus. Donec sodales urna nec sem fringilla fermentum. Vivamus aliquet facilisis velit et suscipit.\n\nDonec pretium magna ut quam placerat, ultricies faucibus ipsum rhoncus. Donec venenatis, mi ac pharetra egestas, orci metus commodo tellus, eget dignissim nisi odio eget nisl. Phasellus turpis tellus, tincidunt sed quam et, dignissim iaculis neque. Cras consequat ante et mi dictum, a pharetra lacus rutrum. Interdum et malesuada fames ac ante ipsum primis in faucibus. Nullam facilisis, enim tempus viverra hendrerit, enim metus rutrum tellus, in dictum ligula lectus et ex. Nullam condimentum purus ac arcu aliquet, sit amet rhoncus lectus lacinia. Quisque accumsan metus et quam suscipit, quis consequat lacus luctus. Nunc id nisl id libero vulputate viverra. Nulla facilisi. Proin non mauris ut nisl posuere placerat. Integer pharetra sapien at accumsan consequat. Fusce sollicitudin, eros ac finibus pulvinar, augue dolor venenatis diam, at molestie erat tortor ut ipsum.\n\nDonec lorem risus, feugiat a semper vel, vestibulum ac purus. Vestibulum pulvinar suscipit diam, eget porttitor eros vestibulum quis. Cras eu nisi mauris. Suspendisse felis odio, tincidunt posuere placerat ac, dictum nec est. Maecenas euismod, dui sed viverra accumsan, nibh arcu rutrum velit, quis mollis nulla mauris id diam. Quisque vel quam et turpis viverra maximus at et eros. Aliquam scelerisque lorem massa, vitae bibendum nibh tincidunt at. Aenean quis gravida augue. Cras ultrices tincidunt lectus, non cursus purus interdum et.\n\nCras ac libero imperdiet, volutpat enim sed, consequat nulla. Pellentesque a egestas augue, ac ultricies nisl. Vestibulum a turpis ultrices, venenatis mi ultricies, tempus odio. Nullam eget dapibus turpis. Vestibulum faucibus ut quam non efficitur. Nam in dolor eu sem ultrices semper vitae a ligula. Curabitur sit amet nisi vitae nunc vestibulum aliquam. Aliquam posuere, purus a tincidunt congue, orci ipsum dictum nunc, eu tristique sem leo at quam. In a velit quis purus venenatis auctor. Donec faucibus odio vitae velit lacinia consequat. Aliquam felis neque, egestas vitae velit sit amet, porttitor placerat orci. In tempor dolor et odio porta, non sodales ex sodales. Phasellus ultrices augue a massa tempus commodo. Donec erat eros, tincidunt at facilisis ut, dictum a augue. Vivamus in neque nulla.\n\nCurabitur vulputate ullamcorper nisi, vitae feugiat libero tincidunt sed. Etiam erat leo, rutrum id egestas in, tempus sit amet quam. Donec ex erat, volutpat vel mollis ut, cursus commodo turpis. Nulla facilisi. Cras non pulvinar leo. Sed elementum pretium nulla, sed mattis nisl porttitor eu. Aliquam at arcu ex. Etiam volutpat velit nibh, eu suscipit augue fermentum vel. Phasellus pellentesque ipsum odio, eget suscipit mi scelerisque a. Sed bibendum tincidunt suscipit. Quisque justo ligula, sodales a justo et, rutrum tempus turpis. Mauris sit amet posuere mi. Aenean blandit, nulla id luctus pellentesque, ipsum ante ultricies tellus, non posuere ipsum arcu in nisi. Donec quis leo vel nisi tristique viverra nec sit amet ante. Donec sed dapibus velit."
     },
-    "f0088": {
-      "value": "5000",
+    "f88": {
       "dimensions": {
         "concept": "vsme:TotalAmountOfFinesForTheViolationOfAnticorruptionAndAntibriberyLaws",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00",
         "unit": "iso4217:EUR"
       },
+      "value": "5000.0",
       "decimals": 2
     },
-    "f0089": {
-      "value": "250",
+    "f89": {
       "dimensions": {
         "concept": "vsme:TotalEnergyConsumption",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00",
         "unit": "utr:MWh"
       },
+      "value": "250.0",
       "decimals": 2
     },
-    "f0090": {
-      "value": "525",
+    "f90": {
       "dimensions": {
         "concept": "vsme:TotalGrossLocationBasedGHGEmissions",
         "entity": "lei:TestCode1234",
@@ -875,20 +858,20 @@
         "unit": "utr:tCO2e",
         "vsme:ReportingScopesAxis": "vsme:BaselineYearMember"
       },
+      "value": "525.0",
       "decimals": 2
     },
-    "f0091": {
-      "value": "350",
+    "f91": {
       "dimensions": {
         "concept": "vsme:TotalGrossLocationBasedGHGEmissions",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00",
         "unit": "utr:tCO2e"
       },
+      "value": "350.0",
       "decimals": 2
     },
-    "f0092": {
-      "value": "190",
+    "f92": {
       "dimensions": {
         "concept": "vsme:TotalGrossLocationBasedGHGEmissions",
         "entity": "lei:TestCode1234",
@@ -896,10 +879,10 @@
         "unit": "utr:tCO2e",
         "vsme:ReportingScopesAxis": "vsme:TargetYearMember"
       },
+      "value": "190.0",
       "decimals": 2
     },
-    "f0093": {
-      "value": "225",
+    "f93": {
       "dimensions": {
         "concept": "vsme:TotalGrossLocationBasedScope1AndScope2GHGEmissions",
         "entity": "lei:TestCode1234",
@@ -907,20 +890,20 @@
         "unit": "utr:tCO2e",
         "vsme:ReportingScopesAxis": "vsme:BaselineYearMember"
       },
+      "value": "225.0",
       "decimals": 2
     },
-    "f0094": {
-      "value": "150",
+    "f94": {
       "dimensions": {
         "concept": "vsme:TotalGrossLocationBasedScope1AndScope2GHGEmissions",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00",
         "unit": "utr:tCO2e"
       },
+      "value": "150.0",
       "decimals": 2
     },
-    "f0095": {
-      "value": "90",
+    "f95": {
       "dimensions": {
         "concept": "vsme:TotalGrossLocationBasedScope1AndScope2GHGEmissions",
         "entity": "lei:TestCode1234",
@@ -928,170 +911,167 @@
         "unit": "utr:tCO2e",
         "vsme:ReportingScopesAxis": "vsme:TargetYearMember"
       },
+      "value": "90.0",
       "decimals": 2
     },
-    "f0096": {
-      "value": "1.2",
+    "f96": {
       "dimensions": {
         "concept": "vsme:TotalHazardousWasteGeneratedMass",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00",
         "unit": "utr:t"
       },
+      "value": "1.2",
       "decimals": 2
     },
-    "f0097": {
-      "value": "100",
+    "f97": {
       "dimensions": {
         "concept": "vsme:TotalHazardousWasteGeneratedVolume",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00",
         "unit": "utr:m3"
       },
+      "value": "100.0",
       "decimals": 2
     },
-    "f0098": {
-      "value": "0.0014893617021276596",
+    "f98": {
       "dimensions": {
         "concept": "vsme:TotalLocationBasedGreenhouseGasEmissionsIntensityValue",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00",
         "unit": "utr:tCO2e/iso4217:EUR"
       },
+      "value": "0.0014893617021276596",
       "decimals": 7
     },
-    "f0099": {
-      "value": "1500",
+    "f99": {
       "dimensions": {
         "concept": "vsme:TotalMassOfMaterialUsed",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00",
         "unit": "utr:kg"
       },
+      "value": "1500.0",
       "decimals": 2
     },
-    "f0100": {
-      "value": "35",
+    "f100": {
       "dimensions": {
         "concept": "vsme:TotalNatureOrientedAreaOffSite",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00",
         "unit": "utr:sqm"
       },
+      "value": "35.0",
       "decimals": 2
     },
-    "f0101": {
-      "value": "100",
+    "f101": {
       "dimensions": {
         "concept": "vsme:TotalNatureOrientedAreaOnSite",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00",
         "unit": "utr:sqm"
       },
+      "value": "100.0",
       "decimals": 2
     },
-    "f0102": {
-      "value": "2850",
+    "f102": {
       "dimensions": {
         "concept": "vsme:TotalNonHazardousWasteGeneratedMass",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00",
         "unit": "utr:t"
       },
+      "value": "2850.0",
       "decimals": 2
     },
-    "f0103": {
-      "value": "5000",
+    "f103": {
       "dimensions": {
         "concept": "vsme:TotalNonHazardousWasteGeneratedVolume",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00",
         "unit": "utr:m3"
       },
+      "value": "5000.0",
       "decimals": 2
     },
-    "f0104": {
-      "value": "1",
+    "f104": {
       "dimensions": {
         "concept": "vsme:TotalNumberOfConvictionsForTheViolationOfAntiCorruptionAndAntiBriberyLaws",
         "entity": "lei:TestCode1234",
-        "period": "2025-01-01T00:00:00/2026-01-01T00:00:00",
-        "unit": "xbrli:pure"
+        "period": "2025-01-01T00:00:00/2026-01-01T00:00:00"
       },
+      "value": "1.0",
       "decimals": 2
     },
-    "f0105": {
-      "value": "4",
+    "f105": {
       "dimensions": {
         "concept": "vsme:TotalNumberOfSelfEmployedWorkersWithoutPersonnelThatAreWorkingExclusivelyForTheUndertaking",
         "entity": "lei:TestCode1234",
-        "period": "2026-01-01T00:00:00",
-        "unit": "xbrli:pure"
+        "period": "2026-01-01T00:00:00"
       },
+      "value": "4.0",
       "decimals": 2
     },
-    "f0106": {
-      "value": "50",
+    "f106": {
       "dimensions": {
         "concept": "vsme:TotalNumberOfTemporaryWorkersProvidedByUndertakingsPrimarilyEngagedInEmploymentActivities",
         "entity": "lei:TestCode1234",
-        "period": "2026-01-01T00:00:00",
-        "unit": "xbrli:pure"
+        "period": "2026-01-01T00:00:00"
       },
+      "value": "50.0",
       "decimals": 2
     },
-    "f0107": {
-      "value": "25",
+    "f107": {
       "dimensions": {
         "concept": "vsme:TotalSealedArea",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00",
         "unit": "utr:sqm"
       },
+      "value": "25.0",
       "decimals": 2
     },
-    "f0108": {
-      "value": "200",
+    "f108": {
       "dimensions": {
         "concept": "vsme:TotalUseOfLand",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00",
         "unit": "utr:sqm"
       },
+      "value": "200.0",
       "decimals": 2
     },
-    "f0109": {
-      "value": "800",
+    "f109": {
       "dimensions": {
         "concept": "vsme:TotalVolumeOfMaterialUsed",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00",
         "unit": "utr:m3"
       },
+      "value": "800.0",
       "decimals": 2
     },
-    "f0110": {
-      "value": "2851.2",
+    "f110": {
       "dimensions": {
         "concept": "vsme:TotalWasteGeneratedMass",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00",
         "unit": "utr:t"
       },
+      "value": "2851.2",
       "decimals": 2
     },
-    "f0111": {
-      "value": "5100",
+    "f111": {
       "dimensions": {
         "concept": "vsme:TotalWasteGeneratedVolume",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00",
         "unit": "utr:m3"
       },
+      "value": "5100.0",
       "decimals": 2
     },
-    "f0112": {
-      "value": "1200",
+    "f112": {
       "dimensions": {
         "concept": "vsme:TotalWasteRecycledReusedAndDirectedToDisposalMass",
         "entity": "lei:TestCode1234",
@@ -1099,10 +1079,10 @@
         "unit": "utr:kg",
         "vsme:TypeOfWasteAxis": "waste:W-160806-Hazardous-SpentLiquidsUsedAsCatalystsMember"
       },
+      "value": "1200.0",
       "decimals": 2
     },
-    "f0113": {
-      "value": "250",
+    "f113": {
       "dimensions": {
         "concept": "vsme:TotalWasteRecycledReusedAndDirectedToDisposalMass",
         "entity": "lei:TestCode1234",
@@ -1110,10 +1090,10 @@
         "unit": "utr:t",
         "vsme:TypeOfWasteAxis": "waste:W-040221-Non-Hazardous-WastesFromUnprocessedTextileFibresMember"
       },
+      "value": "250.0",
       "decimals": 2
     },
-    "f0114": {
-      "value": "700",
+    "f114": {
       "dimensions": {
         "concept": "vsme:TotalWasteRecycledReusedAndDirectedToDisposalMass",
         "entity": "lei:TestCode1234",
@@ -1121,10 +1101,10 @@
         "unit": "utr:t",
         "vsme:TypeOfWasteAxis": "waste:W-101103-Non-Hazardous-WasteGlass-BasedFibrousMaterialsMember"
       },
+      "value": "700.0",
       "decimals": 2
     },
-    "f0115": {
-      "value": "400",
+    "f115": {
       "dimensions": {
         "concept": "vsme:TotalWasteRecycledReusedAndDirectedToDisposalMass",
         "entity": "lei:TestCode1234",
@@ -1132,10 +1112,10 @@
         "unit": "utr:t",
         "vsme:TypeOfWasteAxis": "waste:W-150104-Non-Hazardous-MetallicPackagingMember"
       },
+      "value": "400.0",
       "decimals": 2
     },
-    "f0116": {
-      "value": "1500",
+    "f116": {
       "dimensions": {
         "concept": "vsme:TotalWasteRecycledReusedAndDirectedToDisposalMass",
         "entity": "lei:TestCode1234",
@@ -1143,10 +1123,10 @@
         "unit": "utr:t",
         "vsme:TypeOfWasteAxis": "waste:W-200101-Non-Hazardous-PaperAndCardboardMember"
       },
+      "value": "1500.0",
       "decimals": 2
     },
-    "f0117": {
-      "value": "5000",
+    "f117": {
       "dimensions": {
         "concept": "vsme:TotalWasteRecycledReusedAndDirectedToDisposalVolume",
         "entity": "lei:TestCode1234",
@@ -1154,10 +1134,10 @@
         "unit": "utr:m3",
         "vsme:TypeOfWasteAxis": "waste:W-040210-Non-Hazardous-OrganicMatterFromNaturalProductsForExampleGreaseWaxMember"
       },
+      "value": "5000.0",
       "decimals": 2
     },
-    "f0118": {
-      "value": "100",
+    "f118": {
       "dimensions": {
         "concept": "vsme:TotalWasteRecycledReusedAndDirectedToDisposalVolume",
         "entity": "lei:TestCode1234",
@@ -1165,100 +1145,100 @@
         "unit": "utr:m3",
         "vsme:TypeOfWasteAxis": "waste:W-130101-Hazardous-HydraulicOilsContainingPcbsMember"
       },
+      "value": "100.0",
       "decimals": 2
     },
-    "f0119": {
-      "value": "235000",
+    "f119": {
       "dimensions": {
         "concept": "vsme:Turnover",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00",
         "unit": "iso4217:EUR"
       },
+      "value": "235000.0",
       "decimals": 2
     },
-    "f0120": {
-      "value": "vsme:AccidentPreventionMember vsme:ChildLabourMember vsme:DiscriminationMember vsme:ForcedLabourMember vsme:HumanTraffickingMember",
+    "f120": {
       "dimensions": {
         "concept": "vsme:TypeOfContentCoveredByTheCodeOfConductOrHumanRightsPolicyForItsOwnWorkforce",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00"
-      }
+      },
+      "value": "vsme:AccidentPreventionMember vsme:ChildLabourMember vsme:DiscriminationMember vsme:ForcedLabourMember vsme:HumanTraffickingMember"
     },
-    "f0121": {
-      "value": "vsme:Full-TimeEquivalentFTEMember",
+    "f121": {
       "dimensions": {
         "concept": "vsme:TypeOfNumberOfEmployees",
         "entity": "lei:TestCode1234",
         "period": "2026-01-01T00:00:00"
-      }
+      },
+      "value": "vsme:Full-TimeEquivalentFTEMember"
     },
-    "f0122": {
-      "value": false,
+    "f122": {
       "dimensions": {
         "concept": "vsme:UndertakingAppliesCircularEconomyPrinciples",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00"
-      }
+      },
+      "value": "true"
     },
-    "f0123": {
-      "value": false,
+    "f123": {
       "dimensions": {
         "concept": "vsme:UndertakingHasACodeOfConductOrHumanRightsPolicyForItsOwnWorkforce",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00"
-      }
+      },
+      "value": "true"
     },
-    "f0124": {
-      "value": false,
+    "f124": {
       "dimensions": {
         "concept": "vsme:UndertakingHasAComplaintHandlingMechanismForItsOwnWorkforce",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00"
-      }
+      },
+      "value": "true"
     },
-    "f0125": {
-      "value": false,
+    "f125": {
       "dimensions": {
         "concept": "vsme:UndertakingHasConfirmedHumanRightsIncidentsInItsOwnWorkforce",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00"
-      }
+      },
+      "value": "false"
     },
-    "f0126": {
-      "value": true,
+    "f126": {
       "dimensions": {
         "concept": "vsme:UndertakingHasSetATargetWhichIsRelatedToAPolicy",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00"
-      }
+      },
+      "value": "true"
     },
-    "f0127": {
-      "value": false,
+    "f127": {
       "dimensions": {
         "concept": "vsme:UndertakingIsAwareOfAnyConfirmedIncidentsInvolvingWorkersInTheValueChainAffectedCommunitiesConsumersAndEndUsers",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00"
-      }
+      },
+      "value": "false"
     },
-    "f0128": {
-      "value": false,
+    "f128": {
       "dimensions": {
         "concept": "vsme:UndertakingsAreExcludedFromAnyEuReferenceBenchmarksThatAreAlignedWithTheParisAgreement",
         "entity": "lei:TestCode1234",
         "period": "2025-01-01T00:00:00/2026-01-01T00:00:00"
-      }
+      },
+      "value": "false"
     },
-    "f0129": {
-      "value": "vsme:PrivateLimitedLiabilityUndertakingMember",
+    "f129": {
       "dimensions": {
         "concept": "vsme:UndertakingsLegalForm",
         "entity": "lei:TestCode1234",
         "period": "2026-01-01T00:00:00"
-      }
+      },
+      "value": "vsme:PrivateLimitedLiabilityUndertakingMember"
     },
-    "f0130": {
-      "value": "800",
+    "f130": {
       "dimensions": {
         "concept": "vsme:VolumeOfMaterialUsed",
         "entity": "lei:TestCode1234",
@@ -1266,10 +1246,10 @@
         "unit": "utr:m3",
         "vsme:IdentifierOfMaterialTypedAxis": "2"
       },
+      "value": "800.0",
       "decimals": 2
     },
-    "f0131": {
-      "value": "400",
+    "f131": {
       "dimensions": {
         "concept": "vsme:WasteDirectedToDisposalMass",
         "entity": "lei:TestCode1234",
@@ -1277,10 +1257,10 @@
         "unit": "utr:kg",
         "vsme:TypeOfWasteAxis": "waste:W-160806-Hazardous-SpentLiquidsUsedAsCatalystsMember"
       },
+      "value": "400.0",
       "decimals": 2
     },
-    "f0132": {
-      "value": "150",
+    "f132": {
       "dimensions": {
         "concept": "vsme:WasteDirectedToDisposalMass",
         "entity": "lei:TestCode1234",
@@ -1288,10 +1268,10 @@
         "unit": "utr:t",
         "vsme:TypeOfWasteAxis": "waste:W-040221-Non-Hazardous-WastesFromUnprocessedTextileFibresMember"
       },
+      "value": "150.0",
       "decimals": 2
     },
-    "f0133": {
-      "value": "200",
+    "f133": {
       "dimensions": {
         "concept": "vsme:WasteDirectedToDisposalMass",
         "entity": "lei:TestCode1234",
@@ -1299,10 +1279,10 @@
         "unit": "utr:t",
         "vsme:TypeOfWasteAxis": "waste:W-101103-Non-Hazardous-WasteGlass-BasedFibrousMaterialsMember"
       },
+      "value": "200.0",
       "decimals": 2
     },
-    "f0134": {
-      "value": "100",
+    "f134": {
       "dimensions": {
         "concept": "vsme:WasteDirectedToDisposalMass",
         "entity": "lei:TestCode1234",
@@ -1310,10 +1290,10 @@
         "unit": "utr:t",
         "vsme:TypeOfWasteAxis": "waste:W-150104-Non-Hazardous-MetallicPackagingMember"
       },
+      "value": "100.0",
       "decimals": 2
     },
-    "f0135": {
-      "value": "300",
+    "f135": {
       "dimensions": {
         "concept": "vsme:WasteDirectedToDisposalMass",
         "entity": "lei:TestCode1234",
@@ -1321,10 +1301,10 @@
         "unit": "utr:t",
         "vsme:TypeOfWasteAxis": "waste:W-200101-Non-Hazardous-PaperAndCardboardMember"
       },
+      "value": "300.0",
       "decimals": 2
     },
-    "f0136": {
-      "value": "1000",
+    "f136": {
       "dimensions": {
         "concept": "vsme:WasteDirectedToDisposalVolume",
         "entity": "lei:TestCode1234",
@@ -1332,10 +1312,10 @@
         "unit": "utr:m3",
         "vsme:TypeOfWasteAxis": "waste:W-040210-Non-Hazardous-OrganicMatterFromNaturalProductsForExampleGreaseWaxMember"
       },
+      "value": "1000.0",
       "decimals": 2
     },
-    "f0137": {
-      "value": "70",
+    "f137": {
       "dimensions": {
         "concept": "vsme:WasteDirectedToDisposalVolume",
         "entity": "lei:TestCode1234",
@@ -1343,10 +1323,10 @@
         "unit": "utr:m3",
         "vsme:TypeOfWasteAxis": "waste:W-130101-Hazardous-HydraulicOilsContainingPcbsMember"
       },
+      "value": "70.0",
       "decimals": 2
     },
-    "f0138": {
-      "value": "800",
+    "f138": {
       "dimensions": {
         "concept": "vsme:WasteDivertedToRecycleOrReuseMass",
         "entity": "lei:TestCode1234",
@@ -1354,10 +1334,10 @@
         "unit": "utr:kg",
         "vsme:TypeOfWasteAxis": "waste:W-160806-Hazardous-SpentLiquidsUsedAsCatalystsMember"
       },
+      "value": "800.0",
       "decimals": 2
     },
-    "f0139": {
-      "value": "100",
+    "f139": {
       "dimensions": {
         "concept": "vsme:WasteDivertedToRecycleOrReuseMass",
         "entity": "lei:TestCode1234",
@@ -1365,10 +1345,10 @@
         "unit": "utr:t",
         "vsme:TypeOfWasteAxis": "waste:W-040221-Non-Hazardous-WastesFromUnprocessedTextileFibresMember"
       },
+      "value": "100.0",
       "decimals": 2
     },
-    "f0140": {
-      "value": "500",
+    "f140": {
       "dimensions": {
         "concept": "vsme:WasteDivertedToRecycleOrReuseMass",
         "entity": "lei:TestCode1234",
@@ -1376,10 +1356,10 @@
         "unit": "utr:t",
         "vsme:TypeOfWasteAxis": "waste:W-101103-Non-Hazardous-WasteGlass-BasedFibrousMaterialsMember"
       },
+      "value": "500.0",
       "decimals": 2
     },
-    "f0141": {
-      "value": "300",
+    "f141": {
       "dimensions": {
         "concept": "vsme:WasteDivertedToRecycleOrReuseMass",
         "entity": "lei:TestCode1234",
@@ -1387,10 +1367,10 @@
         "unit": "utr:t",
         "vsme:TypeOfWasteAxis": "waste:W-150104-Non-Hazardous-MetallicPackagingMember"
       },
+      "value": "300.0",
       "decimals": 2
     },
-    "f0142": {
-      "value": "1200",
+    "f142": {
       "dimensions": {
         "concept": "vsme:WasteDivertedToRecycleOrReuseMass",
         "entity": "lei:TestCode1234",
@@ -1398,10 +1378,10 @@
         "unit": "utr:t",
         "vsme:TypeOfWasteAxis": "waste:W-200101-Non-Hazardous-PaperAndCardboardMember"
       },
+      "value": "1200.0",
       "decimals": 2
     },
-    "f0143": {
-      "value": "4000",
+    "f143": {
       "dimensions": {
         "concept": "vsme:WasteDivertedToRecycleOrReuseVolume",
         "entity": "lei:TestCode1234",
@@ -1409,10 +1389,10 @@
         "unit": "utr:m3",
         "vsme:TypeOfWasteAxis": "waste:W-040210-Non-Hazardous-OrganicMatterFromNaturalProductsForExampleGreaseWaxMember"
       },
+      "value": "4000.0",
       "decimals": 2
     },
-    "f0144": {
-      "value": "30",
+    "f144": {
       "dimensions": {
         "concept": "vsme:WasteDivertedToRecycleOrReuseVolume",
         "entity": "lei:TestCode1234",
@@ -1420,10 +1400,10 @@
         "unit": "utr:m3",
         "vsme:TypeOfWasteAxis": "waste:W-130101-Hazardous-HydraulicOilsContainingPcbsMember"
       },
+      "value": "30.0",
       "decimals": 2
     },
-    "f0145": {
-      "value": "1500",
+    "f145": {
       "dimensions": {
         "concept": "vsme:WeightOfMaterialUsed",
         "entity": "lei:TestCode1234",
@@ -1431,11 +1411,8 @@
         "unit": "utr:kg",
         "vsme:IdentifierOfMaterialTypedAxis": "1"
       },
+      "value": "1500.0",
       "decimals": 2
     }
-  },
-  "mireport:messageSeverities": {
-    "INFO": 4,
-    "WARNING": 14
   }
 }
