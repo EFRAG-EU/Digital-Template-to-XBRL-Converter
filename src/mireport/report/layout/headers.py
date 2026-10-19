@@ -28,13 +28,13 @@ Data = list[list[Fact | None]]
 
 
 def table_unit(data: Data) -> str | None:
-    """The unit symbol every numeric fact shares, if there is exactly one."""
-    units = {
-        fact.unitSymbol
-        for row in data
-        for fact in row
-        if fact and fact.concept.isNumeric
-    }
+    """The unit symbol every fact shares, if there is exactly one. A table with a fact that has no
+    unit (a text or yes/no column) has none for the whole table: the unit belongs to the columns
+    that have it, not over the ones that do not."""
+    facts = [fact for row in data for fact in row if fact]
+    if not all(fact.concept.isNumeric for fact in facts):
+        return None
+    units = {fact.unitSymbol for fact in facts}
     if len(units) == 1 and (unit := next(iter(units))):
         return unit
     return None

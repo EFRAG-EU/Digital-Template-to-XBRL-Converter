@@ -170,10 +170,11 @@ class TestGetTableUnit:
         f = _fact(numeric=False, unit=None)
         assert table_unit([[f]]) is None
 
-    def test_mix_numeric_and_non_numeric(self):
+    def test_mix_numeric_and_non_numeric_has_no_table_unit(self):
         f_num = _fact(numeric=True, unit="EUR")
         f_text = _fact(numeric=False, unit=None)
-        assert table_unit([[f_num, f_text]]) == "EUR"
+        assert table_unit([[f_num, f_text]]) is None
+        assert column_units([[f_num, f_text]]) == ["EUR", None]
 
 
 class TestGetTablePeriod:
