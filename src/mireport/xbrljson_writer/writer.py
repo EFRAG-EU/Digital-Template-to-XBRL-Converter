@@ -18,7 +18,7 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field, replace
 from typing import TYPE_CHECKING, Any
 
-from mireport.exceptions import InlineReportException
+from mireport.exceptions import BrokenNamespacePrefixException, InlineReportException
 from mireport.report.model import Unit
 from mireport.xbrljson_reader.document import (
     XbrlJsonDocument,
@@ -26,15 +26,13 @@ from mireport.xbrljson_reader.document import (
     XbrlJsonFact,
 )
 from mireport.xbrljson_writer._values import canonicalValue
-from mireport.xml import XBRLI_NS
+from mireport.xml import XBRLI_NS, NamespaceManager
 
 if TYPE_CHECKING:
     from mireport.report.fact import Fact
     from mireport.report.report import Report
     from mireport.taxonomy import QName
 
-# The namespace OIM's reserved ``xbrl`` prefix is bound to (xbrl:note, xbrl:canonicalValues).
-XBRL_NS = "https://xbrl.org/2021"
 CANONICAL_VALUES = {"xbrl:canonicalValues": True}
 
 
@@ -59,17 +57,20 @@ def _isPure(unit: Unit) -> bool:
 
 
 class _Namespaces:
-    """The prefixes the document uses, each bound to one namespace."""
+    """The document's prefixes: the taxonomy's bindings (which already include ``xbrl``, see
+    getBootstrapQNameMaker) plus the entity's and any extension's, each prefix bound to one
+    namespace. Only the prefixes the document uses are written."""
 
-    def __init__(self) -> None:
-        self._byPrefix: dict[str, str] = {}
+    def __init__(self, taxonomyBindings: Mapping[str, str]) -> None:
+        self._manager = NamespaceManager.fromMapping(taxonomyBindings)
+        self._used: set[str] = {"xbrl"}
 
     def bind(self, prefix: str, namespace: str) -> None:
-        if self._byPrefix.setdefault(prefix, namespace) != namespace:
-            raise XbrlJsonException(
-                f"Prefix {prefix!r} would be bound to both {self._byPrefix[prefix]} and "
-                f"{namespace}."
-            )
+        try:
+            self._manager.add(prefix, namespace)
+        except BrokenNamespacePrefixException as e:
+            raise XbrlJsonException(str(e)) from e
+        self._used.add(prefix)
 
     def name(self, qname: QName) -> str:
         """``qname`` as the document writes it, its prefix bound."""
@@ -77,7 +78,10 @@ class _Namespaces:
         return str(qname)
 
     def sorted(self) -> dict[str, str]:
-        return dict(sorted(self._byPrefix.items()))
+        return {
+            prefix: self._manager.getNamespaceForPrefix(prefix)
+            for prefix in sorted(self._used)
+        }
 
 
 def toXbrlJson(
@@ -92,8 +96,7 @@ def toXbrlJson(
     than the order the report has them in, so two reports with the same facts give the same
     document whichever order they were built in: for comparing one with another.
     """
-    namespaces = _Namespaces()
-    namespaces.bind("xbrl", XBRL_NS)
+    namespaces = _Namespaces(report.taxonomy.namespacePrefixesMap)
     facts = report.facts
     entity = ""
     if facts:

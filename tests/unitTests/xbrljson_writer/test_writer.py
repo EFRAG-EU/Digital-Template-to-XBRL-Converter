@@ -27,9 +27,9 @@ from mireport.report.model import Unit
 from mireport.taxonomy import Concept, Taxonomy
 from mireport.xbrljson_reader import XbrlJsonProcessor
 from mireport.xbrljson_reader.document import XbrlJsonException, XbrlJsonFact
-from mireport.xbrljson_writer import XBRL_NS, XbrlJsonExtensions, toXbrlJson
+from mireport.xbrljson_writer import XbrlJsonExtensions, toXbrlJson
 from mireport.xbrljson_writer._values import canonicalNumber
-from mireport.xml import LEI_NS
+from mireport.xml import LEI_NS, XBRL_NS
 
 LEI = "529900T8BM49AURSDO55"
 
