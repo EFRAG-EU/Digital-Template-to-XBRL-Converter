@@ -179,7 +179,10 @@ internal. The chain, in order:
    workarounds.
 3. **`_fact_creator.FactCreator`** — walks the bindings and builds facts, delegating hypercube tables
    to `_tables.TableFactCreator` (one fact per row, dimensions read from the same row), units to
-   `_units.UnitResolver` (documented resolution ladder), member-label resolution to
+   `_units.UnitResolver` (documented resolution ladder; a UTR *composite* type, such as emissions per
+   monetary unit, takes a divide unit built from `UTR.compositeFor`: the report's currency for a monetary
+   side, else the `dataTypesToUnits` entry for the side's item type, and no fact, with a warning, if either
+   is missing; `UTR.valid` is false for any single unit on such a type), member-label resolution to
    `_enumerations.resolveMemberByLabel` (exact standard label → configured alias → closest EE-domain
    match, scoped to the relevant domain), and footnotes to `_footnotes.FootnoteFactCreator`.
 

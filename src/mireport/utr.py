@@ -193,7 +193,6 @@ class UTR:
         A type the UTR does not list is unconstrained, so any unit is valid. A composite type
         (see ``compositeFor``) is listed, but with no named unit, so no single unit is valid
         for it: it takes a divide unit, checked with ``validComposite``."""
-        units_for_dataType = self.getUnitsForDataType(dataType)
-        if not units_for_dataType:
-            return True
-        return unitType in units_for_dataType
+        if units_for_dataType := self.getUnitsForDataType(dataType):
+            return unitType in units_for_dataType
+        return self.compositeFor(dataType) is None

@@ -230,3 +230,13 @@ class TestNoUnitRange:
         assert env.resolver.setUnitForName(env.holder, env.fb) is False
         assert env.fb._unit is None
         assert any("no default currency" in w for w in env.warnings())
+
+    def test_a_single_unit_in_the_cell_is_not_valid_for_a_composite_type(
+        self, taxonomy, config, per_monetary_concept
+    ):
+        """A named unit typed into the unit cell cannot be valid for a per-unit type; the
+        fact still gets the divide unit rather than that unit or xbrli:pure."""
+        env = _Env(taxonomy, config, per_monetary_concept, "tCO2e")
+        env.report.setDefaultCurrency("EUR")
+        assert env.resolver.setUnitForName(env.holder, env.fb) is True
+        assert env.fb._unit is not None and env.fb._unit.is_divide

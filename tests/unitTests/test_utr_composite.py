@@ -92,6 +92,20 @@ def test_each_side_must_be_valid_for_its_own_item_type(utr: UTR, q) -> None:
     assert not utr.validComposite(dataType, eur, tco2e)  # the wrong way up
 
 
+def test_no_single_unit_is_valid_for_a_composite_type(utr: UTR, q) -> None:
+    dataType = q(DTR, "ghgEmissionsPerMonetaryItemType")
+    for unit in (q(UTR_NS, "tCO2e"), q(ISO, "EUR"), q(XBRLI, "pure")):
+        assert not utr.valid(dataType, unit)
+
+
+def test_a_named_type_still_checks_its_units_and_an_unlisted_one_takes_any(
+    utr: UTR, q
+) -> None:
+    assert utr.valid(q(UTR_NS, "massItemType"), q(UTR_NS, "kg"))
+    assert not utr.valid(q(UTR_NS, "massItemType"), q(UTR_NS, "tCO2e"))
+    assert utr.valid(q(DTR, "percentItemType"), q(XBRLI, "pure"))  # not in the UTR
+
+
 def test_a_simple_type_is_never_a_valid_composite(utr: UTR, q) -> None:
     assert not utr.validComposite(
         q(UTR_NS, "massItemType"), q(UTR_NS, "kg"), q(ISO, "EUR")
