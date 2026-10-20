@@ -284,8 +284,10 @@ per period, each period said once over its columns; a list shows a concept's pri
 opening balance, beside the closing one that leads the line. When every column is in a single period (one period, or baseline and target years each in
 their own column) nothing changes. **The VSME Excel template reports one period** (FAQ item 7), so
 comparatives come from last year's report, always a separate file, and no template contract is needed:
-`mireport.comparatives.PriorReport.fromFile` reads it as a whole report (xBRL-JSON, or a
-workbook in its own template version; one migrated but not yet saved in Excel is refused), and its
+`mireport.comparatives.PriorReport.fromFile` reads it as a whole report (xBRL-JSON, a
+workbook in its own template version, one migrated but not yet saved in Excel being refused, or
+Inline XBRL or a report package (`.xbri`, `.xbr`, `.zip`) through Arelle, whose errors about it are warnings here; offline, Arelle needs last
+year's taxonomy package too), and its
 `mergeInto` (`mireport.report.comparatives.mergePriorReport`) makes its period this report's prior one (`--prior PATH` on
 `parse-and-ixbrl.py` and `xbrljson-to-ixbrl.py`). The current report's own period is its default
 duration; its other durations (baseline and target years) are left alone, but a prior period, or a

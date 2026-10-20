@@ -9,12 +9,15 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
+from functools import partial
 from pathlib import PurePath
 from typing import TYPE_CHECKING, NoReturn
 from zipfile import BadZipFile
 
 from openpyxl.utils.exceptions import InvalidFileException
 
+from mireport.arelle.report_info import ArelleReportProcessor, packageReportDocument
+from mireport.arelle.support import ArelleRelatedException
 from mireport.conversionresults import (
     ConversionResultsBuilder,
     Message,
@@ -37,7 +40,16 @@ if TYPE_CHECKING:
     from typing import Self
 
 MESSAGE_PREFIX = "Prior-year report: "
-PRIOR_REPORT_EXTENSIONS = (".json", ".xlsx")
+# A report package (.xbri for Inline XBRL, .xbr for xBRL-JSON or xBRL-XML, or a plain .zip) goes
+# to Arelle as it is; a single Inline XBRL document is packaged first.
+REPORT_PACKAGE_EXTENSIONS = (".xbri", ".xbr", ".zip")
+PRIOR_REPORT_EXTENSIONS = (
+    ".json",
+    ".xlsx",
+    ".xhtml",
+    ".html",
+    *REPORT_PACKAGE_EXTENSIONS,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -49,7 +61,11 @@ class PriorReport:
 
     @classmethod
     def fromFile(
-        cls, source: FilelikeAndFileName, results: ConversionResultsBuilder
+        cls,
+        source: FilelikeAndFileName,
+        results: ConversionResultsBuilder,
+        *,
+        arelle: ArelleReportProcessor,
     ) -> Self:
         """Last year's report in ``source``, read as its extension says."""
         match PurePath(source.filename).suffix.lower():
@@ -57,6 +73,8 @@ class PriorReport:
                 return cls.fromXbrlJson(source, results)
             case ".xlsx":
                 return cls.fromWorkbook(source, results)
+            case ".xhtml" | ".html" | ".xbri" | ".xbr" | ".zip":
+                return cls.fromInlineXbrl(source, results, arelle=arelle)
             case other:
                 _abort(
                     results,
@@ -78,6 +96,18 @@ class PriorReport:
         """A filled-in Digital Template, in its own template version and taxonomy. Its partial
         facts (Word text blocks) are left unfinished: only numbers are taken."""
         return cls._read(source, results, _readWorkbook)
+
+    @classmethod
+    def fromInlineXbrl(
+        cls,
+        source: FilelikeAndFileName,
+        results: ConversionResultsBuilder,
+        *,
+        arelle: ArelleReportProcessor,
+    ) -> Self:
+        """Inline XBRL, or any report package, which ``arelle`` writes as xBRL-JSON. What Arelle
+        finds wrong with last year's report is a warning here, not an error."""
+        return cls._read(source, results, partial(_readInlineXbrl, arelle=arelle))
 
     @classmethod
     def _read(
@@ -131,6 +161,44 @@ def _readWorkbook(
             "Open it in Excel, save it, and give it again."
         )
     return processor.createReport()
+
+
+def _readInlineXbrl(
+    source: FilelikeAndFileName,
+    read: ConversionResultsBuilder,
+    *,
+    arelle: ArelleReportProcessor,
+) -> Report:
+    name = source.filename
+    if PurePath(name).suffix.lower() not in REPORT_PACKAGE_EXTENSIONS:
+        source = packageReportDocument(source)
+    try:
+        result = arelle.generateXbrlJson(source)
+    except ArelleRelatedException as e:
+        raise InlineReportException(f"{name}: {e}") from e
+    read.addMessages(
+        Message(
+            m.messageText,
+            Severity.WARNING if m.severity is Severity.ERROR else m.severity,
+            m.messageType,
+            m.conceptQName,
+        )
+        for m in result.messages
+    )
+    if not result.has_json:
+        raise InlineReportException(f"Arelle could not read {name} as an XBRL report.")
+    xbrlJson = result.xbrl_json
+    document = XbrlJsonDocument.fromJson(xbrlJson.fileContent, xbrlJson.filename)
+    if not document.taxonomy:
+        raise InlineReportException(
+            f"Arelle could not load the taxonomy of {name}."
+            + (
+                " Working offline, it needs last year's taxonomy package too."
+                if arelle.workOffline
+                else ""
+            )
+        )
+    return XbrlJsonProcessor(document, read).createReport()
 
 
 def _passOn(read: ConversionResultsBuilder, results: ConversionResultsBuilder) -> None:

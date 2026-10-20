@@ -30,6 +30,8 @@ from tests.unitTests.synthetic_taxonomy import (
     taxonomy_json,
 )
 
+from mireport.arelle.report_info import ArelleReportProcessor
+from mireport.arelle.support import ArelleProcessingResult
 from mireport.comparatives import PriorReport
 from mireport.conversionresults import ConversionResultsBuilder, Severity
 from mireport.data import disclosures
@@ -474,8 +476,40 @@ def test_a_prior_report_that_cannot_be_read_stops_the_conversion(
     with pytest.raises(
         EarlyAbortException, match=f"^Prior-year report: .*{match}"
     ) as raised:
-        PriorReport.fromFile(FilelikeAndFileName(content, filename), results)
+        PriorReport.fromFile(
+            FilelikeAndFileName(content, filename),
+            results,
+            arelle=ArelleReportProcessor(),
+        )
     assert _messages(results, Severity.ERROR) == [str(raised.value)]
+
+
+@pytest.mark.parametrize(
+    ("workOffline", "match"),
+    [
+        pytest.param(True, " Working offline, it needs last year's", id="offline"),
+        pytest.param(False, "$", id="online"),
+    ],
+)
+def test_inline_xbrl_whose_taxonomy_arelle_cannot_load_stops_the_conversion(
+    taxonomy: Taxonomy, monkeypatch: pytest.MonkeyPatch, workOffline: bool, match: str
+) -> None:
+    """Arelle drops a taxonomy it can't load from the xBRL-JSON it writes."""
+    document = json.loads(_lastYearsFile(taxonomy))
+    document["documentInfo"]["taxonomy"] = []
+    written = ArelleProcessingResult()
+    written._xbrlJson = FilelikeAndFileName(json.dumps(document).encode(), FILE)
+    arelle = ArelleReportProcessor(workOffline=workOffline)
+    monkeypatch.setattr(arelle, "generateXbrlJson", lambda source: written)
+    with pytest.raises(
+        EarlyAbortException,
+        match=rf"^Prior-year report: Arelle could not load the taxonomy of last-year\.zip\.{match}",
+    ):
+        PriorReport.fromInlineXbrl(
+            FilelikeAndFileName(b"", "last-year.zip"),
+            ConversionResultsBuilder(),
+            arelle=arelle,
+        )
 
 
 def _oneDisclosureSystem(monkeypatch: pytest.MonkeyPatch, *entryPoints: str) -> None:
