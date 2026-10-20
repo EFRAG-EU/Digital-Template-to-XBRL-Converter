@@ -171,5 +171,7 @@ def test_from_mapping_copies_the_bindings(xbrli_and_utr: NamespaceManager) -> No
     assert "ex" not in source
 
 
-def test_the_bootstrap_binds_the_oim_xbrl_prefix() -> None:
-    assert getBootstrapQNameMaker().fromString("xbrl:note").namespace == XBRL_NS
+def test_the_bootstrap_leaves_out_the_oim_xbrl_prefix() -> None:
+    """Taxonomies bake the bootstrap's bindings; xbrl belongs to xBRL-JSON documents,
+    whose writer binds it."""
+    assert XBRL_NS not in getBootstrapQNameMaker().namespacePrefixesMap.values()

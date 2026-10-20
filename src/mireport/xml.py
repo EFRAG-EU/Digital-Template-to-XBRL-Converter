@@ -234,5 +234,4 @@ def getBootstrapQNameMaker() -> QNameMaker:
     boot.add("xbrli", XBRLI_NS)
     boot.add("enum2", ENUM2_NS)
     boot.add("xs", XS_NS)
-    boot.add("xbrl", XBRL_NS)
     return QNameMaker(boot)
