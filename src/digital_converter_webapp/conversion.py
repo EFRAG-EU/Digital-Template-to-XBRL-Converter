@@ -196,6 +196,15 @@ class Conversion:
         self._setFilelike("excel", value)
 
     @property
+    def priorReport(self) -> FilelikeAndFileName | None:
+        """Last year's report, whose figures become the comparatives."""
+        return self._getFilelike("priorReport")
+
+    @priorReport.setter
+    def priorReport(self, value: FilelikeAndFileName | None) -> None:
+        self._setFilelike("priorReport", value)
+
+    @property
     def migrated_excel(self) -> FilelikeAndFileName | None:
         return self._getFilelike("migrated_excel")
 

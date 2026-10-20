@@ -18,6 +18,7 @@ from mireport.arelle.report_info import (
     ARELLE_VERSION_INFORMATION,
     ArelleReportProcessor,
 )
+from mireport.comparatives import PriorReport
 from mireport.conversionresults import (
     ConversionResults,
     ConversionResultsBuilder,
@@ -61,7 +62,8 @@ def doConversion(
     """Drive the full Excel → validated Inline XBRL report pipeline.
 
     Side effects on ``conv``: may populate ``partial_fact_concepts`` (which
-    tells the caller to ask the user for Word documents), and on success stores
+    tells the caller to ask the user for Word documents; last year's report,
+    ``priorReport``, is read only once they are in), and on success stores
     the generated report package as ``conv.zip`` and the report as xBRL-JSON,
     written from the report itself, as ``conv.json``; Arelle validates both.
     """
@@ -74,6 +76,7 @@ def doConversion(
                 return builder.build()
             if _completePartialFacts(report, conv, builder):
                 return builder.build()
+            _mergePriorReport(report, conv, builder, pc, arelle)
             if not report.hasFacts:
                 builder.addMessage(
                     "No facts found in InlineReport (likely due to earlier errors). Stopping here.",
@@ -188,6 +191,24 @@ def _completePartialFacts(
         MessageType.Conversion,
     )
     return True
+
+
+def _mergePriorReport(
+    report: InlineReport,
+    conv: Conversion,
+    builder: ConversionResultsBuilder,
+    pc: ProcessingContext,
+    arelle: ArelleReportProcessor,
+) -> None:
+    """Take the comparatives from last year's report, if one was uploaded. One
+    that can't be read or merged stops the conversion, as a bad workbook does:
+    the EarlyAbortException ends the processing context."""
+    if (prior := conv.priorReport) is None:
+        return
+    pc.mark(
+        "Reading last year's report", additionalInfo=f"Using file: {prior.filename}"
+    )
+    PriorReport.fromFile(prior, builder, arelle=arelle).mergeInto(report, builder)
 
 
 def _applyTheme(
