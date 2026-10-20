@@ -96,8 +96,11 @@ class WorkbookBinder:
                     dimValue = taxonomy.resolveConcept(
                         memberName, by_name=True, only_reportable=False
                     )
-                    crh = reader.peekRange(dn)
-                    if crh is not None and concept is not None and dimValue is not None:
+                    if (
+                        concept is not None
+                        and dimValue is not None
+                        and (crh := reader.peekRange(dn)) is not None
+                    ):
                         b = XbrlConceptCellRangeMetadata.fromCellRangeMetadata(
                             crh, concept=concept
                         )
