@@ -8,6 +8,7 @@ decides.
 from __future__ import annotations
 
 import logging
+from pathlib import PurePath
 from typing import TYPE_CHECKING
 
 import mammoth
@@ -33,6 +34,7 @@ from mireport.pdf_converter import (
 )
 from mireport.report.reportpackage import buildReportPackage
 from mireport.report.theme import ColourPalette, DisplayMode, ReportTheme
+from mireport.xbrljson_writer import toXbrlJson
 from mireport.xlsx_template_reader.processor import XlsxProcessor
 
 if TYPE_CHECKING:
@@ -60,8 +62,8 @@ def doConversion(
 
     Side effects on ``conv``: may populate ``partial_fact_concepts`` (which
     tells the caller to ask the user for Word documents), and on success stores
-    the generated report package as ``conv.zip`` and the xBRL-JSON Arelle
-    produced while validating it as ``conv.json``.
+    the generated report package as ``conv.zip`` and the report as xBRL-JSON,
+    written from the report itself, as ``conv.json``; Arelle validates both.
     """
     builder = ConversionResultsBuilder(conversionId=conv.id)
     try:
@@ -84,7 +86,9 @@ def doConversion(
             reportPackage = _buildReportPackage(report, conv, builder, pc, pdfMode)
             if not builder.conversionSuccessful:
                 return builder.build()
-            conv.json = _validate(reportPackage, arelle, builder, pc)
+            xbrlJson = _writeXbrlJson(report, reportPackage)
+            _validate(reportPackage, xbrlJson, arelle, builder, pc)
+            conv.json = xbrlJson
             conv.zip = reportPackage
     except Exception as e:
         message = next(iter(e.args), "")
@@ -240,23 +244,32 @@ def _buildReportPackage(
     return reportPackage
 
 
+def _writeXbrlJson(
+    report: InlineReport, reportPackage: FilelikeAndFileName
+) -> FilelikeAndFileName:
+    """The report as xBRL-JSON, named after its package."""
+    return FilelikeAndFileName(
+        fileContent=toXbrlJson(report).toJson().encode("utf-8"),
+        filename=PurePath(reportPackage.filename).with_suffix(".json").name,
+    )
+
+
 def _validate(
     reportPackage: FilelikeAndFileName,
+    xbrlJson: FilelikeAndFileName,
     arelle: ArelleReportProcessor,
     builder: ConversionResultsBuilder,
     pc: ProcessingContext,
-) -> FilelikeAndFileName | None:
-    """Validate the report package, returning the xBRL-JSON the same Arelle
-    session produced (None if it could not), so a later JSON download costs
-    nothing. A missing JSON never fails the conversion: ``ensureXbrlJson``
-    generates it on demand."""
+) -> None:
+    """Validate the report package, then the xBRL-JSON written alongside it: each
+    is a separate Arelle session, and both sets of messages are the user's."""
     pc.mark(
         "Validating Inline Report",
         additionalInfo=f"Using Arelle (XBRL Certified Software™) [{ARELLE_VERSION_INFORMATION}]",
     )
-    arelleResults = arelle.validateReportPackage(reportPackage, getReportAsJson=True)
-    builder.addMessages(arelleResults.messages)
-    return arelleResults.xbrl_json if arelleResults.has_json else None
+    builder.addMessages(arelle.validateReportPackage(reportPackage).messages)
+    pc.mark("Validating xBRL-JSON", additionalInfo=xbrlJson.filename)
+    builder.addMessages(arelle.validateXbrlJson(xbrlJson).messages)
 
 
 def ensureViewer(
@@ -274,17 +287,3 @@ def ensureViewer(
         }
 
     return viewer, conv.viewer_members
-
-
-def ensureXbrlJson(
-    conv: Conversion, arelle: ArelleReportProcessor
-) -> FilelikeAndFileName:
-    """Generate (once) and return the xBRL-JSON rendering of the report."""
-    if (json := conv.json) is None:
-        zip_ = conv.zip
-        assert zip_ is not None, "No report package to render as xBRL-JSON"
-        conv.json = json = arelle.validateReportPackage(
-            zip_, getReportAsJson=True
-        ).xbrl_json
-
-    return json

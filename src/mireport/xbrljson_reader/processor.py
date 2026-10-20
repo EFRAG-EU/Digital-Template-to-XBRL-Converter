@@ -4,7 +4,7 @@ The xlsx reader builds facts from workbook cells; this one builds the same facts
 fact objects, so the two share everything downstream (layout, theming, aoix, Arelle).
 
 Deliberately narrow: one entity, durations that declare the report's periods (an instant fact must
-be at the start or end of one), and facts that carry a value. A fact outside that, or one the
+be at the start or end of one), and facts with a value or nil. A fact outside that, or one the
 taxonomy or the UTR does not allow, is skipped with a message saying why (and, where the
 specifications name one, the error code); only a document that cannot be a report at all raises.
 """
@@ -26,13 +26,14 @@ from mireport.entrypoints import describeEntryPointSet, entryPointSetOf
 from mireport.exceptions import InlineReportException, TaxonomyException, UnitException
 from mireport.report import InlineReport
 from mireport.report.fact import Fact
-from mireport.report.factbuilder import FactBuilder
+from mireport.report.factbuilder import FactBuilder, enumerationText
 from mireport.report.model import Unit
 from mireport.report.periods import DurationPeriodHolder, _Period
 from mireport.taxonomy import Concept, QName, Taxonomy, getTaxonomy, listTaxonomies
 from mireport.typealiases import DecimalPlaces
 from mireport.xbrljson_reader._periods import parseDuration, parsePeriod
 from mireport.xbrljson_reader.document import (
+    FACT_FOOTNOTE_ARCROLE,
     INVALID_DIMENSION_VALUE,
     INVALID_JSON_STRUCTURE,
     INVALID_LANGUAGE,
@@ -48,11 +49,8 @@ from mireport.xml import XBRLI_NS
 L = logging.getLogger(__name__)
 
 XHTML_NS = "http://www.w3.org/1999/xhtml"
-# Extension properties the snapshot files write (see tests/unitTests/xbrl_json_snapshot.py).
+# Extension properties the snapshot files write (see test_fact_creator_characterization.py).
 EXTENSION_NS = "urn:mireport:xbrl-json-extension"
-FACT_FOOTNOTE_ARCROLE = "http://www.xbrl.org/2003/arcrole/fact-footnote"
-# What the xlsx reader shows for an empty enumeration set (EE_SET_DESIRED_EMPTY_PLACEHOLDER_VALUE).
-EMPTY_SET_TEXT = "None"
 # Features that change nothing about how a document is read here.
 _KNOWN_FEATURES = frozenset({"xbrl:canonicalValues", "xbrl:allowedDuplicates"})
 _BOOLEANS = {"true": True, "1": True, "false": False, "0": False}
@@ -309,11 +307,12 @@ class XbrlJsonProcessor:
         concept: Concept | None = None
         try:
             concept = self._concept(fact.concept)
-            if fact.value is None:
-                raise FactProblem(UNSUPPORTED, "Nil facts are not supported yet.")
             self._checkLanguage(fact)
             fb = self.report.getFactBuilder().setConcept(concept).setPeriod(period)
-            self._setValue(fb, concept, fact)
+            if fact.isNil:
+                self._setNil(fb, concept, fact)
+            else:
+                self._setValue(fb, concept, fact)
             for name, member in fact.dimensions.items():
                 self._setDimension(fb, name, member)
             built = fb.buildFact()
@@ -336,6 +335,14 @@ class XbrlJsonProcessor:
                 f"The fact is in {fact.language}; the report is in {self.report.language}.",
             )
 
+    def _setNil(self, fb: FactBuilder, concept: Concept, fact: XbrlJsonFact) -> None:
+        """A nil fact: no value, and so no decimals, but a number still has its unit."""
+        if fact.decimals is not None:
+            raise FactProblem(INVALID_JSON_STRUCTURE, "A nil fact has no decimals.")
+        if concept.isNumeric:
+            self._setUnit(fb, concept, fact.unit)
+        fb.setNil()  # building it checks the concept is nillable
+
     def _setValue(self, fb: FactBuilder, concept: Concept, fact: XbrlJsonFact) -> None:
         value = fact.value
         assert value is not None
@@ -345,7 +352,7 @@ class XbrlJsonProcessor:
             )
         if concept.isEnumerationSingle:
             member = self._member(concept, value)
-            fb.setEnumerationValue(member).setValue(self._label(member))
+            fb.setEnumerationValue(member).setValue(enumerationText([member]))
         elif concept.isEnumerationSet:
             tokens = value.split()
             if len(set(tokens)) != len(tokens):
@@ -355,7 +362,7 @@ class XbrlJsonProcessor:
             members = [self._member(concept, m) for m in tokens]
             fb.setEnumerationSet(members)
             # An empty set is a valid value, but a fact needs something human readable.
-            fb.setValue("\n".join(self._label(m) for m in members) or EMPTY_SET_TEXT)
+            fb.setValue(enumerationText(members))
         elif concept.isBoolean:
             if (flag := _BOOLEANS.get(value.strip())) is None:
                 raise FactProblem(
@@ -390,11 +397,6 @@ class XbrlJsonProcessor:
                 INVALID_JSON_STRUCTURE, f"Text is not well-formed XHTML: {e}"
             ) from e
         return Markup(text)
-
-    @staticmethod
-    def _label(member: Concept) -> str:
-        """What a human reads for an enumeration member: its label, or its name if it has none."""
-        return member.getStandardLabel(fallbackIfMissing=str(member.qname))
 
     def _setNumeric(
         self, fb: FactBuilder, concept: Concept, fact: XbrlJsonFact
@@ -494,7 +496,7 @@ class XbrlJsonProcessor:
 
     def _footnoteLinkTypes(self) -> set[str]:
         """The link type names that mean fact-to-footnote: those the document binds to the
-        arcrole, and ``footnote``, the name xBRL-JSON predefines for it."""
+        arcrole, and ``footnote`` even undeclared, as older snapshot files wrote it."""
         return {"footnote"} | {
             name
             for name, uri in self._document.linkTypes.items()

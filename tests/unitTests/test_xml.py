@@ -1,7 +1,12 @@
 import pytest
 
 from mireport.exceptions import BrokenNamespacePrefixException, BrokenQNameException
-from mireport.xml import NamespaceManager, QNameMaker
+from mireport.xml import (
+    XBRL_NS,
+    NamespaceManager,
+    QNameMaker,
+    getBootstrapQNameMaker,
+)
 
 
 @pytest.fixture
@@ -139,3 +144,34 @@ def test_valid_qname_all_test_ns(qname_maker: QNameMaker) -> None:
     assert qname_maker.isValidQName("test:ValidName")
     assert qname_maker.isValidQName("data:another_one")
     assert qname_maker.isValidQName("data:another_one.two")
+
+
+@pytest.mark.parametrize(
+    "namespace", ["urn:mireport:xbrl-json-extension", "https://xbrl.org/2021"]
+)
+def test_a_namespace_is_any_absolute_uri(
+    namespaces: NamespaceManager, namespace: str
+) -> None:
+    assert namespaces.add("p", namespace) == "p"
+
+
+@pytest.mark.parametrize("namespace", ["", "example.com/ns", "no scheme", "1http://x"])
+def test_a_namespace_must_be_an_absolute_uri(
+    namespaces: NamespaceManager, namespace: str
+) -> None:
+    with pytest.raises(BrokenNamespacePrefixException):
+        namespaces.add("p", namespace)
+
+
+def test_from_mapping_copies_the_bindings(xbrli_and_utr: NamespaceManager) -> None:
+    source = QNameMaker(xbrli_and_utr).namespacePrefixesMap
+    copy = NamespaceManager.fromMapping(source)
+    copy.add("ex", "http://example.com/ex")
+    assert copy.getNamespaceForPrefix("utr") == "http://www.xbrl.org/2009/utr"
+    assert "ex" not in source
+
+
+def test_the_bootstrap_leaves_out_the_oim_xbrl_prefix() -> None:
+    """Taxonomies bake the bootstrap's bindings; xbrl belongs to xBRL-JSON documents,
+    whose writer binds it."""
+    assert XBRL_NS not in getBootstrapQNameMaker().namespacePrefixesMap.values()

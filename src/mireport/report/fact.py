@@ -21,7 +21,7 @@ from mireport.typealiases import DecimalPlaces, FactValue
 
 if TYPE_CHECKING:
     from mireport.report.footnote import Footnote
-    from mireport.report.inlinereport import InlineReport
+    from mireport.report.report import Report
 
 
 def numeric_string_key(value: str) -> tuple[int, str | int]:
@@ -57,8 +57,8 @@ class Fact:
     def __init__(
         self,
         concept: Concept,
-        value: FactValue,
-        report: InlineReport,
+        value: FactValue | None,
+        report: Report,
         *,
         period: FactPeriod,
         unit: Unit | None = None,
@@ -70,7 +70,8 @@ class Fact:
         provenance: Provenance | None = None,
     ):
         self.concept: Concept = concept
-        self.value: FactValue = value
+        # None for a nil fact (see isNil).
+        self.value: FactValue | None = value
         self.provenance: Provenance | None = provenance
         self._report = report
         if not period.fitsConcept(concept):
@@ -93,6 +94,11 @@ class Fact:
             None if enumeration is None else tuple(enumeration)
         )
         self.footnotes: list[Footnote] = []
+
+    @property
+    def isNil(self) -> bool:
+        """Whether the fact is nil (``xsi:nil``): reported, with no value."""
+        return self.value is None
 
     def __repr__(self) -> str:
         return (
@@ -212,7 +218,7 @@ class Fact:
             if negated:
                 number = -Decimal(str(number))
             output = localise_and_format_number(
-                number, decimal_places, self._report._outputLocale
+                number, decimal_places, self._report.outputLocale
             )
         except (ValueError, TypeError, ArithmeticError) as e:
             raise InlineReportException(

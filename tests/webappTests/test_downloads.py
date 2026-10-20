@@ -57,8 +57,8 @@ class TestDownloadHappyPath:
         assert resp.status_code == 200
 
     def test_conversion_already_holds_the_json(self, converted_id, conversion_of):
-        """The validating Arelle session also produces the JSON, so the
-        download above costs no second session."""
+        """The JSON is written from the report during the conversion (and
+        validated by Arelle there), so the download above needs no Arelle."""
         _, c = converted_id
         conv = conversion_of(c)
         assert conv.json is not None

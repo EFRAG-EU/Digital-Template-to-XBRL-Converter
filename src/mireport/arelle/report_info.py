@@ -22,7 +22,7 @@ from mireport.arelle.support import (
     ArelleVersionHolder,
 )
 from mireport.filesupport import FilelikeAndFileName
-from mireport.report.reportpackage import UNCONSTRAINED_REPORT_PACKAGE_JSON
+from mireport.report.reportpackage import buildReportPackage
 from mireport.version import VersionInformationTuple
 
 BIG_ARELLE_LOCK = threading.Lock()
@@ -31,6 +31,11 @@ L = logging.getLogger(__name__)
 
 # Arelle splits its --plugins option on "|" (see CntlrCmdLine.run()).
 PLUGIN_SEPARATOR = "|"
+# Our packages put the report in a subdirectory of "reports/" whenever it has
+# document set members (see mireport.report.reportpackage), and Arelle refuses to
+# load a multi-file report entry without this plug-in: "Loading error. Inline
+# document set encountered. Enable 'InlineXbrlDocumentSet' plug-in". It is inert
+# for a single-document report, so any run that may load Inline XBRL enables it.
 INLINE_DOCUMENT_SET_PLUGIN = "inlineXbrlDocumentSet"
 
 
@@ -191,16 +196,9 @@ class ArelleReportProcessor:
     ) -> RuntimeOptions:
         """RuntimeOptions shared by all report processing: validation on
         (calcs 1.1 round-to-nearest unless overridden, UTR, inconsistent
-        duplicate facts warned) and logging to buffer.
-
-        INLINE_DOCUMENT_SET_PLUGIN is always enabled. Our packages put the
-        report in a subdirectory of "reports/" whenever it has document set
-        members (see mireport.report.reportpackage), and Arelle refuses to load
-        a multi-file report entry without it — "Loading error. Inline document
-        set encountered. Enable 'InlineXbrlDocumentSet' plug-in". It is
-        unconditional rather than per-call because nothing here inspects the
-        package, and it is inert for a single-document report.
-        """
+        duplicate facts warned) and logging to buffer. `plugins` are exactly
+        those the run needs: each caller says whether that includes
+        INLINE_DOCUMENT_SET_PLUGIN."""
         return RuntimeOptions(
             internetConnectivity="offline" if self.workOffline else "online",
             keepOpen=True,
@@ -208,7 +206,7 @@ class ArelleReportProcessor:
             logFormat="%(message)s",
             logPropagate=False,
             packages=[str(t) for t in self.taxonomyPackages],
-            plugins=PLUGIN_SEPARATOR.join([INLINE_DOCUMENT_SET_PLUGIN, *plugins]),
+            plugins=PLUGIN_SEPARATOR.join(plugins) or None,
             pluginOptions=pluginOptions if pluginOptions is not None else {},
             validate=True,
             calcs=calcs,
@@ -222,26 +220,31 @@ class ArelleReportProcessor:
         source: FilelikeAndFileName,
         *,
         disableCalculationValidation: bool = False,
-        getReportAsJson: bool = False,
     ) -> ArelleProcessingResult:
-        """Validate the report package with Arelle.
-
-        With getReportAsJson the same validating session also produces the
-        xBRL-JSON rendering (result.has_json / result.xbrl_json), so a caller
-        wanting both pays for one Arelle session rather than two. Validation
-        is never switched off: Arelle needs it to build the PSVI.
-        """
+        """Validate the report package with Arelle. It may hold Inline XBRL, so
+        the document set plug-in is enabled."""
         options = self._makeOptions(
             calcs="none" if disableCalculationValidation else "c11r",
-            plugins=["saveLoadableOIM"] if getReportAsJson else (),
-            pluginOptions=(
-                {"saveLoadableOIM": "report.json"} if getReportAsJson else None
-            ),
+            plugins=[INLINE_DOCUMENT_SET_PLUGIN],
         )
-        if not getReportAsJson:
-            return self._run(source, options)
+        return self._run(source, options)
 
+    def validateXbrlJson(self, document: FilelikeAndFileName) -> ArelleProcessingResult:
+        """Validate an xBRL-JSON document with Arelle, which loads OIM natively: the OIM and
+        xBRL-JSON rules as it loads, then the same instance validation (calculations, UTR,
+        duplicates) a report package gets. It goes in as one, built in memory, and holds
+        no Inline XBRL, so no plug-in is needed."""
+        return self._run(packageReportDocument(document), self._makeOptions())
+
+    def generateXbrlJson(self, source: FilelikeAndFileName) -> ArelleProcessingResult:
+        """Validate the report package with Arelle and, in the same session, have it
+        write the report as xBRL-JSON (result.xbrl_json). This is Arelle's JSON, for a
+        report whatever produced it; ours comes from mireport.xbrljson_writer."""
         jsonBytesIO = BytesIO()
+        options = self._makeOptions(
+            plugins=[INLINE_DOCUMENT_SET_PLUGIN, "saveLoadableOIM"],
+            pluginOptions={"saveLoadableOIM": "report.json"},
+        )
         result = self._run(source, options, jsonBytesIO)
         try:
             json = _singleFileFromResponseZip(
@@ -260,7 +263,7 @@ class ArelleReportProcessor:
     ) -> ArelleProcessingResult:
         viewerBytesIO = BytesIO()
         options = self._makeOptions(
-            plugins=["ixbrl-viewer"],
+            plugins=[INLINE_DOCUMENT_SET_PLUGIN, "ixbrl-viewer"],
             pluginOptions={
                 "saveViewerDest": viewerBytesIO,
                 "viewer_feature_review": False,
@@ -310,29 +313,30 @@ class ArelleReportProcessor:
         return taxonomyPackages
 
 
+def packageReportDocument(document: FilelikeAndFileName) -> FilelikeAndFileName:
+    """A single report document (Inline XBRL or xBRL-JSON) in an unconstrained report
+    package of its own, the only form Arelle takes a report in here."""
+    return buildReportPackage(document, topLevel=PurePath(document.filename).stem)
+
+
 def getOrCreateReportPackage(reportPackage: Path) -> FilelikeAndFileName:
-    """Return the given zip as-is, or wrap a single inline report document in an
-    unconstrained report package."""
+    """Return the given zip as-is, or wrap a single report document (Inline XBRL or
+    xBRL-JSON) in an unconstrained report package."""
     if not isinstance(reportPackage, Path):
         raise ArelleRelatedException(
             f"Passed a report package {reportPackage=} that is not a Path"
         )
 
-    zipName = reportPackage.name
     if zipfile.is_zipfile(reportPackage):
-        zipBytes = reportPackage.read_bytes()
-    elif reportPackage.suffix in {".xhtml", ".html", ".htm"}:
-        with BytesIO() as write_bio:
-            with zipfile.ZipFile(write_bio, "w") as z:
-                z.write(reportPackage, f"a/reports/{reportPackage.name}")
-                z.writestr(
-                    zinfo_or_arcname="a/META-INF/reportPackage.json",
-                    data=UNCONSTRAINED_REPORT_PACKAGE_JSON,
-                )
-            zipBytes = write_bio.getvalue()
-        zipName = reportPackage.with_suffix(".zip").name
-    else:
-        raise ArelleRelatedException(
-            f"Passed a {reportPackage=} that has an unrecognised file type."
+        return FilelikeAndFileName(
+            fileContent=reportPackage.read_bytes(), filename=reportPackage.name
         )
-    return FilelikeAndFileName(fileContent=zipBytes, filename=zipName)
+    if reportPackage.suffix in {".xhtml", ".html", ".htm", ".json"}:
+        return packageReportDocument(
+            FilelikeAndFileName(
+                fileContent=reportPackage.read_bytes(), filename=reportPackage.name
+            )
+        )
+    raise ArelleRelatedException(
+        f"Passed a {reportPackage=} that has an unrecognised file type."
+    )

@@ -66,6 +66,9 @@ def _interval(value: Decimal, places: int | None) -> tuple[Decimal, Decimal]:
 
 
 def _same_value(a: Fact, b: Fact) -> bool:
+    if a.value is None or b.value is None:
+        # Nil (see Fact.isNil): two nils say the same, nothing; a nil and a value do not.
+        return a.value is None and b.value is None
     concept = a.concept
     if (
         concept.isNumeric
@@ -76,6 +79,7 @@ def _same_value(a: Fact, b: Fact) -> bool:
     if a.enumeration is not None or b.enumeration is not None:
         return frozenset(a.enumeration or ()) == frozenset(b.enumeration or ())
     if concept.isBoolean:
+        assert a.value is not None and b.value is not None
         x_bool, y_bool = coerce_boolean(a.value), coerce_boolean(b.value)
         return x_bool is not None and x_bool == y_bool
     return a.value == b.value

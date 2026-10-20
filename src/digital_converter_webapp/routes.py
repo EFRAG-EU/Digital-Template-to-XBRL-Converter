@@ -38,7 +38,7 @@ from .app_setup import DEPLOYMENT_DATETIME, getArelle
 from .blueprints import convert_bp
 from .captcha import generate_captcha, validateCaptchaAndCsrf
 from .conversion import ConversionStore
-from .conversion_service import doConversion, ensureViewer, ensureXbrlJson
+from .conversion_service import doConversion, ensureViewer
 from .forms import IMAGE_UPLOAD_FIELDS, MAX_FILE_SIZE, MAX_PDF_COUNT, first_str
 from .migration import MigrationOutcome, checkMigration
 from .template_helpers import getUploadFilename
@@ -345,9 +345,7 @@ def downloadFile(id: str, ftype: str) -> Response:
                 # A document set viewer fetches its members by name relative to
                 # itself, so it has to be served in place rather than downloaded.
                 return make_response(redirect(url_for("basic.viewer", id=id), code=303))
-        case "json":
-            stuff = ensureXbrlJson(conv, getArelle())
-        case "zip" | "excel":
+        case "zip" | "excel" | "json":
             if (cached := conv.cachedOutput(ftype)) is None:
                 return make_response({"error": "No file found"}, 404)
             stuff = cached

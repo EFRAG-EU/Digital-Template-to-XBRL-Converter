@@ -110,6 +110,7 @@ def main() -> None:
     arp = ArelleReportProcessor(
         taxonomyPackages=taxonomy_packages, workOffline=workOffline
     )
+    # A zip, or an Inline XBRL or xBRL-JSON report, which is packaged in memory.
     source = getOrCreateReportPackage(report_path)
 
     outputsWanted: bool = bool(viewer_path or json_path)
@@ -132,7 +133,7 @@ def main() -> None:
                 print("Failed to create inline viewer.")
 
         if json_path:
-            arelle_result = arp.validateReportPackage(source, getReportAsJson=True)
+            arelle_result = arp.generateXbrlJson(source)
             arelle_messages.extend(arelle_result.messages)
             if arelle_result.has_json:
                 if json_path.is_file():

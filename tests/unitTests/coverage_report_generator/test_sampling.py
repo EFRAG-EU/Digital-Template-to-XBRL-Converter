@@ -12,9 +12,9 @@ from dataclasses import dataclass, field
 import pytest
 
 from mireport.coverage_report_generator._sampling import (
-    SampleEntityPeriod,
+    FactShape,
     buildDimensionValues,
-    buildFactDimensions,
+    buildFactShape,
     domainForDimension,
     extraUnitsFor,
     pickExplicitRepresentative,
@@ -101,10 +101,10 @@ class TestValueForEnumerations:
             isEnumerationSingle=True,
             eeDomain=frozenset({m1, m2}),
         )
-        value, decimals, qnames = valueFor(concept)
+        value, decimals, members = valueFor(concept)
         assert value == "esrs:MemberA"
         assert decimals is None
-        assert qnames == frozenset({m1.qname})
+        assert members == frozenset({m1})
 
     def test_enumeration_set_empty_domain_is_valid_empty_value_not_nil(self) -> None:
         concept = FakeConcept(qname=FakeQName("esrs", "C"), isEnumerationSet=True)
@@ -117,7 +117,7 @@ class TestValueForEnumerations:
             isEnumerationSet=True,
             eeDomain=frozenset({m1}),
         )
-        assert valueFor(concept) == ("esrs:MemberA", None, frozenset({m1.qname}))
+        assert valueFor(concept) == ("esrs:MemberA", None, frozenset({m1}))
 
     def test_enumeration_set_gets_two_members_sorted_by_qname_string(self) -> None:
         # Deliberately out of alphabetical order in the domain, and spanning two
@@ -130,10 +130,10 @@ class TestValueForEnumerations:
             isEnumerationSet=True,
             eeDomain=frozenset({late, early}),
         )
-        value, decimals, qnames = valueFor(concept)
+        value, decimals, members = valueFor(concept)
         assert value == "aaa:Zzz zzz:Aaa"
         assert decimals is None
-        assert qnames == frozenset({early.qname, late.qname})
+        assert members == frozenset({early, late})
 
 
 class TestValueForOtherTypes:
@@ -573,32 +573,32 @@ class TestBuildDimensionValues:
     def test_explicit_dimension_at_its_default_is_omitted(self) -> None:
         dim = member("esrs", "Axis")
         default = member("esrs", "DefaultMember")
-        dimensions, used = buildDimensionValues(
+        explicit, typed = buildDimensionValues(
             explicitChosen={dim: default},
             defaultByDim={dim: default},
             typedChosen={},
         )
-        assert dimensions == {}
-        assert used == set()
+        assert explicit == {}
+        assert typed == {}
 
-    def test_explicit_dimension_not_at_default_is_written_and_tracked(self) -> None:
+    def test_explicit_dimension_not_at_default_is_written(self) -> None:
         dim = member("esrs", "Axis")
         default, chosen = member("esrs", "DefaultMember"), member("esrs", "OtherMember")
-        dimensions, used = buildDimensionValues(
+        explicit, typed = buildDimensionValues(
             explicitChosen={dim: chosen},
             defaultByDim={dim: default},
             typedChosen={},
         )
-        assert dimensions == {"esrs:Axis": "esrs:OtherMember"}
-        assert used == {dim.qname, chosen.qname}
+        assert explicit == {dim: chosen}
+        assert typed == {}
 
-    def test_typed_dimension_is_always_written_as_a_string_value(self) -> None:
+    def test_typed_dimension_is_always_written(self) -> None:
         dim = member("esrs", "TypedAxis")
-        dimensions, used = buildDimensionValues(
+        explicit, typed = buildDimensionValues(
             explicitChosen={}, defaultByDim={}, typedChosen={dim: "sample value"}
         )
-        assert dimensions == {"esrs:TypedAxis": "sample value"}
-        assert used == {dim.qname}
+        assert explicit == {}
+        assert typed == {dim: "sample value"}
 
 
 class FakeEffectiveHypercube:
@@ -616,77 +616,58 @@ class FakeEffectiveHypercube:
         return self._valid
 
 
-SAMPLE_PERIOD = SampleEntityPeriod(
-    entity="lei:529900T8BM49AURSDO55",
-    entityPrefix="lei",
-    entityNamespace="http://standards.iso.org/iso/17442",
-    periodInstant="2027-01-01T00:00:00",
-    periodDuration="2026-01-01T00:00:00/2027-01-01T00:00:00",
-)
-
-
 class TestBuildFactDimensions:
     def test_no_variation_uses_representative_values_and_omits_defaults(self) -> None:
         concept = FakeConcept(qname=FakeQName("esrs", "C"))
         axis = member("esrs", "Axis")
         default = member("esrs", "DefaultMember")
-        dimensions, used = buildFactDimensions(
+        shape = buildFactShape(
             FakeTaxonomy(UTR=FakeUTR()),
             concept,
-            SAMPLE_PERIOD,
             FakeEffectiveHypercube(),
             {axis: default},
             {axis: default},
             {},
         )
-        assert dimensions == {
-            "concept": "esrs:C",
-            "entity": "lei:529900T8BM49AURSDO55",
-            "period": SAMPLE_PERIOD.periodDuration,
-        }
-        assert used == {concept.qname}
+        assert shape == FactShape(concept)
 
     def test_varied_explicit_dimension_overrides_representative_value(self) -> None:
         concept = FakeConcept(qname=FakeQName("esrs", "C"))
         axis = member("esrs", "Axis")
         default, chosen = member("esrs", "DefaultMember"), member("esrs", "OtherMember")
-        dimensions, used = buildFactDimensions(
+        shape = buildFactShape(
             FakeTaxonomy(UTR=FakeUTR()),
             concept,
-            SAMPLE_PERIOD,
             FakeEffectiveHypercube(),
             {axis: default},
             {axis: default},
             {},
             explicitOverrides={axis: chosen},
         )
-        assert dimensions["esrs:Axis"] == "esrs:OtherMember"
-        assert used == {concept.qname, axis.qname, chosen.qname}
+        assert shape.explicit == {axis: chosen}
 
     def test_varied_typed_dimension_overrides_placeholder(self) -> None:
         concept = FakeConcept(qname=FakeQName("esrs", "C"))
         typedAxis = member("esrs", "TypedAxis")
-        dimensions, _ = buildFactDimensions(
+        shape = buildFactShape(
             FakeTaxonomy(UTR=FakeUTR()),
             concept,
-            SAMPLE_PERIOD,
             FakeEffectiveHypercube(),
             {},
             {},
             {typedAxis: "placeholder"},
             typedOverrides={typedAxis: "chosen value"},
         )
-        assert dimensions["esrs:TypedAxis"] == "chosen value"
+        assert shape.typed == {typedAxis: "chosen value"}
 
     def test_multiple_overrides_apply_simultaneously(self) -> None:
         concept = FakeConcept(qname=FakeQName("esrs", "C"))
         axis = member("esrs", "Axis")
         default, chosen = member("esrs", "DefaultMember"), member("esrs", "OtherMember")
         typedAxis = member("esrs", "TypedAxis")
-        dimensions, used = buildFactDimensions(
+        shape = buildFactShape(
             FakeTaxonomy(UTR=FakeUTR()),
             concept,
-            SAMPLE_PERIOD,
             FakeEffectiveHypercube(),
             {axis: default},
             {axis: default},
@@ -694,9 +675,8 @@ class TestBuildFactDimensions:
             explicitOverrides={axis: chosen},
             typedOverrides={typedAxis: "chosen value"},
         )
-        assert dimensions["esrs:Axis"] == "esrs:OtherMember"
-        assert dimensions["esrs:TypedAxis"] == "chosen value"
-        assert used == {concept.qname, axis.qname, chosen.qname, typedAxis.qname}
+        assert shape.explicit == {axis: chosen}
+        assert shape.typed == {typedAxis: "chosen value"}
 
     def test_unit_override_replaces_computed_unit(self) -> None:
         concept = FakeConcept(
@@ -706,28 +686,25 @@ class TestBuildFactDimensions:
         )
         eur = FakeQName("iso4217", "EUR")
         usd = FakeQName("iso4217", "USD")
-        dimensions, used = buildFactDimensions(
+        shape = buildFactShape(
             FakeTaxonomy(
                 UTR=FakeUTR(permitted=frozenset({eur}), unitByPreferredId={"EUR": eur})
             ),
             concept,
-            SAMPLE_PERIOD,
             FakeEffectiveHypercube(),
             {},
             {},
             {},
             unitOverride=usd,
         )
-        assert dimensions["unit"] == "iso4217:USD"
-        assert used == {concept.qname, usd}
+        assert shape.unit is not None and str(shape.unit) == "iso4217:USD"
 
     def test_raises_when_generated_dimensions_do_not_match_the_hypercube(self) -> None:
         concept = FakeConcept(qname=FakeQName("esrs", "C"))
         with pytest.raises(SampleGenerationException):
-            buildFactDimensions(
+            buildFactShape(
                 FakeTaxonomy(UTR=FakeUTR()),
                 concept,
-                SAMPLE_PERIOD,
                 FakeEffectiveHypercube(valid=False),
                 {},
                 {},

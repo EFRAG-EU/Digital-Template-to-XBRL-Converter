@@ -37,6 +37,7 @@ from mireport.pdf_converter import (
 )
 from mireport.report.reportpackage import buildReportPackage
 from mireport.report.theme import ColourPalette, DisplayMode, ReportTheme
+from mireport.xbrljson_writer import toXbrlJson
 from mireport.xlsx_template_reader.processor import XlsxProcessor
 
 
@@ -117,7 +118,8 @@ def createArgParser() -> argparse.ArgumentParser:
         "--json",
         action=argparse.BooleanOptionalAction,
         default=False,
-        help="Generate JSON output as well.",
+        help="Write the report as xBRL-JSON as well (beside the output, with a .json "
+        "suffix), validated by Arelle unless --skip-validation.",
     )
     parser.add_argument(
         "--style-mode",
@@ -358,6 +360,21 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, list[str]
             )
             reportFile.saveToFilepath(output_path)
 
+        xbrlJson: FilelikeAndFileName | None = None
+        if args.json:
+            # Written from the report itself; Arelle checks it below.
+            jsonPath = (
+                output_path / Path(reportPackage.filename).with_suffix(".json").name
+                if dir_specified
+                else output_path.with_suffix(".json")
+            )
+            xbrlJson = FilelikeAndFileName(
+                fileContent=toXbrlJson(report).toJson().encode("utf-8"),
+                filename=jsonPath.name,
+            )
+            pc.mark("Writing xBRL-JSON", additionalInfo=f"To {jsonPath}")
+            xbrlJson.saveToFilepath(jsonPath)
+
         if not args.skip_validation:
             pc.mark(
                 "Validating using Arelle",
@@ -369,7 +386,7 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, list[str]
                 workOffline=args.offline,
             )
 
-            if not args.viewer and not args.json:
+            if not args.viewer:
                 arelleResults = arp.validateReportPackage(reportPackage)
                 resultsBuilder.addMessages(arelleResults.messages)
 
@@ -386,21 +403,9 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, list[str]
                 else:
                     pc.addDevInfoMessage("Failed to create viewer.")
 
-            if args.json:
-                arelleResults = arp.validateReportPackage(
-                    reportPackage, getReportAsJson=True
-                )
-                resultsBuilder.addMessages(arelleResults.messages)
-
-                if arelleResults.has_json:
-                    json_output = arelleResults.xbrl_json
-                    if not dir_specified:
-                        json_path = output_path.with_suffix(".json")
-                        json_output.saveToFilepath(json_path)
-                    else:
-                        json_output.saveToDirectory(output_path)
-                else:
-                    pc.addDevInfoMessage("Failed to create JSON output.")
+            if xbrlJson is not None:
+                pc.mark("Validating xBRL-JSON using Arelle")
+                resultsBuilder.addMessages(arp.validateXbrlJson(xbrlJson).messages)
         unused = xl_processor.unusedNames
     return resultsBuilder.build(), unused
 

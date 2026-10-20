@@ -20,7 +20,9 @@ from mireport.coverage_report_generator._sampling import (
     buildFacts,
     reportableConcepts,
 )
+from mireport.report import Report
 from mireport.taxonomy import Taxonomy, loadTaxonomyJSON
+from mireport.xbrljson_writer import toXbrlJson
 
 _NS = "https://example.com/vsme"
 _STANDARD_LABEL = "http://www.xbrl.org/2003/role/label"
@@ -116,6 +118,11 @@ def _build_taxonomy(
     return loadTaxonomyJSON(bits)
 
 
+def _facts(report: Report) -> dict[str, Any]:
+    """The report's facts as xBRL-JSON writes them."""
+    return toXbrlJson(report).toDict()["facts"]
+
+
 PERIOD = SampleEntityPeriod(
     entity="lei:529900T8BM49AURSDO55",
     entityPrefix="lei",
@@ -146,9 +153,10 @@ class TestVaryAllDimensionsFact:
         taxonomy = _build_taxonomy("test://build-facts/vary-all", dimensions)
         concepts = reportableConcepts(taxonomy)
 
-        facts, _, emptyDomains, emptySetDomains = buildFacts(
+        report, emptyDomains, emptySetDomains = buildFacts(
             taxonomy, concepts, PERIOD, nil=False
         )
+        facts = _facts(report)
 
         assert emptyDomains == []
         assert emptySetDomains == []
@@ -190,7 +198,8 @@ class TestVaryAllDimensionsFact:
         taxonomy = _build_taxonomy("test://build-facts/single-dimension", dimensions)
         concepts = reportableConcepts(taxonomy)
 
-        facts, _, _, _ = buildFacts(taxonomy, concepts, PERIOD, nil=False)
+        report, _, _ = buildFacts(taxonomy, concepts, PERIOD, nil=False)
+        facts = _facts(report)
 
         # proof-of-reportability + the one non-default member -- no combinatorial
         # fact, since there is only one dimension to vary in the first place.
@@ -220,7 +229,8 @@ class TestExtraUnitFact:
         assert len(permitted) == 2
 
         concepts = reportableConcepts(taxonomy)
-        facts, _, _, _ = buildFacts(taxonomy, concepts, PERIOD, nil=False)
+        report, _, _ = buildFacts(taxonomy, concepts, PERIOD, nil=False)
+        facts = _facts(report)
 
         chargeFacts = [
             fact["dimensions"]
@@ -255,7 +265,8 @@ class TestTypedDimensionValueIsTypeAware:
         )
         concepts = reportableConcepts(taxonomy)
 
-        facts, _, _, _ = buildFacts(taxonomy, concepts, PERIOD, nil=False)
+        report, _, _ = buildFacts(taxonomy, concepts, PERIOD, nil=False)
+        facts = _facts(report)
         itemFacts = [
             fact["dimensions"]
             for fact in facts.values()

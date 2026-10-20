@@ -85,22 +85,22 @@ def mergedPackage(report: InlineReport, annex: MergedAnnex) -> FilelikeAndFileNa
 
 # Each Arelle session costs several seconds, so every distinct operation on a
 # package runs once per module and the tests below assert on the result.
-# One validating session per package also hands back the xBRL-JSON
-# (getReportAsJson), so validation and JSON tests share a single run.
+# One validating session per package also counts the facts Arelle loaded
+# (factCount), so validation and fact tests share a single run.
 
 
 @pytest.fixture(scope="module")
 def plainRun(
     arelle: ArelleReportProcessor, plainPackage: FilelikeAndFileName
 ) -> ArelleProcessingResult:
-    return arelle.validateReportPackage(plainPackage, getReportAsJson=True)
+    return arelle.validateReportPackage(plainPackage)
 
 
 @pytest.fixture(scope="module")
 def mergedRun(
     arelle: ArelleReportProcessor, mergedPackage: FilelikeAndFileName
 ) -> ArelleProcessingResult:
-    return arelle.validateReportPackage(mergedPackage, getReportAsJson=True)
+    return arelle.validateReportPackage(mergedPackage)
 
 
 @pytest.fixture(scope="module")
@@ -163,13 +163,8 @@ class TestFactsUnchanged:
     def test_fact_count_is_identical(
         self, plainRun: ArelleProcessingResult, mergedRun: ArelleProcessingResult
     ) -> None:
-        import json
-
-        def factCount(result: ArelleProcessingResult) -> int:
-            assert result.has_json, result.log_lines
-            return len(json.loads(result.xbrl_json.fileContent)["facts"])
-
-        assert factCount(mergedRun) == factCount(plainRun)
+        assert mergedRun.factCount == plainRun.factCount
+        assert plainRun.factCount, plainRun.log_lines
 
 
 # ── layout and content ────────────────────────────────────────────────────────
@@ -210,13 +205,10 @@ class TestMergedContent:
         assert len(root.findall(f".//{{{IX}}}header")) == 1
 
 
-# ── viewer and JSON outputs ───────────────────────────────────────────────────
+# ── viewer output ───────────────────────────────────────────────────────────
 
 
 class TestGeneratedOutputs:
-    def test_json_is_generated(self, mergedRun: ArelleProcessingResult) -> None:
-        assert mergedRun.has_json, mergedRun.log_lines
-
     def test_viewer_is_generated(self, mergedViewer: ArelleProcessingResult) -> None:
         assert mergedViewer.has_viewer, mergedViewer.log_lines
 

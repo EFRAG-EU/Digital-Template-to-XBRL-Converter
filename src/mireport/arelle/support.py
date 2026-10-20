@@ -79,6 +79,7 @@ class ArelleProcessingResult:
         self._viewer: FilelikeAndFileName | None = None
         self._viewerDocumentSetMembers: list[FilelikeAndFileName] = []
         self._xbrlJson: FilelikeAndFileName | None = None
+        self._factCount: int | None = None
         self._exceptions: list[Exception] = []
         self._diagnostics: list[ArelleDiagnostic] = []
 
@@ -86,7 +87,10 @@ class ArelleProcessingResult:
     def fromSession(cls, session: Session) -> Self:
         jsonLog = session.get_logs("json", clear_logs=False)
         textLog = session.get_logs("text", clear_logs=True)
-        return cls.fromArelleLogs(jsonLog, textLog.split("\n"))
+        result = cls.fromArelleLogs(jsonLog, textLog.split("\n"))
+        if models := session.get_models():
+            result._factCount = sum(len(model.facts) for model in models)
+        return result
 
     @classmethod
     def fromArelleLogs(cls, jsonMessages: str, textLogLines: list[str]) -> Self:
@@ -165,6 +169,11 @@ class ArelleProcessingResult:
         if self._xbrlJson is not None:
             return self._xbrlJson
         raise ArelleRelatedException("No JSON available")
+
+    @property
+    def factCount(self) -> int | None:
+        """How many facts Arelle loaded; None if it loaded no report."""
+        return self._factCount
 
     @property
     def has_viewer(self) -> bool:

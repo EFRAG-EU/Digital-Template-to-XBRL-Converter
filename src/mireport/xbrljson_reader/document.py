@@ -36,6 +36,11 @@ INVALID_DIMENSION_VALUE = "oime:invalidDimensionValue"
 INVALID_LANGUAGE = "oime:invalidLanguage"
 UNSUPPORTED = "mireport:unsupported"
 
+# A footnote link: the fact-footnote arcrole, in the standard link role. xBRL-JSON predefines
+# no link type names, so a document using them declares them in linkTypes/linkGroups.
+FACT_FOOTNOTE_ARCROLE = "http://www.xbrl.org/2003/arcrole/fact-footnote"
+STANDARD_LINK_ROLE = "http://www.xbrl.org/2003/role/link"
+
 
 class XbrlJsonException(Exception):
     """The document cannot be turned into a report at all."""
@@ -296,13 +301,13 @@ class XbrlJsonDocument:
         document["facts"] = {fact.id: fact.toDict() for fact in self.facts}
         return document
 
+    def toJson(self) -> str:
+        """The document as JSON text: indented, LF line ends, ending in a newline."""
+        return json.dumps(self.toDict(), indent=2, ensure_ascii=False) + "\n"
+
     def toFile(self, path: Path | str) -> None:
-        """Write the document as UTF-8 JSON with LF line ends, indented, ending in a newline."""
-        Path(path).write_text(
-            json.dumps(self.toDict(), indent=2, ensure_ascii=False) + "\n",
-            encoding="utf-8",
-            newline="\n",
-        )
+        """Write the document as UTF-8 JSON (see ``toJson``)."""
+        Path(path).write_text(self.toJson(), encoding="utf-8", newline="\n")
 
     def resolve(self, prefixed: str) -> tuple[str, str]:
         """The (namespace, local name) a prefixed name stands for in this document."""
