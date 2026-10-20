@@ -52,6 +52,28 @@ class TestConversion:
         conv.migrated_excel = None
         assert "migrated_excel" not in conv
 
+    def test_last_years_workbook_has_its_own_migration_state(self) -> None:
+        conv = _make()
+        conv.excel = _file(name="this-year.xlsx")
+        conv.priorReport = _file(name="last-year.xlsx")
+        prior = conv.prior
+        assert prior.isPrior and not conv.isPrior
+        assert prior.migrationSource == conv.priorReport
+        assert conv.migrationSource == conv.excel
+
+        prior.migration_outcome = MigrationOutcome.MIGRATION_REQUIRED
+        prior.report_template_version = "1.2.0"
+        prior.migrated_excel = _file(name="migrated.xlsx")
+        prior.migration_issues = ["an issue"]
+        assert conv.migration_outcome == ""
+        assert conv.report_template_version == ""
+        assert conv.migrated_excel is None
+        assert conv.migration_issues == []
+        assert not conv.has_migration_results
+        assert prior.has_migration_results
+        # Seen afresh, as each request does.
+        assert conv.prior.migration_outcome == MigrationOutcome.MIGRATION_REQUIRED
+
     def test_file_setter_rejects_wrong_type(self) -> None:
         conv = _make()
         with pytest.raises(TypeError):
@@ -235,6 +257,13 @@ class TestConversionStore:
         assert list(store.active()) == ["ok"]
         assert store.hasActive()
         assert store.get("old") is not None
+
+    def test_last_years_workbook_awaiting_migration_is_hidden_too(self) -> None:
+        store = ConversionStore({})
+        store.create("ok")
+        prior = store.create("old").prior
+        prior.migration_outcome = MigrationOutcome.MIGRATION_REQUIRED
+        assert list(store.active()) == ["ok"]
 
     def test_delete_and_delete_active(self) -> None:
         store = ConversionStore({})

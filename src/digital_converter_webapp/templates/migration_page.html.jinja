@@ -5,11 +5,11 @@
 
 {% macro convert_with_old_version() %}
 <div class="flex justify-center mt-3">
-    <a href="{{ url_for('basic.convert', id=conversion_id, skip_migration=True) }}"
+    <a href="{{ url_for('basic.convert', id=conversion_id, skip_migration=True, skip_prior_migration=prior or None) }}"
         onclick="showSpinner('Converting... Please wait.')"
         class="inline-block px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-center rounded-lg transition"
         style="min-width: 200px;">
-        Convert with old version
+        {% if prior %}Use last year's workbook as it is{% else %}Convert with old version{% endif %}
     </a>
 </div>
 {% endmacro %}
@@ -26,8 +26,14 @@
 
 <!-- Intro -->
 <p class="text-sm text-gray-700 font-medium">
+    {% if prior %}
+    Last year's report is a VSME Template of an older version. You can migrate it to the newest Template version,
+    or use it as it is: its figures are then matched to the newest version by name, and any that don't match are
+    left out with a warning.
+    {% else %}
     Your VSME Template is of an older version. Please use this tool to migrate your data to the newest Template
     version. This step will help the conversion into your digital report.
+    {% endif %}
 </p>
 
 <!-- Version Boxes -->
@@ -40,6 +46,7 @@
     </div>
 </div>
 
+{% if not prior %}
 <!-- New Features -->
 <section class="bg-green-50 border-2 border-green-400 rounded-xl p-8 mb-2 text-green-800">
     <h3 class="text-2xl font-bold mb-4">✨ <strong>New Functionalities</strong> of Newest Version</h3>
@@ -59,6 +66,7 @@
         </li>
     </ul>
 </section>
+{% endif %}
 
 <!-- File Loaded Info -->
 <p class="bg-blue-50 border border-blue-300 rounded-lg p-4 mb-4 text-sm text-blue-800">
@@ -68,7 +76,7 @@
 {% if not has_migration_results %}
 
 <!-- Pre-migration: offer Migrate Template + Convert with old version -->
-<form action="{{ url_for('basic.migrationButton', id=conversion_id) }}" method="post"
+<form action="{{ url_for('basic.migrationButton', id=conversion_id, prior=prior or None) }}" method="post"
     onsubmit="showSpinner('Migrating... Please wait.')">
     <div class="flex justify-center">
         <button type="submit"
@@ -118,7 +126,7 @@
             <p class="font-medium mb-2">Next steps:</p>
             <ol class="list-decimal list-outside pl-4 space-y-2">
                 <li>
-                    <a href="{{ url_for('basic.downloadMigrated', id=conversion_id) }}"
+                    <a href="{{ url_for('basic.downloadMigrated', id=conversion_id, prior=prior or None) }}"
                         class="download-handler text-blue-700 hover:text-blue-900 underline"
                         data-spinner-text="Preparing migrated template">Download the migrated template</a>.
                 </li>
@@ -130,7 +138,7 @@
                 <li>
                     <a href="{{ url_for('basic.index') }}"
                         class="text-blue-700 hover:text-blue-900 underline">Re-upload it on the home page</a>
-                    to convert it to XBRL.
+                    {% if prior %}with this year's workbook, as last year's report.{% else %}to convert it to XBRL.{% endif %}
                 </li>
             </ol>
         </div>
@@ -139,7 +147,7 @@
 </section>
 
 <div class="flex flex-wrap justify-center items-center gap-4">
-    {{ download_button('migrated', url_for('basic.downloadMigrated', id=conversion_id)) }}
+    {{ download_button('migrated', url_for('basic.downloadMigrated', id=conversion_id, prior=prior or None)) }}
 </div>
 {{ convert_with_old_version() }}
 

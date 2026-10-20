@@ -36,7 +36,7 @@ MIGRATION_REQUIRED = "migration_required"
 class Conversion:
     """Typed view over a single per-id conversion dict held in the session."""
 
-    __slots__ = ("_data", "_onChange")
+    __slots__ = ("_data", "_onChange", "_prior")
 
     # Generated files that can be fetched by name from a finished conversion.
     OUTPUT_KEYS: frozenset[str] = frozenset({"zip", "viewer", "json", "excel"})
@@ -45,9 +45,12 @@ class Conversion:
         self,
         data: MutableMapping[str, Any],
         onChange: Callable[[], None] | None = None,
+        *,
+        prior: bool = False,
     ) -> None:
         self._data = data
         self._onChange = onChange
+        self._prior = prior
 
     def _changed(self) -> None:
         if self._onChange is not None:
@@ -57,6 +60,20 @@ class Conversion:
     def raw(self) -> MutableMapping[str, Any]:
         """The underlying mutable dict.  Prefer the typed properties."""
         return self._data
+
+    @property
+    def prior(self) -> Conversion:
+        """This conversion as last year's workbook sees it, for the migration
+        flow: its ``migrationSource`` is ``priorReport``, and its migration
+        state is kept apart from this year's."""
+        return Conversion(self._data, self._onChange, prior=True)
+
+    @property
+    def isPrior(self) -> bool:
+        return self._prior
+
+    def _migrationKey(self, key: str) -> str:
+        return f"prior_{key}" if self._prior else key
 
     def get(self, key: str, default: Any = None) -> Any:
         return self._data.get(key, default)
@@ -115,53 +132,57 @@ class Conversion:
 
     @property
     def report_template_version(self) -> str:
-        return self._str("report_template_version")
+        return self._str(self._migrationKey("report_template_version"))
 
     @report_template_version.setter
     def report_template_version(self, value: str) -> None:
-        self._setStr("report_template_version", value)
+        self._setStr(self._migrationKey("report_template_version"), value)
 
     @property
     def migration_outcome(self) -> str:
-        return self._str("migration_outcome")
+        return self._str(self._migrationKey("migration_outcome"))
 
     @migration_outcome.setter
     def migration_outcome(self, value: object) -> None:
-        self._setStr("migration_outcome", str(value))
+        self._setStr(self._migrationKey("migration_outcome"), str(value))
 
     @property
     def migration_error(self) -> str | None:
-        return self._data.get("migration_error")
+        return self._data.get(self._migrationKey("migration_error"))
 
     @migration_error.setter
     def migration_error(self, value: str | None) -> None:
+        key = self._migrationKey("migration_error")
         if value is None:
-            self._data.pop("migration_error", None)
+            self._data.pop(key, None)
         else:
-            self._data["migration_error"] = value
+            self._data[key] = value
         self._changed()
 
     @property
     def migration_elapsed(self) -> float | None:
-        return self._data.get("migration_elapsed")
+        return self._data.get(self._migrationKey("migration_elapsed"))
 
     @migration_elapsed.setter
     def migration_elapsed(self, value: float | None) -> None:
-        self._data["migration_elapsed"] = value
+        self._data[self._migrationKey("migration_elapsed")] = value
         self._changed()
 
     @property
     def migration_issues(self) -> list[str]:
-        return list(self._data.get("migration_issues", []))
+        return list(self._data.get(self._migrationKey("migration_issues"), []))
 
     @migration_issues.setter
     def migration_issues(self, value: list[str]) -> None:
-        self._data["migration_issues"] = list(value)
+        self._data[self._migrationKey("migration_issues")] = list(value)
         self._changed()
 
     @property
     def has_migration_results(self) -> bool:
-        return "migrated_excel" in self._data or "migration_error" in self._data
+        return any(
+            self._migrationKey(k) in self._data
+            for k in ("migrated_excel", "migration_error")
+        )
 
     @property
     def successful(self) -> bool:
@@ -206,11 +227,16 @@ class Conversion:
 
     @property
     def migrated_excel(self) -> FilelikeAndFileName | None:
-        return self._getFilelike("migrated_excel")
+        return self._getFilelike(self._migrationKey("migrated_excel"))
 
     @migrated_excel.setter
     def migrated_excel(self, value: FilelikeAndFileName | None) -> None:
-        self._setFilelike("migrated_excel", value)
+        self._setFilelike(self._migrationKey("migrated_excel"), value)
+
+    @property
+    def migrationSource(self) -> FilelikeAndFileName | None:
+        """The workbook the migration flow is about: this year's, or last year's."""
+        return self.priorReport if self._prior else self.excel
 
     @property
     def zip(self) -> FilelikeAndFileName | None:
@@ -374,7 +400,10 @@ class ConversionStore:
         for k in self._session:
             if (conv := self.get(k)) is None:
                 continue
-            if conv.migration_outcome == MIGRATION_REQUIRED:
+            if MIGRATION_REQUIRED in (
+                conv.migration_outcome,
+                conv.prior.migration_outcome,
+            ):
                 continue
             out[k] = conv
         return out

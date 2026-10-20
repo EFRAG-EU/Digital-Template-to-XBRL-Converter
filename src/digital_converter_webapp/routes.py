@@ -248,8 +248,6 @@ def upload() -> Response:
 @convert_bp.route("/conversions/<string:id>", methods=["GET"])
 def convert(id: str) -> Response:
     try:
-        skip_migration = truthy(request.args.get("skip_migration", ""))
-
         if (conv := ConversionStore.fromFlask().get(id)) is None:
             return make_response(
                 render_template(
@@ -261,13 +259,18 @@ def convert(id: str) -> Response:
             )
 
         if not conv.has_results:
-            if (
-                not skip_migration
-                and current_app.config["ENABLE_MIGRATION"]
-                and (migrationResponse := checkMigration(conv)) is not None
+            # This year's workbook, then last year's: each may be kept as it is.
+            for workbook, skip in (
+                (conv, "skip_migration"),
+                (conv.prior, "skip_prior_migration"),
             ):
-                # Migration deemed to be required so no conversion done at this stage.
-                return migrationResponse
+                if (
+                    not truthy(request.args.get(skip, ""))
+                    and current_app.config["ENABLE_MIGRATION"]
+                    and (migrationResponse := checkMigration(workbook)) is not None
+                ):
+                    # Migration deemed to be required so no conversion done at this stage.
+                    return migrationResponse
 
             results = doConversion(
                 conv, getArelle(), current_app.config["PDF_SUPPLEMENTARY_MODE"]

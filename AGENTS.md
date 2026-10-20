@@ -461,6 +461,13 @@ write would not do on its own, and they keep stored values to what the session b
 (it hands `NamedTuple`s back as lists, hence `FilelikeAndFileName.from_tuple` on every read). Only the
 CSRF token and captcha answers are read from `session` directly.
 
+Last year's report, the upload's optional `prior` file, is `Conversion.priorReport`. `doConversion`
+merges it (`PriorReport.fromFile(...).mergeInto(...)`) once this year's Word documents are in, and one that can't be
+merged stops the conversion. With migration on, an older prior workbook is offered the migration page
+too, after this year's: `conv.prior` is the same conversion seen from last year's workbook, with its
+own migration state (`prior_` keys), which the migration routes use when given `?prior=True`;
+`skip_prior_migration` uses the workbook as it is.
+
 Web app tests are grouped by the module they exercise: Flask-free modules in
 `tests/unitTests/digital_converter_webapp/`, routes and end-to-end behaviour in `tests/webappTests/`
 (`test_upload.py`, `test_conversion_service.py`, `test_viewer.py`, …). Shared helpers are fixtures in
