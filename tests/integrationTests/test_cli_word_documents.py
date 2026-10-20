@@ -14,6 +14,7 @@ import pytest
 from tests.unitTests.word_documents import (
     EXTERNAL_CONCEPT,
     SAMPLE_1_3_0,
+    externalValuesWorkbook,
     wordDocument,
 )
 
@@ -59,4 +60,14 @@ def test_word_document_replaces_a_text_block_and_its_warnings_are_shown(
     assert result.returncode == 0, result.stdout + result.stderr
     assert "policy.docx" in result.stdout
     assert "Fancy" in result.stdout
+    assert "Supplied in Word." in reportText(tmp_path)
+
+
+def test_word_document_fills_a_text_block_the_template_marks_as_external(
+    tmp_path: Path,
+) -> None:
+    workbook = tmp_path / "external.xlsx"
+    workbook.write_bytes(externalValuesWorkbook())
+    result = runCli(workbook, tmp_path)
+    assert result.returncode == 0, result.stdout + result.stderr
     assert "Supplied in Word." in reportText(tmp_path)

@@ -330,7 +330,13 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, list[str]
                 )
                 docx_path = _resolve_extra_path(extra_file, rtv["path"])
                 markup = _convert_docx_to_markup(docx_path, resultsBuilder)
-                report.replaceFactValue(rtv["concept"], markup)
+                concept = report.taxonomy.getConcept(rtv["concept"])
+                # A text block the template marks as external has no fact to
+                # replace yet, only a partial one waiting for this value.
+                if concept in report.partialFactsByConcept:
+                    report.completePartialFact(concept, markup)
+                else:
+                    report.replaceFactValue(concept, markup)
 
             for entry in extra.get("pdfAttachments", []):
                 pdf_path = _resolve_extra_path(extra_file, entry["path"])

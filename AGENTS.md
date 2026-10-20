@@ -407,7 +407,8 @@ converter, and skips when neither is on PATH.
 
 Some disclosures take their value from an uploaded Word document rather than a cell. Those concepts
 are registered via `InlineReport.addPartialFact()` and must be completed with
-`completePartialFact()`/`replaceFactValue()`; `getInlineReport()` refuses to render while any remain.
+`completePartialFact()` (`replaceFactValue()` only replaces a built fact); `getInlineReport()`
+refuses to render while any remain.
 The web app implements this as the `partial-facts` upload page, the CLI as `--extra-data`
 (`replacementTextblockValues`, which also covers footnotes, label overrides and intro/back-cover
 matter, converted from `.docx` by mammoth).
