@@ -4,10 +4,19 @@ When a report contains disclosure fields whose content must be supplied as Word
 documents, the conversion flow diverts to ``/conversions/<id>/partial-facts``.
 This page renders one file input per outstanding concept; submitting it stores
 the uploaded ``.docx`` files as the conversion's ``external_values`` and returns
-to the convert step. These tests cover that GET/POST behaviour.
+to the convert step. These tests cover that GET/POST behaviour, and the slow
+one the whole flow, from upload to report.
 """
 
 import io
+import zipfile
+
+import pytest
+from tests.unitTests.word_documents import (
+    EXTERNAL_CONCEPT,
+    externalValuesWorkbook,
+    wordDocument,
+)
 
 from digital_converter_webapp.conversion import ConversionStore
 
@@ -92,3 +101,37 @@ def test_post_missing_file_flashes_error_and_redirects_back(client):
     assert resp.status_code == 303
     assert resp.location.endswith(f"/conversions/{CONVERSION_ID}/partial-facts")
     assert not _stored(client).has_external_values
+
+
+@pytest.mark.slow
+@pytest.mark.usefixtures("skipArelle")
+def test_word_document_fills_the_text_block_and_its_warnings_are_shown(
+    client, upload, conversion_of
+):
+    upload(client, data=externalValuesWorkbook())
+    url = f"/conversions/{conversion_of(client).id}"
+    assert client.get(url).location.endswith(f"{url}/partial-facts")
+
+    document = wordDocument("Supplied in Word.", paragraphStyle="Fancy")
+    client.post(
+        f"{url}/partial-facts",
+        data={f"docx_{EXTERNAL_CONCEPT}": (io.BytesIO(document), "policy.docx")},
+        content_type="multipart/form-data",
+    )
+    client.get(url)
+
+    conv = conversion_of(client)
+    results = conv.raw["results"]
+    # "success" is ConversionResults.toDict()'s abbreviated key.
+    assert results["success"] is True
+    wordWarnings = [
+        m for m in results["m"] if m["s"] == "WARNING" and "policy.docx" in m["m"]
+    ]
+    assert wordWarnings, results["m"]
+    assert all("Fancy" in m["m"] for m in wordWarnings), wordWarnings
+    with zipfile.ZipFile(io.BytesIO(conv.zip.fileContent)) as package:
+        assert any(
+            b"Supplied in Word." in package.read(name)
+            for name in package.namelist()
+            if name.endswith(".html")
+        )

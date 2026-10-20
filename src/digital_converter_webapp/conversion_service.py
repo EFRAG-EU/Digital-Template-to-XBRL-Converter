@@ -176,6 +176,13 @@ def _completePartialFacts(
         if (docx := external.get(str(concept.qname))) is None:
             continue
         mammothResult = mammoth.convert_to_html(docx.fileLike())
+        for message in mammothResult.messages:
+            builder.addMessage(
+                f"Word document {docx.filename}: {message.message}",
+                Severity.WARNING,
+                MessageType.Conversion,
+                taxonomy_concept=concept,
+            )
         report.completePartialFact(concept, Markup(mammothResult.value))
 
     if not report.hasPartialFacts:
