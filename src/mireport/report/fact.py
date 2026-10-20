@@ -266,7 +266,7 @@ class Fact:
         dataType = self.concept.dataType
 
         def symbols(measures: Iterable) -> str:
-            return "·".join(utr.getSymbolForUnit(m, dataType) for m in measures)
+            return "·".join(utr.getSymbolForUnit(m) for m in measures)
 
         if unit is not None and unit.is_divide:
             return f"{symbols(unit.numerator)} per {symbols(unit.denominator)}"

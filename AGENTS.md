@@ -179,7 +179,13 @@ internal. The chain, in order:
    workarounds.
 3. **`_fact_creator.FactCreator`** — walks the bindings and builds facts, delegating hypercube tables
    to `_tables.TableFactCreator` (one fact per row, dimensions read from the same row), units to
-   `_units.UnitResolver` (documented resolution ladder), member-label resolution to
+   `_units.UnitResolver` (documented resolution ladder; a monetary concept with no currency cell takes the
+   report's currency, never a UTR pick; a type that `UTR.requiresComplexUnit`, such as emissions per
+   monetary unit, takes a divide unit built from `UTR.complexUnitFor`: a numerator unit typed in the unit
+   cell, else for each side the report's currency for a monetary side, the `dataTypesToUnits` entry
+   (`ConverterConfig.unitForDataType`, by local name) or the UTR's only unit, and no fact, with a warning
+   naming the missing side, otherwise; `UTR.valid` is false for any single unit on such a type; a `False`
+   from the resolver means no fact), member-label resolution to
    `_enumerations.resolveMemberByLabel` (exact standard label → configured alias → closest EE-domain
    match, scoped to the relevant domain), and footnotes to `_footnotes.FootnoteFactCreator`.
 
@@ -299,8 +305,8 @@ anything that cannot be added or would appear nowhere in the rendered report is 
 in a taxonomy-agnostic way (everything comes from the baked `Taxonomy`). Two properties hold by
 construction. **No two facts share a context** (concept, period, dimensions): a fact for dimensions already
 covered is skipped, since duplicates and alternative facts do not belong in a coverage report. **No fact
-carries a unit the UTR forbids**: units are checked as they are written, including composite types (see
-`UTR.compositeFor`: emissions per monetary unit and the like have no named unit and are reported in a divide
+carries a unit the UTR forbids**: units are checked as they are written, including types that take a complex unit (see
+`UTR.complexUnitFor`: emissions per monetary unit and the like have no named unit and are reported in a divide
 unit such as `utr:tCO2e/iso4217:EUR`; leaving them unitless would read as `xbrli:pure`). What each fact
 *shows* is a per-concept rotation: the first fact takes the concept's usual unit and value, each further
 one (each dimension value) takes the next variant, namely another permitted unit or an enumeration set's

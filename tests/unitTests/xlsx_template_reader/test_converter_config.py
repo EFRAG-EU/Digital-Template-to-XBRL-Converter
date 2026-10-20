@@ -6,7 +6,7 @@ import pytest
 
 from mireport.data.disclosures import VSME_DEFAULTS
 from mireport.taxonomy import getTaxonomy
-from mireport.xlsx_template_reader._config import ComplexUnit, ConverterConfig
+from mireport.xlsx_template_reader._config import ConverterConfig
 from mireport.xlsx_template_reader._reader import WorkbookReader
 from mireport.xlsx_template_reader.util import loadExcelFromPathOrFileLike
 
@@ -39,17 +39,23 @@ class TestConverterConfig:
         area = taxonomy.QNameMaker.fromString("dtr-types:areaItemType")
         assert config.dataTypesToUnits[area] == taxonomy.QNameMaker.fromString("utr:ha")
 
+    def test_unit_for_data_type_matches_by_local_name(self, config, taxonomy):
+        """The UTR qualifies ghgEmissionsItemType in its own namespace, the config in the
+        DTR's."""
+        utr_side = taxonomy.QNameMaker.fromNamespaceAndLocalName(
+            "http://www.xbrl.org/2009/utr", "ghgEmissionsItemType"
+        )
+        assert config.unitForDataType(utr_side) == taxonomy.QNameMaker.fromString(
+            "utr:tCO2e"
+        )
+        unknown = taxonomy.QNameMaker.fromString("dtr-types:flowItemType")
+        assert config.unitForDataType(unknown) is None
+
     def test_concepts_to_units_keyed_by_concept(self, config, taxonomy):
         concept = taxonomy.getConcept("vsme:TotalWasteGeneratedMass")
         assert config.conceptsToUnits[concept] == taxonomy.QNameMaker.fromString(
             "utr:t"
         )
-
-    def test_unit_ids_to_measures_builds_complex_units(self, config):
-        cu = config.unitIdsToMeasures["Emissions_per_Monetary"]
-        assert isinstance(cu, ComplexUnit)
-        assert [str(q) for q in cu.numerator] == ["utr:tCO2e"]
-        assert [str(q) for q in cu.denominator] == ["iso4217:EUR"]
 
     def test_cell_values_to_taxonomy_labels_passthrough(self, config):
         assert (
@@ -63,7 +69,6 @@ class TestConverterConfig:
     def test_empty_defaults_gives_empty_config(self, taxonomy):
         cfg = ConverterConfig.fromDefaults({}, taxonomy)
         assert cfg.dataTypesToUnits == {}
-        assert cfg.unitIdsToMeasures == {}
         assert cfg.conceptsToUnits == {}
         assert cfg.cellValuesToTaxonomyLabels == {}
         assert cfg.cellUnitReplacements == {}

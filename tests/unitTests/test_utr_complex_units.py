@@ -1,0 +1,179 @@
+"""Complex UTR units: a unit that is one item type's unit over another's.
+
+The UTR lists a few item types (emissions per monetary unit, say) with no named unit, only a
+numerator and a denominator item type. ``getUnitsForDataType`` knows named units only, so it is
+empty for them; that must not read as "the UTR does not constrain this type".
+"""
+
+from __future__ import annotations
+
+import json
+
+import pytest
+
+from mireport.data import registries
+from mireport.exceptions import UnitException
+from mireport.json import getResource
+from mireport.utr import UTR
+from mireport.xml import getBootstrapQNameMaker
+
+UTR_NS = "http://www.xbrl.org/2009/utr"
+XBRLI = "http://www.xbrl.org/2003/instance"
+ISO = "http://www.xbrl.org/2003/iso4217"
+DTR = "http://www.xbrl.org/dtr/type/2024-01-31"
+
+_ENTRIES = {
+    "utr": [
+        {
+            "unitId": "tCO2e",
+            "itemType": "ghgEmissionsItemType",
+            "nsItemType": UTR_NS,
+            "nsUnit": UTR_NS,
+        },
+        {
+            "unitId": "kg",
+            "itemType": "massItemType",
+            "nsItemType": UTR_NS,
+            "nsUnit": UTR_NS,
+        },
+        {
+            "unitId": "EUR",
+            "itemType": "monetaryItemType",
+            "nsItemType": XBRLI,
+            "nsUnit": ISO,
+        },
+        {
+            "unitId": "Emissions_per_Monetary",
+            "itemType": "ghgEmissionsPerMonetaryItemType",
+            "numeratorItemType": "ghgEmissionsItemType",
+            "nsNumeratorItemType": UTR_NS,
+            "denominatorItemType": "monetaryItemType",
+            "nsDenominatorItemType": XBRLI,
+        },
+    ]
+}
+
+
+@pytest.fixture
+def utr() -> UTR:
+    return UTR.fromDict(_ENTRIES, qnameMaker=getBootstrapQNameMaker())
+
+
+@pytest.fixture
+def q():
+    maker = getBootstrapQNameMaker()
+    return maker.fromNamespaceAndLocalName
+
+
+def test_a_complex_type_is_found_by_its_name_in_any_namespace(utr: UTR, q) -> None:
+    complexUnit = utr.complexUnitFor(q(DTR, "ghgEmissionsPerMonetaryItemType"))
+    assert complexUnit is not None
+    assert complexUnit.unitId == "Emissions_per_Monetary"
+    assert complexUnit.numerator.localName == "ghgEmissionsItemType"
+    assert complexUnit.denominator.localName == "monetaryItemType"
+
+
+def test_a_simple_type_is_not_complex(utr: UTR, q) -> None:
+    assert utr.complexUnitFor(q(UTR_NS, "massItemType")) is None
+
+
+def test_a_complex_type_has_no_named_units_but_is_not_unconstrained(
+    utr: UTR, q
+) -> None:
+    dataType = q(DTR, "ghgEmissionsPerMonetaryItemType")
+    assert utr.getUnitsForDataType(dataType) == frozenset()
+    assert utr.complexUnitFor(dataType) is not None
+
+
+def test_each_side_must_be_valid_for_its_own_item_type(utr: UTR, q) -> None:
+    dataType = q(DTR, "ghgEmissionsPerMonetaryItemType")
+    tco2e, kg, eur = q(UTR_NS, "tCO2e"), q(UTR_NS, "kg"), q(ISO, "EUR")
+    assert utr.validComplexUnit(dataType, tco2e, eur)
+    assert not utr.validComplexUnit(dataType, kg, eur)  # a mass is not an emission
+    assert not utr.validComplexUnit(dataType, eur, tco2e)  # the wrong way up
+
+
+def test_no_single_unit_is_valid_for_a_complex_type(utr: UTR, q) -> None:
+    dataType = q(DTR, "ghgEmissionsPerMonetaryItemType")
+    for unit in (q(UTR_NS, "tCO2e"), q(ISO, "EUR"), q(XBRLI, "pure")):
+        assert not utr.valid(dataType, unit)
+
+
+def test_a_named_type_still_checks_its_units_and_an_unlisted_one_takes_any(
+    utr: UTR, q
+) -> None:
+    assert utr.valid(q(UTR_NS, "massItemType"), q(UTR_NS, "kg"))
+    assert not utr.valid(q(UTR_NS, "massItemType"), q(UTR_NS, "tCO2e"))
+    assert utr.valid(q(DTR, "percentItemType"), q(XBRLI, "pure"))  # not in the UTR
+
+
+def test_only_a_type_with_no_simple_unit_requires_a_complex_one(utr: UTR, q) -> None:
+    assert utr.requiresComplexUnit(q(DTR, "ghgEmissionsPerMonetaryItemType"))
+    assert not utr.requiresComplexUnit(q(UTR_NS, "massItemType"))
+    assert not utr.requiresComplexUnit(q(DTR, "percentItemType"))  # not in the UTR
+
+
+def test_a_type_with_both_a_simple_and_a_complex_unit_takes_the_simple_one(
+    q,
+) -> None:
+    """pureItemType is listed with xbrli:pure and as Monetary_per_Monetary."""
+    entries = [
+        {
+            "unitId": "pure",
+            "itemType": "pureItemType",
+            "nsItemType": XBRLI,
+            "nsUnit": XBRLI,
+        },
+        {
+            "unitId": "Monetary_per_Monetary",
+            "itemType": "pureItemType",
+            "nsItemType": XBRLI,
+            "numeratorItemType": "monetaryItemType",
+            "nsNumeratorItemType": XBRLI,
+            "denominatorItemType": "monetaryItemType",
+            "nsDenominatorItemType": XBRLI,
+        },
+    ]
+    both = UTR.fromDict({"utr": entries}, qnameMaker=getBootstrapQNameMaker())
+    pure = q(XBRLI, "pureItemType")
+    assert both.getUnitsForDataType(pure) == {q(XBRLI, "pure")}
+    assert not both.requiresComplexUnit(pure)
+    assert both.valid(pure, q(XBRLI, "pure"))
+
+
+def test_a_complex_unit_side_without_a_namespace_is_refused() -> None:
+    entry = dict(_ENTRIES["utr"][-1])
+    del entry["nsDenominatorItemType"]
+    with pytest.raises(UnitException, match="denominator item type monetaryItemType"):
+        UTR.fromDict({"utr": [entry]}, qnameMaker=getBootstrapQNameMaker())
+
+
+def test_a_currency_is_valid_only_in_the_iso4217_namespace(utr: UTR, q) -> None:
+    assert utr.validCurrency(q(ISO, "EUR"))
+    assert utr.validCurrency("EUR")
+    assert not utr.validCurrency(q(UTR_NS, "EUR"))
+    assert not utr.validCurrency(q(ISO, "XYZ"))
+
+
+def test_a_simple_type_is_never_a_valid_complex_unit(utr: UTR, q) -> None:
+    assert not utr.validComplexUnit(
+        q(UTR_NS, "massItemType"), q(UTR_NS, "kg"), q(ISO, "EUR")
+    )
+
+
+def test_the_real_utr_models_every_complex_unit_it_lists() -> None:
+    entries = json.loads(getResource(registries, "utr.json").read_text("utf-8"))["utr"]
+    complexUnits = [e for e in entries if "numeratorItemType" in e]
+    real = UTR.fromDict({"utr": entries}, qnameMaker=getBootstrapQNameMaker())
+    maker = getBootstrapQNameMaker()
+    # an item type the UTR gives a namespace is looked up in it; the others come from the DTR
+    found = {
+        e["itemType"]
+        for e in complexUnits
+        if real.complexUnitFor(
+            maker.fromNamespaceAndLocalName(e.get("nsItemType", DTR), e["itemType"])
+        )
+        is not None
+    }
+    assert found == {e["itemType"] for e in complexUnits}
+    assert "ghgEmissionsPerMonetaryItemType" in found

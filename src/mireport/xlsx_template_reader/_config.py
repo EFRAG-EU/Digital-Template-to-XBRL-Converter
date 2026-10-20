@@ -4,15 +4,10 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, NamedTuple
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from mireport.taxonomy import Concept, QName, Taxonomy
-
-
-class ComplexUnit(NamedTuple):
-    numerator: list[QName]
-    denominator: list[QName]
 
 
 @dataclass(frozen=True, slots=True)
@@ -20,10 +15,24 @@ class ConverterConfig:
     """Unit and label overrides supplied by the disclosure defaults."""
 
     dataTypesToUnits: dict[QName, QName] = field(default_factory=dict)
-    unitIdsToMeasures: dict[str, ComplexUnit] = field(default_factory=dict)
     conceptsToUnits: dict[Concept, QName] = field(default_factory=dict)
     cellValuesToTaxonomyLabels: dict[str, str] = field(default_factory=dict)
     cellUnitReplacements: dict[str, str] = field(default_factory=dict)
+
+    def unitForDataType(self, dataType: QName) -> QName | None:
+        """The configured unit for ``dataType``, matched by local name if not by QName: the
+        config spans taxonomies, and the UTR qualifies some item types differently from the
+        DTR."""
+        if (unit := self.dataTypesToUnits.get(dataType)) is not None:
+            return unit
+        return next(
+            (
+                unit
+                for configured, unit in self.dataTypesToUnits.items()
+                if configured.localName == dataType.localName
+            ),
+            None,
+        )
 
     @classmethod
     def fromDefaults(
@@ -34,22 +43,6 @@ class ConverterConfig:
         dataTypesToUnits = {
             qname(dataType): qname(unitType)
             for dataType, unitType in defaults.get("dataTypesToUnits", {}).items()
-        }
-
-        unitIdsToMeasures = {
-            unitId: ComplexUnit(
-                numerator=[
-                    q
-                    for m in unitDict.get("numerator", [])
-                    if (q := taxonomy.UTR.getQNameForUnitId(m)) is not None
-                ],
-                denominator=[
-                    q
-                    for m in unitDict.get("denominator", [])
-                    if (q := taxonomy.UTR.getQNameForUnitId(m)) is not None
-                ],
-            )
-            for unitId, unitDict in defaults.get("unitIdsToMeasures", {}).items()
         }
 
         # Keyed by local name: the config spans taxonomies with different
@@ -63,7 +56,6 @@ class ConverterConfig:
 
         return cls(
             dataTypesToUnits=dataTypesToUnits,
-            unitIdsToMeasures=unitIdsToMeasures,
             conceptsToUnits=conceptsToUnits,
             cellValuesToTaxonomyLabels=dict(
                 defaults.get("cellValuesToTaxonomyLabels", {})

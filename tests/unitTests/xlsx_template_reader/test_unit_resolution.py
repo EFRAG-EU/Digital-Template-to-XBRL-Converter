@@ -2,7 +2,8 @@
 
     unit named range (direct/parenthesised/config-corrected text)
     -> per-concept config override -> taxonomy required units
-    -> config complex units -> data-type/UTR fallbacks
+    -> data-type/UTR fallbacks, where a type with a complex UTR unit (emissions per monetary
+    unit) takes a divide unit
 
 The endpoints (getSimpleUnit, setFallbackUnitForName) are covered in
 test_fact_creator_characterization.py; these tests pin the branching between
@@ -188,7 +189,34 @@ class TestNoUnitRange:
         assert env.resolver.setUnitForName(env.holder, env.fb) is True
         assert env.fb._unit == Unit.simple(next(iter(concept.getRequiredUnitQNames())))
 
-    def test_complex_unit_uses_default_currency_denominator(self, taxonomy, config):
+    @pytest.fixture(scope="class")
+    def monetary_concept(self, taxonomy):
+        return next(
+            c
+            for c in sorted(taxonomy.concepts, key=str)
+            if c.isReportable and c.isMonetary and c.getRequiredUnitQNames() is None
+        )
+
+    def test_monetary_concept_takes_the_report_currency(
+        self, taxonomy, config, monetary_concept
+    ):
+        """A table row with no currency cell: the report's currency, not one of the
+        UTR's ~180."""
+        env = _Env(taxonomy, config, monetary_concept, None, with_unit_map=False)
+        env.report.setDefaultCurrency("GBP")
+        assert env.resolver.setUnitForName(env.holder, env.fb) is True
+        assert env.fb._unit == Unit.simple(env.report.defaultCurrency)
+
+    def test_monetary_concept_without_a_default_currency_creates_no_fact(
+        self, taxonomy, config, monetary_concept
+    ):
+        env = _Env(taxonomy, config, monetary_concept, None, with_unit_map=False)
+        assert env.resolver.setUnitForName(env.holder, env.fb) is False
+        assert env.fb._unit is None
+        assert any("no default currency" in w for w in env.warnings())
+
+    @pytest.fixture(scope="class")
+    def per_monetary_concept(self, taxonomy):
         concept = next(
             (
                 c
@@ -196,18 +224,87 @@ class TestNoUnitRange:
                 if c.isReportable
                 and c.isNumeric
                 and c.getRequiredUnitQNames() is None
-                and any(
-                    unit_id in config.unitIdsToMeasures
-                    and unit_id.endswith("_per_Monetary")
-                    for unit_id in taxonomy.UTR.getUnitIdsForDataType(c.dataType)
-                )
+                and taxonomy.UTR.requiresComplexUnit(c.dataType)
+                and taxonomy.UTR.complexUnitFor(c.dataType).denominator.localName
+                == "monetaryItemType"
             ),
             None,
         )
         if concept is None:
-            pytest.skip("taxonomy has no complex-unit (per-monetary) concept")
-        env = _Env(taxonomy, config, concept, None, with_unit_map=False)
+            pytest.skip("taxonomy has no per-monetary complex-unit concept")
+        return concept
+
+    def test_complex_unit_uses_default_currency_denominator(
+        self, taxonomy, config, per_monetary_concept
+    ):
+        env = _Env(taxonomy, config, per_monetary_concept, None, with_unit_map=False)
         env.report.setDefaultCurrency("EUR")
         assert env.resolver.setUnitForName(env.holder, env.fb) is True
         assert env.fb._unit is not None and env.fb._unit.is_divide
         assert [m.localName for m in env.fb._unit.denominator] == ["EUR"]
+        assert taxonomy.UTR.validComplexUnit(
+            per_monetary_concept.dataType,
+            env.fb._unit.numerator[0],
+            env.fb._unit.denominator[0],
+        )
+
+    def test_complex_unit_without_a_default_currency_creates_no_fact(
+        self, taxonomy, config, per_monetary_concept
+    ):
+        env = _Env(taxonomy, config, per_monetary_concept, None, with_unit_map=False)
+        assert env.resolver.setUnitForName(env.holder, env.fb) is False
+        assert env.fb._unit is None
+        assert any("no default currency" in w for w in env.warnings())
+
+    def test_a_single_unit_in_the_cell_is_not_valid_for_a_complex_type(
+        self, taxonomy, config, per_monetary_concept
+    ):
+        """A named unit typed into the unit cell cannot be valid for a per-unit type; the
+        fact still gets the divide unit rather than that unit or xbrli:pure."""
+        env = _Env(taxonomy, config, per_monetary_concept, "tCO2e")
+        env.report.setDefaultCurrency("EUR")
+        assert env.resolver.setUnitForName(env.holder, env.fb) is True
+        assert env.fb._unit is not None and env.fb._unit.is_divide
+
+    @pytest.mark.parametrize("table", [False, True])
+    def test_a_numerator_unit_in_the_cell_is_used_as_the_numerator(
+        self, taxonomy, config, per_monetary_concept, table
+    ):
+        utr = taxonomy.UTR
+        sides = utr.complexUnitFor(per_monetary_concept.dataType)
+        default = config.unitForDataType(sides.numerator)
+        other = min(u for u in utr.getUnitsForDataType(sides.numerator) if u != default)
+        env = _Env(taxonomy, config, per_monetary_concept, str(other))
+        env.report.setDefaultCurrency("EUR")
+        kwargs = {"specifiedUnitHolder": env.unit_holder} if table else {}
+        assert env.resolver.setUnitForName(env.holder, env.fb, **kwargs) is True
+        assert env.fb._unit == Unit.divide([other], [env.report.defaultCurrency])
+
+    def test_a_cell_unit_for_neither_side_is_ignored(
+        self, taxonomy, config, per_monetary_concept
+    ):
+        env = _Env(taxonomy, config, per_monetary_concept, "MWh")
+        env.report.setDefaultCurrency("EUR")
+        assert env.resolver.setUnitForName(env.holder, env.fb) is True
+        sides = taxonomy.UTR.complexUnitFor(per_monetary_concept.dataType)
+        assert env.fb._unit == Unit.divide(
+            [config.unitForDataType(sides.numerator)], [env.report.defaultCurrency]
+        )
+
+    def test_a_side_with_no_unit_says_which(self, taxonomy, per_monetary_concept):
+        """With no configured unit, the emissions side has many UTR units to choose from."""
+        env = _Env(
+            taxonomy,
+            ConverterConfig(),
+            per_monetary_concept,
+            None,
+            with_unit_map=False,
+        )
+        env.report.setDefaultCurrency("EUR")
+        assert env.resolver.setUnitForName(env.holder, env.fb) is False
+        sides = taxonomy.UTR.complexUnitFor(per_monetary_concept.dataType)
+        assert any(
+            f"no unit is configured for {sides.numerator.localName}" in w
+            and "currency" not in w
+            for w in env.warnings()
+        )

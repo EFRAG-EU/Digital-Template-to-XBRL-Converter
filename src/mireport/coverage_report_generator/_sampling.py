@@ -192,7 +192,7 @@ def unitFor(taxonomy: Taxonomy, concept: Concept) -> QName | None:
 
     if not taxonomy.UTR.getUnitsForDataType(concept.dataType):
         # Either the UTR does not constrain this type (dimensionless), or it is a
-        # composite type whose unit is a divide (see compositeUnitFor()).
+        # type that takes a complex (divide) unit (see complexUnitFor()).
         return None
     return _preferredUnit(taxonomy, concept.dataType, concept)
 
@@ -223,12 +223,10 @@ def _preferredUnit(taxonomy: Taxonomy, dataType: QName, concept: Concept) -> QNa
     return min(permitted)
 
 
-def compositeUnitFor(
-    taxonomy: Taxonomy, concept: Concept
-) -> tuple[QName, QName] | None:
+def complexUnitFor(taxonomy: Taxonomy, concept: Concept) -> tuple[QName, QName] | None:
     """
     The (numerator, denominator) units to report *concept* in, if its type is a UTR
-    composite (emissions per monetary unit, say) and the taxonomy gives it no unit of its
+    complex (emissions per monetary unit, say) and the taxonomy gives it no unit of its
     own; else None.
 
     Such a type has no named units, so unitFor() returns None for it, but that is not
@@ -238,19 +236,14 @@ def compositeUnitFor(
     """
     if not concept.isNumeric or concept.getRequiredUnitQNames() is not None:
         return None
-    if taxonomy.UTR.getUnitsForDataType(concept.dataType):
+    if not taxonomy.UTR.requiresComplexUnit(concept.dataType):
         return None
-    if (composite := taxonomy.UTR.compositeFor(concept.dataType)) is None:
-        return None
-    sides: list[QName] = []
-    for itemType in (composite.numerator, composite.denominator):
-        if isinstance(itemType, str):
-            raise SampleGenerationException(
-                f"The UTR names {itemType} without a namespace as a side of "
-                f"{concept.dataType.localName} (concept {concept.qname})."
-            )
-        sides.append(_preferredUnit(taxonomy, itemType, concept))
-    return sides[0], sides[1]
+    complexUnit = taxonomy.UTR.complexUnitFor(concept.dataType)
+    assert complexUnit is not None
+    return (
+        _preferredUnit(taxonomy, complexUnit.numerator, concept),
+        _preferredUnit(taxonomy, complexUnit.denominator, concept),
+    )
 
 
 def extraUnitsFor(taxonomy: Taxonomy, concept: Concept) -> list[QName]:
@@ -538,15 +531,15 @@ def coreDimensionsFor(
             )
         dimensions["unit"] = str(unit)
         qnames.add(unit)
-    elif (composite := compositeUnitFor(taxonomy, concept)) is not None:
-        numerator, denominator = composite
-        if not taxonomy.UTR.validComposite(concept.dataType, numerator, denominator):
+    elif (complexUnit := complexUnitFor(taxonomy, concept)) is not None:
+        numerator, denominator = complexUnit
+        if not taxonomy.UTR.validComplexUnit(concept.dataType, numerator, denominator):
             raise SampleGenerationException(
                 f"Unit {numerator}/{denominator} is not valid in the UTR for "
                 f"{concept.dataType.localName} (concept {concept.qname})."
             )
         dimensions["unit"] = f"{numerator}/{denominator}"
-        qnames.update(composite)
+        qnames.update(complexUnit)
     return dimensions, qnames
 
 
