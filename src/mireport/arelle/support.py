@@ -78,6 +78,7 @@ class ArelleProcessingResult:
         self._textLogLines: list[str] = []
         self._viewer: FilelikeAndFileName | None = None
         self._viewerDocumentSetMembers: list[FilelikeAndFileName] = []
+        self._xbrlJson: FilelikeAndFileName | None = None
         self._factCount: int | None = None
         self._exceptions: list[Exception] = []
         self._diagnostics: list[ArelleDiagnostic] = []
@@ -164,6 +165,12 @@ class ArelleProcessingResult:
         return list(self._viewerDocumentSetMembers)
 
     @property
+    def xbrl_json(self) -> FilelikeAndFileName:
+        if self._xbrlJson is not None:
+            return self._xbrlJson
+        raise ArelleRelatedException("No JSON available")
+
+    @property
     def factCount(self) -> int | None:
         """How many facts Arelle loaded; None if it loaded no report."""
         return self._factCount
@@ -171,6 +178,10 @@ class ArelleProcessingResult:
     @property
     def has_viewer(self) -> bool:
         return self._viewer is not None
+
+    @property
+    def has_json(self) -> bool:
+        return self._xbrlJson is not None
 
     @property
     def has_exceptions(self) -> bool:

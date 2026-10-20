@@ -31,7 +31,25 @@ L = logging.getLogger(__name__)
 
 # Arelle splits its --plugins option on "|" (see CntlrCmdLine.run()).
 PLUGIN_SEPARATOR = "|"
+# Our packages put the report in a subdirectory of "reports/" whenever it has
+# document set members (see mireport.report.reportpackage), and Arelle refuses to
+# load a multi-file report entry without this plug-in: "Loading error. Inline
+# document set encountered. Enable 'InlineXbrlDocumentSet' plug-in". It is inert
+# for a single-document report, so any run that may load Inline XBRL enables it.
 INLINE_DOCUMENT_SET_PLUGIN = "inlineXbrlDocumentSet"
+
+
+def _singleFileFromResponseZip(stream: BytesIO, what: str) -> bytes:
+    """Return the content of the single file Arelle wrote to its response
+    zip, raising if the zip does not contain exactly one file."""
+    stream.seek(0)
+    with zipfile.ZipFile(stream, "r") as zf:
+        entries = zf.infolist()
+        if len(entries) != 1:
+            raise ArelleRelatedException(
+                f"{what} has gone wrong. Zip contents: {zf.namelist()}"
+            )
+        return zf.read(entries[0])
 
 
 def _filesFromResponseZip(stream: BytesIO, what: str) -> list[FilelikeAndFileName]:
@@ -178,16 +196,9 @@ class ArelleReportProcessor:
     ) -> RuntimeOptions:
         """RuntimeOptions shared by all report processing: validation on
         (calcs 1.1 round-to-nearest unless overridden, UTR, inconsistent
-        duplicate facts warned) and logging to buffer.
-
-        INLINE_DOCUMENT_SET_PLUGIN is always enabled. Our packages put the
-        report in a subdirectory of "reports/" whenever it has document set
-        members (see mireport.report.reportpackage), and Arelle refuses to load
-        a multi-file report entry without it — "Loading error. Inline document
-        set encountered. Enable 'InlineXbrlDocumentSet' plug-in". It is
-        unconditional rather than per-call because nothing here inspects the
-        package, and it is inert for a single-document report.
-        """
+        duplicate facts warned) and logging to buffer. `plugins` are exactly
+        those the run needs: each caller says whether that includes
+        INLINE_DOCUMENT_SET_PLUGIN."""
         return RuntimeOptions(
             internetConnectivity="offline" if self.workOffline else "online",
             keepOpen=True,
@@ -195,7 +206,7 @@ class ArelleReportProcessor:
             logFormat="%(message)s",
             logPropagate=False,
             packages=[str(t) for t in self.taxonomyPackages],
-            plugins=PLUGIN_SEPARATOR.join([INLINE_DOCUMENT_SET_PLUGIN, *plugins]),
+            plugins=PLUGIN_SEPARATOR.join(plugins) or None,
             pluginOptions=pluginOptions if pluginOptions is not None else {},
             validate=True,
             calcs=calcs,
@@ -210,24 +221,49 @@ class ArelleReportProcessor:
         *,
         disableCalculationValidation: bool = False,
     ) -> ArelleProcessingResult:
-        """Validate the report package with Arelle."""
+        """Validate the report package with Arelle. It may hold Inline XBRL, so
+        the document set plug-in is enabled."""
         options = self._makeOptions(
-            calcs="none" if disableCalculationValidation else "c11r"
+            calcs="none" if disableCalculationValidation else "c11r",
+            plugins=[INLINE_DOCUMENT_SET_PLUGIN],
         )
         return self._run(source, options)
 
     def validateXbrlJson(self, document: FilelikeAndFileName) -> ArelleProcessingResult:
         """Validate an xBRL-JSON document with Arelle, which loads OIM natively: the OIM and
         xBRL-JSON rules as it loads, then the same instance validation (calculations, UTR,
-        duplicates) a report package gets. It goes in as one, built in memory."""
-        return self.validateReportPackage(packageReportDocument(document))
+        duplicates) a report package gets. It goes in as one, built in memory, and holds
+        no Inline XBRL, so no plug-in is needed."""
+        return self._run(packageReportDocument(document), self._makeOptions())
+
+    def generateXbrlJson(self, source: FilelikeAndFileName) -> ArelleProcessingResult:
+        """Validate the report package with Arelle and, in the same session, have it
+        write the report as xBRL-JSON (result.xbrl_json). This is Arelle's JSON, for a
+        report whatever produced it; ours comes from mireport.xbrljson_writer."""
+        jsonBytesIO = BytesIO()
+        options = self._makeOptions(
+            plugins=[INLINE_DOCUMENT_SET_PLUGIN, "saveLoadableOIM"],
+            pluginOptions={"saveLoadableOIM": "report.json"},
+        )
+        result = self._run(source, options, jsonBytesIO)
+        try:
+            json = _singleFileFromResponseZip(
+                jsonBytesIO, "Arelle xBRL JSON generation"
+            )
+            jsonFilename = PurePath(source.filename).with_suffix(".json").name
+            result._xbrlJson = FilelikeAndFileName(
+                fileContent=json, filename=jsonFilename
+            )
+        except Exception as e:
+            result.addException(e)
+        return result
 
     def generateInlineViewer(
         self, source: FilelikeAndFileName
     ) -> ArelleProcessingResult:
         viewerBytesIO = BytesIO()
         options = self._makeOptions(
-            plugins=["ixbrl-viewer"],
+            plugins=[INLINE_DOCUMENT_SET_PLUGIN, "ixbrl-viewer"],
             pluginOptions={
                 "saveViewerDest": viewerBytesIO,
                 "viewer_feature_review": False,

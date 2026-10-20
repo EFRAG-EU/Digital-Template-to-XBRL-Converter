@@ -8,16 +8,19 @@ option-building and response-handling helpers.
 import zipfile
 from io import BytesIO
 from pathlib import Path
-from typing import Any
+from typing import Any, BinaryIO
 
 import pytest
+from arelle.CntlrCmdLine import RuntimeOptions
 
 from mireport.arelle.report_info import (
     INLINE_DOCUMENT_SET_PLUGIN,
     ArelleReportProcessor,
     _filesFromResponseZip,
+    _singleFileFromResponseZip,
 )
-from mireport.arelle.support import ArelleRelatedException
+from mireport.arelle.support import ArelleProcessingResult, ArelleRelatedException
+from mireport.filesupport import FilelikeAndFileName
 
 
 def makeZip(entries: dict[str, bytes]) -> BytesIO:
@@ -26,6 +29,27 @@ def makeZip(entries: dict[str, bytes]) -> BytesIO:
         for name, content in entries.items():
             zf.writestr(name, content)
     return stream
+
+
+class TestSingleFileFromResponseZip:
+    def test_returns_single_entry_content(self) -> None:
+        stream = makeZip({"foo.json": b'{"documentInfo": {}}'})
+        assert _singleFileFromResponseZip(stream, "test") == b'{"documentInfo": {}}'
+
+    def test_rewinds_before_reading(self) -> None:
+        stream = makeZip({"foo.json": b"content"})
+        stream.seek(0, 2)  # simulate a fully-written, unrewound stream
+        assert _singleFileFromResponseZip(stream, "test") == b"content"
+
+    def test_raises_on_empty_zip(self) -> None:
+        with pytest.raises(ArelleRelatedException, match="test thing"):
+            _singleFileFromResponseZip(makeZip({}), "test thing")
+
+    def test_raises_on_multiple_entries(self) -> None:
+        """xBRL-JSON is still one file per report; more than one is a bug."""
+        stream = makeZip({"foo.json": b"{}", "viewer.html": b"<html/>"})
+        with pytest.raises(ArelleRelatedException, match="viewer.html"):
+            _singleFileFromResponseZip(stream, "test thing")
 
 
 class TestFilesFromResponseZip:
@@ -94,21 +118,86 @@ class TestMakeOptions:
         assert options.viewerURL == "viewer.js"
 
 
-class TestDocumentSetPlugin:
-    """Our packages put the report in a subdirectory of reports/ once it has
-    document set members, and Arelle refuses to load a multi-file report entry
-    unless this plug-in is active. Every call path therefore needs it."""
+class TestPlugins:
+    """Each run enables exactly the plug-ins it needs. The document set plug-in
+    goes on any run that may load Inline XBRL: our packages put the report in a
+    subdirectory of reports/ once it has document set members, and Arelle refuses
+    to load a multi-file report entry without it."""
 
-    def makeProcessor(self) -> ArelleReportProcessor:
-        return ArelleReportProcessor()
+    def runPlugins(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        call: str,
+        source: FilelikeAndFileName,
+        response: BytesIO | None = None,
+    ) -> tuple[list[str], ArelleProcessingResult]:
+        """The plug-ins `call` runs Arelle with, and its result; Arelle itself is
+        not run, and `response` stands in for what it would write."""
+        seen: list[RuntimeOptions] = []
 
-    def test_enabled_by_default(self) -> None:
-        assert self.makeProcessor()._makeOptions().plugins == INLINE_DOCUMENT_SET_PLUGIN
+        def fakeRun(
+            source: FilelikeAndFileName,
+            options: RuntimeOptions,
+            responseZipStream: BinaryIO | None = None,
+        ) -> ArelleProcessingResult:
+            seen.append(options)
+            if response is not None and responseZipStream is not None:
+                responseZipStream.write(response.getvalue())
+            return ArelleProcessingResult()
 
-    def test_enabled_alongside_other_plugins(self) -> None:
-        options = self.makeProcessor()._makeOptions(plugins=["ixbrl-viewer"])
-        assert options.plugins == f"{INLINE_DOCUMENT_SET_PLUGIN}|ixbrl-viewer"
+        processor = ArelleReportProcessor()
+        monkeypatch.setattr(processor, "_run", fakeRun)
+        result = getattr(processor, call)(source)
+        (options,) = seen
+        return (options.plugins.split("|") if options.plugins else []), result
+
+    PACKAGE = FilelikeAndFileName(fileContent=b"", filename="report.zip")
+
+    def test_none_unless_asked_for(self) -> None:
+        assert ArelleReportProcessor()._makeOptions().plugins is None
 
     def test_pipe_separated_for_several_plugins(self) -> None:
-        options = self.makeProcessor()._makeOptions(plugins=["a", "b"])
-        assert options.plugins.split("|") == [INLINE_DOCUMENT_SET_PLUGIN, "a", "b"]
+        options = ArelleReportProcessor()._makeOptions(plugins=["a", "b"])
+        assert options.plugins == "a|b"
+
+    def test_validating_a_package_enables_the_document_set_plugin(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        plugins, _ = self.runPlugins(monkeypatch, "validateReportPackage", self.PACKAGE)
+        assert plugins == [INLINE_DOCUMENT_SET_PLUGIN]
+
+    def test_the_viewer_enables_the_document_set_plugin(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        plugins, _ = self.runPlugins(monkeypatch, "generateInlineViewer", self.PACKAGE)
+        assert plugins == [INLINE_DOCUMENT_SET_PLUGIN, "ixbrl-viewer"]
+
+    def test_validating_xbrl_json_needs_no_plugin(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        document = FilelikeAndFileName(fileContent=b"{}", filename="report.json")
+        plugins, _ = self.runPlugins(monkeypatch, "validateXbrlJson", document)
+        assert plugins == []
+
+    def test_generating_xbrl_json_saves_arelles_json_of_the_report(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        plugins, result = self.runPlugins(
+            monkeypatch,
+            "generateXbrlJson",
+            self.PACKAGE,
+            makeZip({"report.json": b"{}"}),
+        )
+        assert plugins == [INLINE_DOCUMENT_SET_PLUGIN, "saveLoadableOIM"]
+        assert result.has_json
+        assert result.xbrl_json.filename == "report.json"
+        assert result.xbrl_json.fileContent == b"{}"
+
+    def test_generating_xbrl_json_records_a_missing_json(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        _, result = self.runPlugins(
+            monkeypatch, "generateXbrlJson", self.PACKAGE, makeZip({})
+        )
+        assert not result.has_json
+        assert result.has_exceptions
