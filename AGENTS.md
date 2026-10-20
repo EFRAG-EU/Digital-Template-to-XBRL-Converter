@@ -282,10 +282,23 @@ concept and dimension sit side by side, and so do the opening and the closing ba
 of `cur` and the end of `prior` are one OIM instant, but each is its own cell and its own heading): a column holding facts from more than one period is laid out once
 per period, each period said once over its columns; a list shows a concept's prior value, and an
 opening balance, beside the closing one that leads the line. When every column is in a single period (one period, or baseline and target years each in
-their own column) nothing changes. **The VSME Excel template reports one period** (FAQ item 7), so there is
-no Excel data for a prior one: the disclosure config's `periods[].role` (`current`, the default, or
-`prior`) and the skip-if-absent rule are the groundwork, and reading prior *values* needs a template
-contract from EFRAG.
+their own column) nothing changes. **The VSME Excel template reports one period** (FAQ item 7), so
+comparatives come from last year's report, always a separate file, and no template contract is needed:
+`mireport.comparatives.PriorReport.fromFile` reads it as a whole report (xBRL-JSON so far), and its
+`mergeInto` (`mireport.report.comparatives.mergePriorReport`) makes its period this report's prior one (`--prior PATH` on
+`parse-and-ixbrl.py` and `xbrljson-to-ixbrl.py`). The current report's own period is its default
+duration; its other durations (baseline and target years) are left alone, but a prior period, or a
+duration overlapping its own or ending where it starts, means it already has comparatives, and the merge
+raises. From last year's report the one duration that ends where ours starts (at any length) is taken,
+with the instants at its ends; facts in its other periods are left out with one info message. Only
+non-nil numbers and booleans are copied, and any other fact in a table row with one (the same
+presentation group and dimensions), each by `FactBuilder.fromFact` so every check re-runs, without footnotes, and
+each keeps its unit. A comparative is taken only beside this year's fact for the same concept and
+dimensions; with nothing to compare it with it is left out. The current report wins: a comparative with a `duplicateKey` already present (the
+shared closing and opening instant, say) is skipped, quietly if consistent, with a warning if not.
+Another entity or another taxonomy raises, and a merge that raises stops the conversion. The disclosure
+config's `periods[].role` (`current`, the default, or `prior`) and its skip-if-absent rule stay for a
+future template with prior-year cells.
 
 ### xBRL-JSON reader (`mireport/xbrljson_reader/`)
 
@@ -295,7 +308,7 @@ out. `scripts/xbrljson-to-ixbrl.py` drives it. The document's `documentInfo.taxo
 entry point (a set of documents), and a taxonomy baked for exactly that set must already be loaded. It
 reads one entity. Every duration the facts use is declared as a report period, named from its dates;
 the one with the most facts is the default (a tie goes to the one that ends last). No period is ever
-the prior one: every OIM fact says its own period, so the reader infers nothing. A percent is shown
+the prior one: every OIM fact says its own period, so the reader infers nothing (comparatives come from a separate file, above). A percent is shown
 x100 with `ix:scale -2` but keeps its value and decimals as given. In strict mode (`--strict`)
 anything that cannot be added or would appear nowhere in the rendered report is an error.
 
