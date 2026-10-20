@@ -278,11 +278,18 @@ class XbrlJsonDocument:
     def fromFile(cls, path: Path | str) -> XbrlJsonDocument:
         """Read a document; JSON numbers are read exactly (as Decimal), and NaN and Infinity,
         which are not JSON, are refused."""
+        return cls.fromJson(Path(path).read_bytes(), str(path))
+
+    @classmethod
+    def fromJson(
+        cls, text: str | bytes, name: str = "The document"
+    ) -> XbrlJsonDocument:
+        """Read a document from its JSON text, as fromFile does; ``name`` says what it is in a
+        message."""
         try:
-            with open(path, encoding="utf-8") as f:
-                data = json.load(f, parse_float=Decimal, parse_constant=_refuseConstant)
-        except json.JSONDecodeError as e:
-            raise XbrlJsonException(f"{path} is not JSON: {e}") from e
+            data = json.loads(text, parse_float=Decimal, parse_constant=_refuseConstant)
+        except (json.JSONDecodeError, UnicodeDecodeError) as e:
+            raise XbrlJsonException(f"{name} is not JSON: {e}") from e
         return cls.fromDict(data)
 
     def toDict(self) -> dict[str, Any]:
