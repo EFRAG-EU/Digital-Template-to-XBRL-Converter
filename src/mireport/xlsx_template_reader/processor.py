@@ -410,9 +410,8 @@ class XlsxProcessor:
         named_range = config["named-range"]
         fallback = config.get("fallback")
 
-        if self._reader.getDefinedName(named_range) is not None:
-            value = self._reader.value(named_range).as_str()
-            method(value)
+        if (crm := self._reader.resolveRange(named_range)) is not None:
+            method(self._reader.value(crm).as_str())
         elif fallback is not None:
             method(fallback)
         else:

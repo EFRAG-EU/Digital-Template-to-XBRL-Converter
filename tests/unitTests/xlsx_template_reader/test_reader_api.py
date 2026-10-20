@@ -19,6 +19,7 @@ from mireport.xlsx_template_reader._ranges import (
     XbrlConceptCellRangeMetadata,
 )
 from mireport.xlsx_template_reader._reader import CellValue, WorkbookReader
+from mireport.xlsx_template_reader.processor import XlsxProcessor
 from mireport.xlsx_template_reader.util import loadExcelFromPathOrFileLike
 
 SAMPLE = (
@@ -314,6 +315,40 @@ class TestDamagedNamedRanges:
             f"Named range {OURS} has no destination: #REF!.",
             "1 named range that the converter does not use: Mine.",
         ]
+
+
+class TestDamagedReportMetadata:
+    TITLE = "template_reporting_title"
+
+    def _setTitle(
+        self, ref: str, config: dict[str, str]
+    ) -> tuple[list[str], ConversionResultsBuilder]:
+        wb = Workbook()
+        wb.active.title = "Sheet"
+        wb.defined_names[self.TITLE] = DefinedName(self.TITLE, attr_text=ref)
+        results = _results()
+        titles: list[str] = []
+        XlsxProcessor(wb, results, VSME_DEFAULTS).setReportMetadata(
+            {"report-title": {"named-range": self.TITLE, **config}},
+            "report-title",
+            titles.append,
+        )
+        return titles, results
+
+    def test_damaged_name_uses_fallback(self):
+        titles, results = self._setTitle("#REF!", {"fallback": "Fallback"})
+        assert titles == ["Fallback"]
+        assert not results.hasErrors()
+
+    def test_damaged_name_without_fallback_is_an_error(self):
+        titles, results = self._setTitle("#REF!", {})
+        assert titles == []
+        assert results.hasErrors()
+
+    def test_blank_cell_is_still_read(self):
+        titles, results = self._setTitle("Sheet!$A$1", {"fallback": "Fallback"})
+        assert titles == [""]
+        assert not results.hasErrors()
 
 
 class TestUnusedNamesWarning:
