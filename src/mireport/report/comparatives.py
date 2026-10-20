@@ -4,17 +4,20 @@ them in a table, become this report's prior period.
 Last year's report is read as a whole report on its own (see mireport.comparatives), so nothing has
 to guess which of a file's periods is the prior one: it is the duration that ends where this
 report's own period starts. Only the Report model is used here, so where last year's report came
-from does not matter.
+from does not matter; the facts taken from one on another version of this report's taxonomy
+are matched to it by name (alignToTaxonomy).
 """
 
 from __future__ import annotations
 
 from collections import Counter, defaultdict
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable, Iterator, Mapping
 from dataclasses import dataclass
 from enum import StrEnum
 
 from mireport.conversionresults import ConversionResultsBuilder, MessageType, Severity
+from mireport.data.disclosures import areVersionsOfOneTaxonomy
+from mireport.entrypoints import describeEntryPointSet
 from mireport.exceptions import InlineReportException
 from mireport.report.duplicates import DuplicateClass, duplicateClass
 from mireport.report.fact import Fact
@@ -22,7 +25,7 @@ from mireport.report.factbuilder import FactBuilder
 from mireport.report.model import PeriodPart, ReportPeriod
 from mireport.report.periods import DurationPeriodHolder, _Period
 from mireport.report.report import Report
-from mireport.taxonomy import PresentationGroup
+from mireport.taxonomy import Concept, PresentationGroup, QName, Taxonomy
 
 PRIOR_PERIOD_NAME = "prior"
 
@@ -37,6 +40,8 @@ class SkipReason(StrEnum):
     ALREADY_REPORTED = "already in this report"
     CONFLICT = "different from this report"
     INVALID = "could not be added"
+    NOT_IN_TAXONOMY = "a name not in this report's taxonomy"
+    OTHER_TYPE = "another period type or data type in this report's taxonomy"
 
 
 @dataclass(frozen=True, slots=True)
@@ -73,9 +78,18 @@ _SKIP_MESSAGES: Mapping[SkipReason, tuple[Severity, str]] = {
         Severity.WARNING,
         "{count} facts in {fileName} could not be added to this report; see the developer messages.",
     ),
+    SkipReason.NOT_IN_TAXONOMY: (
+        Severity.WARNING,
+        "{count} facts in {fileName} name a concept, dimension or member that this report's taxonomy does not have; they are left out.",
+    ),
+    SkipReason.OTHER_TYPE: (
+        Severity.WARNING,
+        "{count} facts in {fileName} are for concepts with another period type or data type in this report's taxonomy; they are left out.",
+    ),
 }
 
 
+# The part of an entry point's URL that changes from one version of a taxonomy to the next.
 def mergePriorReport(
     report: Report, prior: Report, results: ConversionResultsBuilder, *, fileName: str
 ) -> PriorMerge:
@@ -88,9 +102,13 @@ def mergePriorReport(
     presentation group and dimensions, so the row is drawn for the prior period anyway), without
     footnotes, and only where ``report`` has its own period's fact for the same concept and
     dimensions to compare them with; a fact ``report`` already has is skipped: this report wins.
-    Raises InlineReportException, before changing ``report``, when the two cannot be merged.
+    From ``prior`` on another version of ``report``'s taxonomy, those facts are matched to it by
+    name (alignToTaxonomy). Raises InlineReportException, before changing ``report``, when the two
+    cannot be merged.
     """
     _checkSameReporter(report, prior)
+    theirs = prior.taxonomy
+    ours = alignToTaxonomy(theirs, report.taxonomy)
     current = report.defaultPeriod
     _checkNoComparatives(report)
     lined = _linedUpDuration(report, prior)
@@ -126,9 +144,15 @@ def mergePriorReport(
         if fact.isNil:
             skipped[SkipReason.NIL] += 1
             continue
+        if any(c.qname not in ours for c in _named(fact)):
+            skipped[SkipReason.NOT_IN_TAXONOMY] += 1
+            continue
+        if _typeOf(ours[fact.concept.qname]) != _typeOf(fact.concept):
+            skipped[SkipReason.OTHER_TYPE] += 1
+            continue
         try:
             built = (
-                FactBuilder.fromFact(report, fact)
+                _onOurTaxonomy(report, fact, ours)
                 .setNamedPeriod(
                     PRIOR_PERIOD_NAME, at=None if part is PeriodPart.Whole else part
                 )
@@ -154,6 +178,14 @@ def mergePriorReport(
         if _comparable(fact):
             rows.update(_rows(fact))
 
+    if theirs.entryPointSet != report.taxonomy.entryPointSet:
+        results.addMessage(
+            f"{fileName} is on taxonomy {describeEntryPointSet(theirs.entryPointSet)}: its "
+            f"figures are matched by name to this report's "
+            f"{describeEntryPointSet(report.taxonomy.entryPointSet)}.",
+            Severity.INFO,
+            MessageType.Conversion,
+        )
     results.addMessage(
         f"Comparative figures for {_days(lined)}: {len(taken)} taken from {fileName}.",
         Severity.INFO,
@@ -180,6 +212,72 @@ def mergePriorReport(
     return PriorMerge(len(taken), dict(skipped))
 
 
+def alignToTaxonomy(theirs: Taxonomy, ours: Taxonomy) -> Mapping[QName, Concept]:
+    """Our concept for each of ``theirs``' that it has. ``theirs`` is ``ours``, or another version of
+    it (one the same disclosure config names, areVersionsOfOneTaxonomy) whose concepts are matched
+    by local name; a match's period type and data type may still differ (``_typeOf``). Raises
+    InlineReportException if ``theirs`` is neither.
+    """
+    if theirs.entryPointSet == ours.entryPointSet:
+        return {c.qname: c for c in ours.concepts}
+    if not areVersionsOfOneTaxonomy(theirs.entryPointSet, ours.entryPointSet):
+        raise InlineReportException(
+            f"Last year's report is on taxonomy {sorted(theirs.entryPointSet)}, not this "
+            f"report's {sorted(ours.entryPointSet)} or another version of it."
+        )
+    names = Counter(c.qname.localName for c in ours.concepts)
+    # A name in more than one of its namespaces matches neither.
+    byName = {
+        c.qname.localName: c for c in ours.concepts if names[c.qname.localName] == 1
+    }
+    return {
+        c.qname: byName[c.qname.localName]
+        for c in theirs.concepts
+        if c.qname.localName in byName
+    }
+
+
+def _named(fact: Fact) -> Iterator[Concept]:
+    """Every concept ``fact`` names: its own, its dimensions and members, and the members it holds
+    (an enumeration)."""
+    yield fact.concept
+    for d in fact.explicit_values:
+        yield d.dimension
+        yield d.member
+    for t in fact.typed_values:
+        yield t.dimension
+    yield from fact.enumeration or ()
+
+
+def _onOurTaxonomy(
+    report: Report, fact: Fact, ours: Mapping[QName, Concept]
+) -> FactBuilder:
+    """A builder for ``fact``, a non-nil fact all of whose concepts ``ours`` has, on ``report``'s
+    taxonomy. Building re-runs every check."""
+    builder = (
+        FactBuilder(report).setConcept(ours[fact.concept.qname]).setValue(fact.value)
+    )
+    for d in fact.explicit_values:
+        builder.setExplicitDimension(ours[d.dimension.qname], ours[d.member.qname])
+    for t in fact.typed_values:
+        builder.setTypedDimension(ours[t.dimension.qname], t.value)
+    if fact.unit is not None:
+        builder.setUnit(fact.unit)
+    if fact.decimals is not None:
+        builder.setDecimals(fact.decimals)
+    if fact.scale is not None:
+        builder.setScale(fact.scale)
+    if fact.enumeration is not None:
+        builder.setEnumerationSet(ours[m.qname] for m in fact.enumeration)
+    return builder
+
+
+def _typeOf(concept: Concept) -> tuple[object, ...]:
+    """What a fact's value is: its concept's period type and data type (by namespace and local
+    name, since prefixes may differ from one version to the next)."""
+    return (concept.periodType, concept.dataType.namespace, concept.dataType.localName)
+
+
 def _checkSameReporter(report: Report, prior: Report) -> None:
     ours = (report.entityScheme, report.entityIdentifier)
     theirs = (prior.entityScheme, prior.entityIdentifier)
@@ -187,11 +285,6 @@ def _checkSameReporter(report: Report, prior: Report) -> None:
         raise InlineReportException(
             f"Last year's report is for entity {theirs[1]} ({theirs[0]}), "
             f"not this report's {ours[1]} ({ours[0]})."
-        )
-    if prior.taxonomy.entryPointSet != report.taxonomy.entryPointSet:
-        raise InlineReportException(
-            f"Last year's report is on taxonomy {sorted(prior.taxonomy.entryPointSet)}, "
-            f"not this report's {sorted(report.taxonomy.entryPointSet)}."
         )
 
 

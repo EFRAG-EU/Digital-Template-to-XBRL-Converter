@@ -1,7 +1,7 @@
 """mergePriorReport: last year's report supplies this one's comparatives; PriorReport reads it.
 
 Both reports are read in memory from xBRL-JSON over a synthetic taxonomy, so each test says only
-the facts it is about.
+the facts it is about; last year's may be on an older version of it (alignToTaxonomy).
 """
 
 from __future__ import annotations
@@ -17,11 +17,14 @@ from tests.unitTests.synthetic_taxonomy import (
     ENTITY,
     ENTITY_SCHEME,
     GROUP_ENTRY_POINT,
+    GROUP_ROLE,
     NAMESPACE,
+    PREFIX,
     concept,
     cube,
     document,
     fact,
+    group_document,
     group_taxonomy_json,
     qname,
     taxonomy_json,
@@ -29,6 +32,8 @@ from tests.unitTests.synthetic_taxonomy import (
 
 from mireport.comparatives import PriorReport
 from mireport.conversionresults import ConversionResultsBuilder, Severity
+from mireport.data import disclosures
+from mireport.entrypoints import entryPointSetOf
 from mireport.exceptions import EarlyAbortException, InlineReportException
 from mireport.filesupport import FilelikeAndFileName
 from mireport.report import InlineReport
@@ -50,6 +55,11 @@ SHARED = "2025-01-01T00:00:00"
 CLOSING = "2026-01-01T00:00:00"
 FILE = "last-year.json"
 ADDRESS_ROLE = f"{NAMESPACE}/role/Addresses"
+# Two versions of one taxonomy (one disclosure config names both), each in its own namespace.
+OURS = "test://synthetic/2026-01-01/comparatives.xsd"
+LAST_VERSION = "test://synthetic/2025-01-01/comparatives.xsd"
+LAST_VERSION_NAMESPACE = f"{NAMESPACE}/2025-01-01"
+NEXT_YEAR = "2026-01-01T00:00:00/2027-01-01T00:00:00"
 
 
 def _monetary(label: str) -> dict[str, Any]:
@@ -100,10 +110,16 @@ def _revenue(value: str, period: str = DURATION, currency: str = "EUR") -> dict:
 
 
 def _report(
-    *facts: dict[str, Any], entryPoint: str = ENTRY_POINT, strict: bool = True
+    *facts: dict[str, Any],
+    entryPoint: str = ENTRY_POINT,
+    strict: bool = True,
+    namespace: str = NAMESPACE,
 ) -> InlineReport:
     doc = document(entryPoint, {f"f{n}": f for n, f in enumerate(facts)})
-    doc["documentInfo"]["namespaces"]["iso4217"] = "http://www.xbrl.org/2003/iso4217"
+    doc["documentInfo"]["namespaces"] |= {
+        PREFIX: namespace,
+        "iso4217": "http://www.xbrl.org/2003/iso4217",
+    }
     return XbrlJsonProcessor(
         doc, ConversionResultsBuilder(), strict=strict
     ).createReport()
@@ -459,3 +475,165 @@ def test_a_prior_report_that_cannot_be_read_stops_the_conversion(
     ) as raised:
         PriorReport.fromFile(FilelikeAndFileName(content, filename), results)
     assert _messages(results, Severity.ERROR) == [str(raised.value)]
+
+
+def _oneDisclosureSystem(monkeypatch: pytest.MonkeyPatch, *entryPoints: str) -> None:
+    """Versions of one taxonomy, as a disclosure config names its supported and old entry points."""
+    config: dict[str, Any] = {}
+    for entryPoint in entryPoints:
+        monkeypatch.setitem(
+            disclosures._CONFIG_BY_ENTRY_POINT, entryPointSetOf(entryPoint), config
+        )
+
+
+@pytest.fixture
+def versions(
+    register_taxonomy: Callable[[dict[str, Any]], Taxonomy],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Our version of the taxonomy and last year's, in which Staff was Employees, Waste a whole
+    number and Cash a duration."""
+    _oneDisclosureSystem(monkeypatch, OURS, LAST_VERSION)
+    register_taxonomy(_taxonomy(OURS))
+    older = _taxonomy(LAST_VERSION)
+    older["namespaces"][PREFIX] = LAST_VERSION_NAMESPACE
+    concepts = older["concepts"]
+    concepts[qname("Employees")] = concepts.pop(qname("Staff"))
+    concepts[qname("Waste")] |= {
+        "dataType": "xbrli:integerItemType",
+        "baseDataType": "xbrli:integerItemType",
+    }
+    concepts[qname("Cash")]["periodType"] = "duration"
+    for row in older["presentation"][ROLE]["rows"]:
+        if row[1] == qname("Staff"):
+            row[1] = qname("Employees")
+    register_taxonomy(older)
+
+
+def _lastVersion(*facts: dict[str, Any]) -> InlineReport:
+    return _report(*facts, entryPoint=LAST_VERSION, namespace=LAST_VERSION_NAMESPACE)
+
+
+@pytest.mark.usefixtures("versions")
+def test_last_years_report_on_an_older_version_is_matched_by_name() -> None:
+    current = _report(_revenue("100"), entryPoint=OURS)
+    prior = _lastVersion(
+        _revenue("90", PRIOR),
+        fact(qname("Note"), "Last year", period=PRIOR, decimals=None),
+        fact(
+            qname("Employees"), "20", period=BASELINE
+        ),  # renamed, but not taken anyway
+    )
+    results, merged = _merge(current, prior)
+    assert merged.taken == 1
+    assert merged.skipped == {SkipReason.NOT_COMPARABLE: 1, SkipReason.OTHER_PERIOD: 1}
+    (revenue,) = [f for f in current.facts if f.period.reportPeriod.name == "prior"]
+    assert revenue.concept is current.taxonomy.getConcept(qname("Revenue"))
+    assert _messages(results, Severity.INFO)[0] == (
+        f"{FILE} is on taxonomy {LAST_VERSION}: its figures are matched by name to this "
+        f"report's {OURS}."
+    )
+    assert not _messages(results, Severity.WARNING)
+    current.requireAllFactsRendered = True
+    assert current.getInlineReport().fileContent
+
+
+@pytest.mark.usefixtures("versions")
+def test_a_renamed_concept_is_left_out_with_a_warning() -> None:
+    current = _report(_revenue("100"), entryPoint=OURS)
+    prior = _lastVersion(
+        _revenue("90", PRIOR), fact(qname("Employees"), "9", period=PRIOR)
+    )
+    results, merged = _merge(current, prior)
+    assert merged.taken == 1 and merged.skipped == {SkipReason.NOT_IN_TAXONOMY: 1}
+    assert _messages(results, Severity.WARNING) == [
+        f"1 facts in {FILE} name a concept, dimension or member that this report's taxonomy does not have; they are left out."
+    ]
+
+
+@pytest.mark.usefixtures("versions")
+@pytest.mark.parametrize(
+    "changed",
+    [
+        pytest.param(fact(qname("Waste"), "3", period=PRIOR), id="data type"),
+        pytest.param(fact(qname("Cash"), "7", period=PRIOR), id="period type"),
+    ],
+)
+def test_a_concept_of_another_type_is_left_out_with_a_warning(
+    changed: dict[str, Any],
+) -> None:
+    current = _report(_revenue("100"), entryPoint=OURS)
+    results, merged = _merge(current, _lastVersion(_revenue("90", PRIOR), changed))
+    assert merged.taken == 1 and merged.skipped == {SkipReason.OTHER_TYPE: 1}
+    assert _messages(results, Severity.WARNING) == [
+        f"1 facts in {FILE} are for concepts with another period type or data type in this report's taxonomy; they are left out."
+    ]
+
+
+@pytest.mark.usefixtures("versions")
+def test_a_taxonomy_no_disclosure_config_names_with_ours_is_refused(
+    register_taxonomy: Callable[[dict[str, Any]], Taxonomy],
+) -> None:
+    """Looking like a version of ours is not enough: an entry point the same apart from its date
+    is another taxonomy until a disclosure config names the two together."""
+    other = "test://synthetic/2025-06-01/comparatives.xsd"
+    register_taxonomy(_taxonomy(other))
+    current = _report(_revenue("100"), entryPoint=OURS)
+    with pytest.raises(InlineReportException, match="or another version of it"):
+        _merge(current, _report(_revenue("90", PRIOR), entryPoint=other))
+    assert current.priorPeriod is None
+
+
+def test_dimensions_and_members_are_matched_by_name_too(
+    register_taxonomy: Callable[[dict[str, Any]], Taxonomy],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Explicit and typed dimensions come across; a member our version lacks leaves its fact out."""
+    _oneDisclosureSystem(
+        monkeypatch,
+        "test://synthetic/2026-01-01/group.xsd",
+        "test://synthetic/2025-01-01/group.xsd",
+    )
+    ours = group_taxonomy_json("test://synthetic/2026-01-01/group.xsd")
+    del ours["concepts"][qname("ScopeB")]
+    scopeCube = ours["dimensions"][GROUP_ROLE][qname("ScopeCube")]
+    scopeCube["explicitDimensions"][qname("ScopeAxis")].remove(qname("ScopeB"))
+    register_taxonomy(ours)
+    lastVersion = "test://synthetic/2025-01-01/group.xsd"
+    older = group_taxonomy_json(lastVersion)
+    older["namespaces"][PREFIX] = LAST_VERSION_NAMESPACE
+    register_taxonomy(older)
+    doc = group_document()
+    doc["documentInfo"]["taxonomy"] = [lastVersion]
+    doc["documentInfo"]["namespaces"][PREFIX] = LAST_VERSION_NAMESPACE
+    prior = XbrlJsonProcessor(doc, ConversionResultsBuilder()).createReport()
+
+    # This year's report has the same facts for its own year, but none for Scope B.
+    thisYear = group_document()
+    thisYear["documentInfo"]["taxonomy"] = ["test://synthetic/2026-01-01/group.xsd"]
+    del thisYear["facts"]["f2"]
+    for f in thisYear["facts"].values():
+        f["dimensions"]["period"] = NEXT_YEAR
+    current = XbrlJsonProcessor(thisYear, ConversionResultsBuilder()).createReport()
+
+    results, merged = _merge(current, prior)
+    # the note comes with its row's intensity
+    assert merged.skipped == {SkipReason.NOT_IN_TAXONOMY: 1}
+    comparatives = [f for f in current.facts if f.period.reportPeriod.name == "prior"]
+    assert len(comparatives) == merged.taken == 5
+    assert {
+        c.qname.namespace
+        for f in comparatives
+        for c in (
+            f.concept,
+            *f.explicit_dimensions.keys(),
+            *f.explicit_dimensions.values(),
+            *f.typed_dimensions.keys(),
+        )
+    } == {NAMESPACE}
+    assert {v for f in comparatives for v in f.typed_dimensions.values()} == {
+        "T1",
+        "T2",
+    }
+    (warning,) = _messages(results, Severity.WARNING)
+    assert warning.startswith(f"1 facts in {FILE} name a concept, dimension or member")

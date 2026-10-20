@@ -292,9 +292,9 @@ duration overlapping its own or ending where it starts, means it already has com
 raises. From last year's report the one duration that ends where ours starts (at any length) is taken,
 with the instants at its ends; facts in its other periods are left out with one info message. Only
 non-nil numbers and booleans are copied, and any other fact in a table row with one (the same
-presentation group and dimensions), each by `FactBuilder.fromFact` so every check re-runs, without footnotes, and
-each keeps its unit. A comparative is taken only beside this year's fact for the same concept and
-dimensions; with nothing to compare it with it is left out. The current report wins: a comparative with a `duplicateKey` already present (the
+presentation group and dimensions), each rebuilt with a `FactBuilder` so every check re-runs,
+without footnotes, and each keeps its unit. A comparative is taken only beside this year's fact for
+the same concept and dimensions; with nothing to compare it with it is left out. The current report wins: a comparative with a `duplicateKey` already present (the
 shared closing and opening instant, say) is skipped, quietly if consistent, with a warning if not.
 Another entity or another taxonomy raises, and a merge that raises stops the conversion. The disclosure
 config's `periods[].role` (`current`, the default, or `prior`) and its skip-if-absent rule stay for a
