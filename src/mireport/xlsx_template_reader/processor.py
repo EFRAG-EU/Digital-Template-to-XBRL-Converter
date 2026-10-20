@@ -48,6 +48,7 @@ from mireport.xlsx_template_reader._fact_creator import FactCreator
 from mireport.xlsx_template_reader._messages import Messenger
 from mireport.xlsx_template_reader._reader import WorkbookReader
 from mireport.xlsx_template_reader.util import (
+    DATE_FORMS_HINT,
     excelDefinedNameRef,
     loadExcelFromPathOrFileLike,
 )
@@ -376,7 +377,7 @@ class XlsxProcessor:
             return self._reader.value(name).as_date()
         except Exception as e:
             self._msg.error(
-                f"Excel report must have a valid date for named range {name}. Exception: {e}",
+                f"Excel report must have a valid date for named range {name}. {DATE_FORMS_HINT} Exception: {e}",
                 MessageType.ExcelParsing,
                 ref=excelDefinedNameRef(self._reader.getDefinedName(name)),
             )

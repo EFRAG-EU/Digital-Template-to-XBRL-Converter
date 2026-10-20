@@ -38,6 +38,7 @@ from mireport.xlsx_template_reader._ranges import (
 from mireport.xlsx_template_reader._tables import TableFactCreator
 from mireport.xlsx_template_reader._units import UnitResolver
 from mireport.xlsx_template_reader.util import (
+    DATE_FORMS_HINT,
     conceptsToText,
     getDateFromValue,
 )
@@ -238,7 +239,7 @@ class FactCreator:
                     value = getDateFromValue(value)
                 except (ValueError, TypeError):
                     self._msg.error(
-                        f"Unable to parse date from cell value '{value}' for {concept.qname}.",
+                        f"Unable to read '{value}' as a date for {concept.qname}. {DATE_FORMS_HINT}",
                         MessageType.ExcelParsing,
                         concept=concept,
                         ref=stuff.excelRef(cell),

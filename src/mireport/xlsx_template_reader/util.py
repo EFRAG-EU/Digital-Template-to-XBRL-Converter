@@ -104,6 +104,12 @@ def get_decimal_places(cell: CellType) -> DecimalPlaces:
     return "INF"
 
 
+# What getDateFromValue accepts, for messages about cells it refuses.
+DATE_FORMS_HINT = (
+    "Enter it as an Excel date, or as text in the form YYYY-MM-DD or DD/MM/YYYY."
+)
+
+
 def getDateFromValue(value: object) -> date:
     if isinstance(value, datetime):
         return value.date()

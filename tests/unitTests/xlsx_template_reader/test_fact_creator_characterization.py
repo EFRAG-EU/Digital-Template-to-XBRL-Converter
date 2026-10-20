@@ -11,11 +11,13 @@ running this module directly:
 from __future__ import annotations
 
 import json
-from collections import Counter
+from collections import Counter, defaultdict
 from pathlib import Path
 from typing import ClassVar, NamedTuple
 
 import pytest
+from openpyxl import Workbook
+from openpyxl.workbook.defined_name import DefinedName
 
 from mireport.conversionresults import ConversionResultsBuilder, Severity
 from mireport.data.disclosures import VSME_DEFAULTS
@@ -27,6 +29,7 @@ from mireport.xbrljson_reader.document import XbrlJsonDocument
 from mireport.xbrljson_reader.processor import EXTENSION_NS
 from mireport.xbrljson_writer import XbrlJsonExtensions, toXbrlJson
 from mireport.xlsx_template_reader._binder import WorkbookBinder
+from mireport.xlsx_template_reader._bindings import WorkbookBindings
 from mireport.xlsx_template_reader._config import ConverterConfig
 from mireport.xlsx_template_reader._enumerations import (
     LabelMatch,
@@ -40,6 +43,7 @@ from mireport.xlsx_template_reader._fact_support import (
     resolveMemberWithMessages,
 )
 from mireport.xlsx_template_reader._messages import Messenger
+from mireport.xlsx_template_reader._ranges import XbrlConceptCellRangeMetadata
 from mireport.xlsx_template_reader._reader import WorkbookReader
 from mireport.xlsx_template_reader._units import UnitResolver, cleanUnitTextFromExcel
 from mireport.xlsx_template_reader.processor import XlsxProcessor
@@ -664,6 +668,51 @@ class TestValidateNumericNonFinite:
         fb = creator_env.report.getFactBuilder().setConcept(concept).setValue(value)
         with pytest.raises(InlineReportException, match="non-finite"):
             fb.buildFact()
+
+
+class TestUnreadableDate:
+    def test_error_names_the_accepted_forms(self, taxonomy):
+        concept = next(
+            c
+            for c in sorted(taxonomy.concepts, key=str)
+            if c.isDate
+            and c.isReportable
+            and taxonomy.getAllExplicitDimensionsForPrimaryItem(c)
+            <= taxonomy.defaultedDimensions
+        )
+        wb = Workbook()
+        ws = wb.active
+        assert ws is not None
+        ws["A1"] = "1.1.2025"
+        wb.defined_names["d"] = DefinedName("d", attr_text=f"'{ws.title}'!$A$1")
+
+        results = _results()
+        reader = WorkbookReader(wb, results)
+        dn = wb.defined_names["d"]
+        crm = reader.peekRange(dn)
+        assert crm is not None
+        bindings = WorkbookBindings(
+            concept_map={
+                dn: XbrlConceptCellRangeMetadata.fromCellRangeMetadata(crm, concept)
+            },
+            tables=[],
+            unit_map={},
+            preset_dims=defaultdict(dict),
+            has_external_value=frozenset(),
+            footnote=None,
+        )
+        report = InlineReport(taxonomy, None)
+        FactCreator(
+            bindings, reader, report, results, VSME_DEFAULTS
+        ).createSimpleFacts()
+
+        errors = [
+            str(m.messageText) for m in results.messages if m.severity is Severity.ERROR
+        ]
+        assert len(errors) == 1
+        assert "'1.1.2025'" in errors[0] and str(concept.qname) in errors[0]
+        assert "YYYY-MM-DD" in errors[0] and "DD/MM/YYYY" in errors[0]
+        assert not report.facts
 
 
 if __name__ == "__main__":
