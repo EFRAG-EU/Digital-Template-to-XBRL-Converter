@@ -37,6 +37,15 @@ class InconsistentDuplicateHandler(Protocol):
     def __call__(self, concept: Concept, facts: Sequence[Fact]) -> None: ...
 
 
+class UnpresentedFactsHandler(Protocol):
+    """
+    Callback invoked once per concept that has facts but is in no presentation
+    group (see :meth:`Report.reportFactsNotInPresentation`).
+    """
+
+    def __call__(self, concept: Concept, facts: Sequence[Fact]) -> None: ...
+
+
 class Report:
     """An XBRL report as data: its taxonomy, entity, periods, facts and footnotes.
 
@@ -276,6 +285,21 @@ class Report:
                 for a, b in combinations(group, 2)
             ):
                 handler(group[0].concept, group)
+
+    def reportFactsNotInPresentation(self, handler: UnpresentedFactsHandler) -> None:
+        """
+        Report, via handler, each concept that has facts but is in no presentation group of the
+        taxonomy, with its facts, in the order the concept's first fact was added. A report is
+        laid out from the presentation, so these facts appear nowhere in it.
+        """
+        presented = {
+            rel.concept
+            for group in self._taxonomy.presentation
+            for rel in group.relationships
+        }
+        for concept, facts in self._factsByConcept.items():
+            if concept not in presented:
+                handler(concept, list(facts))
 
     def _createFootnote(self, content: Markup) -> Footnote:
         fn = Footnote(id=next(self._footnoteCounter), content=content)
