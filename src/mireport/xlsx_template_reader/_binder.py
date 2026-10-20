@@ -147,7 +147,7 @@ class WorkbookBinder:
         ]
         self._consumeTableBindings(concept_map, unit_map, tables)
 
-        return WorkbookBindings(
+        bindings = WorkbookBindings(
             concept_map=concept_map,
             tables=tables,
             unit_map=unit_map,
@@ -155,6 +155,8 @@ class WorkbookBinder:
             has_external_value=resolveExternalValues(ctx),
             footnote=resolveFootnoteBinding(ctx),
         )
+        reader.warnUnusedNames()
+        return bindings
 
     def _indexXbrlCandidates(
         self,
