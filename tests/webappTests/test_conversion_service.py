@@ -51,6 +51,11 @@ class TestConversionResultsPage:
         resp = c.get(f"/conversions/{conv_id}")
         assert b"Conversion Results" in resp.data
 
+    def test_results_page_names_vs_and_vsme(self, converted_id):
+        conv_id, c = converted_id
+        resp = c.get(f"/conversions/{conv_id}")
+        assert b"VS and VSME Digital Template to XBRL Converter" in resp.data
+
     def test_results_page_shows_success_banner(self, converted_id):
         conv_id, c = converted_id
         resp = c.get(f"/conversions/{conv_id}")
