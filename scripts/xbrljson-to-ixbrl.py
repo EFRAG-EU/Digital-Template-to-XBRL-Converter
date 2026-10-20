@@ -63,7 +63,7 @@ def createArgParser() -> argparse.ArgumentParser:
         "--prior",
         type=Path,
         default=None,
-        help="Last year's report (xBRL-JSON), whose figures become the comparatives.",
+        help="Last year's report (xBRL-JSON or a Digital Template workbook), whose figures become the comparatives.",
     )
     parser.add_argument("--force", action="store_true", help="Overwrite quietly.")
     parser.add_argument(

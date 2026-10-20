@@ -284,7 +284,8 @@ per period, each period said once over its columns; a list shows a concept's pri
 opening balance, beside the closing one that leads the line. When every column is in a single period (one period, or baseline and target years each in
 their own column) nothing changes. **The VSME Excel template reports one period** (FAQ item 7), so
 comparatives come from last year's report, always a separate file, and no template contract is needed:
-`mireport.comparatives.PriorReport.fromFile` reads it as a whole report (xBRL-JSON so far), and its
+`mireport.comparatives.PriorReport.fromFile` reads it as a whole report (xBRL-JSON, or a
+workbook in its own template version; one migrated but not yet saved in Excel is refused), and its
 `mergeInto` (`mireport.report.comparatives.mergePriorReport`) makes its period this report's prior one (`--prior PATH` on
 `parse-and-ixbrl.py` and `xbrljson-to-ixbrl.py`). The current report's own period is its default
 duration; its other durations (baseline and target years) are left alone, but a prior period, or a
@@ -296,9 +297,13 @@ presentation group and dimensions), each rebuilt with a `FactBuilder` so every c
 without footnotes, and each keeps its unit. A comparative is taken only beside this year's fact for
 the same concept and dimensions; with nothing to compare it with it is left out. The current report wins: a comparative with a `duplicateKey` already present (the
 shared closing and opening instant, say) is skipped, quietly if consistent, with a warning if not.
-Another entity or another taxonomy raises, and a merge that raises stops the conversion. The disclosure
-config's `periods[].role` (`current`, the default, or `prior`) and its skip-if-absent rule stay for a
-future template with prior-year cells.
+Another entity raises. Last year's report on another version of our taxonomy (one the same disclosure
+config names, `areVersionsOfOneTaxonomy`; VS is a version of VSME) has the facts it would give matched to ours by `alignToTaxonomy`: concepts,
+dimensions and members by local name. One naming something we lack, or whose concept's period type
+or data type differs, is left out and counted with the merge's other skips, one warning for each reason.
+Another taxonomy raises, and a merge that raises stops the conversion. The disclosure config's
+`periods[].role` (`current`, the default, or `prior`) and its skip-if-absent rule stay for a future
+template with prior-year cells.
 
 ### xBRL-JSON reader (`mireport/xbrljson_reader/`)
 

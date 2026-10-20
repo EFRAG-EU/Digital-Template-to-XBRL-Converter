@@ -462,7 +462,8 @@ def test_last_years_report_is_read_from_xbrl_json(taxonomy: Taxonomy) -> None:
 @pytest.mark.parametrize(
     ("content", "filename", "match"),
     [
-        pytest.param(b"{}", "last-year.xlsx", "can't be read", id="extension"),
+        pytest.param(b"{}", "last-year.csv", "can't be read", id="extension"),
+        pytest.param(b"{}", "last-year.xlsx", "not an Excel workbook", id="workbook"),
         pytest.param(b"not json", FILE, "not JSON", id="not JSON"),
     ],
 )

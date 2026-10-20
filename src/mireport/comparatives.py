@@ -11,6 +11,9 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import PurePath
 from typing import TYPE_CHECKING, NoReturn
+from zipfile import BadZipFile
+
+from openpyxl.utils.exceptions import InvalidFileException
 
 from mireport.conversionresults import (
     ConversionResultsBuilder,
@@ -18,6 +21,7 @@ from mireport.conversionresults import (
     MessageType,
     Severity,
 )
+from mireport.data.disclosures import VSME_DEFAULTS
 from mireport.exceptions import EarlyAbortException, InlineReportException
 from mireport.filesupport import FilelikeAndFileName
 from mireport.report.comparatives import PriorMerge, mergePriorReport
@@ -27,12 +31,13 @@ from mireport.xbrljson_reader import (
     XbrlJsonException,
     XbrlJsonProcessor,
 )
+from mireport.xlsx_template_reader.processor import XlsxProcessor
 
 if TYPE_CHECKING:
     from typing import Self
 
 MESSAGE_PREFIX = "Prior-year report: "
-PRIOR_REPORT_EXTENSIONS = (".json",)
+PRIOR_REPORT_EXTENSIONS = (".json", ".xlsx")
 
 
 @dataclass(frozen=True, slots=True)
@@ -50,6 +55,8 @@ class PriorReport:
         match PurePath(source.filename).suffix.lower():
             case ".json":
                 return cls.fromXbrlJson(source, results)
+            case ".xlsx":
+                return cls.fromWorkbook(source, results)
             case other:
                 _abort(
                     results,
@@ -65,6 +72,14 @@ class PriorReport:
         return cls._read(source, results, _readXbrlJson)
 
     @classmethod
+    def fromWorkbook(
+        cls, source: FilelikeAndFileName, results: ConversionResultsBuilder
+    ) -> Self:
+        """A filled-in Digital Template, in its own template version and taxonomy. Its partial
+        facts (Word text blocks) are left unfinished: only numbers are taken."""
+        return cls._read(source, results, _readWorkbook)
+
+    @classmethod
     def _read(
         cls,
         source: FilelikeAndFileName,
@@ -75,7 +90,7 @@ class PriorReport:
         read = ConversionResultsBuilder(conversionId=results.conversionId)
         try:
             report = reader(source, read)
-        except (InlineReportException, XbrlJsonException) as e:
+        except (InlineReportException, XbrlJsonException, EarlyAbortException) as e:
             _passOn(read, results)
             _abort(results, f"{MESSAGE_PREFIX}{e}", e)
         _passOn(read, results)
@@ -99,6 +114,23 @@ def _readXbrlJson(
 ) -> Report:
     document = XbrlJsonDocument.fromJson(source.fileContent, source.filename)
     return XbrlJsonProcessor(document, read).createReport()
+
+
+def _readWorkbook(
+    source: FilelikeAndFileName, read: ConversionResultsBuilder
+) -> Report:
+    try:
+        processor = XlsxProcessor.from_file(source.fileLike(), read, VSME_DEFAULTS)
+    except (BadZipFile, InvalidFileException) as e:
+        raise InlineReportException(
+            f"{source.filename} is not an Excel workbook: {e}"
+        ) from e
+    if processor.checkMigrationStatus() is False:
+        raise InlineReportException(
+            f"{source.filename} has been migrated but not yet saved in Excel. "
+            "Open it in Excel, save it, and give it again."
+        )
+    return processor.createReport()
 
 
 def _passOn(read: ConversionResultsBuilder, results: ConversionResultsBuilder) -> None:
