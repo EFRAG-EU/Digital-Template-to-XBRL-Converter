@@ -545,6 +545,12 @@ class Concept:
         role, then parts) -- see Reference and Taxonomy.getReferencesForConcept."""
         return self._taxonomy.getReferencesForConcept(self)
 
+    @property
+    def presentationGroups(self) -> frozenset[PresentationGroup]:
+        """The presentation groups this concept is a row of -- see
+        Taxonomy.getPresentationGroupsForConcept."""
+        return self._taxonomy.getPresentationGroupsForConcept(self)
+
 
 class TypedDomainWrapperElement:
     """
@@ -820,6 +826,9 @@ class PresentationGroup(NamedTuple):
         if isinstance(other, PresentationGroup):
             return self.roleUri == other.roleUri
         return NotImplemented
+
+    def __hash__(self) -> int:
+        return hash(self.roleUri)
 
     def __lt__(self, other: object) -> bool:
         if isinstance(other, PresentationGroup):
@@ -1589,6 +1598,24 @@ class Taxonomy:
     @property
     def presentation(self) -> tuple[PresentationGroup, ...]:
         return self._groups
+
+    def getPresentationGroupsForConcept(
+        self, concept: Concept
+    ) -> frozenset[PresentationGroup]:
+        """The presentation groups this concept is a row of, if any. See
+        Concept.presentationGroups, which is the usual way to call this."""
+        return self._presentationGroupsByConcept.get(concept, frozenset())
+
+    @cached_property
+    def _presentationGroupsByConcept(
+        self,
+    ) -> Mapping[Concept, frozenset[PresentationGroup]]:
+        groups: dict[Concept, set[PresentationGroup]] = defaultdict(set)
+        for group in self._groups:
+            for block in group.blocks:
+                for rel in block.rows:
+                    groups[rel.concept].add(group)
+        return {concept: frozenset(g) for concept, g in groups.items()}
 
     @property
     def hypercubes(self) -> frozenset[Concept]:
