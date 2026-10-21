@@ -105,6 +105,8 @@ class WorkbookReader:
             for dn in workbook.defined_names.values()
             if (name := dn.name) and not name.startswith(IGNORED_DEFINED_NAME_PREFIXES)
         }
+        self._damaged: set[DefinedName] = set()
+        self._warnedModified = False
         self._results = results
         self._msg = Messenger(results)
 
@@ -122,19 +124,46 @@ class WorkbookReader:
         """Record that this defined name has been consumed by the conversion."""
         self._unused.discard(dn)
 
+    def _warnModified(self) -> None:
+        """Lead the first named range warning with a single note that the
+        workbook isn't the template EFRAG published."""
+        if not self._warnedModified:
+            self._warnedModified = True
+            self._msg.warning(
+                "The template has been modified from the one EFRAG published. Use a fresh copy of the digital template if you can.",
+                MessageType.ExcelParsing,
+            )
+
+    def _warnDamaged(self, dn: DefinedName, problem: str) -> None:
+        if dn not in self._damaged:
+            self._damaged.add(dn)
+            self._warnModified()
+            self._msg.warning(
+                f"Named range {dn.name} {problem}.", MessageType.ExcelParsing
+            )
+
+    def warnUnusedNames(self) -> None:
+        """Warn about the named ranges still unused (other than damaged ones,
+        already warned about), listing them if there are only a few."""
+        names = sorted(dn.name for dn in self._unused - self._damaged if dn.name)
+        if not names:
+            return
+        self._warnModified()
+        message = f"{len(names)} named range{'s' if len(names) != 1 else ''} that the converter does not use"
+        if len(names) <= 10:
+            message += f": {', '.join(names)}"
+        self._msg.warning(f"{message}.", MessageType.ExcelParsing)
+
     def peekRange(self, dn: DefinedName) -> CellRangeMetadata | None:
         """Resolve a defined name to its cell range without marking it used.
 
-        Emits an error message and returns None when the defined name is
+        Emits a warning and returns None when the defined name is
         damaged (unreadable, zero or multiple destinations, broken reference).
         """
         try:
             all_destinations = list(dn.destinations)
         except AttributeError:
-            self._msg.error(
-                f"Named range {dn.name} has an unreadable destination: {dn.attr_text!r}. \nSomething has modified the digital template's structure. \nPlease try a fresh copy of the template and check that it has not been modified in unsupported ways.",
-                MessageType.DevInfo,
-            )
+            self._warnDamaged(dn, f"has an unreadable destination: {dn.attr_text}")
             L.debug(
                 f"OpenPyXL error processing named range definition {dn.name=} {dn.attr_text=!r}.",
                 exc_info=True,
@@ -142,25 +171,16 @@ class WorkbookReader:
             return None
         match len(all_destinations):
             case 0:
-                self._msg.error(
-                    f"Named range {dn.name} has no destinations specified. Ignoring.",
-                    MessageType.DevInfo,
-                )
+                self._warnDamaged(dn, f"has no destination: {dn.attr_text}")
                 return None
             case 1:
                 pass
             case _:
-                self._msg.error(
-                    f"Table {dn.name} has multiple destinations. Ignoring table.",
-                    MessageType.DevInfo,
-                )
+                self._warnDamaged(dn, f"has several destinations: {dn.attr_text}")
                 return None
         sheetName, cell_range = all_destinations[0]
         if not sheetName or not cell_range:
-            self._msg.error(
-                f"Named range {dn.name} has damaged cell reference {sheetName=} {cell_range=}",
-                MessageType.ExcelParsing,
-            )
+            self._warnDamaged(dn, f"has a damaged cell reference: {dn.attr_text}")
             return None
         try:
             ws = self._workbook[sheetName]
@@ -170,6 +190,13 @@ class WorkbookReader:
                 f"OpenPyXL error processing cell range. {dn.name=} {sheetName=} {cell_range=}",
                 exc_info=e,
             )
+            if sheetName.startswith("["):
+                problem = f"points at a cell in another workbook: {dn.attr_text}"
+            elif sheetName not in self._workbook.sheetnames:
+                problem = f"points at a sheet that doesn't exist: {sheetName}"
+            else:
+                problem = f"has an invalid cell range: {cell_range}"
+            self._warnDamaged(dn, problem)
             return None
         dims = getEffectiveCellRangeDimensions(ws, cr)
         self._results.addCellQueries(dims.cellsAccessed)

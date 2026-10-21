@@ -6,9 +6,10 @@ from pathlib import Path
 from typing import ClassVar
 
 import pytest
+from openpyxl import Workbook
 from openpyxl.workbook.defined_name import DefinedName
 
-from mireport.conversionresults import ConversionResultsBuilder
+from mireport.conversionresults import ConversionResultsBuilder, MessageType, Severity
 from mireport.data.disclosures import VSME_DEFAULTS
 from mireport.taxonomy import getTaxonomy
 from mireport.xlsx_template_reader._binder import WorkbookBinder
@@ -18,6 +19,7 @@ from mireport.xlsx_template_reader._ranges import (
     XbrlConceptCellRangeMetadata,
 )
 from mireport.xlsx_template_reader._reader import CellValue, WorkbookReader
+from mireport.xlsx_template_reader.processor import XlsxProcessor
 from mireport.xlsx_template_reader.util import loadExcelFromPathOrFileLike
 
 SAMPLE = (
@@ -255,3 +257,130 @@ class TestWorkbookBinder:
         for table_binding in bound.tables:
             for unit in table_binding.units:
                 assert unit.concept not in bound.unit_map
+
+
+MODIFIED = "The template has been modified from the one EFRAG published."
+OURS = "BasisForPreparation"
+
+
+def _bindNames(taxonomy, names: dict[str, str]) -> ConversionResultsBuilder:
+    """Bind an in-memory workbook holding just the given named ranges."""
+    wb = Workbook()
+    wb.active.title = "Sheet"
+    for name, ref in names.items():
+        wb.defined_names[name] = DefinedName(name, attr_text=ref)
+    results = _results()
+    WorkbookBinder(WorkbookReader(wb, results), taxonomy, results).bind()
+    return results
+
+
+def _warnings(results: ConversionResultsBuilder) -> list[str]:
+    return [
+        m.messageText
+        for m in results.getMessages(
+            wantedMessageTypes={MessageType.ExcelParsing},
+            wantedMessageSeverities={Severity.WARNING},
+        )
+    ]
+
+
+class TestDamagedNamedRanges:
+    @pytest.mark.parametrize(
+        ("ref", "problem"),
+        [
+            ("#REF!", "has no destination"),
+            ("Sheet!#REF!", "has a damaged cell reference"),
+            ("Sheet!$A$1,Sheet!$B$2", "has several destinations"),
+            ("Missing!$A$1", "points at a sheet that doesn't exist"),
+            ("'[1]Other'!$E$150", "points at a cell in another workbook"),
+        ],
+    )
+    def test_damaged_range_of_ours_is_a_warning(self, taxonomy, ref, problem):
+        results = _bindNames(taxonomy, {OURS: ref})
+        warnings = _warnings(results)
+        assert warnings[0].startswith(MODIFIED)
+        assert warnings[1].startswith(f"Named range {OURS} {problem}")
+        assert len(warnings) == 2
+        assert not results.hasErrors()
+
+    def test_broken_third_party_name_is_not_damaged(self, taxonomy):
+        results = _bindNames(taxonomy, {"My_Range": "#REF!"})
+        assert not results.hasErrors()
+        assert not any("Named range" in w for w in _warnings(results))
+
+    def test_modified_warning_leads_once(self, taxonomy):
+        results = _bindNames(taxonomy, {OURS: "#REF!", "Mine": "Sheet!$A$1"})
+        assert _warnings(results) == [
+            f"{MODIFIED} Use a fresh copy of the digital template if you can.",
+            f"Named range {OURS} has no destination: #REF!.",
+            "1 named range that the converter does not use: Mine.",
+        ]
+
+
+class TestDamagedReportMetadata:
+    TITLE = "template_reporting_title"
+
+    def _setTitle(
+        self, ref: str, config: dict[str, str]
+    ) -> tuple[list[str], ConversionResultsBuilder]:
+        wb = Workbook()
+        wb.active.title = "Sheet"
+        wb.defined_names[self.TITLE] = DefinedName(self.TITLE, attr_text=ref)
+        results = _results()
+        titles: list[str] = []
+        XlsxProcessor(wb, results, VSME_DEFAULTS).setReportMetadata(
+            {"report-title": {"named-range": self.TITLE, **config}},
+            "report-title",
+            titles.append,
+        )
+        return titles, results
+
+    def test_damaged_name_uses_fallback(self):
+        titles, results = self._setTitle("#REF!", {"fallback": "Fallback"})
+        assert titles == ["Fallback"]
+        assert not results.hasErrors()
+
+    def test_damaged_name_without_fallback_is_an_error(self):
+        titles, results = self._setTitle("#REF!", {})
+        assert titles == []
+        assert results.hasErrors()
+
+    def test_blank_cell_is_still_read(self):
+        titles, results = self._setTitle("Sheet!$A$1", {"fallback": "Fallback"})
+        assert titles == [""]
+        assert not results.hasErrors()
+
+
+class TestUnusedNamesWarning:
+    def test_few_names_are_listed(self, taxonomy):
+        names = {n: "Sheet!$A$1" for n in ("Gamma", "Alpha", "Beta")}
+        names["template_extra"] = "Sheet!$A$2"
+        assert _warnings(_bindNames(taxonomy, names))[1] == (
+            "3 named ranges that the converter does not use: Alpha, Beta, Gamma."
+        )
+
+    def test_many_names_are_counted(self, taxonomy):
+        names = {f"Mine{i}": "Sheet!$A$1" for i in range(12)}
+        names["template_extra"] = "Sheet!$A$2"
+        assert _warnings(_bindNames(taxonomy, names))[1] == (
+            "12 named ranges that the converter does not use."
+        )
+
+
+SAMPLES = sorted((Path(__file__).parent.parent.parent / "data").glob("*.xlsx"))
+
+
+@pytest.mark.parametrize("sample", SAMPLES, ids=lambda p: p.name)
+def test_unmodified_sample_has_no_modified_warning(sample):
+    """EFRAG's 1.1.0 sample has a named range pointing at another workbook."""
+    wb = loadExcelFromPathOrFileLike(sample)
+    results = _results()
+    reader = WorkbookReader(wb, results)
+    sampleTaxonomy = getTaxonomy(reader.value(VSME_DEFAULTS["entryPoint"]).as_str())
+    try:
+        WorkbookBinder(reader, sampleTaxonomy, results).bind()
+    finally:
+        wb.close()
+    modified = [w for w in _warnings(results) if w.startswith(MODIFIED)]
+    assert len(modified) == (1 if sample.name.endswith("-1.1.0.xlsx") else 0)
+    assert not results.hasErrors()

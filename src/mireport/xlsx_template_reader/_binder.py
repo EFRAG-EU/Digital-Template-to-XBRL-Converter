@@ -96,8 +96,11 @@ class WorkbookBinder:
                     dimValue = taxonomy.resolveConcept(
                         memberName, by_name=True, only_reportable=False
                     )
-                    crh = reader.peekRange(dn)
-                    if crh is not None and concept is not None and dimValue is not None:
+                    if (
+                        concept is not None
+                        and dimValue is not None
+                        and (crh := reader.peekRange(dn)) is not None
+                    ):
                         b = XbrlConceptCellRangeMetadata.fromCellRangeMetadata(
                             crh, concept=concept
                         )
@@ -144,7 +147,7 @@ class WorkbookBinder:
         ]
         self._consumeTableBindings(concept_map, unit_map, tables)
 
-        return WorkbookBindings(
+        bindings = WorkbookBindings(
             concept_map=concept_map,
             tables=tables,
             unit_map=unit_map,
@@ -152,6 +155,8 @@ class WorkbookBinder:
             has_external_value=resolveExternalValues(ctx),
             footnote=resolveFootnoteBinding(ctx),
         )
+        reader.warnUnusedNames()
+        return bindings
 
     def _indexXbrlCandidates(
         self,
