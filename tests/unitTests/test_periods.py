@@ -59,3 +59,19 @@ def test_only_whole_days_can_be_written_as_dates() -> None:
 def test_periods_are_written_as_oim_does() -> None:
     assert str(CUR) == "2025-01-01T00:00:00/2026-01-01T00:00:00"
     assert str(CUR.startInstant) == "2025-01-01T00:00:00"
+
+
+@pytest.mark.parametrize(
+    ("first", "last", "name"),
+    [
+        (date(2025, 1, 1), date(2025, 12, 31), "2025"),
+        (date(2024, 7, 1), date(2025, 6, 30), "2024–2025"),
+        (date(2024, 1, 1), date(2025, 6, 30), None),  # eighteen months
+        (date(2025, 1, 1), date(2025, 6, 30), None),
+        (date(2024, 2, 29), date(2025, 2, 28), None),
+    ],
+)
+def test_a_year_to_the_day_is_named_by_its_year(
+    first: date, last: date, name: str | None
+) -> None:
+    assert DurationPeriodHolder.fromDays(first, last).yearName == name

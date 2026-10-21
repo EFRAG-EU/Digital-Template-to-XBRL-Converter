@@ -108,9 +108,9 @@ def test_a_fact_only_in_another_period_says_which_in_a_list(group: None) -> None
     del doc["facts"]["f3"]  # the Total in the default period
     doc["facts"]["other"] = fact(qname("Total"), "77", period=PRIOR_YEAR)
     html = _render(doc)
-    assert re.findall(r"Reporting period: ([^<]*)<", html) == [
-        "2024-01-01 &#8211; 2024-12-31"
-    ]
+    assert re.findall(
+        r'Reporting period: <span class="period" title="([^"]*)">([^<]*)<', html
+    ) == [("2024-01-01 &#8211; 2024-12-31", "2024")]
 
 
 @pytest.mark.parametrize(

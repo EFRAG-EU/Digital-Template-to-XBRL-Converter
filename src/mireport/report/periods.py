@@ -91,6 +91,21 @@ class DurationPeriodHolder(PeriodHolder):
         """The last day included, for aoix and for people."""
         return _whole_day(self.end, "The end") - _ONE_DAY
 
+    @property
+    def yearName(self) -> str | None:
+        """What people call the duration when it is a year to the day: ``2025`` for a calendar
+        year, ``2024–2025`` for one that starts later in the year. None for any other length."""
+        first, last = self.firstDay, self.lastDay
+        try:
+            yearOn = first.replace(year=first.year + 1)
+        except ValueError:  # from 29 February
+            return None
+        if last != yearOn - _ONE_DAY:
+            return None
+        if (first.month, first.day) == (1, 1):
+            return str(first.year)
+        return f"{first.year}\u2013{last.year}"
+
 
 @dataclass(slots=True, frozen=True, eq=True)
 class InstantPeriodHolder(PeriodHolder):

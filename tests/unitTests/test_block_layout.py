@@ -293,7 +293,9 @@ class TestTwoHypercubesInOneRole:
         html = _html(_report(register_taxonomy(_two_cubes()), self.FACTS))
         _, typed = re.findall(r"<table.*?</table>", html, re.DOTALL)
         # Intensity is a number and Note is text, so the table is not all numeric
-        (period,) = re.findall(r'<th colspan="[2-9]"[^>]*class="([^"]*)">\s*20', typed)
+        (period,) = re.findall(
+            r'<th colspan="[2-9]"[^>]*class="([^"]*)">\s*<span class="period"', typed
+        )
         assert period == "numeric"
 
     def test_a_role_with_only_one_cube_keeps_its_plain_heading(

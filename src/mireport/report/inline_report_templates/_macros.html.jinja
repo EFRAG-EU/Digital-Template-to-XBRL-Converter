@@ -8,20 +8,25 @@
     {%- endif -%}
 {%- endmacro %}
 
-{#- A FactPeriod as a person reads it: the whole of its report period (or just the year, when
-    short), or for an instant the day it falls on: the first day of the report period for its
-    start, the last day for its end. -#}
-{% macro render_period(factPeriod, short=false) -%}
+{#- A FactPeriod as a person reads it: for an instant the day it falls on (the first day of the
+    report period for its start, the last day for its end), else its report period, as the year
+    it is when it is a year to the day (DurationPeriodHolder.yearName). Its full dates are in its
+    title. -#}
+{% macro render_period(factPeriod) -%}
     {%- set duration = factPeriod.reportPeriod.duration -%}
     {%- if factPeriod.isStart -%}
-        {{- duration.firstDay -}}
+        {{ render_day(duration.firstDay) }}
     {%- elif factPeriod.isEnd -%}
-        {{- duration.lastDay -}}
-    {%- elif short -%}
-        {{ render_duration_period_endyear(duration) }}
+        {{ render_day(duration.lastDay) }}
+    {%- elif duration.yearName -%}
+        <span class="period" title="{{ duration.firstDay }} &#8211; {{ duration.lastDay }}">{{ duration.yearName }}</span>
     {%- else -%}
         {{ render_duration_period(duration) }}
     {%- endif -%}
+{%- endmacro %}
+
+{% macro render_day(day) -%}
+    <span class="period" title="{{ day }}">{{ day }}</span>
 {%- endmacro %}
 
 {% macro render_fact_period(fact) -%}
@@ -29,8 +34,9 @@
     {{- render_period(fact.period) -}}
 {%- endmacro %}
 
+{#- A duration's first and last days; a line breaks only between them, not inside a date. -#}
 {% macro render_duration_period(period) -%}
-    {{- period.firstDay }} &#8211; {{ period.lastDay -}}
+    <span class="period" title="{{ period.firstDay }} &#8211; {{ period.lastDay }}"><span class="day">{{ period.firstDay }}</span> &#8211; <span class="day">{{ period.lastDay }}</span></span>
 {%- endmacro %}
 
 {% macro render_duration_period_endyear(period) -%}
