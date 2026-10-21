@@ -24,7 +24,8 @@ from mireport.cli import (
 from mireport.conversionresults import (
     ConversionResults,
     ConversionResultsBuilder,
-    ProcessingContext,
+    MessageType,
+    Severity,
 )
 from mireport.data.disclosures import VSME_DEFAULTS
 from mireport.entrypoints import describeEntryPointSet
@@ -41,12 +42,19 @@ from mireport.xbrljson_writer import toXbrlJson
 from mireport.xlsx_template_reader.processor import XlsxProcessor
 
 
-def _convert_docx_to_markup(docx_path: Path, pc: ProcessingContext) -> Markup:
-    """Convert a .docx file to HTML via mammoth and return as Markup."""
+def _convert_docx_to_markup(
+    docx_path: Path, resultsBuilder: ConversionResultsBuilder
+) -> Markup:
+    """Convert a .docx file to HTML via mammoth and return as Markup, reporting
+    anything mammoth could not convert as a warning."""
     with open(docx_path, "rb") as f:
         result = mammoth.convert_to_html(f)
-    for msg in result.messages:
-        pc.addDevInfoMessage(f"mammoth ({docx_path.name}): {msg}")
+    for message in result.messages:
+        resultsBuilder.addMessage(
+            f"Word document {docx_path.name}: {message.message}",
+            Severity.WARNING,
+            MessageType.Conversion,
+        )
     return Markup(result.value)
 
 
@@ -307,7 +315,7 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, list[str]
                         additionalInfo=f"Creating {section_id} from {section['path']}",
                     )
                     docx_path = _resolve_extra_path(extra_file, section["path"])
-                    sectionSetter(_convert_docx_to_markup(docx_path, pc))
+                    sectionSetter(_convert_docx_to_markup(docx_path, resultsBuilder))
                 elif "content" in section:
                     sectionSetter(Markup(section["content"]))
                 else:
@@ -321,8 +329,14 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, list[str]
                     additionalInfo=f"Replacing {rtv['concept']} from {rtv['path']}",
                 )
                 docx_path = _resolve_extra_path(extra_file, rtv["path"])
-                markup = _convert_docx_to_markup(docx_path, pc)
-                report.replaceFactValue(rtv["concept"], markup)
+                markup = _convert_docx_to_markup(docx_path, resultsBuilder)
+                concept = report.taxonomy.getConcept(rtv["concept"])
+                # A text block the template marks as external has no fact to
+                # replace yet, only a partial one waiting for this value.
+                if concept in report.partialFactsByConcept:
+                    report.completePartialFact(concept, markup)
+                else:
+                    report.replaceFactValue(concept, markup)
 
             for entry in extra.get("pdfAttachments", []):
                 pdf_path = _resolve_extra_path(extra_file, entry["path"])
