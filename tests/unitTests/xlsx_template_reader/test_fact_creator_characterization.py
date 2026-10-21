@@ -19,11 +19,15 @@ import pytest
 from openpyxl import Workbook
 from openpyxl.workbook.defined_name import DefinedName
 
-from mireport.conversionresults import ConversionResultsBuilder, Severity
+from mireport.conversionresults import (
+    ConversionResultsBuilder,
+    MessageType,
+    Severity,
+)
 from mireport.data.disclosures import VSME_DEFAULTS
 from mireport.exceptions import AmbiguousComponentException, InlineReportException
 from mireport.report import InlineReport
-from mireport.taxonomy import getTaxonomy, loadBuiltInTaxonomyJSON
+from mireport.taxonomy import Taxonomy, getTaxonomy, loadBuiltInTaxonomyJSON
 from mireport.xbrljson_reader import XbrlJsonProcessor
 from mireport.xbrljson_reader.document import XbrlJsonDocument
 from mireport.xbrljson_reader.processor import EXTENSION_NS
@@ -131,6 +135,34 @@ class TestFactSnapshot:
         notes = [f for f in document.facts if f.isNote]
         assert len({fn.id for f in report.facts for fn in f.footnotes}) == len(notes)
         assert processor.factsAdded == len(document.facts) - len(notes)
+
+
+@pytest.mark.slow
+def test_a_fact_for_a_concept_in_no_presentation_is_warned_of(monkeypatch):
+    report = XlsxProcessor.from_file(
+        SAMPLE_1_3_0, _results(), VSME_DEFAULTS
+    ).createReport()
+    fact = next(f for f in report.facts if f.provenance is not None)
+    groups = tuple(
+        group._replace(
+            relationships=tuple(
+                rel for rel in group.relationships if rel.concept != fact.concept
+            )
+        )
+        for group in report.taxonomy.presentation
+    )
+    monkeypatch.setattr(Taxonomy, "presentation", property(lambda self: groups))
+
+    results = _results()
+    XlsxProcessor.from_file(SAMPLE_1_3_0, results, VSME_DEFAULTS).createReport()
+
+    [warning] = [
+        m for m in results.messages if "not in any presentation" in m.messageText
+    ]
+    assert warning.severity is Severity.WARNING
+    assert warning.messageType is MessageType.Conversion
+    assert warning.conceptQName == str(fact.concept.qname)
+    assert warning.excelReference == str(fact.provenance)
 
 
 # ---------------------------------------------------------------------------

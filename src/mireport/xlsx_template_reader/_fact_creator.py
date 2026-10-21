@@ -83,6 +83,7 @@ class FactCreator:
         self._report.reportInconsistentDuplicateFacts(
             self._reportInconsistentDuplicateFacts
         )
+        self._report.reportFactsNotInPresentation(self._reportFactsNotInPresentation)
         self._createFootnotes()
         self.checkForUnhandledItems()
 
@@ -109,6 +110,23 @@ class FactCreator:
             f"dimensions. Only one will appear in the report. Values: {details}.",
             MessageType.Conversion,
             ref=first_provenance,
+            concept=concept,
+        )
+
+    def _reportFactsNotInPresentation(
+        self, concept: Concept, facts: Sequence[Fact]
+    ) -> None:
+        """Warn the report preparer that a concept's facts will not be in the report,
+        because the concept is in no presentation group to place them in."""
+        label = concept.getStandardLabel(fallbackIfMissing=str(concept.qname))
+        self._msg.warning(
+            f"{label} ({concept.qname}) is not in any presentation of the taxonomy, "
+            "so it will not appear in the report.",
+            MessageType.Conversion,
+            ref=next(
+                (str(fact.provenance) for fact in facts if fact.provenance is not None),
+                None,
+            ),
             concept=concept,
         )
 
