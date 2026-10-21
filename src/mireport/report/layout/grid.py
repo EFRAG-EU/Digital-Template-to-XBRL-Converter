@@ -120,6 +120,13 @@ class GridBuilder:
 
         A table whose every column is in one period (a table of current facts, or one whose columns
         are baseline and target years) is laid out as it always was."""
+        # A fact for a row or column this grid leaves out has no say in its periods.
+        shown_rows, shown_columns = set(rows), set(columns)
+        cells = {
+            key: fact
+            for key, fact in cells.items()
+            if key[0] in shown_rows and key[1] in shown_columns
+        }
         periods_of: dict[C, set[FactPeriod]] = defaultdict(set)
         for _, column, period in cells:
             periods_of[column].add(period)

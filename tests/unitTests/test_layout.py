@@ -811,6 +811,25 @@ class TestPeriodAxis:
         assert grid.period_axis is False
         assert list(grid.col_labels) == [a, b]
 
+    def test_a_member_the_table_leaves_out_has_no_say_in_its_periods(self):
+        """Baseline and target years in a table of their own: the current and prior facts of a
+        member this table does not show do not make it a period axis."""
+        dimension, a, b = self._members()
+        x, other = _concept("x"), _concept("other")
+        facts = {
+            x: [
+                _fact(explicit={dimension: a}, period=_PRI),
+                _fact(explicit={dimension: b}, period=_CUR),
+                _fact(explicit={dimension: other}, period=_CUR),
+                _fact(explicit={dimension: other}, period=_PRI),
+            ]
+        }
+        grid = _period_builder(facts).explicit_dimension(
+            [x, _concept("y")], dimension, [a, b], None
+        )
+        assert grid.period_axis is False
+        assert list(grid.col_labels) == [a, b]
+
     def test_current_and_prior_in_one_column_split_every_column_by_period(self):
         dimension, a, b = self._members()
         x = _concept("x")
