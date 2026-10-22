@@ -52,7 +52,7 @@ def convertDocxToHtml(
     try:
         xhtml = normaliseFragment(html)
     except XhtmlError as e:
-        raise DocxConversionError(f"Word document {docx.filename} {e}") from e
+        raise DocxConversionError(e.about(f"Word document {docx.filename}")) from e
     return DocxConversion(filename=docx.filename, html=Markup(xhtml), messages=messages)
 
 

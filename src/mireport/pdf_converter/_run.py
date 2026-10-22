@@ -176,6 +176,6 @@ def runConverter(
         try:
             root = parseDocument(outputPath.read_bytes())
         except XhtmlError as e:
-            raise PdfConversionError(f"Converted PDF output {e}") from e
+            raise PdfConversionError(e.about("Converted PDF output")) from e
         inlineLocalResources(root, working)
         return root

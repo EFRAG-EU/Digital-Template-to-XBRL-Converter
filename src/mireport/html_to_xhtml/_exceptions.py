@@ -12,8 +12,16 @@ from mireport.exceptions import MIReportException
 class XhtmlError(MIReportException):
     """Raised when HTML could not be made into valid XHTML.
 
-    The message finishes a sentence whose subject the caller supplies, since
-    only the caller knows where the HTML came from: ``f"Converted PDF output
-    {e}"`` reads "Converted PDF output contains elements XHTML Strict does not
-    define: …".
+    @problem says what is wrong, as the end of a sentence about the HTML ("was
+    empty.", "contains elements XHTML Strict does not define: …"). Only the
+    caller knows where the HTML came from, so :meth:`about` lets it say so.
     """
+
+    def __init__(self, problem: str) -> None:
+        super().__init__(f"The HTML {problem}")
+        self.problem = problem
+
+    def about(self, source: str) -> str:
+        """The message, with @source (such as "Converted PDF output") as what
+        the problem is with."""
+        return f"{source} {self.problem}"

@@ -64,7 +64,7 @@ def convertPdfToXhtml(
     try:
         return normaliseDocument(root, injectIxHeader=injectIxHeader)
     except XhtmlError as e:
-        raise PdfConversionError(f"Converted PDF output {e}") from e
+        raise PdfConversionError(e.about("Converted PDF output")) from e
 
 
 def convertPdfToHtml(
