@@ -156,6 +156,7 @@ def test_script_markdown(script, tmp_path, capsys):
     stamped(VS_ENTRY_POINT, "2.0.0", Bogus="Data!$B$2").save(path)
     assert script.main([str(path), "--markdown"]) == 1
     out = capsys.readouterr().out
+    assert "| Item | Value | Check |" in out
     assert "| **Workbook** | `template.xlsx` |" in out
     assert "### Named ranges that bind to no taxonomy concept (1)" in out
     assert "| `Bogus` | Data!$B$2 |" in out

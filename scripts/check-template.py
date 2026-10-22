@@ -154,7 +154,7 @@ def markdownCell(text: str, code: bool = False) -> str:
 def markdownAudit(audit: TemplateAudit, workbook: Path, reference: Path | None) -> str:
     """The audit as GitHub-flavoured Markdown, to paste into an issue. Files are
     named without their local paths."""
-    lines = ["| | | |", "|---|---|---|"]
+    lines = ["| Item | Value | Check |", "|---|---|---|"]
     lines += [
         f"| **{label}** | {markdownCell(value, code=True)} | {status} |"
         for label, value, status, _ in headerRows(
