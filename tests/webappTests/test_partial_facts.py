@@ -112,7 +112,9 @@ def test_word_document_fills_the_text_block_and_its_warnings_are_shown(
     url = f"/conversions/{conversion_of(client).id}"
     assert client.get(url).location.endswith(f"{url}/partial-facts")
 
-    document = wordDocument("Supplied in Word.", paragraphStyle="Fancy")
+    document = wordDocument(
+        "Supplied in Word.", paragraphStyle="Fancy", breakType="bogus"
+    )
     client.post(
         f"{url}/partial-facts",
         data={f"docx_{EXTERNAL_CONCEPT}": (io.BytesIO(document), "policy.docx")},
@@ -124,11 +126,12 @@ def test_word_document_fills_the_text_block_and_its_warnings_are_shown(
     results = conv.raw["results"]
     # "success" is ConversionResults.toDict()'s abbreviated key.
     assert results["success"] is True
-    wordWarnings = [
-        m for m in results["m"] if m["s"] == "WARNING" and "policy.docx" in m["m"]
-    ]
-    assert wordWarnings, results["m"]
-    assert all("Fancy" in m["m"] for m in wordWarnings), wordWarnings
+    wordMessages = [m for m in results["m"] if "policy.docx" in m["m"]]
+    (warning,) = [m["m"] for m in wordMessages if m["s"] == "WARNING"]
+    assert "Unsupported break type: bogus" in warning
+    # A style mammoth doesn't know loses only formatting: developers only.
+    assert any(m["mt"] == "DevInfo" and "Fancy" in m["m"] for m in wordMessages)
+    assert "Fancy" not in warning
     with zipfile.ZipFile(io.BytesIO(conv.zip.fileContent)) as package:
         assert any(
             b"Supplied in Word." in package.read(name)

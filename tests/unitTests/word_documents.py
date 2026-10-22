@@ -33,15 +33,18 @@ _RELS = (
 )
 
 
-def wordDocument(text: str, *, paragraphStyle: str | None = None) -> bytes:
+def wordDocument(
+    text: str, *, paragraphStyle: str | None = None, breakType: str | None = None
+) -> bytes:
     """A .docx of one paragraph. A ``paragraphStyle`` is not defined in the document, so mammoth
-    warns about it."""
+    warns about it; a ``breakType`` it doesn't support, mammoth warns about and drops."""
     style = (
         f'<w:pPr><w:pStyle w:val="{paragraphStyle}"/></w:pPr>' if paragraphStyle else ""
     )
+    lineBreak = f'<w:br w:type="{breakType}"/>' if breakType else ""
     document = (
         '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
-        f"<w:body><w:p>{style}<w:r><w:t>{text}</w:t></w:r></w:p></w:body></w:document>"
+        f"<w:body><w:p>{style}<w:r><w:t>{text}</w:t>{lineBreak}</w:r></w:p></w:body></w:document>"
     )
     buffer = BytesIO()
     with ZipFile(buffer, "w") as docx:

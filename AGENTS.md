@@ -448,7 +448,8 @@ matter, converted from `.docx` by mammoth).
 Both convert through `mireport/docx_converter/`. The web app runs mammoth in a child process (`_worker.py`)
 that is killed after `DEFAULT_TIMEOUT_SECONDS`, since a crafted document can keep mammoth's regexes busy
 and a thread can't be stopped; a document it can't convert stops the conversion with an error. The CLI's
-user supplies their own documents, so it converts in-process.
+user supplies their own documents, so it converts in-process. `DocxConversion.addTo` makes mammoth's style
+messages (only formatting lost) DevInfo, and the rest one deduplicated warning per document.
 
 ### Web app (`digital_converter_webapp/`)
 

@@ -23,7 +23,7 @@ pytestmark = pytest.mark.slow
 
 def runCli(workbook: Path, directory: Path) -> subprocess.CompletedProcess:
     (directory / "policy.docx").write_bytes(
-        wordDocument("Supplied in Word.", paragraphStyle="Fancy")
+        wordDocument("Supplied in Word.", paragraphStyle="Fancy", breakType="bogus")
     )
     extra = directory / "extra.json"
     extra.write_text(
@@ -59,7 +59,9 @@ def test_word_document_replaces_a_text_block_and_its_warnings_are_shown(
     result = runCli(SAMPLE_1_3_0, tmp_path)
     assert result.returncode == 0, result.stdout + result.stderr
     assert "policy.docx" in result.stdout
-    assert "Fancy" in result.stdout
+    assert "Unsupported break type: bogus" in result.stdout
+    # A style mammoth doesn't know is shown only with --devinfo.
+    assert "Fancy" not in result.stdout
     assert "Supplied in Word." in reportText(tmp_path)
 
 

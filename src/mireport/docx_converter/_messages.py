@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+from collections import Counter
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
@@ -15,6 +17,12 @@ from mireport.conversionresults import (
 
 if TYPE_CHECKING:
     from mireport.taxonomy import Concept
+
+# mammoth's wording for a style it has no mapping for, or that the document
+# doesn't define. Only the formatting is lost; the report styles text its own way.
+_STYLE_MESSAGE = re.compile(
+    r"^Unrecognised \w+ style: | style with ID .* was referenced but not defined"
+)
 
 
 @dataclass(frozen=True)
@@ -31,11 +39,28 @@ class DocxConversion:
         *,
         taxonomy_concept: Concept | None = None,
     ) -> None:
-        """Report what mammoth could not convert as warnings."""
-        for message in self.messages:
+        """Report mammoth's messages, each distinct one once. Style messages
+        are developer information; the rest, which may mean lost content, are
+        one warning for the document."""
+        styles = Counter(m for m in self.messages if _STYLE_MESSAGE.search(m))
+        others = Counter(m for m in self.messages if not _STYLE_MESSAGE.search(m))
+        for message, count in styles.items():
             builder.addMessage(
-                f"Word document {self.filename}: {message}",
+                f"Word document {self.filename}: {_counted(message, count)}",
+                Severity.INFO,
+                MessageType.DevInfo,
+                taxonomy_concept=taxonomy_concept,
+            )
+        if others:
+            builder.addMessage(
+                f"Word document {self.filename}: some content may not appear as "
+                "it does in Word: "
+                + "; ".join(_counted(m, count) for m, count in others.items()),
                 Severity.WARNING,
                 MessageType.Conversion,
                 taxonomy_concept=taxonomy_concept,
             )
+
+
+def _counted(message: str, count: int) -> str:
+    return message if count == 1 else f"{message} ({count} times)"
