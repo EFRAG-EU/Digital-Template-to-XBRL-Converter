@@ -1,5 +1,6 @@
 import argparse
 import logging
+import sys
 from itertools import groupby
 from pathlib import Path
 
@@ -17,10 +18,14 @@ from mireport.xlsx_template_reader.templateaudit import (
     INFORMATIONAL_KINDS,
     FindingKind,
     TemplateAudit,
+    TemplateFinding,
     auditTemplate,
     pinnedTemplateVersion,
 )
 from mireport.xlsx_template_reader.util import loadExcelFromPathOrFileLike
+
+# Sections longer than this fold away in Markdown, to keep an issue readable.
+MARKDOWN_FOLD_ROWS = 10
 
 
 def parser() -> argparse.ArgumentParser:
@@ -43,6 +48,11 @@ def parser() -> argparse.ArgumentParser:
         help="Check against this taxonomy JSON (from update-taxonomy.py) instead of the built-in one the workbook's schemaRef names.",
     )
     parser.add_argument(
+        "--markdown",
+        action=argparse.BooleanOptionalAction,
+        help="Write GitHub-flavoured Markdown, for pasting into an issue, instead of tables.",
+    )
+    parser.add_argument(
         "--debug",
         action=argparse.BooleanOptionalAction,
         help="Turn on debugging output.",
@@ -55,49 +65,70 @@ def findingFor(audit: TemplateAudit, kind: FindingKind) -> str | None:
     return next((f.detail for f in audit.findings if f.kind is kind), None)
 
 
-def headerTable(audit: TemplateAudit, workbook: Path, reference: Path | None) -> Table:
-    """The workbook, what it targets, and how the disclosure system rates that."""
-    unknown = findingFor(audit, FindingKind.unknownEntryPoint)
-    old = findingFor(audit, FindingKind.oldEntryPoint)
-    if unknown is not None:
-        schemaRefStatus = "[red]✗ not in any disclosure system[/red]"
-    elif old is not None:
-        schemaRefStatus = f"[yellow]old entry point: {old}[/yellow]"
+def headerRows(
+    audit: TemplateAudit, workbook: str, reference: str | None
+) -> list[tuple[str, str, str, str]]:
+    """(label, value, status, colour) for the workbook, what it targets, and
+    how the disclosure system rates that."""
+    if findingFor(audit, FindingKind.unknownEntryPoint) is not None:
+        schemaRef = ("✗ not in any disclosure system", "red")
+    elif (old := findingFor(audit, FindingKind.oldEntryPoint)) is not None:
+        schemaRef = (f"old entry point: {old}", "yellow")
     else:
-        schemaRefStatus = "[green]✓ supported entry point[/green]"
+        schemaRef = ("✓ supported entry point", "green")
     if (pinned := pinnedTemplateVersion(audit.entryPoint)) is None:
-        versionStatus = "not pinned by the disclosure system"
+        version = ("not pinned by the disclosure system", "")
     elif findingFor(audit, FindingKind.templateVersionMismatch) is not None:
-        versionStatus = f"[red]✗ disclosure system pins {pinned}[/red]"
+        version = (f"✗ disclosure system pins {pinned}", "red")
     else:
-        versionStatus = "[green]✓ pinned by the disclosure system[/green]"
+        version = ("✓ pinned by the disclosure system", "green")
 
-    table = Table(box=box.SIMPLE, show_header=False)
-    table.add_column(style="bold")
-    table.add_column(overflow="fold")
-    table.add_column()
-    table.add_row("Workbook", Text(str(workbook)), "")
+    rows = [("Workbook", workbook, "", "")]
     if reference is not None:
-        table.add_row("Reference", Text(str(reference)), "")
-    table.add_row("SchemaRef", Text(audit.entryPoint or "(none)"), schemaRefStatus)
-    table.add_row(
-        "Checked against",
-        Text(describeEntryPointSet(audit.taxonomy.entryPointSet)),
-        "",
-    )
-    table.add_row(
-        "Template version", Text(audit.templateVersion or "(none)"), versionStatus
-    )
-    return table
+        rows.append(("Reference", reference, "", ""))
+    rows += [
+        ("SchemaRef", audit.entryPoint or "(none)", *schemaRef),
+        (
+            "Checked against",
+            describeEntryPointSet(audit.taxonomy.entryPointSet),
+            "",
+            "",
+        ),
+        ("Template version", audit.templateVersion or "(none)", *version),
+    ]
+    return rows
+
+
+def sections(
+    audit: TemplateAudit,
+) -> list[tuple[FindingKind, list[TemplateFinding], list[tuple[str, str]]]]:
+    """The findings by kind, each with the (heading, field) columns that have
+    something in them."""
+    result = []
+    for kind, group in groupby(audit.findings, key=lambda f: f.kind):
+        findings = list(group)
+        columns = [
+            (heading, field)
+            for heading, field in (("Name", "name"), ("Detail", "detail"))
+            if any(getattr(f, field) for f in findings)
+        ]
+        result.append((kind, findings, columns))
+    return result
 
 
 def printAudit(audit: TemplateAudit, workbook: Path, reference: Path | None) -> None:
-    print(headerTable(audit, workbook, reference))
+    header = Table(box=box.SIMPLE, show_header=False)
+    header.add_column(style="bold")
+    header.add_column(overflow="fold")
+    header.add_column()
+    for label, value, status, colour in headerRows(
+        audit, str(workbook), str(reference) if reference else None
+    ):
+        header.add_row(label, Text(value), Text(status, style=colour))
+    print(header)
     if not audit.findings:
         print("[green]No differences between the template and the taxonomy.[/green]")
-        return
-    for kind, group in groupby(audit.findings, key=lambda f: f.kind):
-        findings = list(group)
+    for kind, findings, columns in sections(audit):
         colour = "yellow" if kind in INFORMATIONAL_KINDS else "red"
         table = Table(
             title=f"{kind.value} ({len(findings)})",
@@ -105,17 +136,55 @@ def printAudit(audit: TemplateAudit, workbook: Path, reference: Path | None) -> 
             title_justify="left",
             box=box.SIMPLE_HEAD,
         )
-        columns = [
-            (heading, field)
-            for heading, field in (("Name", "name"), ("Detail", "detail"))
-            if any(getattr(f, field) for f in findings)
-        ]
         for heading, _ in columns:
             table.add_column(heading, overflow="fold")
         for f in findings:
             # Text, not markup: names and messages can contain square brackets.
             table.add_row(*(Text(getattr(f, field)) for _, field in columns))
         print(table)
+    if problems := audit.problems:
+        print(f"\n[red]{len(problems)} problems found.[/red]")
+
+
+def markdownCell(text: str, code: bool = False) -> str:
+    text = text.replace("|", "\\|").replace("\n", " ")
+    return f"`{text}`" if code and text else text
+
+
+def markdownAudit(audit: TemplateAudit, workbook: Path, reference: Path | None) -> str:
+    """The audit as GitHub-flavoured Markdown, to paste into an issue. Files are
+    named without their local paths."""
+    lines = ["| | | |", "|---|---|---|"]
+    lines += [
+        f"| **{label}** | {markdownCell(value, code=True)} | {status} |"
+        for label, value, status, _ in headerRows(
+            audit, workbook.name, reference.name if reference else None
+        )
+    ]
+    if not audit.findings:
+        lines += ["", "No differences between the template and the taxonomy."]
+    for kind, findings, columns in sections(audit):
+        title = f"{kind.value} ({len(findings)})"
+        table = [
+            "| " + " | ".join(heading for heading, _ in columns) + " |",
+            "|" + "---|" * len(columns),
+        ]
+        table += [
+            "| "
+            + " | ".join(
+                markdownCell(getattr(f, field), code=field == "name")
+                for _, field in columns
+            )
+            + " |"
+            for f in findings
+        ]
+        if len(findings) > MARKDOWN_FOLD_ROWS:
+            lines += ["", f"<details><summary>{title}</summary>", "", *table]
+            lines += ["", "</details>"]
+        else:
+            lines += ["", f"### {title}", "", *table]
+    lines += ["", f"**{len(audit.problems)} problems found.**"]
+    return "\n".join(lines) + "\n"
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -141,11 +210,11 @@ def main(argv: list[str] | None = None) -> int:
         print(f"[red]{e}[/red]")
         return 2
 
-    printAudit(audit, args.workbook, args.reference)
-    if problems := audit.problems:
-        print(f"\n[red]{len(problems)} problems found.[/red]")
-        return 1
-    return 0
+    if args.markdown:
+        sys.stdout.write(markdownAudit(audit, args.workbook, args.reference))
+    else:
+        printAudit(audit, args.workbook, args.reference)
+    return 1 if audit.problems else 0
 
 
 if __name__ == "__main__":
