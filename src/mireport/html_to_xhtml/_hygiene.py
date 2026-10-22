@@ -15,6 +15,7 @@ from mireport.html_to_xhtml._tree import (
     _elements,
     _localName,
     _remove,
+    _tag,
     _tagText,
 )
 
@@ -61,17 +62,52 @@ def _stripInvalidAttributes(root: etree._Element) -> None:
                 del element.attrib[name]
 
 
-# XHTML Strict requires "type" on style; HTML5 made it optional.
-_REQUIRED_TYPE_ATTRIBUTES = {
-    "style": "text/css",
+# Attributes XHTML Strict requires, with the value to give one that is missing:
+# "type" on style, which HTML5 made optional, and "alt" on img, which mammoth
+# leaves off an image that has no alt text in Word.
+_REQUIRED_ATTRIBUTES = {
+    "style": ("type", "text/css"),
+    "img": ("alt", ""),
 }
 
 
-def _addRequiredTypeAttributes(root: etree._Element) -> None:
-    for localName, defaultType in _REQUIRED_TYPE_ATTRIBUTES.items():
+def _addRequiredAttributes(root: etree._Element) -> None:
+    for localName, (attribute, default) in _REQUIRED_ATTRIBUTES.items():
         for element in _descendants(root, localName):
-            if element.get("type") is None:
-                element.set("type", defaultType)
+            if element.get(attribute) is None:
+                element.set(attribute, default)
+
+
+_LINE_THROUGH = "text-decoration:line-through"
+_CHECKED_BOX = "☒"
+_UNCHECKED_BOX = "☐"
+
+
+def _replaceWithText(element: etree._Element, text: str) -> None:
+    element.tail = text + (element.tail or "")
+    _remove(element)
+
+
+def _translateExactEquivalents(root: etree._Element) -> None:
+    """Rewrite the few elements outside XHTML Strict, or unwanted in a report,
+    that have an exact equivalent, so :func:`_rejectUnknownElements` need not
+    refuse them.
+
+    mammoth writes ``<s>`` (Transitional, like ``<strike>``) for struck-through
+    text, which becomes a span that looks the same; ``<del>`` would look the
+    same too, but would claim the text was deleted. It writes a Word checkbox as
+    a disabled ``<input type="checkbox">``, which becomes the box character it
+    shows.
+    """
+    for localName in ("s", "strike"):
+        for element in _descendants(root, localName):
+            element.tag = _tag("span")
+            style = element.get("style")
+            element.set("style", f"{_LINE_THROUGH};{style}" if style else _LINE_THROUGH)
+    for element in _descendants(root, "input"):
+        if element.get("type") == "checkbox":
+            box = _UNCHECKED_BOX if element.get("checked") is None else _CHECKED_BOX
+            _replaceWithText(element, box)
 
 
 def _stripScripts(root: etree._Element) -> None:
@@ -197,7 +233,9 @@ def _rejectUnknownElements(root: etree._Element) -> None:
     rejected anyway, from inside a zip, as one warning among hundreds.
 
     The same reasoning applies to :data:`_UNWANTED_ELEMENTS`, which the schema
-    does define, so they are refused here too and named separately.
+    does define, so they are refused here too and named separately. The
+    exceptions are the few with an exact equivalent, which
+    :func:`_translateExactEquivalents` has already rewritten.
 
     :raises XhtmlError: naming every element that is not XHTML Strict, or is
         Strict but has no place in a report.

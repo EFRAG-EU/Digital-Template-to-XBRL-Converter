@@ -112,6 +112,16 @@ def _fixPrefixedAttributes(element: etree._Element) -> None:
         _copyAttribute(element, name, value)
 
 
+def _namespaceElements(root: etree._Element) -> None:
+    """Put every unnamespaced element under @root in the XHTML namespace, and
+    repair the attribute names the HTML parser invented, in place."""
+    for element in _elements(root):
+        tag = _tagText(element)
+        if not tag.startswith("{"):
+            element.tag = _tag(tag)
+        _fixPrefixedAttributes(element)
+
+
 def _moveIntoXhtmlNamespace(root: etree._Element) -> etree._Element:
     """Put every element in the XHTML namespace and return a fresh root.
 
@@ -119,12 +129,7 @@ def _moveIntoXhtmlNamespace(root: etree._Element) -> etree._Element:
     be changed after construction — hence building a new root with the prefixes
     we want and moving the parsed content into it, rather than editing in place.
     """
-    for element in _elements(root):
-        tag = _tagText(element)
-        if not tag.startswith("{"):
-            element.tag = _tag(tag)
-        _fixPrefixedAttributes(element)
-
+    _namespaceElements(root)
     replacement = etree.Element(
         _tag("html"),
         nsmap={None: XHTML_NAMESPACE, "ix": IX_NAMESPACE},
@@ -157,3 +162,17 @@ def parseDocument(content: bytes) -> etree._Element:
     except (ValueError, etree.LxmlError) as e:
         raise XhtmlError(f"could not be turned into XHTML. {e}") from e
     return root
+
+
+def _parseFragment(fragment: str) -> etree._Element:
+    """Parse @fragment, leniently, into a ``div`` in the XHTML namespace that
+    holds it.
+
+    :raises XhtmlError: if @fragment cannot be parsed as HTML at all.
+    """
+    try:
+        wrapper = html.fragment_fromstring(fragment, create_parent="div")
+    except (etree.ParserError, etree.XMLSyntaxError, ValueError) as e:
+        raise XhtmlError(f"could not be parsed as HTML. {e}") from e
+    _namespaceElements(wrapper)
+    return wrapper

@@ -43,3 +43,14 @@ def test_every_image_has_an_alt_as_xhtml_requires(timeoutSeconds, altText, expec
     html = convertDocxToHtml(document, timeoutSeconds=timeoutSeconds).html
     assert "<img " in html
     assert expected in html
+
+
+@pytest.mark.parametrize("timeoutSeconds", [None, 30])
+def test_struck_through_text_is_xhtml_strict(timeoutSeconds):
+    document = FilelikeAndFileName(
+        wordDocument("Withdrawn", strikethrough=True), "policy.docx"
+    )
+    html = convertDocxToHtml(document, timeoutSeconds=timeoutSeconds).html
+    assert html == (
+        '<p><span style="text-decoration:line-through">Withdrawn</span></p>'
+    )

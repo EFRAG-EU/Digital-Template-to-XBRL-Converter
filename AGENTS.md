@@ -449,7 +449,9 @@ Both convert through `mireport/docx_converter/`. The web app runs mammoth in a c
 that is killed after `DEFAULT_TIMEOUT_SECONDS`, since a crafted document can keep mammoth's regexes busy
 and a thread can't be stopped; a document it can't convert stops the conversion with an error. The CLI's
 user supplies their own documents, so it converts in-process. `DocxConversion.addTo` makes mammoth's style
-messages (only formatting lost) DevInfo, and the rest one deduplicated warning per document.
+messages (only formatting lost) DevInfo, and the rest one deduplicated warning per document. mammoth's
+HTML then goes through `mireport.html_to_xhtml.normaliseFragment`: the same XHTML Strict rules as a PDF
+annex (alt on every image, `<s>` and checkboxes translated, script stripped) without the document assembly.
 
 ### Web app (`digital_converter_webapp/`)
 

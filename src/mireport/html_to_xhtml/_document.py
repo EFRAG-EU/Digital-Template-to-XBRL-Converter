@@ -10,11 +10,12 @@ from lxml import etree
 
 from mireport.html_to_xhtml._exceptions import XhtmlError
 from mireport.html_to_xhtml._hygiene import (
-    _addRequiredTypeAttributes,
+    _addRequiredAttributes,
     _rejectUnknownElements,
     _stripInvalidAttributes,
     _stripScripting,
     _stripScripts,
+    _translateExactEquivalents,
 )
 from mireport.html_to_xhtml._tree import (
     IX_NAMESPACE,
@@ -187,7 +188,8 @@ def normaliseDocument(
         _dropUnusableMeta(root)
         _stripScripts(root)
         _stripScripting(root)
-        _addRequiredTypeAttributes(root)
+        _translateExactEquivalents(root)
+        _addRequiredAttributes(root)
         _hoistStyles(root)
         _repairHead(root)
         # Wrap first, then insert the header: both end up block-level children

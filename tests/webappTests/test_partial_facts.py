@@ -159,3 +159,26 @@ def test_a_file_that_is_not_a_word_document_fails_the_conversion(
     assert results["success"] is False
     errors = [m["m"] for m in results["m"] if m["s"] == "ERROR"]
     assert errors == ["Conversion failed: Word document policy.docx could not be read."]
+
+
+@pytest.mark.slow
+def test_html_mammoth_writes_outside_xhtml_strict_still_validates(
+    client, upload, conversion_of
+):
+    """mammoth leaves alt off an image Word has no alt text for, and writes
+    struck-through text as <s>; both are XHTML schema errors in the report
+    unless normalised. Validated by Arelle for real, as a filing would be."""
+    upload(client, data=externalValuesWorkbook())
+    url = f"/conversions/{conversion_of(client).id}"
+    client.get(url)
+    document = wordDocument("Withdrawn.", strikethrough=True, image=True)
+    client.post(
+        f"{url}/partial-facts",
+        data={f"docx_{EXTERNAL_CONCEPT}": (io.BytesIO(document), "policy.docx")},
+        content_type="multipart/form-data",
+    )
+    client.get(url)
+
+    results = conversion_of(client).raw["results"]
+    assert [m["m"] for m in results["m"] if m["s"] == "ERROR"] == []
+    assert results["success"] is True

@@ -59,20 +59,20 @@ def wordDocument(
     breakType: str | None = None,
     image: bool = False,
     imageAltText: str = "",
+    strikethrough: bool = False,
 ) -> bytes:
     """A .docx of one paragraph. A ``paragraphStyle`` is not defined in the document, so mammoth
     warns about it; a ``breakType`` it doesn't support, mammoth warns about and drops. An ``image``
-    follows the text, with ``imageAltText`` as its Word alt text."""
+    follows the text, with ``imageAltText`` as its Word alt text. ``strikethrough`` strikes the
+    text through, which mammoth writes as ``<s>``."""
     style = (
         f'<w:pPr><w:pStyle w:val="{paragraphStyle}"/></w:pPr>' if paragraphStyle else ""
     )
+    runStyle = "<w:rPr><w:strike/></w:rPr>" if strikethrough else ""
     lineBreak = f'<w:br w:type="{breakType}"/>' if breakType else ""
     drawing = _DRAWING.format(altText=imageAltText) if image else ""
-    document = (
-        f"<w:document {_NAMESPACES}>"
-        f"<w:body><w:p>{style}<w:r><w:t>{text}</w:t>{lineBreak}{drawing}</w:r></w:p></w:body>"
-        "</w:document>"
-    )
+    run = f"<w:r>{runStyle}<w:t>{text}</w:t>{lineBreak}{drawing}</w:r>"
+    document = f"<w:document {_NAMESPACES}><w:body><w:p>{style}{run}</w:p></w:body></w:document>"
     buffer = BytesIO()
     with ZipFile(buffer, "w") as docx:
         docx.writestr("[Content_Types].xml", _CONTENT_TYPES)

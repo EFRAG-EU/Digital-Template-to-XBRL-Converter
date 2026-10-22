@@ -15,6 +15,7 @@ from mireport.docx_converter._exceptions import DocxConversionError
 from mireport.docx_converter._messages import DocxConversion
 from mireport.docx_converter._worker import convert
 from mireport.filesupport import FilelikeAndFileName
+from mireport.html_to_xhtml import XhtmlError, normaliseFragment
 
 L = logging.getLogger(__name__)
 
@@ -33,13 +34,20 @@ def convertDocxToHtml(
     Without, mammoth runs in-process: for the CLI, whose user supplies their own
     documents.
 
+    mammoth's HTML is then made XHTML Strict, here rather than in the child
+    process, which imports nothing of mireport.
+
     :raises DocxConversionError: if the document could not be converted.
     """
     if timeoutSeconds is None:
         html, messages = _convertInProcess(docx)
     else:
         html, messages = _convertInChildProcess(docx, timeoutSeconds)
-    return DocxConversion(filename=docx.filename, html=Markup(html), messages=messages)
+    try:
+        xhtml = normaliseFragment(html)
+    except XhtmlError as e:
+        raise DocxConversionError(f"Word document {docx.filename} {e}") from e
+    return DocxConversion(filename=docx.filename, html=Markup(xhtml), messages=messages)
 
 
 def _convertInProcess(docx: FilelikeAndFileName) -> tuple[str, list[str]]:

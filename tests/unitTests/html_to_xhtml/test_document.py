@@ -341,6 +341,12 @@ class TestStrictStructure:
         style = root.find(f".//{{{XHTML}}}style")
         assert style is not None and style.get("type") == "text/x-custom"
 
+    def test_image_gets_an_alt(self) -> None:
+        source = b'<html><body><img src="page.png"/></body></html>'
+        root = etree.fromstring(_normalise(source))
+        image = root.find(f".//{{{XHTML}}}img")
+        assert image is not None and image.get("alt") == ""
+
     def test_style_in_the_body_is_hoisted_to_the_head(self) -> None:
         source = b"<html><head><title>t</title></head><body><style>p{color:red}</style><div>x</div></body></html>"
         root = etree.fromstring(_normalise(source))

@@ -41,13 +41,16 @@ A document is parsed once (:func:`parseDocument`), normalised in place
 (:func:`normaliseDocument`) and handed along as a tree; only what leaves for a
 package is serialised (:func:`documentToBytes`). The rules for single elements
 are in :mod:`._hygiene`; assembling a whole document — its head, its body and
-the ``ix:header`` — is :mod:`._document`.
+the ``ix:header`` — is :mod:`._document`. A fragment that joins a report, such
+as a Word text block, gets the rules but not the assembly
+(:func:`normaliseFragment`).
 """
 
 from __future__ import annotations
 
 from mireport.html_to_xhtml._document import documentToBytes, normaliseDocument
 from mireport.html_to_xhtml._exceptions import XhtmlError
+from mireport.html_to_xhtml._fragment import normaliseFragment
 from mireport.html_to_xhtml._parse import parseDocument
 from mireport.html_to_xhtml._tree import IX_NAMESPACE, XHTML_NAMESPACE
 
@@ -57,5 +60,6 @@ __all__ = [
     "XhtmlError",
     "documentToBytes",
     "normaliseDocument",
+    "normaliseFragment",
     "parseDocument",
 ]
