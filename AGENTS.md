@@ -115,6 +115,19 @@ packages and fetches <https://www.xbrl.org/utr/utr.xml> unless told otherwise:
 A taxonomy run can also write `--status-report report.md` (or `.html`, which pastes into Teams as
 a table) with everything it found.
 
+### Report string translations
+
+The report's fixed strings are translated from gettext catalogs,
+`src/mireport/data/disclosures/translations/vsme/<language>.po`, collected from a template's
+Translations sheet by `scripts/collect-report-translations.py` and reviewed in git. Nothing
+compiles them at runtime: building the package (`hatch_build.py`, editable installs included)
+compiles them into the untracked `generated/translations/`, and the wheel carries the `.mo` files
+beside the catalogs. After changing a catalog in a checkout, recompile:
+
+```powershell
+.venv-py314/Scripts/python scripts/compile-report-translations.py
+```
+
 ### Front-end assets
 
 `src/digital_converter_webapp/static/style.css` is a **generated, committed** Tailwind build. Edit

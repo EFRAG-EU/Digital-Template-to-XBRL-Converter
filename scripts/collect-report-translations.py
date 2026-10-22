@@ -296,6 +296,7 @@ def main() -> None:
     writeCatalogs(collected, args.output_dir)
     for line in summary(collected):
         print(line)
+    print("Now compile them: scripts/compile-report-translations.py")
 
 
 if __name__ == "__main__":

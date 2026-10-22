@@ -34,7 +34,7 @@ license = {text = "MIT"}
 "Source code" = "https://github.com/EFRAG-EU/Digital-Template-to-XBRL-Converter"
 
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "babel>=2.17.0"]
 build-backend = "hatchling.build"
 
 [tool.hatch.metadata]
@@ -43,6 +43,18 @@ allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/mireport", "src/digital_converter_webapp"]
+
+# Compiles the report string catalogs into generated/ (hatch_build.py)
+[tool.hatch.build.hooks.custom]
+
+[tool.uv]
+# Rebuild the editable install, and so recompile the catalogs, when a catalog changes
+cache-keys = [
+    { file = "pyproject.toml" },
+    { file = "hatch_build.py" },
+    { file = "scripts/compile-report-translations.py" },
+    { file = "src/mireport/data/disclosures/translations/**/*.po" },
+]
 
 [project.optional-dependencies]
 dev = [

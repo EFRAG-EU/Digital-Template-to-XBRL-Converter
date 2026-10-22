@@ -1,3 +1,6 @@
+# Built from checked-in sources (scripts/compile-report-translations.py)
+generated/
+
 # Python
 __pycache__/
 *.py[cod]
