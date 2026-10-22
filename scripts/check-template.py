@@ -27,6 +27,11 @@ from mireport.xlsx_template_reader.util import loadExcelFromPathOrFileLike
 # Sections longer than this fold away in Markdown, to keep an issue readable.
 MARKDOWN_FOLD_ROWS = 10
 
+# A header check's mark, by its colour: glyphs in the terminal, and ASCII
+# emoji shortcodes in Markdown so the console's code page can't garble them.
+TERMINAL_MARKS = {"green": "✓ ", "red": "✗ ", "yellow": ""}
+MARKDOWN_MARKS = {"green": ":white_check_mark: ", "red": ":x: ", "yellow": ":warning: "}
+
 
 def parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -69,19 +74,19 @@ def headerRows(
     audit: TemplateAudit, workbook: str, reference: str | None
 ) -> list[tuple[str, str, str, str]]:
     """(label, value, status, colour) for the workbook, what it targets, and
-    how the disclosure system rates that."""
+    how the disclosure system rates that. The colour picks the status's mark."""
     if findingFor(audit, FindingKind.unknownEntryPoint) is not None:
-        schemaRef = ("✗ not in any disclosure system", "red")
+        schemaRef = ("not in any disclosure system", "red")
     elif (old := findingFor(audit, FindingKind.oldEntryPoint)) is not None:
         schemaRef = (f"old entry point: {old}", "yellow")
     else:
-        schemaRef = ("✓ supported entry point", "green")
+        schemaRef = ("supported entry point", "green")
     if (pinned := pinnedTemplateVersion(audit.entryPoint)) is None:
         version = ("not pinned by the disclosure system", "")
     elif findingFor(audit, FindingKind.templateVersionMismatch) is not None:
-        version = (f"✗ disclosure system pins {pinned}", "red")
+        version = (f"disclosure system pins {pinned}", "red")
     else:
-        version = ("✓ pinned by the disclosure system", "green")
+        version = ("pinned by the disclosure system", "green")
 
     rows = [("Workbook", workbook, "", "")]
     if reference is not None:
@@ -124,7 +129,8 @@ def printAudit(audit: TemplateAudit, workbook: Path, reference: Path | None) -> 
     for label, value, status, colour in headerRows(
         audit, str(workbook), str(reference) if reference else None
     ):
-        header.add_row(label, Text(value), Text(status, style=colour))
+        mark = TERMINAL_MARKS.get(colour, "")
+        header.add_row(label, Text(value), Text(mark + status, style=colour))
     print(header)
     if not audit.findings:
         print("[green]No differences between the template and the taxonomy.[/green]")
@@ -156,8 +162,9 @@ def markdownAudit(audit: TemplateAudit, workbook: Path, reference: Path | None) 
     named without their local paths."""
     lines = ["| Item | Value | Check |", "|---|---|---|"]
     lines += [
-        f"| **{label}** | {markdownCell(value, code=True)} | {status} |"
-        for label, value, status, _ in headerRows(
+        f"| **{label}** | {markdownCell(value, code=True)} "
+        f"| {MARKDOWN_MARKS.get(colour, '')}{markdownCell(status)} |"
+        for label, value, status, colour in headerRows(
             audit, workbook.name, reference.name if reference else None
         )
     ]
