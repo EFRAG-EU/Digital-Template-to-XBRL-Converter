@@ -11,9 +11,6 @@ import logging
 from pathlib import PurePath
 from typing import TYPE_CHECKING
 
-import mammoth
-from markupsafe import Markup
-
 from mireport.arelle.report_info import (
     ARELLE_VERSION_INFORMATION,
     ArelleReportProcessor,
@@ -26,6 +23,7 @@ from mireport.conversionresults import (
     Severity,
 )
 from mireport.data.disclosures import VSME_DEFAULTS
+from mireport.docx_converter import convertDocxToHtml
 from mireport.filesupport import FilelikeAndFileName, ImageFileLikeAndFileName
 from mireport.localise import get_locale_from_str
 from mireport.pdf_converter import (
@@ -178,15 +176,9 @@ def _completePartialFacts(
     for concept in list(report.partialFactsByConcept):
         if (docx := external.get(str(concept.qname))) is None:
             continue
-        mammothResult = mammoth.convert_to_html(docx.fileLike())
-        for message in mammothResult.messages:
-            builder.addMessage(
-                f"Word document {docx.filename}: {message.message}",
-                Severity.WARNING,
-                MessageType.Conversion,
-                taxonomy_concept=concept,
-            )
-        report.completePartialFact(concept, Markup(mammothResult.value))
+        conversion = convertDocxToHtml(docx)
+        conversion.addTo(builder, taxonomy_concept=concept)
+        report.completePartialFact(concept, conversion.html)
 
     if not report.hasPartialFacts:
         return False

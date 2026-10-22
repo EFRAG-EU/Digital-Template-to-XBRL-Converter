@@ -3,7 +3,6 @@ import json
 import logging
 from pathlib import Path
 
-import mammoth
 from dotenv import load_dotenv
 from markupsafe import Markup
 
@@ -25,10 +24,9 @@ from mireport.comparatives import PriorReport
 from mireport.conversionresults import (
     ConversionResults,
     ConversionResultsBuilder,
-    MessageType,
-    Severity,
 )
 from mireport.data.disclosures import VSME_DEFAULTS
+from mireport.docx_converter import convertDocxToHtml
 from mireport.entrypoints import describeEntryPointSet
 from mireport.filesupport import FilelikeAndFileName, ImageFileLikeAndFileName
 from mireport.localise import EU_LOCALES, argparse_locale
@@ -46,17 +44,13 @@ from mireport.xlsx_template_reader.processor import XlsxProcessor
 def _convert_docx_to_markup(
     docx_path: Path, resultsBuilder: ConversionResultsBuilder
 ) -> Markup:
-    """Convert a .docx file to HTML via mammoth and return as Markup, reporting
-    anything mammoth could not convert as a warning."""
-    with open(docx_path, "rb") as f:
-        result = mammoth.convert_to_html(f)
-    for message in result.messages:
-        resultsBuilder.addMessage(
-            f"Word document {docx_path.name}: {message.message}",
-            Severity.WARNING,
-            MessageType.Conversion,
-        )
-    return Markup(result.value)
+    """Convert a .docx file to HTML and return it as Markup, reporting anything
+    that could not be converted."""
+    conversion = convertDocxToHtml(
+        FilelikeAndFileName(docx_path.read_bytes(), docx_path.name)
+    )
+    conversion.addTo(resultsBuilder)
+    return conversion.html
 
 
 class ExtraDataFileError(FileNotFoundError):
