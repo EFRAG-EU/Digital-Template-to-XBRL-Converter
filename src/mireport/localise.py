@@ -65,13 +65,6 @@ def babelIdentifier_to_xmlLang(babelId: str) -> str:
     return babelId.replace("_", "-")
 
 
-def split_base_territory(locale_str: str) -> tuple[str, str | None]:
-    """Split a locale string into base language and territory components."""
-    locale_str = babelIdentifier_to_xmlLang(locale_str)
-    baseLang, _, territory = locale_str.partition("-")
-    return baseLang, territory
-
-
 def argparse_locale(s: str) -> Locale:
     try:
         s = s.replace("-", "_")
