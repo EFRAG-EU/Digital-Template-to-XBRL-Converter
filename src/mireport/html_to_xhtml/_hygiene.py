@@ -1,4 +1,5 @@
-"""Rules for single elements and attributes, whatever document they are in.
+"""Rules for single elements and attributes, whatever they are part of: a PDF
+annex from pdf2htmlEX or pdftohtml, or a Word text block from mammoth.
 
 Each removes or repairs something XHTML Strict rejects, or script that it
 allows but that must not travel in a report.
@@ -113,9 +114,9 @@ def translateExactEquivalents(root: etree._Element) -> None:
 def stripScripts(root: etree._Element) -> None:
     """Remove every <script> element.
 
-    A document set member is part of a financial report that others will open;
-    script the converter happened to bundle has no business travelling with it,
-    and the iXBRL viewer supplies its own. pdf2htmlEX's script only drives
+    Whatever it came from, this HTML becomes part of a financial report that
+    others will open; script a tool happened to bundle has no business
+    travelling with it, and the iXBRL viewer supplies its own. pdf2htmlEX's script only drives
     optional page navigation, so the page still renders from its CSS-positioned
     content without it.
 
@@ -165,11 +166,12 @@ def _isScriptingUri(value: str) -> bool:
 def stripScripting(root: etree._Element) -> None:
     """Remove the script that is not a <script> element.
 
-    Preventive, unlike everything else here: neither converter emits a handler
-    or a javascript: URL today. It is here because the price of being wrong
-    about that is script running same-origin in the web app, and because
-    dropping an attribute costs a document nothing it needs — an ``<a>`` without
-    its href still renders its text.
+    For a PDF this is preventive: neither converter emits a handler or a
+    javascript: URL today. For Word it is not: mammoth copies a hyperlink's
+    target as it is, so a crafted .docx can carry a ``javascript:`` link into
+    the report. Either way the price of letting one through is script running
+    same-origin in the web app, while dropping an attribute costs nothing the
+    content needs — an ``<a>`` without its href still renders its text.
     """
     for element in elementsIn(root):
         for name, value in list(element.attrib.items()):
@@ -195,11 +197,12 @@ _XHTML_STRICT_ELEMENTS = frozenset(
     )
 )  # fmt: skip
 
-# Valid XHTML Strict, but nothing a converted PDF has any use for: <object> and
+# Valid XHTML Strict, but nothing a report has any use for: <object> and
 # <param> embed something the browser runs, a form submits somewhere, and <base>
 # silently re-points every relative URL in the document. Refused rather than
-# stripped because neither converter emits any of them, so one appearing means
-# the input is not what this module was built for.
+# stripped because no tool we use emits any of them, so one appearing means the
+# input is not what this module was built for. The one exception is mammoth's
+# <input type="checkbox">, which translateExactEquivalents rewrites first.
 _UNWANTED_ELEMENTS = frozenset(
     {
         "base",
@@ -217,20 +220,22 @@ _UNWANTED_ELEMENTS = frozenset(
 def rejectUnknownElements(root: etree._Element) -> None:
     """Refuse to emit a document containing an element we do not recognise.
 
-    Three things land here: HTML5 elements neither supported converter emits
-    today, other vocabularies the HTML parser handed over unnamespaced (an
+    Three things land here: HTML5 elements no tool we use emits today, other
+    vocabularies the HTML parser handed over unnamespaced (an
     inline ``<svg>``), and prefixed names it took literally — ``<o:p>`` becomes
     an element named that *inside* the XHTML namespace, and would serialise
     against a declaration that no longer exists.
 
     Refused rather than translated because the mapping is a guess: nothing here
     knows whether an unknown element was block or inline, and getting it wrong
-    produces a plausible-looking annex that is subtly wrong. Refused rather than
+    produces a plausible-looking result that is subtly wrong. Refused rather than
     dropped because dropping is silent, and the point is to learn what the tools
-    we actually use emit. The cost is bounded —
+    we actually use emit. The cost is bounded. For a PDF,
     :mod:`mireport.pdf_converter._batch` reports a failed conversion as a
-    warning and ships the PDF unconverted — whereas the member would be
-    rejected anyway, from inside a zip, as one warning among hundreds.
+    warning and ships the PDF unconverted, whereas the member would be rejected
+    anyway, from inside a zip, as one warning among hundreds. For a Word text
+    block, the conversion stops with an error naming the element, where
+    otherwise the whole report would fail validation.
 
     The same reasoning applies to :data:`_UNWANTED_ELEMENTS`, which the schema
     does define, so they are refused here too and named separately. The

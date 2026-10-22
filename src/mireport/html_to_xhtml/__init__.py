@@ -27,12 +27,15 @@ tagged report in an Inline XBRL Document Set:
 Script is removed outright, and that means every form of it: the ``<script>``
 element (:func:`._hygiene.stripScripts`), event handler attributes and
 ``javascript:`` URLs (:func:`._hygiene.stripScripting`). The web app serves
-document set members same-origin, so script surviving in an annex built from an
-uploaded PDF would run with the user's session.
+the report and its document set members same-origin, so script surviving in an
+annex built from an uploaded PDF, or in a text block from an uploaded Word
+document, would run with the user's session.
 
-Everything else here repairs a specific thing a real converter emits that the
-XHTML *Strict* half of that schema rejects; none of it is precautionary, and
-``tests/integrationTests/test_real_pdf_converter.py`` is what proves it. What is
+Everything else here repairs a specific thing a real tool emits that the
+XHTML *Strict* half of that schema rejects; none of it is precautionary.
+``tests/integrationTests/test_real_pdf_converter.py`` proves the PDF rules, and
+the Word ones each come from mammoth's own output (``<s>``, a checkbox's
+``<input>``, an ``<img>`` without ``alt``). What is
 *not* repaired is refused: an element outside XHTML Strict fails the conversion
 rather than being translated on a guess — see
 :func:`._hygiene.rejectUnknownElements`.
