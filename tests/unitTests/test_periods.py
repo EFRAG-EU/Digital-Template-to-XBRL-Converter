@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 import pytest
 
@@ -75,3 +75,22 @@ def test_a_year_to_the_day_is_named_by_its_year(
     first: date, last: date, name: str | None
 ) -> None:
     assert DurationPeriodHolder.fromDays(first, last).yearName == name
+
+
+@pytest.mark.parametrize(
+    ("first", "last", "start", "end"),
+    [
+        (date(2025, 1, 1), date(2025, 12, 31), "2024", "2025"),
+        (date(2024, 7, 1), date(2025, 6, 30), "2024-06-30", "2025-06-30"),
+        (date(2025, 1, 1), date(2025, 6, 30), "2024-12-31", "2025-06-30"),
+        (date(2025, 3, 1), date(2025, 3, 1), "2025-02-28", "2025-03-01"),  # one day
+    ],
+)
+def test_an_instant_is_named_as_the_end_of_a_period(
+    first: date, last: date, start: str, end: str
+) -> None:
+    """A calendar year's by its year, anything else's by its day; a period's start is the
+    end of the one before, so its two names always differ."""
+    period = DurationPeriodHolder.fromDays(first, last)
+    assert (period.startName, period.endName) == (start, end)
+    assert period.startInstantDay == first - timedelta(days=1)

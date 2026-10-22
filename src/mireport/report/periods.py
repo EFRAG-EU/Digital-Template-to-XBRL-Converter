@@ -106,6 +106,34 @@ class DurationPeriodHolder(PeriodHolder):
             return str(first.year)
         return f"{first.year}\u2013{last.year}"
 
+    @property
+    def startInstantDay(self) -> date:
+        """The day the start instant ends: the last day before this period (2024-12-31 for
+        2025), as XBRL dates an opening balance."""
+        return self.firstDay - _ONE_DAY
+
+    @property
+    def startName(self) -> str:
+        """What people call the instant this period starts at, as the end of the period
+        before: the year before for a calendar year, else the day before."""
+        if self._isCalendarYear:
+            return str(self.firstDay.year - 1)
+        return self.startInstantDay.isoformat()
+
+    @property
+    def endName(self) -> str:
+        """What people call the instant this period ends at: its year for a calendar year,
+        else its last day (``2024–2025`` would read as a span, not a day). Never the same as
+        its ``startName``, since a period is at least a day long."""
+        if self._isCalendarYear:
+            return str(self.firstDay.year)
+        return self.lastDay.isoformat()
+
+    @property
+    def _isCalendarYear(self) -> bool:
+        first = self.firstDay
+        return self.yearName is not None and (first.month, first.day) == (1, 1)
+
 
 @dataclass(slots=True, frozen=True, eq=True)
 class InstantPeriodHolder(PeriodHolder):

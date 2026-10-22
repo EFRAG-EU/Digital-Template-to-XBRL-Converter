@@ -224,7 +224,7 @@ the end of the one before (`mireport/report/periods.py`, the only place with day
 `FactPeriod`, a report period and which `PeriodPart` of it (`Whole` for a duration concept, `Start` or `End` for
 an instant one). `oim` is what XBRL calls it and is what duplicates and headings compare, `part` is what the
 producer meant: an opening balance of 2025 and a closing balance of 2024 are one instant but two statements,
-shown as the first day of 2025 and the last of 2024, and told to aoix as `instant-start` and `instant`. A
+both shown as 2024 (an instant is named as the end of the period it ends), and told to aoix as `instant-start` and `instant`. A
 producer that knows says so (`setNamedPeriod(name, at=PeriodPart.Start)`); one that has only an OIM period
 (xBRL-JSON) uses `setPeriod(oim)`, which `InlineReport.locatePeriod` resolves, preferring the end.
 

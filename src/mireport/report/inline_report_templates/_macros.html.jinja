@@ -9,15 +9,15 @@
 {%- endmacro %}
 
 {#- A FactPeriod as a person reads it: its report period, as the year it is when it is a year to
-    the day (DurationPeriodHolder.yearName); for an instant, the start or end of that year, else
-    the day it falls on (the first day of the report period for its start, the last for its end).
-    Its full dates are in its title. -#}
+    the day (DurationPeriodHolder.yearName). An instant is the end of a period: its year for a
+    calendar year, else its last day; its start is the end of the one before
+    (DurationPeriodHolder.startName, endName). Its full dates are in its title. -#}
 {% macro render_period(factPeriod) -%}
     {%- set duration = factPeriod.reportPeriod.duration -%}
     {%- if factPeriod.isStart -%}
-        {{ render_day(duration.firstDay, duration.yearName and "Start of " ~ duration.yearName) }}
+        {{ render_instant(duration.startName, duration.startInstantDay) }}
     {%- elif factPeriod.isEnd -%}
-        {{ render_day(duration.lastDay, duration.yearName and "End of " ~ duration.yearName) }}
+        {{ render_instant(duration.endName, duration.lastDay) }}
     {%- elif duration.yearName -%}
         <span class="period" title="{{ duration.firstDay }} &#8211; {{ duration.lastDay }}">{{ duration.yearName }}</span>
     {%- else -%}
@@ -25,13 +25,11 @@
     {%- endif -%}
 {%- endmacro %}
 
-{% macro render_day(day, name=none) -%}
-    <span class="period" title="{{ day }}">{{ name or day }}</span>
+{% macro render_instant(name, day) -%}
+    <span class="period" title="{{ day }}">{{ name }}</span>
 {%- endmacro %}
 
-{#- A fact's period in a sentence: an instant that is a plain day is "At" it. -#}
 {% macro render_fact_period(fact) -%}
-    {%- if fact.period.isInstant and not fact.period.reportPeriod.duration.yearName %}At {% endif -%}
     {{- render_period(fact.period) -}}
 {%- endmacro %}
 
