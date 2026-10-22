@@ -71,3 +71,11 @@ def test_ids_start_with_the_prefix_so_two_documents_cannot_collide(timeoutSecond
     )
     assert 'id="Policy-Target"' in first
     assert 'id="Target-Target"' in second
+
+
+@pytest.mark.parametrize(("ticked", "box"), [(True, "☒"), (False, "☐")])
+def test_a_word_checkbox_becomes_its_box_character(ticked, box):
+    document = FilelikeAndFileName(
+        wordDocument(" agreed", checkbox=ticked), "policy.docx"
+    )
+    assert convertDocxToHtml(document, idPrefix="t-").html == f"<p>{box} agreed</p>"

@@ -37,7 +37,8 @@ _NAMESPACES = (
     'xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" '
     'xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" '
     'xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture" '
-    'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"'
+    'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" '
+    'xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml"'
 )
 _DRAWING = (
     '<w:drawing><wp:inline><wp:docPr id="1" name="Picture 1" descr="{altText}"/>'
@@ -61,12 +62,15 @@ def wordDocument(
     imageAltText: str = "",
     strikethrough: bool = False,
     bookmark: str | None = None,
+    checkbox: bool | None = None,
 ) -> bytes:
     """A .docx of one paragraph. A ``paragraphStyle`` is not defined in the document, so mammoth
     warns about it; a ``breakType`` it doesn't support, mammoth warns about and drops. An ``image``
     follows the text, with ``imageAltText`` as its Word alt text. ``strikethrough`` strikes the
     text through, which mammoth writes as ``<s>``. A ``bookmark`` of that name starts the
-    paragraph, which mammoth writes as an ``<a>`` with the name as its id."""
+    paragraph, which mammoth writes as an ``<a>`` with the name as its id. A ``checkbox``,
+    ticked or not, is a Word content control before the text, which mammoth writes as an
+    ``<input type="checkbox">``."""
     style = (
         f'<w:pPr><w:pStyle w:val="{paragraphStyle}"/></w:pPr>' if paragraphStyle else ""
     )
@@ -74,6 +78,13 @@ def wordDocument(
     lineBreak = f'<w:br w:type="{breakType}"/>' if breakType else ""
     drawing = _DRAWING.format(altText=imageAltText) if image else ""
     run = f"<w:r>{runStyle}<w:t>{text}</w:t>{lineBreak}{drawing}</w:r>"
+    if checkbox is not None:
+        ticked = "1" if checkbox else "0"
+        run = (
+            f'<w:sdt><w:sdtPr><w14:checkbox><w14:checked w14:val="{ticked}"/></w14:checkbox>'
+            "</w:sdtPr><w:sdtContent><w:r><w:t>X</w:t></w:r></w:sdtContent></w:sdt>"
+            + run
+        )
     if bookmark:
         run = f'<w:bookmarkStart w:id="0" w:name="{bookmark}"/>{run}<w:bookmarkEnd w:id="0"/>'
 
