@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Callable
-from datetime import date
+from datetime import date, datetime
 from types import SimpleNamespace
 from typing import Any
 
@@ -24,7 +24,7 @@ from tests.unitTests.synthetic_taxonomy import (
 )
 
 from mireport.exceptions import InlineReportException
-from mireport.report import InlineReport
+from mireport.report import InlineReport, Report
 from mireport.report.factbuilder import FactBuilder
 from mireport.report.model import FactPeriod, PeriodPart, ReportPeriod
 from mireport.report.periods import DurationPeriodHolder, InstantPeriodHolder
@@ -211,7 +211,7 @@ class TestInTheReport:
         # closing 2025, and opening 2025 (the instant at the end of the day before the first)
         assert sorted(_contexts(_html(report))) == ["2024-12-31", "2025-12-31"]
 
-    def test_the_page_says_the_first_day_of_an_opening_balance_and_the_last_of_a_closing_one(
+    def test_the_page_names_an_opening_balance_as_the_end_of_the_year_before(
         self,
     ) -> None:
         report = _report()
@@ -219,11 +219,28 @@ class TestInTheReport:
         html = _html(report)
         # the closing balance leads its line, the opening balance is its comparative
         assert (
-            'fact-comparative-period"><span class="period" title="2025-01-01">'
-            "Start of 2025</span><"
+            'fact-comparative-period"><span class="period" title="2024-12-31">'
+            "2024</span><"
         ) in html
         # the closing balance of the report's own period is what a fact with no period means
-        assert "End of 2025" not in html
+        assert 'title="2025-12-31">2025<' not in html
+
+
+@pytest.mark.parametrize(
+    "duration",
+    [
+        DurationPeriodHolder(datetime(2025, 1, 1, 9), datetime(2026, 1, 1)),
+        DurationPeriodHolder(datetime(2025, 1, 1), datetime(2025, 12, 31, 17, 30)),
+    ],
+)
+def test_an_inline_report_refuses_a_period_with_a_time_of_day(
+    duration: DurationPeriodHolder,
+) -> None:
+    """Only the inline report is limited to whole days; a report as data is not."""
+    taxonomy = _taxonomy()
+    assert Report(taxonomy).addPeriod("day", duration)
+    with pytest.raises(InlineReportException, match="only whole days"):
+        InlineReport(taxonomy).addPeriod("day", duration)
 
 
 class TestRenderMacros:
@@ -240,11 +257,11 @@ class TestRenderMacros:
         ("part", "shown", "title"),
         [
             (PeriodPart.Whole, "2025", "2025-01-01 &#8211; 2025-12-31"),
-            (PeriodPart.Start, "Start of 2025", "2025-01-01"),
-            (PeriodPart.End, "End of 2025", "2025-12-31"),
+            (PeriodPart.Start, "2024", "2024-12-31"),
+            (PeriodPart.End, "2025", "2025-12-31"),
         ],
     )
-    def test_each_part_of_a_year_is_named_by_it_with_its_dates_in_its_title(
+    def test_each_part_of_a_year_is_named_by_the_year_it_ends_with_its_dates_in_its_title(
         self, part: PeriodPart, shown: str, title: str
     ) -> None:
         factPeriod = FactPeriod(_report().getReportPeriod("cur"), part)
@@ -262,14 +279,37 @@ class TestRenderMacros:
             '<span class="day">2025-06-30</span></span>'
         )
 
-    def test_an_instant_of_a_period_that_is_not_a_year_is_at_its_day(self) -> None:
+    def test_an_instant_of_a_period_that_is_not_a_year_is_its_day(self) -> None:
         halfYear = ReportPeriod(
             "half", DurationPeriodHolder.fromDays(date(2025, 1, 1), date(2025, 6, 30))
         )
+        macros = self._macros()
         closing = SimpleNamespace(period=FactPeriod(halfYear, PeriodPart.End))
-        assert str(self._macros().render_fact_period(closing)).strip() == (
-            'At <span class="period" title="2025-06-30">2025-06-30</span>'
+        opening = SimpleNamespace(period=FactPeriod(halfYear, PeriodPart.Start))
+        assert str(macros.render_fact_period(closing)).strip() == (
+            '<span class="period" title="2025-06-30">2025-06-30</span>'
         )
+        assert str(macros.render_fact_period(opening)).strip() == (
+            '<span class="period" title="2024-12-31">2024-12-31</span>'
+        )
+
+    def test_a_year_that_is_not_a_calendar_year_is_named_but_its_instants_are_days(
+        self,
+    ) -> None:
+        julyYear = ReportPeriod(
+            "fy", DurationPeriodHolder.fromDays(date(2024, 7, 1), date(2025, 6, 30))
+        )
+        macros = self._macros()
+        shown = {
+            part: str(macros.render_period(FactPeriod(julyYear, part))).strip()
+            for part in PeriodPart
+        }
+        assert shown == {
+            PeriodPart.Whole: '<span class="period" '
+            'title="2024-07-01 &#8211; 2025-06-30">2024–2025</span>',
+            PeriodPart.Start: '<span class="period" title="2024-06-30">2024-06-30</span>',
+            PeriodPart.End: '<span class="period" title="2025-06-30">2025-06-30</span>',
+        }
 
     def test_a_fact_that_is_an_instant_says_so(self) -> None:
         report = _report()
@@ -281,7 +321,7 @@ class TestRenderMacros:
         )
         whole = _builder(report, EMISSIONS, 1).buildFact()
         assert str(macros.render_fact_period(opening)).strip() == (
-            '<span class="period" title="2025-01-01">Start of 2025</span>'
+            '<span class="period" title="2024-12-31">2024</span>'
         )
         assert str(macros.render_fact_period(whole)).strip() == (
             '<span class="period" title="2025-01-01 &#8211; 2025-12-31">2025</span>'
