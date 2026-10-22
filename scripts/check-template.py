@@ -13,7 +13,7 @@ from mireport.cli import configure_rich_output
 from mireport.cli import console_print as print
 from mireport.entrypoints import describeEntryPointSet
 from mireport.exceptions import TaxonomyException
-from mireport.taxonomy import loadTaxonomyJSON
+from mireport.taxonomy import Taxonomy
 from mireport.xlsx_template_reader.templateaudit import (
     INFORMATIONAL_KINDS,
     FindingKind,
@@ -207,7 +207,8 @@ def main(argv: list[str] | None = None) -> int:
     taxonomy = None
     mireport.loadBuiltInTaxonomyJSON()
     if args.taxonomy_json is not None:
-        taxonomy = loadTaxonomyJSON(args.taxonomy_json)
+        # Built, not registered: it may well share a built-in's entry point.
+        taxonomy = Taxonomy.fromJSON(args.taxonomy_json)
 
     workbook = loadExcelFromPathOrFileLike(args.workbook)
     reference = loadExcelFromPathOrFileLike(args.reference) if args.reference else None

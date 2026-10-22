@@ -12,7 +12,7 @@ from openpyxl import Workbook
 from openpyxl.workbook.defined_name import DefinedName
 
 from mireport.exceptions import TaxonomyException
-from mireport.taxonomy import getTaxonomy
+from mireport.taxonomy import builtInTaxonomyJsonPaths, getTaxonomy
 from mireport.xlsx_template_reader.templateaudit import (
     FindingKind,
     TemplateAudit,
@@ -166,3 +166,11 @@ def test_script_markdown(script, tmp_path, capsys):
 
 def test_markdown_cells_escape_pipes(script):
     assert script.markdownCell("a|b\nc", code=True) == r"`a\|b c`"
+
+
+def test_script_taxonomy_json_may_share_a_built_in_entry_point(script, tmp_path):
+    """A fresh build of a built-in taxonomy has the same entry point."""
+    [vsJson] = [p for p, eps in builtInTaxonomyJsonPaths() if VS_ENTRY_POINT in eps]
+    path = tmp_path / "template.xlsx"
+    stamped(VS_ENTRY_POINT, "2.0.0", Bogus="Data!$B$2").save(path)
+    assert script.main([str(path), "--taxonomy-json", str(vsJson)]) == 1
