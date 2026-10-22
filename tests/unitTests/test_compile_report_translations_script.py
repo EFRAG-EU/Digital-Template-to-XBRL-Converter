@@ -1,5 +1,5 @@
-"""scripts/compile-report-translations.py: what it compiles, and that the checkout's compiled
-catalogs are those of the checked-in ones."""
+"""scripts/compile-report-translations.py: what it compiles. tests/conftest.py compiles the
+checkout's catalogs before the tests run."""
 
 from __future__ import annotations
 
@@ -56,18 +56,3 @@ def test_a_removed_catalog_leaves_nothing_behind(
 
     assert script.compileCatalogs(tmp_path / "po", tmp_path / "mo") == []
     assert not stale.exists()
-
-
-def test_the_compiled_catalogs_are_current(script: ModuleType, tmp_path: Path) -> None:
-    fresh = tmp_path / "mo"
-    script.compileCatalogs(script.CATALOGS, fresh)
-    expected = {p.relative_to(fresh): p.read_bytes() for p in fresh.rglob("*.mo")}
-    compiled = {
-        p.relative_to(script.COMPILED): p.read_bytes()
-        for p in script.COMPILED.rglob("*.mo")
-    }
-    assert expected
-    assert compiled == expected, (
-        "generated/translations is out of date: run "
-        "scripts/compile-report-translations.py (or reinstall the package)"
-    )
