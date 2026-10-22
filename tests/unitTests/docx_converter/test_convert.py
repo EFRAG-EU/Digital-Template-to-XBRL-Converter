@@ -30,3 +30,16 @@ def test_a_child_process_that_takes_too_long_is_stopped():
 def test_a_file_that_is_not_a_word_document_is_an_error(timeoutSeconds):
     with pytest.raises(DocxConversionError, match="policy.docx could not be read"):
         convertDocxToHtml(NOT_A_DOCUMENT, timeoutSeconds=timeoutSeconds)
+
+
+@pytest.mark.parametrize("timeoutSeconds", [None, 30])
+@pytest.mark.parametrize(
+    ("altText", "expected"), [("", 'alt=""'), ("A chart", 'alt="A chart"')]
+)
+def test_every_image_has_an_alt_as_xhtml_requires(timeoutSeconds, altText, expected):
+    document = FilelikeAndFileName(
+        wordDocument("Hello", image=True, imageAltText=altText), "policy.docx"
+    )
+    html = convertDocxToHtml(document, timeoutSeconds=timeoutSeconds).html
+    assert "<img " in html
+    assert expected in html

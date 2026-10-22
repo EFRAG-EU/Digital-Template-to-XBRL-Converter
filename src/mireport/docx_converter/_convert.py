@@ -9,11 +9,11 @@ import subprocess
 import sys
 from pathlib import Path
 
-import mammoth
 from markupsafe import Markup
 
 from mireport.docx_converter._exceptions import DocxConversionError
 from mireport.docx_converter._messages import DocxConversion
+from mireport.docx_converter._worker import convert
 from mireport.filesupport import FilelikeAndFileName
 
 L = logging.getLogger(__name__)
@@ -44,12 +44,11 @@ def convertDocxToHtml(
 
 def _convertInProcess(docx: FilelikeAndFileName) -> tuple[str, list[str]]:
     try:
-        result = mammoth.convert_to_html(docx.fileLike())
+        return convert(docx.fileLike())
     except Exception as e:
         raise DocxConversionError(
             f"Word document {docx.filename} could not be read."
         ) from e
-    return result.value, [message.message for message in result.messages]
 
 
 def _convertInChildProcess(
