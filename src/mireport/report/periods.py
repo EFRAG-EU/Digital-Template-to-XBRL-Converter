@@ -82,6 +82,11 @@ class DurationPeriodHolder(PeriodHolder):
         return InstantPeriodHolder(self.end)
 
     @property
+    def isWholeDays(self) -> bool:
+        """Whether it starts and ends at midnight, so it can be written as days."""
+        return self.start.time() == time.min and self.end.time() == time.min
+
+    @property
     def firstDay(self) -> date:
         """The first day included, for aoix and for people."""
         return _whole_day(self.start, "The start")

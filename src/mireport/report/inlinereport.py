@@ -35,6 +35,7 @@ from mireport.report.fact import Fact, Symbol
 from mireport.report.footnote import Footnote, FootnoteManager
 from mireport.report.layout import ReportLayoutOrganiser, TableStyle
 from mireport.report.periods import (
+    DurationPeriodHolder,
     PeriodHolder,
 )
 from mireport.report.report import Report
@@ -97,6 +98,18 @@ class InlineReport(Report):
                 )
 
         self._numericTransform: str = numeric_transform
+
+    def addPeriod(self, name: str, duration: DurationPeriodHolder) -> bool:
+        """As Report's, but only for a period of whole days: the report shows dates, never a
+        time of day, so a period with one is refused here, before any fact refers to it,
+        rather than when the report is rendered. A fact's period is a declared one or an
+        instant at either end of one, so this covers every period the report shows."""
+        if not duration.isWholeDays:
+            raise InlineReportException(
+                f"Period {name!r} ({duration}) has a time of day; an inline report shows "
+                "only whole days."
+            )
+        return super().addPeriod(name, duration)
 
     def setLabelOverrides(self, overrides: dict[str, str]) -> None:
         self._labelOverrides = overrides

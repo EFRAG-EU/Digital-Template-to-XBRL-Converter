@@ -218,7 +218,7 @@ not stored. A typed value that aoix cannot quote (a double quote) is refused rat
 deprecated `typed` keyword. A monetary fact carries its currency (the report's default, unless it says
 otherwise).
 
-Periods are OIM's: datetimes, a duration running up to (not including) its end, so the start of one year *is*
+Periods are OIM's: datetimes (an `InlineReport` takes only whole days, and `addPeriod` refuses a period with a time of day; a `Report` as data has no such limit), a duration running up to (not including) its end, so the start of one year *is*
 the end of the one before (`mireport/report/periods.py`, the only place with day arithmetic: `fromDays` in,
 `firstDay`/`lastDay` out for aoix and for people). A report declares named `ReportPeriod`s; a fact holds a
 `FactPeriod`, a report period and which `PeriodPart` of it (`Whole` for a duration concept, `Start` or `End` for

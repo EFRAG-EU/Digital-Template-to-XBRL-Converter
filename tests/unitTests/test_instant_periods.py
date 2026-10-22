@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Callable
-from datetime import date
+from datetime import date, datetime
 from types import SimpleNamespace
 from typing import Any
 
@@ -24,7 +24,7 @@ from tests.unitTests.synthetic_taxonomy import (
 )
 
 from mireport.exceptions import InlineReportException
-from mireport.report import InlineReport
+from mireport.report import InlineReport, Report
 from mireport.report.factbuilder import FactBuilder
 from mireport.report.model import FactPeriod, PeriodPart, ReportPeriod
 from mireport.report.periods import DurationPeriodHolder, InstantPeriodHolder
@@ -224,6 +224,23 @@ class TestInTheReport:
         ) in html
         # the closing balance of the report's own period is what a fact with no period means
         assert 'title="2025-12-31">2025<' not in html
+
+
+@pytest.mark.parametrize(
+    "duration",
+    [
+        DurationPeriodHolder(datetime(2025, 1, 1, 9), datetime(2026, 1, 1)),
+        DurationPeriodHolder(datetime(2025, 1, 1), datetime(2025, 12, 31, 17, 30)),
+    ],
+)
+def test_an_inline_report_refuses_a_period_with_a_time_of_day(
+    duration: DurationPeriodHolder,
+) -> None:
+    """Only the inline report is limited to whole days; a report as data is not."""
+    taxonomy = _taxonomy()
+    assert Report(taxonomy).addPeriod("day", duration)
+    with pytest.raises(InlineReportException, match="only whole days"):
+        InlineReport(taxonomy).addPeriod("day", duration)
 
 
 class TestRenderMacros:

@@ -56,6 +56,16 @@ def test_only_whole_days_can_be_written_as_dates() -> None:
     assert part_day.lastDay == date(2025, 1, 1)
 
 
+def test_a_duration_is_whole_days_when_it_starts_and_ends_at_midnight() -> None:
+    assert CUR.isWholeDays
+    assert not DurationPeriodHolder(
+        datetime(2025, 1, 1, 9), datetime(2026, 1, 1)
+    ).isWholeDays
+    assert not DurationPeriodHolder(
+        datetime(2025, 1, 1), datetime(2025, 6, 30, 12)
+    ).isWholeDays
+
+
 def test_periods_are_written_as_oim_does() -> None:
     assert str(CUR) == "2025-01-01T00:00:00/2026-01-01T00:00:00"
     assert str(CUR.startInstant) == "2025-01-01T00:00:00"
