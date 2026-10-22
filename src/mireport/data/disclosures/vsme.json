@@ -3,9 +3,10 @@
         "oldEntryPoints": [
             "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/vsme-entry-point.xsd",
             "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/vsme-all.xsd",
-            "https://xbrl.efrag.org/taxonomy/vsme/2026-02-01/vsme-all.xsd"
+            "https://xbrl.efrag.org/taxonomy/vsme/2026-02-01/vsme-all.xsd",
+            "https://xbrl.efrag.org/taxonomy/vsme/2026-05-01/vsme-all.xsd"
         ],
-        "supportedEntryPoint": "https://xbrl.efrag.org/taxonomy/vsme/2026-05-01/vsme-all.xsd"
+        "supportedEntryPoint": "https://xbrl.efrag.org/taxonomy/vs/2026-10-16/vs-all.xsd"
     },
     "layoutStrategy": {
         "default": "vsme",
