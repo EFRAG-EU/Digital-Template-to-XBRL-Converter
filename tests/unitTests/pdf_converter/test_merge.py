@@ -253,6 +253,13 @@ class TestMergeAnnexesIntoReport:
         content = result.fileContent.decode("utf-8")
         assert 'href="#section-class0"' in content
 
+    def test_an_annex_can_be_merged_into_more_than_one_report(self) -> None:
+        annex = _annex()
+        for _ in range(2):
+            content = mergeAnnexesIntoReport(_report(), [annex]).fileContent
+            assert b"Annex body" in content
+        assert annex.body.getparent() is None  # still the annex's, not a report's
+
     def test_handles_several_annexes_independently(self) -> None:
         first, second = _annex("pdf-annex-1", "a.pdf"), _annex("pdf-annex-2", "b.pdf")
         result = mergeAnnexesIntoReport(_report(), [first, second])

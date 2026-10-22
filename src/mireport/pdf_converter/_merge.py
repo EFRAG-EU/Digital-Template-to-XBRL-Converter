@@ -45,6 +45,7 @@ exist — nothing here reaches back into ``inlinereport.py`` or its templates.
 
 from __future__ import annotations
 
+import copy
 from typing import TYPE_CHECKING, NamedTuple
 
 import tinycss2
@@ -91,7 +92,8 @@ class MergedAnnex(NamedTuple):
         entry links to.
     :param label: the original PDF's filename, for display in that entry.
     :param body: the annex's content as one XHTML ``div`` carrying
-        @anchor_id as its id, ready to be appended to the report's body.
+        @anchor_id as its id. :func:`mergeAnnexesIntoReport` appends a copy,
+        so an annex is never changed by merging it.
     :param head_css: the annex's own CSS, scoped to @anchor_id with ``@scope``
         and preceded by an unlayered reset that keeps the report's own styling
         from reaching inside, ready to be inserted as-is inside a ``<style>``
@@ -313,7 +315,7 @@ def mergeAnnexesIntoReport(
         style.set("type", "text/css")
         style.text = annex.head_css
 
-        body.append(annex.body)
+        body.append(copy.deepcopy(annex.body))
 
         entry = etree.SubElement(annexesList, _tag("li"))
         link = etree.SubElement(entry, _tag("a"))
