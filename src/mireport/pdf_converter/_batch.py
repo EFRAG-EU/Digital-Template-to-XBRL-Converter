@@ -24,7 +24,7 @@ from enum import StrEnum
 from typing import TYPE_CHECKING, NamedTuple
 
 from mireport.conversionresults import MessageType, Severity
-from mireport.pdf_converter._convert import convertPdfToHtml
+from mireport.pdf_converter._convert import convertPdfToHtml, convertPdfToXhtml
 from mireport.pdf_converter._exceptions import PdfConversionError
 from mireport.pdf_converter._merge import MergedAnnex, buildMergedAnnex
 from mireport.pdf_converter._run import findConverter
@@ -98,17 +98,21 @@ def convertSupplementaryPdfs(
     for index, attachment in enumerate(attachments, start=1):
         pc.addDevInfoMessage(f"Converting {attachment.filename}")
         try:
-            converted = convertPdfToHtml(
-                attachment.fileContent,
-                filename=attachment.filename,
-                converter=converter,
-                injectIxHeader=(mode == PdfSupplementaryMode.DOCSET),
-            )
             if mode == PdfSupplementaryMode.MERGE:
                 annex = buildMergedAnnex(
-                    converted.fileContent,
+                    convertPdfToXhtml(
+                        attachment.fileContent,
+                        converter=converter,
+                        injectIxHeader=False,
+                    ),
                     index=index,
                     label=attachment.filename,
+                )
+            else:
+                converted = convertPdfToHtml(
+                    attachment.fileContent,
+                    filename=attachment.filename,
+                    converter=converter,
                 )
         except PdfConversionError as e:
             results.addMessage(

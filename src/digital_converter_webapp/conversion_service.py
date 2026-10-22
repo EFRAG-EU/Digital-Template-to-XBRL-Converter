@@ -11,9 +11,6 @@ import logging
 from pathlib import PurePath
 from typing import TYPE_CHECKING
 
-import mammoth
-from markupsafe import Markup
-
 from mireport.arelle.report_info import (
     ARELLE_VERSION_INFORMATION,
     ArelleReportProcessor,
@@ -26,6 +23,8 @@ from mireport.conversionresults import (
     Severity,
 )
 from mireport.data.disclosures import VSME_DEFAULTS
+from mireport.docx_converter import DEFAULT_TIMEOUT_SECONDS as DOCX_TIMEOUT_SECONDS
+from mireport.docx_converter import DocxConversionError, convertDocxToHtml
 from mireport.filesupport import FilelikeAndFileName, ImageFileLikeAndFileName
 from mireport.localise import get_locale_from_str
 from mireport.pdf_converter import (
@@ -169,25 +168,36 @@ def _completePartialFacts(
     builder: ConversionResultsBuilder,
 ) -> bool:
     """Apply the user's uploaded Word documents to the outstanding partial
-    facts. Returns True if the conversion must stop because some are still
-    missing a document."""
+    facts. Returns True if the conversion must stop because a document could
+    not be converted or some are still missing one."""
     if not (report.hasPartialFacts and conv.has_external_values):
         return False
 
     external = conv.external_values
+    unconverted = False
     for concept in list(report.partialFactsByConcept):
         if (docx := external.get(str(concept.qname))) is None:
             continue
-        mammothResult = mammoth.convert_to_html(docx.fileLike())
-        for message in mammothResult.messages:
+        try:
+            conversion = convertDocxToHtml(
+                docx,
+                idPrefix=f"{concept.qname.localName}-",
+                timeoutSeconds=DOCX_TIMEOUT_SECONDS,
+            )
+        except DocxConversionError as e:
             builder.addMessage(
-                f"Word document {docx.filename}: {message.message}",
-                Severity.WARNING,
+                f"Conversion failed: {e}",
+                Severity.ERROR,
                 MessageType.Conversion,
                 taxonomy_concept=concept,
             )
-        report.completePartialFact(concept, Markup(mammothResult.value))
+            unconverted = True
+            continue
+        conversion.addTo(builder, taxonomy_concept=concept)
+        report.completePartialFact(concept, conversion.html)
 
+    if unconverted:
+        return True
     if not report.hasPartialFacts:
         return False
 

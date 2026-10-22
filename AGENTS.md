@@ -416,14 +416,14 @@ processor that enforces it here:
   enough — and a Validating Conformant Processor accepts only documents valid against the
   XHTML + iXBRL schema (§3.3.1), i.e. **XHTML Strict**. Arelle reports the first as
   `arelle:nonIxdsDocument` and the second via `XhtmlValidate.xhtmlValidate`. So
-  `_xhtml.normaliseToXhtml()` injects an empty `ix:header` inside a `display:none` div (the form
-  §8.1.2 recommends; only one header across the whole set need carry anything, §8.1.3) and repairs
+  `normaliseDocument()` (`mireport/html_to_xhtml/`) injects an empty `ix:header` inside a
+  `display:none` div (the form §8.1.2 recommends; only one header across the whole set need carry anything, §8.1.3) and repairs
   what the converters emit: `data-*`, `<meta charset>` and the `div` hit area inside every link
   annotation, which becomes a `span` (pdf2htmlEX); `lang`,
   `bgcolor`/`link`/`vlink`, `<a name>`, and body-level `<style>` (pdftohtml). Every rule there came
   from a real validation error, not a precaution
   — don't remove one without re-running `tests/integrationTests/test_real_pdf_converter.py`. An
-  element outside XHTML Strict is *refused* (`_rejectUnknownElements`), never translated on a guess,
+  element outside XHTML Strict is *refused* (`rejectUnknownElements`), never translated on a guess,
   as are `object`/`param`/`form`/`input`/`button`/`select`/`textarea`/`base` — Strict defines them,
   but neither converter emits them and each embeds, submits or re-points URLs.
 - **Script is stripped entirely** — the `<script>` element, `on*` handler attributes and
@@ -445,6 +445,13 @@ refuses to render while any remain.
 The web app implements this as the `partial-facts` upload page, the CLI as `--extra-data`
 (`replacementTextblockValues`, which also covers footnotes, label overrides and intro/back-cover
 matter, converted from `.docx` by mammoth).
+Both convert through `mireport/docx_converter/`. The web app runs mammoth in a child process (`_worker.py`)
+that is killed after `DEFAULT_TIMEOUT_SECONDS`, since a crafted document can keep mammoth's regexes busy
+and a thread can't be stopped; a document it can't convert stops the conversion with an error. The CLI's
+user supplies their own documents, so it converts in-process. `DocxConversion.addTo` makes mammoth's style
+messages (only formatting lost) DevInfo, and the rest one deduplicated warning per document. mammoth's
+HTML then goes through `mireport.html_to_xhtml.normaliseFragment`: the same XHTML Strict rules as a PDF
+annex (alt on every image, `<s>` and checkboxes translated, script stripped) without the document assembly.
 
 ### Web app (`digital_converter_webapp/`)
 

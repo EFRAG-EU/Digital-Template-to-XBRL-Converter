@@ -20,6 +20,9 @@ import subprocess
 import tempfile
 from pathlib import Path
 
+from lxml import etree
+
+from mireport.html_to_xhtml import XhtmlError, parseDocument
 from mireport.pdf_converter._backends import (
     BACKENDS_IN_PREFERENCE_ORDER,
     PdfConverterBackend,
@@ -118,13 +121,11 @@ def runConverter(
     converter: ResolvedConverter | None = None,
     binaryPath: str | None = None,
     timeoutSeconds: int = DEFAULT_TIMEOUT_SECONDS,
-) -> bytes:
-    """Convert @pdfBytes, returning self-contained but un-normalised HTML.
-
-    Sibling files the converter wrote are inlined before the working directory
-    is destroyed; the result still needs
-    :func:`mireport.pdf_converter._xhtml.normaliseToXhtml` before it is fit for a
-    document set.
+) -> etree._Element:
+    """Convert @pdfBytes, returning the converter's output parsed, with the
+    sibling files it wrote inlined before the working directory is destroyed.
+    The tree still needs :func:`mireport.html_to_xhtml.normaliseDocument`
+    before it is fit for a document set.
 
     :raises PdfConversionError: on any failure, including a successful exit that
         produced no output file.
@@ -172,4 +173,9 @@ def runConverter(
                 f"PDF converter {backend.name} reported success but produced no "
                 "output file."
             )
-        return inlineLocalResources(outputPath.read_bytes(), working)
+        try:
+            root = parseDocument(outputPath.read_bytes())
+        except XhtmlError as e:
+            raise PdfConversionError(e.about("Converted PDF output")) from e
+        inlineLocalResources(root, working)
+        return root

@@ -28,6 +28,7 @@ from mireport.pdf_converter import (
     availableConverters,
     buildMergedAnnex,
     convertPdfToHtml,
+    convertPdfToXhtml,
     findConverter,
 )
 
@@ -278,10 +279,11 @@ class TestRealConversionMergedInAPackage:
         from mireport.taxonomy import loadBuiltInTaxonomyJSON
         from mireport.xlsx_template_reader.processor import XlsxProcessor
 
-        converted = convertPdfToHtml(
-            pdfBytes, filename="annex1.pdf", injectIxHeader=False
+        annex = buildMergedAnnex(
+            convertPdfToXhtml(pdfBytes, injectIxHeader=False),
+            index=1,
+            label="annex1.pdf",
         )
-        annex = buildMergedAnnex(converted.fileContent, index=1, label="annex1.pdf")
 
         loadBuiltInTaxonomyJSON()
         report = XlsxProcessor.from_file(

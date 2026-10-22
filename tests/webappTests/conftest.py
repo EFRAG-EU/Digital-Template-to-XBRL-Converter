@@ -10,8 +10,8 @@ from mireport.arelle.report_info import ArelleReportProcessor
 from mireport.arelle.support import ArelleProcessingResult
 from mireport.conversionresults import Message, MessageType, Severity
 from mireport.filesupport import FilelikeAndFileName
-from mireport.pdf_converter import PdfToolNotFoundError
-from mireport.pdf_converter._xhtml import normaliseToXhtml
+from mireport.html_to_xhtml import documentToBytes, normaliseDocument, parseDocument
+from mireport.pdf_converter import ANNEX_LABELS, PdfToolNotFoundError
 
 SAMPLE_XLSX = (
     Path(__file__).parent.parent / "data" / "VSME-Digital-Template-Sample-1.2.0.xlsx"
@@ -22,8 +22,13 @@ PDF_BYTES = b"%PDF-1.7\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF\n"
 # injects is what makes the file an Inline XBRL Document, and so a document set
 # member, rather than one dropped as "Non-inline file is not loadable".
 CONVERTED_PDF = FilelikeAndFileName(
-    fileContent=normaliseToXhtml(
-        b"<html><head><title>a</title></head><body>annex</body></html>"
+    fileContent=documentToBytes(
+        normaliseDocument(
+            parseDocument(
+                b"<html><head><title>a</title></head><body>annex</body></html>"
+            ),
+            ANNEX_LABELS,
+        )
     ),
     filename="annex1.xhtml",
 )
@@ -179,11 +184,9 @@ def patchConverterPresent(monkeypatch):
     monkeypatch.setattr(
         _batch,
         "convertPdfToHtml",
-        lambda content, *, filename, converter, injectIxHeader=True: (
-            FilelikeAndFileName(
-                fileContent=CONVERTED_PDF.fileContent,
-                filename=f"{Path(filename).stem}.xhtml",
-            )
+        lambda content, *, filename, converter: FilelikeAndFileName(
+            fileContent=CONVERTED_PDF.fileContent,
+            filename=f"{Path(filename).stem}.xhtml",
         ),
     )
 

@@ -3,7 +3,6 @@ import json
 import logging
 from pathlib import Path
 
-import mammoth
 from dotenv import load_dotenv
 from markupsafe import Markup
 
@@ -25,10 +24,9 @@ from mireport.comparatives import PriorReport
 from mireport.conversionresults import (
     ConversionResults,
     ConversionResultsBuilder,
-    MessageType,
-    Severity,
 )
 from mireport.data.disclosures import VSME_DEFAULTS
+from mireport.docx_converter import convertDocxToHtml
 from mireport.entrypoints import describeEntryPointSet
 from mireport.filesupport import FilelikeAndFileName, ImageFileLikeAndFileName
 from mireport.localise import EU_LOCALES, argparse_locale
@@ -44,19 +42,16 @@ from mireport.xlsx_template_reader.processor import XlsxProcessor
 
 
 def _convert_docx_to_markup(
-    docx_path: Path, resultsBuilder: ConversionResultsBuilder
+    docx_path: Path, resultsBuilder: ConversionResultsBuilder, idPrefix: str
 ) -> Markup:
-    """Convert a .docx file to HTML via mammoth and return as Markup, reporting
-    anything mammoth could not convert as a warning."""
-    with open(docx_path, "rb") as f:
-        result = mammoth.convert_to_html(f)
-    for message in result.messages:
-        resultsBuilder.addMessage(
-            f"Word document {docx_path.name}: {message.message}",
-            Severity.WARNING,
-            MessageType.Conversion,
-        )
-    return Markup(result.value)
+    """Convert a .docx file to HTML and return it as Markup, reporting anything
+    that could not be converted. Its ids start @idPrefix, unique to it."""
+    conversion = convertDocxToHtml(
+        FilelikeAndFileName(docx_path.read_bytes(), docx_path.name),
+        idPrefix=idPrefix,
+    )
+    conversion.addTo(resultsBuilder)
+    return conversion.html
 
 
 class ExtraDataFileError(FileNotFoundError):
@@ -334,7 +329,11 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, list[str]
                         additionalInfo=f"Creating {section_id} from {section['path']}",
                     )
                     docx_path = _resolve_extra_path(extra_file, section["path"])
-                    sectionSetter(_convert_docx_to_markup(docx_path, resultsBuilder))
+                    sectionSetter(
+                        _convert_docx_to_markup(
+                            docx_path, resultsBuilder, idPrefix=f"{section_id}-"
+                        )
+                    )
                 elif "content" in section:
                     sectionSetter(Markup(section["content"]))
                 else:
@@ -348,8 +347,10 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, list[str]
                     additionalInfo=f"Replacing {rtv['concept']} from {rtv['path']}",
                 )
                 docx_path = _resolve_extra_path(extra_file, rtv["path"])
-                markup = _convert_docx_to_markup(docx_path, resultsBuilder)
                 concept = report.taxonomy.getConcept(rtv["concept"])
+                markup = _convert_docx_to_markup(
+                    docx_path, resultsBuilder, idPrefix=f"{concept.qname.localName}-"
+                )
                 # A text block the template marks as external has no fact to
                 # replace yet, only a partial one waiting for this value.
                 if concept in report.partialFactsByConcept:

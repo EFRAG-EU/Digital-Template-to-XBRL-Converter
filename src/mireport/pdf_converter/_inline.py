@@ -139,7 +139,6 @@ class _DocumentInliner:
         self._root = root
         self._resolver = _ResourceResolver(workingDir)
         self._css = _CssInliner(self._resolver)
-        self.changed = False
 
     def run(self) -> None:
         for element in self._root.iter():
@@ -154,7 +153,6 @@ class _DocumentInliner:
                 continue
             if (uri := self._resolver.uriFor(reference)) is not None:
                 element.set(attribute, uri)
-                self.changed = True
 
     def _inlineElementCss(self, element: etree._Element) -> None:
         """Rewrite url() in a <style> element's body and in a style attribute."""
@@ -164,36 +162,13 @@ class _DocumentInliner:
             and (rewritten := self._css.rewrite(element.text)) is not None
         ):
             element.text = rewritten
-            self.changed = True
         if (style := element.get(STYLE_ATTRIBUTE)) and (
             rewritten := self._css.rewrite(style)
         ) is not None:
             element.set(STYLE_ATTRIBUTE, rewritten)
-            self.changed = True
 
 
-def inlineLocalResources(content: bytes, workingDir: Path) -> bytes:
-    """Replace references to files in @workingDir with ``data:`` URIs.
-
-    Returns @content unchanged if it cannot be parsed — normalisation runs next
-    and reports the problem properly.
-    """
-    try:
-        root = etree.fromstring(
-            content, etree.HTMLParser(recover=True, encoding="utf-8")
-        )
-    except (etree.XMLSyntaxError, ValueError):
-        return content
-    if root is None:
-        return content
-
-    inliner = _DocumentInliner(root, workingDir)
-    inliner.run()
-    if not inliner.changed:
-        return content
-
-    # Serialised as XML rather than HTML: an HTML serialisation would unclose
-    # void elements again, undoing well-formedness that a converter's output may
-    # already have had. Normalisation re-parses either way, but there is no
-    # reason to hand it something worse than it was given.
-    return etree.tostring(root, method="xml")
+def inlineLocalResources(root: etree._Element, workingDir: Path) -> None:
+    """Replace references in @root to files in @workingDir with ``data:`` URIs,
+    in place."""
+    _DocumentInliner(root, workingDir).run()

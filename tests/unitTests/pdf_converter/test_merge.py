@@ -14,14 +14,14 @@ import pytest
 from lxml import etree
 
 from mireport.filesupport import FilelikeAndFileName
-from mireport.pdf_converter import PdfConversionError
+from mireport.html_to_xhtml import normaliseDocument, parseDocument
+from mireport.pdf_converter import ANNEX_LABELS, PdfConversionError
 from mireport.pdf_converter._merge import (
     ANNEX_CLASS,
     MergedAnnex,
     buildMergedAnnex,
     mergeAnnexesIntoReport,
 )
-from mireport.pdf_converter._xhtml import normaliseToXhtml
 
 XHTML = "http://www.w3.org/1999/xhtml"
 
@@ -30,8 +30,7 @@ def _tag(localName: str) -> str:
     return f"{{{XHTML}}}{localName}"
 
 
-NORMALISED_ANNEX = normaliseToXhtml(
-    b"""<!DOCTYPE html>
+ANNEX_SOURCE = b"""<!DOCTYPE html>
 <html><head><meta charset=utf-8>
 <style type="text/css">
 .pf{position:relative;background-color:white}
@@ -47,19 +46,26 @@ NORMALISED_ANNEX = normaliseToXhtml(
 </div>
 </body>
 </html>
-""",
-    injectIxHeader=False,
-)
+"""
+
+
+def _normalisedAnnex(source: bytes = ANNEX_SOURCE) -> etree._Element:
+    """A fresh tree each time: building an annex moves its body content."""
+    return normaliseDocument(parseDocument(source), ANNEX_LABELS, injectIxHeader=False)
+
+
+def _html(annex: MergedAnnex) -> str:
+    return etree.tostring(annex.body, encoding="unicode")
 
 
 @pytest.fixture
 def annex():
-    return buildMergedAnnex(NORMALISED_ANNEX, index=1, label="annex1.pdf")
+    return buildMergedAnnex(_normalisedAnnex(), index=1, label="annex1.pdf")
 
 
 @pytest.fixture
 def bodyRoot(annex):
-    return etree.fromstring(annex.body_html.encode("utf-8"))
+    return annex.body
 
 
 class TestAnchorAndLabel:
@@ -70,14 +76,11 @@ class TestAnchorAndLabel:
         assert annex.label == "annex1.pdf"
 
     def test_different_index_gives_a_different_anchor(self) -> None:
-        other = buildMergedAnnex(NORMALISED_ANNEX, index=2, label="annex1.pdf")
+        other = buildMergedAnnex(_normalisedAnnex(), index=2, label="annex1.pdf")
         assert other.anchor_id == "pdf-annex-2"
 
 
 class TestBodyFragment:
-    def test_is_well_formed_xml(self, annex) -> None:
-        etree.fromstring(annex.body_html.encode("utf-8"))
-
     def test_root_carries_the_anchor_id(self, bodyRoot) -> None:
         assert bodyRoot.get("id") == "pdf-annex-1"
 
@@ -91,11 +94,11 @@ class TestBodyFragment:
         """A stray auto-generated namespace prefix would still be valid XML,
         but every element belongs in the same (default) XHTML namespace as the
         report it joins."""
-        assert "<html:" not in annex.body_html
-        assert ":div" not in annex.body_html.replace("</div>", "")
+        assert "<html:" not in _html(annex)
+        assert ":div" not in _html(annex).replace("</div>", "")
 
     def test_original_content_survives(self, annex) -> None:
-        assert "Converted annex &amp; appendix" in annex.body_html
+        assert "Converted annex &amp; appendix" in _html(annex)
 
     def test_ids_are_renamed_unique_to_this_annex(self, bodyRoot) -> None:
         ids = [e.get("id") for e in bodyRoot.iter() if e.get("id") is not None]
@@ -103,15 +106,15 @@ class TestBodyFragment:
         assert "pdf-annex-1-special" in ids
 
     def test_two_annexes_from_the_same_source_do_not_collide(self) -> None:
-        first = buildMergedAnnex(NORMALISED_ANNEX, index=1, label="a.pdf")
-        second = buildMergedAnnex(NORMALISED_ANNEX, index=2, label="b.pdf")
-        assert "pdf-annex-1-special" in first.body_html
-        assert "pdf-annex-2-special" in second.body_html
-        assert "pdf-annex-2-special" not in first.body_html
+        first = buildMergedAnnex(_normalisedAnnex(), index=1, label="a.pdf")
+        second = buildMergedAnnex(_normalisedAnnex(), index=2, label="b.pdf")
+        assert "pdf-annex-1-special" in _html(first)
+        assert "pdf-annex-2-special" in _html(second)
+        assert "pdf-annex-2-special" not in _html(first)
 
     def test_same_document_href_is_rewritten_to_match(self, annex) -> None:
-        assert 'href="#pdf-annex-1-special"' in annex.body_html
-        assert 'href="#special"' not in annex.body_html
+        assert 'href="#pdf-annex-1-special"' in _html(annex)
+        assert 'href="#special"' not in _html(annex)
 
 
 class TestScopedCss:
@@ -147,11 +150,11 @@ class TestScopedCss:
         assert ".pf{" in annex.head_css
 
     def test_style_elements_do_not_appear_in_the_body_fragment(self, annex) -> None:
-        assert "<style" not in annex.body_html
+        assert "<style" not in _html(annex)
 
     def test_two_annexes_get_distinct_resets(self) -> None:
-        first = buildMergedAnnex(NORMALISED_ANNEX, index=1, label="a.pdf")
-        second = buildMergedAnnex(NORMALISED_ANNEX, index=2, label="b.pdf")
+        first = buildMergedAnnex(_normalisedAnnex(), index=1, label="a.pdf")
+        second = buildMergedAnnex(_normalisedAnnex(), index=2, label="b.pdf")
         assert "#pdf-annex-1 { all: revert; }" in first.head_css
         assert "#pdf-annex-2 { all: revert; }" in second.head_css
         assert "pdf-annex-2" not in first.head_css
@@ -159,26 +162,17 @@ class TestScopedCss:
 
 class TestNoStylesAtAll:
     def test_handles_an_annex_with_no_style_element(self) -> None:
-        normalised = normaliseToXhtml(
-            b"<html><body><p>No CSS here</p></body></html>",
-            injectIxHeader=False,
-        )
+        normalised = _normalisedAnnex(b"<html><body><p>No CSS here</p></body></html>")
         annex = buildMergedAnnex(normalised, index=3, label="plain.pdf")
-        assert "No CSS here" in annex.body_html
+        assert "No CSS here" in _html(annex)
         assert "@scope (#pdf-annex-3)" in annex.head_css
-
-
-class TestMalformedInput:
-    def test_raises_pdf_conversion_error_on_unparseable_xml(self) -> None:
-        with pytest.raises(PdfConversionError):
-            buildMergedAnnex(b"not xml at all <<<", index=1, label="bad.pdf")
 
 
 def _annex(anchor_id: str = "pdf-annex-1", label: str = "annex1.pdf") -> MergedAnnex:
     return MergedAnnex(
         anchor_id=anchor_id,
         label=label,
-        body_html=(
+        body=etree.fromstring(
             f'<div xmlns="{XHTML}" id="{anchor_id}" class="{ANNEX_CLASS}">'
             "Annex body</div>"
         ),
@@ -258,6 +252,13 @@ class TestMergeAnnexesIntoReport:
         result = mergeAnnexesIntoReport(_report(), [_annex()])
         content = result.fileContent.decode("utf-8")
         assert 'href="#section-class0"' in content
+
+    def test_an_annex_can_be_merged_into_more_than_one_report(self) -> None:
+        annex = _annex()
+        for _ in range(2):
+            content = mergeAnnexesIntoReport(_report(), [annex]).fileContent
+            assert b"Annex body" in content
+        assert annex.body.getparent() is None  # still the annex's, not a report's
 
     def test_handles_several_annexes_independently(self) -> None:
         first, second = _annex("pdf-annex-1", "a.pdf"), _annex("pdf-annex-2", "b.pdf")
