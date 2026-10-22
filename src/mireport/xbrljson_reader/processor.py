@@ -18,12 +18,14 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
 
+from babel import Locale
 from lxml import etree
 from markupsafe import Markup
 
 from mireport.conversionresults import ConversionResultsBuilder, MessageType, Severity
 from mireport.entrypoints import describeEntryPointSet, entryPointSetOf
 from mireport.exceptions import InlineReportException, TaxonomyException, UnitException
+from mireport.localise import get_locale_from_str
 from mireport.report import InlineReport
 from mireport.report.fact import Fact
 from mireport.report.factbuilder import FactBuilder, enumerationText
@@ -173,11 +175,36 @@ class XbrlJsonProcessor:
                 f"Bake it with scripts/update-taxonomy.py and load it with loadTaxonomyJSON(). "
                 f"Available: {[describeEntryPointSet(eps) for eps in listTaxonomies()]}"
             )
-        report = InlineReport(getTaxonomy(entryPointSet))
+        taxonomy = getTaxonomy(entryPointSet)
+        report = InlineReport(taxonomy, outputLocale=self._outputLocale(taxonomy))
         report.requireAllFactsRendered = self._strict
         for document in sorted(entryPointSet):
             report.addSchemaRef(document)
         return report
+
+    def _outputLocale(self, taxonomy: Taxonomy) -> Locale | None:
+        """The language most of the facts declare, in the locale most of those facts use (so
+        facts in de-AT give a de-AT report). On a tie between languages the taxonomy's default
+        if it is among them, else the first alphabetically. None (the taxonomy's default) when
+        no fact declares a language that parses."""
+        locales = Counter(
+            locale
+            for fact in self._document.facts
+            if fact.language and (locale := get_locale_from_str(fact.language))
+        )
+        if not locales:
+            return None
+        languages: Counter[str] = Counter()
+        for locale, n in locales.items():
+            languages[locale.language] += n
+        most = max(languages.values())
+        tied = sorted(language for language, n in languages.items() if n == most)
+        default = get_locale_from_str(taxonomy.defaultLanguage or "")
+        language = default.language if default and default.language in tied else tied[0]
+        return max(
+            (locale for locale in locales if locale.language == language),
+            key=locales.__getitem__,
+        )
 
     def _reportIgnoredProperties(self) -> None:
         """Say what in the document is not acted on, rather than ignore it silently."""
@@ -326,10 +353,8 @@ class XbrlJsonProcessor:
         """A text fact may say its language; the report is in one language."""
         if fact.language is None:
             return
-        if (
-            fact.language.split("-")[0].lower()
-            != self.report.language.split("-")[0].lower()
-        ):
+        locale = get_locale_from_str(fact.language)
+        if locale is None or locale.language != self.report.outputLocale.language:
             raise FactProblem(
                 INVALID_LANGUAGE,
                 f"The fact is in {fact.language}; the report is in {self.report.language}.",

@@ -256,6 +256,7 @@ def _buildReportPackage(
         additionalInfo=f"({report.factCount} facts to include)",
     )
     reportFile = report.getInlineReport()
+    report.reportUntranslatedStrings(pc)
     if pdfs.mergedAnnexes:
         reportFile = mergeAnnexesIntoReport(reportFile, pdfs.mergedAnnexes)
     reportPackage = buildReportPackage(

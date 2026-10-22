@@ -300,22 +300,31 @@ def test_a_nil_typed_dimension_value_is_skipped_not_read_as_none(
     assert "nil value" in message
 
 
+def _declareLanguages(
+    doc: dict[str, Any], taxonomy: Taxonomy, *languages: str
+) -> list[str]:
+    """Give the first plain string facts these languages, in order; returns their ids."""
+    plain = [
+        (factId, fact)
+        for factId, fact in doc["facts"].items()
+        if not (
+            (c := _concept(taxonomy, fact)).isNumeric
+            or c.isEnumerationSingle
+            or c.isEnumerationSet
+            or c.isBoolean
+            or c.isTextblock
+        )
+    ]
+    for (_, fact), language in zip(plain, languages, strict=False):
+        fact["dimensions"]["language"] = language
+    return [factId for factId, _ in plain[: len(languages)]]
+
+
 def test_a_fact_in_another_language_is_skipped(
     doc: dict[str, Any], taxonomy: Taxonomy
 ) -> None:
-    factId, fact = _first(
-        doc,
-        taxonomy,
-        lambda c, f: (
-            not c.isNumeric
-            and not c.isEnumerationSingle
-            and not c.isEnumerationSet
-            and not c.isBoolean
-            and not c.isTextblock
-        ),
-    )
-    fact["dimensions"]["language"] = "fr"
-    _, message = _skipped(doc, factId)
+    *_, french = _declareLanguages(doc, taxonomy, "en", "en", "fr")
+    _, message = _skipped(doc, french)
     assert "in fr" in message
 
 
@@ -336,6 +345,47 @@ def test_a_fact_in_the_reports_language_is_read(
     fact["dimensions"]["language"] = "en-GB"
     processor, _ = _read(doc, strict=True)
     assert processor.factsSkipped == 0
+
+
+def test_the_report_is_in_the_language_most_facts_are_in(
+    doc: dict[str, Any], taxonomy: Taxonomy
+) -> None:
+    *_, english = _declareLanguages(doc, taxonomy, "de", "de-AT", "en")
+    processor, message = _skipped(doc, english)
+    assert processor.report.language == "de"
+    assert "in en" in message
+
+
+def test_the_report_keeps_the_territory_its_facts_use(
+    doc: dict[str, Any], taxonomy: Taxonomy
+) -> None:
+    *_, english = _declareLanguages(doc, taxonomy, "de-AT", "DE-at", "en")
+    processor, _ = _skipped(doc, english)
+    assert processor.report.language == "de-AT"
+
+
+def test_a_language_that_does_not_parse_has_no_say(
+    doc: dict[str, Any], taxonomy: Taxonomy
+) -> None:
+    unknown, _ = _declareLanguages(doc, taxonomy, "zz", "de")
+    processor, message = _skipped(doc, unknown)
+    assert processor.report.language == "de"
+    assert "in zz" in message
+
+
+def test_a_tie_goes_to_the_taxonomy_default_language(
+    doc: dict[str, Any], taxonomy: Taxonomy
+) -> None:
+    german, _ = _declareLanguages(doc, taxonomy, "de", "en")
+    processor, _ = _skipped(doc, german)
+    assert processor.report.language == taxonomy.defaultLanguage == "en"
+
+
+def test_with_no_languages_the_report_is_in_the_taxonomy_default(
+    doc: dict[str, Any],
+) -> None:
+    processor, _ = _read(doc, strict=True)
+    assert processor.report.language == "en"
 
 
 def test_decimals_on_a_non_numeric_fact_are_refused(
