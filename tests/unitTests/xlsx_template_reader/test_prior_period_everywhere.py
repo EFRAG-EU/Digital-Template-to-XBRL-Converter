@@ -105,7 +105,8 @@ def test_tables_say_each_period_once_over_its_columns(
     html = rendered[0]
     # a header cell spanning more than one column, holding a period: the period axis
     spanning = re.findall(
-        r'<th colspan="([2-9]\d*)"[^>]*>\s*(\d{4}-\d{2}-\d{2}) &#8211;', html
+        r'<th colspan="([2-9]\d*)"[^>]*>\s*<span class="period" title="(\d{4}-\d{2}-\d{2}) &#8211;',
+        html,
     )
     assert spanning, "no table has a period spanning its columns"
     years = {start[:4] for _, start in spanning}

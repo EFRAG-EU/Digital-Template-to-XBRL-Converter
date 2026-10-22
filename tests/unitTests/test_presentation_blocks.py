@@ -144,6 +144,13 @@ def test_a_cube_block_names_the_hypercube_it_is_the_table_of(
         assert {r.concept for r in block.rows} <= set(block.hypercube.primaryItems)
 
 
+@pytest.mark.parametrize("group", GROUPS)
+def test_a_row_of_a_group_knows_its_group(group: PresentationGroup) -> None:
+    for block in group.blocks:
+        for rel in block.rows:
+            assert group in rel.concept.presentationGroups
+
+
 def test_declarations_for_a_role_are_the_modelled_positive_cubes_of_that_role() -> None:
     if not listTaxonomies():
         loadBuiltInTaxonomyJSON()

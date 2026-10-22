@@ -124,6 +124,9 @@
     <div class="flex justify-between items-center gap-4">
         <div><span class="font-bold text-gray-600">Timestamp:</span> {{ conversion_date | e }}</div>
         <div><span class="font-bold text-gray-600">Original filename:</span> {{ upload_filename | e}}</div>
+        {% if prior_filename %}
+        <div><span class="font-bold text-gray-600">Last year's report:</span> {{ prior_filename | e }}</div>
+        {% endif %}
     </div>
     <!-- Messages Table -->
     <div class="overflow-x-auto">

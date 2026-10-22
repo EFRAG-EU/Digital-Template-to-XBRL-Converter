@@ -277,6 +277,8 @@ class TestPeriodAxis:
         top = table.header_rows[0]
         assert _values(top) == [None, CURRENT, PRIOR]
         assert [c.colspan for c in top[1:]] == [2, 2]
+        # aligned alike, whether a period spans one column or several
+        assert all(c.numeric for c in top[1:])
 
     def test_the_labels_repeat_under_each_period(self) -> None:
         table = assemble_table(self._grid())

@@ -22,8 +22,9 @@ from mireport.cli import (
 from mireport.cli import (
     console_print as print,
 )
+from mireport.comparatives import PriorReport
 from mireport.conversionresults import ConversionResults, ConversionResultsBuilder
-from mireport.filesupport import ImageFileLikeAndFileName
+from mireport.filesupport import FilelikeAndFileName, ImageFileLikeAndFileName
 from mireport.report.theme import ColourPalette, DisplayMode, ReportTheme
 from mireport.taxonomy import loadTaxonomyJSON
 from mireport.xbrljson_reader import XbrlJsonProcessor
@@ -57,6 +58,12 @@ def createArgParser() -> argparse.ArgumentParser:
         action=argparse.BooleanOptionalAction,
         default=False,
         help="Fail if any fact in the report cannot be added.",
+    )
+    parser.add_argument(
+        "--prior",
+        type=Path,
+        default=None,
+        help="Last year's report (xBRL-JSON, a Digital Template workbook, Inline XBRL or a report package), whose figures become the comparatives.",
     )
     parser.add_argument("--force", action="store_true", help="Overwrite quietly.")
     parser.add_argument(
@@ -133,6 +140,9 @@ def parseArgs(parser: argparse.ArgumentParser) -> argparse.Namespace:
 
 def doConversion(args: argparse.Namespace) -> ConversionResults:
     resultsBuilder = ConversionResultsBuilder(consoleOutput=True)
+    arp = ArelleReportProcessor(
+        taxonomyPackages=args.taxonomy_packages, workOffline=args.offline
+    )
     with resultsBuilder.processingContext("mireport xBRL-JSON to Inline Report") as pc:
         pc.mark("Loading taxonomy metadata")
         mireport.loadBuiltInTaxonomyJSON()
@@ -150,6 +160,14 @@ def doConversion(args: argparse.Namespace) -> ConversionResults:
         pc.addDevInfoMessage(
             f"{processor.factsAdded} facts added, {processor.factsSkipped} skipped"
         )
+        if args.prior:
+            pc.mark(
+                "Reading last year's report", additionalInfo=f"Using file: {args.prior}"
+            )
+            prior = FilelikeAndFileName(args.prior.read_bytes(), args.prior.name)
+            PriorReport.fromFile(prior, resultsBuilder, arelle=arp).mergeInto(
+                report, resultsBuilder
+            )
 
         colour = ColourPalette.parse(args.style_custom or args.style_preset)
         report.theme.setDisplayMode(args.style_mode).setColour(colour)
@@ -184,9 +202,6 @@ def doConversion(args: argparse.Namespace) -> ConversionResults:
             pc.mark(
                 "Validating using Arelle",
                 additionalInfo=f"({ARELLE_VERSION_INFORMATION})",
-            )
-            arp = ArelleReportProcessor(
-                taxonomyPackages=args.taxonomy_packages, workOffline=args.offline
             )
             if args.viewer:
                 arelleResults = arp.generateInlineViewer(reportPackage)

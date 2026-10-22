@@ -21,6 +21,7 @@ from mireport.cli import (
 from mireport.cli import (
     console_print as print,
 )
+from mireport.comparatives import PriorReport
 from mireport.conversionresults import (
     ConversionResults,
     ConversionResultsBuilder,
@@ -188,6 +189,12 @@ def createArgParser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--prior",
+        type=Path,
+        default=None,
+        help="Last year's report (xBRL-JSON, a Digital Template workbook, Inline XBRL or a report package), whose figures become the comparatives.",
+    )
+    parser.add_argument(
         "--debug",
         action=argparse.BooleanOptionalAction,
         help="Turn on debugging output.",
@@ -234,6 +241,10 @@ def prepare_output_path(path: Path, force: bool) -> tuple[Path, bool]:
 def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, list[str]]:
     resultsBuilder = ConversionResultsBuilder(consoleOutput=True)
     unused: list[str] = []
+    arp = ArelleReportProcessor(
+        taxonomyPackages=args.taxonomy_packages,
+        workOffline=args.offline,
+    )
     with resultsBuilder.processingContext(
         "mireport Excel to validated Inline Report"
     ) as pc:
@@ -255,6 +266,14 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, list[str]
             outputLocale=args.output_locale,
         )
         report = xl_processor.createReport()
+        if args.prior:
+            pc.mark(
+                "Reading last year's report", additionalInfo=f"Using file: {args.prior}"
+            )
+            prior = FilelikeAndFileName(args.prior.read_bytes(), args.prior.name)
+            PriorReport.fromFile(prior, resultsBuilder, arelle=arp).mergeInto(
+                report, resultsBuilder
+            )
 
         colour = ColourPalette.parse(args.style_custom or args.style_preset)
         report.theme.setDisplayMode(args.style_mode).setColour(colour)
@@ -395,10 +414,6 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, list[str]
                 additionalInfo=f"({ARELLE_VERSION_INFORMATION})",
             )
             pc.addDevInfoMessage(f"Using Inline Report package: {reportPackage}")
-            arp = ArelleReportProcessor(
-                taxonomyPackages=args.taxonomy_packages,
-                workOffline=args.offline,
-            )
 
             if not args.viewer:
                 arelleResults = arp.validateReportPackage(reportPackage)

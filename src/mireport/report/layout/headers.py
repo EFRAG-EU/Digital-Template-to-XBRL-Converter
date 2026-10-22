@@ -145,7 +145,10 @@ def build_header_rows(
     rows: list[list[TableHeadingCell]] = []
     if groups:
         rows.append(
-            [TableHeadingCell(p, colspan=span, rowspan=1) for p, span in groups]
+            [
+                TableHeadingCell(p, colspan=span, rowspan=1, numeric=True)
+                for p, span in groups
+            ]
         )
     elif period:
         rows.append([TableHeadingCell(period, colspan=width, rowspan=1)])

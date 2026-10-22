@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import logging
 from datetime import UTC, datetime
+from pathlib import PurePath
 from secrets import token_hex
 from typing import TYPE_CHECKING, Any
 
@@ -29,6 +30,7 @@ from flask import (
 )
 
 import mireport
+from mireport.comparatives import PRIOR_REPORT_EXTENSIONS
 from mireport.conversionresults import ConversionResultsBuilder
 from mireport.filesupport import FilelikeAndFileName
 from mireport.report.theme import ColourPalette, ReportTheme
@@ -170,11 +172,27 @@ def upload() -> Response:
             },
             400,
         )
+    # Last year's report is optional; an untouched file input submits an empty name.
+    prior = request.files.get("prior")
+    priorName = prior.filename if prior is not None else None
+    if priorName and PurePath(priorName).suffix.lower() not in PRIOR_REPORT_EXTENSIONS:
+        return make_response(
+            {
+                "error": "Invalid file format for last year's report (only "
+                f"{', '.join(PRIOR_REPORT_EXTENSIONS)} files supported)",
+                "file": priorName,
+            },
+            400,
+        )
     conv = ConversionStore.fromFlask().create(ConversionResultsBuilder().conversionId)
     conv.date = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")
     conv.excel = FilelikeAndFileName(
         fileContent=blob.stream.read(), filename=blob.filename
     )
+    if prior is not None and priorName:
+        conv.priorReport = FilelikeAndFileName(
+            fileContent=prior.stream.read(), filename=priorName
+        )
 
     if first_str(request.form, "localeOption") == "manual":
         conv.locale_str = first_str(request.form, "locale")
@@ -230,8 +248,6 @@ def upload() -> Response:
 @convert_bp.route("/conversions/<string:id>", methods=["GET"])
 def convert(id: str) -> Response:
     try:
-        skip_migration = truthy(request.args.get("skip_migration", ""))
-
         if (conv := ConversionStore.fromFlask().get(id)) is None:
             return make_response(
                 render_template(
@@ -243,13 +259,18 @@ def convert(id: str) -> Response:
             )
 
         if not conv.has_results:
-            if (
-                not skip_migration
-                and current_app.config["ENABLE_MIGRATION"]
-                and (migrationResponse := checkMigration(conv)) is not None
+            # This year's workbook, then last year's: each may be kept as it is.
+            for workbook, skip in (
+                (conv, "skip_migration"),
+                (conv.prior, "skip_prior_migration"),
             ):
-                # Migration deemed to be required so no conversion done at this stage.
-                return migrationResponse
+                if (
+                    not truthy(request.args.get(skip, ""))
+                    and current_app.config["ENABLE_MIGRATION"]
+                    and (migrationResponse := checkMigration(workbook)) is not None
+                ):
+                    # Migration deemed to be required so no conversion done at this stage.
+                    return migrationResponse
 
             results = doConversion(
                 conv, getArelle(), current_app.config["PDF_SUPPLEMENTARY_MODE"]
@@ -275,6 +296,7 @@ def convert(id: str) -> Response:
                 dev=devInfo,
                 conversion_date=conv.date,
                 upload_filename=getUploadFilename(id),
+                prior_filename=prior.filename if (prior := conv.priorReport) else "",
             )
         )
     except Exception as e:

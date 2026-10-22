@@ -61,6 +61,13 @@ def getDisclosureConfig(entryPointSet: EntryPointSet) -> dict | None:
     return _CONFIG_BY_ENTRY_POINT.get(entryPointSet)
 
 
+def areVersionsOfOneTaxonomy(a: EntryPointSet, b: EntryPointSet) -> bool:
+    """Whether two entry-point sets are versions of one taxonomy: one disclosure config names
+    them both (its supported entry point and its old ones)."""
+    config = _CONFIG_BY_ENTRY_POINT.get(a)
+    return config is not None and config is _CONFIG_BY_ENTRY_POINT.get(b)
+
+
 def getTemplateVersionSetting(entryPointSet: EntryPointSet) -> str | None:
     """How the latest Digital Template version for this entry-point set is
     determined: a version number, ``"auto"`` (ask the migration tool) or

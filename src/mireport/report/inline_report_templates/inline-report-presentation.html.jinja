@@ -195,7 +195,7 @@
                         {% elif column.value is string %}
                            {{ column.value | default("") }}
                         {% elif column.isPeriod %}
-                            {{ macros.render_period(column.value, short=not rowloop.first) }}
+                            {{ macros.render_period(column.value) }}
                         {% elif column.isConcept %}
                             {{ macros.concept_label(column.value) | e }}
                         {% elif column.isRelationship %}

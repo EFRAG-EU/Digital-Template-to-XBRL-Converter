@@ -28,6 +28,18 @@
       required />
   </div>
 
+  <!-- Last year's report -->
+  <div>
+    <label for="prior" class="block text-sm font-medium text-gray-700 mb-1">
+      Last year's report (for comparatives)
+      <span class="text-xs text-gray-500 font-normal">
+        — optional. Its figures are shown beside this year's. A Digital Template (.xlsx), xBRL-JSON (.json) Inline XBRL (.xhtml, .html) or a report package (.xbri, .xbr, .zip).
+      </span>
+    </label>
+    <input type="file" id="prior" name="prior" accept=".xlsx,.json,.xhtml,.html,.xbri,.xbr,.zip"
+      class="block w-full text-sm text-gray-700 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+  </div>
+
 
   {% if ENABLE_CAPTCHA %}
   <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}" />

@@ -11,6 +11,7 @@ from __future__ import annotations
 import re
 from collections.abc import Callable
 from datetime import date
+from types import SimpleNamespace
 from typing import Any
 
 import pytest
@@ -25,7 +26,7 @@ from tests.unitTests.synthetic_taxonomy import (
 from mireport.exceptions import InlineReportException
 from mireport.report import InlineReport
 from mireport.report.factbuilder import FactBuilder
-from mireport.report.model import FactPeriod, PeriodPart
+from mireport.report.model import FactPeriod, PeriodPart, ReportPeriod
 from mireport.report.periods import DurationPeriodHolder, InstantPeriodHolder
 from mireport.taxonomy import Taxonomy, loadTaxonomyJSON
 from mireport.xml import getBootstrapQNameMaker
@@ -217,9 +218,12 @@ class TestInTheReport:
         self._facts(report)
         html = _html(report)
         # the closing balance leads its line, the opening balance is its comparative
-        assert 'fact-comparative-period">At 2025-01-01<' in html
+        assert (
+            'fact-comparative-period"><span class="period" title="2025-01-01">'
+            "Start of 2025</span><"
+        ) in html
         # the closing balance of the report's own period is what a fact with no period means
-        assert "At 2025-12-31" not in html
+        assert "End of 2025" not in html
 
 
 class TestRenderMacros:
@@ -233,21 +237,39 @@ class TestRenderMacros:
         return env.get_template("_macros.html.jinja").module
 
     @pytest.mark.parametrize(
-        ("part", "short", "shown"),
+        ("part", "shown", "title"),
         [
-            (PeriodPart.Whole, False, "2025-01-01 &#8211; 2025-12-31"),
-            (PeriodPart.Whole, True, "2025"),
-            (PeriodPart.Start, False, "2025-01-01"),
-            (PeriodPart.Start, True, "2025-01-01"),
-            (PeriodPart.End, False, "2025-12-31"),
-            (PeriodPart.End, True, "2025-12-31"),
+            (PeriodPart.Whole, "2025", "2025-01-01 &#8211; 2025-12-31"),
+            (PeriodPart.Start, "Start of 2025", "2025-01-01"),
+            (PeriodPart.End, "End of 2025", "2025-12-31"),
         ],
     )
-    def test_each_part_of_a_period_is_shown_as_the_day_it_is(
-        self, part: PeriodPart, short: bool, shown: str
+    def test_each_part_of_a_year_is_named_by_it_with_its_dates_in_its_title(
+        self, part: PeriodPart, shown: str, title: str
     ) -> None:
         factPeriod = FactPeriod(_report().getReportPeriod("cur"), part)
-        assert str(self._macros().render_period(factPeriod, short)).strip() == shown
+        assert str(self._macros().render_period(factPeriod)).strip() == (
+            f'<span class="period" title="{title}">{shown}</span>'
+        )
+
+    def test_a_period_that_is_not_a_year_says_its_days_each_kept_on_one_line(
+        self,
+    ) -> None:
+        days = DurationPeriodHolder.fromDays(date(2024, 1, 1), date(2025, 6, 30))
+        assert str(self._macros().render_duration_period(days)).strip() == (
+            '<span class="period" title="2024-01-01 &#8211; 2025-06-30">'
+            '<span class="day">2024-01-01</span> &#8211; '
+            '<span class="day">2025-06-30</span></span>'
+        )
+
+    def test_an_instant_of_a_period_that_is_not_a_year_is_at_its_day(self) -> None:
+        halfYear = ReportPeriod(
+            "half", DurationPeriodHolder.fromDays(date(2025, 1, 1), date(2025, 6, 30))
+        )
+        closing = SimpleNamespace(period=FactPeriod(halfYear, PeriodPart.End))
+        assert str(self._macros().render_fact_period(closing)).strip() == (
+            'At <span class="period" title="2025-06-30">2025-06-30</span>'
+        )
 
     def test_a_fact_that_is_an_instant_says_so(self) -> None:
         report = _report()
@@ -258,9 +280,11 @@ class TestRenderMacros:
             .buildFact()
         )
         whole = _builder(report, EMISSIONS, 1).buildFact()
-        assert str(macros.render_fact_period(opening)).strip() == "At 2025-01-01"
+        assert str(macros.render_fact_period(opening)).strip() == (
+            '<span class="period" title="2025-01-01">Start of 2025</span>'
+        )
         assert str(macros.render_fact_period(whole)).strip() == (
-            "2025-01-01 &#8211; 2025-12-31"
+            '<span class="period" title="2025-01-01 &#8211; 2025-12-31">2025</span>'
         )
 
 
