@@ -14,6 +14,7 @@ import json
 from collections import Counter, defaultdict
 from pathlib import Path
 from typing import ClassVar, NamedTuple
+from unittest.mock import patch
 
 import pytest
 from openpyxl import Workbook
@@ -77,9 +78,13 @@ def _results() -> ConversionResultsBuilder:
 def _snapshotDocument(sample: Path) -> XbrlJsonDocument:
     """The sample's facts as xBRL-JSON, sorted so a diff reads as facts, with the scale of each
     fact and the conversion's message counts as extension properties (OIM has no place for
-    either)."""
+    either). The template version is judged against the converter's own, whatever migration
+    tool is installed, so the counts are the same everywhere."""
     results = _results()
-    report = XlsxProcessor.from_file(sample, results, VSME_DEFAULTS).createReport()
+    with patch(
+        "mireport.template_versions.migrationTargetTemplateVersion", lambda: None
+    ):
+        report = XlsxProcessor.from_file(sample, results, VSME_DEFAULTS).createReport()
     severities = Counter(m.severity.name for m in results.messages)
     return toXbrlJson(
         report,
