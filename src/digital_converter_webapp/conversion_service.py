@@ -179,7 +179,11 @@ def _completePartialFacts(
         if (docx := external.get(str(concept.qname))) is None:
             continue
         try:
-            conversion = convertDocxToHtml(docx, timeoutSeconds=DOCX_TIMEOUT_SECONDS)
+            conversion = convertDocxToHtml(
+                docx,
+                idPrefix=f"{concept.qname.localName}-",
+                timeoutSeconds=DOCX_TIMEOUT_SECONDS,
+            )
         except DocxConversionError as e:
             builder.addMessage(
                 f"Conversion failed: {e}",

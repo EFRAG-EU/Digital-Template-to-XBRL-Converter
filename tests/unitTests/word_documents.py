@@ -60,11 +60,13 @@ def wordDocument(
     image: bool = False,
     imageAltText: str = "",
     strikethrough: bool = False,
+    bookmark: str | None = None,
 ) -> bytes:
     """A .docx of one paragraph. A ``paragraphStyle`` is not defined in the document, so mammoth
     warns about it; a ``breakType`` it doesn't support, mammoth warns about and drops. An ``image``
     follows the text, with ``imageAltText`` as its Word alt text. ``strikethrough`` strikes the
-    text through, which mammoth writes as ``<s>``."""
+    text through, which mammoth writes as ``<s>``. A ``bookmark`` of that name starts the
+    paragraph, which mammoth writes as an ``<a>`` with the name as its id."""
     style = (
         f'<w:pPr><w:pStyle w:val="{paragraphStyle}"/></w:pPr>' if paragraphStyle else ""
     )
@@ -72,6 +74,9 @@ def wordDocument(
     lineBreak = f'<w:br w:type="{breakType}"/>' if breakType else ""
     drawing = _DRAWING.format(altText=imageAltText) if image else ""
     run = f"<w:r>{runStyle}<w:t>{text}</w:t>{lineBreak}{drawing}</w:r>"
+    if bookmark:
+        run = f'<w:bookmarkStart w:id="0" w:name="{bookmark}"/>{run}<w:bookmarkEnd w:id="0"/>'
+
     document = f"<w:document {_NAMESPACES}><w:body><w:p>{style}{run}</w:p></w:body></w:document>"
     buffer = BytesIO()
     with ZipFile(buffer, "w") as docx:

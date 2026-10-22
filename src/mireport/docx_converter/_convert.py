@@ -24,9 +24,15 @@ _WORKER = Path(__file__).with_name("_worker.py")
 
 
 def convertDocxToHtml(
-    docx: FilelikeAndFileName, *, timeoutSeconds: float | None = None
+    docx: FilelikeAndFileName, *, idPrefix: str, timeoutSeconds: float | None = None
 ) -> DocxConversion:
     """Convert the .docx @docx to HTML.
+
+    Every id mammoth writes, for bookmarks, footnotes and comments, starts
+    @idPrefix. mammoth's own are the same in every document (``footnote-1``…),
+    and ids must be unique across the report, so each document needs a prefix
+    of its own. It must be a valid start of an XML name, such as a concept's
+    local name followed by ``-``.
 
     With @timeoutSeconds, mammoth runs in a child process that is killed after
     that long, because a crafted document can keep it busy for a very long time.
@@ -40,9 +46,9 @@ def convertDocxToHtml(
     :raises DocxConversionError: if the document could not be converted.
     """
     if timeoutSeconds is None:
-        html, messages = _convertInProcess(docx)
+        html, messages = _convertInProcess(docx, idPrefix)
     else:
-        html, messages = _convertInChildProcess(docx, timeoutSeconds)
+        html, messages = _convertInChildProcess(docx, idPrefix, timeoutSeconds)
     try:
         xhtml = normaliseFragment(html)
     except XhtmlError as e:
@@ -50,9 +56,11 @@ def convertDocxToHtml(
     return DocxConversion(filename=docx.filename, html=Markup(xhtml), messages=messages)
 
 
-def _convertInProcess(docx: FilelikeAndFileName) -> tuple[str, list[str]]:
+def _convertInProcess(
+    docx: FilelikeAndFileName, idPrefix: str
+) -> tuple[str, list[str]]:
     try:
-        return convert(docx.fileLike())
+        return convert(docx.fileLike(), idPrefix)
     except Exception as e:
         raise DocxConversionError(
             f"Word document {docx.filename} could not be read."
@@ -60,11 +68,11 @@ def _convertInProcess(docx: FilelikeAndFileName) -> tuple[str, list[str]]:
 
 
 def _convertInChildProcess(
-    docx: FilelikeAndFileName, timeoutSeconds: float
+    docx: FilelikeAndFileName, idPrefix: str, timeoutSeconds: float
 ) -> tuple[str, list[str]]:
     try:
         completed = subprocess.run(
-            [sys.executable, "-I", str(_WORKER)],
+            [sys.executable, "-I", str(_WORKER), idPrefix],
             input=docx.fileContent,
             capture_output=True,
             timeout=timeoutSeconds,

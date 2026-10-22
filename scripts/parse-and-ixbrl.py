@@ -42,12 +42,13 @@ from mireport.xlsx_template_reader.processor import XlsxProcessor
 
 
 def _convert_docx_to_markup(
-    docx_path: Path, resultsBuilder: ConversionResultsBuilder
+    docx_path: Path, resultsBuilder: ConversionResultsBuilder, idPrefix: str
 ) -> Markup:
     """Convert a .docx file to HTML and return it as Markup, reporting anything
-    that could not be converted."""
+    that could not be converted. Its ids start @idPrefix, unique to it."""
     conversion = convertDocxToHtml(
-        FilelikeAndFileName(docx_path.read_bytes(), docx_path.name)
+        FilelikeAndFileName(docx_path.read_bytes(), docx_path.name),
+        idPrefix=idPrefix,
     )
     conversion.addTo(resultsBuilder)
     return conversion.html
@@ -328,7 +329,11 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, list[str]
                         additionalInfo=f"Creating {section_id} from {section['path']}",
                     )
                     docx_path = _resolve_extra_path(extra_file, section["path"])
-                    sectionSetter(_convert_docx_to_markup(docx_path, resultsBuilder))
+                    sectionSetter(
+                        _convert_docx_to_markup(
+                            docx_path, resultsBuilder, idPrefix=f"{section_id}-"
+                        )
+                    )
                 elif "content" in section:
                     sectionSetter(Markup(section["content"]))
                 else:
@@ -342,8 +347,10 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, list[str]
                     additionalInfo=f"Replacing {rtv['concept']} from {rtv['path']}",
                 )
                 docx_path = _resolve_extra_path(extra_file, rtv["path"])
-                markup = _convert_docx_to_markup(docx_path, resultsBuilder)
                 concept = report.taxonomy.getConcept(rtv["concept"])
+                markup = _convert_docx_to_markup(
+                    docx_path, resultsBuilder, idPrefix=f"{concept.qname.localName}-"
+                )
                 # A text block the template marks as external has no fact to
                 # replace yet, only a partial one waiting for this value.
                 if concept in report.partialFactsByConcept:
