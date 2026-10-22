@@ -14,7 +14,7 @@ dependencies = [
     "flask-session",
     "flask",
     "ixbrl-viewer>=1.4.90",
-    "mammoth",
+    "mammoth>=1.12.2",
     "markupsafe",
     "msgpack",
     "openpyxl",
