@@ -120,6 +120,11 @@ class WorkbookReader:
     def unused_defined_names(self) -> frozenset[DefinedName]:
         return frozenset(self._unused)
 
+    @property
+    def damaged_defined_names(self) -> frozenset[DefinedName]:
+        """Defined names already warned about as unreadable or broken."""
+        return frozenset(self._damaged)
+
     def markUsed(self, dn: DefinedName) -> None:
         """Record that this defined name has been consumed by the conversion."""
         self._unused.discard(dn)

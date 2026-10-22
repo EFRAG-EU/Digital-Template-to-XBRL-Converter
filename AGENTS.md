@@ -70,6 +70,9 @@ CI runs ruff only, but mypy config is strict-ish for `src/` (`disallow_untyped_d
 # dump named ranges from a workbook (debugging what the reader sees)
 .venv-py314/Scripts/python scripts/parse-and-dump.py example.xlsx
 
+# audit a template's named ranges against its taxonomy (--reference: diff against another template)
+.venv-py314/Scripts/python scripts/check-template.py template.xlsx
+
 # validate an existing report / build a viewer for it
 .venv-py314/Scripts/python scripts/check-report.py report.html
 
