@@ -14,15 +14,15 @@ from lxml import etree
 
 from mireport.html_to_xhtml._exceptions import XhtmlError
 from mireport.html_to_xhtml._hygiene import (
-    _addRequiredAttributes,
-    _rejectUnknownElements,
-    _stripInvalidAttributes,
-    _stripScripting,
-    _stripScripts,
-    _translateExactEquivalents,
+    addRequiredAttributes,
+    rejectUnknownElements,
+    stripInvalidAttributes,
+    stripScripting,
+    stripScripts,
+    translateExactEquivalents,
 )
-from mireport.html_to_xhtml._parse import _parseFragment
-from mireport.html_to_xhtml._tree import _elements, _localName
+from mireport.html_to_xhtml._parse import parseFragment
+from mireport.html_to_xhtml._tree import elementsIn, localNameOf
 
 # Valid XHTML Strict, but only as a document's own structure or in its head,
 # so never inside a fragment that joins someone else's body.
@@ -34,8 +34,8 @@ def _rejectDocumentElements(root: etree._Element) -> None:
     rather than a fragment."""
     found = {
         localName
-        for element in _elements(root)
-        if (localName := _localName(element)) in _DOCUMENT_ELEMENTS
+        for element in elementsIn(root)
+        if (localName := localNameOf(element)) in _DOCUMENT_ELEMENTS
     }
     if found:
         raise XhtmlError(
@@ -47,8 +47,8 @@ def _rejectDocumentElements(root: etree._Element) -> None:
 def _serialiseContent(wrapper: etree._Element) -> str:
     """@wrapper's content, without @wrapper, as XHTML that relies on the
     default namespace of the document it is placed in."""
-    for element in _elements(wrapper):
-        element.tag = _localName(element)
+    for element in elementsIn(wrapper):
+        element.tag = localNameOf(element)
     etree.cleanup_namespaces(wrapper)
     return escape(wrapper.text or "") + "".join(
         etree.tostring(child, encoding="unicode") for child in wrapper
@@ -64,14 +64,14 @@ def normaliseFragment(fragment: str) -> str:
     """
     if not fragment.strip():
         return ""
-    wrapper = _parseFragment(fragment)
+    wrapper = parseFragment(fragment)
     try:
-        _stripInvalidAttributes(wrapper)
-        _stripScripts(wrapper)
-        _stripScripting(wrapper)
-        _translateExactEquivalents(wrapper)
-        _addRequiredAttributes(wrapper)
-        _rejectUnknownElements(wrapper)
+        stripInvalidAttributes(wrapper)
+        stripScripts(wrapper)
+        stripScripting(wrapper)
+        translateExactEquivalents(wrapper)
+        addRequiredAttributes(wrapper)
+        rejectUnknownElements(wrapper)
         _rejectDocumentElements(wrapper)
         return _serialiseContent(wrapper)
     except (ValueError, etree.LxmlError) as e:

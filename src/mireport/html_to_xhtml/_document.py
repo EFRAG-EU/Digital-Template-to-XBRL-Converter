@@ -10,20 +10,20 @@ from lxml import etree
 
 from mireport.html_to_xhtml._exceptions import XhtmlError
 from mireport.html_to_xhtml._hygiene import (
-    _addRequiredAttributes,
-    _rejectUnknownElements,
-    _stripInvalidAttributes,
-    _stripScripting,
-    _stripScripts,
-    _translateExactEquivalents,
+    addRequiredAttributes,
+    rejectUnknownElements,
+    stripInvalidAttributes,
+    stripScripting,
+    stripScripts,
+    translateExactEquivalents,
 )
 from mireport.html_to_xhtml._tree import (
     IX_NAMESPACE,
-    _descendants,
-    _elements,
-    _remove,
-    _tag,
-    _tagText,
+    clarkName,
+    descendants,
+    elementsIn,
+    removeKeepingTail,
+    tagText,
 )
 
 _HIDDEN_STYLE = "display:none"
@@ -38,7 +38,7 @@ _ANCHOR_ID_PREFIX = "pdfpage-"
 
 def _convertAnchorNames(root: etree._Element) -> None:
     """Turn ``<a name="1">`` into ``<a id="pdfpage-1">``, links included."""
-    anchors = _descendants(root, "a")
+    anchors = descendants(root, "a")
     renamed = set()
     for anchor in anchors:
         if (name := anchor.attrib.pop("name", None)) is None:
@@ -64,14 +64,14 @@ def _inlineAnchorContent(root: etree._Element) -> None:
     these boxes are class-based — while keeping the link clickable, which
     dropping the anchor would not.
     """
-    for anchor in _descendants(root, "a"):
-        for div in anchor.iter(_tag("div")):
-            div.tag = _tag("span")
+    for anchor in descendants(root, "a"):
+        for div in anchor.iter(clarkName("div")):
+            div.tag = clarkName("span")
 
 
 def _ensureHead(root: etree._Element) -> etree._Element:
-    if (head := root.find(_tag("head"))) is None:
-        head = etree.Element(_tag("head"))
+    if (head := root.find(clarkName("head"))) is None:
+        head = etree.Element(clarkName("head"))
         root.insert(0, head)
     return head
 
@@ -82,13 +82,13 @@ def _hoistStyles(root: etree._Element) -> None:
     XHTML Strict allows style only in the head, but pdftohtml emits one per page
     inline in the body. Moving rather than dropping keeps the page layout.
     """
-    if (body := root.find(_tag("body"))) is None:
+    if (body := root.find(clarkName("body"))) is None:
         return
-    if not (styles := _descendants(body, "style")):
+    if not (styles := descendants(body, "style")):
         return
     head = _ensureHead(root)
     for style in styles:
-        _remove(style)
+        removeKeepingTail(style)
         style.tail = None
         head.append(style)
 
@@ -106,14 +106,14 @@ def _wrapBodyContent(root: etree._Element) -> None:
     normalising our own output is a fixed point rather than nesting one more
     wrapper on every pass.
     """
-    body = root.find(_tag("body"))
+    body = root.find(clarkName("body"))
     if body is None or len(body) == 0:
         return
     if not (body.text or "").strip() and all(
-        child.tag == _tag("div") for child in body
+        child.tag == clarkName("div") for child in body
     ):
         return
-    wrapper = etree.Element(_tag("div"), {"class": "pdf-annex"})
+    wrapper = etree.Element(clarkName("div"), {"class": "pdf-annex"})
     wrapper.text = body.text
     body.text = None
     for child in list(body):
@@ -129,9 +129,9 @@ def _dropUnusableMeta(root: etree._Element) -> None:
     bare ``<meta/>``, and the schema requires ``content`` on every meta. Nothing
     is lost by dropping it — the encoding is carried by the XML declaration.
     """
-    for meta in _descendants(root, "meta"):
+    for meta in descendants(root, "meta"):
         if meta.get("content") is None:
-            _remove(meta)
+            removeKeepingTail(meta)
 
 
 def _repairHead(root: etree._Element) -> None:
@@ -141,24 +141,24 @@ def _repairHead(root: etree._Element) -> None:
     <meta charset> has been stripped, a pdf2htmlEX head can be left empty.
     """
     head = _ensureHead(root)
-    if head.find(_tag("title")) is None:
-        title = etree.Element(_tag("title"))
+    if head.find(clarkName("title")) is None:
+        title = etree.Element(clarkName("title"))
         title.text = _DEFAULT_TITLE
         head.insert(0, title)
 
 
 def _hasIxContent(root: etree._Element) -> bool:
     ixPrefix = f"{{{IX_NAMESPACE}}}"
-    return any(_tagText(element).startswith(ixPrefix) for element in _elements(root))
+    return any(tagText(element).startswith(ixPrefix) for element in elementsIn(root))
 
 
 def _addHiddenIxHeader(root: etree._Element) -> None:
     """Prepend the minimum that earns document set membership."""
-    if (body := root.find(_tag("body"))) is None:
-        body = etree.SubElement(root, _tag("body"))
-    hidden = etree.Element(_tag("div"), style=_HIDDEN_STYLE)
-    header = etree.SubElement(hidden, _tag("header", IX_NAMESPACE))
-    etree.SubElement(header, _tag("resources", IX_NAMESPACE))
+    if (body := root.find(clarkName("body"))) is None:
+        body = etree.SubElement(root, clarkName("body"))
+    hidden = etree.Element(clarkName("div"), style=_HIDDEN_STYLE)
+    header = etree.SubElement(hidden, clarkName("header", IX_NAMESPACE))
+    etree.SubElement(header, clarkName("resources", IX_NAMESPACE))
     body.insert(0, hidden)
 
 
@@ -182,14 +182,14 @@ def normaliseDocument(
     # failing must always be a warning rather than an exception reaching a
     # request. Anything unforeseen here is still a conversion failure.
     try:
-        _stripInvalidAttributes(root)
+        stripInvalidAttributes(root)
         _convertAnchorNames(root)
         _inlineAnchorContent(root)
         _dropUnusableMeta(root)
-        _stripScripts(root)
-        _stripScripting(root)
-        _translateExactEquivalents(root)
-        _addRequiredAttributes(root)
+        stripScripts(root)
+        stripScripting(root)
+        translateExactEquivalents(root)
+        addRequiredAttributes(root)
         _hoistStyles(root)
         _repairHead(root)
         # Wrap first, then insert the header: both end up block-level children
@@ -197,7 +197,7 @@ def normaliseDocument(
         _wrapBodyContent(root)
         if injectIxHeader and not _hasIxContent(root):
             _addHiddenIxHeader(root)
-        _rejectUnknownElements(root)
+        rejectUnknownElements(root)
         etree.cleanup_namespaces(root)
     except (ValueError, etree.LxmlError) as e:
         raise XhtmlError(f"could not be turned into XHTML. {e}") from e

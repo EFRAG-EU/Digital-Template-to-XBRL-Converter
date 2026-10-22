@@ -11,12 +11,12 @@ from lxml import etree
 from mireport.html_to_xhtml._exceptions import XhtmlError
 from mireport.html_to_xhtml._tree import (
     IX_NAMESPACE,
-    _descendants,
-    _elements,
-    _localName,
-    _remove,
-    _tag,
-    _tagText,
+    clarkName,
+    descendants,
+    elementsIn,
+    localNameOf,
+    removeKeepingTail,
+    tagText,
 )
 
 # Attributes with no place in the strict XHTML schema every inline document is
@@ -43,7 +43,7 @@ _PRESENTATIONAL_ATTRIBUTES = frozenset(
 _DATA_ATTRIBUTE_PREFIX = "data-"
 
 
-def _stripInvalidAttributes(root: etree._Element) -> None:
+def stripInvalidAttributes(root: etree._Element) -> None:
     """Remove attributes the schema does not define.
 
     This costs pdf2htmlEX's page-navigation script the data-page-no hooks it
@@ -51,7 +51,7 @@ def _stripInvalidAttributes(root: etree._Element) -> None:
     invalid member is rejected outright, whereas one that lost some
     styling or interactivity still renders.
     """
-    for element in _elements(root):
+    for element in elementsIn(root):
         for name in list(element.attrib):
             if (
                 name.startswith(_DATA_ATTRIBUTE_PREFIX)
@@ -71,9 +71,9 @@ _REQUIRED_ATTRIBUTES = {
 }
 
 
-def _addRequiredAttributes(root: etree._Element) -> None:
+def addRequiredAttributes(root: etree._Element) -> None:
     for localName, (attribute, default) in _REQUIRED_ATTRIBUTES.items():
-        for element in _descendants(root, localName):
+        for element in descendants(root, localName):
             if element.get(attribute) is None:
                 element.set(attribute, default)
 
@@ -85,12 +85,12 @@ _UNCHECKED_BOX = "☐"
 
 def _replaceWithText(element: etree._Element, text: str) -> None:
     element.tail = text + (element.tail or "")
-    _remove(element)
+    removeKeepingTail(element)
 
 
-def _translateExactEquivalents(root: etree._Element) -> None:
+def translateExactEquivalents(root: etree._Element) -> None:
     """Rewrite the few elements outside XHTML Strict, or unwanted in a report,
-    that have an exact equivalent, so :func:`_rejectUnknownElements` need not
+    that have an exact equivalent, so :func:`rejectUnknownElements` need not
     refuse them.
 
     mammoth writes ``<s>`` (Transitional, like ``<strike>``) for struck-through
@@ -100,17 +100,17 @@ def _translateExactEquivalents(root: etree._Element) -> None:
     shows.
     """
     for localName in ("s", "strike"):
-        for element in _descendants(root, localName):
-            element.tag = _tag("span")
+        for element in descendants(root, localName):
+            element.tag = clarkName("span")
             style = element.get("style")
             element.set("style", f"{_LINE_THROUGH};{style}" if style else _LINE_THROUGH)
-    for element in _descendants(root, "input"):
+    for element in descendants(root, "input"):
         if element.get("type") == "checkbox":
             box = _UNCHECKED_BOX if element.get("checked") is None else _CHECKED_BOX
             _replaceWithText(element, box)
 
 
-def _stripScripts(root: etree._Element) -> None:
+def stripScripts(root: etree._Element) -> None:
     """Remove every <script> element.
 
     A document set member is part of a financial report that others will open;
@@ -123,12 +123,12 @@ def _stripScripts(root: etree._Element) -> None:
     means this: pdf2htmlEX's --embed-javascript 0 makes the script *external*
     rather than absent, which is strictly worse for a file that ships alone.
     """
-    for script in _descendants(root, "script"):
-        _remove(script)
+    for script in descendants(root, "script"):
+        removeKeepingTail(script)
 
 
 # An event handler attribute and a javascript: URL are both valid XHTML Strict,
-# so neither _stripInvalidAttributes (schema errors) nor _rejectUnknownElements
+# so neither stripInvalidAttributes (schema errors) nor rejectUnknownElements
 # (elements) would ever catch them. Arelle's own detector enumerates the
 # handlers as HTML_EVENT_HANDLER_ATTRIBUTES, as do the ESEF and ROS filing
 # rules; XHTML Strict defines no other attribute beginning "on", so the prefix
@@ -162,7 +162,7 @@ def _isScriptingUri(value: str) -> bool:
     return collapsed.startswith(_SCRIPTING_SCHEMES)
 
 
-def _stripScripting(root: etree._Element) -> None:
+def stripScripting(root: etree._Element) -> None:
     """Remove the script that is not a <script> element.
 
     Preventive, unlike everything else here: neither converter emits a handler
@@ -171,7 +171,7 @@ def _stripScripting(root: etree._Element) -> None:
     dropping an attribute costs a document nothing it needs — an ``<a>`` without
     its href still renders its text.
     """
-    for element in _elements(root):
+    for element in elementsIn(root):
         for name, value in list(element.attrib.items()):
             if name.startswith(_EVENT_HANDLER_PREFIX) or (
                 name in _URI_ATTRIBUTES and _isScriptingUri(value)
@@ -214,7 +214,7 @@ _UNWANTED_ELEMENTS = frozenset(
 )
 
 
-def _rejectUnknownElements(root: etree._Element) -> None:
+def rejectUnknownElements(root: etree._Element) -> None:
     """Refuse to emit a document containing an element we do not recognise.
 
     Three things land here: HTML5 elements neither supported converter emits
@@ -235,16 +235,16 @@ def _rejectUnknownElements(root: etree._Element) -> None:
     The same reasoning applies to :data:`_UNWANTED_ELEMENTS`, which the schema
     does define, so they are refused here too and named separately. The
     exceptions are the few with an exact equivalent, which
-    :func:`_translateExactEquivalents` has already rewritten.
+    :func:`translateExactEquivalents` has already rewritten.
 
     :raises XhtmlError: naming every element that is not XHTML Strict, or is
         Strict but has no place in a report.
     """
     unknown = {
         localName
-        for element in _elements(root)
-        if not _tagText(element).startswith(f"{{{IX_NAMESPACE}}}")
-        and (localName := _localName(element)) not in _XHTML_STRICT_ELEMENTS
+        for element in elementsIn(root)
+        if not tagText(element).startswith(f"{{{IX_NAMESPACE}}}")
+        and (localName := localNameOf(element)) not in _XHTML_STRICT_ELEMENTS
     }
     if unknown:
         raise XhtmlError(
@@ -253,8 +253,8 @@ def _rejectUnknownElements(root: etree._Element) -> None:
         )
     unwanted = {
         localName
-        for element in _elements(root)
-        if (localName := _localName(element)) in _UNWANTED_ELEMENTS
+        for element in elementsIn(root)
+        if (localName := localNameOf(element)) in _UNWANTED_ELEMENTS
     }
     if unwanted:
         raise XhtmlError(

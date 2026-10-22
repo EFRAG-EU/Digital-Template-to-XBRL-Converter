@@ -423,7 +423,7 @@ processor that enforces it here:
   `bgcolor`/`link`/`vlink`, `<a name>`, and body-level `<style>` (pdftohtml). Every rule there came
   from a real validation error, not a precaution
   — don't remove one without re-running `tests/integrationTests/test_real_pdf_converter.py`. An
-  element outside XHTML Strict is *refused* (`_rejectUnknownElements`), never translated on a guess,
+  element outside XHTML Strict is *refused* (`rejectUnknownElements`), never translated on a guess,
   as are `object`/`param`/`form`/`input`/`button`/`select`/`textarea`/`base` — Strict defines them,
   but neither converter emits them and each embeds, submits or re-points URLs.
 - **Script is stripped entirely** — the `<script>` element, `on*` handler attributes and

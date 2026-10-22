@@ -11,9 +11,9 @@ from mireport.html_to_xhtml._tree import (
     IX_NAMESPACE,
     XHTML_NAMESPACE,
     XML_NAMESPACE,
-    _elements,
-    _tag,
-    _tagText,
+    clarkName,
+    elementsIn,
+    tagText,
 )
 
 # Byte order marks of the wide encodings, in which NUL bytes are ordinary text.
@@ -52,7 +52,7 @@ def _parseAsXhtml(content: bytes) -> etree._Element | None:
         root = etree.fromstring(content, etree.XMLParser(resolve_entities=False))
     except etree.XMLSyntaxError:
         return None
-    return root if root.tag == _tag("html") else None
+    return root if root.tag == clarkName("html") else None
 
 
 def _parseAsHtml(content: bytes) -> etree._Element:
@@ -93,7 +93,7 @@ def _copyAttribute(target: etree._Element, name: str, value: str) -> None:
     if ":" in name:
         prefix, _, local = name.partition(":")
         if prefix == "xml":
-            target.set(_tag(local, XML_NAMESPACE), value)
+            target.set(clarkName(local, XML_NAMESPACE), value)
         # Any other prefix belongs to a namespace we have not carried over, so
         # there is nothing sound to map it onto.
         return
@@ -115,10 +115,10 @@ def _fixPrefixedAttributes(element: etree._Element) -> None:
 def _namespaceElements(root: etree._Element) -> None:
     """Put every unnamespaced element under @root in the XHTML namespace, and
     repair the attribute names the HTML parser invented, in place."""
-    for element in _elements(root):
-        tag = _tagText(element)
+    for element in elementsIn(root):
+        tag = tagText(element)
         if not tag.startswith("{"):
-            element.tag = _tag(tag)
+            element.tag = clarkName(tag)
         _fixPrefixedAttributes(element)
 
 
@@ -131,7 +131,7 @@ def _moveIntoXhtmlNamespace(root: etree._Element) -> etree._Element:
     """
     _namespaceElements(root)
     replacement = etree.Element(
-        _tag("html"),
+        clarkName("html"),
         nsmap={None: XHTML_NAMESPACE, "ix": IX_NAMESPACE},
     )
     for name, value in root.attrib.items():
@@ -164,7 +164,7 @@ def parseDocument(content: bytes) -> etree._Element:
     return root
 
 
-def _parseFragment(fragment: str) -> etree._Element:
+def parseFragment(fragment: str) -> etree._Element:
     """Parse @fragment, leniently, into a ``div`` in the XHTML namespace that
     holds it.
 

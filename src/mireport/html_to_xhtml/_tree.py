@@ -14,21 +14,21 @@ IX_NAMESPACE = "http://www.xbrl.org/2013/inlineXBRL"
 XML_NAMESPACE = "http://www.w3.org/XML/1998/namespace"
 
 
-def _tag(localName: str, namespace: str = XHTML_NAMESPACE) -> str:
+def clarkName(localName: str, namespace: str = XHTML_NAMESPACE) -> str:
     return f"{{{namespace}}}{localName}"
 
 
-def _descendants(root: etree._Element, localName: str) -> list[etree._Element]:
-    return root.findall(f".//{_tag(localName)}")
+def descendants(root: etree._Element, localName: str) -> list[etree._Element]:
+    return root.findall(f".//{clarkName(localName)}")
 
 
-def _elements(root: etree._Element) -> Iterator[etree._Element]:
+def elementsIn(root: etree._Element) -> Iterator[etree._Element]:
     """Every element in @root, skipping comments and processing instructions."""
     return (e for e in root.iter() if isinstance(e.tag, str))
 
 
-def _tagText(element: etree._Element) -> str:
-    """@element's tag, which is text for every element _elements() yields.
+def tagText(element: etree._Element) -> str:
+    """@element's tag, which is text for every element elementsIn() yields.
 
     lxml types ``tag`` as ``str | bytes | bytearray | QName`` because comments and
     processing instructions carry a function there; narrow it once, here.
@@ -39,16 +39,16 @@ def _tagText(element: etree._Element) -> str:
     return tag
 
 
-def _localName(element: etree._Element) -> str:
+def localNameOf(element: etree._Element) -> str:
     """@element's name without its namespace.
 
     Split rather than etree.QName, which refuses to parse exactly the names
     worth reporting — the prefixed ones the HTML parser took literally.
     """
-    return _tagText(element).rpartition("}")[2]
+    return tagText(element).rpartition("}")[2]
 
 
-def _remove(element: etree._Element) -> None:
+def removeKeepingTail(element: etree._Element) -> None:
     """Detach @element, leaving the text that followed it where it was."""
     if (parent := element.getparent()) is None:
         return

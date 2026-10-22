@@ -25,8 +25,8 @@ tagged report in an Inline XBRL Document Set:
    (spec 8.1.3), and the tagged report supplies it.
 
 Script is removed outright, and that means every form of it: the ``<script>``
-element (:func:`._hygiene._stripScripts`), event handler attributes and
-``javascript:`` URLs (:func:`._hygiene._stripScripting`). The web app serves
+element (:func:`._hygiene.stripScripts`), event handler attributes and
+``javascript:`` URLs (:func:`._hygiene.stripScripting`). The web app serves
 document set members same-origin, so script surviving in an annex built from an
 uploaded PDF would run with the user's session.
 
@@ -35,7 +35,7 @@ XHTML *Strict* half of that schema rejects; none of it is precautionary, and
 ``tests/integrationTests/test_real_pdf_converter.py`` is what proves it. What is
 *not* repaired is refused: an element outside XHTML Strict fails the conversion
 rather than being translated on a guess — see
-:func:`._hygiene._rejectUnknownElements`.
+:func:`._hygiene.rejectUnknownElements`.
 
 A document is parsed once (:func:`parseDocument`), normalised in place
 (:func:`normaliseDocument`) and handed along as a tree; only what leaves for a
