@@ -21,6 +21,7 @@ from mireport.xlsx_template_reader.templateaudit import (
 
 SCRIPT = Path(__file__).resolve().parents[3] / "scripts" / "check-template.py"
 VS_ENTRY_POINT = "https://xbrl.efrag.org/taxonomy/vs/2026-10-16/vs-all.xsd"
+OLD_VSME_ENTRY_POINT = "https://xbrl.efrag.org/taxonomy/vsme/2026-05-01/vsme-all.xsd"
 
 
 @pytest.fixture(scope="module")
@@ -40,6 +41,18 @@ def workbookWith(**names: str) -> Workbook:
     ws.title = "Data"
     for name, ref in names.items():
         wb.defined_names[name] = DefinedName(name, attr_text=ref)
+    return wb
+
+
+def stamped(entryPoint: str, version: str, **names: str) -> Workbook:
+    """A workbook whose schemaRef and template version cells say these."""
+    wb = workbookWith(
+        template_reporting_schemaRef="Data!$A$1",
+        template_reporting_template_version="Data!$A$2",
+        **names,
+    )
+    wb["Data"]["A1"] = entryPoint
+    wb["Data"]["A2"] = version
     return wb
 
 
@@ -101,9 +114,29 @@ def test_layout_against_reference_ignores_labels():
 
 
 def test_taxonomy_from_schemaref():
-    wb = workbookWith(template_reporting_schemaRef="Data!$A$1")
-    wb["Data"]["A1"] = VS_ENTRY_POINT
-    assert auditTemplate(wb).taxonomy is getTaxonomy(VS_ENTRY_POINT)
+    result = auditTemplate(stamped(VS_ENTRY_POINT, "2.0.0"))
+    assert result.taxonomy is getTaxonomy(VS_ENTRY_POINT)
+    assert not names(result, FindingKind.templateVersionMismatch)
+    assert not names(result, FindingKind.oldEntryPoint)
+
+
+def test_template_version_pinned_by_disclosure_system():
+    result = auditTemplate(stamped(VS_ENTRY_POINT, "1.9.0"))
+    assert names(result, FindingKind.templateVersionMismatch) == {"1.9.0"}
+
+
+def test_old_entry_point_is_informational():
+    """Its template version is "auto" (the migration tool's), so not checked."""
+    result = auditTemplate(stamped(OLD_VSME_ENTRY_POINT, "1.3.0"))
+    assert names(result, FindingKind.oldEntryPoint) == {OLD_VSME_ENTRY_POINT}
+    assert not names(result, FindingKind.templateVersionMismatch)
+    assert all(f.kind is not FindingKind.oldEntryPoint for f in result.problems)
+
+
+def test_schemaref_in_no_disclosure_system():
+    unknown = "https://example.com/taxonomy/other.xsd"
+    result = audit(stamped(unknown, "1.0.0"))
+    assert names(result, FindingKind.unknownEntryPoint) == {unknown}
 
 
 def test_unusable_schemaref():
@@ -113,8 +146,6 @@ def test_unusable_schemaref():
 
 def test_script_exit_codes(script, tmp_path):
     path = tmp_path / "template.xlsx"
-    wb = workbookWith(template_reporting_schemaRef="Data!$A$1", Bogus="Data!$B$2")
-    wb["Data"]["A1"] = VS_ENTRY_POINT
-    wb.save(path)
+    stamped(VS_ENTRY_POINT, "2.0.0", Bogus="Data!$B$2").save(path)
     assert script.main([str(path)]) == 1
     assert script.main([str(tmp_path / "missing.xlsx")]) == 2
