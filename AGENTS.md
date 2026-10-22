@@ -445,6 +445,10 @@ refuses to render while any remain.
 The web app implements this as the `partial-facts` upload page, the CLI as `--extra-data`
 (`replacementTextblockValues`, which also covers footnotes, label overrides and intro/back-cover
 matter, converted from `.docx` by mammoth).
+Both convert through `mireport/docx_converter/`. The web app runs mammoth in a child process (`_worker.py`)
+that is killed after `DEFAULT_TIMEOUT_SECONDS`, since a crafted document can keep mammoth's regexes busy
+and a thread can't be stopped; a document it can't convert stops the conversion with an error. The CLI's
+user supplies their own documents, so it converts in-process.
 
 ### Web app (`digital_converter_webapp/`)
 

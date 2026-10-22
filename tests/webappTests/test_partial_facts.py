@@ -135,3 +135,24 @@ def test_word_document_fills_the_text_block_and_its_warnings_are_shown(
             for name in package.namelist()
             if name.endswith(".html")
         )
+
+
+@pytest.mark.slow
+@pytest.mark.usefixtures("skipArelle")
+def test_a_file_that_is_not_a_word_document_fails_the_conversion(
+    client, upload, conversion_of
+):
+    upload(client, data=externalValuesWorkbook())
+    url = f"/conversions/{conversion_of(client).id}"
+    client.get(url)
+    client.post(
+        f"{url}/partial-facts",
+        data={f"docx_{EXTERNAL_CONCEPT}": (io.BytesIO(b"not a docx"), "policy.docx")},
+        content_type="multipart/form-data",
+    )
+    client.get(url)
+
+    results = conversion_of(client).raw["results"]
+    assert results["success"] is False
+    errors = [m["m"] for m in results["m"] if m["s"] == "ERROR"]
+    assert errors == ["Conversion failed: Word document policy.docx could not be read."]
