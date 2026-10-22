@@ -10,8 +10,8 @@ from mireport.arelle.report_info import ArelleReportProcessor
 from mireport.arelle.support import ArelleProcessingResult
 from mireport.conversionresults import Message, MessageType, Severity
 from mireport.filesupport import FilelikeAndFileName
+from mireport.html_to_xhtml import normaliseDocument
 from mireport.pdf_converter import PdfToolNotFoundError
-from mireport.pdf_converter._xhtml import normaliseToXhtml
 
 SAMPLE_XLSX = (
     Path(__file__).parent.parent / "data" / "VSME-Digital-Template-Sample-1.2.0.xlsx"
@@ -22,7 +22,7 @@ PDF_BYTES = b"%PDF-1.7\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF\n"
 # injects is what makes the file an Inline XBRL Document, and so a document set
 # member, rather than one dropped as "Non-inline file is not loadable".
 CONVERTED_PDF = FilelikeAndFileName(
-    fileContent=normaliseToXhtml(
+    fileContent=normaliseDocument(
         b"<html><head><title>a</title></head><body>annex</body></html>"
     ),
     filename="annex1.xhtml",

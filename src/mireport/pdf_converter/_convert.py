@@ -6,8 +6,9 @@ from pathlib import PurePosixPath
 from typing import TYPE_CHECKING
 
 from mireport.filesupport import FilelikeAndFileName, zipSafeString
+from mireport.html_to_xhtml import XhtmlError, normaliseDocument
+from mireport.pdf_converter._exceptions import PdfConversionError
 from mireport.pdf_converter._run import DEFAULT_TIMEOUT_SECONDS, runConverter
-from mireport.pdf_converter._xhtml import normaliseToXhtml
 
 if TYPE_CHECKING:
     from mireport.pdf_converter._backends import ResolvedConverter
@@ -48,7 +49,7 @@ def convertPdfToHtml(
     :param binaryPath: an explicit executable, resolved into a converter when
         @converter is not given.
     :param injectIxHeader: forwarded to
-        :func:`mireport.pdf_converter._xhtml.normaliseToXhtml`. Pass False when
+        :func:`mireport.html_to_xhtml.normaliseDocument`. Pass False when
         the result will be merged into another report rather than shipped as
         its own document set member.
     :raises PdfToolNotFoundError: if no converter is installed.
@@ -60,7 +61,8 @@ def convertPdfToHtml(
         binaryPath=binaryPath,
         timeoutSeconds=timeoutSeconds,
     )
-    return FilelikeAndFileName(
-        fileContent=normaliseToXhtml(raw, injectIxHeader=injectIxHeader),
-        filename=outputFilenameFor(filename),
-    )
+    try:
+        xhtml = normaliseDocument(raw, injectIxHeader=injectIxHeader)
+    except XhtmlError as e:
+        raise PdfConversionError(f"Converted PDF output {e}") from e
+    return FilelikeAndFileName(fileContent=xhtml, filename=outputFilenameFor(filename))

@@ -67,7 +67,7 @@ def _normalisedMember() -> bytes:
     the outset; this one did not, and the four XHTML-schema errors it produced
     are why the normaliser strips data-* attributes and bare <meta charset>.
     """
-    from mireport.pdf_converter._xhtml import normaliseToXhtml
+    from mireport.html_to_xhtml import normaliseDocument
 
     spec = importlib.util.spec_from_file_location("stub_pdf_converter", STUB_CONVERTER)
     assert spec is not None and spec.loader is not None
@@ -76,7 +76,7 @@ def _normalisedMember() -> bytes:
     # pdf2htmlEX's shape: it is the preferred backend, and unlike pdftohtml's it
     # references no sibling image files, so it stands alone without a working
     # directory to inline from.
-    return normaliseToXhtml(module.PDF2HTMLEX_OUTPUT.encode("utf-8"))
+    return normaliseDocument(module.PDF2HTMLEX_OUTPUT.encode("utf-8"))
 
 
 @pytest.fixture(

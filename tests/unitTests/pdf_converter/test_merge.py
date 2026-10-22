@@ -14,6 +14,7 @@ import pytest
 from lxml import etree
 
 from mireport.filesupport import FilelikeAndFileName
+from mireport.html_to_xhtml import normaliseDocument
 from mireport.pdf_converter import PdfConversionError
 from mireport.pdf_converter._merge import (
     ANNEX_CLASS,
@@ -21,7 +22,6 @@ from mireport.pdf_converter._merge import (
     buildMergedAnnex,
     mergeAnnexesIntoReport,
 )
-from mireport.pdf_converter._xhtml import normaliseToXhtml
 
 XHTML = "http://www.w3.org/1999/xhtml"
 
@@ -30,7 +30,7 @@ def _tag(localName: str) -> str:
     return f"{{{XHTML}}}{localName}"
 
 
-NORMALISED_ANNEX = normaliseToXhtml(
+NORMALISED_ANNEX = normaliseDocument(
     b"""<!DOCTYPE html>
 <html><head><meta charset=utf-8>
 <style type="text/css">
@@ -159,7 +159,7 @@ class TestScopedCss:
 
 class TestNoStylesAtAll:
     def test_handles_an_annex_with_no_style_element(self) -> None:
-        normalised = normaliseToXhtml(
+        normalised = normaliseDocument(
             b"<html><body><p>No CSS here</p></body></html>",
             injectIxHeader=False,
         )

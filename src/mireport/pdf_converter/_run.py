@@ -123,7 +123,7 @@ def runConverter(
 
     Sibling files the converter wrote are inlined before the working directory
     is destroyed; the result still needs
-    :func:`mireport.pdf_converter._xhtml.normaliseToXhtml` before it is fit for a
+    :func:`mireport.html_to_xhtml.normaliseDocument` before it is fit for a
     document set.
 
     :raises PdfConversionError: on any failure, including a successful exit that

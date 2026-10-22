@@ -52,14 +52,13 @@ from lxml import etree
 from tinycss2.ast import HashToken, QualifiedRule
 
 from mireport.filesupport import FilelikeAndFileName
+from mireport.html_to_xhtml import XHTML_NAMESPACE
 from mireport.pdf_converter._exceptions import PdfConversionError
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-XHTML_NAMESPACE = "http://www.w3.org/1999/xhtml"
-
-# The same class name mireport.pdf_converter._xhtml._wrapBodyContent already
+# The same class name mireport.html_to_xhtml._document._wrapBodyContent already
 # gives its own wrapper: kept identical so a merged annex is recognisable
 # (and, e.g., selectable by a future print stylesheet) whichever code wrapped
 # it.
@@ -110,7 +109,7 @@ def buildMergedAnnex(xhtml: bytes, *, index: int, label: str) -> MergedAnnex:
     """Turn one PDF's normalised XHTML into a :class:`MergedAnnex`.
 
     @xhtml must already be well-formed XHTML with no ``ix:header`` — i.e. the
-    output of :func:`mireport.pdf_converter._xhtml.normaliseToXhtml` called
+    output of :func:`mireport.html_to_xhtml.normaliseDocument` called
     with ``injectIxHeader=False``. A merged document needs exactly one header,
     supplied by the report the annex joins, not one per source PDF.
 

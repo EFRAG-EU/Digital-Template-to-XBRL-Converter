@@ -20,8 +20,8 @@ from mireport.arelle.report_info import ArelleReportProcessor
 from mireport.arelle.support import ArelleProcessingResult
 from mireport.conversionresults import ConversionResultsBuilder, Severity
 from mireport.data.disclosures import VSME_DEFAULTS
+from mireport.html_to_xhtml import normaliseDocument
 from mireport.pdf_converter import MergedAnnex, buildMergedAnnex, mergeAnnexesIntoReport
-from mireport.pdf_converter._xhtml import normaliseToXhtml
 from mireport.report.reportpackage import buildReportPackage
 from mireport.taxonomy import loadBuiltInTaxonomyJSON
 from mireport.xlsx_template_reader.processor import XlsxProcessor
@@ -61,7 +61,7 @@ def report() -> InlineReport:
 @pytest.fixture(scope="module")
 def annex() -> MergedAnnex:
     module = _loadStubModule()
-    normalised = normaliseToXhtml(
+    normalised = normaliseDocument(
         module.PDF2HTMLEX_OUTPUT.encode("utf-8"), injectIxHeader=False
     )
     return buildMergedAnnex(normalised, index=1, label="annex1.pdf")

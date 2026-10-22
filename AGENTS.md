@@ -416,8 +416,8 @@ processor that enforces it here:
   enough — and a Validating Conformant Processor accepts only documents valid against the
   XHTML + iXBRL schema (§3.3.1), i.e. **XHTML Strict**. Arelle reports the first as
   `arelle:nonIxdsDocument` and the second via `XhtmlValidate.xhtmlValidate`. So
-  `_xhtml.normaliseToXhtml()` injects an empty `ix:header` inside a `display:none` div (the form
-  §8.1.2 recommends; only one header across the whole set need carry anything, §8.1.3) and repairs
+  `normaliseDocument()` (`mireport/html_to_xhtml/`) injects an empty `ix:header` inside a
+  `display:none` div (the form §8.1.2 recommends; only one header across the whole set need carry anything, §8.1.3) and repairs
   what the converters emit: `data-*`, `<meta charset>` and the `div` hit area inside every link
   annotation, which becomes a `span` (pdf2htmlEX); `lang`,
   `bgcolor`/`link`/`vlink`, `<a name>`, and body-level `<style>` (pdftohtml). Every rule there came
