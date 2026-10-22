@@ -22,6 +22,7 @@ import pytest
 from lxml import etree
 
 from mireport.html_to_xhtml import (
+    DocumentLabels,
     XhtmlError,
     documentToBytes,
     normaliseDocument,
@@ -32,9 +33,16 @@ XHTML = "http://www.w3.org/1999/xhtml"
 IX = "http://www.xbrl.org/2013/inlineXBRL"
 
 
+LABELS = DocumentLabels(
+    title="Supplementary document", wrapperClass="pdf-annex", anchorIdPrefix="pdfpage-"
+)
+
+
 def _normalise(content: bytes, *, injectIxHeader: bool = True) -> bytes:
     """Parse, normalise and serialise @content, as a document set member is."""
-    root = normaliseDocument(parseDocument(content), injectIxHeader=injectIxHeader)
+    root = normaliseDocument(
+        parseDocument(content), LABELS, injectIxHeader=injectIxHeader
+    )
     return documentToBytes(root)
 
 

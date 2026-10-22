@@ -6,6 +6,8 @@ elements are in :mod:`._hygiene` and run here too.
 
 from __future__ import annotations
 
+from typing import NamedTuple
+
 from lxml import etree
 
 from mireport.html_to_xhtml._exceptions import XhtmlError
@@ -27,31 +29,43 @@ from mireport.html_to_xhtml._tree import (
 )
 
 _HIDDEN_STYLE = "display:none"
-_DEFAULT_TITLE = "Supplementary document"
-
-# Anchors: XHTML Strict has no "name" attribute on <a>, so pdftohtml's page
-# anchors are converted to ids. A raw page number is not a valid id either — an
-# NCName cannot start with a digit — so both anchors and the links that target
-# them are prefixed.
-_ANCHOR_ID_PREFIX = "pdfpage-"
 
 
-def _convertAnchorNames(root: etree._Element) -> None:
-    """Turn ``<a name="1">`` into ``<a id="pdfpage-1">``, links included."""
+class DocumentLabels(NamedTuple):
+    """The names a normalised document gives what it adds, which only the
+    caller knows the right words for.
+
+    :param title: the ``<title>`` of a head that has none.
+    :param wrapperClass: the class of the ``div`` that wraps the body's content
+        (:func:`_wrapBodyContent`).
+    :param anchorIdPrefix: what turns ``<a name="1">`` into a valid id. XHTML
+        Strict has no "name" attribute on ``<a>``, so pdftohtml's page anchors
+        become ids; a raw page number is not a valid id either (an NCName cannot
+        start with a digit), so both anchors and the links that target them are
+        prefixed.
+    """
+
+    title: str
+    wrapperClass: str
+    anchorIdPrefix: str
+
+
+def _convertAnchorNames(root: etree._Element, prefix: str) -> None:
+    """Turn ``<a name="1">`` into ``<a id="{prefix}1">``, links included."""
     anchors = descendants(root, "a")
     renamed = set()
     for anchor in anchors:
         if (name := anchor.attrib.pop("name", None)) is None:
             continue
         if anchor.get("id") is None:
-            anchor.set("id", f"{_ANCHOR_ID_PREFIX}{name}")
+            anchor.set("id", f"{prefix}{name}")
             renamed.add(name)
     if not renamed:
         return
     for anchor in anchors:
         href = anchor.get("href", "")
         if href.startswith("#") and href[1:] in renamed:
-            anchor.set("href", f"#{_ANCHOR_ID_PREFIX}{href[1:]}")
+            anchor.set("href", f"#{prefix}{href[1:]}")
 
 
 def _inlineAnchorContent(root: etree._Element) -> None:
@@ -93,7 +107,7 @@ def _hoistStyles(root: etree._Element) -> None:
         head.append(style)
 
 
-def _wrapBodyContent(root: etree._Element) -> None:
+def _wrapBodyContent(root: etree._Element, wrapperClass: str) -> None:
     """Ensure <body> contains only block-level content, by wrapping it all.
 
     XHTML Strict requires body's children to be block-level, and pdftohtml puts
@@ -113,7 +127,7 @@ def _wrapBodyContent(root: etree._Element) -> None:
         child.tag == clarkName("div") for child in body
     ):
         return
-    wrapper = etree.Element(clarkName("div"), {"class": "pdf-annex"})
+    wrapper = etree.Element(clarkName("div"), {"class": wrapperClass})
     wrapper.text = body.text
     body.text = None
     for child in list(body):
@@ -134,7 +148,7 @@ def _dropUnusableMeta(root: etree._Element) -> None:
             removeKeepingTail(meta)
 
 
-def _repairHead(root: etree._Element) -> None:
+def _repairHead(root: etree._Element, title: str) -> None:
     """Ensure a <head> exists and has at least one child the schema permits.
 
     The schema requires one of script/style/meta/link/object/title/base. Once
@@ -142,9 +156,9 @@ def _repairHead(root: etree._Element) -> None:
     """
     head = _ensureHead(root)
     if head.find(clarkName("title")) is None:
-        title = etree.Element(clarkName("title"))
-        title.text = _DEFAULT_TITLE
-        head.insert(0, title)
+        titleElement = etree.Element(clarkName("title"))
+        titleElement.text = title
+        head.insert(0, titleElement)
 
 
 def _hasIxContent(root: etree._Element) -> bool:
@@ -163,11 +177,11 @@ def _addHiddenIxHeader(root: etree._Element) -> None:
 
 
 def normaliseDocument(
-    root: etree._Element, *, injectIxHeader: bool = True
+    root: etree._Element, labels: DocumentLabels, *, injectIxHeader: bool = True
 ) -> etree._Element:
     """Make @root, from :func:`mireport.html_to_xhtml.parseDocument`, valid
     XHTML Strict, optionally carrying an empty ``ix:header``. Works in place
-    and returns @root.
+    and returns @root. @labels names what normalising adds.
 
     :param injectIxHeader: whether to inject the empty, hidden ``ix:header``
         that earns a standalone document set member its Inline XBRL identity
@@ -183,7 +197,7 @@ def normaliseDocument(
     # request. Anything unforeseen here is still a conversion failure.
     try:
         stripInvalidAttributes(root)
-        _convertAnchorNames(root)
+        _convertAnchorNames(root, labels.anchorIdPrefix)
         _inlineAnchorContent(root)
         _dropUnusableMeta(root)
         stripScripts(root)
@@ -191,10 +205,10 @@ def normaliseDocument(
         translateExactEquivalents(root)
         addRequiredAttributes(root)
         _hoistStyles(root)
-        _repairHead(root)
+        _repairHead(root, labels.title)
         # Wrap first, then insert the header: both end up block-level children
         # of body, which is what the schema wants.
-        _wrapBodyContent(root)
+        _wrapBodyContent(root, labels.wrapperClass)
         if injectIxHeader and not _hasIxContent(root):
             _addHiddenIxHeader(root)
         rejectUnknownElements(root)

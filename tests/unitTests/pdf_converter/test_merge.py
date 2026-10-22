@@ -15,7 +15,7 @@ from lxml import etree
 
 from mireport.filesupport import FilelikeAndFileName
 from mireport.html_to_xhtml import normaliseDocument, parseDocument
-from mireport.pdf_converter import PdfConversionError
+from mireport.pdf_converter import ANNEX_LABELS, PdfConversionError
 from mireport.pdf_converter._merge import (
     ANNEX_CLASS,
     MergedAnnex,
@@ -51,7 +51,7 @@ ANNEX_SOURCE = b"""<!DOCTYPE html>
 
 def _normalisedAnnex(source: bytes = ANNEX_SOURCE) -> etree._Element:
     """A fresh tree each time: building an annex moves its body content."""
-    return normaliseDocument(parseDocument(source), injectIxHeader=False)
+    return normaliseDocument(parseDocument(source), ANNEX_LABELS, injectIxHeader=False)
 
 
 def _html(annex: MergedAnnex) -> str:

@@ -21,6 +21,7 @@ from mireport.pdf_converter._batch import (
     convertSupplementaryPdfs,
 )
 from mireport.pdf_converter._convert import (
+    ANNEX_LABELS,
     convertPdfToHtml,
     convertPdfToXhtml,
     outputFilenameFor,
@@ -42,6 +43,7 @@ from mireport.pdf_converter._run import (
 )
 
 __all__ = [
+    "ANNEX_LABELS",
     "BACKENDS_IN_PREFERENCE_ORDER",
     "DEFAULT_TIMEOUT_SECONDS",
     "PATH_ENV_VAR",

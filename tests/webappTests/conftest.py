@@ -11,7 +11,7 @@ from mireport.arelle.support import ArelleProcessingResult
 from mireport.conversionresults import Message, MessageType, Severity
 from mireport.filesupport import FilelikeAndFileName
 from mireport.html_to_xhtml import documentToBytes, normaliseDocument, parseDocument
-from mireport.pdf_converter import PdfToolNotFoundError
+from mireport.pdf_converter import ANNEX_LABELS, PdfToolNotFoundError
 
 SAMPLE_XLSX = (
     Path(__file__).parent.parent / "data" / "VSME-Digital-Template-Sample-1.2.0.xlsx"
@@ -26,7 +26,8 @@ CONVERTED_PDF = FilelikeAndFileName(
         normaliseDocument(
             parseDocument(
                 b"<html><head><title>a</title></head><body>annex</body></html>"
-            )
+            ),
+            ANNEX_LABELS,
         )
     ),
     filename="annex1.xhtml",

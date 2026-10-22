@@ -6,8 +6,14 @@ from pathlib import PurePosixPath
 from typing import TYPE_CHECKING
 
 from mireport.filesupport import FilelikeAndFileName, zipSafeString
-from mireport.html_to_xhtml import XhtmlError, documentToBytes, normaliseDocument
+from mireport.html_to_xhtml import (
+    DocumentLabels,
+    XhtmlError,
+    documentToBytes,
+    normaliseDocument,
+)
 from mireport.pdf_converter._exceptions import PdfConversionError
+from mireport.pdf_converter._merge import ANNEX_CLASS
 from mireport.pdf_converter._run import DEFAULT_TIMEOUT_SECONDS, runConverter
 
 if TYPE_CHECKING:
@@ -16,6 +22,13 @@ if TYPE_CHECKING:
     from mireport.pdf_converter._backends import ResolvedConverter
 
 OUTPUT_SUFFIX = ".xhtml"
+
+# What a converted PDF's normalised XHTML calls what normalising adds.
+ANNEX_LABELS = DocumentLabels(
+    title="Supplementary document",
+    wrapperClass=ANNEX_CLASS,
+    anchorIdPrefix="pdfpage-",
+)
 
 
 def outputFilenameFor(filename: str) -> str:
@@ -62,7 +75,7 @@ def convertPdfToXhtml(
         timeoutSeconds=timeoutSeconds,
     )
     try:
-        return normaliseDocument(root, injectIxHeader=injectIxHeader)
+        return normaliseDocument(root, ANNEX_LABELS, injectIxHeader=injectIxHeader)
     except XhtmlError as e:
         raise PdfConversionError(e.about("Converted PDF output")) from e
 

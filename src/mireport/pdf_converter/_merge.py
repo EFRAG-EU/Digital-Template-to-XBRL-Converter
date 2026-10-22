@@ -58,10 +58,10 @@ from mireport.pdf_converter._exceptions import PdfConversionError
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-# The same class name mireport.html_to_xhtml._document._wrapBodyContent already
-# gives its own wrapper: kept identical so a merged annex is recognisable
-# (and, e.g., selectable by a future print stylesheet) whichever code wrapped
-# it.
+# The class of a merged annex's container, and (through ANNEX_LABELS) of the
+# wrapper normalisation puts round a document set member's body: one name, so
+# an annex is recognisable (and, e.g., selectable by a future print stylesheet)
+# whichever code wrapped it.
 ANNEX_CLASS = "pdf-annex"
 
 # Attributes whose value (or, for the first, only when it starts with "#") is

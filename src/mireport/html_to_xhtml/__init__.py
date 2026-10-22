@@ -48,7 +48,11 @@ as a Word text block, gets the rules but not the assembly
 
 from __future__ import annotations
 
-from mireport.html_to_xhtml._document import documentToBytes, normaliseDocument
+from mireport.html_to_xhtml._document import (
+    DocumentLabels,
+    documentToBytes,
+    normaliseDocument,
+)
 from mireport.html_to_xhtml._exceptions import XhtmlError
 from mireport.html_to_xhtml._fragment import normaliseFragment
 from mireport.html_to_xhtml._parse import parseDocument
@@ -57,6 +61,7 @@ from mireport.html_to_xhtml._tree import IX_NAMESPACE, XHTML_NAMESPACE
 __all__ = [
     "IX_NAMESPACE",
     "XHTML_NAMESPACE",
+    "DocumentLabels",
     "XhtmlError",
     "documentToBytes",
     "normaliseDocument",

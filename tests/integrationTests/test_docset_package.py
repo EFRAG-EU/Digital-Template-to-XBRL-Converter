@@ -68,6 +68,7 @@ def _normalisedMember() -> bytes:
     are why the normaliser strips data-* attributes and bare <meta charset>.
     """
     from mireport.html_to_xhtml import documentToBytes, normaliseDocument, parseDocument
+    from mireport.pdf_converter import ANNEX_LABELS
 
     spec = importlib.util.spec_from_file_location("stub_pdf_converter", STUB_CONVERTER)
     assert spec is not None and spec.loader is not None
@@ -77,7 +78,9 @@ def _normalisedMember() -> bytes:
     # references no sibling image files, so it stands alone without a working
     # directory to inline from.
     return documentToBytes(
-        normaliseDocument(parseDocument(module.PDF2HTMLEX_OUTPUT.encode("utf-8")))
+        normaliseDocument(
+            parseDocument(module.PDF2HTMLEX_OUTPUT.encode("utf-8")), ANNEX_LABELS
+        )
     )
 
 
