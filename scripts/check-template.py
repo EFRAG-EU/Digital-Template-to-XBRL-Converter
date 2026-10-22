@@ -3,16 +3,22 @@ import logging
 from itertools import groupby
 from pathlib import Path
 
+from rich import box
+from rich.table import Table
+from rich.text import Text
+
 import mireport
-from mireport.cli import configure_rich_output, console_print_plain
+from mireport.cli import configure_rich_output
 from mireport.cli import console_print as print
 from mireport.entrypoints import describeEntryPointSet
 from mireport.exceptions import TaxonomyException
 from mireport.taxonomy import loadTaxonomyJSON
 from mireport.xlsx_template_reader.templateaudit import (
     INFORMATIONAL_KINDS,
+    FindingKind,
     TemplateAudit,
     auditTemplate,
+    pinnedTemplateVersion,
 )
 from mireport.xlsx_template_reader.util import loadExcelFromPathOrFileLike
 
@@ -44,18 +50,72 @@ def parser() -> argparse.ArgumentParser:
     return parser
 
 
-def printAudit(audit: TemplateAudit) -> None:
-    print(f"Workbook schemaRef: {audit.entryPoint or '(none)'}")
-    print(f"Checked against: {describeEntryPointSet(audit.taxonomy.entryPointSet)}")
-    print(f"Template version: {audit.templateVersion or '(none)'}")
+def findingFor(audit: TemplateAudit, kind: FindingKind) -> str | None:
+    """The detail of the audit's finding of this kind, if it has one."""
+    return next((f.detail for f in audit.findings if f.kind is kind), None)
+
+
+def headerTable(audit: TemplateAudit, workbook: Path, reference: Path | None) -> Table:
+    """The workbook, what it targets, and how the disclosure system rates that."""
+    unknown = findingFor(audit, FindingKind.unknownEntryPoint)
+    old = findingFor(audit, FindingKind.oldEntryPoint)
+    if unknown is not None:
+        schemaRefStatus = "[red]✗ not in any disclosure system[/red]"
+    elif old is not None:
+        schemaRefStatus = f"[yellow]old entry point: {old}[/yellow]"
+    else:
+        schemaRefStatus = "[green]✓ supported entry point[/green]"
+    if (pinned := pinnedTemplateVersion(audit.entryPoint)) is None:
+        versionStatus = "not pinned by the disclosure system"
+    elif findingFor(audit, FindingKind.templateVersionMismatch) is not None:
+        versionStatus = f"[red]✗ disclosure system pins {pinned}[/red]"
+    else:
+        versionStatus = "[green]✓ pinned by the disclosure system[/green]"
+
+    table = Table(box=box.SIMPLE, show_header=False)
+    table.add_column(style="bold")
+    table.add_column(overflow="fold")
+    table.add_column()
+    table.add_row("Workbook", Text(str(workbook)), "")
+    if reference is not None:
+        table.add_row("Reference", Text(str(reference)), "")
+    table.add_row("SchemaRef", Text(audit.entryPoint or "(none)"), schemaRefStatus)
+    table.add_row(
+        "Checked against",
+        Text(describeEntryPointSet(audit.taxonomy.entryPointSet)),
+        "",
+    )
+    table.add_row(
+        "Template version", Text(audit.templateVersion or "(none)"), versionStatus
+    )
+    return table
+
+
+def printAudit(audit: TemplateAudit, workbook: Path, reference: Path | None) -> None:
+    print(headerTable(audit, workbook, reference))
     if not audit.findings:
         print("[green]No differences between the template and the taxonomy.[/green]")
         return
-    for kind, findings in groupby(audit.findings, key=lambda f: f.kind):
-        lines = [f"{f.name}  {f.detail}".strip() for f in findings]
+    for kind, group in groupby(audit.findings, key=lambda f: f.kind):
+        findings = list(group)
         colour = "yellow" if kind in INFORMATIONAL_KINDS else "red"
-        print(f"\n[{colour}]{kind.value} ({len(lines)}):[/{colour}]")
-        console_print_plain(lines)
+        table = Table(
+            title=f"{kind.value} ({len(findings)})",
+            title_style=f"bold {colour}",
+            title_justify="left",
+            box=box.SIMPLE_HEAD,
+        )
+        columns = [
+            (heading, field)
+            for heading, field in (("Name", "name"), ("Detail", "detail"))
+            if any(getattr(f, field) for f in findings)
+        ]
+        for heading, _ in columns:
+            table.add_column(heading, overflow="fold")
+        for f in findings:
+            # Text, not markup: names and messages can contain square brackets.
+            table.add_row(*(Text(getattr(f, field)) for _, field in columns))
+        print(table)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -75,16 +135,13 @@ def main(argv: list[str] | None = None) -> int:
 
     workbook = loadExcelFromPathOrFileLike(args.workbook)
     reference = loadExcelFromPathOrFileLike(args.reference) if args.reference else None
-    print(f"Workbook: {args.workbook}")
-    if args.reference:
-        print(f"Reference: {args.reference}")
     try:
         audit = auditTemplate(workbook, taxonomy=taxonomy, reference=reference)
     except TaxonomyException as e:
         print(f"[red]{e}[/red]")
         return 2
 
-    printAudit(audit)
+    printAudit(audit, args.workbook, args.reference)
     if problems := audit.problems:
         print(f"\n[red]{len(problems)} problems found.[/red]")
         return 1

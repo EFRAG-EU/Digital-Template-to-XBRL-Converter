@@ -1,9 +1,10 @@
 """Audit a Digital Template's named ranges against its taxonomy.
 
-Binds the workbook exactly as conversion does, then reports where the template
-and taxonomy disagree: names that bind to nothing, reportable concepts and
-hypercubes with no named range, and (given a reference template) names added,
-removed or moved.
+Checks the workbook's schemaRef and template version against the disclosure
+system config, binds the workbook exactly as conversion does, then reports where
+the template and taxonomy disagree: names that bind to nothing, reportable
+concepts and hypercubes with no named range, and (given a reference template)
+names added, removed or moved.
 """
 
 from __future__ import annotations
@@ -13,8 +14,15 @@ from enum import StrEnum
 from typing import TYPE_CHECKING
 
 from mireport.conversionresults import ConversionResultsBuilder, Severity
-from mireport.data.disclosures import VSME_DEFAULTS
+from mireport.data.disclosures import (
+    VSME_DEFAULTS,
+    getDisclosureConfig,
+    getTemplateVersionSetting,
+)
+from mireport.entrypoints import entryPointSetOf
+from mireport.exceptions import TaxonomyException
 from mireport.taxonomy import getTaxonomy
+from mireport.version import VersionHolder
 from mireport.xlsx_template_reader._binder import WorkbookBinder
 from mireport.xlsx_template_reader._constants import (
     IGNORED_DEFINED_NAME_PREFIXES,
@@ -31,6 +39,9 @@ if TYPE_CHECKING:
 
 
 class FindingKind(StrEnum):
+    unknownEntryPoint = "SchemaRef not in any disclosure system"
+    oldEntryPoint = "SchemaRef is an old entry point"
+    templateVersionMismatch = "Template version differs from the disclosure system's"
     nameWithoutConcept = "Named ranges that bind to no taxonomy concept"
     damagedName = "Damaged named ranges"
     conceptWithoutName = "Reportable concepts with no named range"
@@ -42,8 +53,8 @@ class FindingKind(StrEnum):
     aliasedName = "Named ranges bound through a name alias"
 
 
-# Workarounds still in use rather than problems to fix.
-INFORMATIONAL_KINDS = frozenset({FindingKind.aliasedName})
+# Old templates and workarounds still in use rather than problems to fix.
+INFORMATIONAL_KINDS = frozenset({FindingKind.oldEntryPoint, FindingKind.aliasedName})
 
 
 @dataclass(frozen=True)
@@ -87,7 +98,7 @@ def auditTemplate(
     bindResults = ConversionResultsBuilder(consoleOutput=False)
     bindings = WorkbookBinder(reader, taxonomy, bindResults).bind()
 
-    findings: list[TemplateFinding] = []
+    findings = _disclosureSystemFindings(entryPoint, templateVersion)
     damaged = reader.damaged_defined_names
     findings.extend(
         TemplateFinding(FindingKind.damagedName, dn.name, dn.attr_text)
@@ -118,6 +129,50 @@ def auditTemplate(
     kinds = list(FindingKind)
     findings.sort(key=lambda f: (kinds.index(f.kind), f.name, f.detail))
     return TemplateAudit(entryPoint, templateVersion, taxonomy, tuple(findings))
+
+
+def pinnedTemplateVersion(entryPoint: str) -> VersionHolder | None:
+    """The template version the disclosure system config pins for this entry
+    point; None when it leaves it to the migration tool ("auto"), turns
+    migration off ("none") or doesn't list the entry point."""
+    try:
+        setting = getTemplateVersionSetting(entryPointSetOf(entryPoint))
+    except TaxonomyException:
+        return None
+    return VersionHolder.parse_safe(setting or "")
+
+
+def _disclosureSystemFindings(
+    entryPoint: str, templateVersion: str
+) -> list[TemplateFinding]:
+    """Whether a disclosure system config lists the schemaRef, as its supported
+    entry point or an old one, and pins the template version it has."""
+    try:
+        entryPointSet = entryPointSetOf(entryPoint)
+    except TaxonomyException as e:
+        return [TemplateFinding(FindingKind.unknownEntryPoint, entryPoint, str(e))]
+    if (config := getDisclosureConfig(entryPointSet)) is None:
+        return [TemplateFinding(FindingKind.unknownEntryPoint, entryPoint)]
+
+    findings = []
+    supported = config["taxonomyEntryPoints"]["supportedEntryPoint"]
+    if entryPointSet != entryPointSetOf(supported):
+        findings.append(
+            TemplateFinding(
+                FindingKind.oldEntryPoint, entryPoint, f"supported is {supported}"
+            )
+        )
+    if (
+        expected := pinnedTemplateVersion(entryPoint)
+    ) is not None and VersionHolder.parse_or_invalid(templateVersion) != expected:
+        findings.append(
+            TemplateFinding(
+                FindingKind.templateVersionMismatch,
+                templateVersion or "(none)",
+                f"{entryPoint} pins {expected}",
+            )
+        )
+    return findings
 
 
 def _unnamedConcepts(
