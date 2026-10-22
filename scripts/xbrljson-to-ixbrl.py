@@ -185,6 +185,7 @@ def doConversion(args: argparse.Namespace) -> ConversionResults:
 
         pc.mark("Generating Inline Report")
         reportFile = report.getInlineReport()
+        report.reportUntranslatedStrings(pc)
         reportPackage = report.getInlineReportPackage()
 
         output = args.output_path

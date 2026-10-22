@@ -44,21 +44,21 @@
             </div>
 {% if reportInfo.optionalCoverImage %}
             <div class="cover-image">
-                <img src="{{ reportInfo.optionalCoverImage.as_data_url(max_width=500, max_height=500) }}" alt="Cover image" />
+                <img src="{{ reportInfo.optionalCoverImage.as_data_url(max_width=500, max_height=500) }}" alt="{{ _('Cover image') | e }}" />
             </div>
 {% endif %}
 {% if reportInfo.optionalLogoImage %}
             <div class="company-logo">
-                <img src="{{ reportInfo.optionalLogoImage.as_data_url(max_width=400) }}" alt="{{ reportInfo.entityName | e }} logo" />
+                <img src="{{ reportInfo.optionalLogoImage.as_data_url(max_width=400) }}" alt="{{ _('%(entityName)s logo', entityName=reportInfo.entityName) | e }}" />
             </div>
 {% endif %}
         </div>
         <div class="page portrait-page" id="document-information">
             <div class="document-information">
-                <h2>Document Information</h2>
+                <h2>{{ _("Document Information") | e }}</h2>
                 <dl class="document-info-list">
                     {% for item in documentInfo %}
-                    <dt>{{ item.key | e }}</dt>
+                    <dt>{{ _(item.key) | e }}</dt>
                     <dd>
                         {% if item.format_macro is defined %}
                             {{ macros[item.format_macro](item.value) }}
@@ -67,24 +67,24 @@
                         {% endif %}
                     </dd>
                     {% endfor %}
-                    <dt>Report generated</dt>
+                    <dt>{{ _("Report generated") | e }}</dt>
                     <dd>{{ macros.render_datetime(timestamp) }}</dd>
                 </dl>
                 <div class="document-note">
-                    <p>All disclosures are related to the reporting period above unless specified otherwise.{% if reportInfo.priorPeriod %} Comparative figures are for the prior period above.{% endif %}</p>
+                    <p>{{ _("All disclosures are related to the reporting period above unless specified otherwise.") | e }}{% if reportInfo.priorPeriod %} {{ _("Comparative figures are for the prior period above.") | e }}{% endif %}</p>
                 </div>
             </div>
         </div>
 {% if introduction %}
         <div class="page portrait-page" id="introduction">
-            <h2>Introduction</h2>
+            <h2>{{ _("Introduction") | e }}</h2>
             <div class="introduction-content">
                 {{ introduction | e }}
             </div>
         </div>
 {% endif %}
         <div class="page portrait-page toc-page" id="table-of-contents">
-            <h2>Table of contents</h2>
+            <h2>{{ _("Table of contents") | e }}</h2>
             <ol class="toc-list">
 {% for group in toc %}
     {% if group.heading is not none %}
@@ -149,14 +149,14 @@
                         {% if entry.others %}
                         <dd class="fact-period">
                             {% if fact.hasNonDefaultPeriod %}
-                            <div>Reporting period: {{ macros.render_fact_period(fact) }}</div>
+                            <div>{{ _("Reporting period:") | e }} {{ macros.render_fact_period(fact) }}</div>
                             {% endif %}
                             {% for other in entry.others %}
                             <div class="fact-comparative"><span class="fact-comparative-period">{{ macros.render_fact_period(other) }}</span> {{ macros.render_fact_value(other) }}{{ macros.footnote_refs(other.footnotes, footnote_manager) }}{% set ns.fact_count = ns.fact_count + 1 %}</div>
                             {% endfor %}
                         </dd>
                         {% elif fact.hasNonDefaultPeriod %}
-                        <dd class="fact-period">Reporting period: {{ macros.render_fact_period(fact) }}</dd>
+                        <dd class="fact-period">{{ _("Reporting period:") | e }} {{ macros.render_fact_period(fact) }}</dd>
                         {% endif %}
                         {% set reference = none %}
                         {% if reference != none %}
@@ -259,7 +259,11 @@
       {{ backCoverMatter | e }}
     </div>
 {% endif %}
-    <p>This report contains {{ ns.fact_count }} XBRL facts{% if ns.fact_count != uniqueFactCount %} (generated from {{ uniqueFactCount }} unique input facts){% endif %}.</p>
+{% if ns.fact_count == uniqueFactCount %}
+    <p>{{ _("This report contains %(factCount)s XBRL facts.", factCount=ns.fact_count) | e }}</p>
+{% else %}
+    <p>{{ _("This report contains %(factCount)s XBRL facts (%(uniqueFactCount)s unique facts).", factCount=ns.fact_count, uniqueFactCount=uniqueFactCount) | e }}</p>
+{% endif %}
   </div>
 
 </body>

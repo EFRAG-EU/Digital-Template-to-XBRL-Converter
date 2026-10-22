@@ -1,11 +1,23 @@
 from __future__ import annotations
 
 import logging
+from functools import cache
+from importlib.resources import files
+from io import BytesIO
+from pathlib import Path
+
+from babel import Locale
+from babel.support import NullTranslations, Translations
 
 from mireport.entrypoints import EntryPointSet, entryPointSetOf
 from mireport.json import getJsonFiles, getObject
+from mireport.localise import as_xmllang
 
 L = logging.getLogger(__name__)
+
+# Where a checkout's compiled catalogs are (scripts/compile-report-translations.py); an
+# installed wheel has them beside the catalogs instead.
+_CHECKOUT_COMPILED = Path(__file__).resolve().parents[4] / "generated"
 
 
 def _loadConfigs() -> tuple[
@@ -83,6 +95,41 @@ def getLayoutStrategyName(entryPointSet: EntryPointSet) -> str | None:
     return _LAYOUT_OVERRIDES.get(
         entryPointSet, config.get("layoutStrategy", {}).get("default")
     )
+
+
+def getReportTranslations(
+    entryPointSet: EntryPointSet, locale: Locale
+) -> NullTranslations:
+    """The catalog of the report's fixed strings that this entry-point set's config names,
+    for the locale's full tag or else its base language. NullTranslations (the English
+    msgids) when there is neither."""
+    if (config := _CONFIG_BY_ENTRY_POINT.get(entryPointSet)) and (
+        directory := config.get("reportTranslations")
+    ):
+        for language in dict.fromkeys((as_xmllang(locale), locale.language)):
+            if (compiled := _compiledCatalog(directory, language)) is not None:
+                return Translations(BytesIO(compiled))
+    return NullTranslations()
+
+
+@cache
+def _compiledCatalog(directory: str, language: str) -> bytes | None:
+    """``<directory>/<language>.mo``, compiled from its catalog when the package was built,
+    or None when there is no catalog for the language."""
+    catalogs = files(__name__).joinpath(*directory.split("/"))
+    for mo in (
+        catalogs.joinpath(f"{language}.mo"),
+        _CHECKOUT_COMPILED.joinpath(*directory.split("/"), f"{language}.mo"),
+    ):
+        if mo.is_file():
+            return mo.read_bytes()
+    if catalogs.joinpath(f"{language}.po").is_file():
+        L.warning(
+            "The %s report strings are not compiled; run "
+            "scripts/compile-report-translations.py",
+            language,
+        )
+    return None
 
 
 # Back-compat: existing callers (e.g. processor.py) import this by name

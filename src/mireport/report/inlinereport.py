@@ -11,13 +11,17 @@ from unicodedata import name as unicode_name
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
+    from mireport.conversionresults import ProcessingContext
+
 import ixbrltemplates
 from babel import Locale
+from babel.support import NullTranslations
 from jinja2 import Environment, PackageLoader, StrictUndefined, Undefined
 from markupsafe import Markup
 from rcssmin import cssmin
 
 import mireport
+from mireport.data.disclosures import getReportTranslations
 from mireport.exceptions import InlineReportException
 from mireport.filesupport import FilelikeAndFileName, zipSafeString
 from mireport.localise import (
@@ -54,6 +58,25 @@ def _now_utc() -> datetime:
     return datetime.now(UTC)
 
 
+def msgid(text: str) -> str:
+    """Marks ``text`` as a msgid where it is defined; the template translates it."""
+    return text
+
+
+class _MissRecorder(NullTranslations):
+    """The last fallback of a report's translations: notes each msgid that reached it and
+    gives it back untranslated."""
+
+    def __init__(self, misses: list[str]):
+        super().__init__()
+        self._misses = misses
+
+    def gettext(self, message: str) -> str:
+        if message not in self._misses:
+            self._misses.append(message)
+        return message
+
+
 class InlineReport(Report):
     """A Report as an Inline XBRL document: what it says in which language and locale, how it
     looks, and how it is packaged."""
@@ -73,6 +96,9 @@ class InlineReport(Report):
         self._theme: ReportTheme = ReportTheme.default()
         self._footnotesByGroup: dict[str, Footnote] = {}
         self._labelOverrides: dict[str, str] = {}
+        # The report's fixed strings that had no translation into a non-English output
+        # language, in the order the report first used them; filled in when it is rendered.
+        self.untranslatedStrings: list[str] = []
         if not outputLocale:
             outputLocale = (
                 get_locale_from_str(taxonomy.defaultLanguage or "") or Locale.default()
@@ -205,25 +231,25 @@ class InlineReport(Report):
             bits.append(d)
 
         meta = {
-            "Entity Name": self._entityName,
-            "Entity Identifier": self._entityIdentifier,
-            "Entity Identifier Scheme": self._entityScheme,
+            msgid("Entity Name"): self._entityName,
+            msgid("Entity Identifier"): self._entityIdentifier,
+            msgid("Entity Identifier Scheme"): self._entityScheme,
             # Not every taxonomy has monetary facts, so there may be no report currency.
-            "Report currency": (
+            msgid("Report currency"): (
                 self._defaultCurrency.localName if self._defaultCurrency else None
             ),
         }
         for k, v in meta.items():
             if v is not None:
                 addDict(k, v)
-        addDict("Report period", self.defaultPeriod, "render_duration_period")
+        addDict(msgid("Report period"), self.defaultPeriod, "render_duration_period")
         if (prior := self.priorPeriod) is not None:
-            addDict("Prior period", prior, "render_duration_period")
+            addDict(msgid("Prior period"), prior, "render_duration_period")
 
         separator = decimal_symbol(self._outputLocale)
         bits.append(
             {
-                "key": "Decimal separator",
+                "key": msgid("Decimal separator"),
                 "value": Symbol(symbol=separator, name=unicode_name(separator)),
                 "format_macro": "render_symbol",
             }
@@ -257,13 +283,21 @@ class InlineReport(Report):
         sections = rl.organise(layout)
         toc = withoutContinuations(layout.build_toc(sections, lang), sections)
 
+        translations = getReportTranslations(
+            self._taxonomy.entryPointSet, self._outputLocale
+        )
+        if self._outputLocale.language != "en":
+            translations.add_fallback(_MissRecorder(self.untranslatedStrings))
+
         env = Environment(
             loader=PackageLoader("mireport.report", "inline_report_templates"),
+            extensions=["jinja2.ext.i18n"],
             keep_trailing_newline=True,
             trim_blocks=True,
             lstrip_blocks=True,
             undefined=StrictUndefined if L.isEnabledFor(logging.DEBUG) else Undefined,
         )
+        env.install_gettext_translations(translations, newstyle=True)  # type: ignore[attr-defined]
         env.globals.update(
             {
                 PresentationStyle.__name__: PresentationStyle,
@@ -333,6 +367,12 @@ class InlineReport(Report):
             footnotes_by_group=self._footnotesByGroup,
             footnote_manager=fn_manager,
         )
+        if self.untranslatedStrings:
+            L.info(
+                "Report strings with no %s translation: %s",
+                self.language,
+                self.untranslatedStrings,
+            )
 
         try:
             start_time = time.perf_counter_ns()
@@ -388,6 +428,14 @@ class InlineReport(Report):
             docsetMembers=docsetMembers,
             attachments=attachments,
         )
+
+    def reportUntranslatedStrings(self, pc: ProcessingContext) -> None:
+        """Say, as dev info, which of the rendered report's fixed strings had no translation."""
+        if self.untranslatedStrings:
+            pc.addDevInfoMessage(
+                f"Report strings with no {self.language} translation: "
+                f"{'; '.join(self.untranslatedStrings)}"
+            )
 
     def getInlineReport(self) -> FilelikeAndFileName:
         yearEnd = self.defaultPeriod.lastDay.year

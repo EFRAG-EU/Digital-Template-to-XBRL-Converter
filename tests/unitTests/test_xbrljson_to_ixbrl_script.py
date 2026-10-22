@@ -82,3 +82,30 @@ def test_report_on_a_built_in_taxonomy_converts(
     results = script.doConversion(args)
     assert not results.hasErrors()
     assert list(output.glob("*.html"))
+
+
+def test_a_german_report_is_translated_and_says_what_was_not(
+    script: ModuleType, tmp_path: Path
+) -> None:
+    document = vsmeReport()
+    document["facts"]["f3"] = {
+        "value": "Ein Verhaltenskodex für Lieferanten.",
+        "dimensions": {
+            "concept": "vsme:SpecificationOfOtherTypesOfContentCoveredByTheCodeOfConductOrHumanRightsPolicy",
+            "entity": ENTITY,
+            "period": DURATION,
+            "language": "de",
+        },
+    }
+    report = tmp_path / "report.json"
+    report.write_text(json.dumps(document), encoding="utf-8")
+    output = tmp_path / "out"
+    args = script.createArgParser().parse_args(
+        [str(report), str(output), "--strict", "--skip-validation"]
+    )
+    results = script.doConversion(args)
+    (html,) = output.glob("*.html")
+    assert "<dt>Bericht erstellt</dt>" in html.read_text(encoding="utf-8")
+    assert "Report strings with no de translation: Document Information" in [
+        str(m.messageText) for m in results.developerMessages
+    ]

@@ -371,6 +371,7 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, list[str]
 
         pc.mark("Generating Inline Report")
         reportFile = report.getInlineReport()
+        report.reportUntranslatedStrings(pc)
         if pdfs.mergedAnnexes:
             reportFile = mergeAnnexesIntoReport(reportFile, pdfs.mergedAnnexes)
         reportPackage = buildReportPackage(
