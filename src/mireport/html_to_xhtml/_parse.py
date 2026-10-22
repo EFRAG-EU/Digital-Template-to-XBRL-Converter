@@ -133,3 +133,27 @@ def _moveIntoXhtmlNamespace(root: etree._Element) -> etree._Element:
         _copyAttribute(replacement, name, value)
     replacement.extend(list(root))
     return replacement
+
+
+def parseDocument(content: bytes) -> etree._Element:
+    """Parse @content, whatever a tool emitted, into a tree in the XHTML
+    namespace, ready for :func:`mireport.html_to_xhtml.normaliseDocument`.
+
+    The one place a document is parsed: everything after this works on, and
+    hands along, the tree.
+
+    :raises XhtmlError: if @content is empty or binary (it contains NUL bytes
+        and is not UTF-16/32 text), or cannot be parsed as HTML at all — each
+        means the tool produced something other than a document, whatever its
+        exit code claimed.
+    """
+    if not content.strip():
+        raise XhtmlError("was empty.")
+    if _isBinary(content):
+        raise XhtmlError("is binary (it contains NUL bytes), not HTML.")
+    try:
+        if (root := _parseAsXhtml(content)) is None:
+            root = _moveIntoXhtmlNamespace(_parseAsHtml(content))
+    except (ValueError, etree.LxmlError) as e:
+        raise XhtmlError(f"could not be turned into XHTML. {e}") from e
+    return root

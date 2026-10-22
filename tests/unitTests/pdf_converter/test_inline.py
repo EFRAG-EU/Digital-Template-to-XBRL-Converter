@@ -13,13 +13,22 @@ import base64
 from pathlib import Path
 
 import pytest
+from lxml import etree
 
+from mireport.html_to_xhtml import parseDocument
 from mireport.pdf_converter._inline import inlineLocalResources
 
 PNG = base64.b64decode(
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmM"
     "IQAAAABJRU5ErkJggg=="
 )
+
+
+def _inline(source: bytes, workingDir: Path) -> bytes:
+    """Inline into the parsed @source, as runConverter does, and serialise it."""
+    root = parseDocument(source)
+    inlineLocalResources(root, workingDir)
+    return etree.tostring(root)
 
 
 @pytest.fixture
@@ -35,14 +44,14 @@ def workingDir(tmp_path: Path) -> Path:
 
 class TestImageInlining:
     def test_relative_image_becomes_a_data_uri(self, workingDir: Path) -> None:
-        result = inlineLocalResources(
+        result = _inline(
             b'<html><body><img src="page001.png"/></body></html>', workingDir
         )
         assert b"data:image/png;base64," in result
         assert b'src="page001.png"' not in result
 
     def test_every_image_is_inlined(self, workingDir: Path) -> None:
-        result = inlineLocalResources(
+        result = _inline(
             b'<html><body><img src="page001.png"/><img src="page002.png"/></body></html>',
             workingDir,
         )
@@ -50,7 +59,7 @@ class TestImageInlining:
         assert b".png" not in result
 
     def test_stylesheet_link_is_inlined(self, workingDir: Path) -> None:
-        result = inlineLocalResources(
+        result = _inline(
             b'<html><head><link rel="stylesheet" href="fonts.css"/></head></html>',
             workingDir,
         )
@@ -58,9 +67,7 @@ class TestImageInlining:
 
     def test_url_encoded_reference_is_resolved(self, tmp_path: Path) -> None:
         (tmp_path / "a b.png").write_bytes(PNG)
-        result = inlineLocalResources(
-            b'<html><body><img src="a%20b.png"/></body></html>', tmp_path
-        )
+        result = _inline(b'<html><body><img src="a%20b.png"/></body></html>', tmp_path)
         assert b"data:image/png;base64," in result
 
 
@@ -80,22 +87,16 @@ class TestLeftAlone:
         self, workingDir: Path, reference: bytes
     ) -> None:
         source = b'<html><body><img src="' + reference + b'"/></body></html>'
-        assert reference in inlineLocalResources(source, workingDir)
+        assert reference in _inline(source, workingDir)
 
     def test_missing_file_is_left_as_is(self, workingDir: Path) -> None:
         """Better a visibly broken reference than a crash mid-conversion."""
-        result = inlineLocalResources(
-            b'<html><body><img src="nope.png"/></body></html>', workingDir
-        )
+        result = _inline(b'<html><body><img src="nope.png"/></body></html>', workingDir)
         assert b"nope.png" in result
-
-    def test_unparseable_content_is_returned_unchanged(self, workingDir: Path) -> None:
-        """Normalisation runs next and reports the problem properly."""
-        assert inlineLocalResources(b"\x00\x01", workingDir) == b"\x00\x01"
 
     def test_document_without_references_is_unchanged(self, workingDir: Path) -> None:
         source = b"<html><body><p>text only</p></body></html>"
-        assert inlineLocalResources(source, workingDir) == source
+        assert b"data:" not in _inline(source, workingDir)
 
 
 # ── escaping the working directory ────────────────────────────────────────────
@@ -109,7 +110,7 @@ class TestPathTraversal:
         secret.write_bytes(b"TOP SECRET")
         working = tmp_path / "work"
         working.mkdir()
-        result = inlineLocalResources(
+        result = _inline(
             b'<html><body><img src="../secret.png"/></body></html>', working
         )
         assert b"data:" not in result
@@ -125,7 +126,7 @@ class TestPathTraversal:
             + str(secret).replace("\\", "/").encode()
             + b'"/></body></html>'
         )
-        assert b"data:" not in inlineLocalResources(source, working)
+        assert b"data:" not in _inline(source, working)
 
     def test_nested_file_inside_the_working_dir_is_allowed(
         self, tmp_path: Path
@@ -133,7 +134,7 @@ class TestPathTraversal:
         nested = tmp_path / "images"
         nested.mkdir()
         (nested / "a.png").write_bytes(PNG)
-        result = inlineLocalResources(
+        result = _inline(
             b'<html><body><img src="images/a.png"/></body></html>', tmp_path
         )
         assert b"data:image/png;base64," in result
@@ -144,7 +145,7 @@ class TestPathTraversal:
 
 class TestCssUrls:
     def test_url_in_a_style_element_is_inlined(self, workingDir: Path) -> None:
-        result = inlineLocalResources(
+        result = _inline(
             b"<html><head><style>.a{background:url(page001.png)}</style></head></html>",
             workingDir,
         )
@@ -152,14 +153,14 @@ class TestCssUrls:
 
     def test_quoted_url_is_inlined(self, workingDir: Path) -> None:
         """The author's quoting is preserved; only the reference is replaced."""
-        result = inlineLocalResources(
+        result = _inline(
             b'<html><head><style>.a{background:url("page001.png")}</style></head></html>',
             workingDir,
         )
         assert b'url("data:image/png;base64,' in result
 
     def test_url_in_a_style_attribute_is_inlined(self, workingDir: Path) -> None:
-        result = inlineLocalResources(
+        result = _inline(
             b'<html><body><div style="background:url(page001.png)"></div></body></html>',
             workingDir,
         )
@@ -167,13 +168,11 @@ class TestCssUrls:
 
     def test_data_url_is_not_re_inlined(self, workingDir: Path) -> None:
         source = b"<html><head><style>.a{background:url(data:image/png;base64,AA)}</style></head></html>"
-        assert b"url(data:image/png;base64,AA)" in inlineLocalResources(
-            source, workingDir
-        )
+        assert b"url(data:image/png;base64,AA)" in _inline(source, workingDir)
 
     def test_remote_url_is_left_alone(self, workingDir: Path) -> None:
         source = b"<html><head><style>.a{background:url(https://x.test/a.png)}</style></head></html>"
-        assert b"https://x.test/a.png" in inlineLocalResources(source, workingDir)
+        assert b"https://x.test/a.png" in _inline(source, workingDir)
 
 
 class TestOnlyRealCssReferences:
@@ -185,12 +184,14 @@ class TestOnlyRealCssReferences:
 
     def test_url_inside_a_css_string_is_left_alone(self, workingDir: Path) -> None:
         source = b'<html><head><style>.a:before{content:"url(page001.png)"}</style></head></html>'
-        assert b"page001.png" in inlineLocalResources(source, workingDir)
+        assert b"page001.png" in _inline(source, workingDir)
 
     def test_url_inside_a_css_comment_is_left_alone(self, workingDir: Path) -> None:
         source = b"<html><head><style>/* url(page001.png) */.a{color:red}</style></head></html>"
-        assert b"page001.png" in inlineLocalResources(source, workingDir)
+        assert b"page001.png" in _inline(source, workingDir)
 
     def test_url_in_body_text_is_left_alone(self, workingDir: Path) -> None:
         source = b"<html><body><p>url(page001.png)</p></body></html>"
-        assert inlineLocalResources(source, workingDir) == source
+        result = _inline(source, workingDir)
+        assert b"<p>url(page001.png)</p>" in result
+        assert b"data:" not in result

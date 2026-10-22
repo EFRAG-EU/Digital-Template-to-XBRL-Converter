@@ -20,7 +20,11 @@ from mireport.pdf_converter._batch import (
     PdfSupplementaryMode,
     convertSupplementaryPdfs,
 )
-from mireport.pdf_converter._convert import convertPdfToHtml, outputFilenameFor
+from mireport.pdf_converter._convert import (
+    convertPdfToHtml,
+    convertPdfToXhtml,
+    outputFilenameFor,
+)
 from mireport.pdf_converter._exceptions import (
     PdfConversionError,
     PdfToolNotFoundError,
@@ -51,6 +55,7 @@ __all__ = [
     "availableConverters",
     "buildMergedAnnex",
     "convertPdfToHtml",
+    "convertPdfToXhtml",
     "convertSupplementaryPdfs",
     "findConverter",
     "mergeAnnexesIntoReport",

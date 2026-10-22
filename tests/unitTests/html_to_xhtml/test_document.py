@@ -21,10 +21,22 @@ from __future__ import annotations
 import pytest
 from lxml import etree
 
-from mireport.html_to_xhtml import XhtmlError, normaliseDocument
+from mireport.html_to_xhtml import (
+    XhtmlError,
+    documentToBytes,
+    normaliseDocument,
+    parseDocument,
+)
 
 XHTML = "http://www.w3.org/1999/xhtml"
 IX = "http://www.xbrl.org/2013/inlineXBRL"
+
+
+def _normalise(content: bytes, *, injectIxHeader: bool = True) -> bytes:
+    """Parse, normalise and serialise @content, as a document set member is."""
+    root = normaliseDocument(parseDocument(content), injectIxHeader=injectIxHeader)
+    return documentToBytes(root)
+
 
 MALFORMED = b"""<!DOCTYPE html>
 <html><head><meta charset=utf-8>
@@ -47,7 +59,7 @@ MALFORMED = b"""<!DOCTYPE html>
 
 @pytest.fixture
 def normalised() -> bytes:
-    return normaliseDocument(MALFORMED)
+    return _normalise(MALFORMED)
 
 
 @pytest.fixture
@@ -84,7 +96,7 @@ class TestWellFormed:
         ids=["void", "implied-close", "unquoted", "img", "table", "list"],
     )
     def test_html5_shapes_become_well_formed(self, fragment: bytes) -> None:
-        etree.fromstring(normaliseDocument(fragment), etree.XMLParser())
+        etree.fromstring(_normalise(fragment), etree.XMLParser())
 
     def test_normalising_its_own_output_changes_nothing(
         self, normalised: bytes
@@ -93,7 +105,7 @@ class TestWellFormed:
         only one where the input arrives with a real ``ix:header`` rather than a
         literally named one — no second header, and nothing the strict element
         check refuses."""
-        assert normaliseDocument(normalised) == normalised
+        assert _normalise(normalised) == normalised
 
 
 # ── document set membership ───────────────────────────────────────────────────
@@ -125,8 +137,8 @@ class TestInlineXbrlMembership:
         """Normalising already-normalised output must be a no-op, not a second
         header — and must not crash on the xmlns attributes the HTML parser
         would otherwise choke on."""
-        once = normaliseDocument(MALFORMED)
-        assert normaliseDocument(once).count(b"<ix:header") == 1
+        once = _normalise(MALFORMED)
+        assert _normalise(once).count(b"<ix:header") == 1
 
     def test_existing_ix_content_is_left_alone(self) -> None:
         """A converter that already emitted ix: content keeps its own header."""
@@ -137,7 +149,7 @@ class TestInlineXbrlMembership:
             b'<body><div style="display:none"><ix:header id="theirs"/></div></body>'
             b"</html>"
         )
-        root = etree.fromstring(normaliseDocument(source))
+        root = etree.fromstring(_normalise(source))
         headers = root.findall(f".//{{{IX}}}header")
         assert len(headers) == 1
         assert headers[0].get("id") == "theirs"
@@ -156,7 +168,7 @@ class TestSchemaConformance:
 
     def test_data_attributes_are_stripped(self) -> None:
         source = b'<html><body><div class="pf" data-page-no=1 data-x="y">p</div></body></html>'
-        root = etree.fromstring(normaliseDocument(source))
+        root = etree.fromstring(_normalise(source))
         assert not [
             name
             for element in root.iter()
@@ -169,7 +181,7 @@ class TestSchemaConformance:
         source = (
             b'<html><body><div class="pf" id="p1" data-page-no=1>p</div></body></html>'
         )
-        root = etree.fromstring(normaliseDocument(source))
+        root = etree.fromstring(_normalise(source))
         div = root.find(f".//{{{XHTML}}}div[@id='p1']")
         assert div is not None
         assert div.get("class") == "pf"
@@ -179,7 +191,7 @@ class TestSchemaConformance:
         requires content on every meta. The encoding lives in the XML
         declaration regardless."""
         source = b"<html><head><meta charset=utf-8></head><body>x</body></html>"
-        root = etree.fromstring(normaliseDocument(source))
+        root = etree.fromstring(_normalise(source))
         assert root.findall(f".//{{{XHTML}}}meta") == []
 
     def test_meta_with_content_is_kept(self) -> None:
@@ -187,7 +199,7 @@ class TestSchemaConformance:
             b'<html><head><meta http-equiv="Content-Type" content="text/html"></head>'
             b"<body>x</body></html>"
         )
-        root = etree.fromstring(normaliseDocument(source))
+        root = etree.fromstring(_normalise(source))
         metas = root.findall(f".//{{{XHTML}}}meta")
         assert len(metas) == 1
         assert metas[0].get("content") == "text/html"
@@ -195,23 +207,23 @@ class TestSchemaConformance:
     def test_head_always_has_a_title(self) -> None:
         """Stripping the meta can leave a head with no permitted child."""
         source = b"<html><head><meta charset=utf-8></head><body>x</body></html>"
-        root = etree.fromstring(normaliseDocument(source))
+        root = etree.fromstring(_normalise(source))
         head = root.find(f"{{{XHTML}}}head")
         assert head is not None
         assert (head.find(f"{{{XHTML}}}title") is not None) and len(head) >= 1
 
     def test_existing_title_is_kept(self) -> None:
         source = b"<html><head><title>Annex A</title></head><body>x</body></html>"
-        root = etree.fromstring(normaliseDocument(source))
+        root = etree.fromstring(_normalise(source))
         titles = root.findall(f".//{{{XHTML}}}title")
         assert [t.text for t in titles] == ["Annex A"]
 
     def test_head_is_created_when_absent(self) -> None:
-        root = etree.fromstring(normaliseDocument(b"<html><body>x</body></html>"))
+        root = etree.fromstring(_normalise(b"<html><body>x</body></html>"))
         assert root.find(f"{{{XHTML}}}head") is not None
 
     def test_head_precedes_body(self) -> None:
-        root = etree.fromstring(normaliseDocument(b"<html><body>x</body></html>"))
+        root = etree.fromstring(_normalise(b"<html><body>x</body></html>"))
         assert [etree.QName(c).localname for c in root] == ["head", "body"]
 
 
@@ -229,33 +241,33 @@ class TestStrictStructure:
     )
     def test_presentational_body_attributes_are_stripped(self, attribute: str) -> None:
         source = f'<html><body {attribute}="blue">x</body></html>'.encode()
-        root = etree.fromstring(normaliseDocument(source))
+        root = etree.fromstring(_normalise(source))
         body = root.find(f"{{{XHTML}}}body")
         assert body is not None and attribute not in body.attrib
 
     def test_lang_is_dropped_but_xml_lang_kept(self) -> None:
         source = b'<html lang="en" xml:lang="en"><body>x</body></html>'
-        root = etree.fromstring(normaliseDocument(source))
+        root = etree.fromstring(_normalise(source))
         assert "lang" not in root.attrib
         assert root.get("{http://www.w3.org/XML/1998/namespace}lang") == "en"
 
     def test_xml_lang_alone_survives(self) -> None:
         source = b'<html xml:lang="fr"><body>x</body></html>'
-        root = etree.fromstring(normaliseDocument(source))
+        root = etree.fromstring(_normalise(source))
         assert root.get("{http://www.w3.org/XML/1998/namespace}lang") == "fr"
 
     def test_body_children_are_wrapped_in_a_block(self) -> None:
         """Strict requires block-level children; pdftohtml puts bare anchors
         straight in the body."""
         source = b'<html><body><a name="1"></a>loose text</body></html>'
-        root = etree.fromstring(normaliseDocument(source))
+        root = etree.fromstring(_normalise(source))
         body = root.find(f"{{{XHTML}}}body")
         assert body is not None
         assert all(etree.QName(c).localname == "div" for c in body)
 
     def test_anchor_name_becomes_an_id(self) -> None:
         source = b'<html><body><a name="1">x</a></body></html>'
-        root = etree.fromstring(normaliseDocument(source))
+        root = etree.fromstring(_normalise(source))
         anchor = root.find(f".//{{{XHTML}}}a")
         assert anchor is not None
         assert "name" not in anchor.attrib
@@ -265,7 +277,7 @@ class TestStrictStructure:
         """A raw page number cannot be an id — NCNames may not start with a
         digit — so the prefix is load-bearing, not decoration."""
         root = etree.fromstring(
-            normaliseDocument(b'<html><body><a name="1">x</a></body></html>')
+            _normalise(b'<html><body><a name="1">x</a></body></html>')
         )
         anchor = root.find(f".//{{{XHTML}}}a")
         assert anchor is not None
@@ -274,13 +286,13 @@ class TestStrictStructure:
     def test_links_to_renamed_anchors_are_rewritten(self) -> None:
         """Otherwise the page navigation silently points at nothing."""
         source = b'<html><body><a name="1">x</a><a href="#1">go</a></body></html>'
-        root = etree.fromstring(normaliseDocument(source))
+        root = etree.fromstring(_normalise(source))
         links = [a.get("href") for a in root.findall(f".//{{{XHTML}}}a")]
         assert "#pdfpage-1" in links
 
     def test_unrelated_links_are_not_rewritten(self) -> None:
         source = b'<html><body><a name="1">x</a><a href="#other">go</a></body></html>'
-        root = etree.fromstring(normaliseDocument(source))
+        root = etree.fromstring(_normalise(source))
         assert "#other" in [a.get("href") for a in root.findall(f".//{{{XHTML}}}a")]
 
     def test_a_links_hit_area_becomes_inline(self) -> None:
@@ -292,7 +304,7 @@ class TestStrictStructure:
             b'<div class="d m2" style="position:absolute;left:1px"></div>'
             b"</a></body></html>"
         )
-        root = etree.fromstring(normaliseDocument(source))
+        root = etree.fromstring(_normalise(source))
         assert not root.findall(f".//{{{XHTML}}}a//{{{XHTML}}}div")
         span = root.find(f".//{{{XHTML}}}a/{{{XHTML}}}span")
         assert span is not None
@@ -305,18 +317,18 @@ class TestStrictStructure:
         source = (
             b'<html><body><a href="https://example.org/"><div>x</div></a></body></html>'
         )
-        root = etree.fromstring(normaliseDocument(source))
+        root = etree.fromstring(_normalise(source))
         anchor = root.find(f".//{{{XHTML}}}a")
         assert anchor is not None and anchor.get("href") == "https://example.org/"
 
     def test_divs_outside_anchors_are_left_alone(self) -> None:
         source = b'<html><body><div class="pf">page</div></body></html>'
-        root = etree.fromstring(normaliseDocument(source))
+        root = etree.fromstring(_normalise(source))
         assert root.findall(f".//{{{XHTML}}}div[@class='pf']")
 
     def test_style_gets_a_type(self) -> None:
         source = b"<html><head><style>p{color:red}</style></head><body>y</body></html>"
-        root = etree.fromstring(normaliseDocument(source))
+        root = etree.fromstring(_normalise(source))
         style = root.find(f".//{{{XHTML}}}style")
         assert style is not None and style.get("type") == "text/css"
 
@@ -325,13 +337,13 @@ class TestStrictStructure:
             b'<html><head><style type="text/x-custom">p{color:red}</style></head>'
             b"<body>y</body></html>"
         )
-        root = etree.fromstring(normaliseDocument(source))
+        root = etree.fromstring(_normalise(source))
         style = root.find(f".//{{{XHTML}}}style")
         assert style is not None and style.get("type") == "text/x-custom"
 
     def test_style_in_the_body_is_hoisted_to_the_head(self) -> None:
         source = b"<html><head><title>t</title></head><body><style>p{color:red}</style><div>x</div></body></html>"
-        root = etree.fromstring(normaliseDocument(source))
+        root = etree.fromstring(_normalise(source))
         head = root.find(f"{{{XHTML}}}head")
         body = root.find(f"{{{XHTML}}}body")
         assert head is not None and body is not None
@@ -340,13 +352,13 @@ class TestStrictStructure:
 
     def test_hoisted_style_keeps_its_css(self) -> None:
         source = b"<html><body><style>p{color:red}</style><div>x</div></body></html>"
-        root = etree.fromstring(normaliseDocument(source))
+        root = etree.fromstring(_normalise(source))
         style = root.find(f".//{{{XHTML}}}style")
         assert style is not None and "color:red" in (style.text or "")
 
     def test_content_around_a_hoisted_style_survives(self) -> None:
         source = b"<html><body><div>before</div><style>p{color:red}</style>after</body></html>"
-        text = etree.fromstring(normaliseDocument(source)).xpath("string()")
+        text = etree.fromstring(_normalise(source)).xpath("string()")
         assert "before" in text and "after" in text
 
 
@@ -376,7 +388,7 @@ class TestContentPreserved:
             b"<html><body><div>before</div>"
             b"<script>if (1 < 2 && 3 > 2) { x(); }</script>after</body></html>"
         )
-        text = etree.fromstring(normaliseDocument(source)).xpath("string()")
+        text = etree.fromstring(_normalise(source)).xpath("string()")
         assert "before" in text and "after" in text
         assert "x()" not in text
 
@@ -391,7 +403,7 @@ class TestScriptsRemoved:
 
     def test_scripts_are_removed(self) -> None:
         source = b"<html><head><script>var x = 1;</script></head><body>y</body></html>"
-        root = etree.fromstring(normaliseDocument(source))
+        root = etree.fromstring(_normalise(source))
         assert root.findall(f".//{{{XHTML}}}script") == []
 
     def test_every_script_is_removed(self) -> None:
@@ -399,18 +411,18 @@ class TestScriptsRemoved:
             b"<html><head><script>a()</script></head>"
             b"<body><script>b()</script><div>x</div><script>c()</script></body></html>"
         )
-        result = normaliseDocument(source)
+        result = _normalise(source)
         assert b"<script" not in result
         assert b"a()" not in result and b"b()" not in result and b"c()" not in result
 
     def test_the_real_converter_sample_has_none_left(self) -> None:
         """MALFORMED carries a pdf2htmlEX-shaped inline script."""
-        assert b"<script" not in normaliseDocument(MALFORMED)
+        assert b"<script" not in _normalise(MALFORMED)
 
     def test_page_content_still_survives(self) -> None:
         """pdf2htmlEX's script only drives optional page navigation; the page
         itself is CSS-positioned content and renders without it."""
-        result = normaliseDocument(MALFORMED)
+        result = _normalise(MALFORMED)
         assert b"Converted annex" in result
 
 
@@ -431,7 +443,7 @@ class TestScriptingRemoved:
         ids=["onclick", "onload", "onerror"],
     )
     def test_event_handlers_are_removed(self, source: bytes) -> None:
-        result = normaliseDocument(source)
+        result = _normalise(source)
         assert b"x()" not in result
 
     @pytest.mark.parametrize(
@@ -441,7 +453,7 @@ class TestScriptingRemoved:
     )
     def test_scripting_urls_are_removed(self, href: bytes) -> None:
         source = b'<html><body><p><a href="' + href + b'">link</a></p></body></html>'
-        root = etree.fromstring(normaliseDocument(source))
+        root = etree.fromstring(_normalise(source))
         (anchor,) = root.findall(f".//{{{XHTML}}}a")
         assert anchor.get("href") is None
         assert anchor.text == "link", "the element stays; only the URL goes"
@@ -461,7 +473,7 @@ class TestScriptingRemoved:
         source = (
             f'<html><body><p><a {attribute}="{value}">x</a></p></body></html>'
         ).encode()
-        root = etree.fromstring(normaliseDocument(source))
+        root = etree.fromstring(_normalise(source))
         (anchor,) = root.findall(f".//{{{XHTML}}}a")
         assert anchor.get(attribute) == value
 
@@ -471,7 +483,7 @@ class TestScriptingRemoved:
             b'<html><body><img alt="" src="data:image/png;base64,iVBORw0KGgo="/>'
             b"</body></html>"
         )
-        root = etree.fromstring(normaliseDocument(source))
+        root = etree.fromstring(_normalise(source))
         (img,) = root.findall(f".//{{{XHTML}}}img")
         assert img.get("src") == "data:image/png;base64,iVBORw0KGgo="
 
@@ -487,14 +499,14 @@ class TestRejection:
     )
     def test_unparseable_input_raises(self, content: bytes) -> None:
         with pytest.raises(XhtmlError):
-            normaliseDocument(content)
+            _normalise(content)
 
     def test_nul_bytes_inside_otherwise_valid_html_are_rejected(self) -> None:
         """Rejected by rule, not left to the HTML parser: lxml built on libxml2
         2.14 (the Linux wheels) turns a NUL into U+FFFD and recovers a document,
         where the Windows build refuses it. The result must not depend on which."""
         with pytest.raises(XhtmlError, match="NUL"):
-            normaliseDocument(b"<html><body><p>a\x00b</p></body></html>")
+            _normalise(b"<html><body><p>a\x00b</p></body></html>")
 
     @pytest.mark.parametrize("encoding", ["utf-16", "utf-32"])
     def test_wide_encoded_html_with_a_byte_order_mark_is_not_binary(
@@ -502,7 +514,7 @@ class TestRejection:
     ) -> None:
         """NUL bytes are ordinary in UTF-16/32, so a BOM exempts a document."""
         source = "<html><body><p>hello</p></body></html>".encode(encoding)
-        assert b"hello" in normaliseDocument(source)
+        assert b"hello" in _normalise(source)
 
     def test_plain_text_is_recovered_rather_than_rejected(self) -> None:
         """An HTML parser's job is to make a document out of what it is given,
@@ -510,7 +522,7 @@ class TestRejection:
         "recovered badly" from "recovered fine" is not something this can do, so
         it does not pretend to: the guarantee is well-formed XHTML out, not a
         judgement on whether the converter did anything sensible."""
-        result = normaliseDocument(b"just some text, no markup at all")
+        result = _normalise(b"just some text, no markup at all")
         assert b"just some text" in result
         etree.fromstring(result, etree.XMLParser())
 
@@ -532,12 +544,12 @@ class TestRejection:
         find out what the converters we use actually emit. A rejected annex
         still ships, unconverted, as a warning."""
         with pytest.raises(XhtmlError):
-            normaliseDocument(source)
+            _normalise(source)
 
     def test_the_rejection_names_what_was_not_recognised(self) -> None:
         source = b"<html><body><article>a</article><aside>b</aside></body></html>"
         with pytest.raises(XhtmlError, match="article, aside"):
-            normaliseDocument(source)
+            _normalise(source)
 
     @pytest.mark.parametrize(
         "source",
@@ -563,7 +575,7 @@ class TestRejection:
         silently re-points every relative URL. Neither converter emits any of
         them, so one appearing means this is not converter output."""
         with pytest.raises(XhtmlError, match="no use for"):
-            normaliseDocument(source)
+            _normalise(source)
 
     def test_a_literally_named_ix_element_never_becomes_inline_xbrl(self) -> None:
         """An annex contributes content, never XBRL. From the HTML parser
@@ -571,4 +583,4 @@ class TestRejection:
         ix prefix, so emitting it would make a real one on re-parse."""
         source = b"<html><body><ix:header><ix:resources/></ix:header></body></html>"
         with pytest.raises(XhtmlError, match="ix:header"):
-            normaliseDocument(source)
+            _normalise(source)

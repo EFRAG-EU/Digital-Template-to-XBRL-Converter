@@ -6,11 +6,13 @@ from pathlib import PurePosixPath
 from typing import TYPE_CHECKING
 
 from mireport.filesupport import FilelikeAndFileName, zipSafeString
-from mireport.html_to_xhtml import XhtmlError, normaliseDocument
+from mireport.html_to_xhtml import XhtmlError, documentToBytes, normaliseDocument
 from mireport.pdf_converter._exceptions import PdfConversionError
 from mireport.pdf_converter._run import DEFAULT_TIMEOUT_SECONDS, runConverter
 
 if TYPE_CHECKING:
+    from lxml import etree
+
     from mireport.pdf_converter._backends import ResolvedConverter
 
 OUTPUT_SUFFIX = ".xhtml"
@@ -31,18 +33,16 @@ def outputFilenameFor(filename: str) -> str:
     return f"{zipSafeString(stem, fallback='annex')}{OUTPUT_SUFFIX}"
 
 
-def convertPdfToHtml(
+def convertPdfToXhtml(
     pdfBytes: bytes,
     *,
-    filename: str,
     converter: ResolvedConverter | None = None,
     binaryPath: str | None = None,
     timeoutSeconds: int = DEFAULT_TIMEOUT_SECONDS,
     injectIxHeader: bool = True,
-) -> FilelikeAndFileName:
-    """Convert @pdfBytes into an Inline XBRL document set member.
+) -> etree._Element:
+    """Convert @pdfBytes into normalised XHTML, as a tree.
 
-    :param filename: the uploaded PDF's name, used to name the output.
     :param converter: the backend and executable to use. Pass the result of
         :func:`mireport.pdf_converter.findConverter` when converting several
         files, so the search happens — and any failure is reported — once.
@@ -55,14 +55,39 @@ def convertPdfToHtml(
     :raises PdfToolNotFoundError: if no converter is installed.
     :raises PdfConversionError: if the conversion or its output is unusable.
     """
-    raw = runConverter(
+    root = runConverter(
         pdfBytes,
         converter=converter,
         binaryPath=binaryPath,
         timeoutSeconds=timeoutSeconds,
     )
     try:
-        xhtml = normaliseDocument(raw, injectIxHeader=injectIxHeader)
+        return normaliseDocument(root, injectIxHeader=injectIxHeader)
     except XhtmlError as e:
         raise PdfConversionError(f"Converted PDF output {e}") from e
-    return FilelikeAndFileName(fileContent=xhtml, filename=outputFilenameFor(filename))
+
+
+def convertPdfToHtml(
+    pdfBytes: bytes,
+    *,
+    filename: str,
+    converter: ResolvedConverter | None = None,
+    binaryPath: str | None = None,
+    timeoutSeconds: int = DEFAULT_TIMEOUT_SECONDS,
+) -> FilelikeAndFileName:
+    """Convert @pdfBytes into an Inline XBRL document set member: the
+    serialised :func:`convertPdfToXhtml`, carrying its ``ix:header``.
+
+    :param filename: the uploaded PDF's name, used to name the output.
+    :raises PdfToolNotFoundError: if no converter is installed.
+    :raises PdfConversionError: if the conversion or its output is unusable.
+    """
+    root = convertPdfToXhtml(
+        pdfBytes,
+        converter=converter,
+        binaryPath=binaryPath,
+        timeoutSeconds=timeoutSeconds,
+    )
+    return FilelikeAndFileName(
+        fileContent=documentToBytes(root), filename=outputFilenameFor(filename)
+    )

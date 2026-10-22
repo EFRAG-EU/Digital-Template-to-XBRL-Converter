@@ -16,12 +16,6 @@ from mireport.html_to_xhtml._hygiene import (
     _stripScripting,
     _stripScripts,
 )
-from mireport.html_to_xhtml._parse import (
-    _isBinary,
-    _moveIntoXhtmlNamespace,
-    _parseAsHtml,
-    _parseAsXhtml,
-)
 from mireport.html_to_xhtml._tree import (
     IX_NAMESPACE,
     _descendants,
@@ -167,9 +161,12 @@ def _addHiddenIxHeader(root: etree._Element) -> None:
     body.insert(0, hidden)
 
 
-def normaliseDocument(content: bytes, *, injectIxHeader: bool = True) -> bytes:
-    """Return @content as well-formed XHTML, optionally carrying an empty
-    ``ix:header``.
+def normaliseDocument(
+    root: etree._Element, *, injectIxHeader: bool = True
+) -> etree._Element:
+    """Make @root, from :func:`mireport.html_to_xhtml.parseDocument`, valid
+    XHTML Strict, optionally carrying an empty ``ix:header``. Works in place
+    and returns @root.
 
     :param injectIxHeader: whether to inject the empty, hidden ``ix:header``
         that earns a standalone document set member its Inline XBRL identity
@@ -177,23 +174,13 @@ def normaliseDocument(content: bytes, *, injectIxHeader: bool = True) -> bytes:
         be merged into another document rather than shipped as its own
         document set member — the merged document needs exactly one header,
         supplied by the report it joins, not one per source PDF.
-    :raises XhtmlError: if @content is empty or binary (it contains NUL bytes
-        and is not UTF-16/32 text), cannot be parsed as HTML at all, or
-        contains no ``html`` element — each means the converter produced
-        something other than a document, whatever its exit code claimed.
+    :raises XhtmlError: if @root holds an element that can't be made valid.
     """
-    if not content.strip():
-        raise XhtmlError("was empty.")
-    if _isBinary(content):
-        raise XhtmlError("is binary (it contains NUL bytes), not HTML.")
-
     # Rewriting a foreign document into XHTML is exactly the kind of work that
     # turns an unexpected input into a raw lxml ValueError, and a converted PDF
     # failing must always be a warning rather than an exception reaching a
     # request. Anything unforeseen here is still a conversion failure.
     try:
-        if (root := _parseAsXhtml(content)) is None:
-            root = _moveIntoXhtmlNamespace(_parseAsHtml(content))
         _stripInvalidAttributes(root)
         _convertAnchorNames(root)
         _inlineAnchorContent(root)
@@ -210,8 +197,13 @@ def normaliseDocument(content: bytes, *, injectIxHeader: bool = True) -> bytes:
             _addHiddenIxHeader(root)
         _rejectUnknownElements(root)
         etree.cleanup_namespaces(root)
-        return etree.tostring(
-            root, xml_declaration=True, encoding="UTF-8", pretty_print=False
-        )
     except (ValueError, etree.LxmlError) as e:
         raise XhtmlError(f"could not be turned into XHTML. {e}") from e
+    return root
+
+
+def documentToBytes(root: etree._Element) -> bytes:
+    """@root serialised as a standalone XHTML file, for a report package."""
+    return etree.tostring(
+        root, xml_declaration=True, encoding="UTF-8", pretty_print=False
+    )

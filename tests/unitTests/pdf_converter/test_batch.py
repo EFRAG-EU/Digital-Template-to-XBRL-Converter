@@ -10,6 +10,7 @@ from __future__ import annotations
 from typing import Any
 
 import pytest
+from lxml import etree
 
 from mireport.conversionresults import (
     ConversionResultsBuilder,
@@ -57,7 +58,7 @@ def workingConverter(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         _batch,
         "convertPdfToHtml",
-        lambda content, *, filename, converter, injectIxHeader=True: converted(
+        lambda content, *, filename, converter: converted(
             filename.replace(".pdf", ".xhtml")
         ),
     )
@@ -187,7 +188,6 @@ class TestPartialFailure:
             *,
             filename: str,
             converter: ResolvedConverter,
-            injectIxHeader: bool = True,
         ) -> FilelikeAndFileName:
             if filename == "bad.pdf":
                 raise PdfConversionError("that one is corrupt")
@@ -253,23 +253,26 @@ class TestMergeMode:
         headerFlags: list[bool] = []
 
         def convert(
-            content: bytes,
-            *,
-            filename: str,
-            converter: ResolvedConverter,
-            injectIxHeader: bool = True,
+            content: bytes, *, filename: str, converter: ResolvedConverter
         ) -> FilelikeAndFileName:
-            headerFlags.append(injectIxHeader)
+            headerFlags.append(True)  # a document set member always has one
             return converted(filename.replace(".pdf", ".xhtml"))
 
+        def convertToXhtml(
+            content: bytes, *, converter: ResolvedConverter, injectIxHeader: bool
+        ) -> etree._Element:
+            headerFlags.append(injectIxHeader)
+            return etree.Element("html")
+
         monkeypatch.setattr(_batch, "convertPdfToHtml", convert)
+        monkeypatch.setattr(_batch, "convertPdfToXhtml", convertToXhtml)
         monkeypatch.setattr(
             _batch,
             "buildMergedAnnex",
-            lambda xhtml, *, index, label: MergedAnnex(
+            lambda root, *, index, label: MergedAnnex(
                 anchor_id=f"pdf-annex-{index}",
                 label=label,
-                body_html=f"<div id='pdf-annex-{index}'/>",
+                body=etree.Element("div", id=f"pdf-annex-{index}"),
                 head_css="",
             ),
         )

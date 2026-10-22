@@ -37,19 +37,25 @@ XHTML *Strict* half of that schema rejects; none of it is precautionary, and
 rather than being translated on a guess — see
 :func:`._hygiene._rejectUnknownElements`.
 
-The rules for single elements are in :mod:`._hygiene`; assembling a whole
-document — its head, its body and the ``ix:header`` — is :mod:`._document`.
+A document is parsed once (:func:`parseDocument`), normalised in place
+(:func:`normaliseDocument`) and handed along as a tree; only what leaves for a
+package is serialised (:func:`documentToBytes`). The rules for single elements
+are in :mod:`._hygiene`; assembling a whole document — its head, its body and
+the ``ix:header`` — is :mod:`._document`.
 """
 
 from __future__ import annotations
 
-from mireport.html_to_xhtml._document import normaliseDocument
+from mireport.html_to_xhtml._document import documentToBytes, normaliseDocument
 from mireport.html_to_xhtml._exceptions import XhtmlError
+from mireport.html_to_xhtml._parse import parseDocument
 from mireport.html_to_xhtml._tree import IX_NAMESPACE, XHTML_NAMESPACE
 
 __all__ = [
     "IX_NAMESPACE",
     "XHTML_NAMESPACE",
     "XhtmlError",
+    "documentToBytes",
     "normaliseDocument",
+    "parseDocument",
 ]

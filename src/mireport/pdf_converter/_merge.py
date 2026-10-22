@@ -90,9 +90,8 @@ class MergedAnnex(NamedTuple):
         CSS ``@scope`` root and as the in-document anchor a table of contents
         entry links to.
     :param label: the original PDF's filename, for display in that entry.
-    :param body_html: the annex's content as a single well-formed XHTML
-        fragment (one root element, carrying @anchor_id as its id), ready to
-        replace a placeholder element of the same id.
+    :param body: the annex's content as one XHTML ``div`` carrying
+        @anchor_id as its id, ready to be appended to the report's body.
     :param head_css: the annex's own CSS, scoped to @anchor_id with ``@scope``
         and preceded by an unlayered reset that keeps the report's own styling
         from reaching inside, ready to be inserted as-is inside a ``<style>``
@@ -101,39 +100,30 @@ class MergedAnnex(NamedTuple):
 
     anchor_id: str
     label: str
-    body_html: str
+    body: etree._Element
     head_css: str
 
 
-def buildMergedAnnex(xhtml: bytes, *, index: int, label: str) -> MergedAnnex:
-    """Turn one PDF's normalised XHTML into a :class:`MergedAnnex`.
+def buildMergedAnnex(root: etree._Element, *, index: int, label: str) -> MergedAnnex:
+    """Turn one PDF's normalised XHTML into a :class:`MergedAnnex`. @root's
+    body content moves into the annex, so @root is used up.
 
-    @xhtml must already be well-formed XHTML with no ``ix:header`` — i.e. the
-    output of :func:`mireport.html_to_xhtml.normaliseDocument` called
-    with ``injectIxHeader=False``. A merged document needs exactly one header,
+    @root must already be valid XHTML with no ``ix:header`` — i.e. the output
+    of :func:`mireport.pdf_converter.convertPdfToXhtml` called with
+    ``injectIxHeader=False``. A merged document needs exactly one header,
     supplied by the report the annex joins, not one per source PDF.
 
     :param index: distinguishes this annex from any others being merged into
         the same report. Used to derive @anchor_id (``pdf-annex-{index}``) and
         the CSS layer name, so that several annexes' ids and layers cannot
         collide with each other.
-    :raises PdfConversionError: if @xhtml is not well-formed XML.
     """
     anchorId = f"pdf-annex-{index}"
-    try:
-        root = etree.fromstring(xhtml, etree.XMLParser(resolve_entities=False))
-    except etree.XMLSyntaxError as e:
-        raise PdfConversionError(
-            f"Converted PDF output could not be parsed for merging. {e}"
-        ) from e
-
     idMap = _renameIds(root, prefix=f"{anchorId}-")
     cssTexts = _extractStyles(root)
     headCss = _wrapCss(cssTexts, anchorId=anchorId, idMap=idMap)
-    bodyHtml = _extractBodyFragment(root, anchorId=anchorId)
-    return MergedAnnex(
-        anchor_id=anchorId, label=label, body_html=bodyHtml, head_css=headCss
-    )
+    body = _extractBody(root, anchorId=anchorId)
+    return MergedAnnex(anchor_id=anchorId, label=label, body=body, head_css=headCss)
 
 
 def _renameIds(root: etree._Element, *, prefix: str) -> dict[str, str]:
@@ -240,8 +230,8 @@ def _wrapCss(cssTexts: Sequence[str], *, anchorId: str, idMap: dict[str, str]) -
     return f"{reset}@scope (#{anchorId}) {{\n{body}\n}}\n"
 
 
-def _extractBodyFragment(root: etree._Element, *, anchorId: str) -> str:
-    """Return @root's ``<body>`` content as one wrapped, serialised fragment."""
+def _extractBody(root: etree._Element, *, anchorId: str) -> etree._Element:
+    """Move @root's ``<body>`` content into one wrapping ``div``."""
     wrapper = etree.Element(
         _tag("div"),
         {"id": anchorId, "class": ANNEX_CLASS},
@@ -252,7 +242,7 @@ def _extractBodyFragment(root: etree._Element, *, anchorId: str) -> str:
         for child in list(body):
             wrapper.append(child)
     etree.cleanup_namespaces(wrapper)
-    return etree.tostring(wrapper, encoding="unicode")
+    return wrapper
 
 
 def mergeAnnexesIntoReport(
@@ -269,7 +259,7 @@ def mergeAnnexesIntoReport(
     the report generator itself never needs to know supplementary PDFs exist.
     For each annex, in order: its ``<style>`` (:attr:`MergedAnnex.head_css`,
     already isolated both ways — see :func:`_wrapCss`) is appended to
-    ``<head>``; its content (:attr:`MergedAnnex.body_html`) is appended to
+    ``<head>``; its content (:attr:`MergedAnnex.body`) is appended to
     ``<body>``; and one entry linking to it is appended to the report's own
     table of contents, grouped under @tocLabel exactly like every other
     heading group there (see
@@ -323,10 +313,7 @@ def mergeAnnexesIntoReport(
         style.set("type", "text/css")
         style.text = annex.head_css
 
-        annexRoot = etree.fromstring(
-            annex.body_html.encode("UTF-8"), etree.XMLParser(resolve_entities=False)
-        )
-        body.append(annexRoot)
+        body.append(annex.body)
 
         entry = etree.SubElement(annexesList, _tag("li"))
         link = etree.SubElement(entry, _tag("a"))
