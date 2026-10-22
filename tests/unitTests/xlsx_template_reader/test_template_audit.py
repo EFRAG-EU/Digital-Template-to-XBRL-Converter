@@ -160,7 +160,8 @@ def test_script_markdown(script, tmp_path, capsys):
     assert "| **Workbook** | `template.xlsx` |" in out
     assert "### Named ranges that bind to no taxonomy concept (1)" in out
     assert "| `Bogus` | Data!$B$2 |" in out
-    assert "\x1b[" not in out
+    assert "| :white_check_mark: supported entry point |" in out
+    assert out.isascii()
 
 
 def test_markdown_cells_escape_pipes(script):
