@@ -160,42 +160,20 @@ class Message:
         return d
 
 
-class ConversionResults:
-    def __init__(
-        self,
-        conversionId: str,
-        messages: list[Message],
-        cellsQueried: int,
-        cellsPopulated: int,
-        conversionSuccessful: bool,
-    ) -> None:
-        self.conversionId = conversionId
+class Results:
+    """Messages, and what they add up to: severities, RAG status and the
+    user and developer views of them."""
+
+    def __init__(self, messages: list[Message]) -> None:
         self.messages: list[Message] = messages
-        self.cellsQueried: int = cellsQueried
-        self.cellsPopulated: int = cellsPopulated
-        self._conversionSuccessful: bool = conversionSuccessful
-
-    @classmethod
-    def fromDict(cls, stuff: dict) -> Self:
-        id = stuff["id"]
-        m = [Message.fromDict(m) for m in stuff["m"]]
-        q = stuff["q"]
-        p = stuff["p"]
-        success = stuff["success"]
-        return cls(id, m, q, p, success)
-
-    def toDict(self) -> dict:
-        d = {
-            "id": self.conversionId,
-            "m": [m.toDict() for m in self.messages],
-            "q": self.cellsQueried,
-            "p": self.cellsPopulated,
-            "success": self._conversionSuccessful,
-        }
-        return d
 
     def __len__(self) -> int:
         return len(self.messages)
+
+    def __bool__(self) -> bool:
+        """Results with no messages are still results: without this,
+        ``__len__`` would make them false."""
+        return True
 
     def hasErrors(self) -> bool:
         return any(m.severity is Severity.ERROR for m in self.userMessages)
@@ -272,6 +250,41 @@ class ConversionResults:
                 MessageType.DevInfo, MessageType.Progress
             ),
         )
+
+
+class ConversionResults(Results):
+    def __init__(
+        self,
+        conversionId: str,
+        messages: list[Message],
+        cellsQueried: int,
+        cellsPopulated: int,
+        conversionSuccessful: bool,
+    ) -> None:
+        super().__init__(messages)
+        self.conversionId = conversionId
+        self.cellsQueried: int = cellsQueried
+        self.cellsPopulated: int = cellsPopulated
+        self._conversionSuccessful: bool = conversionSuccessful
+
+    @classmethod
+    def fromDict(cls, stuff: dict) -> Self:
+        id = stuff["id"]
+        m = [Message.fromDict(m) for m in stuff["m"]]
+        q = stuff["q"]
+        p = stuff["p"]
+        success = stuff["success"]
+        return cls(id, m, q, p, success)
+
+    def toDict(self) -> dict:
+        d = {
+            "id": self.conversionId,
+            "m": [m.toDict() for m in self.messages],
+            "q": self.cellsQueried,
+            "p": self.cellsPopulated,
+            "success": self._conversionSuccessful,
+        }
+        return d
 
     @property
     def numCellQueries(self) -> int:
@@ -368,6 +381,200 @@ class ConversionResultsBuilder(ConversionResults):
             len(self.cellsPopulatedBuilder),
             len(self.cellsPopulatedBuilder),
             self.conversionSuccessful,
+        )
+
+
+class Step(StrEnum):
+    """The work done on a converted report after conversion, in the order it is
+    done."""
+
+    PACKAGE = "package"
+    XBRL_JSON = "xbrlJson"
+    VIEWER = "viewer"
+
+    @property
+    def isValidation(self) -> bool:
+        return self is not Step.VIEWER
+
+    @property
+    def label(self) -> str:
+        return _STEP_LABELS[self]
+
+    @property
+    def resultsClass(self) -> type[StepResults]:
+        return ValidationResults if self.isValidation else StepResults
+
+
+_STEP_LABELS: Mapping[Step, str] = MappingProxyType(
+    {
+        Step.PACKAGE: "XBRL report validation",
+        Step.XBRL_JSON: "xBRL-JSON validation",
+        Step.VIEWER: "Viewer",
+    }
+)
+
+
+class StepState(StrEnum):
+    PENDING = "pending"
+    RUNNING = "running"
+    DONE = "done"
+    FAILED = "failed"
+
+
+class StepResults(Results):
+    """One step's progress and, once it is finished, its messages."""
+
+    def __init__(
+        self,
+        step: Step,
+        state: StepState,
+        messages: list[Message] | None = None,
+        durationNs: int | None = None,
+    ) -> None:
+        super().__init__(messages if messages is not None else [])
+        self.step = step
+        self.state = state
+        self.durationNs = durationNs
+
+    @classmethod
+    def pending(cls, step: Step) -> Self:
+        return cls(step, StepState.PENDING)
+
+    @classmethod
+    def running(cls, step: Step) -> Self:
+        return cls(step, StepState.RUNNING)
+
+    @classmethod
+    def done(
+        cls,
+        step: Step,
+        messages: Iterable[Message],
+        durationNs: int,
+        *,
+        detail: str = "",
+    ) -> Self:
+        finished = Message(
+            f"Finished: [{step.label}] in {format_time_ns(durationNs)}. {detail}".rstrip(),
+            Severity.INFO,
+            MessageType.Progress,
+        )
+        return cls(step, StepState.DONE, [*messages, finished], durationNs)
+
+    @classmethod
+    def skipped(cls, step: Step, reason: str) -> Self:
+        """Done without doing anything, because of ``reason``."""
+        message = Message(
+            f"Skipped: [{step.label}]. {reason}", Severity.INFO, MessageType.Progress
+        )
+        return cls(step, StepState.DONE, [message])
+
+    @classmethod
+    def failed(cls, step: Step, error: Exception) -> Self:
+        messageType = (
+            MessageType.XbrlValidation if step.isValidation else MessageType.Conversion
+        )
+        message = Message(f"{step.label} failed: {error}", Severity.ERROR, messageType)
+        return cls(step, StepState.FAILED, [message])
+
+    @property
+    def isFinished(self) -> bool:
+        return self.state in (StepState.DONE, StepState.FAILED)
+
+    def toDict(self) -> dict:
+        return {
+            "step": self.step.value,
+            "state": self.state.value,
+            "m": [m.toDict() for m in self.messages],
+            "t": self.durationNs,
+        }
+
+    @staticmethod
+    def fromDict(stuff: dict) -> StepResults:
+        """The results ``toDict`` gave, as the class that suits their step."""
+        step = Step(stuff["step"])
+        return step.resultsClass(
+            step,
+            StepState(stuff["state"]),
+            [Message.fromDict(m) for m in stuff["m"]],
+            stuff["t"],
+        )
+
+
+class ValidationResults(StepResults):
+    """A validation step: its messages are those of the validator."""
+
+    @property
+    def isValid(self) -> bool:
+        return self.isFinished and not self.hasErrors()
+
+
+class ReportResults(Results):
+    """A conversion and the steps run on its report afterwards, as one: what
+    the results page shows and what decides whether the report is offered for
+    download. Its messages are the conversion's, then each step's in order."""
+
+    def __init__(
+        self,
+        conversion: ConversionResults,
+        steps: Mapping[Step, StepResults] = MappingProxyType({}),
+    ) -> None:
+        self.conversion = conversion
+        self.steps: dict[Step, StepResults] = {
+            step: steps[step] if step in steps else step.resultsClass.pending(step)
+            for step in Step
+        }
+        super().__init__(
+            [
+                *conversion.messages,
+                *(m for results in self.steps.values() for m in results.messages),
+            ]
+        )
+
+    @property
+    def conversionId(self) -> str:
+        return self.conversion.conversionId
+
+    @property
+    def conversionSuccessful(self) -> bool:
+        return self.conversion.conversionSuccessful
+
+    @property
+    def conversionRAG(self) -> Mapping[str, bool]:
+        return self.conversion.getRAG(withoutXBRLValidation=True)
+
+    @property
+    def validations(self) -> list[StepResults]:
+        return [results for step, results in self.steps.items() if step.isValidation]
+
+    @property
+    def validationPending(self) -> bool:
+        return self.conversionSuccessful and not all(
+            v.isFinished for v in self.validations
+        )
+
+    @property
+    def validationRAG(self) -> Mapping[str, bool] | None:
+        """The validations' RAG status, or None until they have all finished."""
+        if self.validationPending:
+            return None
+        return Results([m for v in self.validations for m in v.messages]).getRAG()
+
+    @property
+    def hasValidationErrors(self) -> bool:
+        return any(v.hasErrors() for v in self.validations)
+
+    @property
+    def downloadsAllowed(self) -> bool:
+        """Converted, and nothing found invalid so far: a download asked for
+        while validation is still pending waits for it."""
+        return self.conversionSuccessful and not self.hasValidationErrors
+
+    @property
+    def isComplete(self) -> bool:
+        """Nothing more will change: every step has finished, or the conversion
+        failed and so has none."""
+        return not self.conversionSuccessful or all(
+            s.isFinished for s in self.steps.values()
         )
 
 
