@@ -170,6 +170,11 @@ class Results:
     def __len__(self) -> int:
         return len(self.messages)
 
+    def __bool__(self) -> bool:
+        """Results with no messages are still results: without this,
+        ``__len__`` would make them false."""
+        return True
+
     def hasErrors(self) -> bool:
         return any(m.severity is Severity.ERROR for m in self.userMessages)
 
