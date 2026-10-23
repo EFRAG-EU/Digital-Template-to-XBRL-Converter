@@ -31,17 +31,17 @@ from flask import (
 
 import mireport
 from mireport.comparatives import PRIOR_REPORT_EXTENSIONS
-from mireport.conversionresults import ConversionResultsBuilder
+from mireport.conversionresults import ConversionResultsBuilder, Step
 from mireport.filesupport import FilelikeAndFileName
 from mireport.report.theme import ColourPalette, ReportTheme
 from mireport.stringutil import truthy
 
 from .app_setup import DEPLOYMENT_DATETIME, getArelle
-from .background import StepStore, reportResults
+from .background import StepStore, reportResults, viewerFiles
 from .blueprints import convert_bp
 from .captcha import generate_captcha, validateCaptchaAndCsrf
 from .conversion import Conversion, ConversionStore
-from .conversion_service import doConversion, ensureViewer
+from .conversion_service import doConversion
 from .forms import IMAGE_UPLOAD_FIELDS, MAX_FILE_SIZE, MAX_PDF_COUNT, first_str
 from .migration import MigrationOutcome, checkMigration
 from .template_helpers import getUploadFilename
@@ -388,14 +388,17 @@ def partial_facts_submit(id: str) -> Response:
     return make_response(redirect(url_for("basic.convert", id=id), code=303))
 
 
-def _heldForValidation(conv: Conversion) -> Response | None:
+def _heldBack(conv: Conversion, *, viewer: bool = False) -> Response | None:
     """Why the report can't be had yet, if it can't: 202 (try again) while it
-    is being validated, 409 once validation has found errors."""
+    is being validated, or its ``viewer`` built, and 409 once validation has
+    found errors."""
     if (results := reportResults(conv)) is None:
         return None
     if not results.downloadsAllowed:
         return make_response({"error": VALIDATION_ERRORS_MESSAGE}, 409)
-    if results.validationPending:
+    if results.validationPending or (
+        viewer and not results.steps[Step.VIEWER].isFinished
+    ):
         return Response(status=202, headers={"X-File-Ready": "false"})
     return None
 
@@ -411,12 +414,14 @@ def downloadFile(id: str, ftype: str) -> Response:
             {"error": "No report generated. Nothing to download."}, 404
         )
 
-    if ftype in ("viewer", "zip", "json") and (held := _heldForValidation(conv)):
+    if ftype in ("viewer", "zip", "json") and (
+        held := _heldBack(conv, viewer=ftype == "viewer")
+    ):
         return held
 
     match ftype:
         case "viewer":
-            stuff, members = ensureViewer(conv, getArelle())
+            stuff, members = viewerFiles(conv)
             if members and request.method != "HEAD":
                 # A document set viewer fetches its members by name relative to
                 # itself, so it has to be served in place rather than downloaded.
@@ -472,10 +477,10 @@ def delete_all() -> Response:
 def viewer(id: str) -> Response:
     if (conv := ConversionStore.fromFlask().get(id)) is None or not conv.has_zip:
         return make_response({"error": "No file found"}, 404)
-    if held := _heldForValidation(conv):
+    if held := _heldBack(conv, viewer=True):
         return held
 
-    stuff, _ = ensureViewer(conv, getArelle())
+    stuff, _ = viewerFiles(conv)
     return serveViewerFile(stuff)
 
 
@@ -488,10 +493,10 @@ def viewerDocumentSetMember(id: str, filename: str) -> Response:
     """
     if (conv := ConversionStore.fromFlask().get(id)) is None or not conv.has_zip:
         return make_response({"error": "No file found"}, 404)
-    if held := _heldForValidation(conv):
+    if held := _heldBack(conv, viewer=True):
         return held
 
-    _, members = ensureViewer(conv, getArelle())
+    _, members = viewerFiles(conv)
     if (member := members.get(filename)) is None:
         return make_response({"error": f"File {filename} not found."}, 404)
     response = serveViewerFile(member)

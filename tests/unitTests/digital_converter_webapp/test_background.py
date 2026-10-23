@@ -19,6 +19,7 @@ from mireport.filesupport import FilelikeAndFileName
 
 PACKAGE = FilelikeAndFileName(fileContent=b"zip", filename="report.zip")
 XBRL_JSON = FilelikeAndFileName(fileContent=b"{}", filename="report.json")
+VIEWER = FilelikeAndFileName(fileContent=b"<html/>", filename="report_viewer.html")
 
 
 @pytest.fixture
@@ -51,6 +52,15 @@ class FakeArelle:
     def validateXbrlJson(self, document):
         assert document is XBRL_JSON
         return self._run("validateXbrlJson")
+
+    def generateInlineViewer(self, source):
+        assert source is PACKAGE
+        result = self._run("generateInlineViewer")
+        result._viewer = VIEWER
+        return result
+
+
+ALL_CALLS = ["validateReportPackage", "validateXbrlJson", "generateInlineViewer"]
 
 
 class TestStepStore:
@@ -91,10 +101,11 @@ class TestRunSteps:
 
         runSteps(store, "c1", PACKAGE, XBRL_JSON, arelle)
 
-        assert arelle.calls == ["validateReportPackage", "validateXbrlJson"]
+        assert arelle.calls == ALL_CALLS
         steps = store.load("c1")
         assert [s.state for s in steps.values()] == [StepState.DONE] * len(Step)
         assert steps[Step.PACKAGE].isValid
+        assert store.loadViewer("c1") == (VIEWER, {})
         assert store.claim("c1")
 
     def test_skips_steps_already_finished(self, store):
@@ -103,7 +114,7 @@ class TestRunSteps:
 
         runSteps(store, "c1", PACKAGE, XBRL_JSON, arelle)
 
-        assert arelle.calls == ["validateXbrlJson"]
+        assert arelle.calls == ALL_CALLS[1:]
 
     def test_reruns_a_step_left_running(self, store):
         store.save("c1", ValidationResults.running(Step.PACKAGE))
@@ -111,7 +122,7 @@ class TestRunSteps:
 
         runSteps(store, "c1", PACKAGE, XBRL_JSON, arelle)
 
-        assert arelle.calls == ["validateReportPackage", "validateXbrlJson"]
+        assert arelle.calls == ALL_CALLS
 
     def test_a_failing_step_fails_alone(self, store):
         arelle = FakeArelle("validateReportPackage")
@@ -127,3 +138,19 @@ class TestRunSteps:
         )
         assert steps[Step.XBRL_JSON].state is StepState.DONE
         assert arelle.calls == ["validateReportPackage", "validateXbrlJson"]
+
+    def test_no_viewer_once_validation_finds_errors(self, store):
+        """The report isn't offered at all, so neither is its viewer."""
+        runSteps(store, "c1", PACKAGE, XBRL_JSON, FakeArelle("validateXbrlJson"))
+
+        viewer = store.load("c1")[Step.VIEWER]
+        assert viewer.state is StepState.DONE
+        assert store.loadViewer("c1") is None
+
+    def test_forget_drops_the_viewer_too(self, store):
+        runSteps(store, "c1", PACKAGE, XBRL_JSON, FakeArelle())
+
+        store.forget("c1")
+
+        assert store.load("c1") == {}
+        assert store.loadViewer("c1") is None
