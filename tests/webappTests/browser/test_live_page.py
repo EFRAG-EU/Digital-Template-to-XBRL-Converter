@@ -185,10 +185,37 @@ def test_viewer_built_in_the_background_downloads_at_once(
     assert arelle.viewersBuilt == 1
 
 
-@pytest.mark.xfail(
-    reason="Progress messages are gone; the page shows durations in the next commit",
-    strict=True,
-)
+def test_a_section_the_user_opened_stays_open(page: Page, uploadAndConvert, arelle):
+    arelle.gate.clear()
+    arelle.packageError = True
+    uploadAndConvert(page)
+    report, package = page.locator("#section-report"), page.locator("#section-package")
+
+    report.locator("summary").click()
+    arelle.gate.set()
+
+    expectSettled(page)
+    expect(report).to_have_attribute("open", "")
+    # Untouched, it opens itself for the error it now has.
+    expect(package).to_have_attribute("open", "")
+
+
+def test_a_section_the_user_closed_stays_closed(page: Page, uploadAndConvert, arelle):
+    arelle.gate.clear()
+    arelle.packageError = True
+    uploadAndConvert(page)
+    package = page.locator("#section-package")
+
+    package.locator("summary").click()
+    expect(package).to_have_attribute("open", "")
+    package.locator("summary").click()
+    arelle.gate.set()
+
+    expectSettled(page)
+    expect(package.get_by_text(FAKE_ERROR)).to_be_attached()
+    expect(package).not_to_have_attribute("open", "")
+
+
 def test_developer_messages_follow_the_updates(page: Page, uploadAndConvert, arelle):
     arelle.gate.clear()
     uploadAndConvert(page)
@@ -201,11 +228,7 @@ def test_developer_messages_follow_the_updates(page: Page, uploadAndConvert, are
 
     expectSettled(page)
     expect(toggle).to_be_checked()
-    expect(
-        page.get_by_role(
-            "cell", name=re.compile(r"Finished: \[XBRL report validation\]")
-        )
-    ).to_be_visible()
+    expect(page.locator("#section-package").get_by_title("Duration")).to_be_visible()
 
 
 def test_two_tabs_settle_alike(context, uploadAndConvert, arelle):

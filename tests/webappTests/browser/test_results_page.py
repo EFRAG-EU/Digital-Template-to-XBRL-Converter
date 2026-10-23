@@ -49,20 +49,17 @@ def test_download(convertedPage: Page, button: str, suffix: str):
     expect(convertedPage.locator("#loadingSpinner")).to_be_hidden()
 
 
-@pytest.mark.xfail(
-    reason="Progress messages are gone; the page shows durations in the next commit",
-    strict=True,
-)
 def test_developer_messages_toggle(convertedPage: Page):
     toggle = convertedPage.get_by_label("Display software developer messages")
-    progress = convertedPage.get_by_role("cell", name="Progress").first
+    # Each section's duration is shown to developers only.
+    duration = convertedPage.locator("#section-workbook").get_by_title("Duration")
 
-    expect(progress).to_be_hidden()
+    expect(duration).to_be_hidden()
     toggle.check()
     convertedPage.wait_for_url(re.compile(r"show_developer_messages=true"))
-    expect(progress).to_be_visible()
+    expect(duration).to_be_visible()
     expect(toggle).to_be_checked()
 
     toggle.uncheck()
     convertedPage.wait_for_url(re.compile(r"/conversions/[^?]+$"))
-    expect(progress).to_be_hidden()
+    expect(duration).to_be_hidden()

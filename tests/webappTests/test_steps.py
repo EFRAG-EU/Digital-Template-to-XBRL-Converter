@@ -100,6 +100,10 @@ def test_status_of_a_finished_conversion(client, upload_id, validations):
     assert "validation ERRORS" in status["html"]["validation-status"]
     assert 'id="downloads"' in status["html"]["downloads"]
     assert "Arelle validation was not run (test stub)" in status["html"]["messages"]
+    messages = status["html"]["messages"]
+    assert messages.lstrip().startswith('<div id="messages"')
+    for section in ("workbook", "report", "package", "xbrlJson", "viewer"):
+        assert f'id="section-{section}"' in messages
 
 
 def test_status_of_an_unknown_conversion(client):
@@ -143,6 +147,8 @@ def test_results_page_is_shown_before_validation_finishes(
     assert 'data-state="pending"' in page
     assert f"/conversions/{conv_id}/status" in page
     assert "Validating the generated XBRL report" in page
+    # The package's validation, in its section's header.
+    assert "waiting" in page or "in progress" in page
     status = backgroundClient.get(f"/conversions/{conv_id}/status").get_json()
     assert status["complete"] is False
 

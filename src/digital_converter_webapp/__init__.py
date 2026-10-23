@@ -18,6 +18,7 @@ from jinja2 import ChoiceLoader, FileSystemLoader
 import mireport
 from mireport import loadBuiltInTaxonomyJSON
 from mireport.conversionresults import MessageType, Severity
+from mireport.stringutil import format_time_ns
 
 from .app_setup import (
     DEPLOYMENT_DATETIME,
@@ -87,6 +88,7 @@ def create_app(test_config: Mapping[str, Any] | None = None) -> Flask:
             "deployment_datetime": DEPLOYMENT_DATETIME,
             "mireport_version": mireport.__version__,
             format_timedelta.__name__: format_timedelta,
+            format_time_ns.__name__: format_time_ns,
             getUploadFilename.__name__: getUploadFilename,
         }
     )

@@ -14,6 +14,7 @@ installed, and that path has to be exercised on machines that are exactly that.
 import io
 import zipfile
 
+import lxml.html
 import pytest
 
 from mireport.conversionresults import Severity, Stage
@@ -135,6 +136,51 @@ class TestConversionResultsPage:
         # The steps say what ran them, for developers only.
         assert b"Using Arelle" in resp.data
         assert b"Using Arelle" not in c.get(f"/conversions/{conv_id}").data
+
+
+def _sections(html: str) -> dict[str, bool]:
+    """Each section of the messages, by id, and whether it starts open."""
+    tree = lxml.html.fromstring(html)
+    [messages] = tree.xpath('//*[@id="messages"]')
+    return {d.get("id"): d.get("open") is not None for d in messages.iter("details")}
+
+
+class TestResultsSections:
+    def test_results_page_has_a_section_per_stage(self, converted_id):
+        conv_id, c = converted_id
+        page = c.get(f"/conversions/{conv_id}").get_data(as_text=True)
+
+        assert list(_sections(page)) == [
+            "section-workbook",
+            "section-report",
+            "section-package",
+            "section-xbrlJson",
+            "section-viewer",
+        ]
+        assert "Digital Template" in page
+        assert "XBRL report validation" in page
+
+    def test_only_developers_see_how_long_each_took(self, converted_id):
+        conv_id, c = converted_id
+        user = c.get(f"/conversions/{conv_id}").get_data(as_text=True)
+        dev = c.get(f"/conversions/{conv_id}?show_developer_messages=true")
+
+        assert 'title="Duration"' not in user
+        assert 'title="Duration"' in dev.get_data(as_text=True)
+
+    @pytest.mark.slow
+    @pytest.mark.usefixtures("skipArelle")
+    def test_info_only_sections_are_closed_and_one_with_a_warning_open(
+        self, client, upload, make_pdf, conversion_of, noBinary
+    ):
+        upload(client, pdfs=[make_pdf("annex1.pdf")])
+        conv_id = _convert(client, conversion_of).id
+        page = client.get(f"/conversions/{conv_id}").get_data(as_text=True)
+
+        sections = _sections(page)
+        assert sections["section-pdf"] is True
+        assert sections["section-report"] is False
+        assert "1 warning" in page
 
 
 def _convert(client, conversion_of):
