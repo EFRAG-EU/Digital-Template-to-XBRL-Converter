@@ -86,22 +86,33 @@ def excelDefinedNameRef(
             return None
 
 
+# What a number format shows literally rather than as digits: quoted text, an escaped
+# character, a [colour], [condition] or [$currency], and the character after _ (padding) or *
+# (fill).
+_FORMAT_LITERALS = re.compile(r'"[^"]*"|\\.|\[[^\]]*\]|[_*].')
+
+
+def _numberFormatSection(cell: CellType) -> str:
+    """The first section (for positive numbers) of the cell's number format, without literals."""
+    return _FORMAT_LITERALS.sub("", cell.number_format).split(";", 1)[0]
+
+
 def get_decimal_places(cell: CellType) -> DecimalPlaces:
     """
     Returns the number of decimal places in the cell's number format. For
-    example, a format of '0.00' would return 2.
+    example, a format of '0.00' would return 2, and '0', '#,##0' and '0%' 0.
+    Only the 0s after the point count, the places always shown: '0.0#' is 1.
 
-    If no decimal places are specified, return Literal['INF'], meaning infinite
-    precision, include all digits in display.
+    A format that shows no digits as such ('General', '@'), or a fraction, has
+    no decimal places: return Literal['INF'], meaning infinite precision,
+    include all digits in display.
     """
-    number_format = cell.number_format
-
-    # Matches the zeros after the decimal point in formats like '0.00',
-    # '#,##0.000', '0.0%' and '0.00E+00'.
-    if match := re.search(r"\.(0+)", number_format):
-        return len(match.group(1))
-
-    return "INF"
+    section = _numberFormatSection(cell)
+    if not re.search(r"[0#?]", section) or "/" in section:
+        return "INF"
+    if match := re.search(r"\.([0#?]*)", section):
+        return match.group(1).count("0")
+    return 0
 
 
 # What getDateFromValue accepts, for messages about cells it refuses.

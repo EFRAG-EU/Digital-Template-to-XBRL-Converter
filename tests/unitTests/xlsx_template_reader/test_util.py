@@ -20,14 +20,23 @@ def _cell(number_format: str):
 @pytest.mark.parametrize(
     "number_format,expected",
     [
+        ("General", "INF"),
+        ("@", "INF"),
+        ("0", 0),
+        ("#,##0", 0),
         ("0.00", 2),
         ("#,##0.000", 3),
+        ("0%", 0),
+        ("0.00%", 2),
         ("0.0%", 1),
-        ("0.000%", 3),
+        ("0.0#", 1),  # the places always shown
         ("0.00E+00", 2),
-        ("General", "INF"),
-        ("0", "INF"),
-        ("#,##0", "INF"),
+        ('"a.b" 0', 0),  # a point in quoted text is not the decimal point
+        ("#,##0.00;[Red]-#,##0.00", 2),
+        ("[$€-x] #,##0.00", 2),
+        ("#,##0_);(#,##0)", 0),
+        (";;;", "INF"),  # shows nothing
+        ("# ?/?", "INF"),  # a fraction
     ],
 )
 def test_get_decimal_places(number_format, expected):
