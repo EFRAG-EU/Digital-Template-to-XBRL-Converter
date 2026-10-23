@@ -14,7 +14,9 @@ from lxml import etree
 
 from mireport.conversionresults import (
     ConversionResultsBuilder,
+    MessageType,
     Severity,
+    Stage,
 )
 from mireport.filesupport import FilelikeAndFileName
 from mireport.pdf_converter import (
@@ -215,8 +217,18 @@ class TestPartialFailure:
         self, results: Any, pc: Any, flakyConverter: None
     ) -> None:
         convertSupplementaryPdfs([makePdf("a.pdf"), makePdf("bad.pdf")], results, pc)
-        assert len(warnings(results)) == 1
-        assert "bad.pdf" in warnings(results)[0]
+        [warning] = results.getMessages(wantedMessageSeverities={Severity.WARNING})
+        assert warning.source == "bad.pdf"
+        assert "bad.pdf" not in warning.messageText
+
+    def test_every_message_is_in_the_pdfs_section(
+        self, results: Any, pc: Any, flakyConverter: None
+    ) -> None:
+        convertSupplementaryPdfs([makePdf("a.pdf"), makePdf("bad.pdf")], results, pc)
+        [pdfs] = [s for s in results.sections if s.stage is Stage.PDF]
+        assert pdfs.messages == results.getMessages(
+            wantedMessageTypes=MessageType.allExcept(MessageType.Progress)
+        )
 
     def test_conversion_still_succeeds(
         self, results: Any, pc: Any, flakyConverter: None

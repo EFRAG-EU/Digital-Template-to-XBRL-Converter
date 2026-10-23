@@ -18,6 +18,7 @@ from mireport.conversionresults import (
     ConversionResultsBuilder,
     MessageType,
     Severity,
+    Stage,
 )
 from mireport.data.disclosures import VSME_DEFAULTS
 from mireport.docx_converter import DEFAULT_TIMEOUT_SECONDS as DOCX_TIMEOUT_SECONDS
@@ -155,11 +156,12 @@ def _pauseForPartialFacts(
     ]
     conv.partial_fact_concepts = concept_infos
     labels = ", ".join(info["label"] for info in concept_infos)
-    builder.addMessage(
-        f"Conversion paused: {len(concept_infos)} disclosure field(s) require supplementary Word documents ({labels}).",
-        Severity.INFO,
-        MessageType.Conversion,
-    )
+    with builder.section(Stage.WORD):
+        builder.addMessage(
+            f"{len(concept_infos)} disclosure field(s) require supplementary Word documents ({labels}).",
+            Severity.INFO,
+            MessageType.Conversion,
+        )
     return True
 
 
@@ -174,6 +176,15 @@ def _completePartialFacts(
     if not (report.hasPartialFacts and conv.has_external_values):
         return False
 
+    with builder.section(Stage.WORD):
+        return _convertWordDocuments(report, conv, builder)
+
+
+def _convertWordDocuments(
+    report: InlineReport,
+    conv: Conversion,
+    builder: ConversionResultsBuilder,
+) -> bool:
     external = conv.external_values
     unconverted = False
     for concept in list(report.partialFactsByConcept):
@@ -187,10 +198,11 @@ def _completePartialFacts(
             )
         except DocxConversionError as e:
             builder.addMessage(
-                f"Conversion failed: {e}",
+                str(e),
                 Severity.ERROR,
                 MessageType.Conversion,
                 taxonomy_concept=concept,
+                source=e.filename,
             )
             unconverted = True
             continue
@@ -204,7 +216,7 @@ def _completePartialFacts(
 
     missing = ", ".join(str(c.qname) for c in report.partialFactsByConcept)
     builder.addMessage(
-        f"Conversion failed: no Word document was provided for the following disclosure field(s): {missing}.",
+        f"No Word document was provided for the following disclosure field(s): {missing}.",
         Severity.ERROR,
         MessageType.Conversion,
     )
@@ -223,10 +235,8 @@ def _mergePriorReport(
     the EarlyAbortException ends the processing context."""
     if (prior := conv.priorReport) is None:
         return
-    pc.mark(
-        "Reading last year's report", additionalInfo=f"Using file: {prior.filename}"
-    )
-    PriorReport.fromFile(prior, builder, arelle=arelle).mergeInto(report, builder)
+    with builder.section(Stage.PRIOR, source=prior.filename):
+        PriorReport.fromFile(prior, builder, arelle=arelle).mergeInto(report, builder)
 
 
 def _applyTheme(

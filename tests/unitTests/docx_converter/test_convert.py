@@ -22,14 +22,16 @@ def test_a_child_process_converts_as_in_process_does():
 
 
 def test_a_child_process_that_takes_too_long_is_stopped():
-    with pytest.raises(DocxConversionError, match="took longer than 0 seconds"):
+    with pytest.raises(DocxConversionError, match="^Took longer than 0 seconds") as e:
         convertDocxToHtml(DOCUMENT, idPrefix="t-", timeoutSeconds=0)
+    assert e.value.filename == "policy.docx"
 
 
 @pytest.mark.parametrize("timeoutSeconds", [None, 30])
 def test_a_file_that_is_not_a_word_document_is_an_error(timeoutSeconds):
-    with pytest.raises(DocxConversionError, match="policy.docx could not be read"):
+    with pytest.raises(DocxConversionError, match=r"^Could not be read\.$") as e:
         convertDocxToHtml(NOT_A_DOCUMENT, idPrefix="t-", timeoutSeconds=timeoutSeconds)
+    assert e.value.filename == "policy.docx"
 
 
 @pytest.mark.parametrize("timeoutSeconds", [None, 30])

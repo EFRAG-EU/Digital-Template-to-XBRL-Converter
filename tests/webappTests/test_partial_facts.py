@@ -19,7 +19,7 @@ from tests.unitTests.word_documents import (
 )
 
 from digital_converter_webapp.conversion import ConversionStore
-from mireport.conversionresults import MessageType, Severity
+from mireport.conversionresults import MessageType, Severity, Stage
 
 CONVERSION_ID = "test-conversion"
 
@@ -126,13 +126,16 @@ def test_word_document_fills_the_text_block_and_its_warnings_are_shown(
     conv = conversion_of(client)
     results = conv.results
     assert results.conversionSuccessful
-    wordMessages = [m for m in results.messages if "policy.docx" in m.messageText]
-    (warning,) = [m.messageText for m in wordMessages if m.severity is Severity.WARNING]
+    [word] = [s for s in results.sections if s.stage is Stage.WORD]
+    assert {m.source for m in word.messages} == {"policy.docx"}
+    (warning,) = [
+        m.messageText for m in word.messages if m.severity is Severity.WARNING
+    ]
     assert "Unsupported break type: bogus" in warning
     # A style mammoth doesn't know loses only formatting: developers only.
     assert any(
         m.messageType is MessageType.DevInfo and "Fancy" in m.messageText
-        for m in wordMessages
+        for m in word.messages
     )
     assert "Fancy" not in warning
     with zipfile.ZipFile(io.BytesIO(conv.zip.fileContent)) as package:
@@ -160,11 +163,14 @@ def test_a_file_that_is_not_a_word_document_fails_the_conversion(
 
     results = conversion_of(client).results
     assert not results.conversionSuccessful
+    [word] = [s for s in results.sections if s.stage is Stage.WORD]
     errors = [
-        m.messageText
-        for m in results.getMessages(wantedMessageSeverities={Severity.ERROR})
+        (m.source, m.messageText) for m in word.messages if m.severity is Severity.ERROR
     ]
-    assert errors == ["Conversion failed: Word document policy.docx could not be read."]
+    assert errors == [("policy.docx", "Could not be read.")]
+    assert word.messages == results.getMessages(
+        wantedMessageSeverities={Severity.ERROR}
+    )
 
 
 @pytest.mark.slow

@@ -1,7 +1,7 @@
 """Last year's report, read from a file for its comparatives (see mireport.report.comparatives).
 
 The file is read as a whole report on its own. Its messages are about last year's report, so they
-say so. One that can't be read or merged is an error, and stops the conversion
+go in a section of their own. One that can't be read or merged is an error, and stops the conversion
 (EarlyAbortException).
 """
 
@@ -23,6 +23,7 @@ from mireport.conversionresults import (
     Message,
     MessageType,
     Severity,
+    Stage,
 )
 from mireport.data.disclosures import VSME_DEFAULTS
 from mireport.exceptions import EarlyAbortException, InlineReportException
@@ -39,7 +40,6 @@ from mireport.xlsx_template_reader.processor import XlsxProcessor
 if TYPE_CHECKING:
     from typing import Self
 
-MESSAGE_PREFIX = "Prior-year report: "
 # A report package (.xbri for Inline XBRL, .xbr for xBRL-JSON or xBRL-XML, or a plain .zip) goes
 # to Arelle as it is; a single Inline XBRL document is packaged first.
 REPORT_PACKAGE_EXTENSIONS = (".xbri", ".xbr", ".zip")
@@ -68,20 +68,20 @@ class PriorReport:
         arelle: ArelleReportProcessor,
     ) -> Self:
         """Last year's report in ``source``, read as its extension says."""
-        match PurePath(source.filename).suffix.lower():
-            case ".json":
-                return cls.fromXbrlJson(source, results)
-            case ".xlsx":
-                return cls.fromWorkbook(source, results)
-            case ".xhtml" | ".html" | ".xbri" | ".xbr" | ".zip":
-                return cls.fromInlineXbrl(source, results, arelle=arelle)
-            case other:
-                _abort(
-                    results,
-                    f"{MESSAGE_PREFIX}{source.filename}: a "
-                    f"{other or 'file without an extension'} can't be read; give one of "
-                    f"{', '.join(PRIOR_REPORT_EXTENSIONS)}.",
-                )
+        with results.section(Stage.PRIOR, source=source.filename):
+            match PurePath(source.filename).suffix.lower():
+                case ".json":
+                    return cls.fromXbrlJson(source, results)
+                case ".xlsx":
+                    return cls.fromWorkbook(source, results)
+                case ".xhtml" | ".html" | ".xbri" | ".xbr" | ".zip":
+                    return cls.fromInlineXbrl(source, results, arelle=arelle)
+                case other:
+                    _abort(
+                        results,
+                        f"A {other or 'file without an extension'} can't be read; "
+                        f"give one of {', '.join(PRIOR_REPORT_EXTENSIONS)}.",
+                    )
 
     @classmethod
     def fromXbrlJson(
@@ -116,14 +116,16 @@ class PriorReport:
         results: ConversionResultsBuilder,
         reader: Callable[[FilelikeAndFileName, ConversionResultsBuilder], Report],
     ) -> Self:
-        """``reader``'s report, with its messages passed on to ``results`` as last year's."""
+        """``reader``'s report, with its messages passed on to ``results``, in the
+        section for last year's."""
         read = ConversionResultsBuilder(conversionId=results.conversionId)
-        try:
-            report = reader(source, read)
-        except (InlineReportException, XbrlJsonException, EarlyAbortException) as e:
-            _passOn(read, results)
-            _abort(results, f"{MESSAGE_PREFIX}{e}", e)
-        _passOn(read, results)
+        with results.section(Stage.PRIOR, source=source.filename):
+            try:
+                report = reader(source, read)
+            except (InlineReportException, XbrlJsonException, EarlyAbortException) as e:
+                results.addMessages(read.messages)
+                _abort(results, str(e), e)
+            results.addMessages(read.messages)
         return cls(report, source.filename)
 
     def mergeInto(
@@ -131,12 +133,13 @@ class PriorReport:
     ) -> PriorMerge:
         """Add this report's numbers and booleans for the year before ``report``'s as its
         prior period (mergePriorReport)."""
-        try:
-            return mergePriorReport(
-                report, self.report, results, fileName=self.fileName
-            )
-        except InlineReportException as e:
-            _abort(results, str(e), e)
+        with results.section(Stage.PRIOR, source=self.fileName):
+            try:
+                return mergePriorReport(
+                    report, self.report, results, fileName=self.fileName
+                )
+            except InlineReportException as e:
+                _abort(results, str(e), e)
 
 
 def _readXbrlJson(
@@ -199,19 +202,6 @@ def _readInlineXbrl(
             )
         )
     return XbrlJsonProcessor(document, read).createReport()
-
-
-def _passOn(read: ConversionResultsBuilder, results: ConversionResultsBuilder) -> None:
-    results.addMessages(
-        Message(
-            f"{MESSAGE_PREFIX}{m.messageText}",
-            m.severity,
-            m.messageType,
-            m.conceptQName,
-            m.excelReference,
-        )
-        for m in read.messages
-    )
 
 
 def _abort(

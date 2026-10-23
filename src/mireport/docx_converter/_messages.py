@@ -39,26 +39,28 @@ class DocxConversion:
         *,
         taxonomy_concept: Concept | None = None,
     ) -> None:
-        """Report mammoth's messages, each distinct one once. Style messages
-        are developer information; the rest, which may mean lost content, are
-        one warning for the document."""
+        """Report mammoth's messages, each distinct one once and each about this
+        document (its ``source``). Style messages are developer information;
+        the rest, which may mean lost content, are one warning for the
+        document."""
         styles = Counter(m for m in self.messages if _STYLE_MESSAGE.search(m))
         others = Counter(m for m in self.messages if not _STYLE_MESSAGE.search(m))
         for message, count in styles.items():
             builder.addMessage(
-                f"Word document {self.filename}: {_counted(message, count)}",
+                _counted(message, count),
                 Severity.INFO,
                 MessageType.DevInfo,
                 taxonomy_concept=taxonomy_concept,
+                source=self.filename,
             )
         if others:
             builder.addMessage(
-                f"Word document {self.filename}: some content may not appear as "
-                "it does in Word: "
+                "Some content may not appear as it does in Word: "
                 + "; ".join(_counted(m, count) for m, count in others.items()),
                 Severity.WARNING,
                 MessageType.Conversion,
                 taxonomy_concept=taxonomy_concept,
+                source=self.filename,
             )
 
 

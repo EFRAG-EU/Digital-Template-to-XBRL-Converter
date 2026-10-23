@@ -23,7 +23,11 @@ from mireport.cli import (
     console_print as print,
 )
 from mireport.comparatives import PriorReport
-from mireport.conversionresults import ConversionResults, ConversionResultsBuilder
+from mireport.conversionresults import (
+    ConversionResults,
+    ConversionResultsBuilder,
+    Stage,
+)
 from mireport.filesupport import FilelikeAndFileName, ImageFileLikeAndFileName
 from mireport.report.theme import ColourPalette, DisplayMode, ReportTheme
 from mireport.taxonomy import loadTaxonomyJSON
@@ -161,13 +165,11 @@ def doConversion(args: argparse.Namespace) -> ConversionResults:
             f"{processor.factsAdded} facts added, {processor.factsSkipped} skipped"
         )
         if args.prior:
-            pc.mark(
-                "Reading last year's report", additionalInfo=f"Using file: {args.prior}"
-            )
             prior = FilelikeAndFileName(args.prior.read_bytes(), args.prior.name)
-            PriorReport.fromFile(prior, resultsBuilder, arelle=arp).mergeInto(
-                report, resultsBuilder
-            )
+            with resultsBuilder.section(Stage.PRIOR, source=prior.filename):
+                PriorReport.fromFile(prior, resultsBuilder, arelle=arp).mergeInto(
+                    report, resultsBuilder
+                )
 
         colour = ColourPalette.parse(args.style_custom or args.style_preset)
         report.theme.setDisplayMode(args.style_mode).setColour(colour)

@@ -24,10 +24,14 @@ from mireport.comparatives import PriorReport
 from mireport.conversionresults import (
     ConversionResults,
     ConversionResultsBuilder,
+    MessageType,
+    Severity,
+    Stage,
 )
 from mireport.data.disclosures import VSME_DEFAULTS
-from mireport.docx_converter import convertDocxToHtml
+from mireport.docx_converter import DocxConversionError, convertDocxToHtml
 from mireport.entrypoints import describeEntryPointSet
+from mireport.exceptions import EarlyAbortException
 from mireport.filesupport import FilelikeAndFileName, ImageFileLikeAndFileName
 from mireport.localise import EU_LOCALES, argparse_locale
 from mireport.pdf_converter import (
@@ -45,11 +49,18 @@ def _convert_docx_to_markup(
     docx_path: Path, resultsBuilder: ConversionResultsBuilder, idPrefix: str
 ) -> Markup:
     """Convert a .docx file to HTML and return it as Markup, reporting anything
-    that could not be converted. Its ids start @idPrefix, unique to it."""
-    conversion = convertDocxToHtml(
-        FilelikeAndFileName(docx_path.read_bytes(), docx_path.name),
-        idPrefix=idPrefix,
-    )
+    that could not be converted. Its ids start @idPrefix, unique to it. One
+    that can't be converted at all stops the conversion."""
+    try:
+        conversion = convertDocxToHtml(
+            FilelikeAndFileName(docx_path.read_bytes(), docx_path.name),
+            idPrefix=idPrefix,
+        )
+    except DocxConversionError as e:
+        resultsBuilder.addMessage(
+            str(e), Severity.ERROR, MessageType.Conversion, source=e.filename
+        )
+        raise EarlyAbortException(str(e)) from e
     conversion.addTo(resultsBuilder)
     return conversion.html
 
@@ -262,13 +273,11 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, list[str]
         )
         report = xl_processor.createReport()
         if args.prior:
-            pc.mark(
-                "Reading last year's report", additionalInfo=f"Using file: {args.prior}"
-            )
             prior = FilelikeAndFileName(args.prior.read_bytes(), args.prior.name)
-            PriorReport.fromFile(prior, resultsBuilder, arelle=arp).mergeInto(
-                report, resultsBuilder
-            )
+            with resultsBuilder.section(Stage.PRIOR, source=prior.filename):
+                PriorReport.fromFile(prior, resultsBuilder, arelle=arp).mergeInto(
+                    report, resultsBuilder
+                )
 
         colour = ColourPalette.parse(args.style_custom or args.style_preset)
         report.theme.setDisplayMode(args.style_mode).setColour(colour)
@@ -317,46 +326,44 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, list[str]
                 "introduction": report.setIntroduction,
                 "backCoverMatter": report.setBackCoverMatter,
             }
-            for section in extra.get("optionalSections", []):
-                section_id = section.get("id")
-                sectionSetter = optional_section_setters.get(section_id)
-                if sectionSetter is None:
-                    pc.addDevInfoMessage(f"Unknown optionalSections id: {section_id!r}")
-                    continue
-                if "path" in section:
-                    pc.mark(
-                        "Converting Word document",
-                        additionalInfo=f"Creating {section_id} from {section['path']}",
-                    )
-                    docx_path = _resolve_extra_path(extra_file, section["path"])
-                    sectionSetter(
-                        _convert_docx_to_markup(
-                            docx_path, resultsBuilder, idPrefix=f"{section_id}-"
+            # Every Word document, in one section.
+            with resultsBuilder.section(Stage.WORD):
+                for section in extra.get("optionalSections", []):
+                    section_id = section.get("id")
+                    sectionSetter = optional_section_setters.get(section_id)
+                    if sectionSetter is None:
+                        pc.addDevInfoMessage(
+                            f"Unknown optionalSections id: {section_id!r}"
                         )
-                    )
-                elif "content" in section:
-                    sectionSetter(Markup(section["content"]))
-                else:
-                    pc.addDevInfoMessage(
-                        f"optionalSections entry {section_id!r} has neither 'path' nor 'content'"
-                    )
+                        continue
+                    if "path" in section:
+                        docx_path = _resolve_extra_path(extra_file, section["path"])
+                        sectionSetter(
+                            _convert_docx_to_markup(
+                                docx_path, resultsBuilder, idPrefix=f"{section_id}-"
+                            )
+                        )
+                    elif "content" in section:
+                        sectionSetter(Markup(section["content"]))
+                    else:
+                        pc.addDevInfoMessage(
+                            f"optionalSections entry {section_id!r} has neither 'path' nor 'content'"
+                        )
 
-            for rtv in extra.get("replacementTextblockValues", []):
-                pc.mark(
-                    "Converting Word document",
-                    additionalInfo=f"Replacing {rtv['concept']} from {rtv['path']}",
-                )
-                docx_path = _resolve_extra_path(extra_file, rtv["path"])
-                concept = report.taxonomy.getConcept(rtv["concept"])
-                markup = _convert_docx_to_markup(
-                    docx_path, resultsBuilder, idPrefix=f"{concept.qname.localName}-"
-                )
-                # A text block the template marks as external has no fact to
-                # replace yet, only a partial one waiting for this value.
-                if concept in report.partialFactsByConcept:
-                    report.completePartialFact(concept, markup)
-                else:
-                    report.replaceFactValue(concept, markup)
+                for rtv in extra.get("replacementTextblockValues", []):
+                    docx_path = _resolve_extra_path(extra_file, rtv["path"])
+                    concept = report.taxonomy.getConcept(rtv["concept"])
+                    markup = _convert_docx_to_markup(
+                        docx_path,
+                        resultsBuilder,
+                        idPrefix=f"{concept.qname.localName}-",
+                    )
+                    # A text block the template marks as external has no fact to
+                    # replace yet, only a partial one waiting for this value.
+                    if concept in report.partialFactsByConcept:
+                        report.completePartialFact(concept, markup)
+                    else:
+                        report.replaceFactValue(concept, markup)
 
             for entry in extra.get("pdfAttachments", []):
                 pdf_path = _resolve_extra_path(extra_file, entry["path"])

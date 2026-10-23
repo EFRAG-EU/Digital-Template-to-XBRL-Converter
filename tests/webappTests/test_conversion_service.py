@@ -16,7 +16,7 @@ import zipfile
 
 import pytest
 
-from mireport.conversionresults import Severity
+from mireport.conversionresults import Severity, Stage
 from mireport.pdf_converter import PdfConversionError, PdfToolNotFoundError
 
 
@@ -209,14 +209,11 @@ class TestPdfConversion:
         upload(client, pdfs=[make_pdf("annex1.pdf")])
         results = _convert(client, conversion_of).results
         assert results.conversionSuccessful
-        # Scoped to PDF warnings: the sample template raises its own unrelated
-        # ones, so a bare count would pass for the wrong reason.
-        pdfWarnings = [
-            m
-            for m in results.messages
-            if m.severity is Severity.WARNING and "annex1.pdf" in m.messageText
-        ]
-        assert len(pdfWarnings) == 1, results.messages
+        # Scoped to the PDFs' section: the sample template raises its own
+        # unrelated warnings, so a bare count would pass for the wrong reason.
+        [pdfs] = [s for s in results.sections if s.stage is Stage.PDF]
+        pdfWarnings = [m for m in pdfs.messages if m.severity is Severity.WARNING]
+        assert [m.source for m in pdfWarnings] == ["annex1.pdf"]
 
     @pytest.mark.xdist_group("webapp-unconverted-pdf")
     def test_the_pdf_still_ships_when_conversion_fails(

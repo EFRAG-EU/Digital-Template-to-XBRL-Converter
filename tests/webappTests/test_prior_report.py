@@ -162,7 +162,7 @@ class TestFailures:
         unsaved = _withNamedCell(thisYear, "template_migration_status", None)
         body = _convert(client, _upload(client, thisYear, unsaved, "migrated.xlsx"))
         assert (
-            "Prior-year report: migrated.xlsx has been migrated but not yet saved in "
+            "migrated.xlsx has been migrated but not yet saved in "
             "Excel. Open it in Excel, save it, and give it again."
         ) in body
         assert not conversion_of(client).has_zip

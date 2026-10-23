@@ -52,7 +52,9 @@ def convertDocxToHtml(
     try:
         xhtml = normaliseFragment(html)
     except XhtmlError as e:
-        raise DocxConversionError(e.about(f"Word document {docx.filename}")) from e
+        raise DocxConversionError(
+            e.about("The document"), filename=docx.filename
+        ) from e
     return DocxConversion(filename=docx.filename, html=Markup(xhtml), messages=messages)
 
 
@@ -62,9 +64,7 @@ def _convertInProcess(
     try:
         return convert(docx.fileLike(), idPrefix)
     except Exception as e:
-        raise DocxConversionError(
-            f"Word document {docx.filename} could not be read."
-        ) from e
+        raise DocxConversionError("Could not be read.", filename=docx.filename) from e
 
 
 def _convertInChildProcess(
@@ -81,18 +81,16 @@ def _convertInChildProcess(
         )
     except subprocess.TimeoutExpired as e:
         raise DocxConversionError(
-            f"Word document {docx.filename} took longer than {timeoutSeconds:g} "
-            "seconds to convert."
+            f"Took longer than {timeoutSeconds:g} seconds to convert.",
+            filename=docx.filename,
         ) from e
     except subprocess.CalledProcessError as e:
         detail = e.stderr.decode("utf-8", errors="replace").strip()
         L.warning(f"Converting Word document {docx.filename} failed: {detail}")
-        raise DocxConversionError(
-            f"Word document {docx.filename} could not be read."
-        ) from e
+        raise DocxConversionError("Could not be read.", filename=docx.filename) from e
     except (OSError, subprocess.SubprocessError) as e:
         raise DocxConversionError(
-            f"Could not run the Word document converter. {e}"
+            f"Could not run the Word document converter. {e}", filename=docx.filename
         ) from e
     output = json.loads(completed.stdout)
     return output["html"], output["messages"]
