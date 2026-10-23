@@ -37,8 +37,21 @@ function showErrorModal(message) {
     document.getElementById("errorModal").classList.replace("hidden", "flex");
 }
 
+// The download being waited for, if any, so that it can be cancelled.
+let pendingDownload = null;
+
+// Cancel a download still waiting for its file, saying why.
+function cancelPendingDownload(reason) {
+    if (pendingDownload) {
+        pendingDownload.abort();
+        pendingDownload = null;
+        showErrorModal(reason);
+    }
+}
+
 async function downloadWhenReady(fileUrl, spinnerText) {
-    const MAX_WAIT_MS      = 60000;
+    // Long enough for the report to be validated, which a download waits for.
+    const MAX_WAIT_MS      = 300000;
     const INITIAL_POLL_MS  = 500;
     const MAX_POLL_MS      = 5000;
     const POLL_BACKOFF     = 1.5;
@@ -51,10 +64,11 @@ async function downloadWhenReady(fileUrl, spinnerText) {
 
     let pollingInterval = INITIAL_POLL_MS;
     const startTime = Date.now();
+    const download = pendingDownload = new AbortController();
 
     try {
         while (Date.now() - startTime < MAX_WAIT_MS) {
-            const response = await fetch(fileUrl, { method: "HEAD" });
+            const response = await fetch(fileUrl, { method: "HEAD", signal: download.signal });
 
             if (response.status === 200 && response.headers.get("X-File-Ready") === "true") {
                 window.location.href = fileUrl;
@@ -75,15 +89,24 @@ async function downloadWhenReady(fileUrl, spinnerText) {
             }
 
             await new Promise(resolve => setTimeout(resolve, pollingInterval));
+            if (download.signal.aborted) {
+                return;
+            }
             pollingInterval = Math.min(pollingInterval * POLL_BACKOFF, MAX_POLL_MS);
         }
 
         showErrorModal("The file could not be generated in time.");
 
     } catch (error) {
+        if (download.signal.aborted) {
+            return;
+        }
         console.error("Error waiting for file:", error);
         showErrorModal(`Error: ${error.message}`);
     } finally {
+        if (pendingDownload === download) {
+            pendingDownload = null;
+        }
         clearTimeout(spinnerTimeout);
         hideSpinner();
     }
@@ -119,6 +142,9 @@ async function pollConversionStatus(results) {
             document.getElementById(id)?.replaceWith(
                 document.createRange().createContextualFragment(html)
             );
+        }
+        if (status.error) {
+            cancelPendingDownload(status.error);
         }
         if (status.complete) {
             results.dataset.state = "complete";

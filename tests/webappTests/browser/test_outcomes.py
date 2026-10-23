@@ -63,11 +63,11 @@ def test_unknown_conversion_is_expired(page: Page):
     expect(page.get_by_text("No conversion results available.")).to_be_visible()
 
 
-def test_validation_errors_leave_downloads_enabled(
+def test_validation_errors_disable_downloads(
     page: Page, uploadAndConvert, skipArelle, noJsonValidation
 ):
-    """Today an Arelle ERROR only turns the validation banner red: the report
-    can still be downloaded."""
+    """An Arelle ERROR turns the validation banner red and withholds the
+    report: none of it can be downloaded."""
     uploadAndConvert(page)
 
     expect(
@@ -76,13 +76,11 @@ def test_validation_errors_leave_downloads_enabled(
     expect(
         page.get_by_text("Arelle validation was not run (test stub)")
     ).to_be_visible()
+    expect(page.get_by_text("No files available for download")).to_be_visible()
     for name in DOWNLOAD_BUTTONS:
-        expect(page.get_by_role("link", name=name)).not_to_have_attribute(
+        expect(page.get_by_role("link", name=name)).to_have_attribute(
             "aria-disabled", "true"
         )
-    with page.expect_download() as info:
-        page.get_by_role("link", name="Download xBRL-JSON").click()
-    assert info.value.suggested_filename.endswith(".json")
 
 
 @pytest.fixture(scope="module")

@@ -40,7 +40,7 @@ from .app_setup import DEPLOYMENT_DATETIME, getArelle
 from .background import StepStore, reportResults
 from .blueprints import convert_bp
 from .captcha import generate_captcha, validateCaptchaAndCsrf
-from .conversion import ConversionStore
+from .conversion import Conversion, ConversionStore
 from .conversion_service import doConversion, ensureViewer
 from .forms import IMAGE_UPLOAD_FIELDS, MAX_FILE_SIZE, MAX_PDF_COUNT, first_str
 from .migration import MigrationOutcome, checkMigration
@@ -308,6 +308,12 @@ def convert(id: str) -> Response:
             return make_response({"error": str(e)}, 500)
 
 
+VALIDATION_ERRORS_MESSAGE = (
+    "Validation found errors in the XBRL report, so it can't be downloaded."
+    " Please review the messages on the results page."
+)
+
+
 @convert_bp.route("/conversions/<string:id>/status", methods=["GET"])
 def conversionStatus(id: str) -> Response:
     """The results page's validation banner, downloads and messages as they
@@ -321,6 +327,7 @@ def conversionStatus(id: str) -> Response:
         {
             "complete": results.isComplete,
             "downloadsAllowed": results.downloadsAllowed,
+            "error": VALIDATION_ERRORS_MESSAGE if results.hasValidationErrors else None,
             "html": {
                 "validation-status": render_template(
                     "_validation-status.html.jinja", results=results
@@ -376,6 +383,18 @@ def partial_facts_submit(id: str) -> Response:
     return make_response(redirect(url_for("basic.convert", id=id), code=303))
 
 
+def _heldForValidation(conv: Conversion) -> Response | None:
+    """Why the report can't be had yet, if it can't: 202 (try again) while it
+    is being validated, 409 once validation has found errors."""
+    if (results := reportResults(conv)) is None:
+        return None
+    if not results.downloadsAllowed:
+        return make_response({"error": VALIDATION_ERRORS_MESSAGE}, 409)
+    if results.validationPending:
+        return Response(status=202, headers={"X-File-Ready": "false"})
+    return None
+
+
 @convert_bp.route("/downloadFile/<string:id>/<string:ftype>/", methods=["GET", "HEAD"])
 def downloadFile(id: str, ftype: str) -> Response:
     """Download the converted file from the session."""
@@ -386,6 +405,9 @@ def downloadFile(id: str, ftype: str) -> Response:
         return make_response(
             {"error": "No report generated. Nothing to download."}, 404
         )
+
+    if ftype in ("viewer", "zip", "json") and (held := _heldForValidation(conv)):
+        return held
 
     match ftype:
         case "viewer":
@@ -445,6 +467,8 @@ def delete_all() -> Response:
 def viewer(id: str) -> Response:
     if (conv := ConversionStore.fromFlask().get(id)) is None or not conv.has_zip:
         return make_response({"error": "No file found"}, 404)
+    if held := _heldForValidation(conv):
+        return held
 
     stuff, _ = ensureViewer(conv, getArelle())
     return serveViewerFile(stuff)
@@ -459,6 +483,8 @@ def viewerDocumentSetMember(id: str, filename: str) -> Response:
     """
     if (conv := ConversionStore.fromFlask().get(id)) is None or not conv.has_zip:
         return make_response({"error": "No file found"}, 404)
+    if held := _heldForValidation(conv):
+        return held
 
     _, members = ensureViewer(conv, getArelle())
     if (member := members.get(filename)) is None:

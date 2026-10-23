@@ -153,3 +153,72 @@ def test_results_page_is_shown_before_validation_finishes(
     page = backgroundClient.get(f"/conversions/{conv_id}").get_data(as_text=True)
     assert 'data-state="complete"' in page
     assert validations == ["package", "xbrlJson"]
+
+
+@pytest.fixture
+def cleanValidations(monkeypatch):
+    """Both validations pass, without Arelle running."""
+    for name in ("validateReportPackage", "validateXbrlJson"):
+        monkeypatch.setattr(
+            ArelleReportProcessor,
+            name,
+            lambda *args, **kwargs: ArelleProcessingResult(),
+        )
+
+
+@pytest.mark.parametrize("ftype", ["zip", "json", "viewer"])
+def test_validation_errors_withhold_the_report(client, upload_id, validations, ftype):
+    conv_id = upload_id(client)
+    client.get(f"/conversions/{conv_id}")
+
+    for method in (client.head, client.get):
+        response = method(f"/downloadFile/{conv_id}/{ftype}/")
+        assert response.status_code == 409
+    assert "Validation found errors" in response.get_json()["error"]
+    status = client.get(f"/conversions/{conv_id}/status").get_json()
+    assert status["downloadsAllowed"] is False
+    assert "Validation found errors" in status["error"]
+
+
+def test_validation_errors_withhold_the_served_viewer(client, upload_id, validations):
+    conv_id = upload_id(client)
+    client.get(f"/conversions/{conv_id}")
+
+    assert client.get(f"/viewer/{conv_id}/").status_code == 409
+
+
+def test_validation_errors_leave_the_upload_downloadable(
+    client, upload_id, validations
+):
+    conv_id = upload_id(client)
+    client.get(f"/conversions/{conv_id}")
+
+    assert client.get(f"/downloadFile/{conv_id}/excel/").status_code == 200
+
+
+@pytest.mark.parametrize("ftype", ["zip", "json"])
+def test_valid_report_is_downloadable(client, upload_id, cleanValidations, ftype):
+    conv_id = upload_id(client)
+    client.get(f"/conversions/{conv_id}")
+
+    response = client.head(f"/downloadFile/{conv_id}/{ftype}/")
+
+    assert response.status_code == 200
+    assert response.headers["X-File-Ready"] == "true"
+    status = client.get(f"/conversions/{conv_id}/status").get_json()
+    assert status["downloadsAllowed"] is True
+    assert status["error"] is None
+
+
+def test_download_waits_for_validation(backgroundClient, upload_id, validations, gate):
+    gate.clear()
+    conv_id = upload_id(backgroundClient)
+    backgroundClient.get(f"/conversions/{conv_id}")
+
+    response = backgroundClient.head(f"/downloadFile/{conv_id}/json/")
+
+    assert response.status_code == 202
+    assert response.headers["X-File-Ready"] == "false"
+    gate.set()
+    waitUntilComplete(backgroundClient, conv_id)
+    assert backgroundClient.head(f"/downloadFile/{conv_id}/json/").status_code == 409

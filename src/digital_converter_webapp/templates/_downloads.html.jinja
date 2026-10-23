@@ -2,35 +2,40 @@
 {# The download buttons, replaced in place as the steps finish. #}
 <div id="downloads" class="space-y-4">
     <h3 class="text-xl font-semibold text-gray-800">
-{% if results.conversionSuccessful %}
+{% if results.downloadsAllowed %}
         Files to download
 {% else %}
         No files available for download
 {% endif %}
     </h3>
-{% if results.conversionSuccessful %}
+{% if results.downloadsAllowed %}
     <p>
         Please review the generated XBRL report and the messages below to ensure that all disclosures are complete
         and accurate. The report can be downloaded in various formats:
+    </p>
+{% elif results.conversionSuccessful %}
+    <p>
+        Validation found errors in the generated XBRL report, so it can't be downloaded. Please review the
+        messages below and the Digital Template.
     </p>
 {% endif %}
     <div class="flex gap-4 justify-between items-center download-buttons">
         {{ download_button(
             'viewer',
             url_for('basic.downloadFile', id=results.conversionId, ftype='viewer'),
-            results.conversionSuccessful
+            results.downloadsAllowed
         ) }}
 
         {{ download_button(
             'zip',
             url_for('basic.downloadFile', id=results.conversionId, ftype='zip'),
-            results.conversionSuccessful
+            results.downloadsAllowed
         ) }}
 
         {{ download_button(
             'json',
             url_for('basic.downloadFile', id=results.conversionId, ftype='json'),
-            results.conversionSuccessful
+            results.downloadsAllowed
         ) }}
     </div>
 </div>
