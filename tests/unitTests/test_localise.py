@@ -64,15 +64,9 @@ def test_finite_decimal_places_with_locale(number, decimal_places, expected):
     [
         # INF with locale (preserve digits exactly)
         (1234.5678, "1,234.5678"),
-        pytest.param(
-            Decimal("1234.5678900"),
-            "1,234.5678900",
-            marks=pytest.mark.xfail(
-                reason="Trailing zeros are truncated unexpectedly by babel"
-            ),
-        ),
+        (Decimal("1234.5678900"), "1,234.5678900"),
         ("1e-6", "0.000001"),
-        (-1200.0, "-1,200"),
+        (-1200.0, "-1,200.0"),  # as without a locale
     ],
 )
 def test_inf_with_locale(number, expected):

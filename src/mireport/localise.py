@@ -171,20 +171,16 @@ def localise_and_format_number(
         raise ValueError(f"Non-finite number cannot be formatted: {number}")
 
     if decimal_places == "INF":
-        if locale:
-            # Babel derives its fractional precision from abs(exponent), so a
-            # positive exponent (e.g. Decimal("1E+30")) widens the quantum too.
-            exponent_digits = abs(int(value.as_tuple().exponent))
-            with localcontext() as ctx:
-                ctx.prec = max(ctx.prec, value.adjusted() + 1 + exponent_digits + 2)
-                return format_decimal(value, locale=locale, decimal_quantization=False)
-        # No locale: use standard thousands separator, preserve full precision
-        return f"{value:,}"
-
-    # Handle negative decimal places (fallback to 0). Bound to a new name so the
-    # "INF" arm above stays narrowed away; reassigning decimal_places would widen
-    # it back to its declared DecimalPlaces union.
-    places = max(decimal_places, 0)
+        if not locale:
+            # No locale: use standard thousands separator, preserve full precision
+            return f"{value:,}"
+        # As many places as the value has, so trailing zeros stay: babel's own
+        # unquantized formatting normalizes the value first and drops them.
+        places = max(-int(value.as_tuple().exponent), 0)
+    else:
+        # Handle negative decimal places (fallback to 0). Bound to a new name so
+        # decimal_places keeps its declared DecimalPlaces union.
+        places = max(decimal_places, 0)
 
     # Normal finite case
     if locale:
