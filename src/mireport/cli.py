@@ -20,6 +20,7 @@ from rich.prompt import Prompt
 from rich.table import Table
 from rich.text import Text
 
+from mireport.conversionresults import Section
 from mireport.diagnostics import AbstractDiagnostic
 from mireport.entrypoints import EntryPointSet, entryPointSetOf
 from mireport.exceptions import TaxonomyPackageException
@@ -95,6 +96,18 @@ def console_print_plain(lines: Iterable[object], indent: str = "\t") -> None:
     otherwise swallow as a style tag.
     """
     console_print(Text("\n".join(f"{indent}{line}" for line in lines)))
+
+
+def printSections(sections: Iterable[Section], *, developer: bool = False) -> None:
+    """Each section with messages to show, under a header saying what it is
+    about and what it found ("Last year's report (2025.json): 2 warnings")."""
+    for section in sections:
+        if messages := section.shownMessages(developer):
+            console_print(
+                Text(f"{section.title}: {section.severityCounts(developer)}"),
+                style="bold",
+            )
+            console_print_plain(messages)
 
 
 def configure_rich_output(*, locals_max_length: int | None = None) -> Console:

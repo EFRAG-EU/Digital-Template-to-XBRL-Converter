@@ -6,7 +6,7 @@ from pathlib import Path
 from mireport.arelle.report_info import ArelleReportProcessor, getOrCreateReportPackage
 from mireport.cli import (
     configure_rich_output,
-    console_print_plain,
+    printSections,
     validateTaxonomyPackages,
 )
 from mireport.cli import console_print as print
@@ -14,6 +14,7 @@ from mireport.conversionresults import (
     ConversionResults,
     ConversionResultsBuilder,
     Severity,
+    Stage,
 )
 
 
@@ -114,16 +115,18 @@ def main() -> None:
     source = getOrCreateReportPackage(report_path)
 
     outputsWanted: bool = bool(viewer_path or json_path)
-    arelle_messages = []
+    builder = ConversionResultsBuilder()
     if not outputsWanted:
-        arelle_result = arp.validateReportPackage(
-            source, disableCalculationValidation=args.ignore_calculation_warnings
-        )
-        arelle_messages.extend(arelle_result.messages)
+        with builder.section(Stage.PACKAGE):
+            arelle_result = arp.validateReportPackage(
+                source, disableCalculationValidation=args.ignore_calculation_warnings
+            )
+            builder.addMessages(arelle_result.messages)
     else:
         if viewer_path:
-            arelle_result = arp.generateInlineViewer(source)
-            arelle_messages.extend(arelle_result.messages)
+            with builder.section(Stage.PACKAGE):
+                arelle_result = arp.generateInlineViewer(source)
+                builder.addMessages(arelle_result.messages)
             if arelle_result.has_viewer:
                 if viewer_path.is_file():
                     print(f"Overwriting {viewer_path}.")
@@ -133,8 +136,9 @@ def main() -> None:
                 print("Failed to create inline viewer.")
 
         if json_path:
-            arelle_result = arp.generateXbrlJson(source)
-            arelle_messages.extend(arelle_result.messages)
+            with builder.section(Stage.XBRL_JSON_OUTPUT):
+                arelle_result = arp.generateXbrlJson(source)
+                builder.addMessages(arelle_result.messages)
             if arelle_result.has_json:
                 if json_path.is_file():
                     print(f"Overwriting {json_path}.")
@@ -142,7 +146,7 @@ def main() -> None:
                 print(f"xBRL-JSON written to {json_path}.")
             else:
                 print("Failed to create xBRL-JSON.")
-    results = ConversionResultsBuilder().addMessages(arelle_messages).build()
+    results = builder.build()
     elapsed = (time.perf_counter_ns() - start) / 1_000_000_000
     print(f"Finished querying Arelle ({elapsed:,.2f} seconds elapsed).")
 
@@ -155,12 +159,12 @@ def main() -> None:
         else:
             print("Messages:")
 
-        console_print_plain(results.userMessages)
+        printSections(results.sections)
 
     if args.devinfo and results.developerMessages:
         print()
         print("All messages (including developer messages):")
-        console_print_plain(results.developerMessages)
+        printSections(results.sections, developer=True)
 
     final_word_and_exit(results, args.quiet)
 

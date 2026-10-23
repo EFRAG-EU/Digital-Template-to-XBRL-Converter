@@ -14,7 +14,7 @@ from mireport.arelle.report_info import (
 )
 from mireport.cli import (
     configure_rich_output,
-    console_print_plain,
+    printSections,
     validateTaxonomyPackages,
 )
 from mireport.cli import (
@@ -467,7 +467,7 @@ def outputMessages(
         print(
             f"Information and issues encountered ({len(messages)} message{('s' if len(messages) != 1 else '')}):"
         )
-        console_print_plain(messages)
+        printSections(result.sections, developer=bool(args.devinfo))
 
     if args.devinfo and unused:
         max_output = 40

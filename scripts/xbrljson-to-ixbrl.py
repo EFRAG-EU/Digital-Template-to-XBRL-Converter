@@ -16,7 +16,7 @@ from mireport.arelle.report_info import (
 )
 from mireport.cli import (
     configure_rich_output,
-    console_print_plain,
+    printSections,
     validateTaxonomyPackages,
 )
 from mireport.cli import (
@@ -235,7 +235,7 @@ def outputMessages(args: argparse.Namespace, result: ConversionResults) -> None:
     if messages:
         print()
         print(f"Information and issues encountered ({len(messages)}):")
-        console_print_plain(messages)
+        printSections(result.sections, developer=bool(args.devinfo))
 
 
 def main() -> None:
