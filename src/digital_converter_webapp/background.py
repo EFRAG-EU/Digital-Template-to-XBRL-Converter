@@ -1,5 +1,6 @@
 """The steps run on a converted report once its results page can be shown:
-Arelle validates the report package, then the xBRL-JSON written from it.
+Arelle validates the report package, then the xBRL-JSON written from it, then
+builds the viewer.
 
 Each step's :class:`~mireport.conversionresults.StepResults` is kept in a
 :class:`StepStore`, a cache every process serving the app shares, rather than
@@ -29,6 +30,7 @@ from mireport.arelle.report_info import ARELLE_VERSION_INFORMATION
 from mireport.conversionresults import ReportResults, Step, StepResults
 
 from .app_setup import getArelle
+from .conversion_service import ensureViewer
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -41,6 +43,9 @@ if TYPE_CHECKING:
     from mireport.filesupport import FilelikeAndFileName
 
     from .conversion import Conversion
+
+    # The viewer, and its document set members by the filename it fetches them as.
+    ViewerFiles = tuple[FilelikeAndFileName, dict[str, FilelikeAndFileName]]
 
 L = logging.getLogger(__name__)
 
@@ -86,7 +91,16 @@ class StepStore:
         )
 
     def forget(self, conversionId: str) -> None:
-        self._cache.delete_many(*(self._key(conversionId, s) for s in Step))
+        self._cache.delete_many(
+            *(self._key(conversionId, s) for s in Step),
+            self._key(conversionId, "viewerFiles"),
+        )
+
+    def saveViewer(self, conversionId: str, viewer: ViewerFiles) -> None:
+        self._cache.set(self._key(conversionId, "viewerFiles"), viewer, self._timeout)
+
+    def loadViewer(self, conversionId: str) -> ViewerFiles | None:
+        return self._cache.get(self._key(conversionId, "viewerFiles"))
 
     def claim(self, conversionId: str) -> bool:
         """Claim the running of these steps; False if someone already has."""
@@ -144,9 +158,7 @@ def runSteps(
         Step.XBRL_JSON: lambda: arelle.validateXbrlJson(xbrlJson).validationResults(
             Step.XBRL_JSON, detail=f"{xbrlJson.filename}. {arelleDetail}"
         ),
-        Step.VIEWER: lambda: StepResults.skipped(
-            Step.VIEWER, "The viewer is generated when first asked for."
-        ),
+        Step.VIEWER: lambda: _buildViewer(store, conversionId, reportPackage, arelle),
     }
     try:
         finished = {s for s, r in store.load(conversionId).items() if r.isFinished}
@@ -180,6 +192,34 @@ def _runInBackground(job: Callable[[], None]) -> None:
 def _logFailure(future: Future[None]) -> None:
     if (e := future.exception()) is not None:
         L.error("Conversion steps stopped unexpectedly", exc_info=e)
+
+
+def _buildViewer(
+    store: StepStore,
+    conversionId: str,
+    reportPackage: FilelikeAndFileName,
+    arelle: ArelleReportProcessor,
+) -> StepResults:
+    """Build the viewer, unless validation found errors: then the report, the
+    viewer included, isn't offered at all."""
+    steps = store.load(conversionId)
+    if any(results.hasErrors() for s, results in steps.items() if s.isValidation):
+        return StepResults.skipped(Step.VIEWER, "Validation found errors.")
+    result = arelle.generateInlineViewer(reportPackage)
+    store.saveViewer(
+        conversionId,
+        (
+            result.viewer,
+            {m.filename: m for m in result.viewer_document_set_members},
+        ),
+    )
+    # Its messages are the package validation's again: leave them out.
+    return StepResults.done(Step.VIEWER, [], result.elapsedNs)
+
+
+def viewerFiles(conv: Conversion) -> ViewerFiles:
+    """The viewer the steps built, or one built now if they didn't."""
+    return StepStore.fromFlask().loadViewer(conv.id) or ensureViewer(conv, getArelle())
 
 
 def reportResults(conv: Conversion) -> ReportResults | None:

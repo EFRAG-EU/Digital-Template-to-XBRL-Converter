@@ -11,6 +11,7 @@ from digital_converter_webapp.background import StepStore
 from mireport.arelle.report_info import ArelleReportProcessor
 from mireport.arelle.support import ArelleProcessingResult
 from mireport.conversionresults import Step, StepState
+from mireport.filesupport import FilelikeAndFileName
 
 
 @pytest.fixture
@@ -155,15 +156,31 @@ def test_results_page_is_shown_before_validation_finishes(
     assert validations == ["package", "xbrlJson"]
 
 
+VIEWER = FilelikeAndFileName(fileContent=b"<html/>", filename="report_viewer.html")
+
+
 @pytest.fixture
-def cleanValidations(monkeypatch):
-    """Both validations pass, without Arelle running."""
+def cleanValidations(monkeypatch) -> list[str]:
+    """Both validations pass and the viewer is built, without Arelle running.
+    Returns the packages viewers were built from."""
     for name in ("validateReportPackage", "validateXbrlJson"):
         monkeypatch.setattr(
             ArelleReportProcessor,
             name,
             lambda *args, **kwargs: ArelleProcessingResult(),
         )
+    built: list[str] = []
+
+    def generateInlineViewer(self, source):
+        built.append(source.filename)
+        result = ArelleProcessingResult()
+        result._viewer = VIEWER
+        return result
+
+    monkeypatch.setattr(
+        ArelleReportProcessor, "generateInlineViewer", generateInlineViewer
+    )
+    return built
 
 
 @pytest.mark.parametrize("ftype", ["zip", "json", "viewer"])
@@ -222,3 +239,55 @@ def test_download_waits_for_validation(backgroundClient, upload_id, validations,
     gate.set()
     waitUntilComplete(backgroundClient, conv_id)
     assert backgroundClient.head(f"/downloadFile/{conv_id}/json/").status_code == 409
+
+
+def test_viewer_built_by_the_steps_is_served(client, upload_id, cleanValidations):
+    conv_id = upload_id(client)
+    client.get(f"/conversions/{conv_id}")
+
+    response = client.get(f"/downloadFile/{conv_id}/viewer/")
+
+    assert response.status_code == 200
+    assert response.data == VIEWER.fileContent
+    assert len(cleanValidations) == 1
+
+
+def test_viewer_waits_for_its_step(
+    backgroundClient, upload_id, cleanValidations, monkeypatch
+):
+    viewerGate = threading.Event()
+    build = ArelleReportProcessor.generateInlineViewer
+
+    def slowViewer(self, source):
+        assert viewerGate.wait(timeout=60), "The test never let the viewer be built"
+        return build(self, source)
+
+    monkeypatch.setattr(ArelleReportProcessor, "generateInlineViewer", slowViewer)
+    conv_id = upload_id(backgroundClient)
+    backgroundClient.get(f"/conversions/{conv_id}")
+    try:
+        waitForStep(backgroundClient, conv_id, Step.VIEWER, StepState.RUNNING)
+
+        assert (
+            backgroundClient.head(f"/downloadFile/{conv_id}/json/").status_code == 200
+        )
+        assert (
+            backgroundClient.head(f"/downloadFile/{conv_id}/viewer/").status_code == 202
+        )
+    finally:
+        viewerGate.set()
+    waitUntilComplete(backgroundClient, conv_id)
+    assert backgroundClient.head(f"/downloadFile/{conv_id}/viewer/").status_code == 200
+    assert len(cleanValidations) == 1
+
+
+def waitForStep(client, conv_id: str, step: Step, state: StepState) -> None:
+    deadline = time.monotonic() + 60
+    with client.application.app_context():
+        store = StepStore.fromFlask()
+        while time.monotonic() < deadline:
+            results = store.load(conv_id).get(step)
+            if results is not None and results.state is state:
+                return
+            time.sleep(0.05)
+    raise AssertionError(f"{step.label} never got to {state}")

@@ -9,6 +9,7 @@ the primary alone would be useless.
 
 import pytest
 
+from digital_converter_webapp.background import StepStore
 from digital_converter_webapp.conversion import ConversionStore
 from mireport.filesupport import FilelikeAndFileName
 
@@ -111,11 +112,13 @@ class TestViewerAfterConversion:
 class TestDocumentSetViewerAfterConversion:
     """Against a real conversion of a workbook with a supplementary PDF."""
 
-    def test_viewer_has_document_set_members(
-        self, viewed_docset, conversion_of
-    ) -> None:
-        client, _ = viewed_docset
-        assert list(conversion_of(client).viewer_members) == ["annex1.xhtml"]
+    def test_viewer_has_document_set_members(self, app, viewed_docset) -> None:
+        _, conversionId = viewed_docset
+        with app.app_context():
+            viewerFiles = StepStore.fromFlask().loadViewer(conversionId)
+        assert viewerFiles is not None
+        _, members = viewerFiles
+        assert list(members) == ["annex1.xhtml"]
 
     def test_download_redirects_to_the_served_viewer(self, viewed_docset) -> None:
         client, conversionId = viewed_docset
