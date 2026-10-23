@@ -232,9 +232,10 @@ class FakeArelleProcessingResult(ArelleProcessingResult):
     """Stands in for a real Arelle validation in tests that never look at it.
 
     Carries an XBRL-validation ERROR saying so, so a test that comes to depend
-    on the validation outcome (isXbrlValid, overall severity, the results-page
-    banner) fails loudly rather than passing against a validation that never
-    ran. XBRL-validation errors don't count against ``conversionSuccessful``.
+    on the validation outcome (the results-page banner, the downloads) fails
+    loudly rather than passing against a validation that never ran. The
+    conversion still succeeds, but the ERROR withholds the report: every
+    download of it is refused and the viewer isn't built.
     """
 
     def __init__(self) -> None:
