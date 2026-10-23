@@ -12,12 +12,19 @@ if TYPE_CHECKING:
 
     from arelle.ModelDocument import ModelDocument
 
+    from mireport.conversionresults import Step
+
 from arelle.api.Session import Session
 from arelle.ModelValue import QName
 from arelle.ModelXbrl import ModelXbrl
 
 from mireport.arelle.diagnostics import ArelleDiagnostic
-from mireport.conversionresults import Message, MessageType, Severity
+from mireport.conversionresults import (
+    Message,
+    MessageType,
+    Severity,
+    ValidationResults,
+)
 from mireport.exceptions import MIReportException
 from mireport.filesupport import FilelikeAndFileName
 from mireport.version import VersionInformationTuple
@@ -82,6 +89,7 @@ class ArelleProcessingResult:
         self._factCount: int | None = None
         self._exceptions: list[Exception] = []
         self._diagnostics: list[ArelleDiagnostic] = []
+        self.elapsedNs: int = 0
 
     @classmethod
     def fromSession(cls, session: Session) -> Self:
@@ -190,6 +198,12 @@ class ArelleProcessingResult:
     @property
     def messages(self) -> list[Message]:
         return list(self._validationMessages)
+
+    def validationResults(self, step: Step, *, detail: str = "") -> ValidationResults:
+        """This run as the results of the validation ``step``."""
+        return ValidationResults.done(
+            step, self._validationMessages, self.elapsedNs, detail=detail
+        )
 
     @property
     def log_lines(self) -> list[str]:
