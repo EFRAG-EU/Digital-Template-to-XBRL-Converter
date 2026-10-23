@@ -49,6 +49,10 @@ quicker for a single test and needed for a debugger.
   hypercube, say) builds it with `tests/unitTests/synthetic_taxonomy.py` and registers it with the
   `register_taxonomy` fixture, which removes it again. Don't hand-roll taxonomy JSON in a test file.
 - `tests/unitTests/test_import_cycles.py` fails on any new circular import inside `mireport`.
+- `tests/webappTests/browser/` drives the served web app through Chromium with Playwright, so the
+  pages' JavaScript runs. The server is a thread in the test process, so `monkeypatch` reaches it.
+  It is skipped until the browser is installed (`.venv-py314/Scripts/python -m playwright install chromium`)
+  and, as in CI, best run on its own: `--ignore=tests/webappTests/browser` for the rest of the web app tests.
 
 ### Lint and types
 
