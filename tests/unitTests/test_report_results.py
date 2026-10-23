@@ -8,7 +8,9 @@ from mireport.conversionresults import (
     Message,
     MessageType,
     ReportResults,
+    Section,
     Severity,
+    Stage,
     Step,
     StepResults,
     StepState,
@@ -22,7 +24,9 @@ def message(severity: Severity, messageType=MessageType.XbrlValidation) -> Messa
 
 def converted(*messages: Message) -> ConversionResults:
     successful = all(m.severity is not Severity.ERROR for m in messages)
-    return ConversionResults("id", list(messages), 0, 0, successful)
+    return ConversionResults(
+        "id", [Section(Stage.CONVERSION, list(messages))], 0, 0, successful
+    )
 
 
 def validated(step: Step, *messages: Message) -> ValidationResults:

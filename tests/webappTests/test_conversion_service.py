@@ -207,15 +207,16 @@ class TestPdfConversion:
             lambda: ResolvedConverter(BACKENDS_IN_PREFERENCE_ORDER[0], "/usr/bin/x"),
         )
         upload(client, pdfs=[make_pdf("annex1.pdf")])
-        results = _convert(client, conversion_of).raw["results"]
-        # "success" is ConversionResults.toDict()'s abbreviated key.
-        assert results["success"] is True
+        results = _convert(client, conversion_of).results
+        assert results.conversionSuccessful
         # Scoped to PDF warnings: the sample template raises its own unrelated
         # ones, so a bare count would pass for the wrong reason.
         pdfWarnings = [
-            m for m in results["m"] if m["s"] == "WARNING" and "annex1.pdf" in m["m"]
+            m
+            for m in results.messages
+            if m.severity is Severity.WARNING and "annex1.pdf" in m.messageText
         ]
-        assert len(pdfWarnings) == 1, results["m"]
+        assert len(pdfWarnings) == 1, results.messages
 
     @pytest.mark.xdist_group("webapp-unconverted-pdf")
     def test_the_pdf_still_ships_when_conversion_fails(

@@ -19,6 +19,7 @@ from tests.unitTests.word_documents import (
 )
 
 from digital_converter_webapp.conversion import ConversionStore
+from mireport.conversionresults import MessageType, Severity
 
 CONVERSION_ID = "test-conversion"
 
@@ -123,14 +124,16 @@ def test_word_document_fills_the_text_block_and_its_warnings_are_shown(
     client.get(url)
 
     conv = conversion_of(client)
-    results = conv.raw["results"]
-    # "success" is ConversionResults.toDict()'s abbreviated key.
-    assert results["success"] is True
-    wordMessages = [m for m in results["m"] if "policy.docx" in m["m"]]
-    (warning,) = [m["m"] for m in wordMessages if m["s"] == "WARNING"]
+    results = conv.results
+    assert results.conversionSuccessful
+    wordMessages = [m for m in results.messages if "policy.docx" in m.messageText]
+    (warning,) = [m.messageText for m in wordMessages if m.severity is Severity.WARNING]
     assert "Unsupported break type: bogus" in warning
     # A style mammoth doesn't know loses only formatting: developers only.
-    assert any(m["mt"] == "DevInfo" and "Fancy" in m["m"] for m in wordMessages)
+    assert any(
+        m.messageType is MessageType.DevInfo and "Fancy" in m.messageText
+        for m in wordMessages
+    )
     assert "Fancy" not in warning
     with zipfile.ZipFile(io.BytesIO(conv.zip.fileContent)) as package:
         assert any(
@@ -155,9 +158,12 @@ def test_a_file_that_is_not_a_word_document_fails_the_conversion(
     )
     client.get(url)
 
-    results = conversion_of(client).raw["results"]
-    assert results["success"] is False
-    errors = [m["m"] for m in results["m"] if m["s"] == "ERROR"]
+    results = conversion_of(client).results
+    assert not results.conversionSuccessful
+    errors = [
+        m.messageText
+        for m in results.getMessages(wantedMessageSeverities={Severity.ERROR})
+    ]
     assert errors == ["Conversion failed: Word document policy.docx could not be read."]
 
 
@@ -179,6 +185,6 @@ def test_html_mammoth_writes_outside_xhtml_strict_still_validates(
     )
     client.get(url)
 
-    results = conversion_of(client).raw["results"]
-    assert [m["m"] for m in results["m"] if m["s"] == "ERROR"] == []
-    assert results["success"] is True
+    results = conversion_of(client).results
+    assert results.getMessages(wantedMessageSeverities={Severity.ERROR}) == []
+    assert results.conversionSuccessful
