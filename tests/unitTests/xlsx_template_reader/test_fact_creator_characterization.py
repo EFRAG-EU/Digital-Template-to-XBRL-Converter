@@ -28,7 +28,14 @@ from mireport.conversionresults import (
 from mireport.data.disclosures import VSME_DEFAULTS
 from mireport.exceptions import AmbiguousComponentException, InlineReportException
 from mireport.report import InlineReport
-from mireport.taxonomy import Taxonomy, getTaxonomy, loadBuiltInTaxonomyJSON
+from mireport.report.fact import Fact
+from mireport.report.model import FactPeriod, PeriodPart
+from mireport.taxonomy import (
+    PeriodType,
+    Taxonomy,
+    getTaxonomy,
+    loadBuiltInTaxonomyJSON,
+)
 from mireport.xbrljson_reader import XbrlJsonProcessor
 from mireport.xbrljson_reader.document import XbrlJsonDocument
 from mireport.xbrljson_reader.processor import EXTENSION_NS
@@ -690,6 +697,51 @@ class TestProcessNumeric:
             Messenger(creator_env.results), holder, _makeCell(12, "General"), fb, 12
         )
         assert fb._decimals == "INF"
+
+
+@pytest.mark.parametrize(
+    ("number_format", "cell_value", "percentage", "value", "decimals", "shown"),
+    [
+        ("0", 12.5, False, 12, 0, "12"),  # half to even, where Excel shows 13
+        ("0.00", 12.346, False, 12.35, 2, "12.35"),
+        ("General", 12.3456, False, 12.3456, "INF", "12.3456"),
+        ("0%", 0.125, True, 12, 2, "12"),
+        ("0.00%", 0.12345, True, 12.35, 4, "12.35"),  # the float is just over 0.12345
+    ],
+)
+def test_the_reader_reports_what_the_cell_shows(
+    creator_env, taxonomy, number_format, cell_value, percentage, value, decimals, shown
+):
+    """A numeric cell is rounded to its format's places once, half to even, as Excel shows it;
+    a percentage as shown, x100."""
+    concept = next(
+        c
+        for c in sorted(taxonomy.concepts, key=str)
+        if c.isReportable
+        and c.isNumeric
+        and c.periodType == PeriodType.Duration
+        and (c.dataType.localName == "percentItemType") == percentage
+    )
+    report = creator_env.report
+    fb = report.getFactBuilder().setConcept(concept).setValue(cell_value)
+    processNumeric(
+        Messenger(creator_env.results),
+        next(iter(creator_env.bindings.concept_map.values())),
+        _makeCell(cell_value, number_format),
+        fb,
+        cell_value,
+    )
+    assert (fb._value, fb._decimals) == (value, decimals)
+    assert fb._scale == (-2 if percentage else None)
+    fact = Fact(
+        concept,
+        fb._value,
+        report,
+        period=FactPeriod(report.defaultReportPeriod, PeriodPart.Whole),
+        decimals=fb._decimals,
+        scale=fb._scale,
+    )
+    assert fact.html_format_value() == shown
 
 
 class TestValidateNumericNonFinite:

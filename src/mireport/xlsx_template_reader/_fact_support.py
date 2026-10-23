@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from decimal import ROUND_HALF_EVEN, Decimal, localcontext
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -134,7 +135,23 @@ def processNumeric(
                 ref=holder.excelRef(cell),
             )
 
+    if decimals == "INF":
+        if cell_is_percentage:
+            fb.setPercentageValue(value, decimals, inputIsDecimalForm=True)
+        else:
+            fb.setDecimals(decimals)
+        return
+
+    # What is reported is what the cell shows: rounded to its places once, here, half to even as
+    # XBRL rounds. A percentage is rounded as shown, so its fraction to two more places.
+    places = decimals + 2 if cell_is_percentage else decimals
+    exact = Decimal(value)
+    with localcontext() as ctx:
+        ctx.prec = max(ctx.prec, exact.adjusted() + 1 + places + 2)
+        rounded = exact.quantize(Decimal(1).scaleb(-places), ROUND_HALF_EVEN)
     if cell_is_percentage:
-        fb.setPercentageValue(value, decimals, inputIsDecimalForm=True)
+        fb.setPercentageFact(rounded, places)
     else:
-        fb.setDecimals(decimals)
+        fb.setValue(
+            int(rounded) if rounded == rounded.to_integral() else float(rounded)
+        ).setDecimals(decimals)
