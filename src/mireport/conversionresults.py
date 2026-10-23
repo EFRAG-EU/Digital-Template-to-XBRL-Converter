@@ -379,6 +379,192 @@ class ConversionResultsBuilder(ConversionResults):
         )
 
 
+class Step(StrEnum):
+    """The work done on a converted report after conversion, in the order it is
+    done."""
+
+    PACKAGE = "package"
+    XBRL_JSON = "xbrlJson"
+    VIEWER = "viewer"
+
+    @property
+    def isValidation(self) -> bool:
+        return self is not Step.VIEWER
+
+    @property
+    def label(self) -> str:
+        return _STEP_LABELS[self]
+
+
+_STEP_LABELS: Mapping[Step, str] = MappingProxyType(
+    {
+        Step.PACKAGE: "XBRL report validation",
+        Step.XBRL_JSON: "xBRL-JSON validation",
+        Step.VIEWER: "Viewer",
+    }
+)
+
+
+class StepState(StrEnum):
+    PENDING = "pending"
+    RUNNING = "running"
+    DONE = "done"
+    FAILED = "failed"
+
+
+class StepResults(Results):
+    """One step's progress and, once it is finished, its messages."""
+
+    def __init__(
+        self,
+        step: Step,
+        state: StepState,
+        messages: list[Message] | None = None,
+        durationNs: int | None = None,
+    ) -> None:
+        super().__init__(messages if messages is not None else [])
+        self.step = step
+        self.state = state
+        self.durationNs = durationNs
+
+    @classmethod
+    def pending(cls, step: Step) -> Self:
+        return cls(step, StepState.PENDING)
+
+    @classmethod
+    def running(cls, step: Step) -> Self:
+        return cls(step, StepState.RUNNING)
+
+    @classmethod
+    def done(
+        cls,
+        step: Step,
+        messages: Iterable[Message],
+        durationNs: int,
+        *,
+        detail: str = "",
+    ) -> Self:
+        finished = Message(
+            f"Finished: [{step.label}] in {format_time_ns(durationNs)}. {detail}".rstrip(),
+            Severity.INFO,
+            MessageType.Progress,
+        )
+        return cls(step, StepState.DONE, [*messages, finished], durationNs)
+
+    @classmethod
+    def failed(cls, step: Step, error: Exception) -> Self:
+        messageType = (
+            MessageType.XbrlValidation if step.isValidation else MessageType.Conversion
+        )
+        message = Message(f"{step.label} failed: {error}", Severity.ERROR, messageType)
+        return cls(step, StepState.FAILED, [message])
+
+    @property
+    def isFinished(self) -> bool:
+        return self.state in (StepState.DONE, StepState.FAILED)
+
+    def toDict(self) -> dict:
+        return {
+            "step": self.step.value,
+            "state": self.state.value,
+            "m": [m.toDict() for m in self.messages],
+            "t": self.durationNs,
+        }
+
+    @staticmethod
+    def fromDict(stuff: dict) -> StepResults:
+        """The results ``toDict`` gave, as the class that suits their step."""
+        step = Step(stuff["step"])
+        return stepResultsClass(step)(
+            step,
+            StepState(stuff["state"]),
+            [Message.fromDict(m) for m in stuff["m"]],
+            stuff["t"],
+        )
+
+
+class ValidationResults(StepResults):
+    """A validation step: its messages are those of the validator."""
+
+    @property
+    def isValid(self) -> bool:
+        return self.isFinished and not self.hasErrors()
+
+
+def stepResultsClass(step: Step) -> type[StepResults]:
+    return ValidationResults if step.isValidation else StepResults
+
+
+class ReportResults(Results):
+    """A conversion and the steps run on its report afterwards, as one: what
+    the results page shows and what decides whether the report is offered for
+    download. Its messages are the conversion's, then each step's in order."""
+
+    def __init__(
+        self,
+        conversion: ConversionResults,
+        steps: Mapping[Step, StepResults] = MappingProxyType({}),
+    ) -> None:
+        self.conversion = conversion
+        self.steps: dict[Step, StepResults] = {
+            step: steps.get(step) or stepResultsClass(step).pending(step)
+            for step in Step
+        }
+        super().__init__(
+            [
+                *conversion.messages,
+                *(m for results in self.steps.values() for m in results.messages),
+            ]
+        )
+
+    @property
+    def conversionId(self) -> str:
+        return self.conversion.conversionId
+
+    @property
+    def conversionSuccessful(self) -> bool:
+        return self.conversion.conversionSuccessful
+
+    @property
+    def conversionRAG(self) -> Mapping[str, bool]:
+        return self.conversion.getRAG(withoutXBRLValidation=True)
+
+    @property
+    def validations(self) -> list[StepResults]:
+        return [results for step, results in self.steps.items() if step.isValidation]
+
+    @property
+    def validationPending(self) -> bool:
+        return self.conversionSuccessful and not all(
+            v.isFinished for v in self.validations
+        )
+
+    @property
+    def validationRAG(self) -> Mapping[str, bool] | None:
+        """The validations' RAG status, or None until they have all finished."""
+        if self.validationPending:
+            return None
+        return Results([m for v in self.validations for m in v.messages]).getRAG()
+
+    @property
+    def hasValidationErrors(self) -> bool:
+        return any(v.hasErrors() for v in self.validations)
+
+    @property
+    def downloadsAllowed(self) -> bool:
+        """Converted, and nothing found invalid so far: a download asked for
+        while validation is still pending waits for it."""
+        return self.conversionSuccessful and not self.hasValidationErrors
+
+    @property
+    def isComplete(self) -> bool:
+        """Nothing more will change: every step has finished, or the conversion
+        failed and so has none."""
+        return not self.conversionSuccessful or all(
+            s.isFinished for s in self.steps.values()
+        )
+
+
 class ProcessingContext:
     def __init__(self, resultsBuilder: ConversionResultsBuilder, name: str) -> None:
         self._resultsBuilder: ConversionResultsBuilder = resultsBuilder
