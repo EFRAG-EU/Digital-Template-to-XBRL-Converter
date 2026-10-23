@@ -39,6 +39,8 @@ def _test_config(session_dir, **overrides):
         "TESTING": True,
         "SESSION_CACHELIB": FileSystemCache(str(session_dir)),
         "SECRET_KEY": "test-secret",
+        # The results page complete when first shown, as these tests expect.
+        "RUN_STEPS_INLINE": True,
         **overrides,
     }
 

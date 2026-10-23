@@ -208,6 +208,7 @@ def migration_app(tmp_path_factory):
             ),
             "SECRET_KEY": "test-secret",
             "ENABLE_MIGRATION": True,
+            "RUN_STEPS_INLINE": True,
         }
     )
 
