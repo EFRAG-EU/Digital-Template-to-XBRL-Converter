@@ -25,7 +25,7 @@ CONVERTED_PDF = FilelikeAndFileName(
     fileContent=documentToBytes(
         normaliseDocument(
             parseDocument(
-                b"<html><head><title>a</title></head><body>annex</body></html>"
+                b"<html><head><title>a</title></head><body><p>annex</p></body></html>"
             ),
             ANNEX_LABELS,
         )
