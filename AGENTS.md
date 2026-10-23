@@ -85,7 +85,7 @@ Supplementary PDFs are supplied to the CLI through `--extra-data`, as
 for display needs `pdf2htmlEX` or `pdftohtml` on PATH, or `PDF_CONVERTER_PATH` (environment or
 `.env`, no `FLASK_` prefix — `findConverter()` reads it, so both front ends resolve the same binary);
 without any of those they are attached unconverted and a warning is issued. The web app also has
-`FLASK_ENABLE_SUPPLEMENTARY_PDFS`, on unless set false, which removes the upload field entirely.
+`FLASK_ENABLE_SUPPLEMENTARY_PDFS`, off unless set true, which shows the upload field.
 
 ### Regenerating taxonomy data
 
