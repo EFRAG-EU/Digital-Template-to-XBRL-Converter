@@ -116,13 +116,14 @@ def test_a_fact_only_in_another_period_says_which_in_a_list(group: None) -> None
 @pytest.mark.parametrize(
     ("value", "decimals", "shown"),
     [
-        ("12.346", 2, "12.35"),  # decimals set how many digits are shown
-        ("12.5", 0, "12.5"),  # but 0 decimals does not round the value away
+        ("12.346", 2, "12.346"),  # shown as given: the report does not round it
+        ("12.3", 2, "12.30"),  # but padded to its decimals
+        ("12.5", 0, "12.5"),
         ("12.5", "INF", "12.5"),
         ("1234", 0, "1,234"),
     ],
 )
-def test_the_digits_shown_follow_the_decimals_without_changing_a_whole_value(
+def test_a_number_is_shown_as_given_padded_to_its_decimals(
     group: None, value: str, decimals: object, shown: str
 ) -> None:
     doc = group_document()

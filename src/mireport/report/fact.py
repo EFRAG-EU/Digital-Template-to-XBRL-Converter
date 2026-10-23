@@ -193,14 +193,12 @@ class Fact:
         return output
 
     def _format_numeric_value(self, negated: bool = False) -> Markup:
-        # What is written is what is tagged: the document's number *is* the fact's value. So the
-        # digits shown follow the decimals (less any scale), except that 0 decimals, like none, shows
-        # the value whole -- rounding 12.5 to "12" would change the fact, not just its look.
-        decimal_places: DecimalPlaces
-        if self.decimals and self.decimals != "INF" and self.scale:
-            decimal_places = self.decimals + self.scale
-        else:
-            decimal_places = self.decimals or "INF"
+        # What is written is what is tagged: the document's number *is* the fact's value, so it is
+        # never rounded here. Its decimals (less any scale; 0 included) are the places it is shown
+        # to at least: a value with fewer is padded with zeros, one with more is shown whole.
+        decimal_places: DecimalPlaces = "INF"
+        if self.decimals is not None and self.decimals != "INF":
+            decimal_places = self.decimals + (self.scale or 0)
 
         try:
             number: int | float | str | Decimal
@@ -217,6 +215,9 @@ class Fact:
                     )
             if negated:
                 number = -Decimal(str(number))
+            if decimal_places != "INF":
+                ownPlaces = -int(Decimal(str(number)).as_tuple().exponent)
+                decimal_places = max(decimal_places, ownPlaces)
             output = localise_and_format_number(
                 number, decimal_places, self._report.outputLocale
             )
