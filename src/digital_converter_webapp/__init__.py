@@ -29,6 +29,7 @@ from .app_setup import (
     normalise_feature_flags,
     report_pdf_converter,
 )
+from .background import configureStepStore
 from .forms import MAX_FILE_SIZE
 from .locales import make_locale_json
 from .routes import register_routes
@@ -65,6 +66,7 @@ def create_app(test_config: Mapping[str, Any] | None = None) -> Flask:
 
     if not configure_session_backend(app):
         return brokenApp()
+    configureStepStore(app)
 
     # Normalise feature flags so request-time checks can rely on real booleans
     normalise_feature_flags(app)

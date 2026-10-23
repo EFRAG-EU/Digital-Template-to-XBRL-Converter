@@ -37,6 +37,7 @@ from mireport.report.theme import ColourPalette, ReportTheme
 from mireport.stringutil import truthy
 
 from .app_setup import DEPLOYMENT_DATETIME, getArelle
+from .background import StepStore, reportResults
 from .blueprints import convert_bp
 from .captcha import generate_captcha, validateCaptchaAndCsrf
 from .conversion import ConversionStore
@@ -253,7 +254,7 @@ def convert(id: str) -> Response:
                 render_template(
                     "conversion-results.html.jinja",
                     expired=True,
-                    conversion_result=None,
+                    results=None,
                 ),
                 404,
             )
@@ -295,7 +296,7 @@ def convert(id: str) -> Response:
         return Response(
             render_template(
                 "conversion-results.html.jinja",
-                conversion_result=conv.results,
+                results=reportResults(conv),
                 offer_migration=offer_migration,
                 conversion_id=id,
                 dev=devInfo,
@@ -403,13 +404,19 @@ def conversions() -> Response:
 
 @convert_bp.route("/delete/<string:id>", methods=["POST"])
 def delete(id: str) -> Response:
-    ConversionStore.fromFlask().delete(id)
+    conversions = ConversionStore.fromFlask()
+    if conversions.get(id) is not None:
+        StepStore.fromFlask().forget(id)
+    conversions.delete(id)
     return make_response(redirect(url_for("basic.conversions"), code=303))
 
 
 @convert_bp.route("/delete/_all", methods=["POST"])
 def delete_all() -> Response:
-    ConversionStore.fromFlask().deleteActive()
+    conversions = ConversionStore.fromFlask()
+    for id in conversions.active():
+        StepStore.fromFlask().forget(id)
+    conversions.deleteActive()
     return make_response(redirect(url_for("basic.conversions"), code=303))
 
 

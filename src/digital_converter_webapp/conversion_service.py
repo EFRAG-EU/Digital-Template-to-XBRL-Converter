@@ -11,10 +11,7 @@ import logging
 from pathlib import PurePath
 from typing import TYPE_CHECKING
 
-from mireport.arelle.report_info import (
-    ARELLE_VERSION_INFORMATION,
-    ArelleReportProcessor,
-)
+from mireport.arelle.report_info import ArelleReportProcessor
 from mireport.comparatives import PriorReport
 from mireport.conversionresults import (
     ConversionResults,
@@ -60,13 +57,14 @@ def doConversion(
     *,
     excelParsingWarningsAsDevInfo: bool = False,
 ) -> ConversionResults:
-    """Drive the full Excel → validated Inline XBRL report pipeline.
+    """Drive the Excel → Inline XBRL report pipeline.
 
     Side effects on ``conv``: may populate ``partial_fact_concepts`` (which
     tells the caller to ask the user for Word documents; last year's report,
     ``priorReport``, is read only once they are in), and on success stores
     the generated report package as ``conv.zip`` and the report as xBRL-JSON,
-    written from the report itself, as ``conv.json``; Arelle validates both.
+    written from the report itself, as ``conv.json``. Validating them is left
+    to the steps :mod:`.background` runs afterwards.
     """
     builder = ConversionResultsBuilder(
         conversionId=conv.id,
@@ -93,9 +91,7 @@ def doConversion(
             reportPackage = _buildReportPackage(report, conv, builder, pc, pdfMode)
             if not builder.conversionSuccessful:
                 return builder.build()
-            xbrlJson = _writeXbrlJson(report, reportPackage)
-            _validate(reportPackage, xbrlJson, arelle, builder, pc)
-            conv.json = xbrlJson
+            conv.json = _writeXbrlJson(report, reportPackage)
             conv.zip = reportPackage
     except Exception as e:
         message = next(iter(e.args), "")
@@ -296,24 +292,6 @@ def _writeXbrlJson(
         fileContent=toXbrlJson(report).toJson().encode("utf-8"),
         filename=PurePath(reportPackage.filename).with_suffix(".json").name,
     )
-
-
-def _validate(
-    reportPackage: FilelikeAndFileName,
-    xbrlJson: FilelikeAndFileName,
-    arelle: ArelleReportProcessor,
-    builder: ConversionResultsBuilder,
-    pc: ProcessingContext,
-) -> None:
-    """Validate the report package, then the xBRL-JSON written alongside it: each
-    is a separate Arelle session, and both sets of messages are the user's."""
-    pc.mark(
-        "Validating Inline Report",
-        additionalInfo=f"Using Arelle (XBRL Certified Software™) [{ARELLE_VERSION_INFORMATION}]",
-    )
-    builder.addMessages(arelle.validateReportPackage(reportPackage).messages)
-    pc.mark("Validating xBRL-JSON", additionalInfo=xbrlJson.filename)
-    builder.addMessages(arelle.validateXbrlJson(xbrlJson).messages)
 
 
 def ensureViewer(
