@@ -13,6 +13,7 @@ from typing import Any
 from dotenv import load_dotenv
 from flask import Flask
 from flask_session import Session  # type: ignore
+from jinja2 import ChoiceLoader, FileSystemLoader
 
 import mireport
 from mireport import loadBuiltInTaxonomyJSON
@@ -20,6 +21,7 @@ from mireport.conversionresults import MessageType, Severity
 
 from .app_setup import (
     DEPLOYMENT_DATETIME,
+    applyBrandingDefaults,
     brokenApp,
     configure_arelle,
     configure_logging,
@@ -52,6 +54,14 @@ def create_app(test_config: Mapping[str, Any] | None = None) -> Flask:
         # variables.
         load_dotenv()
         app.config.from_prefixed_env()
+
+    applyBrandingDefaults(app)
+    if brandTemplateDir := app.config.get("BRAND_TEMPLATE_DIR"):
+        # A deployment's own _brand-content.html.jinja is found before ours.
+        loaders = [FileSystemLoader(brandTemplateDir)]
+        if app.jinja_loader is not None:
+            loaders.append(app.jinja_loader)
+        app.jinja_loader = ChoiceLoader(loaders)
 
     if not configure_session_backend(app):
         return brokenApp()

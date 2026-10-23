@@ -1,7 +1,8 @@
 {% extends "base.html.jinja" %}
 {% from "_macros.html.jinja" import download_button %}
+{% import "_brand-content.html.jinja" as brandContent %}
 
-{% block title %}VS and VSME Digital Template-to-XBRL Converter{% endblock %}
+{% block title %}Conversion Results{% endblock %}
 
 {% block content %}
 
@@ -169,7 +170,7 @@
             </tbody>
         </table>
     </div>
-    {% if conversion_result.conversionSuccessful %}
+    {% if conversion_result.conversionSuccessful and config.BRAND_CONTACT_EMAIL %}
     <!-- Feedback / Request Message Card -->
     <div class="mt-6 flex items-start gap-3 p-4 bg-blue-50 border border-blue-300 rounded-lg shadow-sm">
         <!-- Icon -->
@@ -178,11 +179,7 @@
         </div>
 
         <!-- Text -->
-        <p class="text-sm text-blue-800">
-            The EFRAG Secretariat is interested in your experience using this tool and in real VS and VSME disclosures for internal analytical purposes
-            (any reports received by EFRAG will not be shared or published). Please feel free to send your report to
-            <a href="mailto:vsme@efrag.org" class="underline font-medium hover:text-blue-600">vsme@efrag.org</a> – Thank you!
-        </p>
+        {{ brandContent.feedbackRequest() }}
     </div>
     {% endif %}
 </div>

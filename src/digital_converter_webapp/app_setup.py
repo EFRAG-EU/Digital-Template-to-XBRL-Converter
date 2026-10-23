@@ -25,6 +25,24 @@ L = logging.getLogger(__name__)
 # X-Deployment-Datetime header so you can tell which deployment answered.
 DEPLOYMENT_DATETIME = datetime.now(UTC)
 
+# What the templates show as config.BRAND_*; a deployment overrides any of them
+# with FLASK_BRAND_* (an empty value hides that element). BRAND_TEMPLATE_DIR,
+# unset by default, names a directory holding a replacement
+# _brand-content.html.jinja.
+BRANDING_DEFAULTS: dict[str, str] = {
+    "BRAND_PRODUCT_NAME": "VS and VSME Digital Template to XBRL Converter",
+    "BRAND_ORGANISATION_NAME": "EFRAG",
+    "BRAND_LOGO_URL": "https://www.efrag.org/themes/custom/dms_theme/logo.svg",
+    "BRAND_FAVICON_URL": "https://www.efrag.org/themes/custom/dms_theme/favicon.ico",
+    "BRAND_CONTACT_EMAIL": "vsme@efrag.org",
+    "BRAND_TEMPLATE_URL": (
+        "https://xbrl.efrag.org/downloads/vsme/VSME-Digital-Template-latest.xlsx"
+    ),
+    "BRAND_SAMPLE_URL": (
+        "https://xbrl.efrag.org/downloads/vsme/VSME-Digital-Template-sample-latest.xlsx"
+    ),
+}
+
 
 def configure_logging() -> None:
     """Initial logging setup; safe to call more than once."""
@@ -59,6 +77,12 @@ def normalise_feature_flags(app: Flask) -> None:
         )
         pdfMode = PdfSupplementaryMode.DOCSET
     app.config["PDF_SUPPLEMENTARY_MODE"] = pdfMode
+
+
+def applyBrandingDefaults(app: Flask) -> None:
+    """Fill in each branding key the configuration left unset."""
+    for key, value in BRANDING_DEFAULTS.items():
+        app.config.setdefault(key, value)
 
 
 def configure_session_backend(app: Flask) -> bool:

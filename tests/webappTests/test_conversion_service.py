@@ -56,6 +56,35 @@ class TestConversionResultsPage:
         resp = c.get(f"/conversions/{conv_id}")
         assert b"VS and VSME Digital Template to XBRL Converter" in resp.data
 
+    def test_results_page_asks_for_feedback(self, converted_id):
+        conv_id, c = converted_id
+        body = c.get(f"/conversions/{conv_id}").get_data(as_text=True)
+        assert "The EFRAG Secretariat is interested in your experience" in body
+        assert (
+            '<a href="mailto:vsme@efrag.org" class="underline font-medium'
+            ' hover:text-blue-600">vsme@efrag.org</a> – Thank you!' in body
+        )
+
+    def test_results_page_feedback_goes_to_the_contact_email(
+        self, app, converted_id, monkeypatch
+    ):
+        monkeypatch.setitem(app.config, "BRAND_CONTACT_EMAIL", "feedback@example.com")
+        conv_id, c = converted_id
+        body = c.get(f"/conversions/{conv_id}").get_data(as_text=True)
+        assert ">feedback@example.com</a>" in body
+        assert 'href="mailto:feedback@example.com"' in body
+        assert "vsme@efrag.org" not in body
+
+    def test_results_page_has_no_feedback_request_without_a_contact_email(
+        self, app, converted_id, monkeypatch
+    ):
+        monkeypatch.setitem(app.config, "BRAND_CONTACT_EMAIL", "")
+        conv_id, c = converted_id
+        body = c.get(f"/conversions/{conv_id}").get_data(as_text=True)
+        assert "Technical conversion" in body
+        assert "interested in your experience" not in body
+        assert "Feedback / Request Message Card" not in body
+
     def test_results_page_shows_success_banner(self, converted_id):
         conv_id, c = converted_id
         resp = c.get(f"/conversions/{conv_id}")

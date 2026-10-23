@@ -2,7 +2,10 @@
 
 import logging
 
+from flask import Flask
+
 from digital_converter_webapp import create_app, routes
+from digital_converter_webapp.app_setup import BRANDING_DEFAULTS, applyBrandingDefaults
 from mireport.conversionresults import ConversionResultsBuilder
 
 from .conftest import _test_config
@@ -51,3 +54,24 @@ class TestExcelParsingWarningsAsDevInfo:
         client = app.test_client()
         client.get(f"/conversions/{upload_id(client)}")
         assert seen == {"excelParsingWarningsAsDevInfo": True}
+
+
+class TestBrandingDefaults:
+    def test_fills_in_unset_keys(self):
+        app = Flask(__name__)
+        applyBrandingDefaults(app)
+        for key, value in BRANDING_DEFAULTS.items():
+            assert app.config[key] == value
+        assert "BRAND_TEMPLATE_DIR" not in app.config
+
+    def test_keeps_values_already_set(self):
+        app = Flask(__name__)
+        app.config["BRAND_PRODUCT_NAME"] = "Acme Converter"
+        app.config["BRAND_LOGO_URL"] = ""
+        applyBrandingDefaults(app)
+        assert app.config["BRAND_PRODUCT_NAME"] == "Acme Converter"
+        assert app.config["BRAND_LOGO_URL"] == ""
+        assert app.config["BRAND_ORGANISATION_NAME"] == "EFRAG"
+
+    def test_create_app_applies_them(self, app):
+        assert app.config["BRAND_CONTACT_EMAIL"] == "vsme@efrag.org"
