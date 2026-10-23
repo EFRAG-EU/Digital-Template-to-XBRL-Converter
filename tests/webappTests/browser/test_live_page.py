@@ -185,6 +185,10 @@ def test_viewer_built_in_the_background_downloads_at_once(
     assert arelle.viewersBuilt == 1
 
 
+@pytest.mark.xfail(
+    reason="Progress messages are gone; the page shows durations in the next commit",
+    strict=True,
+)
 def test_developer_messages_follow_the_updates(page: Page, uploadAndConvert, arelle):
     arelle.gate.clear()
     uploadAndConvert(page)

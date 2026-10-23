@@ -604,7 +604,7 @@ class ConversionResultsBuilder(ConversionResults):
 
 class Step(StrEnum):
     """The work done on a converted report after conversion, in the order it is
-    done."""
+    done: the stages scheduled in the background, each its own section."""
 
     PACKAGE = "package"
     XBRL_JSON = "xbrlJson"
@@ -615,21 +615,16 @@ class Step(StrEnum):
         return self is not Step.VIEWER
 
     @property
+    def stage(self) -> Stage:
+        return Stage(self.value)
+
+    @property
     def label(self) -> str:
-        return _STEP_LABELS[self]
+        return self.stage.label
 
     @property
     def resultsClass(self) -> type[StepResults]:
         return ValidationResults if self.isValidation else StepResults
-
-
-_STEP_LABELS: Mapping[Step, str] = MappingProxyType(
-    {
-        Step.PACKAGE: "XBRL report validation",
-        Step.XBRL_JSON: "xBRL-JSON validation",
-        Step.VIEWER: "Viewer",
-    }
-)
 
 
 class StepState(StrEnum):
@@ -639,8 +634,9 @@ class StepState(StrEnum):
     FAILED = "failed"
 
 
-class StepResults(Results):
-    """One step's progress and, once it is finished, its messages."""
+class StepResults(Section):
+    """One step's section: its progress and, once it is finished, its
+    messages."""
 
     def __init__(
         self,
@@ -649,10 +645,9 @@ class StepResults(Results):
         messages: list[Message] | None = None,
         durationNs: int | None = None,
     ) -> None:
-        super().__init__(messages if messages is not None else [])
+        super().__init__(step.stage, messages, durationNs=durationNs)
         self.step = step
         self.state = state
-        self.durationNs = durationNs
 
     @classmethod
     def pending(cls, step: Step) -> Self:
@@ -671,19 +666,14 @@ class StepResults(Results):
         *,
         detail: str = "",
     ) -> Self:
-        finished = Message(
-            f"Finished: [{step.label}] in {format_time_ns(durationNs)}. {detail}".rstrip(),
-            Severity.INFO,
-            MessageType.Progress,
-        )
-        return cls(step, StepState.DONE, [*messages, finished], durationNs)
+        """Finished, with ``detail`` (what did it, say) for developers."""
+        about = [Message(detail, Severity.INFO, MessageType.DevInfo)] if detail else []
+        return cls(step, StepState.DONE, [*messages, *about], durationNs)
 
     @classmethod
     def skipped(cls, step: Step, reason: str) -> Self:
         """Done without doing anything, because of ``reason``."""
-        message = Message(
-            f"Skipped: [{step.label}]. {reason}", Severity.INFO, MessageType.Progress
-        )
+        message = Message(f"Skipped: {reason}", Severity.INFO, MessageType.Progress)
         return cls(step, StepState.DONE, [message])
 
     @classmethod
@@ -691,7 +681,7 @@ class StepResults(Results):
         messageType = (
             MessageType.XbrlValidation if step.isValidation else MessageType.Conversion
         )
-        message = Message(f"{step.label} failed: {error}", Severity.ERROR, messageType)
+        message = Message(f"Failed: {error}", Severity.ERROR, messageType)
         return cls(step, StepState.FAILED, [message])
 
     @property
@@ -729,7 +719,8 @@ class ValidationResults(StepResults):
 class ReportResults(Results):
     """A conversion and the steps run on its report afterwards, as one: what
     the results page shows and what decides whether the report is offered for
-    download. Its messages are the conversion's, then each step's in order."""
+    download. Its sections are the conversion's, then each step's in order, and
+    so are its messages."""
 
     def __init__(
         self,
@@ -747,6 +738,10 @@ class ReportResults(Results):
                 *(m for results in self.steps.values() for m in results.messages),
             ]
         )
+
+    @property
+    def sections(self) -> list[Section]:
+        return [*self.conversion.sections, *self.steps.values()]
 
     @property
     def conversionId(self) -> str:

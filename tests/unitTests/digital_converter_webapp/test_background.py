@@ -132,10 +132,8 @@ class TestRunSteps:
         steps = store.load("c1")
         assert steps[Step.PACKAGE].state is StepState.FAILED
         [error] = steps[Step.PACKAGE].userMessages
-        assert (
-            error.messageText
-            == "XBRL report validation failed: validateReportPackage broke"
-        )
+        assert error.messageText == "Failed: validateReportPackage broke"
+        assert steps[Step.PACKAGE].label == "XBRL report validation"
         assert steps[Step.XBRL_JSON].state is StepState.DONE
         assert arelle.calls == ["validateReportPackage", "validateXbrlJson"]
 

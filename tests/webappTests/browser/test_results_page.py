@@ -49,6 +49,10 @@ def test_download(convertedPage: Page, button: str, suffix: str):
     expect(convertedPage.locator("#loadingSpinner")).to_be_hidden()
 
 
+@pytest.mark.xfail(
+    reason="Progress messages are gone; the page shows durations in the next commit",
+    strict=True,
+)
 def test_developer_messages_toggle(convertedPage: Page):
     toggle = convertedPage.get_by_label("Display software developer messages")
     progress = convertedPage.get_by_role("cell", name="Progress").first

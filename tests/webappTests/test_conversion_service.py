@@ -132,12 +132,9 @@ class TestConversionResultsPage:
         conv_id, c = converted_id
         resp = c.get(f"/conversions/{conv_id}?show_developer_messages=true")
         assert resp.status_code == 200
-        # Developer messages include Progress-type entries
-        assert (
-            b"DevInfo" in resp.data
-            or b"Progress" in resp.data
-            or b"Extracting" in resp.data
-        )
+        # The steps say what ran them, for developers only.
+        assert b"Using Arelle" in resp.data
+        assert b"Using Arelle" not in c.get(f"/conversions/{conv_id}").data
 
 
 def _convert(client, conversion_of):

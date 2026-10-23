@@ -14,7 +14,7 @@ from mireport.arelle.support import (
     ArelleQNameCanonicaliser,
     ArelleRelatedException,
 )
-from mireport.conversionresults import MessageType, Severity, Step, StepState
+from mireport.conversionresults import MessageType, Severity, Stage, Step, StepState
 from mireport.xml import getBootstrapQNameMaker
 
 
@@ -119,9 +119,13 @@ class TestValidationResults:
         assert [m.messageText for m in validation.userMessages] == [
             "[xbrl.5.2.5.2:calcInconsistency] Bad calc"
         ]
-        [finished] = validation.getMessages(wantedMessageTypes={MessageType.Progress})
-        assert finished.messageText.startswith("Finished: [XBRL report validation] in")
-        assert finished.messageText.endswith("Using Arelle")
+        assert (validation.stage, validation.label) == (
+            Stage.PACKAGE,
+            "XBRL report validation",
+        )
+        [detail] = validation.getMessages(wantedMessageTypes={MessageType.DevInfo})
+        assert detail.messageText == "Using Arelle"
+        assert validation.getMessages(wantedMessageTypes={MessageType.Progress}) == []
 
     def test_clean_run_is_valid(self) -> None:
         validation = ArelleProcessingResult().validationResults(Step.XBRL_JSON)

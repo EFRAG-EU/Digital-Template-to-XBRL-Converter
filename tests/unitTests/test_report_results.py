@@ -71,7 +71,7 @@ class TestStepResults:
         assert failed.isFinished
         assert not failed.isValid
         [error] = failed.userMessages
-        assert error.messageText == "XBRL report validation failed: boom"
+        assert error.messageText == "Failed: boom"
         assert error.messageType is MessageType.XbrlValidation
 
     def test_true_without_messages(self):
@@ -167,3 +167,37 @@ class TestReportResults:
         )
 
         assert results.userMessages == [conversionMessage, packageMessage, jsonMessage]
+
+    def test_steps_are_sections_after_the_conversions(self):
+        conversion = converted(message(Severity.WARNING, MessageType.Conversion))
+        package = validated(Step.PACKAGE, message(Severity.ERROR))
+        results = ReportResults(conversion, {Step.PACKAGE: package})
+
+        assert [s.stage for s in results.sections] == [
+            Stage.CONVERSION,
+            Stage.PACKAGE,
+            Stage.XBRL_JSON,
+            Stage.VIEWER,
+        ]
+        assert results.sections[1] is package
+        assert results.sections[1].label == "XBRL report validation"
+        assert results.sections[1].durationNs == 1_000_000
+
+    def test_a_pending_step_is_an_empty_section(self):
+        [*_, viewer] = ReportResults(converted()).sections
+
+        assert isinstance(viewer, Section)
+        assert viewer.stage is Stage.VIEWER
+        assert viewer.state is StepState.PENDING
+        assert viewer.messages == []
+        assert viewer.durationNs is None
+
+    def test_done_keeps_its_detail_for_developers_only(self):
+        done = ValidationResults.done(Step.PACKAGE, [], 5, detail="Using Arelle")
+
+        assert done.userMessages == []
+        [detail] = done.developerMessages
+        assert (detail.messageText, detail.messageType) == (
+            "Using Arelle",
+            MessageType.DevInfo,
+        )

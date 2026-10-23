@@ -2,12 +2,13 @@
 Arelle validates the report package, then the xBRL-JSON written from it, then
 builds the viewer.
 
-Each step's :class:`~mireport.conversionresults.StepResults` is kept in a
-:class:`StepStore`, a cache every process serving the app shares, rather than
-in the session, which is rewritten whole by whichever request saves it last.
-One process at a time runs a conversion's steps, the one holding its claim;
-any request that finds them unfinished and unclaimed (the process running them
-was restarted, say) runs them again, skipping those already finished.
+Each step's :class:`~mireport.conversionresults.StepResults`, its section of
+the results, is kept in a :class:`StepStore`, a cache every process serving the
+app shares, rather than in the session, which is rewritten whole by whichever
+request saves it last. One process at a time runs a conversion's steps, the one
+holding its claim; any request that finds them unfinished and unclaimed (the
+process running them was restarted, say) runs them again, skipping those
+already finished.
 
 They run on a background thread, one per process: the results page is shown
 straight away and polls for the steps' progress. ``RUN_STEPS_INLINE`` runs them
@@ -156,7 +157,7 @@ def runSteps(
             reportPackage
         ).validationResults(Step.PACKAGE, detail=arelleDetail),
         Step.XBRL_JSON: lambda: arelle.validateXbrlJson(xbrlJson).validationResults(
-            Step.XBRL_JSON, detail=f"{xbrlJson.filename}. {arelleDetail}"
+            Step.XBRL_JSON, detail=f"Validated {xbrlJson.filename}. {arelleDetail}"
         ),
         Step.VIEWER: lambda: _buildViewer(store, conversionId, reportPackage, arelle),
     }
