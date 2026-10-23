@@ -87,6 +87,12 @@ class TestReportResults:
         assert isinstance(results.steps[Step.PACKAGE], ValidationResults)
         assert type(results.steps[Step.VIEWER]) is StepResults
 
+    def test_a_running_step_stays_running(self):
+        """A step with no messages yet is still the one given."""
+        running = ValidationResults.running(Step.PACKAGE)
+        results = ReportResults(converted(), {Step.PACKAGE: running})
+        assert results.steps[Step.PACKAGE] is running
+
     def test_pending_validation_has_no_rag_yet_but_allows_downloads(self):
         results = ReportResults(converted(), {Step.PACKAGE: validated(Step.PACKAGE)})
 

@@ -395,6 +395,10 @@ class Step(StrEnum):
     def label(self) -> str:
         return _STEP_LABELS[self]
 
+    @property
+    def resultsClass(self) -> type[StepResults]:
+        return ValidationResults if self.isValidation else StepResults
+
 
 _STEP_LABELS: Mapping[Step, str] = MappingProxyType(
     {
@@ -452,6 +456,14 @@ class StepResults(Results):
         return cls(step, StepState.DONE, [*messages, finished], durationNs)
 
     @classmethod
+    def skipped(cls, step: Step, reason: str) -> Self:
+        """Done without doing anything, because of ``reason``."""
+        message = Message(
+            f"Skipped: [{step.label}]. {reason}", Severity.INFO, MessageType.Progress
+        )
+        return cls(step, StepState.DONE, [message])
+
+    @classmethod
     def failed(cls, step: Step, error: Exception) -> Self:
         messageType = (
             MessageType.XbrlValidation if step.isValidation else MessageType.Conversion
@@ -475,7 +487,7 @@ class StepResults(Results):
     def fromDict(stuff: dict) -> StepResults:
         """The results ``toDict`` gave, as the class that suits their step."""
         step = Step(stuff["step"])
-        return stepResultsClass(step)(
+        return step.resultsClass(
             step,
             StepState(stuff["state"]),
             [Message.fromDict(m) for m in stuff["m"]],
@@ -491,10 +503,6 @@ class ValidationResults(StepResults):
         return self.isFinished and not self.hasErrors()
 
 
-def stepResultsClass(step: Step) -> type[StepResults]:
-    return ValidationResults if step.isValidation else StepResults
-
-
 class ReportResults(Results):
     """A conversion and the steps run on its report afterwards, as one: what
     the results page shows and what decides whether the report is offered for
@@ -507,7 +515,7 @@ class ReportResults(Results):
     ) -> None:
         self.conversion = conversion
         self.steps: dict[Step, StepResults] = {
-            step: steps.get(step) or stepResultsClass(step).pending(step)
+            step: steps[step] if step in steps else step.resultsClass.pending(step)
             for step in Step
         }
         super().__init__(

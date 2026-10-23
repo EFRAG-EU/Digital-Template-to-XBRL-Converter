@@ -26,7 +26,7 @@
         <p class="text-center font-semibold">No conversion results available.</p>
     </div>
 {% else %}
-    {% set conv_rag = conversion_result.getRAG(withoutXBRLValidation=true) %}
+    {% set conv_rag = results.conversionRAG %}
     <!-- Title -->
     <h2 class="text-3xl font-bold text-center text-gray-800">Conversion Results</h2>
     <!-- Conversion Status -->
@@ -47,14 +47,14 @@
     </div>
 
     <!-- XBRL Validation Status -->
-    {% set val_rag = conversion_result.getRAG(justXBRLValidation=true) %}
+    {% set val_rag = results.validationRAG %}
     <div class="p-4 rounded-lg shadow-md 
-        {% if not conversion_result.conversionSuccessful or val_rag.red %}bg-red-100 border border-red-400 text-red-800
+        {% if not results.conversionSuccessful or val_rag.red %}bg-red-100 border border-red-400 text-red-800
         {% elif val_rag.amber %}bg-amber-100 border border-amber-400 text-amber-800
         {% elif val_rag.green %}bg-green-100 border border-green-400 text-green-800
         {% endif %}">
         <p class="text-center font-semibold">
-    {% if not conversion_result.conversionSuccessful %}
+    {% if not results.conversionSuccessful %}
             XBRL Report not validated due to earlier conversion failure
     {% elif val_rag.red %}
             The generated XBRL report has validation ERRORS, please review the messages and the Digital Template
@@ -66,7 +66,7 @@
         </p>
     </div>
 
-    {% if offer_migration and conversion_result.getRAG(withoutXBRLValidation=true).green %}
+    {% if offer_migration and conv_rag.green %}
     <!-- Offer to migrate to current template version -->
     <div class="p-4 rounded-lg shadow-md bg-amber-100 border border-amber-400 text-amber-800">
         <p class="text-center font-semibold">
@@ -82,13 +82,13 @@
     <!-- Download Links -->
     <div class="space-y-4">
         <h3 class="text-xl font-semibold text-gray-800">
-    {% if conversion_result.conversionSuccessful %}
+    {% if results.conversionSuccessful %}
             Files to download
     {% else %}
             No files available for download
     {% endif %}
         </h3>
-    {% if conversion_result.conversionSuccessful %}
+    {% if results.conversionSuccessful %}
         <p>
             Please review the generated XBRL report and the messages below to ensure that all disclosures are complete
             and accurate. The report can be downloaded in various formats:
@@ -97,20 +97,20 @@
         <div class="flex gap-4 justify-between items-center download-buttons">
             {{ download_button(
                 'viewer',
-                url_for('basic.downloadFile', id=conversion_result.conversionId, ftype='viewer'),
-                conversion_result.conversionSuccessful
+                url_for('basic.downloadFile', id=results.conversionId, ftype='viewer'),
+                results.conversionSuccessful
             ) }}
 
             {{ download_button(
                 'zip',
-                url_for('basic.downloadFile', id=conversion_result.conversionId, ftype='zip'),
-                conversion_result.conversionSuccessful
+                url_for('basic.downloadFile', id=results.conversionId, ftype='zip'),
+                results.conversionSuccessful
             ) }}
 
             {{ download_button(
                 'json',
-                url_for('basic.downloadFile', id=conversion_result.conversionId, ftype='json'),
-                conversion_result.conversionSuccessful
+                url_for('basic.downloadFile', id=results.conversionId, ftype='json'),
+                results.conversionSuccessful
             ) }}
         </div>
     </div>
@@ -148,7 +148,7 @@
                 </tr>
             </thead>
             <tbody>
-    {% set messages = conversion_result.userMessages if not dev else conversion_result.developerMessages %}
+    {% set messages = results.userMessages if not dev else results.developerMessages %}
     {% for message in messages %}
                 <tr class="hover:bg-gray-50">
                     <td class="border border-gray-300 px-4 py-2">{{ message.messageType.value | e }}</td>
@@ -169,7 +169,7 @@
             </tbody>
         </table>
     </div>
-    {% if conversion_result.conversionSuccessful %}
+    {% if results.conversionSuccessful %}
     <!-- Feedback / Request Message Card -->
     <div class="mt-6 flex items-start gap-3 p-4 bg-blue-50 border border-blue-300 rounded-lg shadow-sm">
         <!-- Icon -->

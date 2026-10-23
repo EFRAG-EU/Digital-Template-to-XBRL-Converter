@@ -221,6 +221,13 @@ used inside the xlsx reader. Errors accumulate; `abortEarlyIfErrors()` raises `E
 defined checkpoints rather than failing at the first problem. Dev-info messages are hidden from users
 (`--devinfo` on the CLI reveals them).
 
+`ConversionResults` and the builder share a `Results` base: the messages and what they add up to
+(severities, RAG, user and developer views). The web app validates after converting, as `Step`s
+(package, xBRL-JSON, viewer), each with its own `StepResults` (`ValidationResults` for a validation,
+which Arelle hands back through `ArelleProcessingResult.validationResults`). `ReportResults` puts a
+conversion and its steps together: the banners, the messages and whether downloads are allowed all
+come from it.
+
 ### The fact model (`mireport/report/model.py`, `fact.py`, `factbuilder.py`, `aoix.py`)
 
 A `Fact` is typed values, not aoix strings: `concept`, `value`, a `FactPeriod`, a `Unit` (measures over
@@ -473,7 +480,8 @@ never pick up a developer's `.env`.
 | `routes.py` | The routes and request hooks on the `basic` blueprint, and `register_routes(app)`, which `create_app` calls. Handlers stay thin. It imports `migration`, so the migration routes come with it |
 | `app_setup.py` | Startup configuration: logging, feature flags, session backend, Arelle/taxonomy packages, PDF converter report, `brokenApp`, `getArelle`, `DEPLOYMENT_DATETIME` |
 | `conversion.py` | `Conversion` / `ConversionStore`, the typed view over the per-id session dicts |
-| `conversion_service.py` | The Excel → Inline XBRL pipeline (`doConversion`, which also writes the report as xBRL-JSON and has Arelle validate the package and the JSON) and the viewer generated from it. Flask-free: the caller passes in the Arelle processor and PDF mode |
+| `conversion_service.py` | The Excel → Inline XBRL pipeline (`doConversion`, which also writes the report as xBRL-JSON) and the viewer generated from it. Flask-free: the caller passes in the Arelle processor and PDF mode |
+| `background.py` | The steps run on a converted report (Arelle validating the package, then the xBRL-JSON) and the `StepStore` that keeps their results where every process can see them (redis in production), plus `reportResults(conv)`, which the routes read |
 | `captcha.py` | The id-keyed math captcha and the captcha + CSRF check for `/upload` |
 | `forms.py` | Upload limits (`MAX_FILE_SIZE`, `MAX_PDF_COUNT`), image field map, form parsing |
 | `viewer.py` | Serving the viewer and its document set members (with the member CSP) |
