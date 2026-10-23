@@ -291,3 +291,36 @@ def waitForStep(client, conv_id: str, step: Step, state: StepState) -> None:
                 return
             time.sleep(0.05)
     raise AssertionError(f"{step.label} never got to {state}")
+
+
+def test_direct_download_waits_for_validation(
+    backgroundClient, upload_id, validations, gate
+):
+    gate.clear()
+    conv_id = upload_id(backgroundClient)
+    backgroundClient.get(f"/conversions/{conv_id}")
+    threading.Timer(0.5, gate.set).start()
+
+    response = backgroundClient.get(f"/downloadFile/{conv_id}/json/")
+
+    assert response.status_code == 409
+    assert validations == ["package", "xbrlJson"]
+
+
+def test_direct_download_stops_waiting(
+    backgroundClient, upload_id, validations, gate, monkeypatch
+):
+    monkeypatch.setitem(
+        backgroundClient.application.config, "DOWNLOAD_WAIT_SECONDS", 0.2
+    )
+    gate.clear()
+    conv_id = upload_id(backgroundClient)
+    backgroundClient.get(f"/conversions/{conv_id}")
+
+    response = backgroundClient.get(f"/downloadFile/{conv_id}/json/")
+
+    assert response.status_code == 202
+    assert response.headers["X-File-Ready"] == "false"
+    assert "still being validated" in response.get_json()["status"]
+    gate.set()
+    waitUntilComplete(backgroundClient, conv_id)
