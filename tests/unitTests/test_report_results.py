@@ -70,6 +70,9 @@ class TestStepResults:
         assert error.messageText == "XBRL report validation failed: boom"
         assert error.messageType is MessageType.XbrlValidation
 
+    def test_true_without_messages(self):
+        assert ValidationResults.running(Step.PACKAGE)
+
     def test_viewer_failure_is_not_a_validation_message(self):
         [error] = StepResults.failed(Step.VIEWER, OSError("disk")).messages
         assert error.messageType is MessageType.Conversion
