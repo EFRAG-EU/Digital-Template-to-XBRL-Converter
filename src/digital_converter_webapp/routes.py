@@ -308,6 +308,32 @@ def convert(id: str) -> Response:
             return make_response({"error": str(e)}, 500)
 
 
+@convert_bp.route("/conversions/<string:id>/status", methods=["GET"])
+def conversionStatus(id: str) -> Response:
+    """The results page's validation banner, downloads and messages as they
+    now stand, for the page to swap in while the steps run."""
+    if (conv := ConversionStore.fromFlask().get(id)) is None or (
+        results := reportResults(conv)
+    ) is None:
+        return make_response({"error": "No conversion found"}, 404)
+    dev = request.args.get("show_developer_messages") == "true"
+    return make_response(
+        {
+            "complete": results.isComplete,
+            "downloadsAllowed": results.downloadsAllowed,
+            "html": {
+                "validation-status": render_template(
+                    "_validation-status.html.jinja", results=results
+                ),
+                "downloads": render_template("_downloads.html.jinja", results=results),
+                "messages": render_template(
+                    "_messages.html.jinja", results=results, dev=dev
+                ),
+            },
+        }
+    )
+
+
 @convert_bp.route("/conversions/<string:id>/partial-facts", methods=["GET"])
 def partial_facts(id: str) -> Response:
     if (conv := ConversionStore.fromFlask().get(id)) is None:

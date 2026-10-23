@@ -481,7 +481,7 @@ never pick up a developer's `.env`.
 | `app_setup.py` | Startup configuration: logging, feature flags, session backend, Arelle/taxonomy packages, PDF converter report, `brokenApp`, `getArelle`, `DEPLOYMENT_DATETIME` |
 | `conversion.py` | `Conversion` / `ConversionStore`, the typed view over the per-id session dicts |
 | `conversion_service.py` | The Excel → Inline XBRL pipeline (`doConversion`, which also writes the report as xBRL-JSON) and the viewer generated from it. Flask-free: the caller passes in the Arelle processor and PDF mode |
-| `background.py` | The steps run on a converted report (Arelle validating the package, then the xBRL-JSON) and the `StepStore` that keeps their results where every process can see them (redis in production), plus `reportResults(conv)`, which the routes read |
+| `background.py` | The steps run on a converted report (Arelle validating the package, then the xBRL-JSON) on a background thread, and the `StepStore` that keeps their results where every process can see them (redis in production), plus `reportResults(conv)`, which the routes read. The results page polls `/conversions/<id>/status` for the partials (`_validation-status`, `_downloads`, `_messages`) until the steps finish. `RUN_STEPS_INLINE` runs them within the request instead: the web app tests' config sets it |
 | `captcha.py` | The id-keyed math captcha and the captcha + CSRF check for `/upload` |
 | `forms.py` | Upload limits (`MAX_FILE_SIZE`, `MAX_PDF_COUNT`), image field map, form parsing |
 | `viewer.py` | Serving the viewer and its document set members (with the member CSP) |

@@ -7,12 +7,19 @@ in the session, which is rewritten whole by whichever request saves it last.
 One process at a time runs a conversion's steps, the one holding its claim;
 any request that finds them unfinished and unclaimed (the process running them
 was restarted, say) runs them again, skipping those already finished.
+
+They run on a background thread, one per process: the results page is shown
+straight away and polls for the steps' progress. ``RUN_STEPS_INLINE`` runs them
+within the request instead, so the page is complete when it is first shown.
 """
 
 from __future__ import annotations
 
 import logging
 import os
+import threading
+from concurrent.futures import ThreadPoolExecutor
+from functools import partial
 from typing import TYPE_CHECKING
 
 from cachelib.simple import SimpleCache
@@ -25,6 +32,7 @@ from .app_setup import getArelle
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from concurrent.futures import Future
 
     from cachelib.base import BaseCache
     from flask import Flask
@@ -41,6 +49,13 @@ L = logging.getLogger(__name__)
 CLAIM_TIMEOUT_SECONDS = 600
 
 _EXTENSION_KEY = "stepStore"
+
+# One worker: Arelle runs one session at a time per process anyway
+# (BIG_ARELLE_LOCK). Made on first use, and again after a fork, which leaves a
+# child no threads.
+_executor: ThreadPoolExecutor | None = None
+_executorPid: int | None = None
+_executorLock = threading.Lock()
 
 
 class StepStore:
@@ -150,6 +165,23 @@ def runSteps(
         store.release(conversionId)
 
 
+def _runInBackground(job: Callable[[], None]) -> None:
+    global _executor, _executorPid
+    with _executorLock:
+        if _executor is None or _executorPid != os.getpid():
+            _executor = ThreadPoolExecutor(
+                max_workers=1, thread_name_prefix="conversion-steps"
+            )
+            _executorPid = os.getpid()
+        future = _executor.submit(job)
+    future.add_done_callback(_logFailure)
+
+
+def _logFailure(future: Future[None]) -> None:
+    if (e := future.exception()) is not None:
+        L.error("Conversion steps stopped unexpectedly", exc_info=e)
+
+
 def reportResults(conv: Conversion) -> ReportResults | None:
     """The conversion's results with its steps', starting any steps that are
     unfinished and that no one is running."""
@@ -162,6 +194,10 @@ def reportResults(conv: Conversion) -> ReportResults | None:
         assert reportPackage is not None and xbrlJson is not None, (
             "A successful conversion has a report package and its xBRL-JSON"
         )
-        runSteps(store, conv.id, reportPackage, xbrlJson, getArelle())
-        results = ReportResults(conversion, store.load(conv.id))
+        job = partial(runSteps, store, conv.id, reportPackage, xbrlJson, getArelle())
+        if current_app.config.get("RUN_STEPS_INLINE", False):
+            job()
+            results = ReportResults(conversion, store.load(conv.id))
+        else:
+            _runInBackground(job)
     return results
