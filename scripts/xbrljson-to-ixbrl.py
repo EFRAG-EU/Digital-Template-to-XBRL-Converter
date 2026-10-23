@@ -148,22 +148,22 @@ def doConversion(args: argparse.Namespace) -> ConversionResults:
         taxonomyPackages=args.taxonomy_packages, workOffline=args.offline
     )
     with resultsBuilder.processingContext("mireport xBRL-JSON to Inline Report") as pc:
-        pc.mark("Loading taxonomy metadata")
-        mireport.loadBuiltInTaxonomyJSON()
-        for path in args.taxonomy_json:
-            loadTaxonomyJSON(path)
+        with resultsBuilder.section(Stage.TAXONOMY):
+            mireport.loadBuiltInTaxonomyJSON()
+            for path in args.taxonomy_json:
+                loadTaxonomyJSON(path)
 
-        pc.mark("Reading xBRL-JSON", additionalInfo=f"Using file: {args.json_file}")
-        processor = XbrlJsonProcessor.fromFile(
-            args.json_file,
-            resultsBuilder,
-            strict=args.strict,
-            entityNameConcept=args.entity_name_concept,
-        )
-        report = processor.createReport()
-        pc.addDevInfoMessage(
-            f"{processor.factsAdded} facts added, {processor.factsSkipped} skipped"
-        )
+        with resultsBuilder.section(Stage.XBRL_JSON_INPUT, source=args.json_file.name):
+            processor = XbrlJsonProcessor.fromFile(
+                args.json_file,
+                resultsBuilder,
+                strict=args.strict,
+                entityNameConcept=args.entity_name_concept,
+            )
+            report = processor.createReport()
+            pc.addDevInfoMessage(
+                f"{processor.factsAdded} facts added, {processor.factsSkipped} skipped"
+            )
         if args.prior:
             prior = FilelikeAndFileName(args.prior.read_bytes(), args.prior.name)
             with resultsBuilder.section(Stage.PRIOR, source=prior.filename):
@@ -173,52 +173,60 @@ def doConversion(args: argparse.Namespace) -> ConversionResults:
 
         colour = ColourPalette.parse(args.style_custom or args.style_preset)
         report.theme.setDisplayMode(args.style_mode).setColour(colour)
-        for arg_name, imageSetter in [
-            ("image_logo", report.theme.setLogoImage),
-            ("image_cover", report.theme.setCoverImage),
-            ("image_background", report.theme.setBackgroundImage),
-        ]:
-            if image_path := getattr(args, arg_name):
-                image, err = ImageFileLikeAndFileName.prepare(image_path)
-                if err:
-                    pc.addDevInfoMessage(err)
-                elif image:
-                    imageSetter(image)
+        images = [
+            (image_path, imageSetter)
+            for arg_name, imageSetter in [
+                ("image_logo", report.theme.setLogoImage),
+                ("image_cover", report.theme.setCoverImage),
+                ("image_background", report.theme.setBackgroundImage),
+            ]
+            if (image_path := getattr(args, arg_name))
+        ]
+        if images:
+            with resultsBuilder.section(Stage.IMAGES):
+                for image_path, imageSetter in images:
+                    image, err = ImageFileLikeAndFileName.prepare(image_path)
+                    if err:
+                        pc.addDevInfoMessage(err)
+                    elif image:
+                        imageSetter(image)
 
-        pc.mark("Generating Inline Report")
-        reportFile = report.getInlineReport()
-        report.reportUntranslatedStrings(pc)
-        reportPackage = report.getInlineReportPackage()
+        with resultsBuilder.section(Stage.REPORT):
+            reportFile = report.getInlineReport()
+            report.reportUntranslatedStrings(pc)
+            reportPackage = report.getInlineReportPackage()
 
-        output = args.output_path
-        toDirectory = not output.suffix
-        if output.exists() and not toDirectory and not args.force:
-            print(f"Warning: overwriting existing file: {output}")
-        (output if toDirectory else output.parent).mkdir(parents=True, exist_ok=True)
-        if toDirectory:
-            reportFile.saveToDirectory(output)
-            reportPackage.saveToDirectory(output)
-        else:
-            reportFile.saveToFilepath(output)
+            output = args.output_path
+            toDirectory = not output.suffix
+            if output.exists() and not toDirectory and not args.force:
+                print(f"Warning: overwriting existing file: {output}")
+            (output if toDirectory else output.parent).mkdir(
+                parents=True, exist_ok=True
+            )
+            if toDirectory:
+                reportFile.saveToDirectory(output)
+                reportPackage.saveToDirectory(output)
+            else:
+                reportFile.saveToFilepath(output)
 
         if not args.skip_validation:
-            pc.mark(
-                "Validating using Arelle",
-                additionalInfo=f"({ARELLE_VERSION_INFORMATION})",
-            )
-            if args.viewer:
-                arelleResults = arp.generateInlineViewer(reportPackage)
-                resultsBuilder.addMessages(arelleResults.messages)
-                if arelleResults.has_viewer:
-                    if toDirectory:
-                        arelleResults.viewer.saveToDirectory(output)
-                    else:
-                        arelleResults.viewer.saveToFilepath(
-                            output.with_suffix(".viewer.html")
-                        )
-            else:
-                arelleResults = arp.validateReportPackage(reportPackage)
-                resultsBuilder.addMessages(arelleResults.messages)
+            with resultsBuilder.section(Stage.PACKAGE):
+                pc.addDevInfoMessage(
+                    f"Validating using Arelle ({ARELLE_VERSION_INFORMATION})"
+                )
+                if args.viewer:
+                    arelleResults = arp.generateInlineViewer(reportPackage)
+                    resultsBuilder.addMessages(arelleResults.messages)
+                    if arelleResults.has_viewer:
+                        if toDirectory:
+                            arelleResults.viewer.saveToDirectory(output)
+                        else:
+                            arelleResults.viewer.saveToFilepath(
+                                output.with_suffix(".viewer.html")
+                            )
+                else:
+                    arelleResults = arp.validateReportPackage(reportPackage)
+                    resultsBuilder.addMessages(arelleResults.messages)
     return resultsBuilder.build()
 
 

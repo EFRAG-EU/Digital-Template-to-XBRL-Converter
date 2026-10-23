@@ -254,24 +254,21 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, list[str]
     with resultsBuilder.processingContext(
         "mireport Excel to validated Inline Report"
     ) as pc:
-        pc.mark("Loading taxonomy metadata")
-        mireport.loadBuiltInTaxonomyJSON()
-        allTaxonomies = mireport.taxonomy.listTaxonomies()
-        pc.addDevInfoMessage(
-            f"Taxonomies entry points ({len(allTaxonomies)}) available: "
-            + ", ".join(describeEntryPointSet(eps) for eps in allTaxonomies)
-        )
-        pc.mark(
-            "Extracting data from Excel workbook",
-            additionalInfo=f"Using file: {args.xlsx_file}",
-        )
-        xl_processor = XlsxProcessor.from_file(
-            args.xlsx_file,
-            resultsBuilder,
-            VSME_DEFAULTS,
-            outputLocale=args.output_locale,
-        )
-        report = xl_processor.createReport()
+        with resultsBuilder.section(Stage.TAXONOMY):
+            mireport.loadBuiltInTaxonomyJSON()
+            allTaxonomies = mireport.taxonomy.listTaxonomies()
+            pc.addDevInfoMessage(
+                f"Taxonomies entry points ({len(allTaxonomies)}) available: "
+                + ", ".join(describeEntryPointSet(eps) for eps in allTaxonomies)
+            )
+        with resultsBuilder.section(Stage.WORKBOOK, source=args.xlsx_file.name):
+            xl_processor = XlsxProcessor.from_file(
+                args.xlsx_file,
+                resultsBuilder,
+                VSME_DEFAULTS,
+                outputLocale=args.output_locale,
+            )
+            report = xl_processor.createReport()
         if args.prior:
             prior = FilelikeAndFileName(args.prior.read_bytes(), args.prior.name)
             with resultsBuilder.section(Stage.PRIOR, source=prior.filename):
@@ -282,17 +279,23 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, list[str]
         colour = ColourPalette.parse(args.style_custom or args.style_preset)
         report.theme.setDisplayMode(args.style_mode).setColour(colour)
 
-        for arg_name, imageSetter in [
-            ("image_logo", report.theme.setLogoImage),
-            ("image_cover", report.theme.setCoverImage),
-            ("image_background", report.theme.setBackgroundImage),
-        ]:
-            if image_path := getattr(args, arg_name):
-                image, err = ImageFileLikeAndFileName.prepare(image_path)
-                if err:
-                    pc.addDevInfoMessage(err)
-                elif image:
-                    imageSetter(image)
+        images = [
+            (image_path, imageSetter)
+            for arg_name, imageSetter in [
+                ("image_logo", report.theme.setLogoImage),
+                ("image_cover", report.theme.setCoverImage),
+                ("image_background", report.theme.setBackgroundImage),
+            ]
+            if (image_path := getattr(args, arg_name))
+        ]
+        if images:
+            with resultsBuilder.section(Stage.IMAGES):
+                for image_path, imageSetter in images:
+                    image, err = ImageFileLikeAndFileName.prepare(image_path)
+                    if err:
+                        pc.addDevInfoMessage(err)
+                    elif image:
+                        imageSetter(image)
 
         supplementary_pdfs: list[FilelikeAndFileName] = []
         if (extra_file := args.extra_data) and extra_file.is_file():
@@ -377,30 +380,32 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, list[str]
             supplementary_pdfs, resultsBuilder, pc, mode=args.pdf_mode
         )
 
-        pc.mark("Generating Inline Report")
-        reportFile = report.getInlineReport()
-        report.reportUntranslatedStrings(pc)
-        if pdfs.mergedAnnexes:
-            reportFile = mergeAnnexesIntoReport(reportFile, pdfs.mergedAnnexes)
-        reportPackage = buildReportPackage(
-            reportFile,
-            topLevel=report.packageTopLevelName,
-            docsetMembers=pdfs.docsetMembers,
-            attachments=pdfs.attachments,
-        )
+        with resultsBuilder.section(Stage.REPORT):
+            reportFile = report.getInlineReport()
+            report.reportUntranslatedStrings(pc)
+            if pdfs.mergedAnnexes:
+                reportFile = mergeAnnexesIntoReport(reportFile, pdfs.mergedAnnexes)
+            reportPackage = buildReportPackage(
+                reportFile,
+                topLevel=report.packageTopLevelName,
+                docsetMembers=pdfs.docsetMembers,
+                attachments=pdfs.attachments,
+            )
 
-        output_path, dir_specified = prepare_output_path(args.output_path, args.force)
-        if dir_specified:
-            pc.addDevInfoMessage(
-                f"Writing various files to {output_path} ({report.factCount} facts to include)"
+            output_path, dir_specified = prepare_output_path(
+                args.output_path, args.force
             )
-            reportFile.saveToDirectory(output_path)
-            reportPackage.saveToDirectory(output_path)
-        else:
-            pc.addDevInfoMessage(
-                f"Writing {reportFile} to {output_path} ({report.factCount} facts to include)"
-            )
-            reportFile.saveToFilepath(output_path)
+            if dir_specified:
+                pc.addDevInfoMessage(
+                    f"Writing various files to {output_path} ({report.factCount} facts to include)"
+                )
+                reportFile.saveToDirectory(output_path)
+                reportPackage.saveToDirectory(output_path)
+            else:
+                pc.addDevInfoMessage(
+                    f"Writing {reportFile} to {output_path} ({report.factCount} facts to include)"
+                )
+                reportFile.saveToFilepath(output_path)
 
         xbrlJson: FilelikeAndFileName | None = None
         if args.json:
@@ -410,40 +415,40 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, list[str]
                 if dir_specified
                 else output_path.with_suffix(".json")
             )
-            xbrlJson = FilelikeAndFileName(
-                fileContent=toXbrlJson(report).toJson().encode("utf-8"),
-                filename=jsonPath.name,
-            )
-            pc.mark("Writing xBRL-JSON", additionalInfo=f"To {jsonPath}")
-            xbrlJson.saveToFilepath(jsonPath)
+            with resultsBuilder.section(Stage.XBRL_JSON_OUTPUT, source=jsonPath.name):
+                xbrlJson = FilelikeAndFileName(
+                    fileContent=toXbrlJson(report).toJson().encode("utf-8"),
+                    filename=jsonPath.name,
+                )
+                xbrlJson.saveToFilepath(jsonPath)
 
         if not args.skip_validation:
-            pc.mark(
-                "Validating using Arelle",
-                additionalInfo=f"({ARELLE_VERSION_INFORMATION})",
-            )
-            pc.addDevInfoMessage(f"Using Inline Report package: {reportPackage}")
+            with resultsBuilder.section(Stage.PACKAGE):
+                pc.addDevInfoMessage(
+                    f"Validating using Arelle ({ARELLE_VERSION_INFORMATION})"
+                )
+                pc.addDevInfoMessage(f"Using Inline Report package: {reportPackage}")
 
-            if not args.viewer:
-                arelleResults = arp.validateReportPackage(reportPackage)
-                resultsBuilder.addMessages(arelleResults.messages)
+                if not args.viewer:
+                    arelleResults = arp.validateReportPackage(reportPackage)
+                    resultsBuilder.addMessages(arelleResults.messages)
 
-            if args.viewer:
-                arelleResults = arp.generateInlineViewer(reportPackage)
-                resultsBuilder.addMessages(arelleResults.messages)
+                if args.viewer:
+                    arelleResults = arp.generateInlineViewer(reportPackage)
+                    resultsBuilder.addMessages(arelleResults.messages)
 
-                if arelleResults.has_viewer:
-                    viewer = arelleResults.viewer
-                    if not dir_specified:
-                        viewer.saveToFilepath(output_path)
+                    if arelleResults.has_viewer:
+                        viewer = arelleResults.viewer
+                        if not dir_specified:
+                            viewer.saveToFilepath(output_path)
+                        else:
+                            viewer.saveToDirectory(output_path)
                     else:
-                        viewer.saveToDirectory(output_path)
-                else:
-                    pc.addDevInfoMessage("Failed to create viewer.")
+                        pc.addDevInfoMessage("Failed to create viewer.")
 
             if xbrlJson is not None:
-                pc.mark("Validating xBRL-JSON using Arelle")
-                resultsBuilder.addMessages(arp.validateXbrlJson(xbrlJson).messages)
+                with resultsBuilder.section(Stage.XBRL_JSON):
+                    resultsBuilder.addMessages(arp.validateXbrlJson(xbrlJson).messages)
         unused = xl_processor.unusedNames
     return resultsBuilder.build(), unused
 

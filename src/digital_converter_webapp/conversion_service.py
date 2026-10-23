@@ -73,13 +73,13 @@ def doConversion(
     )
     try:
         with builder.processingContext(f"Conversion {conv.id}") as pc:
-            report = _loadReport(conv, builder, pc)
+            report = _loadReport(conv, builder)
 
             if _pauseForPartialFacts(report, conv, builder):
                 return builder.build()
             if _completePartialFacts(report, conv, builder):
                 return builder.build()
-            _mergePriorReport(report, conv, builder, pc, arelle)
+            _mergePriorReport(report, conv, builder, arelle)
             if not report.hasFacts:
                 builder.addMessage(
                     "No facts found in InlineReport (likely due to earlier errors). Stopping here.",
@@ -109,26 +109,22 @@ def doConversion(
 def _loadReport(
     conv: Conversion,
     builder: ConversionResultsBuilder,
-    pc: ProcessingContext,
 ) -> InlineReport:
     upload = conv.excel
     assert upload is not None, "Conversion has no uploaded Excel file"
-    pc.mark(
-        "Extracting data from Excel",
-        additionalInfo=f"Using file: {upload.filename}",
-    )
     if locale_str := conv.locale_str:
         requestedOutputLocale = get_locale_from_str(locale_str)
     else:
         requestedOutputLocale = None
 
-    processor = XlsxProcessor.from_file(
-        upload.fileLike(),
-        builder,
-        VSME_DEFAULTS,
-        outputLocale=requestedOutputLocale,
-    )
-    return processor.createReport()
+    with builder.section(Stage.WORKBOOK, source=upload.filename):
+        processor = XlsxProcessor.from_file(
+            upload.fileLike(),
+            builder,
+            VSME_DEFAULTS,
+            outputLocale=requestedOutputLocale,
+        )
+        return processor.createReport()
 
 
 def _pauseForPartialFacts(
@@ -227,7 +223,6 @@ def _mergePriorReport(
     report: InlineReport,
     conv: Conversion,
     builder: ConversionResultsBuilder,
-    pc: ProcessingContext,
     arelle: ArelleReportProcessor,
 ) -> None:
     """Take the comparatives from last year's report, if one was uploaded. One
@@ -252,15 +247,21 @@ def _applyTheme(
     mode = DisplayMode.parse(conv.style_mode)
     report.theme.setColour(colour).setDisplayMode(mode)
 
-    for key, setterName in _IMAGE_THEME_SETTERS:
-        if (stored := conv.image(key)) is None:
-            continue
-        image, err = ImageFileLikeAndFileName.prepare(stored)
-        if err:
-            builder.addMessage(err, Severity.WARNING, MessageType.Conversion)
-        elif image:
-            pc.addDevInfoMessage(f"Adding {key} to report {image}")
-            getattr(report.theme, setterName)(image)
+    images = [
+        (key, setterName, stored)
+        for key, setterName in _IMAGE_THEME_SETTERS
+        if (stored := conv.image(key)) is not None
+    ]
+    if not images:
+        return
+    with builder.section(Stage.IMAGES):
+        for key, setterName, stored in images:
+            image, err = ImageFileLikeAndFileName.prepare(stored)
+            if err:
+                builder.addMessage(err, Severity.WARNING, MessageType.Conversion)
+            elif image:
+                pc.addDevInfoMessage(f"Adding {key} to report {image}")
+                getattr(report.theme, setterName)(image)
 
 
 def _buildReportPackage(
@@ -272,25 +273,22 @@ def _buildReportPackage(
 ) -> FilelikeAndFileName:
     pdfs = convertSupplementaryPdfs(conv.pdfs, builder, pc, mode=pdfMode)
 
-    pc.mark(
-        "Generating Inline Report",
-        additionalInfo=f"({report.factCount} facts to include)",
-    )
-    reportFile = report.getInlineReport()
-    report.reportUntranslatedStrings(pc)
-    if pdfs.mergedAnnexes:
-        reportFile = mergeAnnexesIntoReport(reportFile, pdfs.mergedAnnexes)
-    reportPackage = buildReportPackage(
-        reportFile,
-        topLevel=report.packageTopLevelName,
-        docsetMembers=pdfs.docsetMembers,
-        attachments=pdfs.attachments,
-    )
-    builder.addMessage(
-        f"Inline XBRL report {reportPackage} created (containing {report.factCount} facts)",
-        Severity.INFO,
-        MessageType.Conversion,
-    )
+    with builder.section(Stage.REPORT):
+        reportFile = report.getInlineReport()
+        report.reportUntranslatedStrings(pc)
+        if pdfs.mergedAnnexes:
+            reportFile = mergeAnnexesIntoReport(reportFile, pdfs.mergedAnnexes)
+        reportPackage = buildReportPackage(
+            reportFile,
+            topLevel=report.packageTopLevelName,
+            docsetMembers=pdfs.docsetMembers,
+            attachments=pdfs.attachments,
+        )
+        builder.addMessage(
+            f"Inline XBRL report {reportPackage} created (containing {report.factCount} facts)",
+            Severity.INFO,
+            MessageType.Conversion,
+        )
     return reportPackage
 
 

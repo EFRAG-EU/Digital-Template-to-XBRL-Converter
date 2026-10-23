@@ -562,12 +562,22 @@ class ConversionResultsBuilder(ConversionResults):
         section = Section(stage, source=source)
         self.sections.append(section)
         self._openSection = section
+        self.printProgress(f"Starting: [{section.title}].")
         start = perf_counter_ns()
         try:
             yield section
         finally:
             section.durationNs = perf_counter_ns() - start
             self._openSection = None
+            self.printProgress(
+                f"Finished: [{section.title}] in {format_time_ns(section.durationNs)}."
+            )
+
+    def printProgress(self, message: str) -> None:
+        """Say how the run is going, live, when the results are for the
+        console; it isn't kept."""
+        if self.consoleOutput:
+            print(message)
 
     def _currentSection(self) -> Section:
         """The open section, else a "Conversion" one for messages outside any."""
@@ -787,18 +797,19 @@ class ReportResults(Results):
 
 
 class ProcessingContext:
+    """A whole run: how long it took goes on the results, and an
+    EarlyAbortException ends it quietly. Its progress is printed when the
+    results are for the console, not kept."""
+
     def __init__(self, resultsBuilder: ConversionResultsBuilder, name: str) -> None:
         self._resultsBuilder: ConversionResultsBuilder = resultsBuilder
         self.name: str = name
         self.succeeded: bool = False
         self.start_time: int
-        self.current_section_start_time: int
-        self.current_section_name: str | None = None
-        self.console = self._resultsBuilder.consoleOutput
 
     def __enter__(self) -> Self:
-        self.start_time = self.current_section_start_time = perf_counter_ns()
-        self._logProgress(f'Starting: "{self.name}".')
+        self.start_time = perf_counter_ns()
+        self._resultsBuilder.printProgress(f'Starting: "{self.name}".')
         return self
 
     def __exit__(
@@ -807,13 +818,13 @@ class ProcessingContext:
         exc_value: BaseException | None,
         traceback: TracebackType | None,
     ) -> bool:
-        self.mark()
         execution_time_ns = perf_counter_ns() - self.start_time
+        self._resultsBuilder.durationNs = execution_time_ns
 
         swallow_exception: bool = False
         if exc_type is None:
             self.succeeded = True
-            self._logProgress(
+            self._resultsBuilder.printProgress(
                 f'Finished: "{self.name}" in {format_time_ns(execution_time_ns)}.'
             )
         elif exc_type is not None and issubclass(exc_type, EarlyAbortException):
@@ -833,23 +844,7 @@ class ProcessingContext:
 
     def _logProgress(self, message: str, severity: Severity = Severity.INFO) -> None:
         self._resultsBuilder.addMessage(message, severity, MessageType.Progress)
-        if self.console:
-            print(message)
+        self._resultsBuilder.printProgress(message)
 
     def addDevInfoMessage(self, message: str) -> None:
         self._resultsBuilder.addMessage(message, Severity.INFO, MessageType.DevInfo)
-
-    def mark(self, newSectionName: str | None = None, additionalInfo: str = "") -> None:
-        now = perf_counter_ns()
-        if self.current_section_name is not None:
-            execution_time_ns = now - self.current_section_start_time
-            self._logProgress(
-                f"Finished: [{self.current_section_name}] in {format_time_ns(execution_time_ns)}."
-            )
-
-        if newSectionName is not None:
-            self.current_section_name = newSectionName
-            self.current_section_start_time = now
-            self._logProgress(
-                f"Starting: [{self.current_section_name}]. {additionalInfo}"
-            )

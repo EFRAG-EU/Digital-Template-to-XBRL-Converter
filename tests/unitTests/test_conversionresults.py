@@ -28,11 +28,12 @@ def test_add_message(builder):
     assert msg.messageType == MessageType.Conversion
 
 
-def test_processing_context_success(builder):
+def test_processing_context_success_keeps_its_time_not_a_message(builder):
     with builder.processingContext("Success Test"):
-        pass
-    msgs = [m.messageText for m in builder.messages]
-    assert any('Finished: "Success Test"' in m for m in msgs)
+        sleep(0.001)
+    assert builder.messages == []
+    built = builder.build()
+    assert built.durationNs is not None and built.durationNs >= 1_000_000
 
 
 def test_processing_context_early_abort_is_swallowed(builder):
@@ -398,17 +399,27 @@ def builder_with_console():
     return ConversionResultsBuilder(conversionId="ctx-test", consoleOutput=False)
 
 
-def test_console_processing_context_success(builder_with_console):
-    with builder_with_console.processingContext("Simple Task") as ctx:
+def test_console_progress_is_printed_not_kept(capsys):
+    builder = ConversionResultsBuilder(consoleOutput=True)
+    with (
+        builder.processingContext("Simple Task") as ctx,
+        builder.section(Stage.PRIOR, source="2025.json"),
+    ):
         sleep(0.001)  # simulate work
-        ctx.mark("Step 2")
 
     assert ctx.succeeded
-    messages = builder_with_console.getMessages(
-        wantedMessageTypes={MessageType.Progress}
-    )
-    assert any('Finished: "Simple Task"' in m.messageText for m in messages)
-    assert any("Starting: [Step 2]" in m.messageText for m in messages)
+    assert builder.getMessages(wantedMessageTypes={MessageType.Progress}) == []
+    printed = capsys.readouterr().out
+    assert 'Starting: "Simple Task".' in printed
+    assert "Starting: [Last year's report (2025.json)]." in printed
+    assert "Finished: [Last year's report (2025.json)] in " in printed
+    assert 'Finished: "Simple Task" in ' in printed
+
+
+def test_nothing_is_printed_without_console_output(builder, capsys):
+    with builder.processingContext("Quiet"), builder.section(Stage.WORKBOOK):
+        pass
+    assert capsys.readouterr().out == ""
 
 
 def test_console_processing_context_early_abort_is_swallowed(builder_with_console):
