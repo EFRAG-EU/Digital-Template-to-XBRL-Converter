@@ -700,20 +700,38 @@ class TestProcessNumeric:
 
 
 @pytest.mark.parametrize(
-    ("number_format", "cell_value", "percentage", "value", "decimals", "shown"),
+    (
+        "number_format",
+        "cell_value",
+        "percentage",
+        "value",
+        "decimals",
+        "scale",
+        "shown",
+    ),
     [
-        ("0", 12.5, False, 12, 0, "12"),  # half to even, where Excel shows 13
-        ("0.00", 12.346, False, 12.35, 2, "12.35"),
-        ("General", 12.3456, False, 12.3456, "INF", "12.3456"),
-        ("0%", 0.125, True, 12, 2, "12"),
-        ("0.00%", 0.12345, True, 12.35, 4, "12.35"),  # the float is just over 0.12345
+        ("0", 12.5, False, 12, 0, None, "12"),  # half to even, where Excel shows 13
+        ("0.00", 12.346, False, 12.35, 2, None, "12.35"),
+        ("General", 12.3456, False, 12.3456, "INF", None, "12.3456"),
+        ("0%", 0.125, True, 12, 2, -2, "12"),
+        ("0.00%", 0.12345, True, 12.35, 4, -2, "12.35"),  # the float is over 0.12345
+        ("#,##0,", 1234567, False, 1235, -3, 3, "1,235"),  # thousands
+        ("#,##0.0,,", 1234567, False, 1.2, -5, 6, "1.2"),  # millions
     ],
 )
 def test_the_reader_reports_what_the_cell_shows(
-    creator_env, taxonomy, number_format, cell_value, percentage, value, decimals, shown
+    creator_env,
+    taxonomy,
+    number_format,
+    cell_value,
+    percentage,
+    value,
+    decimals,
+    scale,
+    shown,
 ):
-    """A numeric cell is rounded to its format's places once, half to even, as Excel shows it;
-    a percentage as shown, x100."""
+    """A numeric cell is rounded to its format's places once, half to even, as Excel shows it:
+    a percentage as shown, x100, and a cell shown in thousands or millions with the scale."""
     concept = next(
         c
         for c in sorted(taxonomy.concepts, key=str)
@@ -731,8 +749,7 @@ def test_the_reader_reports_what_the_cell_shows(
         fb,
         cell_value,
     )
-    assert (fb._value, fb._decimals) == (value, decimals)
-    assert fb._scale == (-2 if percentage else None)
+    assert (fb._value, fb._decimals, fb._scale) == (value, decimals, scale)
     fact = Fact(
         concept,
         fb._value,

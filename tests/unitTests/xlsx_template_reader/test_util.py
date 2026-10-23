@@ -5,7 +5,11 @@ from datetime import date, datetime
 import pytest
 from openpyxl import Workbook
 
-from mireport.xlsx_template_reader.util import get_decimal_places, getDateFromValue
+from mireport.xlsx_template_reader.util import (
+    get_decimal_places,
+    get_display_scale,
+    getDateFromValue,
+)
 
 
 def _cell(number_format: str):
@@ -41,6 +45,24 @@ def _cell(number_format: str):
 )
 def test_get_decimal_places(number_format, expected):
     assert get_decimal_places(_cell(number_format)) == expected
+
+
+@pytest.mark.parametrize(
+    "number_format,expected",
+    [
+        ("#,##0", 0),
+        ("#,##0,", 3),
+        ("#,##0.0,,", 6),
+        ("0,", 3),
+        ("#,##0,;(#,##0,)", 3),
+        ('"a,b" 0', 0),  # a comma in quoted text divides nothing
+        ("0.00%", 0),
+        ("0.00%,", 0),  # a percentage is left unscaled
+        ("General", 0),
+    ],
+)
+def test_get_display_scale(number_format, expected):
+    assert get_display_scale(_cell(number_format)) == expected
 
 
 class TestGetDateFromValue:

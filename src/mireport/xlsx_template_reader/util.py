@@ -115,6 +115,21 @@ def get_decimal_places(cell: CellType) -> DecimalPlaces:
     return 0
 
 
+def get_display_scale(cell: CellType) -> int:
+    """
+    Returns the power of ten the cell's number format divides a number by to
+    show it: 3 for each comma after its last digit placeholder, so '#,##0,'
+    (thousands) is 3 and '#,##0.0,,' (millions) 6. A comma between digit
+    placeholders is the thousands separator. A percentage is left unscaled: 0.
+    """
+    section = _numberFormatSection(cell)
+    if "%" in section:
+        return 0
+    if match := re.search(r"[0#?](,*)[^0#?]*$", section):
+        return 3 * len(match.group(1))
+    return 0
+
+
 # What getDateFromValue accepts, for messages about cells it refuses.
 DATE_FORMS_HINT = (
     "Enter it as an Excel date, or as text in the form YYYY-MM-DD or DD/MM/YYYY."
