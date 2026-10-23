@@ -438,3 +438,7 @@ class TestMigratingLastYearsWorkbook:
         body = unescape(page.get_data(as_text=True))
         assert f"taken from {SAMPLE_1_2_0.name}." in body
         assert f"Last year's report:</span> {SAMPLE_1_2_0.name}" in body
+        # Converted as it is, it is listed with the others.
+        assert f"/conversions/{id}" in client.get("/conversions/").get_data(
+            as_text=True
+        )
