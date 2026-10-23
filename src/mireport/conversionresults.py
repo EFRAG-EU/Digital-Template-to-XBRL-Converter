@@ -160,39 +160,12 @@ class Message:
         return d
 
 
-class ConversionResults:
-    def __init__(
-        self,
-        conversionId: str,
-        messages: list[Message],
-        cellsQueried: int,
-        cellsPopulated: int,
-        conversionSuccessful: bool,
-    ) -> None:
-        self.conversionId = conversionId
+class Results:
+    """Messages, and what they add up to: severities, RAG status and the
+    user and developer views of them."""
+
+    def __init__(self, messages: list[Message]) -> None:
         self.messages: list[Message] = messages
-        self.cellsQueried: int = cellsQueried
-        self.cellsPopulated: int = cellsPopulated
-        self._conversionSuccessful: bool = conversionSuccessful
-
-    @classmethod
-    def fromDict(cls, stuff: dict) -> Self:
-        id = stuff["id"]
-        m = [Message.fromDict(m) for m in stuff["m"]]
-        q = stuff["q"]
-        p = stuff["p"]
-        success = stuff["success"]
-        return cls(id, m, q, p, success)
-
-    def toDict(self) -> dict:
-        d = {
-            "id": self.conversionId,
-            "m": [m.toDict() for m in self.messages],
-            "q": self.cellsQueried,
-            "p": self.cellsPopulated,
-            "success": self._conversionSuccessful,
-        }
-        return d
 
     def __len__(self) -> int:
         return len(self.messages)
@@ -272,6 +245,41 @@ class ConversionResults:
                 MessageType.DevInfo, MessageType.Progress
             ),
         )
+
+
+class ConversionResults(Results):
+    def __init__(
+        self,
+        conversionId: str,
+        messages: list[Message],
+        cellsQueried: int,
+        cellsPopulated: int,
+        conversionSuccessful: bool,
+    ) -> None:
+        super().__init__(messages)
+        self.conversionId = conversionId
+        self.cellsQueried: int = cellsQueried
+        self.cellsPopulated: int = cellsPopulated
+        self._conversionSuccessful: bool = conversionSuccessful
+
+    @classmethod
+    def fromDict(cls, stuff: dict) -> Self:
+        id = stuff["id"]
+        m = [Message.fromDict(m) for m in stuff["m"]]
+        q = stuff["q"]
+        p = stuff["p"]
+        success = stuff["success"]
+        return cls(id, m, q, p, success)
+
+    def toDict(self) -> dict:
+        d = {
+            "id": self.conversionId,
+            "m": [m.toDict() for m in self.messages],
+            "q": self.cellsQueried,
+            "p": self.cellsPopulated,
+            "success": self._conversionSuccessful,
+        }
+        return d
 
     @property
     def numCellQueries(self) -> int:
