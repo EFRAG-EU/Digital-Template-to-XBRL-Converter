@@ -76,8 +76,10 @@ async function downloadWhenReady(fileUrl, spinnerText) {
             }
 
             if (response.status >= 400) {
+                // A HEAD response has no body: ask again for the error itself.
+                const errorResponse = await fetch(fileUrl, { signal: download.signal });
                 let errorBody;
-                const rawText = await response.text();
+                const rawText = await errorResponse.text();
                 try {
                     const jsonResponse = JSON.parse(rawText);
                     errorBody = jsonResponse.error ?? JSON.stringify(jsonResponse, null, 2);
@@ -85,7 +87,7 @@ async function downloadWhenReady(fileUrl, spinnerText) {
                     errorBody = `Failed to parse JSON: ${e.message}. Response body: ${rawText}`;
                 }
 
-                throw new Error(`Server error ${response.status}: ${errorBody}`);
+                throw new Error(`Server error ${errorResponse.status}: ${errorBody}`);
             }
 
             await new Promise(resolve => setTimeout(resolve, pollingInterval));
