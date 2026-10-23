@@ -12,6 +12,7 @@ import logging
 from datetime import UTC, datetime
 from pathlib import PurePath
 from secrets import token_hex
+from time import monotonic, sleep
 from typing import TYPE_CHECKING, Any
 
 from flask import (
@@ -384,17 +385,30 @@ def partial_facts_submit(id: str) -> Response:
 
 
 def _heldBack(conv: Conversion, *, viewer: bool = False) -> Response | None:
-    """Why the report can't be had yet, if it can't: 202 (try again) while it
-    is being validated, or its ``viewer`` built, and 409 once validation has
-    found errors."""
-    if (results := reportResults(conv)) is None:
-        return None
-    if not results.downloadsAllowed:
-        return make_response({"error": VALIDATION_ERRORS_MESSAGE}, 409)
-    if results.validationPending or (
-        viewer and not results.steps[Step.VIEWER].isFinished
-    ):
-        return Response(status=202, headers={"X-File-Ready": "false"})
+    """Why the report can't be had yet, if it can't: 409 once validation has
+    found errors, 202 (try again) while it is being validated, or its
+    ``viewer`` built. A HEAD, the page's polling, is answered at once; a GET,
+    someone following the link, waits a while for validation first."""
+    # Inside the 60s that gunicorn allows a request in production.
+    waitSeconds = current_app.config.get("DOWNLOAD_WAIT_SECONDS", 50)
+    deadline = monotonic() + (waitSeconds if request.method == "GET" else 0)
+    while (results := reportResults(conv)) is not None:
+        if not results.downloadsAllowed:
+            return make_response({"error": VALIDATION_ERRORS_MESSAGE}, 409)
+        if not (
+            results.validationPending
+            or (viewer and not results.steps[Step.VIEWER].isFinished)
+        ):
+            return None
+        if monotonic() >= deadline:
+            return make_response(
+                {
+                    "status": "The XBRL report is still being validated. Try again shortly."
+                },
+                202,
+                {"X-File-Ready": "false"},
+            )
+        sleep(0.5)
     return None
 
 
