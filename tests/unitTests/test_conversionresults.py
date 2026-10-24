@@ -310,6 +310,24 @@ def test_round_trip_keeps_the_sections(builder):
     assert rebuilt.toDict() == built.toDict()
 
 
+def test_a_stage_not_run_is_a_skipped_section_saying_why(builder):
+    builder.skip(Stage.REPORT, "Digital Template has errors.")
+
+    rebuilt = ConversionResults.fromDict(builder.build().toDict())
+
+    [section] = rebuilt.sections
+    assert (section.stage, section.isSkipped) == (Stage.REPORT, True)
+    assert [m.messageText for m in section.userMessages] == [
+        "Not run: Digital Template has errors."
+    ]
+
+
+def test_a_section_stored_before_skipping_was_not_skipped():
+    stored = Section(Stage.PDF).toDict()
+    del stored["s"]
+    assert not Section.fromDict(stored).isSkipped
+
+
 def test_results_stored_before_sections_are_one_conversion_section():
     old = {
         "id": "old",

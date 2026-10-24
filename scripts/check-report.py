@@ -121,12 +121,16 @@ def main() -> None:
             arelle_result = arp.validateReportPackage(
                 source, disableCalculationValidation=args.ignore_calculation_warnings
             )
-            builder.addMessages(arelle_result.messages)
+            builder.addMessages(
+                [*arelle_result.messages, arelle_result.summary(source.filename)]
+            )
     else:
         if viewer_path:
             with builder.section(Stage.PACKAGE):
                 arelle_result = arp.generateInlineViewer(source)
-                builder.addMessages(arelle_result.messages)
+                builder.addMessages(
+                    [*arelle_result.messages, arelle_result.summary(source.filename)]
+                )
             if arelle_result.has_viewer:
                 if viewer_path.is_file():
                     print(f"Overwriting {viewer_path}.")
@@ -138,7 +142,9 @@ def main() -> None:
         if json_path:
             with builder.section(Stage.XBRL_JSON_OUTPUT):
                 arelle_result = arp.generateXbrlJson(source)
-                builder.addMessages(arelle_result.messages)
+                builder.addMessages(
+                    [*arelle_result.messages, arelle_result.summary(source.filename)]
+                )
             if arelle_result.has_json:
                 if json_path.is_file():
                     print(f"Overwriting {json_path}.")

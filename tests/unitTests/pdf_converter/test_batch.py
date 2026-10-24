@@ -145,6 +145,19 @@ class TestConversionWorks:
         assert warnings(results) == []
         assert results.conversionSuccessful
 
+    def test_says_each_was_converted(
+        self, results: Any, pc: Any, workingConverter: None
+    ) -> None:
+        said = (
+            "Converted for display alongside the report. "
+            "It is also attached to the report package."
+        )
+        convertSupplementaryPdfs([makePdf("a.pdf"), makePdf("b.pdf")], results, pc)
+        assert [(m.source, m.messageText) for m in results.userMessages] == [
+            ("a.pdf", said),
+            ("b.pdf", said),
+        ]
+
 
 # ── no converter installed ────────────────────────────────────────────────────
 

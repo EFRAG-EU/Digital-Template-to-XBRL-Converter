@@ -136,7 +136,15 @@ def _convertAll(
         if mode == PdfSupplementaryMode.MERGE:
             devInfo(f"Converted to merged {annex}")
             mergedAnnexes.append(annex)
+            shown = "Converted for display as an annex to the report."
         else:
             devInfo(f"Converted to {converted}")
             docsetMembers.append(converted)
+            shown = "Converted for display alongside the report."
+        results.addMessage(
+            f"{shown} It is also attached to the report package.",
+            Severity.INFO,
+            MessageType.Conversion,
+            source=attachment.filename,
+        )
     return PdfBatchResult(attachments, docsetMembers, mergedAnnexes)

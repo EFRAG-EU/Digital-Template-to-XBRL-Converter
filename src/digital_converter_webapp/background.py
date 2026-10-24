@@ -28,7 +28,14 @@ from cachelib.simple import SimpleCache
 from flask import current_app
 
 from mireport.arelle.report_info import ARELLE_VERSION_INFORMATION
-from mireport.conversionresults import ReportResults, Step, StepResults
+from mireport.conversionresults import (
+    Message,
+    MessageType,
+    ReportResults,
+    Severity,
+    Step,
+    StepResults,
+)
 
 from .app_setup import getArelle
 from .conversion_service import ensureViewer
@@ -155,9 +162,9 @@ def runSteps(
     work: dict[Step, Callable[[], StepResults]] = {
         Step.PACKAGE: lambda: arelle.validateReportPackage(
             reportPackage
-        ).validationResults(Step.PACKAGE, detail=arelleDetail),
+        ).validationResults(Step.PACKAGE, reportPackage.filename, detail=arelleDetail),
         Step.XBRL_JSON: lambda: arelle.validateXbrlJson(xbrlJson).validationResults(
-            Step.XBRL_JSON, detail=f"Validated {xbrlJson.filename}. {arelleDetail}"
+            Step.XBRL_JSON, xbrlJson.filename, detail=arelleDetail
         ),
         Step.VIEWER: lambda: _buildViewer(store, conversionId, reportPackage, arelle),
     }
@@ -205,7 +212,7 @@ def _buildViewer(
     viewer included, isn't offered at all."""
     steps = store.load(conversionId)
     if any(results.hasErrors() for s, results in steps.items() if s.isValidation):
-        return StepResults.skipped(Step.VIEWER, "Validation found errors.")
+        return StepResults.skipped(Step.VIEWER, "validation found errors.")
     result = arelle.generateInlineViewer(reportPackage)
     store.saveViewer(
         conversionId,
@@ -215,7 +222,8 @@ def _buildViewer(
         ),
     )
     # Its messages are the package validation's again: leave them out.
-    return StepResults.done(Step.VIEWER, [], result.elapsedNs)
+    built = Message("Viewer built.", Severity.INFO, MessageType.Conversion)
+    return StepResults.done(Step.VIEWER, [built], result.elapsedNs)
 
 
 def viewerFiles(conv: Conversion) -> ViewerFiles:

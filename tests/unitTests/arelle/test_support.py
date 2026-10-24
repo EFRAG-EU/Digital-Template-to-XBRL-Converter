@@ -110,14 +110,17 @@ class TestValidationResults:
         )
         result.elapsedNs = 2_000_000_000
 
-        validation = result.validationResults(Step.PACKAGE, detail="Using Arelle")
+        validation = result.validationResults(
+            Step.PACKAGE, "report.zip", detail="Using Arelle"
+        )
 
         assert validation.step is Step.PACKAGE
         assert validation.state is StepState.DONE
         assert validation.durationNs == 2_000_000_000
         assert not validation.isValid
         assert [m.messageText for m in validation.userMessages] == [
-            "[xbrl.5.2.5.2:calcInconsistency] Bad calc"
+            "[xbrl.5.2.5.2:calcInconsistency] Bad calc",
+            "Validated report.zip: 1 error.",
         ]
         assert (validation.stage, validation.label) == (
             Stage.PACKAGE,
@@ -127,9 +130,31 @@ class TestValidationResults:
         assert detail.messageText == "Using Arelle"
         assert validation.getMessages(wantedMessageTypes={MessageType.Progress}) == []
 
-    def test_clean_run_is_valid(self) -> None:
-        validation = ArelleProcessingResult().validationResults(Step.XBRL_JSON)
+    def test_clean_run_is_valid_and_says_so(self) -> None:
+        validation = ArelleProcessingResult().validationResults(
+            Step.XBRL_JSON, "report.json"
+        )
         assert validation.isValid
+        [summary] = validation.userMessages
+        assert (summary.messageText, summary.severity, summary.messageType) == (
+            "Validated report.json: no errors or warnings.",
+            Severity.INFO,
+            MessageType.XbrlValidation,
+        )
+
+    def test_summary_counts_errors_and_warnings(self) -> None:
+        result = ArelleProcessingResult.fromArelleLogs(
+            makeJsonLog(
+                ("a:one", "error", "One"),
+                ("a:two", "error", "Two"),
+                ("a:three", "warning", "Three"),
+            ),
+            [],
+        )
+        assert (
+            result.summary("r.zip").messageText
+            == "Validated r.zip: 2 errors, 1 warning."
+        )
 
 
 class TestArelleProcessingResultOutputs:

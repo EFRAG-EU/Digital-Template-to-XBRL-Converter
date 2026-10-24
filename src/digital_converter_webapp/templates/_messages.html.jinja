@@ -12,6 +12,8 @@
     {% set severity = section.getOverallSeverity() %}
     {% if unfinished %}
         {% set status, glyph, colours, icon = "In progress", "…", "border-blue-300 bg-blue-50", "bg-blue-400" %}
+    {% elif section.isSkipped %}
+        {% set status, glyph, colours, icon = "Not run", "–", "border-gray-300 bg-gray-100", "bg-gray-400" %}
     {% elif severity is sameas Severity.ERROR %}
         {% set status, glyph, colours, icon = "Errors", "✕", "border-red-300 bg-red-50", "bg-red-500" %}
     {% elif severity is sameas Severity.WARNING %}
@@ -34,6 +36,8 @@
             <span class="ml-auto text-sm text-gray-700">
     {% if unfinished %}
                 {{ state_words[section.state.value] }}
+    {% elif section.isSkipped %}
+                not run
     {% else %}
                 {{ section.severityCounts(dev) }}
     {% endif %}

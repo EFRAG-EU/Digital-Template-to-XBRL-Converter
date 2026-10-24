@@ -20,8 +20,12 @@ def added(*messages: str) -> list[tuple[str, Severity, MessageType]]:
     return [(m.messageText, m.severity, m.messageType) for m in builder.messages]
 
 
+def test_says_it_was_converted():
+    assert added() == [("Converted.", Severity.INFO, MessageType.Conversion)]
+
+
 def test_style_messages_are_developer_information_counted_once_each():
-    assert added(STYLE, UNDEFINED, STYLE) == [
+    assert added(STYLE, UNDEFINED, STYLE)[1:] == [
         (f"{STYLE} (2 times)", Severity.INFO, MessageType.DevInfo),
         (UNDEFINED, Severity.INFO, MessageType.DevInfo),
     ]

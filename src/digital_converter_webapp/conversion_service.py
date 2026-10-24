@@ -74,11 +74,13 @@ def doConversion(
     try:
         with builder.processingContext(f"Conversion {conv.id}") as pc:
             report = _loadReport(conv, builder)
+            if not builder.conversionSuccessful:
+                return _stopped(builder)
 
             if _pauseForPartialFacts(report, conv, builder):
                 return builder.build()
             if _completePartialFacts(report, conv, builder):
-                return builder.build()
+                return _stopped(builder)
             _mergePriorReport(report, conv, builder, arelle)
             if not report.hasFacts:
                 builder.addMessage(
@@ -86,7 +88,7 @@ def doConversion(
                     Severity.ERROR,
                     MessageType.Conversion,
                 )
-                return builder.build()
+                return _stopped(builder)
 
             _applyTheme(report, conv, builder, pc)
             reportPackage = _buildReportPackage(report, conv, builder, pc, pdfMode)
@@ -103,6 +105,17 @@ def doConversion(
         )
         L.exception("Exception encountered", exc_info=e)
 
+    return _stopped(builder)
+
+
+def _stopped(builder: ConversionResultsBuilder) -> ConversionResults:
+    """The results of a conversion that has stopped: if it failed before
+    making its report, saying so in the report's section, naming the section
+    whose errors stopped it."""
+    made = any(s.stage is Stage.REPORT for s in builder.sections)
+    if not (made or builder.conversionSuccessful):
+        failed = next(s for s in builder.sections if s.hasErrors())
+        builder.skip(Stage.REPORT, f"{failed.title} has errors.")
     return builder.build()
 
 
@@ -262,6 +275,12 @@ def _applyTheme(
             elif image:
                 pc.addDevInfoMessage(f"Adding {key} to report {image}")
                 getattr(report.theme, setterName)(image)
+                builder.addMessage(
+                    f"Added as the report's {key.removeprefix('image_')} image.",
+                    Severity.INFO,
+                    MessageType.Conversion,
+                    source=image.filename,
+                )
 
 
 def _buildReportPackage(

@@ -105,6 +105,9 @@ class TestRunSteps:
         steps = store.load("c1")
         assert [s.state for s in steps.values()] == [StepState.DONE] * len(Step)
         assert steps[Step.PACKAGE].isValid
+        assert [m.messageText for m in steps[Step.VIEWER].userMessages] == [
+            "Viewer built."
+        ]
         assert store.loadViewer("c1") == (VIEWER, {})
         assert store.claim("c1")
 
@@ -142,7 +145,10 @@ class TestRunSteps:
         runSteps(store, "c1", PACKAGE, XBRL_JSON, FakeArelle("validateXbrlJson"))
 
         viewer = store.load("c1")[Step.VIEWER]
-        assert viewer.state is StepState.DONE
+        assert viewer.state is StepState.SKIPPED
+        assert [m.messageText for m in viewer.userMessages] == [
+            "Not run: validation found errors."
+        ]
         assert store.loadViewer("c1") is None
 
     def test_forget_drops_the_viewer_too(self, store):

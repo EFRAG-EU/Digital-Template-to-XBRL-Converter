@@ -2,9 +2,11 @@
 
 import threading
 import time
+from io import BytesIO
 
 import pytest
 from cachelib.file import FileSystemCache
+from openpyxl import load_workbook
 
 from digital_converter_webapp import create_app
 from digital_converter_webapp.background import StepStore
@@ -57,6 +59,39 @@ def test_results_page_shows_the_steps_outcome(client, upload_id, validations):
     assert "Arelle validation was not run (test stub)" in page
 
 
+def brokenWorkbook(sample: bytes) -> bytes:
+    """The sample workbook with no valid template version: an Excel parsing
+    error."""
+    workbook = load_workbook(BytesIO(sample))
+    [(sheet, ref)] = workbook.defined_names[
+        "template_reporting_template_version"
+    ].destinations
+    workbook[sheet][ref.replace("$", "")].value = "not a version"
+    buffer = BytesIO()
+    workbook.save(buffer)
+    return buffer.getvalue()
+
+
+def test_a_workbook_with_errors_stops_the_conversion(
+    app, client, upload, sample_xlsx, validations
+):
+    """No report is made from it, so none is validated or viewed: each step
+    says it was not run, rather than waiting for ever."""
+    response = upload(client, data=brokenWorkbook(sample_xlsx))
+    conv_id = response.headers["Location"].rstrip("/").split("/")[-1]
+
+    page = client.get(f"/conversions/{conv_id}").get_data(as_text=True)
+
+    assert validations == []
+    assert "Not finished yet" not in page
+    assert "Not run: Digital Template (test.xlsx) has errors." in page
+    assert page.count("Not run: the conversion failed.") == len(Step)
+    assert "Inline XBRL report" in page
+    assert "created (containing" not in page
+    with app.app_context():
+        assert StepStore.fromFlask().load(conv_id) == {}
+
+
 def test_lost_steps_run_again(app, client, upload_id, validations):
     conv_id = upload_id(client)
     client.get(f"/conversions/{conv_id}")
@@ -68,8 +103,13 @@ def test_lost_steps_run_again(app, client, upload_id, validations):
 
         assert validations == ["package", "xbrlJson"] * 2
         assert "The generated XBRL report has validation ERRORS" in page
-        assert all(s.state is StepState.DONE for s in store.load(conv_id).values())
-        assert set(store.load(conv_id)) == set(Step)
+        steps = store.load(conv_id)
+        assert set(steps) == set(Step)
+        assert [s.state for s in steps.values()] == [
+            StepState.DONE,
+            StepState.DONE,
+            StepState.SKIPPED,
+        ]
 
 
 def test_finished_steps_are_not_run_again(client, upload_id, validations):

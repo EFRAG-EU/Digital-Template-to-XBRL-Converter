@@ -39,10 +39,19 @@ class DocxConversion:
         *,
         taxonomy_concept: Concept | None = None,
     ) -> None:
-        """Report mammoth's messages, each distinct one once and each about this
-        document (its ``source``). Style messages are developer information;
-        the rest, which may mean lost content, are one warning for the
-        document."""
+        """Report the conversion, then mammoth's messages, each distinct one
+        once and each about this document (its ``source``). Style messages are
+        developer information; the rest, which may mean lost content, are one
+        warning for the document."""
+        builder.addMessage(
+            "Converted."
+            if taxonomy_concept is None
+            else f"Converted for {taxonomy_concept.qname}.",
+            Severity.INFO,
+            MessageType.Conversion,
+            taxonomy_concept=taxonomy_concept,
+            source=self.filename,
+        )
         styles = Counter(m for m in self.messages if _STYLE_MESSAGE.search(m))
         others = Counter(m for m in self.messages if not _STYLE_MESSAGE.search(m))
         for message, count in styles.items():

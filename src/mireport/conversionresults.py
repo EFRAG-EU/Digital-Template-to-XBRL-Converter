@@ -350,12 +350,23 @@ class Section(Results):
         label: str | None = None,
         source: str | None = None,
         durationNs: int | None = None,
+        skipped: bool = False,
     ) -> None:
         super().__init__(messages if messages is not None else [])
         self.stage = stage
         self.label: str = label if label is not None else stage.label
         self.source = source
         self.durationNs = durationNs
+        self._skipped = skipped
+
+    @classmethod
+    def notRun(cls, stage: Stage, reason: str) -> Section:
+        """A stage that was not run, because of ``reason``."""
+        return cls(stage, [_notRunMessage(reason)], skipped=True)
+
+    @property
+    def isSkipped(self) -> bool:
+        return self._skipped
 
     @property
     def title(self) -> str:
@@ -369,6 +380,7 @@ class Section(Results):
             "f": self.source,
             "t": self.durationNs,
             "m": [m.toDict() for m in self.messages],
+            "s": self._skipped,
         }
 
     @classmethod
@@ -379,7 +391,12 @@ class Section(Results):
             label=stuff["l"],
             source=stuff["f"],
             durationNs=stuff["t"],
+            skipped=stuff.get("s", False),
         )
+
+
+def _notRunMessage(reason: str) -> Message:
+    return Message(f"Not run: {reason}", Severity.INFO, MessageType.Conversion)
 
 
 class ConversionResults(Results):
@@ -573,6 +590,12 @@ class ConversionResultsBuilder(ConversionResults):
                 f"Finished: [{section.title}] in {format_time_ns(section.durationNs)}."
             )
 
+    def skip(self, stage: Stage, reason: str) -> Self:
+        """Record that ``stage`` was not run, because of ``reason``."""
+        self.sections.append(Section.notRun(stage, reason))
+        self.printProgress(f"Not run: [{stage.label}]: {reason}")
+        return self
+
     def printProgress(self, message: str) -> None:
         """Say how the run is going, live, when the results are for the
         console; it isn't kept."""
@@ -631,6 +654,7 @@ class StepState(StrEnum):
     PENDING = "pending"
     RUNNING = "running"
     DONE = "done"
+    SKIPPED = "skipped"
     FAILED = "failed"
 
 
@@ -672,9 +696,8 @@ class StepResults(Section):
 
     @classmethod
     def skipped(cls, step: Step, reason: str) -> Self:
-        """Done without doing anything, because of ``reason``."""
-        message = Message(f"Skipped: {reason}", Severity.INFO, MessageType.Progress)
-        return cls(step, StepState.DONE, [message])
+        """Not run, because of ``reason``."""
+        return cls(step, StepState.SKIPPED, [_notRunMessage(reason)])
 
     @classmethod
     def failed(cls, step: Step, error: Exception) -> Self:
@@ -686,7 +709,11 @@ class StepResults(Section):
 
     @property
     def isFinished(self) -> bool:
-        return self.state in (StepState.DONE, StepState.FAILED)
+        return self.state in (StepState.DONE, StepState.SKIPPED, StepState.FAILED)
+
+    @property
+    def isSkipped(self) -> bool:
+        return self.state is StepState.SKIPPED
 
     def toDict(self) -> dict:
         return {
@@ -729,7 +756,7 @@ class ReportResults(Results):
     ) -> None:
         self.conversion = conversion
         self.steps: dict[Step, StepResults] = {
-            step: steps[step] if step in steps else step.resultsClass.pending(step)
+            step: steps[step] if step in steps else self._notYetRun(step)
             for step in Step
         }
         super().__init__(
@@ -738,6 +765,12 @@ class ReportResults(Results):
                 *(m for results in self.steps.values() for m in results.messages),
             ]
         )
+
+    def _notYetRun(self, step: Step) -> StepResults:
+        """Pending, or never to run: a failed conversion has no report."""
+        if self.conversion.conversionSuccessful:
+            return step.resultsClass.pending(step)
+        return step.resultsClass.skipped(step, "the conversion failed.")
 
     @property
     def sections(self) -> list[Section]:

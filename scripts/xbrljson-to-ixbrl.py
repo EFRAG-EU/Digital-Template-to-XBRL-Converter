@@ -15,6 +15,7 @@ from mireport.arelle.report_info import (
     ArelleReportProcessor,
 )
 from mireport.cli import (
+    addThemeImages,
     configure_rich_output,
     printSections,
     validateTaxonomyPackages,
@@ -26,11 +27,13 @@ from mireport.comparatives import PriorReport
 from mireport.conversionresults import (
     ConversionResults,
     ConversionResultsBuilder,
+    MessageType,
+    Severity,
     Stage,
 )
-from mireport.filesupport import FilelikeAndFileName, ImageFileLikeAndFileName
+from mireport.filesupport import FilelikeAndFileName
 from mireport.report.theme import ColourPalette, DisplayMode, ReportTheme
-from mireport.taxonomy import loadTaxonomyJSON
+from mireport.taxonomy import listTaxonomies, loadTaxonomyJSON
 from mireport.xbrljson_reader import XbrlJsonProcessor
 
 
@@ -152,6 +155,11 @@ def doConversion(args: argparse.Namespace) -> ConversionResults:
             mireport.loadBuiltInTaxonomyJSON()
             for path in args.taxonomy_json:
                 loadTaxonomyJSON(path)
+            resultsBuilder.addMessage(
+                f"{len(listTaxonomies())} taxonomy entry points loaded.",
+                Severity.INFO,
+                MessageType.Conversion,
+            )
 
         with resultsBuilder.section(Stage.XBRL_JSON_INPUT, source=args.json_file.name):
             processor = XbrlJsonProcessor.fromFile(
@@ -161,8 +169,11 @@ def doConversion(args: argparse.Namespace) -> ConversionResults:
                 entityNameConcept=args.entity_name_concept,
             )
             report = processor.createReport()
-            pc.addDevInfoMessage(
-                f"{processor.factsAdded} facts added, {processor.factsSkipped} skipped"
+            resultsBuilder.addMessage(
+                f"xBRL-JSON report read: {processor.factsAdded} facts added, "
+                f"{processor.factsSkipped} skipped.",
+                Severity.INFO,
+                MessageType.Conversion,
             )
         if args.prior:
             prior = FilelikeAndFileName(args.prior.read_bytes(), args.prior.name)
@@ -174,7 +185,7 @@ def doConversion(args: argparse.Namespace) -> ConversionResults:
         colour = ColourPalette.parse(args.style_custom or args.style_preset)
         report.theme.setDisplayMode(args.style_mode).setColour(colour)
         images = [
-            (image_path, imageSetter)
+            (arg_name, image_path, imageSetter)
             for arg_name, imageSetter in [
                 ("image_logo", report.theme.setLogoImage),
                 ("image_cover", report.theme.setCoverImage),
@@ -184,12 +195,7 @@ def doConversion(args: argparse.Namespace) -> ConversionResults:
         ]
         if images:
             with resultsBuilder.section(Stage.IMAGES):
-                for image_path, imageSetter in images:
-                    image, err = ImageFileLikeAndFileName.prepare(image_path)
-                    if err:
-                        pc.addDevInfoMessage(err)
-                    elif image:
-                        imageSetter(image)
+                addThemeImages(images, resultsBuilder)
 
         with resultsBuilder.section(Stage.REPORT):
             reportFile = report.getInlineReport()
@@ -208,8 +214,16 @@ def doConversion(args: argparse.Namespace) -> ConversionResults:
                 reportPackage.saveToDirectory(output)
             else:
                 reportFile.saveToFilepath(output)
+            resultsBuilder.addMessage(
+                f"Inline XBRL report {reportPackage} written to {output} "
+                f"(containing {report.factCount} facts).",
+                Severity.INFO,
+                MessageType.Conversion,
+            )
 
-        if not args.skip_validation:
+        if args.skip_validation:
+            resultsBuilder.skip(Stage.PACKAGE, "--skip-validation was given.")
+        else:
             with resultsBuilder.section(Stage.PACKAGE):
                 pc.addDevInfoMessage(
                     f"Validating using Arelle ({ARELLE_VERSION_INFORMATION})"
@@ -219,14 +233,22 @@ def doConversion(args: argparse.Namespace) -> ConversionResults:
                     resultsBuilder.addMessages(arelleResults.messages)
                     if arelleResults.has_viewer:
                         if toDirectory:
+                            viewerPath = output
                             arelleResults.viewer.saveToDirectory(output)
                         else:
-                            arelleResults.viewer.saveToFilepath(
-                                output.with_suffix(".viewer.html")
-                            )
+                            viewerPath = output.with_suffix(".viewer.html")
+                            arelleResults.viewer.saveToFilepath(viewerPath)
+                        resultsBuilder.addMessage(
+                            f"Viewer {arelleResults.viewer} written to {viewerPath}.",
+                            Severity.INFO,
+                            MessageType.Conversion,
+                        )
                 else:
                     arelleResults = arp.validateReportPackage(reportPackage)
                     resultsBuilder.addMessages(arelleResults.messages)
+                resultsBuilder.addMessages(
+                    [arelleResults.summary(reportPackage.filename)]
+                )
     return resultsBuilder.build()
 
 

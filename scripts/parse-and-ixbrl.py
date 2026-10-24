@@ -13,6 +13,7 @@ from mireport.arelle.report_info import (
     ArelleReportProcessor,
 )
 from mireport.cli import (
+    addThemeImages,
     configure_rich_output,
     printSections,
     validateTaxonomyPackages,
@@ -32,7 +33,7 @@ from mireport.data.disclosures import VSME_DEFAULTS
 from mireport.docx_converter import DocxConversionError, convertDocxToHtml
 from mireport.entrypoints import describeEntryPointSet
 from mireport.exceptions import EarlyAbortException
-from mireport.filesupport import FilelikeAndFileName, ImageFileLikeAndFileName
+from mireport.filesupport import FilelikeAndFileName
 from mireport.localise import EU_LOCALES, argparse_locale
 from mireport.pdf_converter import (
     PdfSupplementaryMode,
@@ -261,6 +262,11 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, list[str]
                 f"Taxonomies entry points ({len(allTaxonomies)}) available: "
                 + ", ".join(describeEntryPointSet(eps) for eps in allTaxonomies)
             )
+            resultsBuilder.addMessage(
+                f"{len(allTaxonomies)} taxonomy entry points loaded.",
+                Severity.INFO,
+                MessageType.Conversion,
+            )
         with resultsBuilder.section(Stage.WORKBOOK, source=args.xlsx_file.name):
             xl_processor = XlsxProcessor.from_file(
                 args.xlsx_file,
@@ -280,7 +286,7 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, list[str]
         report.theme.setDisplayMode(args.style_mode).setColour(colour)
 
         images = [
-            (image_path, imageSetter)
+            (arg_name, image_path, imageSetter)
             for arg_name, imageSetter in [
                 ("image_logo", report.theme.setLogoImage),
                 ("image_cover", report.theme.setCoverImage),
@@ -290,12 +296,7 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, list[str]
         ]
         if images:
             with resultsBuilder.section(Stage.IMAGES):
-                for image_path, imageSetter in images:
-                    image, err = ImageFileLikeAndFileName.prepare(image_path)
-                    if err:
-                        pc.addDevInfoMessage(err)
-                    elif image:
-                        imageSetter(image)
+                addThemeImages(images, resultsBuilder)
 
         supplementary_pdfs: list[FilelikeAndFileName] = []
         if (extra_file := args.extra_data) and extra_file.is_file():
@@ -406,6 +407,12 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, list[str]
                     f"Writing {reportFile} to {output_path} ({report.factCount} facts to include)"
                 )
                 reportFile.saveToFilepath(output_path)
+            resultsBuilder.addMessage(
+                f"Inline XBRL report {reportPackage} written to {output_path} "
+                f"(containing {report.factCount} facts).",
+                Severity.INFO,
+                MessageType.Conversion,
+            )
 
         xbrlJson: FilelikeAndFileName | None = None
         if args.json:
@@ -421,8 +428,17 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, list[str]
                     filename=jsonPath.name,
                 )
                 xbrlJson.saveToFilepath(jsonPath)
+                resultsBuilder.addMessage(
+                    f"Written to {jsonPath} (containing {report.factCount} facts).",
+                    Severity.INFO,
+                    MessageType.Conversion,
+                )
 
-        if not args.skip_validation:
+        if args.skip_validation:
+            resultsBuilder.skip(Stage.PACKAGE, "--skip-validation was given.")
+            if xbrlJson is not None:
+                resultsBuilder.skip(Stage.XBRL_JSON, "--skip-validation was given.")
+        else:
             with resultsBuilder.section(Stage.PACKAGE):
                 pc.addDevInfoMessage(
                     f"Validating using Arelle ({ARELLE_VERSION_INFORMATION})"
@@ -443,12 +459,26 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, list[str]
                             viewer.saveToFilepath(output_path)
                         else:
                             viewer.saveToDirectory(output_path)
+                        resultsBuilder.addMessage(
+                            f"Viewer {viewer} written to {output_path}.",
+                            Severity.INFO,
+                            MessageType.Conversion,
+                        )
                     else:
                         pc.addDevInfoMessage("Failed to create viewer.")
+                resultsBuilder.addMessages(
+                    [arelleResults.summary(reportPackage.filename)]
+                )
 
             if xbrlJson is not None:
                 with resultsBuilder.section(Stage.XBRL_JSON):
-                    resultsBuilder.addMessages(arp.validateXbrlJson(xbrlJson).messages)
+                    arelleResults = arp.validateXbrlJson(xbrlJson)
+                    resultsBuilder.addMessages(
+                        [
+                            *arelleResults.messages,
+                            arelleResults.summary(xbrlJson.filename),
+                        ]
+                    )
         unused = xl_processor.unusedNames
     return resultsBuilder.build(), unused
 

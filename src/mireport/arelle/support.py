@@ -199,10 +199,33 @@ class ArelleProcessingResult:
     def messages(self) -> list[Message]:
         return list(self._validationMessages)
 
-    def validationResults(self, step: Step, *, detail: str = "") -> ValidationResults:
-        """This run as the results of the validation ``step``."""
+    def summary(self, filename: str) -> Message:
+        """What validating ``filename`` found, as one message for the user."""
+        counts = Counter(m.severity for m in self._validationMessages)
+        found = [
+            f"{count} {noun}{'' if count == 1 else 's'}"
+            for severity, noun in (
+                (Severity.ERROR, "error"),
+                (Severity.WARNING, "warning"),
+            )
+            if (count := counts[severity])
+        ]
+        return Message(
+            f"Validated {filename}: {', '.join(found) or 'no errors or warnings'}.",
+            Severity.INFO,
+            MessageType.XbrlValidation,
+        )
+
+    def validationResults(
+        self, step: Step, filename: str, *, detail: str = ""
+    ) -> ValidationResults:
+        """This run, validating ``filename``, as the results of the validation
+        ``step``."""
         return ValidationResults.done(
-            step, self._validationMessages, self.elapsedNs, detail=detail
+            step,
+            [*self._validationMessages, self.summary(filename)],
+            self.elapsedNs,
+            detail=detail,
         )
 
     @property

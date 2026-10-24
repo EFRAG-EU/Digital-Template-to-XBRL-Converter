@@ -49,6 +49,7 @@ class TestStepResults:
             validated(Step.PACKAGE, message(Severity.WARNING)),
             ValidationResults.failed(Step.XBRL_JSON, ValueError("boom")),
             StepResults.done(Step.VIEWER, [], 5),
+            StepResults.skipped(Step.VIEWER, "no reason."),
         ],
         ids=lambda r: f"{r.step}-{r.state}",
     )
@@ -73,6 +74,15 @@ class TestStepResults:
         [error] = failed.userMessages
         assert error.messageText == "Failed: boom"
         assert error.messageType is MessageType.XbrlValidation
+
+    def test_skipped_is_finished_and_says_why(self):
+        skipped = StepResults.skipped(Step.VIEWER, "validation found errors.")
+
+        assert skipped.isFinished
+        assert skipped.isSkipped
+        [why] = skipped.userMessages
+        assert why.messageText == "Not run: validation found errors."
+        assert why.severity is Severity.INFO
 
     def test_true_without_messages(self):
         assert ValidationResults.running(Step.PACKAGE)
@@ -145,6 +155,17 @@ class TestReportResults:
         assert not results.validationPending
         assert not results.downloadsAllowed
         assert results.isComplete
+
+    def test_failed_conversion_runs_no_steps(self):
+        results = ReportResults(
+            converted(message(Severity.ERROR, MessageType.Conversion))
+        )
+
+        assert all(s.isSkipped for s in results.steps.values())
+        assert isinstance(results.steps[Step.PACKAGE], ValidationResults)
+        assert results.steps[Step.VIEWER].userMessages[0].messageText == (
+            "Not run: the conversion failed."
+        )
 
     def test_complete_once_every_step_finishes(self):
         steps = bothValidated() | {Step.VIEWER: StepResults.done(Step.VIEWER, [], 1)}

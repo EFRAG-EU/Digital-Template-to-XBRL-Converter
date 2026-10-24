@@ -5,7 +5,7 @@ import sys
 import warnings
 from argparse import ArgumentParser
 from collections import Counter
-from collections.abc import Iterable, Sequence
+from collections.abc import Callable, Iterable, Sequence
 from glob import escape as escape_glob
 from glob import glob
 from pathlib import Path
@@ -20,10 +20,16 @@ from rich.prompt import Prompt
 from rich.table import Table
 from rich.text import Text
 
-from mireport.conversionresults import Section
+from mireport.conversionresults import (
+    ConversionResultsBuilder,
+    MessageType,
+    Section,
+    Severity,
+)
 from mireport.diagnostics import AbstractDiagnostic
 from mireport.entrypoints import EntryPointSet, entryPointSetOf
 from mireport.exceptions import TaxonomyPackageException
+from mireport.filesupport import ImageFileLikeAndFileName
 from mireport.taxonomy import listTaxonomies
 from mireport.taxonomy_package import PackageEntryPoint, entryPointsFromPackage
 
@@ -103,11 +109,33 @@ def printSections(sections: Iterable[Section], *, developer: bool = False) -> No
     about and what it found ("Last year's report (2025.json): 2 warnings")."""
     for section in sections:
         if messages := section.shownMessages(developer):
-            console_print(
-                Text(f"{section.title}: {section.severityCounts(developer)}"),
-                style="bold",
+            found = (
+                "not run" if section.isSkipped else section.severityCounts(developer)
             )
+            console_print(Text(f"{section.title}: {found}"), style="bold")
             console_print_plain(messages)
+
+
+def addThemeImages(
+    images: Iterable[tuple[str, Path, Callable[[ImageFileLikeAndFileName], object]]],
+    builder: ConversionResultsBuilder,
+) -> None:
+    """Give the report each image (its argument name, its file and the theme's
+    setter for it), saying which were added and why any weren't."""
+    for argName, path, setter in images:
+        image, err = ImageFileLikeAndFileName.prepare(path)
+        if err:
+            builder.addMessage(
+                err, Severity.WARNING, MessageType.Conversion, source=path.name
+            )
+        elif image:
+            setter(image)
+            builder.addMessage(
+                f"Added as the report's {argName.removeprefix('image_')} image.",
+                Severity.INFO,
+                MessageType.Conversion,
+                source=image.filename,
+            )
 
 
 def configure_rich_output(*, locals_max_length: int | None = None) -> Console:
