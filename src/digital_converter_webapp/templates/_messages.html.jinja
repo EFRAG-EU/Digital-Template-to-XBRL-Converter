@@ -54,13 +54,26 @@
         {% if source is not none %}
             <h4 class="pt-2 font-semibold text-gray-700">{{ source | e }}</h4>
         {% endif %}
-            <table class="table-auto w-full border-collapse border border-gray-300 text-sm">
+        {# Only messages about the workbook have Excel references. #}
+        {% set has_refs = group | selectattr("excelReference") | list | length > 0 %}
+            {# Fixed widths, so every section's columns line up. #}
+            <table class="table-fixed w-full border-collapse border border-gray-300 text-sm">
+                <colgroup>
+                    <col class="w-40">
+                    <col class="w-28">
+                    <col>
+        {% if has_refs %}
+                    <col class="w-48">
+        {% endif %}
+                </colgroup>
                 <thead class="bg-gray-100">
                     <tr>
                         <th class="border border-gray-300 px-4 py-2 text-left">Message Type</th>
                         <th class="border border-gray-300 px-4 py-2 text-left">Severity</th>
                         <th class="border border-gray-300 px-4 py-2 text-left">Message</th>
+        {% if has_refs %}
                         <th class="border border-gray-300 px-4 py-2 text-left">Excel Reference</th>
+        {% endif %}
                     </tr>
                 </thead>
                 <tbody>
@@ -73,11 +86,9 @@
                                 {{ message.severity.value | e }}
                             </span>
                         </td>
-                        <td class="border border-gray-300 px-4 py-2">{{ message.messageText | e }}</td>
-            {% if message.excelReference is not none %}
-                        <td class="border border-gray-300 px-4 py-2">{{ message.excelReference | e }}</td>
-            {% else %}
-                        <td class="border border-gray-300 px-4 py-2"></td>
+                        <td class="border border-gray-300 px-4 py-2 wrap-break-word">{{ message.messageText | e }}</td>
+            {% if has_refs %}
+                        <td class="border border-gray-300 px-4 py-2 wrap-break-word">{{ (message.excelReference or "") | e }}</td>
             {% endif %}
                     </tr>
         {% endfor %}

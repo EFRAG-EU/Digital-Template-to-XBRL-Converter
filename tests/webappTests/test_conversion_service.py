@@ -160,6 +160,16 @@ class TestResultsSections:
         assert "Digital Template" in page
         assert "XBRL report validation" in page
 
+    def test_only_tables_with_excel_references_have_the_column(self, converted_id):
+        conv_id, c = converted_id
+        tree = lxml.html.fromstring(c.get(f"/conversions/{conv_id}").data)
+
+        def headers(sectionId: str) -> list[str]:
+            return tree.xpath(f'//*[@id="{sectionId}"]//th/text()')
+
+        assert "Excel Reference" in headers("section-workbook")
+        assert headers("section-report") == ["Message Type", "Severity", "Message"]
+
     def test_only_developers_see_how_long_each_took(self, converted_id):
         conv_id, c = converted_id
         user = c.get(f"/conversions/{conv_id}").get_data(as_text=True)
