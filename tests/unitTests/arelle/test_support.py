@@ -30,6 +30,10 @@ def makeJsonLog(*records: tuple[str, str, str]) -> str:
     )
 
 
+# How Arelle says it has finished validating.
+VALIDATED = ("info", "info", "validated in 1.00 secs")
+
+
 class TestArelleProcessingResultDiagnostics:
     def test_no_diagnostics_by_default(self) -> None:
         result = ArelleProcessingResult()
@@ -98,6 +102,35 @@ class TestImportArelleMessages:
         )
         assert result.messages == []
 
+    @pytest.mark.parametrize(
+        ("code", "level", "severity"),
+        [
+            ("", "error", Severity.ERROR),
+            ("info", "critical", Severity.ERROR),
+            ("", "warning", Severity.WARNING),
+        ],
+    )
+    def test_an_uncoded_problem_is_shown(
+        self, code: str, level: str, severity: Severity
+    ) -> None:
+        """An exception Arelle caught and logged, say: not developer
+        information, nor dropped as unexpected."""
+        result = ArelleProcessingResult.fromArelleLogs(
+            makeJsonLog((code, level, "Traceback: it broke")), []
+        )
+        [message] = result.messages
+        assert (message.messageText, message.severity, message.messageType) == (
+            "Traceback: it broke",
+            severity,
+            MessageType.XbrlValidation,
+        )
+
+    def test_validated_once_arelle_says_so(self) -> None:
+        assert not ArelleProcessingResult.fromArelleLogs(makeJsonLog(), []).validated
+        assert ArelleProcessingResult.fromArelleLogs(
+            makeJsonLog(VALIDATED), []
+        ).validated
+
     def test_log_lines_are_kept(self) -> None:
         result = ArelleProcessingResult.fromArelleLogs(makeJsonLog(), ["one", "two"])
         assert result.log_lines == ["one", "two"]
@@ -106,7 +139,10 @@ class TestImportArelleMessages:
 class TestValidationResults:
     def test_messages_and_timing_become_the_steps(self) -> None:
         result = ArelleProcessingResult.fromArelleLogs(
-            makeJsonLog(("xbrl.5.2.5.2:calcInconsistency", "error", "Bad calc")), []
+            makeJsonLog(
+                ("xbrl.5.2.5.2:calcInconsistency", "error", "Bad calc"), VALIDATED
+            ),
+            [],
         )
         result.elapsedNs = 2_000_000_000
 
@@ -126,14 +162,16 @@ class TestValidationResults:
             Stage.PACKAGE,
             "XBRL report validation",
         )
-        [detail] = validation.getMessages(wantedMessageTypes={MessageType.DevInfo})
-        assert detail.messageText == "Using Arelle"
+        assert [
+            m.messageText
+            for m in validation.getMessages(wantedMessageTypes={MessageType.DevInfo})
+        ] == ["validated in 1.00 secs", "Using Arelle"]
         assert validation.getMessages(wantedMessageTypes={MessageType.Progress}) == []
 
     def test_clean_run_is_valid_and_says_so(self) -> None:
-        validation = ArelleProcessingResult().validationResults(
-            Step.XBRL_JSON, "report.json"
-        )
+        validation = ArelleProcessingResult.fromArelleLogs(
+            makeJsonLog(VALIDATED), []
+        ).validationResults(Step.XBRL_JSON, "report.json")
         assert validation.isValid
         [summary] = validation.userMessages
         assert (summary.messageText, summary.severity, summary.messageType) == (
@@ -148,12 +186,34 @@ class TestValidationResults:
                 ("a:one", "error", "One"),
                 ("a:two", "error", "Two"),
                 ("a:three", "warning", "Three"),
+                VALIDATED,
             ),
             [],
         )
         assert (
             result.summary("r.zip").messageText
             == "Validated r.zip: 2 errors, 1 warning."
+        )
+
+    def test_a_run_that_never_finished_is_not_valid(self) -> None:
+        """Arelle reported nothing at all: no problems found is not the same as
+        none."""
+        validation = ArelleProcessingResult().validationResults(
+            Step.PACKAGE, "report.zip"
+        )
+        assert not validation.isValid
+        [summary] = validation.userMessages
+        assert (summary.messageText, summary.severity) == (
+            "Validation of report.zip did not finish: Arelle reported nothing.",
+            Severity.ERROR,
+        )
+
+    def test_an_unfinished_run_still_counts_what_it_found(self) -> None:
+        result = ArelleProcessingResult.fromArelleLogs(
+            makeJsonLog(("a:one", "warning", "One")), []
+        )
+        assert result.summary("r.zip").messageText == (
+            "Validation of r.zip did not finish: 1 warning."
         )
 
 

@@ -11,6 +11,7 @@ import threading
 import pytest
 from cachelib.file import FileSystemCache
 from playwright.sync_api import Page, expect
+from tests.unitTests.arelle_results import cleanValidation
 
 from digital_converter_webapp import create_app
 from mireport.arelle.report_info import ArelleReportProcessor
@@ -39,7 +40,7 @@ class FakeArelle:
 
     def validateReportPackage(self, processor, source, **kwargs):
         assert self.gate.wait(timeout=60), "The test never let validation go ahead"
-        result = ArelleProcessingResult()
+        result = cleanValidation()
         if self.packageError:
             result._validationMessages.append(
                 Message(FAKE_ERROR, Severity.ERROR, MessageType.XbrlValidation)
@@ -47,7 +48,7 @@ class FakeArelle:
         return result
 
     def validateXbrlJson(self, processor, document):
-        return ArelleProcessingResult()
+        return cleanValidation()
 
     def generateInlineViewer(self, processor, source):
         self.viewersBuilt += 1

@@ -7,6 +7,7 @@ from io import BytesIO
 import pytest
 from cachelib.file import FileSystemCache
 from openpyxl import load_workbook
+from tests.unitTests.arelle_results import cleanValidation
 
 from digital_converter_webapp import create_app
 from digital_converter_webapp.background import StepStore
@@ -40,7 +41,7 @@ def validations(monkeypatch, skipArelle, gate) -> list[str]:
 
     def validateXbrlJson(self, document):
         calls.append("xbrlJson")
-        return ArelleProcessingResult()
+        return cleanValidation()
 
     monkeypatch.setattr(
         ArelleReportProcessor, "validateReportPackage", validateReportPackage
@@ -72,6 +73,8 @@ def brokenWorkbook(sample: bytes) -> bytes:
     return buffer.getvalue()
 
 
+# openpyxl drops the sample's extensions it can't read: no matter here.
+@pytest.mark.filterwarnings("ignore:.* extension is not supported:UserWarning")
 def test_a_workbook_with_errors_stops_the_conversion(
     app, client, upload, sample_xlsx, validations
 ):
@@ -213,7 +216,7 @@ def cleanValidations(monkeypatch) -> list[str]:
         monkeypatch.setattr(
             ArelleReportProcessor,
             name,
-            lambda *args, **kwargs: ArelleProcessingResult(),
+            lambda *args, **kwargs: cleanValidation(),
         )
     built: list[str] = []
 

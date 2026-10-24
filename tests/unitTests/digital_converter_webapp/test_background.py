@@ -3,6 +3,7 @@ process serving the app can see them."""
 
 import pytest
 from cachelib.file import FileSystemCache
+from tests.unitTests.arelle_results import cleanValidation
 
 from digital_converter_webapp.background import StepStore, runSteps
 from mireport.arelle.support import ArelleProcessingResult
@@ -43,7 +44,7 @@ class FakeArelle:
         self.calls.append(name)
         if name in self.failing:
             raise RuntimeError(f"{name} broke")
-        return ArelleProcessingResult()
+        return cleanValidation()
 
     def validateReportPackage(self, source):
         assert source is PACKAGE

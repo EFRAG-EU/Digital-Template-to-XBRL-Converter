@@ -80,7 +80,11 @@ class ArelleProcessingResult:
         "Option ",
     )
 
+    # How Arelle logs, uncoded, that it has finished validating.
+    _VALIDATED_PREFIX = "validated in"
+
     def __init__(self) -> None:
+        self._validated = False
         self._validationMessages: list[Message] = []
         self._textLogLines: list[str] = []
         self._viewer: FilelikeAndFileName | None = None
@@ -119,6 +123,9 @@ class ArelleProcessingResult:
             if wantDebug:
                 L.debug(f"Record: {r=}")
 
+            if code in ("", "info") and text.startswith(self._VALIDATED_PREFIX):
+                self._validated = True
+
             if code not in ("", "info"):
                 # A coded record is an XBRL validation message. Its severity
                 # is the worse of the log level and any level embedded in the
@@ -131,6 +138,17 @@ class ArelleProcessingResult:
                     Message(
                         messageText=f"[{code}] {text}",
                         severity=max(level_severity, code_severity, key=Severity.key),
+                        messageType=MessageType.XbrlValidation,
+                        conceptQName=fact,
+                    )
+                )
+            elif (severity := self._uncodedSeverity(level)) is not Severity.INFO:
+                # Not a validation message, but a problem all the same: an
+                # exception Arelle caught, say. The user sees it.
+                self._validationMessages.append(
+                    Message(
+                        messageText=text,
+                        severity=severity,
                         messageType=MessageType.XbrlValidation,
                         conceptQName=fact,
                     )
@@ -154,6 +172,24 @@ class ArelleProcessingResult:
                 L.warning(
                     f"Unexpected Arelle log message: {code=} {level=} {text=} {fact=}"
                 )
+
+    @staticmethod
+    def _uncodedSeverity(level: str) -> Severity:
+        """How bad an uncoded record is: Arelle's progress is logged at info
+        (or debug), anything worse is a problem."""
+        match level.lower():
+            case "" | "info" | "debug":
+                return Severity.INFO
+            case "critical" | "fatal":
+                return Severity.ERROR
+            case _:
+                return Severity.fromLogLevelString(level, default=Severity.WARNING)
+
+    @property
+    def validated(self) -> bool:
+        """Arelle said it finished validating: without that, finding no
+        problems means nothing."""
+        return self._validated
 
     @property
     def viewer(self) -> FilelikeAndFileName:
@@ -200,18 +236,27 @@ class ArelleProcessingResult:
         return list(self._validationMessages)
 
     def summary(self, filename: str) -> Message:
-        """What validating ``filename`` found, as one message for the user."""
+        """What validating ``filename`` found, as one message for the user. A
+        run Arelle didn't say it finished is an error, whatever else it said:
+        no problems found is not the same as none."""
         counts = Counter(m.severity for m in self._validationMessages)
-        found = [
+        found = ", ".join(
             f"{count} {noun}{'' if count == 1 else 's'}"
             for severity, noun in (
                 (Severity.ERROR, "error"),
                 (Severity.WARNING, "warning"),
             )
             if (count := counts[severity])
-        ]
+        )
+        if not self._validated:
+            return Message(
+                f"Validation of {filename} did not finish: "
+                f"{found or 'Arelle reported nothing'}.",
+                Severity.ERROR,
+                MessageType.XbrlValidation,
+            )
         return Message(
-            f"Validated {filename}: {', '.join(found) or 'no errors or warnings'}.",
+            f"Validated {filename}: {found or 'no errors or warnings'}.",
             Severity.INFO,
             MessageType.XbrlValidation,
         )
