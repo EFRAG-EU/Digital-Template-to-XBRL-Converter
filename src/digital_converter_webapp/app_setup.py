@@ -46,6 +46,9 @@ def normalise_feature_flags(app: Flask) -> None:
     app.config["ENABLE_SUPPLEMENTARY_PDFS"] = truthy(
         app.config.get("ENABLE_SUPPLEMENTARY_PDFS", False)
     )
+    app.config["EXCEL_PARSING_WARNINGS_AS_DEVINFO"] = truthy(
+        app.config.get("EXCEL_PARSING_WARNINGS_AS_DEVINFO", False)
+    )
     pdfMode = app.config.get("PDF_SUPPLEMENTARY_MODE", PdfSupplementaryMode.DOCSET)
     try:
         pdfMode = PdfSupplementaryMode(pdfMode)
