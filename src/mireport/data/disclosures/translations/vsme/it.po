@@ -58,3 +58,7 @@ msgstr "Periodo di riferimento:"
 msgid "Introduction"
 msgstr "Introduzione"
 
+# Ours until the template has template_label_document_information.
+msgid "Document Information"
+msgstr "Informazioni sul documento"
+

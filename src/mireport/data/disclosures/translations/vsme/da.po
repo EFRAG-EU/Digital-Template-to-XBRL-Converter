@@ -64,3 +64,7 @@ msgstr "Denne rapport indeholder %(factCount)s XBRL-fakta."
 msgid "Introduction"
 msgstr "Indledning"
 
+# Ours until the template has template_label_document_information.
+msgid "Document Information"
+msgstr "Dokumentoplysninger"
+
