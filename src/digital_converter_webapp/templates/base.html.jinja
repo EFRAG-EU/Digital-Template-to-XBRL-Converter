@@ -1,12 +1,16 @@
 <!DOCTYPE html>
+{%- import "_brand-content.html.jinja" as brandContent %}
 <html lang="en">
 
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{% block title %}Default Title{% endblock %}</title>
+  {% set pageTitle %}{% block title %}{% endblock %}{% endset %}
+  <title>{% if pageTitle | trim %}{{ pageTitle | trim }} — {% endif %}{{ config.BRAND_PRODUCT_NAME }}</title>
   <link href="{{ url_for('basic.static', filename='style.css') }}" rel="stylesheet">
-  <link rel="icon" href="https://www.efrag.org/themes/custom/dms_theme/favicon.ico" type="image/x-icon" />
+  {% if config.BRAND_FAVICON_URL %}
+  <link rel="icon" href="{{ config.BRAND_FAVICON_URL }}" type="image/x-icon" />
+  {% endif %}
   {% block head %}{% endblock %}
 </head>
 
@@ -15,12 +19,14 @@
   <main class="flex-grow flex items-center justify-center px-4">
     <div class="bg-white p-8 rounded-2xl shadow-xl border border-gray-200 w-full max-w-7xl space-y-6">
       <!-- Logo -->
+      {% if config.BRAND_LOGO_URL %}
       <div class="flex justify-center">
-        <img src="https://www.efrag.org/themes/custom/dms_theme/logo.svg" alt="EFRAG Logo" class="h-12">
+        <img src="{{ config.BRAND_LOGO_URL }}" alt="{{ config.BRAND_ORGANISATION_NAME }} Logo" class="h-12">
       </div>
+      {% endif %}
 
       <!-- Title -->
-      <h1 class="text-2xl font-bold text-center text-gray-800">VS and VSME Digital Template to XBRL Converter</h1>
+      <h1 class="text-2xl font-bold text-center text-gray-800">{{ config.BRAND_PRODUCT_NAME }}</h1>
 
       {% with messages = get_flashed_messages(with_categories=true) %}
       {% for category, message in messages %}
@@ -37,52 +43,8 @@
   <footer class="bg-gray-100 text-gray-600 text-sm py-6 px-4 mt-8">
     <div class="max-w-7xl mx-auto space-y-4">
       <div class="text-center">
-        <div>
-          <p>
-            The Digital Template and the XBRL Converter on this website are provided by EFRAG as guidance material to support the SME ecosystem in the
-            implementation of the Voluntary Sustainability Reporting Standard for non-listed SMEs (VSME). By using this website, you agree to the 
-            <button type="button" onclick="openModal()" class="text-blue-600 underline">terms and conditions</button>.
-          </p>
-          <p>
-            More information about EFRAG's supporting materials is available on the official webpage. The source code of
-            this tool is published on EFRAG's Github page
-            <a target="_blank" href="https://github.com/EFRAG-EU/Digital-Template-to-XBRL-Converter" class="text-blue-600 underline">https://github.com/EFRAG-EU/Digital-Template-to-XBRL-Converter</a>.
-            If you would like to report an issue with this converter or Digital Template, please do so by <a class="text-blue-600 underline" href="https://github.com/EFRAG-EU/Digital-Template-to-XBRL-Converter/issues">creating an issue report on Github</a>.
-          </p>
-          <p>
-            Do you want to contribute and support EFRAG's mission? <a class="text-blue-600 underline" target="_blank" href="https://www.efrag.org/en/about-us/friends-of-efrag">Become a Friend of EFRAG!</a>
-          </p>
-        </div>
-        <div class="max-w-7xl mx-auto flex items-center space-x-10 text-center">
-          <img src="https://www.efrag.org/sites/default/files/styles/pg_text_media/public/2023-12/166824540_max.jpg"
-            width="100" alt="EU FUNDING EFRAG Logo" class="my-6">
-          <div class="text-left px-4 text-sm">
-            <p>
-              EFRAG is co-funded by the European Union through the Single Market Programme in which the EEA-EFTA countries
-              (Norway, Iceland and Liechtenstein), as well as Kosovo participate. Any views and opinions expressed are
-              however those of the EFRAG Secretariat only and do not necessarily reflect those of the European Union, the
-              European
-              Commission or of countries that participate in the Single Market Programme. Neither the European Union, the
-              European
-              Commission nor countries participating in the Single Market Programme can be held responsible for them.
-            </p>
-          </div>
-        </div>
+        {{ brandContent.footer() }}
         <div class="text-center">
-          <p>
-            Copyright © EFRAG 2025<br>
-            35 Square de Meeûs<br>
-            B-1000 Brussels, Belgium<br>
-            Telephone: +32 (0) 2 207 93 00<br>
-            Email: <a href="mailto:digital-reporting@efrag.org"
-              class="text-blue-600 underline">digital-reporting@efrag.org</a><br>
-            EFRAG Website: <a target="_blank" href="https://www.efrag.org" class="text-blue-600 underline">www.efrag.org</a>
-          </p>
-            <p>
-            More information about digital VSME reporting: <a target="_blank"
-              href="https://www.efrag.org/en/vsme-digital-template-and-xbrl-taxonomy"
-              class="text-blue-600 underline">VSME Digital Template & Taxonomy</a>
-          </p>
           <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-left">
             <dt class="font-semibold after:content-[':']">Deployed since</dt>
             <dd>{{ deployment_datetime.isoformat(timespec="seconds") }}</dd>
@@ -107,47 +69,7 @@
   </div>
 
   <!-- Terms and conditions Modal -->
-<div id="termsModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50">
-  <div class="bg-white w-full max-w-lg p-6 rounded-xl shadow-xl relative">
-    <h2 class="text-lg font-bold text-gray-800 mb-4">Terms and Conditions</h2>
-    <div class="text-sm text-gray-700 space-y-2 max-h-60 overflow-y-auto">
-      <p>
-        The Digital-Template-to-XBRL Converter is provided by EFRAG as guidance material to support the SME ecosystem in the
-        implementation of the Voluntary Sustainability Reporting Standard for non-listed SMEs (VSME).
-      </p>
-      <p>
-        EFRAG is providing the web-converter for personal and non-commercial use only. It shall not be used in an
-        automated way, e.g. from an application using HTTP requests. In order to integrate the converter into another 
-        software, please use the source code of the converter available on GitHub.
-      </p>
-      <p>
-        Any reliance you place on such data or information provided is therefore entirely at your own risk. In no event will EFRAG be
-        liable for any loss or damage including, without limitation, indirect or consequential loss or damage, or any
-        loss or damage whatsoever arising from loss of data or profits arising out of, or in connection with, the
-        use of this website and its tools.
-      </p>
-      <p>
-      The converter software (including the Digital Template) is provided "as is", without warranty of any kind, express or implied, 
-      including but not limited to the warranties of merchantability, fitness for a particular purpose and non-infringement. 
-      In no event shall the authors or copyright holders be liable for any claim, damages or other liability, 
-      whether in an action of contract, tort or otherwise, arising from, out of or in connection with the software or the use or other dealings in the software.
-      </p>
-      <p>
-        By using this converter, you acknowledge that all data processed is subject to <a target="_blank" href="https://www.efrag.org/en/about-us/legal-policies">EFRAG's privacy policy</a>.
-        EFRAG does not retain any uploaded file. The uploaded files are kept temporarily in the memory of the server for the purpose of conversion and providing the converted files for download. No data is permanently stored.
-        This website is storing a cookie in your browser to temporarily remember your session and the files uploaded and generated.
-      </p>
-      <p>
-        You are responsible for the accuracy and completeness of any data converted. EFRAG provides no warranties
-        for the converted outputs and disclaims any liability for misuse. Please note that EFRAG does not offer direct support to end users.
-      </p>
-    </div>
-    <div class="mt-6 text-right">
-      <button onclick="closeModal()"
-        class="text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg">Close</button>
-    </div>
-  </div>
-</div>
+  {{ brandContent.termsModal() }}
 
   <div id="errorModal" class="hidden fixed inset-0 items-center justify-center bg-black opacity-50">
     <div class="bg-white p-6 rounded-lg shadow-lg max-w-sm">

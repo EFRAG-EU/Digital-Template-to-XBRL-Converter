@@ -466,6 +466,12 @@ conversion id (`/conversions/<id>`, `/downloadFile/<id>/<ftype>/`, `/viewer/<id>
 `.env` + `FLASK_*` env vars in normal operation; tests pass an explicit `test_config` mapping so they
 never pick up a developer's `.env`.
 
+Branding is config (`app_setup.BRANDING_DEFAULTS`, EFRAG's by default; an empty value hides its
+element): `BRAND_PRODUCT_NAME`, `BRAND_ORGANISATION_NAME`, `BRAND_LOGO_URL`, `BRAND_FAVICON_URL`,
+`BRAND_CONTACT_EMAIL`, `BRAND_TEMPLATE_URL`, `BRAND_SAMPLE_URL`, and `BRAND_TEMPLATE_DIR`, a
+directory searched first for a replacement `_brand-content.html.jinja` defining the macros
+`footer()`, `termsModal()` and `feedbackRequest()`.
+
 `__init__.py` holds only `create_app()`. The rest is split by concern:
 
 | Module | Owns |
