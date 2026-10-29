@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import argparse
+import decimal
 import logging
 from decimal import Decimal, localcontext
+from enum import StrEnum
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -15,6 +17,16 @@ from babel.numbers import format_decimal, get_decimal_symbol, get_group_symbol
 from mireport.typealiases import DecimalPlaces
 
 L = logging.getLogger(__name__)
+
+
+class Rounding(StrEnum):
+    """How a number is rounded to its decimals for display. The values are decimal's own modes."""
+
+    # Python's default, for a source without a rule of its own.
+    HALF_EVEN = decimal.ROUND_HALF_EVEN
+    # Halves away from zero, as Excel shows a cell.
+    HALF_UP = decimal.ROUND_HALF_UP
+
 
 EU_LOCALES = {
     # One standard locale per official EU language
@@ -129,6 +141,8 @@ def localise_and_format_number(
     number: float | str | Decimal,
     decimal_places: DecimalPlaces,
     locale: Locale | None = None,
+    *,
+    rounding: Rounding = Rounding.HALF_EVEN,
 ) -> str:
     """
     Format a number with optional locale, supporting 'INF' for unlimited precision.
@@ -136,12 +150,14 @@ def localise_and_format_number(
     In the 'INF' case, the output preserves the exact decimal representation
     (no rounding or truncation, including trailing zeros) and applies locale-aware
     grouping and decimal point symbols if a locale is provided. For finite decimal
-    places, applies locale-aware formatting with specified precision.
+    places, rounds to them (negative ones too: 1234567 at -3 is 1,235,000) with
+    ``rounding``, and applies locale-aware formatting with that precision.
 
     Args:
         number: The number to format (float, int, str, or Decimal).
         decimal_places: Number of decimal places or 'INF' for unlimited precision.
         locale: Optional locale (string or babel.core.Locale) for formatting.
+        rounding: How a finite number of decimal places rounds; half to even if not given.
 
     Returns:
         Formatted string representation of the number.
@@ -178,22 +194,23 @@ def localise_and_format_number(
         # unquantized formatting normalizes the value first and drops them.
         places = max(-int(value.as_tuple().exponent), 0)
     else:
-        # Handle negative decimal places (fallback to 0). Bound to a new name so
-        # decimal_places keeps its declared DecimalPlaces union.
+        # Negative decimal places round (below) but show no places. Bound to a new
+        # name so decimal_places keeps its declared DecimalPlaces union.
         places = max(decimal_places, 0)
 
-    # Normal finite case
-    if locale:
-        pattern = "#,##0." + "0" * places if places > 0 else "#,##0"
-        # Babel quantizes in the active decimal context; the default 28-digit
-        # precision raises InvalidOperation for values whose formatted form
-        # needs more digits (integer digits + requested decimal places).
-        with localcontext() as ctx:
-            ctx.prec = max(ctx.prec, value.adjusted() + 1 + places + 2)
+    # Babel and Decimal's own formatting quantize in the active decimal context; the
+    # default 28-digit precision raises InvalidOperation for values whose formatted
+    # form needs more digits (integer digits + requested decimal places).
+    with localcontext() as ctx:
+        ctx.prec = max(ctx.prec, value.adjusted() + 1 + places + 2)
+        ctx.rounding = rounding
+        if decimal_places != "INF":
+            value = value.quantize(Decimal(1).scaleb(-decimal_places))
+        if locale:
+            pattern = "#,##0." + "0" * places if places > 0 else "#,##0"
             return format_decimal(
                 value, format=pattern, locale=locale, decimal_quantization=True
             )
-    else:
         # Use standard Python formatting without locale
         return f"{value:,.{places}f}"
 
