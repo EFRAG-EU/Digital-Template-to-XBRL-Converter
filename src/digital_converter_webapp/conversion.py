@@ -394,13 +394,14 @@ class ConversionStore:
 
         Excludes session internals and any conversion that was aborted because
         a mandatory migration was required (its entry is kept so the migration
-        page can still find it, but it must not appear in the listing).
+        page can still find it, but it must not appear in the listing). One the
+        user converted anyway, skipping the migration, has results and is listed.
         """
         out: dict[str, Conversion] = {}
         for k in self._session:
             if (conv := self.get(k)) is None:
                 continue
-            if MIGRATION_REQUIRED in (
+            if not conv.has_results and MIGRATION_REQUIRED in (
                 conv.migration_outcome,
                 conv.prior.migration_outcome,
             ):

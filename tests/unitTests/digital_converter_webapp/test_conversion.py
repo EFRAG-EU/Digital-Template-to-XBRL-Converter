@@ -8,6 +8,7 @@ from digital_converter_webapp.conversion import (
     ConversionStore,
 )
 from digital_converter_webapp.migration import MigrationOutcome
+from mireport.conversionresults import ConversionResultsBuilder
 from mireport.filesupport import FilelikeAndFileName
 
 
@@ -257,6 +258,14 @@ class TestConversionStore:
         assert list(store.active()) == ["ok"]
         assert store.hasActive()
         assert store.get("old") is not None
+
+    def test_converted_without_the_required_migration_is_listed(self) -> None:
+        store = ConversionStore({})
+        skipped = store.create("skipped")
+        skipped.migration_outcome = MigrationOutcome.MIGRATION_REQUIRED
+        skipped.prior.migration_outcome = MigrationOutcome.MIGRATION_REQUIRED
+        skipped.results = ConversionResultsBuilder().build()
+        assert list(store.active()) == ["skipped"]
 
     def test_last_years_workbook_awaiting_migration_is_hidden_too(self) -> None:
         store = ConversionStore({})
