@@ -11,7 +11,7 @@ from unicodedata import name as unicode_name
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from mireport.conversionresults import ProcessingContext
+    from mireport.conversionresults import ConversionResultsBuilder
 
 import ixbrltemplates
 from babel import Locale
@@ -442,10 +442,10 @@ class InlineReport(Report):
             attachments=attachments,
         )
 
-    def reportUntranslatedStrings(self, pc: ProcessingContext) -> None:
+    def reportUntranslatedStrings(self, results: ConversionResultsBuilder) -> None:
         """Say, as dev info, which of the rendered report's fixed strings had no translation."""
         if self.untranslatedStrings:
-            pc.addDevInfoMessage(
+            results.addDevInfoMessage(
                 f"Report strings with no {self.language} translation: "
                 f"{'; '.join(self.untranslatedStrings)}"
             )

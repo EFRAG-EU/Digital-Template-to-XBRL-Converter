@@ -33,7 +33,7 @@ from mireport.pdf_converter._run import findConverter
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from mireport.conversionresults import ConversionResultsBuilder, ProcessingContext
+    from mireport.conversionresults import ConversionResultsBuilder
     from mireport.filesupport import FilelikeAndFileName
 
 
@@ -61,7 +61,6 @@ class PdfBatchResult(NamedTuple):
 def convertSupplementaryPdfs(
     pdfs: Sequence[FilelikeAndFileName],
     results: ConversionResultsBuilder,
-    pc: ProcessingContext,
     *,
     mode: PdfSupplementaryMode = PdfSupplementaryMode.DOCSET,
 ) -> PdfBatchResult:
@@ -76,13 +75,12 @@ def convertSupplementaryPdfs(
         return PdfBatchResult([], [], [])
 
     with results.section(Stage.PDF):
-        return _convertAll(attachments, results, pc, mode)
+        return _convertAll(attachments, results, mode)
 
 
 def _convertAll(
     attachments: list[FilelikeAndFileName],
     results: ConversionResultsBuilder,
-    pc: ProcessingContext,
     mode: PdfSupplementaryMode,
 ) -> PdfBatchResult:
     try:
@@ -96,7 +94,7 @@ def _convertAll(
         )
         return PdfBatchResult(attachments, [], [])
 
-    pc.addDevInfoMessage(f"Converting PDFs using {converter} (mode={mode})")
+    results.addDevInfoMessage(f"Converting PDFs using {converter} (mode={mode})")
     docsetMembers: list[FilelikeAndFileName] = []
     mergedAnnexes: list[MergedAnnex] = []
     for index, attachment in enumerate(attachments, start=1):

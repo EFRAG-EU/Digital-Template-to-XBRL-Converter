@@ -36,7 +36,6 @@ from mireport.xbrljson_writer import toXbrlJson
 from mireport.xlsx_template_reader.processor import XlsxProcessor
 
 if TYPE_CHECKING:
-    from mireport.conversionresults import ProcessingContext
     from mireport.report.inlinereport import InlineReport
 
     from .conversion import Conversion
@@ -72,7 +71,7 @@ def doConversion(
         excelParsingWarningsAsDevInfo=excelParsingWarningsAsDevInfo,
     )
     try:
-        with builder.processingContext(f"Conversion {conv.id}") as pc:
+        with builder.processingContext(f"Conversion {conv.id}"):
             report = _loadReport(conv, builder)
             if not builder.conversionSuccessful:
                 return _stopped(builder)
@@ -90,8 +89,8 @@ def doConversion(
                 )
                 return _stopped(builder)
 
-            _applyTheme(report, conv, builder, pc)
-            reportPackage = _buildReportPackage(report, conv, builder, pc, pdfMode)
+            _applyTheme(report, conv, builder)
+            reportPackage = _buildReportPackage(report, conv, builder, pdfMode)
             if not builder.conversionSuccessful:
                 return builder.build()
             conv.json = _writeXbrlJson(report, reportPackage)
@@ -251,7 +250,6 @@ def _applyTheme(
     report: InlineReport,
     conv: Conversion,
     builder: ConversionResultsBuilder,
-    pc: ProcessingContext,
 ) -> None:
     colour = ColourPalette.parse(
         conv.style_palette or ReportTheme.DEFAULT_COLOUR.label,
@@ -273,7 +271,7 @@ def _applyTheme(
             if err:
                 builder.addMessage(err, Severity.WARNING, MessageType.Conversion)
             elif image:
-                pc.addDevInfoMessage(f"Adding {key} to report {image}")
+                builder.addDevInfoMessage(f"Adding {key} to report {image}")
                 getattr(report.theme, setterName)(image)
                 builder.addMessage(
                     f"Added as the report's {key.removeprefix('image_')} image.",
@@ -287,14 +285,13 @@ def _buildReportPackage(
     report: InlineReport,
     conv: Conversion,
     builder: ConversionResultsBuilder,
-    pc: ProcessingContext,
     pdfMode: PdfSupplementaryMode,
 ) -> FilelikeAndFileName:
-    pdfs = convertSupplementaryPdfs(conv.pdfs, builder, pc, mode=pdfMode)
+    pdfs = convertSupplementaryPdfs(conv.pdfs, builder, mode=pdfMode)
 
     with builder.section(Stage.REPORT):
         reportFile = report.getInlineReport()
-        report.reportUntranslatedStrings(pc)
+        report.reportUntranslatedStrings(builder)
         if pdfs.mergedAnnexes:
             reportFile = mergeAnnexesIntoReport(reportFile, pdfs.mergedAnnexes)
         reportPackage = buildReportPackage(

@@ -378,12 +378,12 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, list[str]
                 )
 
         pdfs = convertSupplementaryPdfs(
-            supplementary_pdfs, resultsBuilder, pc, mode=args.pdf_mode
+            supplementary_pdfs, resultsBuilder, mode=args.pdf_mode
         )
 
         with resultsBuilder.section(Stage.REPORT):
             reportFile = report.getInlineReport()
-            report.reportUntranslatedStrings(pc)
+            report.reportUntranslatedStrings(resultsBuilder)
             if pdfs.mergedAnnexes:
                 reportFile = mergeAnnexesIntoReport(reportFile, pdfs.mergedAnnexes)
             reportPackage = buildReportPackage(

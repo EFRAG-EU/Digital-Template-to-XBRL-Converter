@@ -410,14 +410,12 @@ class ConversionResults(Results):
         cellsQueried: int,
         cellsPopulated: int,
         conversionSuccessful: bool,
-        durationNs: int | None = None,
     ) -> None:
         self.conversionId = conversionId
         self.sections: list[Section] = sections
         self.cellsQueried: int = cellsQueried
         self.cellsPopulated: int = cellsPopulated
         self._conversionSuccessful: bool = conversionSuccessful
-        self.durationNs = durationNs
 
     @property
     def messages(self) -> list[Message]:
@@ -435,7 +433,7 @@ class ConversionResults(Results):
         q = stuff["q"]
         p = stuff["p"]
         success = stuff["success"]
-        return cls(id, sections, q, p, success, stuff.get("t"))
+        return cls(id, sections, q, p, success)
 
     def toDict(self) -> dict:
         d = {
@@ -444,7 +442,6 @@ class ConversionResults(Results):
             "q": self.cellsQueried,
             "p": self.cellsPopulated,
             "success": self._conversionSuccessful,
-            "t": self.durationNs,
         }
         return d
 
@@ -485,7 +482,6 @@ class ConversionResultsBuilder(ConversionResults):
             self.conversionId = str(uuid.uuid4())
         self.sections: list[Section] = []
         self._openSection: Section | None = None
-        self.durationNs: int | None = None
         self.cellsQueriedBuilder: set[tuple[str, int, int]] = set()
         self.cellsPopulatedBuilder: set[tuple[str, int, int]] = set()
         self.consoleOutput = consoleOutput
@@ -535,6 +531,10 @@ class ConversionResultsBuilder(ConversionResults):
             )
         )
         return self
+
+    def addDevInfoMessage(self, message: str) -> Self:
+        """Say something only a developer needs to know."""
+        return self.addMessage(message, Severity.INFO, MessageType.DevInfo)
 
     def processingContext(self, name: str) -> ProcessingContext:
         return ProcessingContext(self, name)
@@ -621,7 +621,6 @@ class ConversionResultsBuilder(ConversionResults):
             len(self.cellsPopulatedBuilder),
             len(self.cellsPopulatedBuilder),
             self.conversionSuccessful,
-            self.durationNs,
         )
 
 
@@ -847,7 +846,6 @@ class ProcessingContext:
         traceback: TracebackType | None,
     ) -> bool:
         execution_time_ns = perf_counter_ns() - self.start_time
-        self._resultsBuilder.durationNs = execution_time_ns
 
         swallow_exception: bool = False
         if exc_type is None:
@@ -875,4 +873,4 @@ class ProcessingContext:
         self._resultsBuilder.printProgress(message)
 
     def addDevInfoMessage(self, message: str) -> None:
-        self._resultsBuilder.addMessage(message, Severity.INFO, MessageType.DevInfo)
+        self._resultsBuilder.addDevInfoMessage(message)

@@ -28,12 +28,10 @@ def test_add_message(builder):
     assert msg.messageType == MessageType.Conversion
 
 
-def test_processing_context_success_keeps_its_time_not_a_message(builder):
+def test_processing_context_success_adds_no_message(builder):
     with builder.processingContext("Success Test"):
-        sleep(0.001)
+        pass
     assert builder.messages == []
-    built = builder.build()
-    assert built.durationNs is not None and built.durationNs >= 1_000_000
 
 
 def test_processing_context_early_abort_is_swallowed(builder):

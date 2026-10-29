@@ -199,7 +199,7 @@ def doConversion(args: argparse.Namespace) -> ConversionResults:
 
         with resultsBuilder.section(Stage.REPORT):
             reportFile = report.getInlineReport()
-            report.reportUntranslatedStrings(pc)
+            report.reportUntranslatedStrings(resultsBuilder)
             reportPackage = report.getInlineReportPackage()
 
             output = args.output_path

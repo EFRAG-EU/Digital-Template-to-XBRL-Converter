@@ -43,12 +43,6 @@ def results() -> ConversionResultsBuilder:
     return ConversionResultsBuilder()
 
 
-@pytest.fixture
-def pc(results: ConversionResultsBuilder) -> Any:
-    with results.processingContext("test") as context:
-        yield context
-
-
 FAKE_CONVERTER = ResolvedConverter(
     BACKENDS_IN_PREFERENCE_ORDER[0], "/usr/bin/pdf2htmlEX"
 )
@@ -86,18 +80,18 @@ def warnings(results: ConversionResultsBuilder) -> list[str]:
 
 
 class TestNoPdfs:
-    def test_returns_three_empty_lists(self, results: Any, pc: Any) -> None:
-        assert convertSupplementaryPdfs([], results, pc) == ([], [], [])
+    def test_returns_three_empty_lists(self, results: Any) -> None:
+        assert convertSupplementaryPdfs([], results) == ([], [], [])
 
-    def test_says_nothing_alarming(self, results: Any, pc: Any) -> None:
+    def test_says_nothing_alarming(self, results: Any) -> None:
         """The processing context emits its own progress marks, so this is
         about warnings and errors, not about total silence."""
-        convertSupplementaryPdfs([], results, pc)
+        convertSupplementaryPdfs([], results)
         assert warnings(results) == []
         assert results.conversionSuccessful
 
     def test_does_not_look_for_the_binary(
-        self, results: Any, pc: Any, monkeypatch: pytest.MonkeyPatch
+        self, results: Any, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """No PDFs means no reason to complain about a missing converter."""
 
@@ -105,54 +99,46 @@ class TestNoPdfs:
             raise AssertionError("should not have looked for the binary")
 
         monkeypatch.setattr(_batch, "findConverter", boom)
-        convertSupplementaryPdfs([], results, pc)
+        convertSupplementaryPdfs([], results)
 
 
 # ── the happy path ────────────────────────────────────────────────────────────
 
 
 class TestConversionWorks:
-    def test_attaches_the_originals(
-        self, results: Any, pc: Any, workingConverter: None
-    ) -> None:
+    def test_attaches_the_originals(self, results: Any, workingConverter: None) -> None:
         pdfs = [makePdf("a.pdf"), makePdf("b.pdf")]
-        assert convertSupplementaryPdfs(pdfs, results, pc).attachments == pdfs
+        assert convertSupplementaryPdfs(pdfs, results).attachments == pdfs
 
     def test_produces_a_member_per_pdf(
-        self, results: Any, pc: Any, workingConverter: None
+        self, results: Any, workingConverter: None
     ) -> None:
-        result = convertSupplementaryPdfs(
-            [makePdf("a.pdf"), makePdf("b.pdf")], results, pc
-        )
+        result = convertSupplementaryPdfs([makePdf("a.pdf"), makePdf("b.pdf")], results)
         assert [m.filename for m in result.docsetMembers] == ["a.xhtml", "b.xhtml"]
 
-    def test_preserves_order(
-        self, results: Any, pc: Any, workingConverter: None
-    ) -> None:
+    def test_preserves_order(self, results: Any, workingConverter: None) -> None:
         """Document set order is presentation order, so it must be the upload's."""
         pdfs = [makePdf(n) for n in ("z.pdf", "a.pdf", "m.pdf")]
-        result = convertSupplementaryPdfs(pdfs, results, pc)
+        result = convertSupplementaryPdfs(pdfs, results)
         assert [m.filename for m in result.docsetMembers] == [
             "z.xhtml",
             "a.xhtml",
             "m.xhtml",
         ]
 
-    def test_says_nothing_alarming(
-        self, results: Any, pc: Any, workingConverter: None
-    ) -> None:
-        convertSupplementaryPdfs([makePdf("a.pdf")], results, pc)
+    def test_says_nothing_alarming(self, results: Any, workingConverter: None) -> None:
+        convertSupplementaryPdfs([makePdf("a.pdf")], results)
         assert warnings(results) == []
         assert results.conversionSuccessful
 
     def test_says_each_was_converted(
-        self, results: Any, pc: Any, workingConverter: None
+        self, results: Any, workingConverter: None
     ) -> None:
         said = (
             "Converted for display alongside the report. "
             "It is also attached to the report package."
         )
-        convertSupplementaryPdfs([makePdf("a.pdf"), makePdf("b.pdf")], results, pc)
+        convertSupplementaryPdfs([makePdf("a.pdf"), makePdf("b.pdf")], results)
         assert [(m.source, m.messageText) for m in results.userMessages] == [
             ("a.pdf", said),
             ("b.pdf", said),
@@ -163,30 +149,24 @@ class TestConversionWorks:
 
 
 class TestNoConverterInstalled:
-    def test_originals_are_still_attached(
-        self, results: Any, pc: Any, noBinary: None
-    ) -> None:
+    def test_originals_are_still_attached(self, results: Any, noBinary: None) -> None:
         """The reason for attaching the PDF as well as converting it."""
         pdfs = [makePdf("a.pdf"), makePdf("b.pdf")]
-        assert convertSupplementaryPdfs(pdfs, results, pc).attachments == pdfs
+        assert convertSupplementaryPdfs(pdfs, results).attachments == pdfs
 
-    def test_no_members(self, results: Any, pc: Any, noBinary: None) -> None:
-        result = convertSupplementaryPdfs([makePdf("a.pdf")], results, pc)
+    def test_no_members(self, results: Any, noBinary: None) -> None:
+        result = convertSupplementaryPdfs([makePdf("a.pdf")], results)
         assert result.docsetMembers == []
 
-    def test_warns_once_for_the_batch(
-        self, results: Any, pc: Any, noBinary: None
-    ) -> None:
+    def test_warns_once_for_the_batch(self, results: Any, noBinary: None) -> None:
         """Not once per file — three uploads must not mean three identical
         complaints about the deployment."""
         pdfs = [makePdf(f"{n}.pdf") for n in "abcde"]
-        convertSupplementaryPdfs(pdfs, results, pc)
+        convertSupplementaryPdfs(pdfs, results)
         assert len(warnings(results)) == 1
 
-    def test_conversion_still_succeeds(
-        self, results: Any, pc: Any, noBinary: None
-    ) -> None:
-        convertSupplementaryPdfs([makePdf("a.pdf")], results, pc)
+    def test_conversion_still_succeeds(self, results: Any, noBinary: None) -> None:
+        convertSupplementaryPdfs([makePdf("a.pdf")], results)
         assert results.conversionSuccessful
 
 
@@ -210,48 +190,46 @@ class TestPartialFailure:
 
         monkeypatch.setattr(_batch, "convertPdfToHtml", convert)
 
-    def test_good_pdfs_still_convert(
-        self, results: Any, pc: Any, flakyConverter: None
-    ) -> None:
+    def test_good_pdfs_still_convert(self, results: Any, flakyConverter: None) -> None:
         result = convertSupplementaryPdfs(
-            [makePdf("a.pdf"), makePdf("bad.pdf"), makePdf("b.pdf")], results, pc
+            [makePdf("a.pdf"), makePdf("bad.pdf"), makePdf("b.pdf")], results
         )
         assert [m.filename for m in result.docsetMembers] == ["a.xhtml", "b.xhtml"]
 
     def test_the_failed_pdf_is_still_attached(
-        self, results: Any, pc: Any, flakyConverter: None
+        self, results: Any, flakyConverter: None
     ) -> None:
         result = convertSupplementaryPdfs(
-            [makePdf("a.pdf"), makePdf("bad.pdf")], results, pc
+            [makePdf("a.pdf"), makePdf("bad.pdf")], results
         )
         assert [a.filename for a in result.attachments] == ["a.pdf", "bad.pdf"]
 
     def test_warns_once_naming_the_file(
-        self, results: Any, pc: Any, flakyConverter: None
+        self, results: Any, flakyConverter: None
     ) -> None:
-        convertSupplementaryPdfs([makePdf("a.pdf"), makePdf("bad.pdf")], results, pc)
+        convertSupplementaryPdfs([makePdf("a.pdf"), makePdf("bad.pdf")], results)
         [warning] = results.getMessages(wantedMessageSeverities={Severity.WARNING})
         assert warning.source == "bad.pdf"
         assert "bad.pdf" not in warning.messageText
 
     def test_every_message_is_in_the_pdfs_section(
-        self, results: Any, pc: Any, flakyConverter: None
+        self, results: Any, flakyConverter: None
     ) -> None:
-        convertSupplementaryPdfs([makePdf("a.pdf"), makePdf("bad.pdf")], results, pc)
+        convertSupplementaryPdfs([makePdf("a.pdf"), makePdf("bad.pdf")], results)
         [pdfs] = [s for s in results.sections if s.stage is Stage.PDF]
         assert pdfs.messages == results.getMessages(
             wantedMessageTypes=MessageType.allExcept(MessageType.Progress)
         )
 
     def test_conversion_still_succeeds(
-        self, results: Any, pc: Any, flakyConverter: None
+        self, results: Any, flakyConverter: None
     ) -> None:
         """A warning must not clear conversionSuccessful."""
-        convertSupplementaryPdfs([makePdf("bad.pdf")], results, pc)
+        convertSupplementaryPdfs([makePdf("bad.pdf")], results)
         assert results.conversionSuccessful
 
     def test_every_pdf_failing_is_still_not_an_error(
-        self, results: Any, pc: Any, monkeypatch: pytest.MonkeyPatch
+        self, results: Any, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         monkeypatch.setattr(_batch, "findConverter", lambda: FAKE_CONVERTER)
 
@@ -259,9 +237,7 @@ class TestPartialFailure:
             raise PdfConversionError("nope")
 
         monkeypatch.setattr(_batch, "convertPdfToHtml", boom)
-        result = convertSupplementaryPdfs(
-            [makePdf("a.pdf"), makePdf("b.pdf")], results, pc
-        )
+        result = convertSupplementaryPdfs([makePdf("a.pdf"), makePdf("b.pdf")], results)
         assert result.docsetMembers == []
         assert len(result.attachments) == 2
         assert results.conversionSuccessful
@@ -305,28 +281,28 @@ class TestMergeMode:
         return conversions
 
     def test_does_not_inject_an_ix_header(
-        self, results: Any, pc: Any, mergeConverter: list[str]
+        self, results: Any, mergeConverter: list[str]
     ) -> None:
-        convertSupplementaryPdfs([makePdf("a.pdf")], results, pc, mode="merge")
+        convertSupplementaryPdfs([makePdf("a.pdf")], results, mode="merge")
         assert mergeConverter == ["xhtml, injectIxHeader=False"]
 
     def test_docset_mode_makes_a_document_set_member(
-        self, results: Any, pc: Any, mergeConverter: list[str]
+        self, results: Any, mergeConverter: list[str]
     ) -> None:
-        convertSupplementaryPdfs([makePdf("a.pdf")], results, pc, mode="docset")
+        convertSupplementaryPdfs([makePdf("a.pdf")], results, mode="docset")
         assert mergeConverter == ["member"]
 
     def test_produces_no_docset_members(
-        self, results: Any, pc: Any, mergeConverter: list[str]
+        self, results: Any, mergeConverter: list[str]
     ) -> None:
-        result = convertSupplementaryPdfs([makePdf("a.pdf")], results, pc, mode="merge")
+        result = convertSupplementaryPdfs([makePdf("a.pdf")], results, mode="merge")
         assert result.docsetMembers == []
 
     def test_produces_an_annex_per_pdf_in_order(
-        self, results: Any, pc: Any, mergeConverter: list[str]
+        self, results: Any, mergeConverter: list[str]
     ) -> None:
         result = convertSupplementaryPdfs(
-            [makePdf("a.pdf"), makePdf("b.pdf")], results, pc, mode="merge"
+            [makePdf("a.pdf"), makePdf("b.pdf")], results, mode="merge"
         )
         assert [a.anchor_id for a in result.mergedAnnexes] == [
             "pdf-annex-1",
@@ -335,8 +311,8 @@ class TestMergeMode:
         assert [a.label for a in result.mergedAnnexes] == ["a.pdf", "b.pdf"]
 
     def test_originals_still_attached(
-        self, results: Any, pc: Any, mergeConverter: list[str]
+        self, results: Any, mergeConverter: list[str]
     ) -> None:
         pdfs = [makePdf("a.pdf"), makePdf("b.pdf")]
-        result = convertSupplementaryPdfs(pdfs, results, pc, mode="merge")
+        result = convertSupplementaryPdfs(pdfs, results, mode="merge")
         assert result.attachments == pdfs
