@@ -16600,6 +16600,30 @@
       "nillable": true,
       "periodType": "duration"
     },
+    "vs:ATransitionPlanHasAlreadyBeenAdoptedMember": {
+      "abstract": true,
+      "baseDataType": "xbrli:stringItemType",
+      "dataType": "dtr-types:domainItemType",
+      "labels": {
+        "en": {
+          "http://www.xbrl.org/2003/role/label": "A transition plan has already been adopted [member]"
+        }
+      },
+      "nillable": true,
+      "periodType": "duration"
+    },
+    "vs:ATransitionPlanIsNotInPlaceAndItIsNotPlannedToBeAdoptedMember": {
+      "abstract": true,
+      "baseDataType": "xbrli:stringItemType",
+      "dataType": "dtr-types:domainItemType",
+      "labels": {
+        "en": {
+          "http://www.xbrl.org/2003/role/label": "A transition plan is not in place and it is not planned to be adopted [member]"
+        }
+      },
+      "nillable": true,
+      "periodType": "duration"
+    },
     "vs:AccidentPreventionMember": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
@@ -16660,31 +16684,31 @@
           "http://www.xbrl.org/2003/role/label": "Additional (general) workforce characteristics [abstract]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "Informaci\u00f3n adicional sobre Salud y seguridad de los trabajadores [abstract]"
+          "http://www.xbrl.org/2003/role/label": "Caracter\u00edsticas (generales) adicionales de los trabajadores [abstract]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "Informations suppl\u00e9mentaires sur le personnel \u2013 Sant\u00e9 et s\u00e9curit\u00e9 [abstract]"
+          "http://www.xbrl.org/2003/role/label": "Caract\u00e9ristiques suppl\u00e9mentaires (g\u00e9n\u00e9rales) du personnel [abstract]"
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Sl\u00e1inte agus s\u00e1bh\u00e1ilteacht bhreise don lucht saothair [abstract]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "Ulteriore salute e sicurezza (forza lavoro) [abstract]"
+          "http://www.xbrl.org/2003/role/label": "Ulteriori (generale) caratteristiche della forza lavoro [abstract]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "Papildom\u0173 darbuotoj\u0173 sveikata ir sauga [abstract]"
+          "http://www.xbrl.org/2003/role/label": "Papildomos (bendrosios) darbo j\u0117gos charakteristikos [abstract]"
         },
         "nl": {
           "http://www.xbrl.org/2003/role/label": "Aanvullende gezondheid en veiligheid van het personeel [abstract]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "Dodatkowe zagadnienia dotycz\u0105ce zdrowia i bezpiecze\u0144stwa pracownik\u00f3w [abstract]"
+          "http://www.xbrl.org/2003/role/label": "Dodatkowa (og\u00f3lna) charakterystyka pracownik\u00f3w [abstract]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "Sa\u00fade e seguran\u00e7a da m\u00e3o-de-obra adicional [abstract]"
+          "http://www.xbrl.org/2003/role/label": "Caracter\u00edsticas adicionais (gerais) Sa\u00fade e seguran\u00e7a da m\u00e3o-de-obra adicional [abstract]"
         },
         "sl": {
-          "http://www.xbrl.org/2003/role/label": "Dodatno zdravje in varnost delovne sile [abstract]"
+          "http://www.xbrl.org/2003/role/label": "Dodatne (splo\u0161ne) zna\u010dilnosti delovne sile [abstract]"
         }
       },
       "nillable": true,
@@ -16752,6 +16776,18 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Ime, ulica, hi\u0161na \u0161tevilka, \u0161tevilka stavbe"
+        }
+      },
+      "nillable": true,
+      "periodType": "duration"
+    },
+    "vs:AdoptionOfATransitionPlanIsPlannedInTheFutureMember": {
+      "abstract": true,
+      "baseDataType": "xbrli:stringItemType",
+      "dataType": "dtr-types:domainItemType",
+      "labels": {
+        "en": {
+          "http://www.xbrl.org/2003/role/label": "Adoption of a transition plan is planned in the future [member]"
         }
       },
       "nillable": true,
@@ -17128,6 +17164,27 @@
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Amount of other pollutant emission [abstract]"
+        },
+        "es": {
+          "http://www.xbrl.org/2003/role/label": "Cantidad de emisiones de otros contaminantes [abstract]"
+        },
+        "fr": {
+          "http://www.xbrl.org/2003/role/label": "Quantit\u00e9 d'\u00e9missions d'autres polluants [abstract]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Quantit\u00e0 delle altre emissioni inquinanti [abstract]"
+        },
+        "lt": {
+          "http://www.xbrl.org/2003/role/label": "Kit\u0173 i\u0161metam\u0173 ter\u0161al\u0173 kiekis [abstract]"
+        },
+        "pl": {
+          "http://www.xbrl.org/2003/role/label": "Ilo\u015b\u0107 emisji innego zanieczyszczenia [abstract]"
+        },
+        "pt": {
+          "http://www.xbrl.org/2003/role/label": "Valor de outras emiss\u00f5es de poluentes [abstract]"
+        },
+        "sl": {
+          "http://www.xbrl.org/2003/role/label": "Koli\u010dina emisije drugega onesna\u017eevala [abstract]"
         }
       },
       "nillable": true,
@@ -17140,6 +17197,27 @@
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Amount of other pollutant emissions [line items]"
+        },
+        "es": {
+          "http://www.xbrl.org/2003/role/label": "Cantidad de emisiones de otros contaminantes [line items]"
+        },
+        "fr": {
+          "http://www.xbrl.org/2003/role/label": "Quantit\u00e9 d'\u00e9missions d'autres polluants [line items]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Quantit\u00e0 delle altre emissioni inquinanti [line items]"
+        },
+        "lt": {
+          "http://www.xbrl.org/2003/role/label": "Kit\u0173 i\u0161metam\u0173 ter\u0161al\u0173 kiekis [line items]"
+        },
+        "pl": {
+          "http://www.xbrl.org/2003/role/label": "Ilo\u015b\u0107 emisji innego zanieczyszczenia [line items]"
+        },
+        "pt": {
+          "http://www.xbrl.org/2003/role/label": "Valor de outras emiss\u00f5es de poluentes [line items]"
+        },
+        "sl": {
+          "http://www.xbrl.org/2003/role/label": "Koli\u010dina emisij drugih onesna\u017eeval [line items]"
         }
       },
       "nillable": true,
@@ -17153,6 +17231,27 @@
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Amount of other pollutant emission [table]"
+        },
+        "es": {
+          "http://www.xbrl.org/2003/role/label": "Cantidad de emisiones de otros contaminantes [table]"
+        },
+        "fr": {
+          "http://www.xbrl.org/2003/role/label": "Quantit\u00e9 d'\u00e9missions d'autres polluants [table]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Quantit\u00e0 delle altre emissioni inquinanti [table]"
+        },
+        "lt": {
+          "http://www.xbrl.org/2003/role/label": "Kit\u0173 i\u0161metam\u0173 ter\u0161al\u0173 kiekis [table]"
+        },
+        "pl": {
+          "http://www.xbrl.org/2003/role/label": "Ilo\u015b\u0107 emisji innego zanieczyszczenia [table]"
+        },
+        "pt": {
+          "http://www.xbrl.org/2003/role/label": "Valor de outras emiss\u00f5es de poluentes [table]"
+        },
+        "sl": {
+          "http://www.xbrl.org/2003/role/label": "Koli\u010dina emisije drugega onesna\u017eevala [table]"
         }
       },
       "nillable": true,
@@ -17164,6 +17263,27 @@
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Amount of other pollutant emission to air"
+        },
+        "es": {
+          "http://www.xbrl.org/2003/role/label": "Cantidad de emisiones de otros contaminantes a la atm\u00f3sfera"
+        },
+        "fr": {
+          "http://www.xbrl.org/2003/role/label": "Quantit\u00e9 d'\u00e9missions d'autres polluants dans l'air"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Quantit\u00e0 delle altre emissioni inquinanti nell'aria"
+        },
+        "lt": {
+          "http://www.xbrl.org/2003/role/label": "Kit\u0173 \u012f or\u0105 i\u0161metam\u0173 ter\u0161al\u0173 kiekis"
+        },
+        "pl": {
+          "http://www.xbrl.org/2003/role/label": "Ilo\u015b\u0107 emisji innego zanieczyszczenia do powietrza"
+        },
+        "pt": {
+          "http://www.xbrl.org/2003/role/label": "Valor de outras emiss\u00f5es de poluentes para o ar"
+        },
+        "sl": {
+          "http://www.xbrl.org/2003/role/label": "Koli\u010dina emisije drugega onesna\u017eevala v zrak"
         }
       },
       "nillable": true,
@@ -17176,6 +17296,27 @@
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Amount of other pollutant emission to soil"
+        },
+        "es": {
+          "http://www.xbrl.org/2003/role/label": "Cantidad de emisiones de otros contaminantes al suelo"
+        },
+        "fr": {
+          "http://www.xbrl.org/2003/role/label": "Quantit\u00e9 d'\u00e9missions d'autres polluants dans le sol"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Quantit\u00e0 delle altre emissioni inquinanti nel suolo"
+        },
+        "lt": {
+          "http://www.xbrl.org/2003/role/label": "Kit\u0173 \u012f dirvo\u017eem\u012f i\u0161leid\u017eiam\u0173 ter\u0161al\u0173 kiekis"
+        },
+        "pl": {
+          "http://www.xbrl.org/2003/role/label": "Ilo\u015b\u0107 emisji innego zanieczyszczenia do gleby"
+        },
+        "pt": {
+          "http://www.xbrl.org/2003/role/label": "Valor de outras emiss\u00f5es de poluentes para o solo"
+        },
+        "sl": {
+          "http://www.xbrl.org/2003/role/label": "Koli\u010dina emisije drugega onesna\u017eevala v tla"
         }
       },
       "nillable": true,
@@ -17188,6 +17329,27 @@
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Amount of other pollutant emission to water"
+        },
+        "es": {
+          "http://www.xbrl.org/2003/role/label": "Cantidad de emisiones de otros contaminantes al agua"
+        },
+        "fr": {
+          "http://www.xbrl.org/2003/role/label": "Quantit\u00e9 d'\u00e9missions d'autres polluants dans l'eau"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Quantit\u00e0 delle altre emissioni inquinanti nell'acqua"
+        },
+        "lt": {
+          "http://www.xbrl.org/2003/role/label": "Kit\u0173 \u012f vanden\u012f i\u0161leid\u017eiam\u0173 ter\u0161al\u0173 kiekis"
+        },
+        "pl": {
+          "http://www.xbrl.org/2003/role/label": "Ilo\u015b\u0107 emisji innego zanieczyszczenia do wody"
+        },
+        "pt": {
+          "http://www.xbrl.org/2003/role/label": "Valor de outras emiss\u00f5es de poluentes para a \u00e1gua"
+        },
+        "sl": {
+          "http://www.xbrl.org/2003/role/label": "Koli\u010dina emisije drugega onesna\u017eevala v vodo"
         }
       },
       "nillable": true,
@@ -17209,31 +17371,31 @@
           "http://www.xbrl.org/2003/role/measurementGuidance": "[utr:m3]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "Cantidad de agua extra\u00edda en emplazamientos situados en zonas con un alto estr\u00e9s h\u00eddrico"
+          "http://www.xbrl.org/2003/role/label": "Cantidad de agua consumida en emplazamientos situados en zonas con estr\u00e9s h\u00eddrico (metros c\u00fabicos, m\u00b3)"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "Quantit\u00e9 d\u2019eau pr\u00e9lev\u00e9e sur les sites qui se situent dans des zones expos\u00e9es \u00e0 un stress hydrique \u00e9lev\u00e9"
+          "http://www.xbrl.org/2003/role/label": "Quantit\u00e9 d\u2019eau consomm\u00e9e sur les sites qui se situent dans des zones expos\u00e9es \u00e0 un stress hydrique (m\u00e8tres cubes m\u00b3)"
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "An m\u00e9id uisce arna aistarraingt ag l\u00e1ithre\u00e1in at\u00e1 suite i limist\u00e9ir ina bhfuil ardstrus maidir le huisce"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "Quantit\u00e0 di acqua prelevata presso siti ubicati in aree ad elevato stress idrico"
+          "http://www.xbrl.org/2003/role/label": "Quantit\u00e0 di acqua consumata presso siti ubicati in aree a stress idrico (metri cubi m\u00b3)"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "Imamo vandens kiekis vietose, esan\u010diose didelio vandens stygiaus zonose"
+          "http://www.xbrl.org/2003/role/label": "Suvartojamo vandens kiekis vietose, esan\u010diose vandens stygiaus zonose (kubiniais metrais m\u00b3)"
         },
         "nl": {
           "http://www.xbrl.org/2003/role/label": "Hoeveelheid water onttrokken op locaties in gebieden met grote waterstress"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "Ilo\u015b\u0107 wody pobranej w lokalizacjach znajduj\u0105cych si\u0119 na obszarach o znacznym deficycie wody"
+          "http://www.xbrl.org/2003/role/label": "Ilo\u015b\u0107 wody zu\u017cytej w lokalizacjach znajduj\u0105cych si\u0119 na obszarach z deficytem wody (metry sze\u015bcienne m\u00b3)"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "Quantidade de \u00e1gua captada em locais situados em \u00e1reas com elevado stress h\u00eddrico"
+          "http://www.xbrl.org/2003/role/label": "Quantidade de \u00e1gua consumida em locais situados em \u00e1reas com stress h\u00eddrico (metros c\u00fabicos m3)"
         },
         "sl": {
-          "http://www.xbrl.org/2003/role/label": "Koli\u010dina odvzete vode na lokacijah, ki se nahajajo na obmo\u010djih z visoko vodno obremenitvijo"
+          "http://www.xbrl.org/2003/role/label": "Koli\u010dina vode, porabljene na lokacijah na obmo\u010djih vodnega stresa (kubi\u010dni metri m\u00b3)"
         }
       },
       "nillable": true,
@@ -17516,31 +17678,31 @@
           "http://www.xbrl.org/2003/role/label": "Average number of annual training hours per employee"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "N\u00famero medio de horas anuales de formaci\u00f3n por empleado masculino"
+          "http://www.xbrl.org/2003/role/label": "N\u00famero promedio de horas anuales de formaci\u00f3n por asalariado"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "Nombre moyen d\u2019heures annuelles de formation par salari\u00e9 homme"
+          "http://www.xbrl.org/2003/role/label": "Nombre moyen d\u2019heures de formation par an et par salari\u00e9"
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "An me\u00e1nl\u00edon uaireanta oili\u00fana bliant\u00fala in aghaidh an fhosta\u00ed fireann"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "Numero medio annuo di ore di formazione per dipendente di sesso maschile"
+          "http://www.xbrl.org/2003/role/label": "Numero medio di ore di formazione annuali per dipendente"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "Vidutinis metinis mokym\u0173 valand\u0173 skai\u010dius vienam darbuotojui (vyrui)"
+          "http://www.xbrl.org/2003/role/label": "Vidutinis metinis mokym\u0173 valand\u0173 skai\u010dius vienam darbuotojui"
         },
         "nl": {
           "http://www.xbrl.org/2003/role/label": "Gemiddeld aantal jaarlijkse trainingsuren per mannelijke werknemer"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "\u015arednia liczba godzin szkole\u0144 w ci\u0105gu roku na pracownika p\u0142ci m\u0119skiej"
+          "http://www.xbrl.org/2003/role/label": "\u015arednia liczba godzin szkole\u0144 na pracownika"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "N\u00famero m\u00e9dio de horas de forma\u00e7\u00e3o anual por trabalhador do sexo masculino"
+          "http://www.xbrl.org/2003/role/label": "N\u00famero m\u00e9dio anual de horas de forma\u00e7\u00e3o por trabalhador"
         },
         "sl": {
-          "http://www.xbrl.org/2003/role/label": "Povpre\u010dno \u0161tevilo ur usposabljanja na leto na zaposlenega mo\u0161kega"
+          "http://www.xbrl.org/2003/role/label": "Povpre\u010dno letno \u0161tevilo ur usposabljanja na zaposlenega"
         }
       },
       "nillable": true,
@@ -18124,46 +18286,46 @@
       "nillable": true,
       "periodType": "duration"
     },
-    "vs:B3EstimatedAbsoluteGreenhouseGasEmissionsConsideringTheGHGProtocolVersion2004InTCO2eMember": {
+    "vs:B3EstimatedAbsoluteGreenhouseGasEmissionsConsideringTheGHGProtocolVersion2004InTCO2eqMember": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "B3 - Ansl\u00e5ede drivhusgasudledninger under hensyntagen til GHG-protokollen version 2004 (i tCO2e) [member]"
+          "http://www.xbrl.org/2003/role/label": "B3 - Ansl\u00e5ede drivhusgasudledninger under hensyntagen til GHG-protokollen version 2004 (i tCO2eq) [member]"
         },
         "de": {
-          "http://www.xbrl.org/2003/role/label": "B3 - Gesch\u00e4tzte Treibhausgasemissionen gem\u00e4\u00df des THG-Protokolls Version 2004 (in tCO2e) [member]"
+          "http://www.xbrl.org/2003/role/label": "B3 - Gesch\u00e4tzte Treibhausgasemissionen gem\u00e4\u00df des THG-Protokolls Version 2004 (in tCO2eq) [member]"
         },
         "en": {
-          "http://www.xbrl.org/2003/role/label": "B3 - Estimated Absolute Greenhouse Gas Emissions considering the GHG Protocol Version 2004 (in tCO2e) [member]"
+          "http://www.xbrl.org/2003/role/label": "B3 - Estimated Absolute Greenhouse Gas Emissions considering the GHG Protocol Version 2004 (in tCO2eq) [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "B3 \u2013 Emisiones brutas estimadas de gases de efecto invernadero considerando el Protocolo GEI versi\u00f3n 2004 (en tCO2e) [member]"
+          "http://www.xbrl.org/2003/role/label": "B3 \u2013 Emisiones absolutas estimadas de gases de efecto invernadero considerando el Protocolo GEI versi\u00f3n 2004 (en tCO2eq) [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "B3 - Estimations des \u00e9missions de gaz \u00e0 effet de serre en prenant en consid\u00e9ration la norme du protocole des GES relative aux entreprises (GHG Protocol) (version 2004) (en tCO\u2082e) [member]"
+          "http://www.xbrl.org/2003/role/label": "B3 - Estimation des \u00e9missions absolues de gaz \u00e0 effet de serre en tenant compte du contenu de la norme de comptabilisation et de d\u00e9claration du protocole des GES relative aux entreprises (version 2004) (en tCO2eq) [member]"
         },
         "ga": {
-          "http://www.xbrl.org/2003/role/label": "B3 - Asta\u00edochta\u00ed Measta G\u00e1s Ceaptha Teasa ag smaoineamh ar Phr\u00f3tacal GCT Leagan 2004 (i tCO2e) [member]"
+          "http://www.xbrl.org/2003/role/label": "B3 - Asta\u00edochta\u00ed Measta G\u00e1s Ceaptha Teasa ag smaoineamh ar Phr\u00f3tacal GCT Leagan 2004 (i tCO2eq) [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "B3 - Emissioni stimate di gas a effetto serra considerando il Greenhouse Gas Protocol versione 2004 (in tCO2e) [member]"
+          "http://www.xbrl.org/2003/role/label": "B3 - Emissioni assolute stimate di gas a effetto serra considerando il Greenhouse Gas Protocol versione 2004 (in tonnellate di CO2eq) [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "B3 \u2013 Apskai\u010diuotos \u0161iltnamio efekt\u0105 sukelian\u010di\u0173 duj\u0173 emisijos, atsi\u017evelgiant \u012f 2004 m. \u0160ESD protokolo versij\u0105 (tCO2e) [member]"
+          "http://www.xbrl.org/2003/role/label": "B3 \u2013 Apskai\u010diuotas absoliutus \u0161iltnamio efekt\u0105 sukelian\u010di\u0173 duj\u0173 kiekis, atsi\u017evelgiant \u012f 2004 m. \u0160ESD protokolo versij\u0105 (tCO2eq) [member]"
         },
         "nl": {
-          "http://www.xbrl.org/2003/role/label": "B3 - Geraamde broeikasgasemissies rekening houdend met het GHG Protocol versie 2004 (in tCO2e) [member]"
+          "http://www.xbrl.org/2003/role/label": "B3 - Geraamde broeikasgasemissies rekening houdend met het GHG Protocol versie 2004 (in tCO2eq) [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "B3 \u2013 Szacunkowa emisja gaz\u00f3w cieplarnianych z uwzgl\u0119dnieniem wymog\u00f3w GHG Protocol Corporate Standard w wersji z 2004 r. (w tCO2e) [member]"
+          "http://www.xbrl.org/2003/role/label": "B3 \u2013 Szacunkowa bezwzgl\u0119dna emisja gaz\u00f3w cieplarnianych z uwzgl\u0119dnieniem wymog\u00f3w GHG Protocol w wersji z 2004 r. (w tCO2eq) [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "B3 \u2013 Emiss\u00f5es estimadas de gases com efeito de estufa considerando o Protocolo GEE Vers\u00e3o 2004 (em teCO2) [member]"
+          "http://www.xbrl.org/2003/role/label": "B3 \u2013 Emiss\u00f5es brutas estimadas de gases com efeito de estufa, em valor absoluto, considerando o Protocolo GEE Vers\u00e3o 2004 (em tCO2eq) [member]"
         },
         "sl": {
-          "http://www.xbrl.org/2003/role/label": "B3 - Ocenjene emisije toplogrednih plinov ob upo\u0161tevanju protokola o TGP, razli\u010dica iz leta 2004 (v tCO2e) [member]"
+          "http://www.xbrl.org/2003/role/label": "B3 \u2013 Ocenjene absolutne emisije toplogrednih plinov ob upo\u0161tevanju razli\u010dice Protokola o toplogrednih plinih (GHG Protocol) iz leta 2004 (v tCO2eq) [member]"
         }
       },
       "periodType": "duration"
@@ -19700,46 +19862,46 @@
       },
       "periodType": "duration"
     },
-    "vs:C3GHGReductionTargetsInTC02eMember": {
+    "vs:C3GHGReductionTargetsInTCO2eqMember": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
       "dataType": "dtr-types:domainItemType",
       "labels": {
         "da": {
-          "http://www.xbrl.org/2003/role/label": "C3 \u2013 M\u00e5l for reduktion af drivhusgasudledninger (i tCO2e) [member]"
+          "http://www.xbrl.org/2003/role/label": "C3 \u2013 M\u00e5l for reduktion af drivhusgasudledninger (i tCO2eq) [member]"
         },
         "de": {
-          "http://www.xbrl.org/2003/role/label": "C3 \u2013 THG-Reduktionsziele (in tCO2e) [member]"
+          "http://www.xbrl.org/2003/role/label": "C3 \u2013 THG-Reduktionsziele (in tCO2eq) [member]"
         },
         "en": {
-          "http://www.xbrl.org/2003/role/label": "C3 - GHG reduction targets (in tC02e) [member]"
+          "http://www.xbrl.org/2003/role/label": "C3 - GHG reduction targets (in tCO2eq) [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "C3 - Metas de reducci\u00f3n de GEI (en tCO2e) [member]"
+          "http://www.xbrl.org/2003/role/label": "C3 - Metas de reducci\u00f3n de GEI (en tCO2eq) [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "Cibles de r\u00e9duction des \u00e9missions de GES (en tCO\u2082e) [member]"
+          "http://www.xbrl.org/2003/role/label": "Cibles de r\u00e9duction des \u00e9missions de GES (en tCO2eq) [member]"
         },
         "ga": {
-          "http://www.xbrl.org/2003/role/label": "C3 - Spriocanna laghdaithe g\u00e1s ceaptha teasa (i tC02e) [member]"
+          "http://www.xbrl.org/2003/role/label": "C3 - Spriocanna laghdaithe g\u00e1s ceaptha teasa (i tCO2eq) [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "C3 - Obiettivi di riduzione delle emissioni di gas a effetto serra (in tCO2e) [member]"
+          "http://www.xbrl.org/2003/role/label": "C3 - Obiettivi di riduzione delle emissioni di gas a effetto serra (in tCO2eq) [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "C3 \u2013 \u0160iltnamio efekt\u0105 sukelian\u010di\u0173 duj\u0173 ma\u017einimo tikslai (tCO2e) [member]"
+          "http://www.xbrl.org/2003/role/label": "C3 \u2013 \u0160iltnamio efekt\u0105 sukelian\u010di\u0173 duj\u0173 ma\u017einimo tikslai (tCO2eq) [member]"
         },
         "nl": {
-          "http://www.xbrl.org/2003/role/label": "C3 - Streefcijfers voor broeikasgasreductie (in tCO2e) [member]"
+          "http://www.xbrl.org/2003/role/label": "C3 - Streefcijfers voor broeikasgasreductie (in tCO2eq) [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "C3 \u2013 Cele redukcji emisji gaz\u00f3w cieplarnianych (w tCO2e) [member]"
+          "http://www.xbrl.org/2003/role/label": "C3 \u2013 Cele redukcji emisji gaz\u00f3w cieplarnianych (w tCO2eq) [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "C3 - Metas de redu\u00e7\u00e3o de GEE (em tCO2e) [member]"
+          "http://www.xbrl.org/2003/role/label": "C3 - Metas de redu\u00e7\u00e3o de GEE (em tCO2eq) [member]"
         },
         "sl": {
-          "http://www.xbrl.org/2003/role/label": "C3 - Cilji zmanj\u0161anja emisij toplogrednih plinov (v tCO2e) [member]"
+          "http://www.xbrl.org/2003/role/label": "C3 - Cilji zmanj\u0161anja emisij toplogrednih plinov (v tCO2eq) [member]"
         }
       },
       "periodType": "duration"
@@ -19983,31 +20145,31 @@
           "http://www.xbrl.org/2003/role/label": "C7 - Human rights incidents [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "C7 - Incidentes graves negativos de derechos humanos [member]"
+          "http://www.xbrl.org/2003/role/label": "C7 - Incidentes relacionados con los derechos humanos [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "C7 \u2013 Incidents graves en mati\u00e8re de droits de l\u2019homme [member]"
+          "http://www.xbrl.org/2003/role/label": "C7 - Incidents en mati\u00e8re de droits de l\u2019homme [member]"
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "C7 \u2013 Teagmhais dhi\u00faltacha thromch\u00faiseacha a bhaineann le cearta an duine [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "C7 - Incidenti gravi in materia di diritti umani [member]"
+          "http://www.xbrl.org/2003/role/label": "C7 - Incidenti in materia di diritti umani [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "C7 - Dideli neigiami incidentai \u017emogaus teisi\u0173 srityje [member]"
+          "http://www.xbrl.org/2003/role/label": "C7 \u2013 Incidentai \u017emogaus teisi\u0173 srityje [member]"
         },
         "nl": {
           "http://www.xbrl.org/2003/role/label": "C7 - Ernstige negatieve incidenten met betrekking tot mensenrechten [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "C7 \u2013 Powa\u017cne incydenty dotycz\u0105ce praw cz\u0142owieka [member]"
+          "http://www.xbrl.org/2003/role/label": "C7 \u2013 Incydenty dotycz\u0105ce praw cz\u0142owieka [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "C7 - Incidentes negativos graves em mat\u00e9ria de direitos humanos [member]"
+          "http://www.xbrl.org/2003/role/label": "C7 - Incidentes em mat\u00e9ria de direitos humanos [member]"
         },
         "sl": {
-          "http://www.xbrl.org/2003/role/label": "C7 - Resni negativni incidenti na podro\u010dju \u010dlovekovih pravic [member]"
+          "http://www.xbrl.org/2003/role/label": "C7 \u2013 Incidenti v zvezi s \u010dlovekovimi pravicami [member]"
         }
       },
       "nillable": true,
@@ -20028,10 +20190,10 @@
           "http://www.xbrl.org/2003/role/label": "C8 - Revenues from certain activities [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "C8 \u2013 Ingresos de determinadas actividades [member]"
+          "http://www.xbrl.org/2003/role/label": "C8 \u2013 Ingresos procedentes de determinadas actividades [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "C8 \u2013 Chiffre d\u2019affaires de certains secteurs [member]"
+          "http://www.xbrl.org/2003/role/label": "C8 - Chiffre d\u2019affaires provenant de certaines activit\u00e9s [member]"
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "C8 \u2013 Ioncam \u00f3 ghn\u00edomha\u00edochta\u00ed \u00e1irithe [member]"
@@ -20040,7 +20202,7 @@
           "http://www.xbrl.org/2003/role/label": "C8 \u2013 Ricavi da determinate attivit\u00e0 [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "C8 \u2013 Pajamos i\u0161 tam tikr\u0173 veikl\u0173 [member]"
+          "http://www.xbrl.org/2003/role/label": "C8 \u2013 Pajamos i\u0161 tam tikros veiklos [member]"
         },
         "nl": {
           "http://www.xbrl.org/2003/role/label": "C8 \u2014 Ontvangsten uit bepaalde activiteiten [member]"
@@ -20052,7 +20214,7 @@
           "http://www.xbrl.org/2003/role/label": "C8 \u2013 R\u00e9dito de determinadas atividades [member]"
         },
         "sl": {
-          "http://www.xbrl.org/2003/role/label": "C8 - Prihodki od dolo\u010denih dejavnosti [member]"
+          "http://www.xbrl.org/2003/role/label": "C8 \u2013 Prihodki iz dolo\u010denih dejavnosti [member]"
         }
       },
       "nillable": true,
@@ -20343,31 +20505,31 @@
           "http://www.xbrl.org/2003/role/label": "Circular economy and Resource Use [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "Econom\u00eda circular [member]"
+          "http://www.xbrl.org/2003/role/label": "Econom\u00eda circular y uso de los recursos [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "\u00c9conomie circulaire [member]"
+          "http://www.xbrl.org/2003/role/label": "\u00c9conomie circulaire et utilisation des ressources [member]"
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Geilleagar ciorclach [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "Economia circolare [member]"
+          "http://www.xbrl.org/2003/role/label": "Economia circolare e uso delle risorse [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "\u017diedin\u0117 ekonomika [member]"
+          "http://www.xbrl.org/2003/role/label": "\u017diedin\u0117 ekonomika ir i\u0161tekli\u0173 naudojimas [member]"
         },
         "nl": {
           "http://www.xbrl.org/2003/role/label": "Circulaire economie [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "Gospodarka o obiegu zamkni\u0119tym [member]"
+          "http://www.xbrl.org/2003/role/label": "Gospodarka o obiegu zamkni\u0119tym i wykorzystanie zasob\u00f3w [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "Economia circular [member]"
+          "http://www.xbrl.org/2003/role/label": "Economia circular e Utiliza\u00e7\u00e3o dos recursos [member]"
         },
         "sl": {
-          "http://www.xbrl.org/2003/role/label": "Kro\u017eno gospodarstvo [member]"
+          "http://www.xbrl.org/2003/role/label": "Kro\u017eno gospodarstvo in raba virov [member]"
         }
       },
       "nillable": true,
@@ -23050,31 +23212,31 @@
           "http://www.xbrl.org/2003/role/label": "Estimated absolute greenhouse gas emissions [abstract]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "Emisiones brutas estimadas de gases de efecto invernadero [abstract]"
+          "http://www.xbrl.org/2003/role/label": "Emisiones absolutas estimadas de gases de efecto invernadero [abstract]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "Estimation des \u00e9missions de gaz \u00e0 effet de serre (GES) [abstract]"
+          "http://www.xbrl.org/2003/role/label": "Estimation des \u00e9missions absolues de gaz \u00e0 effet de serre [abstract]"
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Asta\u00edochta\u00ed g\u00e1s ceaptha teasa measta [abstract]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "Emissioni stimate di gas a effetto serra [abstract]"
+          "http://www.xbrl.org/2003/role/label": "Emissioni assolute stimate di gas a effetto serra [abstract]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "Apskai\u010diuotos \u0161iltnamio efekt\u0105 sukelian\u010di\u0173 duj\u0173 kiekis [abstract]"
+          "http://www.xbrl.org/2003/role/label": "Apskai\u010diuotas absoliutus i\u0161metam\u0173 \u0161iltnamio efekt\u0105 sukelian\u010di\u0173 duj\u0173 kiekis [abstract]"
         },
         "nl": {
           "http://www.xbrl.org/2003/role/label": "Geschatte broeikasgasemissies [abstract]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "Szacunkowa emisja gaz\u00f3w cieplarnianych [abstract]"
+          "http://www.xbrl.org/2003/role/label": "Szacunkowa bezwzgl\u0119dna emisja gaz\u00f3w cieplarnianych [abstract]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "Emiss\u00f5es brutas estimadas de gases com efeito de estufa [abstract]"
+          "http://www.xbrl.org/2003/role/label": "Emiss\u00f5es brutas estimadas de gases com efeito de estufa, em valor absoluto [abstract]"
         },
         "sl": {
-          "http://www.xbrl.org/2003/role/label": "Ocenjene emisije toplogrednih plinov [abstract]"
+          "http://www.xbrl.org/2003/role/label": "Ocenjene absolutne emisije toplogrednih plinov [abstract]"
         }
       },
       "nillable": true,
@@ -23095,31 +23257,31 @@
           "http://www.xbrl.org/2003/role/label": "Estimated absolute greenhouse gas emissions [line items]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "Emisiones estimadas de gases de efecto invernadero [line items]"
+          "http://www.xbrl.org/2003/role/label": "Emisiones absolutas estimadas de gases de efecto invernadero [line items]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "Estimation des \u00e9missions de gaz \u00e0 effet de serre [line items]"
+          "http://www.xbrl.org/2003/role/label": "Estimation des \u00e9missions absolues de gaz \u00e0 effet de serre [line items]"
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Asta\u00edochta\u00ed g\u00e1s ceaptha teasa measta [line items]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "Emissioni stimate di gas a effetto serra [line items]"
+          "http://www.xbrl.org/2003/role/label": "Emissioni assolute stimate di gas a effetto serra [line items]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "Apskai\u010diuotas \u0161iltnamio efekt\u0105 sukelian\u010di\u0173 duj\u0173 (\u0160ESD) kiekis [line items]"
+          "http://www.xbrl.org/2003/role/label": "Apskai\u010diuotas absoliutus i\u0161metam\u0173 \u0161iltnamio efekt\u0105 sukelian\u010di\u0173 duj\u0173 kiekis [line items]"
         },
         "nl": {
           "http://www.xbrl.org/2003/role/label": "Geschatte broeikasgasemissies [line items]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "Szacunkowa emisja gaz\u00f3w cieplarnianych [line items]"
+          "http://www.xbrl.org/2003/role/label": "Szacunkowa bezwgl\u0119dna emisja gaz\u00f3w cieplarnianych [line items]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "Emiss\u00f5es estimadas de gases com efeito de estufa [line items]"
+          "http://www.xbrl.org/2003/role/label": "Emiss\u00f5es brutas estimadas de gases com efeito de estufa, em valor absoluto [line items]"
         },
         "sl": {
-          "http://www.xbrl.org/2003/role/label": "Ocenjene emisije toplogrednih plinov [line items]"
+          "http://www.xbrl.org/2003/role/label": "Ocenjene absolutne emisije toplogrednih plinov [line items]"
         }
       },
       "nillable": true,
@@ -23141,31 +23303,31 @@
           "http://www.xbrl.org/2003/role/label": "Estimated absolute greenhouse gas emissions [table]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "Emisiones estimadas de gases de efecto invernadero [table]"
+          "http://www.xbrl.org/2003/role/label": "Emisiones absolutas estimadas de gases de efecto invernadero [table]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "Estimation des \u00e9missions de gaz \u00e0 effet de serre (GES) [table]"
+          "http://www.xbrl.org/2003/role/label": "Estimation des \u00e9missions absolues de gaz \u00e0 effet de serre [table]"
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Asta\u00edochta\u00ed g\u00e1s ceaptha teasa measta [table]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "Emissioni stimate di gas a effetto serra [table]"
+          "http://www.xbrl.org/2003/role/label": "Emissioni assolute stimate di gas a effetto serra [table]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "Apskai\u010diuotos \u0161iltnamio efekt\u0105 sukelian\u010di\u0173 duj\u0173 kiekis [table]"
+          "http://www.xbrl.org/2003/role/label": "Apskai\u010diuotas absoliutus i\u0161metam\u0173 \u0161iltnamio efekt\u0105 sukelian\u010di\u0173 duj\u0173 kiekis [table]"
         },
         "nl": {
           "http://www.xbrl.org/2003/role/label": "Geschatte broeikasgasemissies [table]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "Szacunkowa emisja gaz\u00f3w cieplarnianych [table]"
+          "http://www.xbrl.org/2003/role/label": "Szacunkowa bezwzgl\u0119dna emisja gaz\u00f3w cieplarnianych [table]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "Emiss\u00f5es brutas estimadas de gases com efeito de estufa [table]"
+          "http://www.xbrl.org/2003/role/label": "Emiss\u00f5es brutas estimadas de gases com efeito de estufa, em valor absoluto [table]"
         },
         "sl": {
-          "http://www.xbrl.org/2003/role/label": "Ocenjene emisije toplogrednih plinov [table]"
+          "http://www.xbrl.org/2003/role/label": "Ocenjene absolutne emisije toplogrednih plinov [table]"
         }
       },
       "nillable": true,
@@ -23207,6 +23369,27 @@
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Explicit statement of compliance"
+        },
+        "es": {
+          "http://www.xbrl.org/2003/role/label": "Declaraci\u00f3n expl\u00edcita de cumplimiento"
+        },
+        "fr": {
+          "http://www.xbrl.org/2003/role/label": "D\u00e9claration explicite de conformit\u00e9"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Dichiarazione esplicita di conformit\u00e0"
+        },
+        "lt": {
+          "http://www.xbrl.org/2003/role/label": "Ai\u0161kus atitikties parei\u0161kimas"
+        },
+        "pl": {
+          "http://www.xbrl.org/2003/role/label": "Wyra\u017ane o\u015bwiadczenie o zgodno\u015bci"
+        },
+        "pt": {
+          "http://www.xbrl.org/2003/role/label": "Declara\u00e7\u00e3o expl\u00edcita de conformidade"
+        },
+        "sl": {
+          "http://www.xbrl.org/2003/role/label": "Izrecna izjava o skladnosti"
         }
       },
       "nillable": true,
@@ -24056,31 +24239,31 @@
           "http://www.xbrl.org/2003/role/label": "Human rights incidents [abstract]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "Incidentes graves negativos de derechos humanos [abstract]"
+          "http://www.xbrl.org/2003/role/label": "Incidentes relacionados con los derechos humanos [abstract]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "Incidents graves en mati\u00e8re de droits de l\u2019homme [abstract]"
+          "http://www.xbrl.org/2003/role/label": "Incidents en mati\u00e8re de droits de l\u2019homme [abstract]"
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Teagmhais dhi\u00faltacha thromch\u00faiseacha a bhaineann le cearta an duine [abstract]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "Incidenti gravi in materia di diritti umani [abstract]"
+          "http://www.xbrl.org/2003/role/label": "Incidenti in materia di diritti umani [abstract]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "Dideli neigiami incidentai \u017emogaus teisi\u0173 srityje [abstract]"
+          "http://www.xbrl.org/2003/role/label": "Incidentai \u017emogaus teisi\u0173 srityje [abstract]"
         },
         "nl": {
           "http://www.xbrl.org/2003/role/label": "Ernstige negatieve mensenrechtenschendingen [abstract]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "Powa\u017cne incydenty dotycz\u0105ce praw cz\u0142owieka [abstract]"
+          "http://www.xbrl.org/2003/role/label": "Incydenty dotycz\u0105ce praw cz\u0142owieka [abstract]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "Incidentes negativos graves em mat\u00e9ria de direitos humanos [abstract]"
+          "http://www.xbrl.org/2003/role/label": "Incidentes em mat\u00e9ria de direitos humanos [abstract]"
         },
         "sl": {
-          "http://www.xbrl.org/2003/role/label": "Resni negativni incidenti na podro\u010dju \u010dlovekovih pravic [abstract]"
+          "http://www.xbrl.org/2003/role/label": "Incidenti v zvezi s \u010dlovekovimi pravicami [abstract]"
         }
       },
       "nillable": true,
@@ -24374,6 +24557,27 @@
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Introduction and/or entity specific information"
+        },
+        "es": {
+          "http://www.xbrl.org/2003/role/label": "Introducci\u00f3n y/u otra informaci\u00f3n espec\u00edfica de la entidad"
+        },
+        "fr": {
+          "http://www.xbrl.org/2003/role/label": "Introduction et informations g\u00e9n\u00e9rales et/ou sp\u00e9cifiques \u00e0 l\u2019entit\u00e9"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Introduzione e informazione generale e/o specifica per soggetto"
+        },
+        "lt": {
+          "http://www.xbrl.org/2003/role/label": "\u012evadas ir (arba) \u012fmonei b\u016bdinga informacija"
+        },
+        "pl": {
+          "http://www.xbrl.org/2003/role/label": "Wprowadzenie i informacje og\u00f3lne i/lub specyficzne dla jednostki"
+        },
+        "pt": {
+          "http://www.xbrl.org/2003/role/label": "Introdu\u00e7\u00e3o e informa\u00e7\u00e3o geral e/ou espec\u00edfica da entidade"
+        },
+        "sl": {
+          "http://www.xbrl.org/2003/role/label": "Uvod in/ali informacije, specifi\u010dne za podjetje"
         }
       },
       "nillable": true,
@@ -24549,7 +24753,7 @@
           "vs:B3EnergyAndGreenhouseGasEmissionsMember",
           "vs:B3TotalEnergyConsumptionInMWhMember",
           "vs:B3BreakdownOfEnergyConsumptionInMWhMember",
-          "vs:B3EstimatedAbsoluteGreenhouseGasEmissionsConsideringTheGHGProtocolVersion2004InTCO2eMember",
+          "vs:B3EstimatedAbsoluteGreenhouseGasEmissionsConsideringTheGHGProtocolVersion2004InTCO2eqMember",
           "vs:B4PollutionOfAirWaterAndSoilMember",
           "vs:B5BiodiversityMember",
           "vs:B5SitesInBiodiversitySensitiveAreasMember",
@@ -24572,7 +24776,7 @@
           "vs:C1StrategyBusinessModelAndSustainabilityRelatedInitiativesMember",
           "vs:C2DescriptionOfPracticesPoliciesAndFutureInitiativesForTransitioningTowardsAMoreSustainableEconomyMember",
           "vs:C3GhgReductionTargetsAndClimateTransitionMember",
-          "vs:C3GHGReductionTargetsInTC02eMember",
+          "vs:C3GHGReductionTargetsInTCO2eqMember",
           "vs:C3DisclosureOfListOfMainActionsTheEntitySeeksInOrderToAchieveItsTargetsMember",
           "vs:C3TransitionPlanForUndertakingsOperatingInHighClimateImpactSectorsMember",
           "vs:C4ClimateRisksMember",
@@ -24648,31 +24852,31 @@
           "http://www.xbrl.org/2003/role/label": "List of omitted disclosures"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "Lista de divulgaciones omitidas consideradas informaci\u00f3n clasificada o sensible"
+          "http://www.xbrl.org/2003/role/label": "Lista de divulgaciones omitidas"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "Liste des informations omises jug\u00e9es comme informations classifi\u00e9es ou sensibles"
+          "http://www.xbrl.org/2003/role/label": "Liste des informations omises"
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Liosta de nochta\u00ed f\u00e1gtha ar l\u00e1r a mheastar a bheith faoi r\u00fan n\u00f3 ina bhfaisn\u00e9is \u00edogair"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "Elenco delle informative omesse ritenute informazioni classificate o sensibili"
+          "http://www.xbrl.org/2003/role/label": "Elenco delle informative omesse"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "Nepateikt\u0173 atskleidim\u0173, laikom\u0173 konfidencialia ar jautria informacija, s\u0105ra\u0161as"
+          "http://www.xbrl.org/2003/role/label": "Nepateikt\u0173 atskleidim\u0173 s\u0105ra\u0161as"
         },
         "nl": {
           "http://www.xbrl.org/2003/role/label": "Lijst van weggelaten  rapportages die worden beschouwd als gerubriceerde of gevoelige informatie"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "Lista ujawnie\u0144 pomini\u0119tych uznanych za informacje niejawne lub informacje szczeg\u00f3lnie chronione"
+          "http://www.xbrl.org/2003/role/label": "Lista ujawnie\u0144 pomini\u0119tych"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "Lista de divulga\u00e7\u00f5es omitidas consideradas informa\u00e7\u00f5es classificadas ou sens\u00edveis"
+          "http://www.xbrl.org/2003/role/label": "Lista de divulga\u00e7\u00f5es omitidas"
         },
         "sl": {
-          "http://www.xbrl.org/2003/role/label": "Seznam izpu\u0161\u010denih razkritij, ki veljajo za tajne ali ob\u010dutljive podatke"
+          "http://www.xbrl.org/2003/role/label": "Seznam izpu\u0161\u010denih razkritij"
         }
       },
       "nillable": true,
@@ -24688,7 +24892,7 @@
           "vs:B3EnergyAndGreenhouseGasEmissionsMember",
           "vs:B3TotalEnergyConsumptionInMWhMember",
           "vs:B3BreakdownOfEnergyConsumptionInMWhMember",
-          "vs:B3EstimatedAbsoluteGreenhouseGasEmissionsConsideringTheGHGProtocolVersion2004InTCO2eMember",
+          "vs:B3EstimatedAbsoluteGreenhouseGasEmissionsConsideringTheGHGProtocolVersion2004InTCO2eqMember",
           "vs:B4PollutionOfAirWaterAndSoilMember",
           "vs:B5BiodiversityMember",
           "vs:B5SitesInBiodiversitySensitiveAreasMember",
@@ -24711,7 +24915,7 @@
           "vs:C1StrategyBusinessModelAndSustainabilityRelatedInitiativesMember",
           "vs:C2DescriptionOfPracticesPoliciesAndFutureInitiativesForTransitioningTowardsAMoreSustainableEconomyMember",
           "vs:C3GhgReductionTargetsAndClimateTransitionMember",
-          "vs:C3GHGReductionTargetsInTC02eMember",
+          "vs:C3GHGReductionTargetsInTCO2eqMember",
           "vs:C3DisclosureOfListOfMainActionsTheEntitySeeksInOrderToAchieveItsTargetsMember",
           "vs:C3TransitionPlanForUndertakingsOperatingInHighClimateImpactSectorsMember",
           "vs:C4ClimateRisksMember",
@@ -25104,31 +25308,31 @@
           "http://www.xbrl.org/2003/role/label": "Most senior level in the undertaking accountable for implementation of practices, policies and future initiatives"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "El nivel m\u00e1s alto dentro de sus empleados que es responsable de las pol\u00edticas"
+          "http://www.xbrl.org/2003/role/label": "El nivel  m\u00e1s alto de la empresa, responsable de la aplicaci\u00f3n de las pr\u00e1cticas, las pol\u00edticas y las iniciativas futuras"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "Niveau hi\u00e9rarchique le plus \u00e9lev\u00e9 parmi les salari\u00e9s qui est responsable des politiques"
+          "http://www.xbrl.org/2003/role/label": "Niveau hi\u00e9rarchique le plus \u00e9lev\u00e9 au sein de l'entreprise qui est responsable de la mise en \u0153uvre des pratiques, politiques et initiatives futures"
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "An leibh\u00e9al is sinseara\u00ed i measc a chuid fostaithe at\u00e1 freagrach as na beartais a chur chun feidhme"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "Il livello gerarchico pi\u00f9 elevato tra i suoi dipendenti cui spetta la responsabilit\u00e0 delle politiche"
+          "http://www.xbrl.org/2003/role/label": "Il livello gerarchico pi\u00f9 elevato nell'impresa cui spetta la responsabilit\u00e0 dell'attuazione elle prassi, politiche e iniziative future"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "Auk\u0161\u010diausias darbuotoj\u0173 hierarchijos lygmuo, atsakingas u\u017e politik\u0173 \u012fgyvendinim\u0105"
+          "http://www.xbrl.org/2003/role/label": "Auk\u0161\u010diausias \u012fmon\u0117s hierarchijos lygmuo, atsakingas u\u017e praktik\u0173, politik\u0173 ir b\u016bsim\u0173 iniciatyv\u0173 \u012fgyvendinim\u0105"
         },
         "nl": {
           "http://www.xbrl.org/2003/role/label": "Het meest senior niveau binnen haar werknemers dat verantwoordelijk is voor het implementeren van het beleid"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "Najwy\u017cszy szczebel w\u015br\u00f3d pracownik\u00f3w, kt\u00f3ry jest odpowiedzialny za polityki"
+          "http://www.xbrl.org/2003/role/label": "Najwy\u017cszy szczebel w jednostce, kt\u00f3ry jest odpowiedzialny za wdro\u017cenie praktyk, polityk i przysz\u0142ych inicjatyw"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "N\u00edvel hier\u00e1rquico mais elevado entre os trabalhadores respons\u00e1veis pelas pol\u00edticas"
+          "http://www.xbrl.org/2003/role/label": "N\u00edvel hier\u00e1rquico mais elevado na empresa respons\u00e1vel pela implementa\u00e7\u00e3o das pr\u00e1ticas, pol\u00edticas e iniciativas futuras"
         },
         "sl": {
-          "http://www.xbrl.org/2003/role/label": "Najvi\u0161ja raven med zaposlenimi, ki je odgovorna za politike"
+          "http://www.xbrl.org/2003/role/label": "Najvi\u0161ja raven v podjetju, odgovorna za izvajanje praks, politik in prihodnjih pobud"
         }
       },
       "nillable": true,
@@ -26243,31 +26447,31 @@
           "http://www.xbrl.org/2003/role/label": "Name of biodiversity sensitive area"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "\u00c1rea del emplazamiento en zona sensible en cuanto a la biodiversidad"
+          "http://www.xbrl.org/2003/role/label": "Nombre de la zona sensible en cuanto a biodiversidad (ZSB)"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "Surface du site situ\u00e9 dans une zone sensible pour la biodiversit\u00e9"
+          "http://www.xbrl.org/2003/role/label": "Nom de la zone sensible sur le plan de la biodiversit\u00e9"
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Achar an l\u00e1ithre\u00e1in at\u00e1 suite i limist\u00e9ir at\u00e1 \u00edogair \u00f3 thaobh na bith\u00e9ags\u00falachta de"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "Superficie del sito all'interno di un'area sensibile sotto il profilo della biodiversit\u00e0"
+          "http://www.xbrl.org/2003/role/label": "Nome dell'area sensibile sotto il profilo della biodiversit\u00e0"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "Objekto plotas biologinei \u012fvairovei jautrioje teritorijoje"
+          "http://www.xbrl.org/2003/role/label": "Pa\u017eeid\u017eiamos biologin\u0117s \u012fvairov\u0117s teritorijos pavadinimas"
         },
         "nl": {
           "http://www.xbrl.org/2003/role/label": "Oppervlakte van de  vestiging in biodiversiteitsgevoelig gebied"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "Obszar lokalizacji na obszarze wra\u017cliwym pod wzgl\u0119dem bior\u00f3\u017cnorodno\u015bci"
+          "http://www.xbrl.org/2003/role/label": "Nazwa obszaru wra\u017cliwego pod wzgl\u0119dem bior\u00f3\u017cnorodno\u015bci"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "\u00c1rea do s\u00edtio localizado em zona sens\u00edvel \u00e0 biodiversidade"
+          "http://www.xbrl.org/2003/role/label": "Nome da \u00e1rea sens\u00edvel \u00e0 biodiversidade"
         },
         "sl": {
-          "http://www.xbrl.org/2003/role/label": "Povr\u0161ina lokacije na obmo\u010dju z ob\u010dutljivo biotsko raznovrstnostjo"
+          "http://www.xbrl.org/2003/role/label": "Ime ob\u010dutljivega obmo\u010dja biotske raznovrstnosti"
         }
       },
       "nillable": true,
@@ -26325,6 +26529,27 @@
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Name of other pollutant [typed axis]"
+        },
+        "es": {
+          "http://www.xbrl.org/2003/role/label": "Nombre del/de los otros contaminante(s) [typed axis]"
+        },
+        "fr": {
+          "http://www.xbrl.org/2003/role/label": "Nom du ou des autres polluants [typed axis]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Nome dell'altro inquinante (inquinanti) [typed axis]"
+        },
+        "lt": {
+          "http://www.xbrl.org/2003/role/label": "Kito (-\u0173) ter\u0161alo (-\u0173) pavadinimas (-ai) [typed axis]"
+        },
+        "pl": {
+          "http://www.xbrl.org/2003/role/label": "Nazwa innych zanieczyszcze\u0144 [typed axis]"
+        },
+        "pt": {
+          "http://www.xbrl.org/2003/role/label": "Nome de outro(s) poluente(s) [typed axis]"
+        },
+        "sl": {
+          "http://www.xbrl.org/2003/role/label": "Ime drugega onesna\u017eevala oziroma drugih onesna\u017eeval [typed axis]"
         }
       },
       "nillable": true,
@@ -27743,31 +27968,31 @@
           "http://www.xbrl.org/2003/role/label": "Percentage of waste diverted to preparation for reuse (mass)"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "Residuos totales reciclados, reutilizados y dirigidos a eliminaci\u00f3n (volumen)"
+          "http://www.xbrl.org/2003/role/label": "Porcentaje de residuos desviados a la preparaci\u00f3n para la reutilizaci\u00f3n (masa)"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "Total des d\u00e9chets recycl\u00e9s, r\u00e9utilis\u00e9s et destin\u00e9s \u00e0 \u00eatre \u00e9limin\u00e9s (en volume)"
+          "http://www.xbrl.org/2003/role/label": "Pourcentage des d\u00e9chets redirig\u00e9s vers la pr\u00e9paration en vue du r\u00e9emploi (masse)"
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Ioml\u00e1n na dramha\u00edola at\u00e1 athch\u00fars\u00e1ilte, ath\u00fas\u00e1idte agus treoraithe chun di\u00fascartha (toirt)"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "Totale rifiuti riciclati, riutilizzati e destinati allo smaltimento (volume)"
+          "http://www.xbrl.org/2003/role/label": "Percentuale di rifiuti destinati alla preparazione per il riutilizzo (massa)"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "Bendras atliek\u0173 kiekis, kuris buvo perdirbtas, pakartotinai panaudotas ir nukreiptas \u0161alinimui (t\u016bris)"
+          "http://www.xbrl.org/2003/role/label": "Atliek\u0173, nukreipt\u0173 parengti pakartotinai naudoti, procentin\u0117 dalis (pagal mas\u0119)"
         },
         "nl": {
           "http://www.xbrl.org/2003/role/label": "Totale hoeveelheid afval die wordt gerecycled, hergebruikt en bestemd is voor verwijdering (volume)"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "Ca\u0142kowita ilo\u015b\u0107 odpad\u00f3w poddanych recyklingowi, ponownemu u\u017cyciu oraz unieszkodliwieniu (obj\u0119to\u015b\u0107)"
+          "http://www.xbrl.org/2003/role/label": "Procent odpad\u00f3w kierowanych do przygotowania do ponownego u\u017cycia (masa)"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "Res\u00edduos totais reciclados, reutilizados e encaminhados para elimina\u00e7\u00e3o (volume)"
+          "http://www.xbrl.org/2003/role/label": "Percentagem de res\u00edduos desviados para prepara\u00e7\u00e3o para reutiliza\u00e7\u00e3o (massa)"
         },
         "sl": {
-          "http://www.xbrl.org/2003/role/label": "Izra\u010dun: odpadki, preusmerjeni v recikliranje ali ponovno uporabo + odpadki, preusmerjeni v odstranjevanje (prostornina)"
+          "http://www.xbrl.org/2003/role/label": "Dele\u017e odpadkov, preusmerjenih v pripravo za ponovno uporabo (masa)"
         }
       },
       "nillable": true,
@@ -27788,31 +28013,31 @@
           "http://www.xbrl.org/2003/role/label": "Percentage of waste diverted to preparation for reuse (volume)"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "Residuos totales reciclados, reutilizados y dirigidos a eliminaci\u00f3n (volumen)"
+          "http://www.xbrl.org/2003/role/label": "Porcentaje de residuos desviados a la preparaci\u00f3n para la reutilizaci\u00f3n (volumen)"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "Total des d\u00e9chets recycl\u00e9s, r\u00e9utilis\u00e9s et destin\u00e9s \u00e0 \u00eatre \u00e9limin\u00e9s (en volume)"
+          "http://www.xbrl.org/2003/role/label": "Pourcentage des d\u00e9chets redirig\u00e9s vers la pr\u00e9paration en vue du r\u00e9emploi (volume)"
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Ioml\u00e1n na dramha\u00edola at\u00e1 athch\u00fars\u00e1ilte, ath\u00fas\u00e1idte agus treoraithe chun di\u00fascartha (toirt)"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "Totale rifiuti riciclati, riutilizzati e destinati allo smaltimento (volume)"
+          "http://www.xbrl.org/2003/role/label": "Percentuale di rifiuti destinati alla preparazione per il riutilizzo (volume)"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "Bendras atliek\u0173 kiekis, kuris buvo perdirbtas, pakartotinai panaudotas ir nukreiptas \u0161alinimui (t\u016bris)"
+          "http://www.xbrl.org/2003/role/label": "Atliek\u0173, nukreipt\u0173 parengti pakartotinai naudoti, procentin\u0117 dalis (pagal t\u016br\u012f)"
         },
         "nl": {
           "http://www.xbrl.org/2003/role/label": "Totale hoeveelheid afval die wordt gerecycled, hergebruikt en bestemd is voor verwijdering (volume)"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "Ca\u0142kowita ilo\u015b\u0107 odpad\u00f3w poddanych recyklingowi, ponownemu u\u017cyciu oraz unieszkodliwieniu (obj\u0119to\u015b\u0107)"
+          "http://www.xbrl.org/2003/role/label": "Procent odpad\u00f3w kierowanych do przygotowania do ponownego u\u017cycia (obj\u0119to\u015b\u0107)"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "Res\u00edduos totais reciclados, reutilizados e encaminhados para elimina\u00e7\u00e3o (volume)"
+          "http://www.xbrl.org/2003/role/label": "Percentagem de res\u00edduos desviados para prepara\u00e7\u00e3o para reutiliza\u00e7\u00e3o (volume)"
         },
         "sl": {
-          "http://www.xbrl.org/2003/role/label": "Izra\u010dun: odpadki, preusmerjeni v recikliranje ali ponovno uporabo + odpadki, preusmerjeni v odstranjevanje (prostornina)"
+          "http://www.xbrl.org/2003/role/label": "Dele\u017e odpadkov, preusmerjenih v pripravo za ponovno uporabo (prostornina)"
         }
       },
       "nillable": true,
@@ -27833,31 +28058,31 @@
           "http://www.xbrl.org/2003/role/label": "Percentage of waste diverted to recycling (mass)"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "Residuos totales reciclados, reutilizados y dirigidos a la eliminaci\u00f3n (masa)"
+          "http://www.xbrl.org/2003/role/label": "Porcentaje de residuos desviados al reciclado (masa)"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "Total des d\u00e9chets recycl\u00e9s, r\u00e9utilis\u00e9s et destin\u00e9s \u00e0 \u00eatre \u00e9limin\u00e9s (en masse)"
+          "http://www.xbrl.org/2003/role/label": "Pourcentage des d\u00e9chets redirig\u00e9s vers le recyclage (masse)"
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Ioml\u00e1n na dramha\u00edola at\u00e1 athch\u00fars\u00e1ilte, ath\u00fas\u00e1idte agus treoraithe chun di\u00fascartha (mais)"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "Totale rifiuti riciclati, riutilizzati e destinati allo smaltimento (massa)"
+          "http://www.xbrl.org/2003/role/label": "Percentuale di rifiuti destinati al riciclo (massa)"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "Bendras atliek\u0173 kiekis, kuris buvo perdirbtas, pakartotinai panaudotas ir nukreiptas \u0161alinimui (mas\u0117)"
+          "http://www.xbrl.org/2003/role/label": "Atliek\u0173, nukreipt\u0173 perdirbti, procentin\u0117 dalis (pagal mas\u0119)"
         },
         "nl": {
           "http://www.xbrl.org/2003/role/label": "Totale hoeveelheid afval gerecycled, hergebruikt en bestemd voor verwijdering (massa)"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "Ca\u0142kowita ilo\u015b\u0107 odpad\u00f3w poddanych recyklingowi, ponownemu u\u017cyciu oraz skierowanych do unieszkodliwienia (masa)"
+          "http://www.xbrl.org/2003/role/label": "Procent odpad\u00f3w kierowanych do recyklingu (masa)"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "Total de res\u00edduos reciclados, reutilizados e destinados \u00e0 elimina\u00e7\u00e3o (massa)"
+          "http://www.xbrl.org/2003/role/label": "Percentagem de res\u00edduos desviados para reciclagem (massa)"
         },
         "sl": {
-          "http://www.xbrl.org/2003/role/label": "Izra\u010dun: odpadki, preusmerjeni v recikliranje ali ponovno uporabo + odpadki, preusmerjeni v odstranjevanje (masa)"
+          "http://www.xbrl.org/2003/role/label": "Dele\u017e odpadkov, preusmerjenih v recikliranje (masa)"
         }
       },
       "nillable": true,
@@ -27878,31 +28103,31 @@
           "http://www.xbrl.org/2003/role/label": "Percentage of waste diverted to recycling (volume)"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "Residuos totales reciclados, reutilizados y dirigidos a la eliminaci\u00f3n (masa)"
+          "http://www.xbrl.org/2003/role/label": "Porcentaje de residuos desviados al reciclaje (volumen)"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "Total des d\u00e9chets recycl\u00e9s, r\u00e9utilis\u00e9s et destin\u00e9s \u00e0 \u00eatre \u00e9limin\u00e9s (en masse)"
+          "http://www.xbrl.org/2003/role/label": "Pourcentage des d\u00e9chets redirig\u00e9s vers le recyclage (volume)"
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Ioml\u00e1n na dramha\u00edola at\u00e1 athch\u00fars\u00e1ilte, ath\u00fas\u00e1idte agus treoraithe chun di\u00fascartha (mais)"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "Totale rifiuti riciclati, riutilizzati e destinati allo smaltimento (massa)"
+          "http://www.xbrl.org/2003/role/label": "Percentuale di rifiuti destinati al riciclo (volume)"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "Bendras atliek\u0173 kiekis, kuris buvo perdirbtas, pakartotinai panaudotas ir nukreiptas \u0161alinimui (mas\u0117)"
+          "http://www.xbrl.org/2003/role/label": "Atliek\u0173, nukreipt\u0173 perdirbti, procentin\u0117 dalis (pagal t\u016br\u012f)"
         },
         "nl": {
           "http://www.xbrl.org/2003/role/label": "Totale hoeveelheid afval gerecycled, hergebruikt en bestemd voor verwijdering (massa)"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "Ca\u0142kowita ilo\u015b\u0107 odpad\u00f3w poddanych recyklingowi, ponownemu u\u017cyciu oraz skierowanych do unieszkodliwienia (masa)"
+          "http://www.xbrl.org/2003/role/label": "Procent odpad\u00f3w kierowanych do recyklingu (obj\u0119to\u015b\u0107)"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "Total de res\u00edduos reciclados, reutilizados e destinados \u00e0 elimina\u00e7\u00e3o (massa)"
+          "http://www.xbrl.org/2003/role/label": "Percentagem de res\u00edduos desviados para reciclagem (volume)"
         },
         "sl": {
-          "http://www.xbrl.org/2003/role/label": "Izra\u010dun: odpadki, preusmerjeni v recikliranje ali ponovno uporabo + odpadki, preusmerjeni v odstranjevanje (masa)"
+          "http://www.xbrl.org/2003/role/label": "Dele\u017e odpadkov, preusmerjenih v recikliranje (prostornina)"
         }
       },
       "nillable": true,
@@ -28954,31 +29179,31 @@
           "http://www.xbrl.org/2003/role/label": "Revenue derived from the prohibited weapons industry (anti-personnel mines, cluster munitions, chemical weapons and biological weapons)"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "Ingresos derivados de armas controvertidas (minas antipersona, municiones en racimo, armas qu\u00edmicas y armas biol\u00f3gicas)"
+          "http://www.xbrl.org/2003/role/label": "Ingresos derivados de la industria de las armas prohibidas  (minas antipersona, municiones en racimo, armas qu\u00edmicas y armas biol\u00f3gicas)"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "Chiffre d'affaires r\u00e9alis\u00e9 \u00e0 partir des armes controvers\u00e9es (mines antipersonnel, armes \u00e0 sous-munitions, armes chimiques et armes biologiques)"
+          "http://www.xbrl.org/2003/role/label": "Chiffre d'affaires r\u00e9alis\u00e9 \u00e0 partir du secteur des armes interdites (mines antipersonnel, armes \u00e0 sous-munitions, armes chimiques et armes biologiques)"
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Ioncam a dh\u00edortha\u00edtear as airm chonsp\u00f3ideacha (mianaigh frithphearsanra, cnuas-mhuinisin, airm cheimiceacha agus airm \nbhitheola\u00edocha)"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "Ricavi derivanti da armi controverse (mine antiuomo, munizioni a grappolo, armi chimiche e armi biologiche)"
+          "http://www.xbrl.org/2003/role/label": "Ricavi derivanti dal settore delle armi proibite (mine antiuomo, munizioni a grappolo, armi chimiche e armi biologiche)"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "Pajamos, gautos i\u0161 prie\u0161taringai vertinam\u0173 ginkl\u0173 (p\u0117stinink\u0173 min\u0173, kasetini\u0173 \u0161audmen\u0173, chemini\u0173 ir biologini\u0173 ginkl\u0173)."
+          "http://www.xbrl.org/2003/role/label": "Pajamos, gautos i\u0161 draud\u017eiam\u0173 ginkl\u0173 pramon\u0117s (prie\u0161p\u0117stini\u0173 min\u0173, kasetini\u0173 \u0161audmen\u0173, chemini\u0173 ir biologini\u0173 ginkl\u0173)"
         },
         "nl": {
           "http://www.xbrl.org/2003/role/label": "Inkomsten uit controversi\u00eble wapens (antipersoonsmijnen, clustermunitie, chemische wapens en biologische wapens)"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "Przychody z kontrowersyjnych rodzaj\u00f3w broni (miny przeciwpiechotne, amunicja kasetowa, bro\u0144 chemiczna i bro\u0144 biologiczna)"
+          "http://www.xbrl.org/2003/role/label": "Przychody pochodz\u0105ce z sektora produkcji broni zakazanej (miny przeciwpiechotne, amunicja kasetowa, bro\u0144 chemiczna i bro\u0144 biologiczna)"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "R\u00e9dito proveniente de armas controversas (minas anti-pessoais, muni\u00e7\u00f5es de fragmenta\u00e7\u00e3o, armas qu\u00edmicas e armas biol\u00f3gicas)"
+          "http://www.xbrl.org/2003/role/label": "R\u00e9dito proveniente da ind\u00fastria de armas proibidas (minas anti-pessoais, muni\u00e7\u00f5es de fragmenta\u00e7\u00e3o, armas qu\u00edmicas e armas biol\u00f3gicas)"
         },
         "sl": {
-          "http://www.xbrl.org/2003/role/label": "Prihodki od spornega oro\u017eja (protipehotne mine, kasetno strelivo, kemi\u010dno oro\u017eje in biolo\u0161ko oro\u017eje)"
+          "http://www.xbrl.org/2003/role/label": "Prihodki iz industrije prepovedanega oro\u017eja (protipehotne mine, kasetno strelivo, kemi\u010dno oro\u017eje in biolo\u0161ko oro\u017eje)"
         }
       },
       "nillable": true,
@@ -29000,31 +29225,31 @@
           "http://www.xbrl.org/2003/role/label": "Revenues derived from certain activities [abstract]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "Ingresos derivados de actividades [abstract]"
+          "http://www.xbrl.org/2003/role/label": "Ingresos derivados de determinadas actividades [abstract]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "Chiffre d\u2019affaires r\u00e9alis\u00e9 \u00e0 partir des activit\u00e9s [abstract]"
+          "http://www.xbrl.org/2003/role/label": "Chiffre d\u2019affaires provenant de certaines activit\u00e9s [abstract]"
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Ioncaim ghaolmhara a dh\u00edortha\u00edtear as gn\u00edomha\u00edochta\u00ed [abstract]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "Ricavi derivanti da attivit\u00e0 [abstract]"
+          "http://www.xbrl.org/2003/role/label": "Ricavi da determinate attivit\u00e0 [abstract]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "Veiklos pajamos [abstract]"
+          "http://www.xbrl.org/2003/role/label": "Pajamos, gautos i\u0161 tam tikr\u0173 veikl\u0173 [abstract]"
         },
         "nl": {
           "http://www.xbrl.org/2003/role/label": "Inkomsten uit activiteiten [abstract]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "Przychody z dzia\u0142alno\u015bci [abstract]"
+          "http://www.xbrl.org/2003/role/label": "Przychody pochodz\u0105ce z niekt\u00f3rych dzia\u0142alno\u015bci [abstract]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "R\u00e9dito das atividades [abstract]"
+          "http://www.xbrl.org/2003/role/label": "R\u00e9ditos provenientes de determinadas atividades [abstract]"
         },
         "sl": {
-          "http://www.xbrl.org/2003/role/label": "Prihodki iz dejavnosti [abstract]"
+          "http://www.xbrl.org/2003/role/label": "Prihodki iz dolo\u010denih dejavnosti [abstract]"
         }
       },
       "nillable": true,
@@ -29446,6 +29671,69 @@
       "nillable": true,
       "periodType": "duration"
     },
+    "vs:StatusOfImplementationOfATransitionPlanInRelationToClimateChangeMitigation": {
+      "baseDataType": "xbrli:tokenItemType",
+      "dataType": "enum2:enumerationItemType",
+      "labels": {
+        "da": {
+          "http://www.xbrl.org/2003/role/label": "Status for implementering af en omstillingsplan i relation til modvirkning af klima\u00e6ndringer"
+        },
+        "de": {
+          "http://www.xbrl.org/2003/role/label": "Status der Umsetzung eines \u00dcbergangsplans zur Minderung des Klimawandels"
+        },
+        "en": {
+          "http://www.xbrl.org/2003/role/label": "Status of implementation of a transition plan in relation to climate change mitigation"
+        },
+        "es": {
+          "http://www.xbrl.org/2003/role/label": "Estado de implementaci\u00f3n de un plan de transici\u00f3n en relaci\u00f3n con la mitigaci\u00f3n del cambio clim\u00e1tico"
+        },
+        "fr": {
+          "http://www.xbrl.org/2003/role/label": "Statut de la mise en \u0153uvre d\u2019un plan de transition en relation avec l\u2019att\u00e9nuation du changement climatique"
+        },
+        "ga": {
+          "http://www.xbrl.org/2003/role/label": "St\u00e1das cur chun feidhme plean aistrithe i nd\u00e1il le maol\u00fa ar an athr\u00fa aer\u00e1ide"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Stato di attuazione di un piano di transizione per la mitigazione dei cambiamenti climatici"
+        },
+        "lt": {
+          "http://www.xbrl.org/2003/role/label": "Per\u0117jimo plano \u012fgyvendinimo statusas klimato kaitos \u0161velninimo at\u017evilgiu"
+        },
+        "nl": {
+          "http://www.xbrl.org/2003/role/label": "Status van de uitvoering van een transitieplan in relatie tot mitigatie van klimaatverandering"
+        },
+        "pl": {
+          "http://www.xbrl.org/2003/role/label": "Status wdro\u017cenia planu transformacji w zwi\u0105zku z \u0142agodzeniem zmian klimatu"
+        },
+        "pt": {
+          "http://www.xbrl.org/2003/role/label": "Estado da implementa\u00e7\u00e3o de um plano de transi\u00e7\u00e3o relacionado com a mitiga\u00e7\u00e3o das altera\u00e7\u00f5es clim\u00e1ticas"
+        },
+        "sl": {
+          "http://www.xbrl.org/2003/role/label": "Stanje izvajanja na\u010drta prehoda za bla\u017eitev podnebnih sprememb"
+        }
+      },
+      "nillable": true,
+      "other": {
+        "ee20DomainMembers": [
+          "vs:AdoptionOfATransitionPlanIsPlannedInTheFutureMember",
+          "vs:ATransitionPlanHasAlreadyBeenAdoptedMember",
+          "vs:ATransitionPlanIsNotInPlaceAndItIsNotPlannedToBeAdoptedMember"
+        ]
+      },
+      "periodType": "duration"
+    },
+    "vs:StatusOfImplementationOfATransitionPlanInRelationToClimateChangeMitigationMember": {
+      "abstract": true,
+      "baseDataType": "xbrli:stringItemType",
+      "dataType": "dtr-types:domainItemType",
+      "labels": {
+        "en": {
+          "http://www.xbrl.org/2003/role/label": "Status of implementation of a transition plan in relation to climate change mitigation [member]"
+        }
+      },
+      "nillable": true,
+      "periodType": "duration"
+    },
     "vs:StrategyBusinessModelAndSustainabilityRelatedInitiativesAbstract": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
@@ -29535,31 +29823,31 @@
           "http://www.xbrl.org/2003/role/label": "Sum of fatalities as a result of recordable work-related accidents and recordable work-related ill health (subject to legal restrictions)"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "N\u00famero de fallecimientos como consecuencia de lesiones y problemas de salud relacionados con el trabajo"
+          "http://www.xbrl.org/2003/role/label": "N\u00famero de fallecimientos como consecuencia de accidentes laborales registrables y de problemas de salud  relacionados con el trabajo registrables (sujeto a restricciones legales)"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "Nombre de d\u00e9c\u00e8s dus \u00e0 des accidents du travail ou \u00e0 des probl\u00e8mes de sant\u00e9 li\u00e9s au travail"
+          "http://www.xbrl.org/2003/role/label": "Le nombre total de d\u00e9c\u00e8s r\u00e9sultant d'accidents du travail comptabilisables et de ceux r\u00e9sultants de maladies professionnelles comptabilisables (sous r\u00e9serve des restrictions l\u00e9gales)"
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "L\u00edon na mb\u00e1sanna de thoradh gortuithe at\u00e1 bainteach leis an obair agus drochshl\u00e1inte at\u00e1 bainteach leis an obair."
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "Numero di decessi dovuti a lesioni e malattie connesse al lavoro"
+          "http://www.xbrl.org/2003/role/label": "Somma dei decessi dovuti a incidenti sul lavoro registrabili e malattie connesse al lavoro registrabili (soggetto a restrizioni legali)"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "Mir\u010di\u0173 d\u0117l su darbu susijusi\u0173 su\u017ealojim\u0173 ir su darbu susijusi\u0173 sveikatos sutrikim\u0173 skai\u010dius"
+          "http://www.xbrl.org/2003/role/label": "Bendras mir\u010di\u0173 d\u0117l registruotin\u0173 su darbu susijusi\u0173 nelaiming\u0173 atsitikim\u0173 ir registruotin\u0173 su darbu susijusi\u0173 sveikatos sutrikim\u0173 skai\u010dius (atsi\u017evelgiant \u012f teis\u0117s aktuose nustatytus apribojimus)"
         },
         "nl": {
           "http://www.xbrl.org/2003/role/label": "Het aantal sterfgevallen als gevolg van arbeidsongevallen en beroepsziekten"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "Liczba ofiar \u015bmiertelnych w wyniku uraz\u00f3w zwi\u0105zanych z prac\u0105 i z\u0142ego stanu zdrowia zwi\u0105zanego z prac\u0105"
+          "http://www.xbrl.org/2003/role/label": "Suma ofiar \u015bmiertelnych b\u0119d\u0105cych wynikiem podlegaj\u0105cych zg\u0142oszeniu wypadk\u00f3w zwi\u0105zanych z prac\u0105 i przypadk\u00f3w podlegaj\u0105cego zg\u0142oszeniu z\u0142ego stanu zdrowia zwi\u0105zanego z prac\u0105 (z zastrze\u017ceniem ogranicze\u0144 prawnych)"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "N\u00famero de mortes devido a les\u00f5es relacionadas com o trabalho e a problemas de sa\u00fade relacionados com o trabalho"
+          "http://www.xbrl.org/2003/role/label": "Soma das mortes devido a acidentes relacionados com o trabalho pass\u00edveis de registo e a problemas de sa\u00fade relacionados com o trabalho pass\u00edveis de registo (sujeito a restri\u00e7\u00f5es legais)"
         },
         "sl": {
-          "http://www.xbrl.org/2003/role/label": "\u0160tevilo smrtnih \u017ertev zaradi po\u0161kodb pri delu in z delom povezanih bolezni"
+          "http://www.xbrl.org/2003/role/label": "Skupno \u0161tevilo smrtnih primerov zaradi nezgod pri delu, ki jih je treba evidentirati, in okvar zdravja, povezanih z delom, ki jih je treba evidentirati (ob upo\u0161tevanju zakonskih omejitev)"
         }
       },
       "nillable": true,
@@ -31978,7 +32266,7 @@
           "http://www.xbrl.org/2003/role/label": "Dr\u00e1mha\u00edl a ghintear [abstract]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "Rifiuti generati [abstract]"
+          "http://www.xbrl.org/2003/role/label": "Rifiuti prodotti [abstract]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Susidariusios atliekos [abstract]"
@@ -31990,7 +32278,7 @@
           "http://www.xbrl.org/2003/role/label": "Wytworzone odpady [abstract]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "Res\u00edduos gerados [abstract]"
+          "http://www.xbrl.org/2003/role/label": "Res\u00edduos produzidos [abstract]"
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Nastali odpadki [abstract]"
@@ -32023,7 +32311,7 @@
           "http://www.xbrl.org/2003/role/label": "Dr\u00e1mha\u00edl a ghintear [line items]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "Rifiuti generati [line items]"
+          "http://www.xbrl.org/2003/role/label": "Rifiuti prodotti [line items]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Susidariusios atliekos [line items]"
@@ -32035,7 +32323,7 @@
           "http://www.xbrl.org/2003/role/label": "Wytworzone odpady [line items]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "Res\u00edduos gerados [line items]"
+          "http://www.xbrl.org/2003/role/label": "Res\u00edduos produzidos [line items]"
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Nastali odpadki [line items]"
@@ -32059,31 +32347,31 @@
           "http://www.xbrl.org/2003/role/measurementGuidance": "[utr:kg]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "Residuos destinados a eliminaci\u00f3n (masa)"
+          "http://www.xbrl.org/2003/role/label": "Residuos generados (masa)"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "D\u00e9chets destin\u00e9s \u00e0 \u00eatre \u00e9limin\u00e9s (en masse)"
+          "http://www.xbrl.org/2003/role/label": "D\u00e9chets produits (masse)"
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Dramha\u00edl arna treor\u00fa chuig di\u00fascairt (mais)"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "Rifiuti destinati allo smaltimento (massa)"
+          "http://www.xbrl.org/2003/role/label": "Rifiuti prodotti (massa)"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "Atliekos, nukreiptos \u0161alinimui (mas\u0117)"
+          "http://www.xbrl.org/2003/role/label": "Susidariusios atliekos (mas\u0117)"
         },
         "nl": {
           "http://www.xbrl.org/2003/role/label": "Restafval (niet recyclebaar/herbruikbaar) (massa)"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "Odpady kierowane do unieszkodliwienia (masa)"
+          "http://www.xbrl.org/2003/role/label": "Wytworzone odpady (masa)"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "Res\u00edduos destinados \u00e0 elimina\u00e7\u00e3o (massa)"
+          "http://www.xbrl.org/2003/role/label": "Res\u00edduos produzidos (massa)"
         },
         "sl": {
-          "http://www.xbrl.org/2003/role/label": "Odpadki, namenjeni za odstranjevanje (masa)"
+          "http://www.xbrl.org/2003/role/label": "Nastali odpadki (masa)"
         }
       },
       "nillable": true,
@@ -32115,7 +32403,7 @@
           "http://www.xbrl.org/2003/role/label": "Dr\u00e1mha\u00edl a ghintear [table]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "Rifiuti generati [table]"
+          "http://www.xbrl.org/2003/role/label": "Rifiuti prodotti [table]"
         },
         "lt": {
           "http://www.xbrl.org/2003/role/label": "Susidariusios atliekos [table]"
@@ -32151,31 +32439,31 @@
           "http://www.xbrl.org/2003/role/measurementGuidance": "[utr:m3]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "Residuos dirigidos a la eliminaci\u00f3n (volumen)"
+          "http://www.xbrl.org/2003/role/label": "Residuos generados (volumen)"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "D\u00e9chets destin\u00e9s \u00e0 \u00eatre \u00e9limin\u00e9s (en volume)"
+          "http://www.xbrl.org/2003/role/label": "D\u00e9chets produits (volume)"
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Dramha\u00edl arna treor\u00fa chuig di\u00fascairt (toirt)"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "Rifiuti destinati allo smaltimento (volume)"
+          "http://www.xbrl.org/2003/role/label": "Rifiuti prodotti (volume)"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "Atliekos, nukreiptos \u0161alinimui (t\u016bris)"
+          "http://www.xbrl.org/2003/role/label": "Susidariusios atliekos (t\u016bris)"
         },
         "nl": {
           "http://www.xbrl.org/2003/role/label": "Restafval (niet recyclebaar/herbruikbaar) (volume)"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "Odpady kierowane do unieszkodliwienia (obj\u0119to\u015b\u0107)"
+          "http://www.xbrl.org/2003/role/label": "Wytworzone odpady (obj\u0119to\u015b\u0107)"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "Res\u00edduos destinados \u00e0 elimina\u00e7\u00e3o (volume)"
+          "http://www.xbrl.org/2003/role/label": "Res\u00edduos produzidos (volume)"
         },
         "sl": {
-          "http://www.xbrl.org/2003/role/label": "Odpadki, namenjeni za odstranjevanje (prostornina)"
+          "http://www.xbrl.org/2003/role/label": "Nastali odpadki (prostornina)"
         }
       },
       "nillable": true,
@@ -45497,6 +45785,15 @@
   "presentation": {
     "https://xbrl.efrag.org/taxonomy/vs/2026-10-16/role/role-100": {
       "definition": "[1000] Introduction and/or entity specific information",
+      "labels": {
+        "es": "[1000] Introducci\u00f3n y/u otra informaci\u00f3n espec\u00edfica de la entidad",
+        "fr": "[1000] Introduction et/ou informations sp\u00e9cifiques \u00e0 l\u2019entit\u00e9",
+        "it": "[1000] Introduzione e/o informazione specifica per soggetto",
+        "lt": "[1000] \u012evadas ir (arba) \u012fmonei b\u016bdinga informacija",
+        "pl": "[1000] Wprowadzenie i/lub informacje specyficzne dla jednostki",
+        "pt": "[1000] Introdu\u00e7\u00e3o e/ou informa\u00e7\u00e3o espec\u00edfica da entidade",
+        "sl": "[1000] Uvod in/ali informacije, specifi\u010dne za podjetje"
+      },
       "rows": [
         [
           0,
@@ -45936,15 +46233,15 @@
       "labels": {
         "da": "[1100] B3 - Milj\u00f8 - Ansl\u00e5ede drivhusgasudledninger",
         "de": "[1100] B3 - Umwelt - Gesch\u00e4tzte Treibhausgasemissionen",
-        "es": "[1100] B3 - Medio ambiente - Emisiones brutas estimadas de gases de efecto invernadero",
-        "fr": "[1100] B3 - Environnement - Estimation des \u00e9missions de gaz \u00e0 effet de serre",
+        "es": "[1100] B3 \u2013 Emisiones absolutas estimadas de gases de efecto invernadero",
+        "fr": "[1100] B3 - Environnement - Estimations des \u00e9missions absolues de gaz \u00e0 effet de serre",
         "ga": "[1100] B3 - Comhshaol - Meastach\u00e1in ar asta\u00edochta\u00ed g\u00e1s ceaptha teasa",
-        "it": "[1100] B3 - Ambiente - Emissioni stimate di gas a effetto serra",
-        "lt": "[1100] B3 - Aplinkos sritis - Apskai\u010diuotas i\u0161metam\u0173 \u0161iltnamio efekt\u0105 sukelian\u010di\u0173 duj\u0173 kiekis",
+        "it": "[1100] B3 - Ambiente - Emissioni assolute stimate di gas a effetto serra",
+        "lt": "[1100] B3 \u2013 Aplinkos sritis \u2013 Apskai\u010diuotas absoliutus i\u0161metam\u0173 \u0161iltnamio efekt\u0105 sukelian\u010di\u0173 duj\u0173 kiekis",
         "nl": "[1100] B3 - Milieu - Geschatte broeikasgasemissies",
-        "pl": "[1100] B3 - \u015arodowisko - Szacunkowa emisja gaz\u00f3w cieplarnianych",
-        "pt": "[1100] B3 - Ambiente - Emiss\u00f5es estimadas de Gases de Efeito de Estufa\"",
-        "sl": "[1100] B3 - Okolje - Ocenjene emisije toplogrednih plinov"
+        "pl": "[1100] B3 - \u015arodowisko - Szacunkowa bezwgl\u0119dna emisja gaz\u00f3w cieplarnianych",
+        "pt": "[1100] B3 - Ambiente - Emiss\u00f5es brutas estimadas de Gases de Efeito de Estufa, em valor absoluto",
+        "sl": "[1100] B3 \u2013 Okolje \u2013 Ocenjene absolutne emisije toplogrednih plinov"
       },
       "rows": [
         [
@@ -51017,6 +51314,10 @@
         ],
         [
           1,
+          "vs:StatusOfImplementationOfATransitionPlanInRelationToClimateChangeMitigation"
+        ],
+        [
+          1,
           "vs:DescriptionOfATransitionPlanForClimateChangeMitigationIncludingAnExplanationOfHowItIsContributingToReduceGhgEmissions"
         ],
         [
@@ -51364,15 +51665,15 @@
       "labels": {
         "da": "[1360] C7 - Social - Alvorlige negative menneskerettighedsh\u00e6ndelser",
         "de": "[1360] C7 - Sozial - Schwerwiegende Vorf\u00e4lle im Zusammenhang mit Menschenrechten",
-        "es": "[1360] C7 - Social - Incidentes graves negativos de derechos humanos",
-        "fr": "[1360] C7 - Social - Incidents graves en mati\u00e8re de droits de l\u2019homme",
+        "es": "[1360] C7 - Social- Incidentes relacionados con los derechos humanos",
+        "fr": "[1360] C7 - Social - Incidents en mati\u00e8re de droits de l\u2019homme",
         "ga": "[1360] C7 - S\u00f3isialta - Teagmhais gh\u00e9ara do chearta an duine",
-        "it": "[1360] C7 - Sociale - Incidenti gravi in materia di diritti umani",
-        "lt": "[1360] C7 - Socialin\u0117 sritis - Svarb\u016bs neigiami \u017emogaus teisi\u0173 pa\u017eeidimai",
+        "it": "[1360] C7 - Sociale - Incidenti in materia di diritti umani",
+        "lt": "[1360] C7 \u2013 Socialin\u0117 sritis \u2013 Incidentai \u017emogaus teisi\u0173 srityje",
         "nl": "[1360] C7 - Sociaal - Ernstige negatieve incidenten met betrekking tot mensenrechten",
-        "pl": "[1360] C7 - Kwestie spo\u0142eczne - Powa\u017cne negatywne incydenty dotycz\u0105ce praw cz\u0142owieka",
-        "pt": "[1360] C7 - Social - Incidentes graves negativos em mat\u00e9ria de direitos humanos",
-        "sl": "[1360] C7 - Dru\u017eba - Resni negativni incidenti na podro\u010dju \u010dlovekovih pravic"
+        "pl": "[1360] C7 - Kwestie spo\u0142eczne - Incydenty dotycz\u0105ce praw cz\u0142owieka",
+        "pt": "[1360] C7 - Social - Incidentes em mat\u00e9ria de direitos humanos",
+        "sl": "[1360] C7 \u2013 Socialno podro\u010dje \u2013 Incidenti v zvezi s \u010dlovekovimi pravicami"
       },
       "rows": [
         [
@@ -51466,15 +51767,15 @@
       "labels": {
         "da": "[1380] C8 - Virksomhedsadf\u00e6rd - Indt\u00e6gter fra bestemte aktiviteter",
         "de": "[1380] C8 - Governance - Umsatzerl\u00f6se aus bestimmten T\u00e4tigkeiten und Ausnahme von EU-Referenzwerten",
-        "es": "[1380] C8 - Gobernanza - Ingresos derivados de actividades",
-        "fr": "[1380] C8 - Gouvernance - Chiffre d'affaires r\u00e9alis\u00e9 \u00e0 partir des activit\u00e9s",
+        "es": "[1380] C8 - Gobernanza - Ingresos derivados de determinadas actividades",
+        "fr": "[1380] C8 - Gouvernance - Chiffre d\u2019affaires provenant de certaines activit\u00e9s",
         "ga": "[1380] C8 - Rialachas - Ioncaim \u00f3 earn\u00e1lacha \u00e1irithe",
-        "it": "[1380] C8 - Governance - Ricavi derivanti da attivit\u00e0",
-        "lt": "[1380] C8 - Valdymo sritis - Pajamos, gautos i\u0161 veikl\u0173",
+        "it": "[1380] C8 - Governance - Ricavi derivanti da determinate attivit\u00e0",
+        "lt": "[1380] C8 \u2013 Valdymo sritis \u2013 Pajamos, gautos i\u0161 tam tikros veiklos",
         "nl": "[1380] C8 - Governance - Ontvangsten uit bepaalde sectoren",
-        "pl": "[1380] C8 - \u0141ad korporacyjny - Przychody z dzia\u0142alno\u015bci",
-        "pt": "[1380] C8 - Governa\u00e7\u00e3o - R\u00e9ditos provenientes de atividades",
-        "sl": "[1380] C8 - Upravljanje - Prihodki iz dejavnosti"
+        "pl": "[1380] C8 - \u0141ad korporacyjny - Przychody pochodz\u0105ce z niekt\u00f3rych rodzaj\u00f3w dzia\u0142alno\u015bci",
+        "pt": "[1380] C8 - Governa\u00e7\u00e3o - R\u00e9ditos provenientes de determinadas atividades",
+        "sl": "[1380] C8 \u2013 Upravljanje \u2013 Prihodki iz dolo\u010denih dejavnosti"
       },
       "rows": [
         [
@@ -54044,6 +54345,38 @@
         [
           "vs:RelatedVsGuidance",
           "160-162"
+        ]
+      ],
+      "role": "http://www.xbrl.org/2003/role/reference"
+    },
+    {
+      "concepts": [
+        "vs:StatusOfImplementationOfATransitionPlanInRelationToClimateChangeMitigation"
+      ],
+      "parts": [
+        [
+          "ref:Name",
+          "VS"
+        ],
+        [
+          "ref:Section",
+          "Comprehensive Module"
+        ],
+        [
+          "ref:Number",
+          "C3"
+        ],
+        [
+          "ref:Paragraph",
+          "54"
+        ],
+        [
+          "ref:URI",
+          "https://knowledgehub.efrag.org/eng/interactive/voluntary-standard/standard-for-voluntary-use/voluntary-standard-official-journal-publication/54"
+        ],
+        [
+          "vs:RelatedVsGuidance",
+          "159-161"
         ]
       ],
       "role": "http://www.xbrl.org/2003/role/reference"
