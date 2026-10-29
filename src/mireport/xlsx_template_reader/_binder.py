@@ -147,13 +147,20 @@ class WorkbookBinder:
 
         ctx = ExcelCellBindingContext(reader, self._msg, taxonomy)
 
-        # A dimension set by Concept_Member names needs no range of its own.
+        # A dimension set by Concept_Member names needs no range of its own, and
+        # a range named for the member holds the year of the member's period.
+        preset_members = {m for dims in preset_dims.values() for m in dims.values()}
         table_resolver = XBRLTableResolver(
             ctx,
             unit_map,
             candidates_by_ws,
             concepts_in_excel.union(*(dims.keys() for dims in preset_dims.values())),
             table_scope,
+            [
+                crm
+                for crm in concept_map.values()
+                if crm.concept.isAbstract and crm.concept in preset_members
+            ],
         )
         tables: list[TableBinding] = [
             binding

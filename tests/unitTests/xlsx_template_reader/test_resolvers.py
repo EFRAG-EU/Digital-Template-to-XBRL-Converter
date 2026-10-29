@@ -579,3 +579,35 @@ def test_member_presets_count_as_their_dimension_being_found():
         if "have not been found" in m.messageText
     ]
     assert "ReportingScopesAxis" not in missing
+
+
+class TestPeriodYearCells:
+    """A member's period-year cell (BaselineYearMember) may also be a fact of its
+    own, such as the base year, inside the table that uses the period."""
+
+    TABLE = "EstimatedAbsoluteGreenhouseGasEmissionsTable"
+    BASE_YEAR = "GreenhouseGasEmissionReductionTargetBaseYear"
+
+    def _extras(self, baseYearCell):
+        vs = getTaxonomy(VS_DRAFT_ENTRY_POINT)
+        _, results = _bindNames(
+            vs,
+            {
+                self.TABLE: "A1:F6",
+                "BaselineYearMember": "B2",
+                self.BASE_YEAR: baseYearCell,
+                "GrossScope1GreenhouseGasEmissions_BaselineYearMember": "B3",
+            },
+        )
+        return [
+            m.messageText
+            for m in results.messages
+            if "Extra named ranges" in m.messageText
+        ]
+
+    def test_fact_on_a_period_year_cell_is_not_extra(self):
+        assert self._extras("B2") == []
+
+    def test_fact_elsewhere_in_the_table_is_still_extra(self):
+        [message] = self._extras("C2")
+        assert self.BASE_YEAR in message

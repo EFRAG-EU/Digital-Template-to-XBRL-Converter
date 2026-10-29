@@ -32,6 +32,7 @@ from mireport.xlsx_template_reader._constants import (
 from mireport.xlsx_template_reader._enumerations import resolveMemberByLabel
 from mireport.xlsx_template_reader._fact_support import (
     addFactToReport,
+    applyPresetDimensions,
     processNumeric,
     resolveMemberWithMessages,
 )
@@ -152,11 +153,9 @@ class TableFactCreator:
         factBuilder.setValue(value).setConcept(concept)
 
         if (presetDimensions := self._bindings.preset_dims.get(priItem)) is not None:
-            for dim, dimValue in presetDimensions.items():
-                if (
-                    defaultValue := self.taxonomy.getDimensionDefault(dim)
-                ) is not None and dimValue != defaultValue:
-                    factBuilder.setExplicitDimension(dim, dimValue)
+            applyPresetDimensions(
+                factBuilder, presetDimensions, self._report, self._reader
+            )
 
         all_dims_set = True
         all_dims_set &= self._addTypedDimensions(

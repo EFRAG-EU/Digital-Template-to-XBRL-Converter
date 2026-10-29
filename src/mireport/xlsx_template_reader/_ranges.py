@@ -68,6 +68,12 @@ class CellRangeMetadata:
             not mine.isdisjoint(theirs) for mine in self.areas for theirs in other.areas
         )
 
+    def coversSameCells(self, other: CellRangeMetadata) -> bool:
+        """True if other is on the same worksheet and covers exactly these cells."""
+        return self.worksheet is other.worksheet and [a.bounds for a in self.areas] == [
+            a.bounds for a in other.areas
+        ]
+
     def excelRef(self, cell: CellType | None = None) -> str:
         """Excel reference for this range, or for a specific cell within it.
 
@@ -121,7 +127,7 @@ class XbrlConceptCellRangeMetadata(CellRangeMetadata):
         shares_reportable_range = (
             self.concept.isReportable
             and other.concept.isReportable
-            and [a.bounds for a in self.areas] == [a.bounds for a in other.areas]
+            and self.coversSameCells(other)
         )
         return not shares_reportable_range
 
