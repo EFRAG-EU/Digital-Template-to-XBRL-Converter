@@ -174,3 +174,29 @@ def test_script_taxonomy_json_may_share_a_built_in_entry_point(script, tmp_path)
     path = tmp_path / "template.xlsx"
     stamped(VS_ENTRY_POINT, "2.0.0", Bogus="Data!$B$2").save(path)
     assert script.main([str(path), "--taxonomy-json", str(vsJson)]) == 1
+
+
+def test_table_with_several_areas_is_a_table():
+    table = "EstimatedAbsoluteGreenhouseGasEmissionsTable"
+    result = audit(workbookWith(**{table: "Data!$D$21:$J$26,Data!$D$45:$J$47"}))
+    assert table not in names(result, FindingKind.damagedName)
+    assert table not in names(result, FindingKind.hypercubeWithoutName)
+
+
+def test_only_a_table_may_have_several_areas():
+    result = audit(workbookWith(Turnover="Data!$B$2,Data!$B$4"))
+    assert names(result, FindingKind.damagedName) == {"Turnover"}
+
+
+def test_concept_table_outside_its_table_is_a_binding_problem():
+    result = audit(
+        workbookWith(
+            SitesInBiodiversitySensitiveAreasTable="Data!$C$191:$K$290",
+            IdentifierOfSiteTypedAxis_SitesInBiodiversitySensitiveAreasTable="Data!$B$191:$B$290",
+        )
+    )
+    assert "'Data'!$B$191:$B$290" in names(result, FindingKind.bindingMessage)
+    assert (
+        "IdentifierOfSiteTypedAxis_SitesInBiodiversitySensitiveAreasTable"
+        not in names(result, FindingKind.nameWithoutConcept)
+    )
