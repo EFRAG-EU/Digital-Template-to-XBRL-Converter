@@ -239,12 +239,14 @@ class XBRLTableResolver:
         candidates_by_ws: dict[Worksheet, list[XbrlConceptCellRangeMetadata]],
         concepts_in_excel: frozenset[Concept],
         table_scope: dict[XbrlConceptCellRangeMetadata, Concept] | None = None,
+        periodYearRanges: list[XbrlConceptCellRangeMetadata] | None = None,
     ) -> None:
         self._ctx = ctx
         self._unit_map = unit_map
         self._candidates_by_ws = candidates_by_ws
         self._concepts_in_excel = concepts_in_excel
         self._table_scope = table_scope or {}
+        self._periodYearRanges = periodYearRanges or []
 
     def resolve(self, table: XbrlConceptCellRangeMetadata) -> TableBinding | None:
         """Return the TableBinding, or None if an overlap conflict makes it unusable."""
@@ -271,7 +273,8 @@ class XBRLTableResolver:
                 scope = self._table_scope.get(crm, table.concept)
                 if crm.concept in permitted and scope == table.concept:
                     candidates.append(crm)
-                else:
+                elif not any(crm.coversSameCells(p) for p in self._periodYearRanges):
+                    # A fact may share its cell with a member's period year.
                     extras.add(crm)
             elif table.overlaps(crm):
                 extras.add(crm)
