@@ -337,7 +337,7 @@
         "entity": "lei:TestCode1234",
         "period": "2026-01-01T00:00:00/2027-01-01T00:00:00"
       },
-      "value": "0.2841",
+      "value": "0.284090909090909",
       "decimals": 4,
       "mireport:scale": -2
     },
@@ -396,7 +396,7 @@
         "unit": "utr:MWh",
         "vsme:BreakdownOfEnergyConsumptionAxis": "vsme:NonRenewableEnergyMember"
       },
-      "value": "10.03",
+      "value": "10.03334136",
       "decimals": 2
     },
     "f40": {
@@ -407,7 +407,7 @@
         "unit": "utr:MWh",
         "vsme:BreakdownOfEnergyConsumptionAxis": "vsme:RenewableEnergyMember"
       },
-      "value": "6.38",
+      "value": "6.3750051",
       "decimals": 2
     },
     "f41": {
@@ -417,7 +417,7 @@
         "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
         "unit": "utr:MWh"
       },
-      "value": "16.41",
+      "value": "16.40834646",
       "decimals": 2,
       "links": {
         "footnote": {
@@ -774,7 +774,7 @@
         "entity": "lei:TestCode1234",
         "period": "2027-01-01T00:00:00"
       },
-      "value": "0.9272",
+      "value": "0.927152317880795",
       "decimals": 4,
       "mireport:scale": -2
     },
@@ -966,7 +966,7 @@
         "period": "2026-01-01T00:00:00/2027-01-01T00:00:00",
         "unit": "utr:tCO2e/iso4217:EUR"
       },
-      "value": "0.0148936",
+      "value": "0.0148936170212766",
       "decimals": 7
     },
     "f98": {

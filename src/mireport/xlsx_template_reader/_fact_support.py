@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from decimal import ROUND_HALF_EVEN, Decimal, localcontext
+from decimal import Decimal
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -17,6 +17,7 @@ if TYPE_CHECKING:
 
 from mireport.conversionresults import MessageType
 from mireport.exceptions import AmbiguousComponentException, InlineReportException
+from mireport.localise import Rounding
 from mireport.xlsx_template_reader._enumerations import resolveMemberByLabel
 from mireport.xlsx_template_reader.util import get_decimal_places, get_display_scale
 
@@ -135,28 +136,18 @@ def processNumeric(
                 ref=holder.excelRef(cell),
             )
 
-    if decimals == "INF":
-        if cell_is_percentage:
-            fb.setPercentageValue(value, decimals, inputIsDecimalForm=True)
-        else:
-            fb.setDecimals(decimals)
-        return
-
-    # What is reported is what the cell shows: rounded to its places once, here, half to even as
-    # XBRL rounds. A percentage is rounded as shown, so its fraction to two more places; a cell
-    # shown in thousands or millions is shown so too, with the scale that undoes it.
-    scale = get_display_scale(cell)
-    places = decimals + 2 if cell_is_percentage else decimals - scale
-    exact = Decimal(value)
-    with localcontext() as ctx:
-        ctx.prec = max(ctx.prec, exact.adjusted() + 1 + places + 2)
-        rounded = exact.quantize(Decimal(1).scaleb(-places), ROUND_HALF_EVEN)
-        shown = rounded.scaleb(-scale)
+    # The cell's value is reported whole, to the 15 significant digits Excel ever shows (no float
+    # noise: 0.1 + 0.2 is 0.3). The format's places are its decimals, and the report shows it rounded
+    # to them as Excel does, half away from zero. A percentage is shown x100, so its fraction has two
+    # more; a cell shown in thousands or millions is shown so too, with the scale that undoes it.
+    exact = Decimal(f"{value:.15g}") if isinstance(value, float) else Decimal(value)
+    fb.setRounding(Rounding.HALF_UP)
     if cell_is_percentage:
-        fb.setPercentageFact(rounded, places)
-    else:
-        fb.setValue(
-            int(shown) if shown == shown.to_integral() else float(shown)
-        ).setDecimals(places)
-        if scale:
-            fb.setScale(scale)
+        fb.setPercentageFact(exact, decimals if decimals == "INF" else decimals + 2)
+        return
+    scale = get_display_scale(cell)
+    shown = exact.scaleb(-scale)
+    fb.setValue(int(shown) if shown == shown.to_integral() else float(shown))
+    fb.setDecimals(decimals if decimals == "INF" else decimals - scale)
+    if scale:
+        fb.setScale(scale)

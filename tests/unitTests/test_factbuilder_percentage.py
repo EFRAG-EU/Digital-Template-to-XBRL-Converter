@@ -71,6 +71,6 @@ def test_the_whole_number_form_is_not_scaled() -> None:
 
 @pytest.mark.parametrize("float_input", [0.07, 0.29, 0.1234])
 def test_the_float_route_is_the_legacy_arithmetic(float_input: float) -> None:
-    """setPercentageValue keeps float x100, so INF Excel percentages stay byte-for-byte as before."""
+    """setPercentageValue keeps float x100, as before; the Excel reader uses setPercentageFact."""
     value, _ = _held(_builder().setPercentageValue(float_input, 2))
     assert value == float_input * 10**2
