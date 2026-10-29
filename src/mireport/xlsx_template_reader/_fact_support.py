@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from decimal import Decimal
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -16,8 +17,9 @@ if TYPE_CHECKING:
 
 from mireport.conversionresults import MessageType
 from mireport.exceptions import AmbiguousComponentException, InlineReportException
+from mireport.localise import Rounding
 from mireport.xlsx_template_reader._enumerations import resolveMemberByLabel
-from mireport.xlsx_template_reader.util import get_decimal_places
+from mireport.xlsx_template_reader.util import get_decimal_places, get_display_scale
 
 L = logging.getLogger(__name__)
 
@@ -134,7 +136,18 @@ def processNumeric(
                 ref=holder.excelRef(cell),
             )
 
+    # The cell's value is reported whole, to the 15 significant digits Excel ever shows (no float
+    # noise: 0.1 + 0.2 is 0.3). The format's places are its decimals, and the report shows it rounded
+    # to them as Excel does, half away from zero. A percentage is shown x100, so its fraction has two
+    # more; a cell shown in thousands or millions is shown so too, with the scale that undoes it.
+    exact = Decimal(f"{value:.15g}") if isinstance(value, float) else Decimal(value)
+    fb.setRounding(Rounding.HALF_UP)
     if cell_is_percentage:
-        fb.setPercentageValue(value, decimals, inputIsDecimalForm=True)
-    else:
-        fb.setDecimals(decimals)
+        fb.setPercentageFact(exact, decimals if decimals == "INF" else decimals + 2)
+        return
+    scale = get_display_scale(cell)
+    shown = exact.scaleb(-scale)
+    fb.setValue(int(shown) if shown == shown.to_integral() else float(shown))
+    fb.setDecimals(decimals if decimals == "INF" else decimals - scale)
+    if scale:
+        fb.setScale(scale)

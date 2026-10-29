@@ -3,7 +3,10 @@ from decimal import Decimal
 import pytest
 from babel.core import Locale
 
-from mireport.localise import localise_and_format_number  # adjust import as needed
+from mireport.localise import (  # adjust import as needed
+    Rounding,
+    localise_and_format_number,
+)
 
 
 @pytest.mark.parametrize(
@@ -43,6 +46,28 @@ def test_inf_no_locale(number, expected):
 
 
 @pytest.mark.parametrize(
+    "number,decimal_places,rounding,expected",
+    [
+        (12.5, 0, Rounding.HALF_EVEN, "12"),
+        (12.5, 0, Rounding.HALF_UP, "13"),
+        (-12.5, 0, Rounding.HALF_UP, "-13"),
+        (1.005, 2, Rounding.HALF_UP, "1.01"),
+        (1234567, -3, Rounding.HALF_EVEN, "1,235,000"),  # negative places round too
+        (1234500, -3, Rounding.HALF_EVEN, "1,234,000"),
+        (1234500, -3, Rounding.HALF_UP, "1,235,000"),
+    ],
+)
+@pytest.mark.parametrize("locale", [None, Locale("en", "US")], ids=["none", "en_US"])
+def test_finite_decimal_places_round_as_asked(
+    number, decimal_places, rounding, expected, locale
+):
+    result = localise_and_format_number(
+        number, decimal_places, locale, rounding=rounding
+    )
+    assert result == expected
+
+
+@pytest.mark.parametrize(
     "number,decimal_places,expected",
     [
         # Finite decimal places with locale (en_US)
@@ -64,15 +89,9 @@ def test_finite_decimal_places_with_locale(number, decimal_places, expected):
     [
         # INF with locale (preserve digits exactly)
         (1234.5678, "1,234.5678"),
-        pytest.param(
-            Decimal("1234.5678900"),
-            "1,234.5678900",
-            marks=pytest.mark.xfail(
-                reason="Trailing zeros are truncated unexpectedly by babel"
-            ),
-        ),
+        (Decimal("1234.5678900"), "1,234.5678900"),
         ("1e-6", "0.000001"),
-        (-1200.0, "-1,200"),
+        (-1200.0, "-1,200.0"),  # as without a locale
     ],
 )
 def test_inf_with_locale(number, expected):

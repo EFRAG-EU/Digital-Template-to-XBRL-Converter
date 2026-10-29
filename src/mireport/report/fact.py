@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, NamedTuple, Protocol, runtime_checkable
 from markupsafe import Markup, escape
 
 from mireport.exceptions import InlineReportException
-from mireport.localise import localise_and_format_number
+from mireport.localise import Rounding, localise_and_format_number
 from mireport.report.aoix import fact_to_aoix
 from mireport.report.model import (
     ExplicitDimensionValue,
@@ -64,6 +64,7 @@ class Fact:
         unit: Unit | None = None,
         decimals: DecimalPlaces | None = None,
         scale: int | None = None,
+        rounding: Rounding | None = None,
         explicit_dimensions: Iterable[ExplicitDimensionValue] = (),
         typed_dimensions: Iterable[TypedDimensionValue] = (),
         enumeration: Iterable[Concept] | None = None,
@@ -83,6 +84,9 @@ class Fact:
         self.unit: Unit | None = unit
         self.decimals: DecimalPlaces | None = decimals
         self.scale: int | None = scale
+        # How the shown number rounds to its decimals, as the fact's source does; None is half to
+        # even. Not an XBRL aspect, so not part of what makes facts equal or duplicates.
+        self.rounding: Rounding | None = rounding
         # In the order they were given: that is the order they are written in, so reordering
         # them would change the output. Identity (context_key) does not depend on the order.
         self.explicit_values: tuple[ExplicitDimensionValue, ...] = tuple(
@@ -193,14 +197,12 @@ class Fact:
         return output
 
     def _format_numeric_value(self, negated: bool = False) -> Markup:
-        # What is written is what is tagged: the document's number *is* the fact's value. So the
-        # digits shown follow the decimals (less any scale), except that 0 decimals, like none, shows
-        # the value whole -- rounding 12.5 to "12" would change the fact, not just its look.
-        decimal_places: DecimalPlaces
-        if self.decimals and self.decimals != "INF" and self.scale:
-            decimal_places = self.decimals + self.scale
-        else:
-            decimal_places = self.decimals or "INF"
+        # What is written is what is tagged, so the document's number is the value rounded to its
+        # decimals (less any scale; 0 included) and padded to them. That is the same fact: XBRL reads
+        # 12.3456 and 12.35, both at decimals 2, as one value. It rounds as the fact's source does.
+        decimal_places: DecimalPlaces = "INF"
+        if self.decimals is not None and self.decimals != "INF":
+            decimal_places = self.decimals + (self.scale or 0)
 
         try:
             number: int | float | str | Decimal
@@ -218,7 +220,10 @@ class Fact:
             if negated:
                 number = -Decimal(str(number))
             output = localise_and_format_number(
-                number, decimal_places, self._report.outputLocale
+                number,
+                decimal_places,
+                self._report.outputLocale,
+                rounding=self.rounding or Rounding.HALF_EVEN,
             )
         except (ValueError, TypeError, ArithmeticError) as e:
             raise InlineReportException(

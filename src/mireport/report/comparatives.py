@@ -267,6 +267,8 @@ def _onOurTaxonomy(
         builder.setDecimals(fact.decimals)
     if fact.scale is not None:
         builder.setScale(fact.scale)
+    if fact.rounding is not None:
+        builder.setRounding(fact.rounding)
     if fact.enumeration is not None:
         builder.setEnumerationSet(ours[m.qname] for m in fact.enumeration)
     return builder

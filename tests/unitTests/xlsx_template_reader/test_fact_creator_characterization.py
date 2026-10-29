@@ -27,8 +27,16 @@ from mireport.conversionresults import (
 )
 from mireport.data.disclosures import VSME_DEFAULTS
 from mireport.exceptions import AmbiguousComponentException, InlineReportException
+from mireport.localise import Rounding
 from mireport.report import InlineReport
-from mireport.taxonomy import Taxonomy, getTaxonomy, loadBuiltInTaxonomyJSON
+from mireport.report.fact import Fact
+from mireport.report.model import FactPeriod, PeriodPart
+from mireport.taxonomy import (
+    PeriodType,
+    Taxonomy,
+    getTaxonomy,
+    loadBuiltInTaxonomyJSON,
+)
 from mireport.xbrljson_reader import XbrlJsonProcessor
 from mireport.xbrljson_reader.document import XbrlJsonDocument
 from mireport.xbrljson_reader.processor import EXTENSION_NS
@@ -690,6 +698,82 @@ class TestProcessNumeric:
             Messenger(creator_env.results), holder, _makeCell(12, "General"), fb, 12
         )
         assert fb._decimals == "INF"
+
+
+@pytest.mark.parametrize(
+    (
+        "number_format",
+        "cell_value",
+        "percentage",
+        "value",
+        "decimals",
+        "scale",
+        "shown",
+    ),
+    [
+        (
+            "0",
+            12.5,
+            False,
+            12.5,
+            0,
+            None,
+            "13",
+        ),  # half away from zero, as Excel shows it
+        ("0.00", 12.3456, False, 12.3456, 2, None, "12.35"),
+        ("0.00", 1.005, False, 1.005, 2, None, "1.01"),  # the float is under 1.005
+        ("General", 12.3456, False, 12.3456, "INF", None, "12.3456"),
+        ("General", 0.1 + 0.2, False, 0.3, "INF", None, "0.3"),  # 15 digits, as Excel
+        ("0%", 0.125, True, 12.5, 2, -2, "13"),
+        ("0.00%", 0.12345, True, 12.345, 4, -2, "12.35"),
+        ("0.00%", 0.07, True, 7, 4, -2, "7.00"),  # not 7.000000000000001
+        ("#,##0,", 1234567, False, 1234.567, -3, 3, "1,235"),  # thousands
+        ("#,##0.0,,", 1234567, False, 1.234567, -5, 6, "1.2"),  # millions
+    ],
+)
+def test_the_reader_keeps_the_value_and_shows_what_the_cell_shows(
+    creator_env,
+    taxonomy,
+    number_format,
+    cell_value,
+    percentage,
+    value,
+    decimals,
+    scale,
+    shown,
+):
+    """A numeric cell's value is kept, to Excel's 15 digits, at its format's places: the report shows
+    it rounded to them as Excel does, a percentage x100 and a cell shown in thousands or millions
+    with the scale."""
+    concept = next(
+        c
+        for c in sorted(taxonomy.concepts, key=str)
+        if c.isReportable
+        and c.isNumeric
+        and c.periodType == PeriodType.Duration
+        and (c.dataType.localName == "percentItemType") == percentage
+    )
+    report = creator_env.report
+    fb = report.getFactBuilder().setConcept(concept).setValue(cell_value)
+    processNumeric(
+        Messenger(creator_env.results),
+        next(iter(creator_env.bindings.concept_map.values())),
+        _makeCell(cell_value, number_format),
+        fb,
+        cell_value,
+    )
+    assert (fb._value, fb._decimals, fb._scale) == (value, decimals, scale)
+    assert fb._rounding is Rounding.HALF_UP
+    fact = Fact(
+        concept,
+        fb._value,
+        report,
+        period=FactPeriod(report.defaultReportPeriod, PeriodPart.Whole),
+        decimals=fb._decimals,
+        scale=fb._scale,
+        rounding=fb._rounding,
+    )
+    assert fact.html_format_value() == shown
 
 
 class TestValidateNumericNonFinite:

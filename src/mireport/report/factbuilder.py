@@ -7,6 +7,7 @@ from decimal import Decimal
 from typing import TYPE_CHECKING
 
 from mireport.exceptions import InlineReportException
+from mireport.localise import Rounding
 from mireport.report.aoix import coerce_boolean
 from mireport.report.fact import Fact, Provenance
 from mireport.report.model import (
@@ -58,6 +59,7 @@ class FactBuilder:
         self._unit: Unit | None = None
         self._decimals: DecimalPlaces | None = None
         self._scale: int | None = None
+        self._rounding: Rounding | None = None
         self._explicit: dict[Concept, Concept] = {}
         self._typed: dict[Concept, TypedDimensionValue] = {}
         self._enumeration: tuple[Concept, ...] | None = None
@@ -77,6 +79,7 @@ class FactBuilder:
         fb._unit = fact.unit
         fb._decimals = fact.decimals
         fb._scale = fact.scale
+        fb._rounding = fact.rounding
         fb._explicit = {d.dimension: d.member for d in fact.explicit_values}
         fb._typed = {t.dimension: t for t in fact.typed_values}
         fb._enumeration = fact.enumeration
@@ -185,6 +188,12 @@ class FactBuilder:
 
     def setScale(self, scale: int) -> Self:
         self._scale = scale
+        return self
+
+    def setRounding(self, rounding: Rounding) -> Self:
+        """How the number is rounded to its decimals when it is shown: as its source rounds it
+        (Excel half up). Without one it rounds half to even."""
+        self._rounding = rounding
         return self
 
     def setNamedPeriod(self, periodName: str, *, at: PeriodPart | None = None) -> Self:
@@ -432,6 +441,7 @@ class FactBuilder:
             unit=unit,
             decimals=None if self._nil else self._decimals,
             scale=None if self._nil else self._scale,
+            rounding=None if self._nil else self._rounding,
             explicit_dimensions=(
                 ExplicitDimensionValue(d, m) for d, m in self._explicit.items()
             ),
