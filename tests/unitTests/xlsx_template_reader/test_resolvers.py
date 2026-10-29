@@ -468,3 +468,51 @@ def test_other_pollutants_template_name_binds_to_vs_typed_axis():
     )
     assert concept is not None
     assert concept.qname.localName == "NameOfOtherPollutantTypedAxis"
+
+
+SITE_AXIS = "IdentifierOfSiteTypedAxis"
+BIO_TABLE = "SitesInBiodiversitySensitiveAreasTable"
+SCOPED = f"{SITE_AXIS}_{BIO_TABLE}"
+
+
+def _bindNames(taxonomy, names):
+    """Bind an in-memory workbook holding just the given named ranges."""
+    wb = Workbook()
+    ws = wb.active
+    assert ws is not None
+    ws.title = "S"
+    for name, ref in names.items():
+        attr = f"{quote_sheetname('S')}!{absolute_coordinate(ref)}"
+        wb.defined_names[name] = DefinedName(name, attr_text=attr)
+    results = _results()
+    bindings = WorkbookBinder(WorkbookReader(wb, results), taxonomy, results).bind()
+    return bindings, results
+
+
+class TestConceptTableNames:
+    """Concept_Table names a concept's range in that table, so a concept can
+    have a range in each of several tables."""
+
+    NOT_INSIDE = f"Named range {SCOPED} names table {BIO_TABLE} but is not inside its named range."
+
+    def test_binds_the_concept_inside_its_table(self, taxonomy):
+        bindings, results = _bindNames(taxonomy, {BIO_TABLE: "A1:F6", SCOPED: "A2:A6"})
+        [table] = bindings.tables
+        assert [
+            (c.definedName.name, c.concept.qname.localName)
+            for c in table.typedDimensions
+        ] == [(SCOPED, SITE_AXIS)]
+        assert not _messages(results, Severity.ERROR)
+
+    def test_outside_its_table_is_an_error(self, taxonomy):
+        _, results = _bindNames(taxonomy, {BIO_TABLE: "A1:F6", SCOPED: "H2:H6"})
+        assert self.NOT_INSIDE in _messages(results, Severity.ERROR)
+
+    def test_inside_another_table_is_an_error(self, taxonomy):
+        bindings, results = _bindNames(
+            taxonomy, {"ListOfSitesTable": "A1:F6", SCOPED: "A2:A6"}
+        )
+        assert SCOPED not in {
+            c.definedName.name for t in bindings.tables for c in t.conceptRanges
+        }
+        assert self.NOT_INSIDE in _messages(results, Severity.ERROR)

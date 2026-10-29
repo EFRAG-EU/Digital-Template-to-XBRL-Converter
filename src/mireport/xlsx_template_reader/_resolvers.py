@@ -238,11 +238,13 @@ class XBRLTableResolver:
         unit_map: dict[Concept, XbrlConceptCellRangeMetadata],
         candidates_by_ws: dict[Worksheet, list[XbrlConceptCellRangeMetadata]],
         concepts_in_excel: frozenset[Concept],
+        table_scope: dict[XbrlConceptCellRangeMetadata, Concept] | None = None,
     ) -> None:
         self._ctx = ctx
         self._unit_map = unit_map
         self._candidates_by_ws = candidates_by_ws
         self._concepts_in_excel = concepts_in_excel
+        self._table_scope = table_scope or {}
 
     def resolve(self, table: XbrlConceptCellRangeMetadata) -> TableBinding | None:
         """Return the TableBinding, or None if an overlap conflict makes it unusable."""
@@ -265,7 +267,8 @@ class XBRLTableResolver:
         extras: set[XbrlConceptCellRangeMetadata] = set()
         for crm in self._candidates_by_ws.get(table.worksheet, ()):
             if table.contains(crm):
-                if crm.concept in permitted:
+                scope = self._table_scope.get(crm, table.concept)
+                if crm.concept in permitted and scope == table.concept:
                     candidates.append(crm)
                 else:
                     extras.add(crm)
