@@ -560,3 +560,22 @@ class TestBindingMessagesSayWhere:
             taxonomy, {"BasisForPreparation_BasisForPreparation": "B2"}
         )
         assert _refs(results, "Domain member qualification") == ["'S'!$B$2"]
+
+
+def test_member_presets_count_as_their_dimension_being_found():
+    """A table whose cells all set its axis with Concept_Member names has no
+    axis range, and doesn't need one."""
+    vs = getTaxonomy(VS_DRAFT_ENTRY_POINT)
+    _, results = _bindNames(
+        vs,
+        {
+            "EstimatedAbsoluteGreenhouseGasEmissionsTable": "A1:F6",
+            "GrossScope1GreenhouseGasEmissions_BaselineYearMember": "B2",
+        },
+    )
+    [missing] = [
+        m.messageText
+        for m in results.messages
+        if "have not been found" in m.messageText
+    ]
+    assert "ReportingScopesAxis" not in missing

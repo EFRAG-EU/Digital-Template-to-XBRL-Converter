@@ -147,8 +147,13 @@ class WorkbookBinder:
 
         ctx = ExcelCellBindingContext(reader, self._msg, taxonomy)
 
+        # A dimension set by Concept_Member names needs no range of its own.
         table_resolver = XBRLTableResolver(
-            ctx, unit_map, candidates_by_ws, concepts_in_excel, table_scope
+            ctx,
+            unit_map,
+            candidates_by_ws,
+            concepts_in_excel.union(*(dims.keys() for dims in preset_dims.values())),
+            table_scope,
         )
         tables: list[TableBinding] = [
             binding
