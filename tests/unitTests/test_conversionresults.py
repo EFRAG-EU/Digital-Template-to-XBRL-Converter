@@ -341,3 +341,50 @@ def test_isXbrlValid_mixed_message_types(builder):
     result = builder.build()
     # Only XBRL validation errors matter for isXbrlValid
     assert result.isXbrlValid
+
+
+class TestExcelParsingWarningsAsDevInfo:
+    @pytest.fixture
+    def demoting(self):
+        return ConversionResultsBuilder(excelParsingWarningsAsDevInfo=True)
+
+    def test_excel_parsing_warning_becomes_dev_info(self, demoting):
+        demoting.addMessage("Modified", Severity.WARNING, MessageType.ExcelParsing)
+        (msg,) = demoting.messages
+        assert msg.messageType is MessageType.DevInfo
+        assert msg.severity is Severity.WARNING
+        assert not demoting.userMessages
+        assert demoting.developerMessages == [msg]
+        assert not demoting.hasWarnings()
+
+    @pytest.mark.parametrize(
+        ("severity", "mtype"),
+        [
+            (Severity.ERROR, MessageType.ExcelParsing),
+            (Severity.INFO, MessageType.ExcelParsing),
+            (Severity.WARNING, MessageType.Conversion),
+            (Severity.WARNING, MessageType.XbrlValidation),
+        ],
+    )
+    def test_other_messages_unchanged(self, demoting, severity, mtype):
+        demoting.addMessage("Other", severity, mtype)
+        (msg,) = demoting.messages
+        assert msg.messageType is mtype
+
+    def test_added_messages_reclassified(self, demoting):
+        demoting.addMessages(
+            [
+                Message("W", Severity.WARNING, MessageType.ExcelParsing, "c", "A1"),
+                Message("E", Severity.ERROR, MessageType.ExcelParsing),
+            ]
+        )
+        w, e = demoting.messages
+        assert (w.messageType, w.severity) == (MessageType.DevInfo, Severity.WARNING)
+        assert (w.messageText, w.conceptQName, w.excelReference) == ("W", "c", "A1")
+        assert e.messageType is MessageType.ExcelParsing
+
+    def test_off_by_default(self, builder):
+        builder.addMessage("Modified", Severity.WARNING, MessageType.ExcelParsing)
+        builder.addMessages([Message("W", Severity.WARNING, MessageType.ExcelParsing)])
+        assert all(m.messageType is MessageType.ExcelParsing for m in builder.messages)
+        assert builder.hasWarnings()

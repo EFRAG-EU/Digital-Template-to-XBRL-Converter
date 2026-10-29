@@ -298,7 +298,11 @@ class ConversionResults:
 
 class ConversionResultsBuilder(ConversionResults):
     def __init__(
-        self, conversionId: str | None = None, consoleOutput: bool = False
+        self,
+        conversionId: str | None = None,
+        consoleOutput: bool = False,
+        *,
+        excelParsingWarningsAsDevInfo: bool = False,
     ) -> None:
         if conversionId is not None:
             self.conversionId = conversionId
@@ -308,6 +312,9 @@ class ConversionResultsBuilder(ConversionResults):
         self.cellsQueriedBuilder: set[tuple[str, int, int]] = set()
         self.cellsPopulatedBuilder: set[tuple[str, int, int]] = set()
         self.consoleOutput = consoleOutput
+        # A deployment can keep Excel parsing warnings out of the user's view
+        # (for a demo, say): they become developer messages, still warnings.
+        self.excelParsingWarningsAsDevInfo = excelParsingWarningsAsDevInfo
 
     def addCellQueries(self, delta: Iterable[tuple[str, int, int]]) -> Self:
         self.cellsQueriedBuilder.update(delta)
@@ -343,7 +350,7 @@ class ConversionResultsBuilder(ConversionResults):
             Message(
                 message_text,
                 severity,
-                message_type,
+                self._reclassify(severity, message_type),
                 concept_str_or_none,
                 excel_reference,
             )
@@ -354,8 +361,23 @@ class ConversionResultsBuilder(ConversionResults):
         return ProcessingContext(self, name)
 
     def addMessages(self, messages: Iterable[Message]) -> Self:
-        self.messages.extend(messages)
+        for m in messages:
+            mtype = self._reclassify(m.severity, m.messageType)
+            if mtype is not m.messageType:
+                m = Message(
+                    m.messageText, m.severity, mtype, m.conceptQName, m.excelReference
+                )
+            self.messages.append(m)
         return self
+
+    def _reclassify(self, severity: Severity, messageType: MessageType) -> MessageType:
+        if (
+            self.excelParsingWarningsAsDevInfo
+            and severity is Severity.WARNING
+            and messageType is MessageType.ExcelParsing
+        ):
+            return MessageType.DevInfo
+        return messageType
 
     @property
     def conversionSuccessful(self) -> bool:

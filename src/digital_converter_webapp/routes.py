@@ -273,7 +273,12 @@ def convert(id: str) -> Response:
                     return migrationResponse
 
             results = doConversion(
-                conv, getArelle(), current_app.config["PDF_SUPPLEMENTARY_MODE"]
+                conv,
+                getArelle(),
+                current_app.config["PDF_SUPPLEMENTARY_MODE"],
+                excelParsingWarningsAsDevInfo=current_app.config[
+                    "EXCEL_PARSING_WARNINGS_AS_DEVINFO"
+                ],
             )
             if conv.has_partial_fact_concepts and not conv.has_external_values:
                 return make_response(

@@ -57,6 +57,8 @@ def doConversion(
     conv: Conversion,
     arelle: ArelleReportProcessor,
     pdfMode: PdfSupplementaryMode,
+    *,
+    excelParsingWarningsAsDevInfo: bool = False,
 ) -> ConversionResults:
     """Drive the full Excel → validated Inline XBRL report pipeline.
 
@@ -66,7 +68,10 @@ def doConversion(
     the generated report package as ``conv.zip`` and the report as xBRL-JSON,
     written from the report itself, as ``conv.json``; Arelle validates both.
     """
-    builder = ConversionResultsBuilder(conversionId=conv.id)
+    builder = ConversionResultsBuilder(
+        conversionId=conv.id,
+        excelParsingWarningsAsDevInfo=excelParsingWarningsAsDevInfo,
+    )
     try:
         with builder.processingContext(f"Conversion {conv.id}") as pc:
             report = _loadReport(conv, builder, pc)

@@ -87,6 +87,10 @@ for display needs `pdf2htmlEX` or `pdftohtml` on PATH, or `PDF_CONVERTER_PATH` (
 without any of those they are attached unconverted and a warning is issued. The web app also has
 `FLASK_ENABLE_SUPPLEMENTARY_PDFS`, off unless set true, which shows the upload field.
 
+`FLASK_EXCEL_PARSING_WARNINGS_AS_DEVINFO` (web app, off by default) records Excel Parsing warnings
+as Dev Info instead, so a deployment (a demo, say) shows users none of them; they stay warnings in
+the developer messages and no longer count towards the RAG status.
+
 ### Regenerating taxonomy data
 
 Taxonomy metadata is **pre-baked JSON** in `src/mireport/data/taxonomies/`; nothing at runtime reads
