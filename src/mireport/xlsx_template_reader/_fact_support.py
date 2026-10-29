@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Mapping
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
@@ -14,6 +15,7 @@ if TYPE_CHECKING:
     from mireport.xlsx_template_reader._constants import CellType
     from mireport.xlsx_template_reader._messages import Messenger
     from mireport.xlsx_template_reader._ranges import XbrlConceptCellRangeMetadata
+    from mireport.xlsx_template_reader._reader import WorkbookReader
 
 from mireport.conversionresults import MessageType
 from mireport.exceptions import AmbiguousComponentException, InlineReportException
@@ -75,6 +77,26 @@ def resolveMemberWithMessages(
             ref=holder.excelRef(cell),
         )
     return match.concept
+
+
+def applyPresetDimensions(
+    factBuilder: FactBuilder,
+    presets: Mapping[Concept, Concept],
+    report: InlineReport,
+    reader: WorkbookReader,
+) -> None:
+    """Set the dimensions a Concept_Member name presets (unless the member is the
+    default) and, where a range is named for the member, the member's named period."""
+    for dim, member in presets.items():
+        default = report.taxonomy.getDimensionDefault(dim)
+        if default is None or member != default:
+            factBuilder.setExplicitDimension(dim, member)
+
+        namedPeriod = member.qname.localName
+        if reader.getDefinedName(namedPeriod) is not None and report.hasNamedPeriod(
+            namedPeriod
+        ):
+            factBuilder.setNamedPeriod(namedPeriod)
 
 
 def addFactToReport(

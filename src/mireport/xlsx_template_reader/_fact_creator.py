@@ -27,6 +27,7 @@ from mireport.xlsx_template_reader._constants import (
 )
 from mireport.xlsx_template_reader._fact_support import (
     addFactToReport,
+    applyPresetDimensions,
     processNumeric,
     resolveMemberWithMessages,
 )
@@ -309,16 +310,7 @@ class FactCreator:
                     fb.setEnumerationValue(member)
 
             if (presetDimensions := preset_dims.get(stuff)) is not None:
-                for dim, dimValue in presetDimensions.items():
-                    defaultValue = self.taxonomy.getDimensionDefault(dim)
-                    if defaultValue is None or dimValue != defaultValue:
-                        fb.setExplicitDimension(dim, dimValue)
-
-                    namedPeriod = dimValue.qname.localName
-                    if self._reader.getDefinedName(
-                        namedPeriod
-                    ) is not None and self._report.hasNamedPeriod(namedPeriod):
-                        fb.setNamedPeriod(namedPeriod)
+                applyPresetDimensions(fb, presetDimensions, self._report, self._reader)
 
             self._pending.pop(dn)
             if external_value:
