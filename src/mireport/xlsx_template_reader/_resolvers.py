@@ -238,11 +238,13 @@ class XBRLTableResolver:
         unit_map: dict[Concept, XbrlConceptCellRangeMetadata],
         candidates_by_ws: dict[Worksheet, list[XbrlConceptCellRangeMetadata]],
         concepts_in_excel: frozenset[Concept],
+        table_scope: dict[XbrlConceptCellRangeMetadata, Concept] | None = None,
     ) -> None:
         self._ctx = ctx
         self._unit_map = unit_map
         self._candidates_by_ws = candidates_by_ws
         self._concepts_in_excel = concepts_in_excel
+        self._table_scope = table_scope or {}
 
     def resolve(self, table: XbrlConceptCellRangeMetadata) -> TableBinding | None:
         """Return the TableBinding, or None if an overlap conflict makes it unusable."""
@@ -259,13 +261,15 @@ class XBRLTableResolver:
             msg.warning(
                 f"Expected Dimensions or Primary Items for hypercube {table_name} have not been found: {conceptsToText(missing)}.",
                 MessageType.DevInfo,
+                ref=table,
             )
 
         candidates: list[XbrlConceptCellRangeMetadata] = []
         extras: set[XbrlConceptCellRangeMetadata] = set()
         for crm in self._candidates_by_ws.get(table.worksheet, ()):
             if table.contains(crm):
-                if crm.concept in permitted:
+                scope = self._table_scope.get(crm, table.concept)
+                if crm.concept in permitted and scope == table.concept:
                     candidates.append(crm)
                 else:
                     extras.add(crm)
@@ -273,9 +277,13 @@ class XBRLTableResolver:
                 extras.add(crm)
 
         if extras:
+            listed = ", ".join(
+                sorted(f"{c.definedName.name} ({c.excelRef()})" for c in extras)
+            )
             msg.warning(
-                f"Extra named ranges found within/overlapping bounds of {table_name} named range but not supported by Hypercube {table.concept.qname}: {extras}.",
+                f"Extra named ranges found within/overlapping bounds of {table_name} named range but not supported by Hypercube {table.concept.qname}: {listed}.",
                 MessageType.DevInfo,
+                ref=table,
             )
 
         conflict = next(
@@ -290,6 +298,7 @@ class XBRLTableResolver:
                 f"{c2.definedName.name} that are neither the same nor disjoint. "
                 "Ignoring table.",
                 MessageType.ExcelParsing,
+                ref=table,
             )
             return None
 
