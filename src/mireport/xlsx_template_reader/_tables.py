@@ -58,6 +58,12 @@ class TableFactCreator:
         self._config = config
         self._units = units
         self._bindings = bindings
+        # For the table being processed: row -> (unset dimensions, the values
+        # that could not be reported for want of them)
+        self._rowsWithoutDimensions: dict[
+            int,
+            tuple[list[XbrlConceptCellRangeMetadata], list[tuple[Concept, object]]],
+        ] = {}
 
     @property
     def taxonomy(self) -> Taxonomy:
@@ -81,6 +87,38 @@ class TableFactCreator:
                         table_binding, priItem, rnum, row, unitHolder, sharedRange
                     ):
                         break
+            self._warnRowsWithoutDimensions(table_binding)
+
+    def _warnRowsWithoutDimensions(self, table_binding: TableBinding) -> None:
+        """One warning per row whose values went unreported for want of a
+        dimension value, pointing at the empty dimension cell. Rows holding
+        nothing but FALSE are left alone: unticked checkboxes come pre-filled."""
+
+        def label(concept: Concept) -> str:
+            return concept.getStandardLabel(
+                fallbackIfMissing=str(concept.qname), removeSuffix=True
+            )
+
+        def text(value: object) -> str:
+            return str(value).upper() if isinstance(value, bool) else str(value)
+
+        for rnum, (unset, values) in sorted(self._rowsWithoutDimensions.items()):
+            if all(value is False for _, value in values):
+                continue
+            missing = ", ".join(
+                f'"{label(d.concept)}"'
+                + (" selected" if d in table_binding.explicitDimensions else "")
+                for d in unset
+            )
+            dropped = ", ".join(f'"{label(c)}" = {text(v)}' for c, v in values)
+            first = unset[0]
+            keyCell = first.worksheet.cell(row=rnum, column=first.cellRange.min_col)
+            self._msg.warning(
+                f'Row {rnum} of "{label(table_binding.table.concept)}" has no {missing}, so its values were not reported: {dropped}.',
+                MessageType.Conversion,
+                ref=first.excelRef(keyCell),
+            )
+        self._rowsWithoutDimensions.clear()
 
     @staticmethod
     def _unitHolderFor(
@@ -157,21 +195,14 @@ class TableFactCreator:
                 factBuilder, presetDimensions, self._report, self._reader
             )
 
-        all_dims_set = True
-        all_dims_set &= self._addTypedDimensions(
+        unset = self._addTypedDimensions(
             table_binding.typedDimensions, rnum, factBuilder
-        )
-        all_dims_set &= self._addExplicitDimensions(
+        ) + self._addExplicitDimensions(
             table_binding.explicitDimensions, rnum, factBuilder
         )
-        if not all_dims_set:
-            if value:
-                self._msg.warning(
-                    f"Unable to add fact with value '{value}' due to missing dimension values.",
-                    MessageType.Conversion,
-                    concept=priItem.concept,
-                    ref=priItem.excelRef(cell),
-                )
+        if unset:
+            dropped = self._rowsWithoutDimensions.setdefault(rnum, (unset, []))
+            dropped[1].append((concept, value))
             return True
 
         if concept.isNumeric:
@@ -245,51 +276,33 @@ class TableFactCreator:
         typed_dimensions: list[XbrlConceptCellRangeMetadata],
         rnum: int,
         factBuilder: FactBuilder,
-    ) -> bool:
-        if not typed_dimensions:
-            return True
-
-        dims_set = 0
+    ) -> list[XbrlConceptCellRangeMetadata]:
+        """Set the row's typed dimensions; returns those left unset."""
+        unset: list[XbrlConceptCellRangeMetadata] = []
         for td in typed_dimensions:
-            tdConcept = td.concept
             tdCell = self._reader.getSingleCell(td, row=rnum)
-            if not tdCell:
+            if tdCell is None or (tdValue := tdCell.value) is None:
+                unset.append(td)
                 continue
-            elif (tdValue := tdCell.value) is not None:
-                dims_set += 1
-                if not isinstance(tdValue, FactValue):
-                    tdValue = str(tdValue)
-                factBuilder.setTypedDimension(tdConcept, tdValue)
-            else:
-                self._msg.error(
-                    f"Required typed dimension {tdConcept.qname} not set",
-                    MessageType.Conversion,
-                    ref=td.excelRef(tdCell),
-                )
-        return dims_set == len(typed_dimensions)
+            if not isinstance(tdValue, FactValue):
+                tdValue = str(tdValue)
+            factBuilder.setTypedDimension(td.concept, tdValue)
+        return unset
 
     def _addExplicitDimensions(
         self,
         explicit_dimensions: list[XbrlConceptCellRangeMetadata],
         rnum: int,
         factBuilder: FactBuilder,
-    ) -> bool:
-        if not explicit_dimensions:
-            return True
-
-        dims_set = 0
+    ) -> list[XbrlConceptCellRangeMetadata]:
+        """Set the row's explicit dimensions; returns those left unset (an
+        unresolvable member is also reported as an error)."""
+        unset: list[XbrlConceptCellRangeMetadata] = []
         for ed in explicit_dimensions:
             edConcept = ed.concept
             edCell = self._reader.getSingleCell(ed, row=rnum)
-
-            if not edCell:
-                continue
-            elif (edValue := edCell.value) is None:
-                self._msg.error(
-                    f"Required explicit dimension {edConcept.qname} not set. Cell value '{edValue}'",
-                    MessageType.Conversion,
-                    ref=ed.excelRef(edCell),
-                )
+            if edCell is None or (edValue := edCell.value) is None:
+                unset.append(ed)
                 continue
 
             try:
@@ -307,11 +320,11 @@ class TableFactCreator:
                 )
             if match is not None:
                 factBuilder.setExplicitDimension(edConcept, match.concept)
-                dims_set += 1
             else:
+                unset.append(ed)
                 self._msg.error(
                     f"Required explicit dimension {edConcept.qname} not set. Cell value '{edValue}'",
                     MessageType.Conversion,
                     ref=ed.excelRef(edCell),
                 )
-        return dims_set == len(explicit_dimensions)
+        return unset
