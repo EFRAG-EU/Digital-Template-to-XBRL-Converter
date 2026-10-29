@@ -35,7 +35,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        suite: [unitTests, integrationTests, webappTests]
+        include:
+          - suite: unitTests
+            args: tests/unitTests
+          - suite: integrationTests
+            args: tests/integrationTests
+          - suite: webappTests
+            args: tests/webappTests --ignore=tests/webappTests/browser
+          # Chromium against the served app: a job of its own, off the
+          # runners busy with the other suites' conversions.
+          - suite: browserTests
+            args: tests/webappTests/browser
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -58,7 +68,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install .[dev] pytest-github-actions-annotate-failures
 
+      - name: Install Chromium for the browser tests
+        if: matrix.suite == 'browserTests'
+        run: python -m playwright install --with-deps chromium
+
       - name: Run ${{ matrix.suite }}
-        run: pytest tests/${{ matrix.suite }} -n auto --dist loadgroup --durations=20 --tb=short --color=yes
+        run: pytest ${{ matrix.args }} -n auto --dist loadgroup --durations=20 --tb=short --color=yes
         env:
           PYTEST_GITHUB_ACTIONS_ANNOTATE: "true"
