@@ -16664,6 +16664,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Prepre\u010devanje nezgod [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Parandalimi i aksidenteve [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Spre\u010davanje nesre\u0107a [member]"
         }
       },
       "nillable": true,
@@ -16709,6 +16715,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Dodatne (splo\u0161ne) zna\u010dilnosti delovne sile [abstract]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Karakteristika shtes\u00eb (t\u00eb p\u00ebrgjithshme) t\u00eb fuqis\u00eb pun\u00ebtore [abstract]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Dodatne (op\u0161te) karakteristike radne snage [abstract]"
         }
       },
       "nillable": true,
@@ -16721,6 +16733,12 @@
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Additional own workforce information human rights policies and processes [abstract]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Informacion shtes\u00eb p\u00ebr fuqin\u00eb pun\u00ebtore, politikat dhe proceset e t\u00eb drejtave t\u00eb njeriut [abstract]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Dodatne informacije o sopstvenoj radnoj snazi - Politike i procesi u oblasti ljudskih prava [abstract]"
         }
       },
       "nillable": true,
@@ -16776,6 +16794,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Ime, ulica, hi\u0161na \u0161tevilka, \u0161tevilka stavbe"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Adresa"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Adresa lokacije"
         }
       },
       "nillable": true,
@@ -16833,6 +16857,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Prizadete skupnosti [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Komunitetet e prekura [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Pogo\u0111ene zajednice [member]"
         }
       },
       "nillable": true,
@@ -16923,6 +16953,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Koli\u010dina emisije [abstract]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Sasia e emetimit [abstract]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Koli\u010dina emisije [abstract]"
         }
       },
       "nillable": true,
@@ -16967,6 +17003,12 @@
           "http://www.xbrl.org/2003/role/label": "Quantidade de emiss\u00e3o [line items]"
         },
         "sl": {
+          "http://www.xbrl.org/2003/role/label": "Koli\u010dina emisije [line items]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Sasia e emetimit [line items]"
+        },
+        "sr": {
           "http://www.xbrl.org/2003/role/label": "Koli\u010dina emisije [line items]"
         }
       },
@@ -17013,6 +17055,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Koli\u010dina emisije v zrak"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Sasia e emetimit n\u00eb aj\u00ebr"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Koli\u010dina emisija u vazduh"
         }
       },
       "nillable": true,
@@ -17059,6 +17107,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Koli\u010dina emisije v prst"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Sasia e emetimit n\u00eb tok\u00eb"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Koli\u010dina emisija u zemlji\u0161te"
         }
       },
       "nillable": true,
@@ -17105,6 +17159,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Koli\u010dina emisije v vodo"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Sasia e emetimit n\u00eb uj\u00eb"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Koli\u010dina emisija u vodu"
         }
       },
       "nillable": true,
@@ -17152,6 +17212,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Koli\u010dina emisij [table]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Sasia e emetimeve [table]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Koli\u010dina emisija [table]"
         }
       },
       "nillable": true,
@@ -17185,6 +17251,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Koli\u010dina emisije drugega onesna\u017eevala [abstract]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Sasia e emetimit t\u00eb ndot\u00ebsve t\u00eb tjer\u00eb [abstract]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Koli\u010dina emisije drugih zaga\u0111uju\u0107ih materija [abstract]"
         }
       },
       "nillable": true,
@@ -17218,6 +17290,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Koli\u010dina emisij drugih onesna\u017eeval [line items]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Sasia e emetimeve t\u00eb ndot\u00ebsve t\u00eb tjer\u00eb [line items]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Koli\u010dina emisija drugih zaga\u0111uju\u0107ih materija [line items]"
         }
       },
       "nillable": true,
@@ -17252,6 +17330,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Koli\u010dina emisije drugega onesna\u017eevala [table]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Sasia e emetimeve t\u00eb ndot\u00ebsve t\u00eb tjer\u00eb [table]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Koli\u010dina emisije drugih zaga\u0111uju\u0107ih materija [table]"
         }
       },
       "nillable": true,
@@ -17284,6 +17368,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Koli\u010dina emisije drugega onesna\u017eevala v zrak"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Sasia e emetimeve t\u00eb ndot\u00ebsve t\u00eb tjer\u00eb n\u00eb aj\u00ebr"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Koli\u010dina emisija drugih zaga\u0111uju\u0107ih materija u vazduh"
         }
       },
       "nillable": true,
@@ -17317,6 +17407,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Koli\u010dina emisije drugega onesna\u017eevala v tla"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Sasia e emetimeve t\u00eb ndot\u00ebsve t\u00eb tjer\u00eb n\u00eb tok\u00eb"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Koli\u010dina emisija drugih zaga\u0111uju\u0107ih materija u zemlji\u0161te"
         }
       },
       "nillable": true,
@@ -17350,6 +17446,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Koli\u010dina emisije drugega onesna\u017eevala v vodo"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Sasia e emetimit t\u00eb ndot\u00ebsve t\u00eb tjer\u00eb n\u00eb uj\u00eb"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Koli\u010dina emisija drugih zaga\u0111uju\u0107ih materija u vodu"
         }
       },
       "nillable": true,
@@ -17396,6 +17498,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Koli\u010dina vode, porabljene na lokacijah na obmo\u010djih vodnega stresa (kubi\u010dni metri m\u00b3)"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Sasia e ujit t\u00eb konsumuar n\u00eb vendet e vendosura n\u00eb zona me kufizime uji (metra kub m\u00b3)"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Koli\u010dina vode potro\u0161ena na lokacijama sme\u0161tenim na podru\u010djima podlo\u017enim vodnom stresu (u kubnim metrima, m\u00b3)"
         }
       },
       "nillable": true,
@@ -17442,6 +17550,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Letni masni tok materialov, ki jih uporablja podjetje [abstract]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Qarkullimi vjetor masiv i materialeve t\u00eb p\u00ebrdorura nga nd\u00ebrmarrja [abstract]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Godi\u0161nji maseni protok relevantnih kori\u0161\u0107enih materijala [abstract]"
         }
       },
       "nillable": true,
@@ -17553,6 +17667,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Sredstva"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Pasurit\u00eb"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Imovina"
         }
       },
       "nillable": true,
@@ -17599,6 +17719,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Ob koncu poro\u010devalskega obdobja [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "N\u00eb fund t\u00eb periudh\u00ebs s\u00eb raportimit [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Na kraju izve\u0161tajnog perioda [member]"
         }
       },
       "nillable": true,
@@ -17659,6 +17785,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Povpre\u010dje v poro\u010devalskem obdobju [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Mesatarja gjat\u00eb periudh\u00ebs s\u00eb raportimit [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Prosek tokom izve\u0161tajnog perioda [member]"
         }
       },
       "nillable": true,
@@ -17703,6 +17835,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Povpre\u010dno letno \u0161tevilo ur usposabljanja na zaposlenega"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Numri mesatar i or\u00ebve vjetore t\u00eb trajnimit p\u00ebr punonj\u00ebs"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Prose\u010dan broj godi\u0161njih sati obuke po zaposlenom"
         }
       },
       "nillable": true,
@@ -17749,6 +17887,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "B10 - Delovna sila - \u0160tevilo ur letnega usposabljanja na zaposlenega v obdobju poro\u010danja [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "B10 - Fuqia pun\u00ebtore - Numri i or\u00ebve vjetore t\u00eb trajnimit p\u00ebr punonj\u00ebs gjat\u00eb periudh\u00ebs s\u00eb raportimit [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "B10 - Radna snaga - Broj godi\u0161njih sati obuke po zaposlenom u izve\u0161tajnom periodu [member]"
         }
       },
       "periodType": "duration"
@@ -17793,6 +17937,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "B10 - Delovna sila - Prejemki in kolektivna pogajanja [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "B10 - Fuqia pun\u00ebtore - Kompenzimi dhe negociatat kolektive [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "B10 - Radna snaga - Naknade i kolektivno pregovaranje [member]"
         }
       },
       "periodType": "duration"
@@ -17837,6 +17987,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "B10 - Delovna sila - Prejemki, kolektivna pogajanja in usposabljanje [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "B10 - Fuqia pun\u00ebtore - Kompenzimi, negociatat kolektive dhe trajnimi [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "B10 - Radna snaga - Naknade, kolektivno pregovaranje i obuka [member]"
         }
       },
       "nillable": true,
@@ -17882,6 +18038,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "B11 - Obsodbe in globe za korupcijo in podkupovanje [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "B11 - D\u00ebnime dhe gjoba p\u00ebr korrupsion dhe ryshfet [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "B11 - Osu\u0111uju\u0107e presude i nov\u010dane kazne za korupciju i podmi\u0107ivanje [member]"
         }
       },
       "nillable": true,
@@ -17927,6 +18089,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "B1 - Druge splo\u0161ne informacije o podjetju [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "B1 - Informacion i p\u00ebrgjithsh\u00ebm i nd\u00ebrmarrjeve t\u00eb tjera [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "B1 - Ostale op\u0161te informacije o privrednom subjektu [member]"
         }
       },
       "periodType": "duration"
@@ -17971,6 +18139,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "B1 - Podlaga za pripravo [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "B1 - Baza p\u00ebr p\u00ebrgatitje [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "B1 - Osnova za pripremu izve\u0161taja [member]"
         }
       },
       "nillable": true,
@@ -18016,6 +18190,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "B1 - Razkritje certifikatov ali znakov, povezanih s trajnostnostjo [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "B1 - Shpalosja e etiketave ose 1ertifikatave t\u00eb lidhura me q\u00ebndrueshm\u00ebrin\u00eb [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "B1 - Obelodanjivanje informacija o sertifikatu (sertifikatima) ili oznaci (oznakama) koje se odnose na odr\u017eivost [member]"
         }
       },
       "periodType": "duration"
@@ -18060,6 +18240,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "B1 - Seznam lokacij [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "B1 - Lista e deg\u00ebve [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "B1 - Spisak lokacija [member]"
         }
       },
       "periodType": "duration"
@@ -18104,6 +18290,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "B1 - Seznam odvisnih dru\u017eb [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "B1 - Lista e filialeve [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "B1 - Spisak zavisnih dru\u0161tava [member]"
         }
       },
       "periodType": "duration"
@@ -18148,6 +18340,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "B2 - Razkritja, specifi\u010dna za zadruge [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "B2 - Shpalosje specifike p\u00ebr bashk\u00ebpunim [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "B2 - Informacije koje posebno obelodanjuju zadruge [member]"
         }
       },
       "periodType": "duration"
@@ -18192,6 +18390,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "B2 - Prakse, politike in prihodnje pobude za prehod na bolj trajnostno gospodarstvo [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "B2 - Praktika, politika dhe iniciativa t\u00eb ardhshme p\u00ebr kalimin drejt nj\u00eb ekonomie m\u00eb t\u00eb q\u00ebndrueshme [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "B2 - Prakse, politike i budu\u0107e inicijative za tranziciju ka odr\u017eivijoj ekonomiji [member]"
         }
       },
       "nillable": true,
@@ -18237,6 +18441,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "B3 - Raz\u010dlenitev porabe energije (v MWh) [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "B3 - Ndarja e konsumit t\u00eb energjis\u00eb (n\u00eb MWh) [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "B3 - Ra\u0161\u010dlanjena ukupna potro\u0161nja energije (u MWh) [member]"
         }
       },
       "periodType": "duration"
@@ -18281,6 +18491,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "B3 - Energija in emisije toplogrednih plinov [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "B3 - Emetimet e energjis\u00eb dhe gazrave serr\u00eb [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "B3 - Energija i emisije gasova sa efektom staklene ba\u0161te [member]"
         }
       },
       "nillable": true,
@@ -18326,6 +18542,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "B3 \u2013 Ocenjene absolutne emisije toplogrednih plinov ob upo\u0161tevanju razli\u010dice Protokola o toplogrednih plinih (GHG Protocol) iz leta 2004 (v tCO2eq) [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "B3 - Emetimet Absolute t\u00eb Gazrave Serr\u00eb t\u00eb Vler\u00ebsuara duke marr\u00eb parasysh Protokollin GHG Versioni 2004 (n\u00eb tCO2eq) [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "B3 - Procenjene emisije gasova sa efektom staklene ba\u0161te u apsolutnom iznosu u skladu sa verzijom Protokola o gasovima sa efektom staklene ba\u0161te iz 2004. (u tCO2eq) [member]"
         }
       },
       "periodType": "duration"
@@ -18370,6 +18592,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "B3 - Skupna poraba energije (v MWh) [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "B3 - Konsumi Total i Energjis\u00eb (n\u00eb MWh) [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "B3 - Ukupna potro\u0161nja energije (u MWh) [member]"
         }
       },
       "periodType": "duration"
@@ -18414,6 +18642,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "B4 - Onesna\u017eevanje zraka, vode in prsti [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "B4 - Ndotja e ajrit, ujit dhe tok\u00ebs [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "B4 - Zaga\u0111enje vazduha, vode i zemlji\u0161ta [member]"
         }
       },
       "nillable": true,
@@ -18459,6 +18693,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "B5 - Biotska raznovrstnost [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "B5 - Biodiversiteti [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "B4 - Biodiverzitet [member]"
         }
       },
       "nillable": true,
@@ -18504,6 +18744,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "B5 - Lokacije na obmo\u010djih z ob\u010dutljivo biotsko raznovrstnostjo [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "B5 - Vende n\u00eb zona t\u00eb ndjeshme ndaj biodiversitetit [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "B5 - Lokacije na podru\u010djima osetljivim sa stanovi\u0161ta biodiverziteta [member]"
         }
       },
       "periodType": "duration"
@@ -18548,6 +18794,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "B6 - Poraba vode [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "B6 - Konsumi i Ujit [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "B6 - Potro\u0161nja vode [member]"
         }
       },
       "periodType": "duration"
@@ -18591,6 +18843,12 @@
           "http://www.xbrl.org/2003/role/label": "B6 \u2013 \u00c1gua [member]"
         },
         "sl": {
+          "http://www.xbrl.org/2003/role/label": "B6 - Voda [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "B6 - Uji [member]"
+        },
+        "sr": {
           "http://www.xbrl.org/2003/role/label": "B6 - Voda [member]"
         }
       },
@@ -18637,6 +18895,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "B6 - Odvzem vode [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "B6 - T\u00ebrheqja e ujit [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "B6 - Zahvatanje vode [member]"
         }
       },
       "periodType": "duration"
@@ -18681,6 +18945,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "B7 - Letni masni tok zadevnih uporabljenih materialov [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "B7 - Rrjedhja vjetore masive e materialeve relevante t\u00eb p\u00ebrdorura [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "B7 - Godi\u0161nji maseni protok relevantnih kori\u0161\u0107enih materijala [member]"
         }
       },
       "periodType": "duration"
@@ -18725,6 +18995,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "B7 - Opis na\u010del kro\u017enega gospodarstva [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "B7 - P\u00ebrshkrimi i parimeve t\u00eb ekonomis\u00eb qarkore [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "B7 - Opis principa cirkularne ekonomije [member]"
         }
       },
       "periodType": "duration"
@@ -18769,6 +19045,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "B7 - Raba virov, kro\u017eno gospodarstvo in ravnanje z odpadki [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "B7 - P\u00ebrdorimi i burimeve, ekonomia qarkore dhe menaxhimi i mbetjeve [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "B7 - Kori\u0161\u0107enje resursa, cirkularna ekonomija i upravljanje otpadom [member]"
         }
       },
       "nillable": true,
@@ -18814,6 +19096,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "B7 - Nastali odpadki [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "B7 - T\u00eb gjeneruara nga mbetjet [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "B7 - Proizvodnja otpada [member]"
         }
       },
       "periodType": "duration"
@@ -18858,6 +19146,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "B8 - Delovna sila - Splo\u0161ne zna\u010dilnosti - Dr\u017eava zaposlitve [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "B8 - Fuqia pun\u00ebtore - Karakteristikat e p\u00ebrgjithshme - Vendi i pun\u00ebsimit [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "B8 - Radna snaga - Op\u0161te karakteristike - Dr\u017eava zaposlenja [member]"
         }
       },
       "periodType": "duration"
@@ -18902,6 +19196,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "B8 - Delovna sila - Splo\u0161ne zna\u010dilnosti - Spol [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "B8 - Fuqia pun\u00ebtore - Karakteristikat e p\u00ebrgjithshme - Gjinia [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "B8 - Radna snaga - Op\u0161te karakteristike - Rod [member]"
         }
       },
       "periodType": "duration"
@@ -18946,6 +19246,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "B8 - Delovna sila - Splo\u0161ne zna\u010dilnosti - Vrsta pogodbe [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "B8 - Fuqia pun\u00ebtore - Karakteristikat e p\u00ebrgjithshme - Lloji i kontrat\u00ebs [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "B8 - Radna snaga - Op\u0161te karakteristike - Vrsta ugovora [member]"
         }
       },
       "periodType": "duration"
@@ -18990,6 +19296,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "B8 - Delovna sila - Splo\u0161ne zna\u010dilnosti [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "B8 - Fuqia pun\u00ebtore - Karakteristikat e p\u00ebrgjithshme [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "B8 - Radna snaga - Op\u0161te karakteristike [member]"
         }
       },
       "nillable": true,
@@ -19035,6 +19347,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "B9 - Delovna sila - Zdravje in varnost [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "B9 - Fuqia pun\u00ebtore - Sh\u00ebndeti dhe siguria [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "B9 - Radna snaga - Bezbednost i zdravlje na radu [member]"
         }
       },
       "nillable": true,
@@ -19080,6 +19398,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Izhodi\u0161\u010dno leto [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Viti baz\u00eb [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Bazna godina [member]"
         }
       },
       "nillable": true,
@@ -19124,6 +19448,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Podlaga za pripravo (le osnovni modul ali osnovni in celovit modul)"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Baza p\u00ebr p\u00ebrgatitje (Vet\u00ebm Moduli Baz\u00eb ose Moduli Baz\u00eb & Gjith\u00ebp\u00ebrfshir\u00ebs)"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Osnova za pripremu izve\u0161taja (samo osnovni modul ili osnovni i sveobuhvatni modul)"
         }
       },
       "nillable": true,
@@ -19175,6 +19505,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Podlaga za pripravo [abstract]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Baza e p\u00ebrgatitjes [abstract]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Osnova za pripremu izve\u0161taja [abstract]"
         }
       },
       "nillable": true,
@@ -19220,6 +19556,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Podlaga za pripravo [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Baza e p\u00ebrgatitjes [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Osnova za pripremu izve\u0161taja [member]"
         }
       },
       "nillable": true,
@@ -19264,6 +19606,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Podlaga za poro\u010danje (konsolidirana ali posami\u010dna osnova)"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Baza p\u00ebr raportim (baz\u00eb e konsoliduar ose individuale)"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Osnova za izve\u0161tavanje (na konsolidovanoj ili pojedina\u010dnoj osnovi)"
         }
       },
       "nillable": true,
@@ -19315,6 +19663,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Podlaga za poro\u010danje [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Baza p\u00ebr raportim [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Osnova za izve\u0161tavanje [member]"
         }
       },
       "nillable": true,
@@ -19390,6 +19744,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Biotska raznovrstnost in ekosistemi [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Biodiversiteti dhe ekosistemet [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Biodiverzitet i ekosistemi [member]"
         }
       },
       "nillable": true,
@@ -19436,6 +19796,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Raz\u010dlenitev letnega masnega toka materialov, ki jih uporablja podjetje [table]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Ndarja e rrjedh\u00ebs vjetore masive t\u00eb materialeve t\u00eb p\u00ebrdorura nga nd\u00ebrmarrja [table]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Ra\u0161\u010dlanjeni godi\u0161nji maseni protok materijala koje koristi privredni subjekt [table]"
         }
       },
       "nillable": true,
@@ -19481,6 +19847,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Raz\u010dlenitev letnega masnega toka materialov, ki jih uporablja podjetje [line items]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Ndarja e rrjedh\u00ebs vjetore masive t\u00eb materialeve t\u00eb p\u00ebrdorura nga nd\u00ebrmarrja [line items]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Ra\u0161\u010dlanjeni godi\u0161nji maseni protok materijala koje koristi privredni subjekt [line items]"
         }
       },
       "nillable": true,
@@ -19526,6 +19898,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Raz\u010dlenitev porabe energije [abstract]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Ndarja e konsumit t\u00eb energjis\u00eb [abstract]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Ra\u0161\u010dlanjena potro\u0161nja energije [abstract]"
         }
       },
       "nillable": true,
@@ -19572,6 +19950,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Raz\u010dlenitev porabe energije [axis]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Ndarja e konsumit t\u00eb energjis\u00eb [axis]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Ra\u0161\u010dlanjena potro\u0161nja energije [axis]"
         }
       },
       "nillable": true,
@@ -19617,6 +20001,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Raz\u010dlenitev porabe energije [line items]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Ndarja e konsumit t\u00eb energjis\u00eb [line items]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Ra\u0161\u010dlanjena potro\u0161nja energije [line items]"
         }
       },
       "nillable": true,
@@ -19663,6 +20053,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Raz\u010dlenitev porabe energije [table]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Ndarja e konsumit t\u00eb energjis\u00eb [table]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Ra\u0161\u010dlanjena potro\u0161nja energije [table]"
         }
       },
       "nillable": true,
@@ -19723,6 +20119,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Poslovno ravnanje [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Sjellja n\u00eb biznes [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Poslovna etika [member]"
         }
       },
       "nillable": true,
@@ -19768,6 +20170,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "C1 - Strategija: Poslovni model in trajnost - Povezane pobude [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "C1 - Strategjia: Modeli i Biznesit dhe Q\u00ebndrueshm\u00ebria - Nisma t\u00eb Lidhura [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "C1 - Strategija: poslovni model i odr\u017eivost - Povezane inicijative [member]"
         }
       },
       "nillable": true,
@@ -19813,6 +20221,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "C2 - Opis praks, politik in prihodnjih pobud za prehod na bolj trajnostno gospodarstvo [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "C2 - P\u00ebrshkrimi i praktikave, politikave dhe nismave t\u00eb ardhshme p\u00ebr kalimin drejt nj\u00eb ekonomie m\u00eb t\u00eb q\u00ebndrueshme [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "C2 - Opis praksi, politika i budu\u0107ih inicijativa za tranziciju ka odr\u017eivijoj ekonomiji [member]"
         }
       },
       "nillable": true,
@@ -19858,6 +20272,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "C3 - Razkritje seznama glavnih ukrepov, s katerimi si subjekt prizadeva dose\u010di svoje cilje [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "C3 - Shpalosja e list\u00ebs s\u00eb veprimeve kryesore q\u00eb entiteti k\u00ebrkon p\u00ebr t\u00eb arritur objektivat e tij [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "C3 - Obelodanjenje spiska glavnih aktivnosti koje privredni subjekat namerava da sprovede da bi ostvario svoje ciljne vrednosti [member]"
         }
       },
       "periodType": "duration"
@@ -19902,6 +20322,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "C3 - Cilji zmanj\u0161anja emisij toplogrednih plinov (v tCO2eq) [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "C3 - Objektivat p\u00ebr reduktimin e gazrave serr\u00eb (n\u00eb tCO2eq) [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "C3 - Ciljne vrednosti smanjenja emisija gasova sa efektom staklene ba\u0161te (u tCO2eq) [member]"
         }
       },
       "periodType": "duration"
@@ -19946,6 +20372,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "C3 - Cilji zmanj\u0161anja emisij toplogrednih plinov in podnebni prehod [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "C3 - Objektivat p\u00ebr reduktimin e GHG dhe tranzicioni klimatik [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "C3 - Ciljne vrednosti smanjenja emisija gasova sa efektom staklene ba\u0161te i klimatske tranzicije [member]"
         }
       },
       "nillable": true,
@@ -19991,6 +20423,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "C3 - Na\u010drt prehoda za podjetja, ki delujejo v sektorjih z velikim vplivom na podnebje [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "C3 - Plani i tranzicionit p\u00ebr nd\u00ebrmarrjet q\u00eb operojn\u00eb n\u00eb sektor\u00eb me ndikim t\u00eb lart\u00eb klimatik [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "C3 - Plan tranzicije za privredne subjekte koji posluju u sektorima sa visokim klimatskim uticajem [member]"
         }
       },
       "periodType": "duration"
@@ -20035,6 +20473,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "C4 - Podnebna tveganja [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "C4 - Rreziqet klimatike [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "C4 - Klimatski rizici [member]"
         }
       },
       "nillable": true,
@@ -20080,6 +20524,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "C5 - Dodatne (splo\u0161ne) zna\u010dilnosti delovne sile [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "C5 - Karakteristika shtes\u00eb (t\u00eb p\u00ebrgjithshme) t\u00eb fuqis\u00eb pun\u00ebtore [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "C5 - Dodatne (op\u0161te) karakteristike radne snage [member]"
         }
       },
       "nillable": true,
@@ -20125,6 +20575,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "C6 - Dodatne informacije o lastni delovni sili - politike in procesi na podro\u010dju \u010dlovekovih pravic [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "C6 - Informacion shtes\u00eb mbi fuqin\u00eb pun\u00ebtore - Politikat dhe proceset e t\u00eb drejtave t\u00eb njeriut [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "C6 - Dodatne informacije o sopstvenoj radnoj snazi - Politike i procesi u oblasti ljudskih prava [member]"
         }
       },
       "nillable": true,
@@ -20170,6 +20626,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "C7 \u2013 Incidenti v zvezi s \u010dlovekovimi pravicami [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "C7 - Incidentet e t\u00eb drejtave t\u00eb njeriut [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "C7 - Incidenti u oblasti ljudskih prava [member]"
         }
       },
       "nillable": true,
@@ -20215,6 +20677,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "C8 \u2013 Prihodki iz dolo\u010denih dejavnosti [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "C8 - T\u00eb ardhurat nga aktivitete t\u00eb caktuara [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "C8 - Prihodi od odre\u0111enih delatnosti [member]"
         }
       },
       "nillable": true,
@@ -20260,6 +20728,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "C9 - Razmerje med spoloma v organu upravljanja [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "C9 - Raporti i diversitetit gjinor n\u00eb organin qeveris\u00ebs [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "C9 - Stepen rodne raznolikosti organa upravljanja [member]"
         }
       },
       "nillable": true,
@@ -20350,6 +20824,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Otro\u0161ko delo [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Puna e kryer nga f\u00ebmij\u00ebt [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "De\u010dji rad [member]"
         }
       },
       "nillable": true,
@@ -20530,6 +21010,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Kro\u017eno gospodarstvo in raba virov [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Ekonomia qarkore dhe p\u00ebrdorimi i resurseve [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Cirkularna ekonomija i kori\u0161\u0107enje resursa [member]"
         }
       },
       "nillable": true,
@@ -20574,6 +21060,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Kraj lokacije"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Qyteti i lokacionit/vendit"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Mesto u kome se nalazi lokacija"
         }
       },
       "nillable": true,
@@ -20619,6 +21111,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Podnebne spremembe [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Ndryshimet klimatike [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Klimatske promene [member]"
         }
       },
       "nillable": true,
@@ -20664,6 +21162,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Podnebna tveganja [abstract]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Rreziqet klimatike [abstract]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Klimatski rizici [abstract]"
         }
       },
       "nillable": true,
@@ -20709,6 +21213,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Konsolidirano [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Konsoliduar [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Konsolidovana osnova [member]"
         }
       },
       "nillable": true,
@@ -20754,6 +21264,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Potro\u0161niki in kon\u010dni uporabniki [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Konsumator\u00ebt dhe p\u00ebrdoruesit p\u00ebrfundimtar\u00eb [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Potro\u0161a\u010di i krajnji korisnici [member]"
         }
       },
       "nillable": true,
@@ -20799,6 +21315,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Obsodbe in globe za korupcijo in podkupovanje [abstract]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "D\u00ebnime dhe gjoba p\u00ebr korrupsion dhe ryshfet [abstract]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Osu\u0111uju\u0107e presude i nov\u010dane kazne za korupciju i podmi\u0107ivanje [abstract]"
         }
       },
       "nillable": true,
@@ -20843,6 +21365,12 @@
           "http://www.xbrl.org/2003/role/label": "Cooperativa [member]"
         },
         "sl": {
+          "http://www.xbrl.org/2003/role/label": "Zadruga [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Bashk\u00ebpunuese [member]"
+        },
+        "sr": {
           "http://www.xbrl.org/2003/role/label": "Zadruga [member]"
         }
       },
@@ -20889,6 +21417,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Razkritja, specifi\u010dna za zadruge [abstract]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Shpalosje specifike mbi bashk\u00ebpunimet [abstract]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Informacije koje posebno obelodanjuju zadruge [abstract]"
         }
       },
       "nillable": true,
@@ -20950,6 +21484,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Dr\u017eava pogodbe o zaposlitvi [axis]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Vendi i kontrat\u00ebs s\u00eb pun\u00ebs [axis]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Dr\u017eava ugovora o radu [axis]"
         }
       },
       "nillable": true,
@@ -20994,6 +21534,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Dr\u017eava glavnega poslovanja in lokacija pomembnih sredstev"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Vendi i operacioneve kryesore dhe vendndodhja e pasurive t\u00eb r\u00ebnd\u00ebsishme"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Dr\u017eava prete\u017enog poslovanja i lokacija zna\u010dajne imovine"
         }
       },
       "nillable": true,
@@ -21297,6 +21843,12 @@
           "http://www.xbrl.org/2003/role/label": "Pa\u00eds do local"
         },
         "sl": {
+          "http://www.xbrl.org/2003/role/label": "Dr\u017eava lokacije"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Shteti i lokacionit"
+        },
+        "sr": {
           "http://www.xbrl.org/2003/role/label": "Dr\u017eava lokacije"
         }
       },
@@ -21603,6 +22155,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Trenutno navedeno [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Si\u00e7 \u00ebsht\u00ebdeklaruar aktualisht [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Trenutno iskazano [member]"
         }
       },
       "nillable": true,
@@ -21677,6 +22235,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Datum sprejetja na\u010drta prehoda za podjetje, ki ga \u0161e ni sprejelo"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Data e miratimit t\u00eb planit t\u00eb tranzicionit p\u00ebr nd\u00ebrmarrje q\u00eb ende nuk ka miratuar planin e tranzicionit"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Datum usvajanja plana tranzicije, za privredne subjekte koji jo\u0161 nisu usvojili plan tranzicije"
         }
       },
       "nillable": true,
@@ -21721,6 +22285,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Opis cilja praks, politik ali prihodnjih pobud"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "P\u00ebrshkrimi i q\u00ebllimi t\u00eb praktikave, politikave ose nismave t\u00eb ardhshme"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Opis ciljeva praksi, politika i budu\u0107ih inicijativa"
         }
       },
       "nillable": true,
@@ -21765,6 +22335,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Opis na\u010drta prehoda za bla\u017eitev podnebnih sprememb, vklju\u010dno z opisom, kako prispeva k zmanj\u0161anju emisij toplogrednih plinov"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "P\u00ebrshkrimi i nj\u00eb plani tranzicioni p\u00ebr zbutjen e ndryshimeve klimatike, duke p\u00ebrfshir\u00eb nj\u00eb shpjegim se si po kontribuon n\u00eb uljen e emetimeve t\u00eb gazrave serr\u00eb"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Opis plana tranzicije za ubla\u017eavanje klimatskih promena, sa obja\u0161njenjem njegovog doprinosa smanjenju emisija gasova sa efektom staklene ba\u0161te"
         }
       },
       "nillable": true,
@@ -21809,6 +22385,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Opis ukrepov, sprejetih za obravnavo potrjenih incidentov"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "P\u00ebrshkrimi i veprimeve t\u00eb nd\u00ebrmarra p\u00ebr t\u00eb adresuar incidentet e konfirmuara"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Opis radnji preduzetih radi re\u0161avanja potvr\u0111enih incidenata"
         }
       },
       "nillable": true,
@@ -21854,6 +22436,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Opis na\u010dela kro\u017enega gospodarstva [abstract]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "P\u00ebrshkrimi i parimit t\u00eb ekonomis\u00eb qarkore [abstract]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Opis principa cirkularne ekonomije [abstract]"
         }
       },
       "nillable": true,
@@ -21898,6 +22486,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Opis s podnebjem povezanih nevarnosti in s podnebjem povezanih prehodnih dogodkov"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "P\u00ebrshkrimi i rreziqeve t\u00eb lidhura me klim\u00ebn dhe ngjarjeve t\u00eb tranzicionit t\u00eb lidhura me klim\u00ebn"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Opis klimatskih pretnji i klimatskih tranzicionih doga\u0111aja"
         }
       },
       "nillable": true,
@@ -21942,6 +22536,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Opis na\u010dina uporabe na\u010del kro\u017enega gospodarstva"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "P\u00ebrshkrimi i m\u00ebnyr\u00ebs se si zbatohen parimet e ekonomis\u00eb qarkore"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Opis primene principa cirkularne ekonomije"
         }
       },
       "nillable": true,
@@ -21986,6 +22586,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Opis klju\u010dnih elementov strategije, ki se nana\u0161ajo na trajnostnostne zadeve ali nanje vplivajo"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "P\u00ebrshkrimi i elementeve ky\u00e7e t\u00eb strategjis\u00eb q\u00eb lidhen ose ndikojn\u00eb n\u00eb \u00e7\u00ebshtjet e q\u00ebndrueshm\u00ebris\u00eb"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Opis klju\u010dnih elemenata strategije koja se odnosi ili uti\u010de na pitanja odr\u017eivosti"
         }
       },
       "nillable": true,
@@ -22030,6 +22636,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Opis omejitev pri razdelitvi dobi\u010dka, glede na vzajemnost ali naravo dejavnosti, ki obsegajo storitve splo\u0161nega gospodarskega pomena (SSGP)"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "P\u00ebrshkrimi i kufijve t\u00eb shp\u00ebrndarjes s\u00eb fitimeve t\u00eb lidhura me natyr\u00ebn mutualiste ose me natyr\u00ebn e aktiviteteve q\u00eb p\u00ebrb\u00ebhen nga sh\u00ebrbimet me interes t\u00eb p\u00ebrgjithsh\u00ebm ekonomik (SGEI)"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Opis ograni\u010denja za raspodelu dobiti vezanih za zadru\u017eni oblik organizovanja ili prirodu aktivnosti koje se sastoje od pru\u017eanja usluga od op\u0161teg ekonomskog interesa  (UOEI)"
         }
       },
       "nillable": true,
@@ -22075,6 +22687,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "npr. klju\u010dni dobavitelji, kupci, distribucijski kanali in potro\u0161niki"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "P\u00ebrshkrimi i marr\u00ebdh\u00ebnieve kryesore t\u00eb biznesit (psh. Furnizuesit ky\u00e7, klient\u00ebt, kanalet e shp\u00ebrndarjes)"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Opis glavnih poslovnih odnosa (kao \u0161to su klju\u010dni dobavlja\u010di, klijenti, kanali distribucije)"
         }
       },
       "nillable": true,
@@ -22120,6 +22738,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Opis praks, politik in prihodnjih pobud za prehod na bolj trajnostno gospodarstvo [abstract]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "P\u00ebrshkrimi i praktikave, politikave dhe nismave t\u00eb ardhshme p\u00ebr kalimin drejt nj\u00eb ekonomie m\u00eb t\u00eb q\u00ebndrueshme [abstract]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Opis praksi, politika i budu\u0107ih inicijativa za tranziciju ka odr\u017eivijoj ekonomiji [abstract]"
         }
       },
       "nillable": true,
@@ -22164,6 +22788,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Opis praks, politik in/ali prihodnjih pobud"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "P\u00ebrshkrimi i praktikave, politikave dhe/ose nismave t\u00eb ardhshme"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Opis praksi, politika i/ili budu\u0107ih inicijativa"
         }
       },
       "nillable": true,
@@ -22208,6 +22838,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Opis pomembnih skupin ponujenih proizvodov in/ali storitev"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "P\u00ebrshkrimi i grupeve t\u00eb r\u00ebnd\u00ebsishme t\u00eb produkteve dhe/ose sh\u00ebrbimeve t\u00eb ofruara"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Opis zna\u010dajnih grupa proizvoda i/ili usluga koje privredni subjekt nudi"
         }
       },
       "nillable": true,
@@ -22253,6 +22889,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "npr. B2B, veleprodaja, maloprodaja, dr\u017eave"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "P\u00ebrshkrimi i tregut/tregjeve t\u00eb r\u00ebnd\u00ebsishme ku operon nd\u00ebrmarrja"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Opis zna\u010dajnih tr\u017ei\u0161ta na kojima privredni subjekt posluje"
         }
       },
       "nillable": true,
@@ -22298,6 +22940,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "To razkritje bi moralo po potrebi vklju\u010devati izdajatelje certifikata ali znaka, datum in oceno"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "P\u00ebrshkrimi i \u00e7ertifikatave ose etiketave t\u00eb lidhura me q\u00ebndrueshm\u00ebrin\u00eb"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Opis sertifikata ili oznaka koje se odnose na odr\u017eivost"
         }
       },
       "nillable": true,
@@ -22342,6 +22990,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Opis u\u010dinkovitega sodelovanja delavcev, uporabnikov ali drugih zainteresiranih strani ali skupnosti pri upravljanju"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "P\u00ebrshkrimi i pjes\u00ebmarrjes efektive t\u00eb pun\u00ebtor\u00ebve, p\u00ebrdoruesve ose pal\u00ebve t\u00eb tjera t\u00eb interesuara ose komuniteteve n\u00eb qeverisje"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Opis su\u0161tinskog u\u010de\u0161\u0107a radnika, korisnika ili drugih zainteresovanih strana ili zajednica u upravljanju"
         }
       },
       "nillable": true,
@@ -22446,6 +23100,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Razkritje vseh drugih okoljskih in/ali za subjekt specifi\u010dnih okoljskih razkritij"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Shpalosja e cfar\u00ebdo shplaosje tjet\u00ebr mjedisore dhe/ose specifike p\u00ebr entitete mjedisore"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Eventualne druge informacije o pitanjima vezanim za \u017eivotnu sredinu ili pitanjima vezanim za \u017eivotnu sredinu koja se konkretno odnose na privrednog subjekta"
         }
       },
       "nillable": true,
@@ -22490,6 +23150,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Razkritje vseh drugih splo\u0161nih in/ali za subjekt specifi\u010dnih informacij o obdobju poro\u010danja"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Shpalosja e \u00e7do informacioni tjet\u00ebr t\u00eb p\u00ebrgjithsh\u00ebm dhe/ose specifik p\u00ebr entitetin gjat\u00eb periudh\u00ebs s\u00eb raportimit"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Eventualne druge op\u0161te informacije i/ili informacije koje se konkretno odnose na privrednog subjekta u izve\u0161tajnom periodu"
         }
       },
       "nillable": true,
@@ -22534,6 +23200,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Razkritje vseh drugih upravljavskih in/ali za subjekt specifi\u010dnih upravljavskih razkritij"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Shpalosja e \u00e7do deklarate tjet\u00ebr t\u00eb qeverisjes dhe/ose entitetit specifik"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Eventualne druge informacije o upravljanju i/ili informacije o upravljanju koje se konkretno odnose na privrednog subjekta"
         }
       },
       "nillable": true,
@@ -22578,6 +23250,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Razkritje vseh drugih socialnih in/ali za subjekt specifi\u010dnih socialnih razkritij"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Shpalosja e \u00e7do deklarate tjet\u00ebr sociale dhe/ose specifike p\u00ebr entitete"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Eventualne druge informacije o upravljanju i/ili informacije o upravljanju koje se konkretno odnose na privrednog subjekta"
         }
       },
       "nillable": true,
@@ -22622,6 +23300,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Razkritje na\u010dina ocenjevanja izpostavljenosti in ob\u010dutljivosti svojih sredstev, dejavnosti in vrednostne verige tem nevarnostim in prehodnim dogodkom"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Shpalosja e m\u00ebnyr\u00ebs se si ka vler\u00ebsuar ekspozimin dhe ndjeshm\u00ebrin\u00eb e aseteve, aktiviteteve dhe zinxhirit t\u00eb vler\u00ebs ndaj k\u00ebtyre rreziqeve dhe ngjarjeve t\u00eb tranzicionit"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Informacija o tome kako je privredni subjekt ocenio izlo\u017eenost i osetljivost svoje imovine, aktivnosti i lanaca vrednosti u odnosu na klimatske pretnje i tranzicione doga\u0111aje"
         }
       },
       "nillable": true,
@@ -22666,6 +23350,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Razkritje seznama glavnih ukrepov, s katerimi si subjekt prizadeva dose\u010di svoje cilje"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Shpalosja e list\u00ebs s\u00eb veprimeve kryesore q\u00eb entiteti k\u00ebrkon p\u00ebr t\u00eb arritur objektivat e tij"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Obelodanjenje spiska glavnih aktivnosti koje privredni subjekat namerava da sprovede da bi ostvario svoje ciljne vrednosti"
         }
       },
       "nillable": true,
@@ -22711,6 +23401,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Razkritje seznama glavnih ukrepov, s katerimi si subjekt prizadeva dose\u010di svoje cilje [abstract]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Shpalosja e list\u00ebs s\u00eb veprimeve kryesore q\u00eb entiteti synon p\u00ebr t\u00eb arritur objektivat e tij [abstract]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Obelodanjenje spiska glavnih aktivnosti koje privredni subjekat namerava da sprovede radi ostvarenja svojih ciljnih vrednosti [abstract]"
         }
       },
       "nillable": true,
@@ -22755,6 +23451,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Razkritje, ali je sprejelo ukrepe za prilagajanje podnebnim spremembam za katero koli s podnebjem povezano nevarnost in prehodni dogodek"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Shpalosja n\u00ebse ka nd\u00ebrmarr\u00eb veprime p\u00ebr adaptimin ndaj ndryshimeve klimatike p\u00ebr ndonj\u00eb rrezik apo ngjarje tranzicioni t\u00eb lidhura me klim\u00ebn"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Informacija o tome da li je privredni subjekt preduzeo aktivnosti prilago\u0111avanja na klimatske promene u odnosu na eventualne klimatske rizike i tranzicione doga\u0111aje"
         }
       },
       "nillable": true,
@@ -22799,6 +23501,12 @@
           "http://www.xbrl.org/2003/role/label": "Discrimina\u00e7\u00e3o [member]"
         },
         "sl": {
+          "http://www.xbrl.org/2003/role/label": "Diskriminacija [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Diskriminimi [member]"
+        },
+        "sr": {
           "http://www.xbrl.org/2003/role/label": "Diskriminacija [member]"
         }
       },
@@ -22874,6 +23582,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Metodologija \u0161tetja zaposlenih"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Metodologjia e num\u00ebrimit t\u00eb punonj\u00ebsve"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Metodologija brojanja zaposlenih"
         }
       },
       "nillable": true,
@@ -22925,6 +23639,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Metodologija \u0161tetja zaposlenih [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Metodologjia e num\u00ebrimit t\u00eb punonj\u00ebsve [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Metodologija brojanja zaposlenih [member]"
         }
       },
       "nillable": true,
@@ -22970,6 +23690,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Izra\u010dun: (\u0161tevilo zaposlenih, ki so od\u0161li v poro\u010devalskem obdobju / povpre\u010dno \u0161tevilo zaposlenih v poro\u010devalskem obdobju) * 100"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Norma e largimit t\u00eb punonj\u00ebsve"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Stopa fluktuacije zaposlenih"
         }
       },
       "nillable": true,
@@ -23015,6 +23741,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Zaposleni prejemajo pla\u010dilo, ki je enako ali vi\u0161je od minimalne pla\u010de, dolo\u010dene z nacionalno zakonodajo ali kolektivno pogodbo"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Punonj\u00ebsit marrin pag\u00eb t\u00eb barabart\u00eb ose mbi pag\u00ebn minimale t\u00eb p\u00ebrcaktuar nga ligji komb\u00ebtar ose marr\u00ebveshja kolektive"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Zaposleni primaju zaradu koja je jednaka ili ve\u0107a od primenljive minimalne zarade utvr\u0111ene neposredno doma\u0107im propisima o minimalnoj zaradi ili kolektivnim ugovorom"
         }
       },
       "nillable": true,
@@ -23101,6 +23833,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Kot je razvidno iz ra\u010dunov za komunalne storitve"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Konsumi i energjis\u00eb nga energjia elektrike"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Potro\u0161nja elektri\u010dne energije"
         }
       },
       "nillable": true,
@@ -23146,6 +23884,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Poraba energije iz goriv"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Konsumi i energjis\u00eb nga karburantet"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Potro\u0161nja energije proizvedene sagorevanjem goriva"
         }
       },
       "nillable": true,
@@ -23191,6 +23935,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Poraba energije iz lastne proizvedene elektri\u010dne energije"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Konsumi i energjis\u00eb nga energjia elektrike e gjeneruar vet\u00eb"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Potro\u0161nja samostalno proizvedene elektri\u010dne energije"
         }
       },
       "nillable": true,
@@ -23237,6 +23987,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Ocenjene absolutne emisije toplogrednih plinov [abstract]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Emetimet absolute t\u00eb gazrave serr\u00eb t\u00eb vler\u00ebsuara [abstract]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Procenjene emisije gasova sa efektom staklene ba\u0161te u apsolutnom iznosu [abstract]"
         }
       },
       "nillable": true,
@@ -23282,6 +24038,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Ocenjene absolutne emisije toplogrednih plinov [line items]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Emetimet absolute t\u00eb gazrave serr\u00eb t\u00eb vler\u00ebsuara [line items]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Procenjene emisije gasova sa efektom staklene ba\u0161te u apsolutnom iznosu [line items]"
         }
       },
       "nillable": true,
@@ -23328,6 +24090,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Ocenjene absolutne emisije toplogrednih plinov [table]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Emetimet absolute t\u00eb gazrave serr\u00eb t\u00eb vler\u00ebsuara [table]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Procenjene emisije gasova sa efektom staklene ba\u0161te u apsolutnom iznosu [table]"
         }
       },
       "nillable": true,
@@ -23390,6 +24158,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Izrecna izjava o skladnosti"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Deklarat\u00eb e qart\u00eb e p\u00ebrputhshm\u00ebris\u00eb"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Izri\u010dita izjava o po\u0161tovanju propisa"
         }
       },
       "nillable": true,
@@ -23435,6 +24209,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Izra\u010dun: \u0161tevilo zaposlenih \u017eensk na vodstveni ravni / \u0161tevilo zaposlenih mo\u0161kih na vodstveni ravni"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Raporti femra-meshkuj n\u00eb nivel menaxhimi p\u00ebr periudh\u00ebn e raportimit"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Broj\u010dani odnos mu\u0161karaca i \u017eena na nivou rukovodstva u izve\u0161tajnom periodu"
         }
       },
       "nillable": true,
@@ -23481,6 +24261,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Navedeno v priporo\u010dilu Sveta z dne 29. septembra 2023 (brez donacij in prispevkov)"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Investimi financiar n\u00eb kapitalin ose asetet e entiteteve t\u00eb ekonomis\u00eb sociale"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Finansijske investicije u kapital ili imovinu subjekata u socijalnoj ekonomiji"
         }
       },
       "nillable": true,
@@ -23572,6 +24358,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Prisilno delo [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Puna e detyruar [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Prisilni rad [member]"
         }
       },
       "nillable": true,
@@ -23617,6 +24409,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Ustreznik polnega delovnega \u010dasa (FTE) [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Ekuivalenti me koh\u00eb t\u00eb plot\u00eb (FTE) [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Ekvivalent punog radnog vremena (FTE) [member]"
         }
       },
       "nillable": true,
@@ -23661,6 +24459,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "GPS-lokacija kraja"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Vendndodhja apo koordinatat GPS t\u00eb lokacionit"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "GPS koordinate lokacije"
         }
       },
       "nillable": true,
@@ -23706,6 +24510,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Izra\u010dun: \u0161tevilo \u010dlanic upravnega odbora / \u0161tevilo \u010dlanov upravnega odbora"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Raporti i diversitetit gjinor n\u00eb organet e qeverisjes"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Stepen rodne raznolikosti organa upravljanja"
         }
       },
       "nillable": true,
@@ -23752,6 +24562,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Razmerje med spoloma v organu upravljanja [abstract]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Raporti i diversitetit gjinor n\u00eb organet e qeverisjes [abstract]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Stepen rodne raznolikosti organa upravljanja [abstract]"
         }
       },
       "nillable": true,
@@ -23796,6 +24612,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Izhodi\u0161\u010dno leto cilja zmanj\u0161anja emisij toplogrednih plinov"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Objektivi p\u00ebr reduktimin e emetimeve t\u00eb gazeve serr\u00eb p\u00ebr vitin baz\u00eb"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Bazna godina za ciljnu vrednost smanjenja emisija gasova sa efektnom staklene ba\u0161te"
         }
       },
       "nillable": true,
@@ -23840,6 +24662,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Ciljno leto za zmanj\u0161anje emisij toplogrednih plinov"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Viti i synuar p\u00ebr reduktimin e emetimeve t\u00eb gazeve serr\u00eb"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Godina u kojoj se planira ostvarenje ciljnih vrednosti smanjenja emisija gasova sa efektom staklene ba\u0161te"
         }
       },
       "nillable": true,
@@ -23885,6 +24713,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Cilji zmanj\u0161anja emisij toplogrednih plinov [abstract]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Objektivat p\u00ebr reduktimin e emetimeve t\u00eb gazrave serr\u00eb [abstract]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Ciljne vrednosti smanjenja emisija gasova sa efektom staklene ba\u0161te [abstract]"
         }
       },
       "nillable": true,
@@ -23930,6 +24764,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Bruto lokacijske emisije toplogrednih plinov obsega 2"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Emetimet bruto t\u00eb gazrave serr\u00eb t\u00eb bazuara n\u00eb vendndodhje, perimetri 2"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Bruto emisije gasova sa efektom staklene ba\u0161te Scope 2 prema lokacijskom pristupu"
         }
       },
       "nillable": true,
@@ -23976,6 +24816,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Bruto tr\u017ene emisije toplogrednih plinov obsega 2"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Emetimet bruto t\u00eb gazrave serr\u00eb t\u00eb bazuara n\u00eb treg perimetri 2"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Bruto emisije gasova sa efektom staklene ba\u0161te Scope 2 prema tr\u017ei\u0161nom pristupu"
         }
       },
       "nillable": true,
@@ -24022,6 +24868,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Bruto emisije toplogrednih plinov obsega 1"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Emetimet bruto t\u00eb gazrave serr\u00eb me perimetri 1"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Bruto emisije gasova sa efektom staklene ba\u0161te Scope 1"
         }
       },
       "nillable": true,
@@ -24068,6 +24920,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Bruto emisije toplogrednih plinov obsega 3"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Emetimet bruto t\u00eb gazrave serr\u00eb me perimetri 3"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Bruto emisije gasova sa efektom staklene ba\u0161te Scope 3"
         }
       },
       "nillable": true,
@@ -24159,6 +25017,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "\u0160tevilo oseb [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Numri i personelit [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Brojno stanje [member]"
         }
       },
       "nillable": true,
@@ -24264,6 +25128,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Incidenti v zvezi s \u010dlovekovimi pravicami [abstract]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Incidentet e t\u00eb drejtave t\u00eb njeriut [abstract]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Incidenti u oblasti ljudskih prava [abstract]"
         }
       },
       "nillable": true,
@@ -24309,6 +25179,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Trgovina z ljudmi [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Trafikimi i qenieve njer\u00ebzore [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Trgovina ljudima [member]"
         }
       },
       "nillable": true,
@@ -24400,6 +25276,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Identifikator materiala [typed axis]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Identifikuesi i materialit [typed axis]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Identifikaciona \u0161ifra materijala [typed axis]"
         }
       },
       "nillable": true,
@@ -24449,6 +25331,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Identifikator lokacije [typed axis]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Identifikuesi i lokacionit [typed axis]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Identifikaciona \u0161ifra lokacije [typed axis]"
         }
       },
       "nillable": true,
@@ -24498,6 +25386,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Identifikator odvisne dru\u017ebe [typed axis]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Identifikuesi i deg\u00ebs [typed axis]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Identifikaciona \u0161ifra zavisnog dru\u0161tva [typed axis]"
         }
       },
       "nillable": true,
@@ -24546,6 +25440,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Posameznik [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Individuale [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Pojedina\u010dna osnova [member]"
         }
       },
       "nillable": true,
@@ -24578,6 +25478,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Uvod in/ali informacije, specifi\u010dne za podjetje"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Hyrje dhe/ose informacion specifik p\u00ebr entitetin"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Uvod i/ili informacije koje se konkretno odnose na privrednog subjekta"
         }
       },
       "nillable": true,
@@ -24590,6 +25496,12 @@
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Introduction and/or entity specific information [abstract]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Hyrje dhe/ose informacion specifik p\u00ebr entitetin [abstract]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Uvod i/ili informacije koje se konkretno odnose na privrednog subjekta [abstract]"
         }
       },
       "nillable": true,
@@ -24694,6 +25606,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Povezava do prej\u0161njega poro\u010dila, ki vsebuje razkritja, ki ostajajo nespremenjena"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Lidhje me raportin e m\u00ebparsh\u00ebm q\u00eb p\u00ebrmban shpalosje q\u00eb mbeten t\u00eb pandryshuara"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Veza sa prethodnim izve\u0161tajem koji sadr\u017ei obelodanjene informacije koje ostaju nepromenjene"
         }
       },
       "nillable": true,
@@ -24738,6 +25656,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Seznam razkritij, za katera se v primerjavi s poro\u010danjem v prej\u0161njem obdobju ne poro\u010da o spremembah"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Lista e shpalosjeve p\u00ebr t\u00eb cilat nuk raportohen ndryshime krahasuar me raportimin e periudh\u00ebs s\u00eb m\u00ebparshme"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Spisak obelodanjenih informacija za koje se ne prijavljuju promene u pore\u0111enju sa izve\u0161tajem za prethodni period"
         }
       },
       "nillable": true,
@@ -24833,6 +25757,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Seznam razkritij [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Lista e shpalosjeve [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Spisak obelodanjenih informacija [member]"
         }
       },
       "nillable": true,
@@ -24877,6 +25807,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Seznam izpu\u0161\u010denih razkritij"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Lista e shpalosjeve t\u00eb l\u00ebna jasht\u00eb"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Spisak izostavljenih informacija"
         }
       },
       "nillable": true,
@@ -24972,6 +25908,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Seznam lokacij [abstract]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Lista e objekteve [abstract]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Spisak lokacija [abstract]"
         }
       },
       "nillable": true,
@@ -25017,6 +25959,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Seznam lokacij [line items]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Lista e objekteve [line items]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Spisak lokacija [line items]"
         }
       },
       "nillable": true,
@@ -25063,6 +26011,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Seznam lokacij [table]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Lista e objekteve [table]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Spisak lokacija [table]"
         }
       },
       "nillable": true,
@@ -25108,6 +26062,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Seznam odvisnih dru\u017eb [abstract]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Lista e filialeve [abstract]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Spisak zavisnih dru\u0161tava [abstract]"
         }
       },
       "nillable": true,
@@ -25153,6 +26113,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Seznam odvisnih dru\u017eb [line items]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Lista e filialeve [line items]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Spisak zavisnih dru\u0161tava [line items]"
         }
       },
       "nillable": true,
@@ -25199,6 +26165,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Seznam odvisne dru\u017ebe [table]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Lista e filial\u00ebve [table]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Spisak zavisnih dru\u0161tava [table]"
         }
       },
       "nillable": true,
@@ -25244,6 +26216,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Seznam pravnih oblik podjetij [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Lista e formave ligjore t\u00eb nd\u00ebrmarrjeve [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Spisak pravnih formi privrednih subjekata [member]"
         }
       },
       "nillable": true,
@@ -25333,6 +26311,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Najvi\u0161ja raven v podjetju, odgovorna za izvajanje praks, politik in prihodnjih pobud"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Nivelit m\u00eb i lart\u00eb n\u00eb nd\u00ebrmarrje q\u00eb \u00ebsht\u00eb p\u00ebrgjegj\u00ebs p\u00ebr zbatimin e praktikave, politikave dhe iniciativave t\u00eb ardhshme"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Najvi\u0161i nivo u privrednom subjektu koji je odgovoran za sprovo\u0111enje praksi, politika i budu\u0107ih inicijativa"
         }
       },
       "nillable": true,
@@ -25377,6 +26361,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "\u0160ifre klasifikacije sektorjev NACE"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Kodet e klasifikimit sektorial NACE"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Sektorske \u0161ifre delatnosti prema klasifikaciji NACE"
         }
       },
       "nillable": true,
@@ -26472,6 +27462,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Ime ob\u010dutljivega obmo\u010dja biotske raznovrstnosti"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Emri i zon\u00ebs s\u00eb ndjeshme ndaj biodiversitetit"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Naziv podru\u010dja osetljivog sa stanovi\u0161ta biodiverziteta"
         }
       },
       "nillable": true,
@@ -26516,6 +27512,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Ime uporabljenega materiala"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Emri i materialit t\u00eb p\u00ebrdorur"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Naziv kori\u0161\u0107enog materijala"
         }
       },
       "nillable": true,
@@ -26550,6 +27552,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Ime drugega onesna\u017eevala oziroma drugih onesna\u017eeval [typed axis]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Emri i ndot\u00ebsit tjet\u00ebr [typed axis]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Naziv druge zaga\u0111uju\u0107e materije [typed axis]"
         }
       },
       "nillable": true,
@@ -26597,6 +27605,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Firma odvisne dru\u017ebe"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Emri i deg\u00ebs"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Naziv zavisnog dru\u0161tva"
         }
       },
       "nillable": true,
@@ -26717,6 +27731,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Neobnovljiva energija [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Energjia jo e rinovueshme [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Energija iz neobnovljivih izvora [member]"
         }
       },
       "nillable": true,
@@ -26777,6 +27797,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "\u0160tevilo ur letnega usposabljanja na zaposlenega [abstract]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Numri i or\u00ebve vjetore t\u00eb trajnimit p\u00ebr punonj\u00ebs [abstract]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Broj godi\u0161njih sati obuke po zaposlenom [abstract]"
         }
       },
       "nillable": true,
@@ -26821,6 +27847,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "\u0160tevilo zaposlenih"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Numri i punonj\u00ebsve"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Broj zaposlenih"
         }
       },
       "nillable": true,
@@ -26867,6 +27899,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "\u0160tevilo zaposlenih po spolu [abstract]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Numri i punonj\u00ebsve sipas gjinis\u00eb [abstract]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Broj zaposlenih po rodu [abstract]"
         }
       },
       "nillable": true,
@@ -26911,6 +27949,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "\u0160tevilo zaposlenih za dr\u017eavo pogodbe o zaposlitvi"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Numri i punonj\u00ebsve p\u00ebr vendin e kontrat\u00ebs s\u00eb pun\u00ebsimit"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Broj zaposlenih po dr\u017eavi ugovora o radu"
         }
       },
       "nillable": true,
@@ -26957,6 +28001,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "\u0160tevilo zaposlenih za dr\u017eavo pogodbe o zaposlitvi [abstract]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Numri i punonj\u00ebsve p\u00ebr vendin e kontrat\u00ebs s\u00eb pun\u00ebsimit [abstract]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Broj zaposlenih po dr\u017eavi ugovora o radu [abstract]"
         }
       },
       "nillable": true,
@@ -27002,6 +28052,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "\u0160tevilo zaposlenih za dr\u017eavo pogodbe o zaposlitvi [line items]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Numri i punonj\u00ebsve p\u00ebr vendin e kontrat\u00ebs s\u00eb pun\u00ebsimit [line items]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Broj zaposlenih po dr\u017eavi ugovora o radu [line items]"
         }
       },
       "nillable": true,
@@ -27048,6 +28104,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "\u0160tevilo zaposlenih za dr\u017eavo pogodbe o zaposlitvi [table]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Numri i punonj\u00ebsve p\u00ebr vendin e kontrat\u00ebs s\u00eb pun\u00ebsimit [table]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Broj zaposlenih po dr\u017eavi ugovora o radu [table]"
         }
       },
       "nillable": true,
@@ -27093,6 +28155,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "\u0160tevilo zaposlenih glede na vrsto pogodbe [abstract]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Numri i punonj\u00ebsve sipas llojit t\u00eb kontrat\u00ebs [abstract]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Broj zaposlenih po vrsti ugovora o radu [abstract]"
         }
       },
       "nillable": true,
@@ -27137,6 +28205,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "\u0160tevilo zaposlenih \u017eensk"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Numri i punonj\u00ebseve femra"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Broj zaposlenih \u017eena"
         }
       },
       "nillable": true,
@@ -27182,6 +28256,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "\u0160tevilo zaposlenih mo\u0161kih"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Numri i punonj\u00ebsve meshkuj"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Broj zaposlenih mu\u0161karaca"
         }
       },
       "nillable": true,
@@ -27227,6 +28307,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "\u0160tevilo zaposlenih oseb nerazkriti spol"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Numri i punonj\u00ebsve gjinor\u00eb q\u00eb nuk jan\u00eb raportuar"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Broj zaposlenih za koje nije prijavljen rod"
         }
       },
       "nillable": true,
@@ -27272,6 +28358,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "\u0160tevilo zaposlenih oseb drug spol"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Numri i punonj\u00ebsve t\u00eb tjer\u00eb gjinor\u00eb"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Broj zaposlenih drugog roda"
         }
       },
       "nillable": true,
@@ -27317,6 +28409,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "\u0160tevilo zaposlenih za nedolo\u010den \u010das"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Numri i punonj\u00ebsve t\u00eb p\u00ebrhersh\u00ebm t\u00eb kontaktit"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Broj zaposlenih sa ugovorima na neodre\u0111eno vreme"
         }
       },
       "nillable": true,
@@ -27362,6 +28460,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "\u0160tevilo prigla\u0161enih nezgod pri delu v obdobju poro\u010danja"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Numri i aksidenteve t\u00eb regjistrueshme t\u00eb lidhura me pun\u00ebn gjat\u00eb periudh\u00ebs s\u00eb raportimit"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Broj"
         }
       },
       "nillable": true,
@@ -27407,6 +28511,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "\u0160tevilo zaposlenih za dolo\u010den \u010das"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Numri i punonj\u00ebsve t\u00eb p\u00ebrkohsh\u00ebm me kontrat\u00eb"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Broj zaposlenih sa ugovorima na odre\u0111eno vreme"
         }
       },
       "nillable": true,
@@ -27468,6 +28578,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Mo\u017enost A (le osnovni modul) [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Opsioni A (Vet\u00ebm Moduli Baz\u00eb) [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Opcija A (Samo Osnovni modul) [member]"
         }
       },
       "nillable": true,
@@ -27513,6 +28629,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Mo\u017enost B (osnovni in celovit modul) [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Opsioni B (Moduli Baz\u00eb dhe Moduli Gjith\u00ebp\u00ebrfshir\u00ebs) [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Opcija B (Osnovni modul i Sveobuhvatni modul) [member]"
         }
       },
       "nillable": true,
@@ -27573,6 +28695,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Druge in/ali subjektu specifi\u010dne informacije [abstract]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Informacione t\u00eb tjera dhe/ose specifike p\u00ebr entitete [abstract]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Druge informacije i/ili informacije koje se konkretno odnose na privrednog subjekta [abstract]"
         }
       },
       "nillable": true,
@@ -27618,6 +28746,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Druga vsebina [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "P\u00ebrmbajtje t\u00eb tjera [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Ostali sadr\u017eaj [member]"
         }
       },
       "nillable": true,
@@ -27662,6 +28796,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Pravna oblika drugega podjetja"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Forma ligjore e nd\u00ebrmarrjeve t\u00eb tjera"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Druga pravna forma privrednog subjekta"
         }
       },
       "nillable": true,
@@ -27707,6 +28847,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Pravna oblika drugih podjetij [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Forma t\u00eb tjera ligjore [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Druga pravna forma privrednog subjekta [member]"
         }
       },
       "nillable": true,
@@ -27752,6 +28898,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Lastna delovna sila [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Fuqia pun\u00ebtore vetanake [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Sopstvena radna snaga [member]"
         }
       },
       "nillable": true,
@@ -27827,6 +28979,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Partnerstvo [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Partneriteti [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Komanditno dru\u0161tvo [member]"
         }
       },
       "nillable": true,
@@ -27902,6 +29060,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Izra\u010dun: ((povpre\u010dna bruto urna postavka zaposlenih mo\u0161kih - povpre\u010dna bruto urna postavka zaposlenih \u017eensk) / povpre\u010dna bruto urna postavka zaposlenih mo\u0161kih) * 100"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Dallimi n\u00eb p\u00ebrqindje n\u00eb pag\u00eb midis punonj\u00ebsve femra dhe meshkuj"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Procentualna razlika izme\u0111u zarada zaposlenih \u017eena i mu\u0161karaca"
         }
       },
       "nillable": true,
@@ -27948,6 +29112,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Izra\u010dun: (\u0161tevilo zaposlenih, za katere veljajo kolektivne pogodbe / skupno \u0161tevilo zaposlenih) * 100"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "P\u00ebrqindja e punonj\u00ebsve t\u00eb mbuluar nga marr\u00ebveshjet kolektive"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Procenat zaposlenih obuhva\u0107enih kolektivnim ugovorima"
         }
       },
       "nillable": true,
@@ -27993,6 +29163,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Dele\u017e odpadkov, preusmerjenih v pripravo za ponovno uporabo (masa)"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "P\u00ebrqindja e mbetjeve t\u00eb ridrejtuara p\u00ebr p\u00ebrgatitje p\u00ebr rip\u00ebrdorim (masa)"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Procenat otpada usmeren na pripremu za ponovno iskori\u0161\u0107enje (masa)"
         }
       },
       "nillable": true,
@@ -28038,6 +29214,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Dele\u017e odpadkov, preusmerjenih v pripravo za ponovno uporabo (prostornina)"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "P\u00ebrqindja e mbetjeve t\u00eb ridrejtuara p\u00ebr p\u00ebrgatitje p\u00ebr rip\u00ebrdorim (v\u00ebllimi)"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Procenat otpada usmeren na pripremu za ponovno iskori\u0161\u0107enje (zapremina)"
         }
       },
       "nillable": true,
@@ -28083,6 +29265,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Dele\u017e odpadkov, preusmerjenih v recikliranje (masa)"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "P\u00ebrqindja e mbetjeve t\u00eb devijuara p\u00ebr riciklim (masa)"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Procenat otpada usmeren na recikla\u017eu (masa)"
         }
       },
       "nillable": true,
@@ -28128,6 +29316,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Dele\u017e odpadkov, preusmerjenih v recikliranje (prostornina)"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "P\u00ebrqindja e mbetjeve t\u00eb devijuara p\u00ebr riciklim (v\u00ebllimi)"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Procenat otpada usmeren na recikla\u017eu (zapremina)"
         }
       },
       "nillable": true,
@@ -28234,6 +29428,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Onesna\u017eevanje [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Ndotja [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Zaga\u0111enje [member]"
         }
       },
       "nillable": true,
@@ -28279,6 +29479,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Onesna\u017eevanje zraka, vode in prsti [abstract]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Ndotja e ajrit, ujit dhe tok\u00ebs [abstract]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Zaga\u0111enje vazduha, vode i zemlji\u0161ta [abstract]"
         }
       },
       "nillable": true,
@@ -28353,6 +29559,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Po\u0161tna \u0161tevilka lokacije"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Kodi postar i lokacionit"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Po\u0161tanski broj lokacije"
         }
       },
       "nillable": true,
@@ -28397,6 +29609,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Morebitni \u0161kodljivi u\u010dinki podnebnih tveganj, ki lahko kratko-, srednje- ali dolgoro\u010dno vplivajo na finan\u010dno uspe\u0161nost ali poslovanje, z navedbo, ali tveganja ocenjuje kot visoka, srednja ali nizka"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Efektet potenciale negative t\u00eb rreziqeve klimatike q\u00eb mund t\u00eb ndikojn\u00eb n\u00eb performanc\u00ebn financiare ose operacionet e biznesit n\u00eb afat t\u00eb shkurt\u00ebr, mes\u00ebm ose t\u00eb gjat\u00eb, duke treguar n\u00ebse vler\u00ebsohen rreziqet si t\u00eb larta, mesatare apo t\u00eb ul\u00ebta"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Potencijalni negativni efekti klimatskih rizika koji mogu uticati na finansijske performanse ili poslovanje privrednog subjekta na kratak, srednji ili du\u017ei rok, uz navo\u0111enje toga da li privredni subjekt ocenjuje te rizike kao visoke, srednje ili niske"
         }
       },
       "nillable": true,
@@ -28441,6 +29659,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Praksa, politika in/ali prihodnja pobuda je javno dostopna"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Praktika, politika dhe/ose iniciativa e ardhshme jan\u00eb t\u00eb disponueshme publikisht"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Praksa, politika i/ili budu\u0107a inicijativa javno je dostupna"
         }
       },
       "nillable": true,
@@ -28486,6 +29710,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Prakse, politike in/ali prihodnje pobude za prehod na bolj trajnostno gospodarstvo [abstract]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Praktika, politika dhe/ose iniciativa t\u00eb ardhshme p\u00ebr kalimin drejt nj\u00eb ekonomie m\u00eb t\u00eb q\u00ebndrueshme [abstract]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Prakse, politike i/ili budu\u0107e inicijative za tranziciju ka odr\u017eivijoj ekonomiji [abstract]"
         }
       },
       "nillable": true,
@@ -28531,6 +29761,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Dru\u017eba z omejeno odgovornostjo [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Nd\u00ebrmarrje private me p\u00ebrgjegj\u00ebsi t\u00eb kufizuar [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Dru\u0161tvo sa ograni\u010denom odgovorno\u0161\u0107u [member]"
         }
       },
       "nillable": true,
@@ -28575,6 +29811,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Javno dostopno razkritje"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Shpalosja e disponueshme publikisht"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Javno dostupna obelodanjena informacija"
         }
       },
       "nillable": true,
@@ -28620,6 +29862,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Izra\u010dun: (\u0161tevilo zabele\u017eenih nezgod pri delu v poro\u010devalnem letu / skupno \u0161tevilo ur, ki so jih v letu opravili vsi zaposleni) * 200000. Znesek 200000 ur predstavlja skupne letne delovne ure 100 zaposlenih (40 ur na teden, 50 tednov na leto) in slu\u017ei kot standardna osnova za izra\u010dun stopnje incidence v enem letu, ki velja za podjetja z do 250 zaposlenimi."
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Shkalla e aksidenteve t\u00eb lidhura me pun\u00ebn e regjistrueshme gjat\u00eb periudh\u00ebs s\u00eb raportimit"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Stopa nesre\u0107a na radnom mestu koje podle\u017eu evidentiranju u izve\u0161tajnom periodu"
         }
       },
       "nillable": true,
@@ -28665,6 +29913,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Registrirani sede\u017e odvisne dru\u017ebe"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Adresa e regjistruar e filialit"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Sedi\u0161te zavisnog dru\u0161tva"
         }
       },
       "nillable": true,
@@ -28710,6 +29964,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Prejemki, kolektivna pogajanja in usposabljanje [abstract]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Shp\u00ebrblimi dhe negociatat kolektive [abstract]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Naknade i kolektivno pregovaranje [abstract]"
         }
       },
       "nillable": true,
@@ -28755,6 +30015,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Prejemki, kolektivna pogajanja in usposabljanje [abstract]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Shp\u00ebrblimi, negociatat kolektive dhe trajnimi [abstract]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Naknade, kolektivno pregovaranje i obuka [abstract]"
         }
       },
       "nillable": true,
@@ -28800,6 +30066,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Obnovljiva energija [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Energjia e rip\u00ebrtishme [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Energija iz obnovljivih izvora [member]"
         }
       },
       "nillable": true,
@@ -28844,6 +30116,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Poro\u010dilo vsebuje razkritja iz prej\u0161njega poro\u010devalskega obdobja, ki ostajajo nespremenjena"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Raporti p\u00ebrmban shpalosje nga periudha e m\u00ebparshme e raportimit q\u00eb mbeten t\u00eb pandryshuara"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Ovaj izve\u0161taj sadr\u017ei informacije obelodanjene u prethodnom izve\u0161tajnom periodu koje ostaju nepromenjene"
         }
       },
       "nillable": true,
@@ -28889,6 +30167,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Obseg poro\u010danja [domain]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Fusha e raportimit [domain]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Opseg izve\u0161taja [domain]"
         }
       },
       "nillable": true,
@@ -28935,6 +30219,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Obsegi poro\u010danja [axis]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Fushat e raportimit [axis]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Opsezi izve\u0161taja [axis]"
         }
       },
       "nillable": true,
@@ -28979,6 +30269,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Prihodki iz proizvodnje kemikalij"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "T\u00eb ardhurat e nxjerra nga prodhimi kimik"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Prihodi ostvareni od proizvodnje hemikalija"
         }
       },
       "nillable": true,
@@ -29024,6 +30320,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Prihodki od premoga"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "T\u00eb ardhurat e nxjerra nga qymyri"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Prihodi ostvareni od uglja"
         }
       },
       "nillable": true,
@@ -29069,6 +30371,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Prihodki od gojenja in proizvodnje tobaka"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "T\u00eb ardhurat e nxjerra nga kultivimi dhe prodhimi i duhanit"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Prihodi ostvareni od uzgoja i proizvodnje duvana"
         }
       },
       "nillable": true,
@@ -29114,6 +30422,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Prihodki od plina"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "T\u00eb ardhurat e nxjerra nga gazi"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Prihodi ostvareni od gasa"
         }
       },
       "nillable": true,
@@ -29159,6 +30473,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Prihodki od nafte"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "T\u00eb ardhurat e nxjerra nga nafta"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Prihodi ostvareni od nafte"
         }
       },
       "nillable": true,
@@ -29204,6 +30524,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Prihodki iz industrije prepovedanega oro\u017eja (protipehotne mine, kasetno strelivo, kemi\u010dno oro\u017eje in biolo\u0161ko oro\u017eje)"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "T\u00eb ardhurat e nxjerra nga industria e arm\u00ebve t\u00eb ndaluara (minat anti-personel, municionet klaster, arm\u00ebt kimike dhe arm\u00ebt biologjike)"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Prihodi ostvareni od delatnosti zabranjenog oru\u017eja (protivpe\u0161adijske mine, kasetna municija, hemijsko i biolo\u0161ko oru\u017eje)"
         }
       },
       "nillable": true,
@@ -29250,6 +30576,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Prihodki iz dolo\u010denih dejavnosti [abstract]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "T\u00eb ardhurat e nxjerra nga disa aktivitete [abstract]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Prihodi od odre\u0111enih delatnosti [abstract]"
         }
       },
       "nillable": true,
@@ -29309,6 +30641,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Lokacija na obmo\u010dju z ob\u010dutljivo biotsko raznovrstnostjo"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Lokacioni ndodhet n\u00eb nj\u00eb zon\u00eb t\u00eb ndjeshme ndaj biodiversitetit"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Lokacija sme\u0161tena na podru\u010dju osetljivom sa stanovi\u0161ta biodiverziteta"
         }
       },
       "nillable": true,
@@ -29353,6 +30691,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Lokacija v bli\u017eini obmo\u010dja z ob\u010dutljivo biotsko raznovrstnostjo"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Lokacioni ndodhet pran\u00eb nj\u00eb zone t\u00eb ndjeshme ndaj biodiversitetit"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Lokacija sme\u0161tena u blizini podru\u010dja osetljivog sa stanovi\u0161ta biodiverziteta"
         }
       },
       "nillable": true,
@@ -29398,6 +30742,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Lokacije na obmo\u010djih z ob\u010dutljivo biotsko raznovrstnostjo [abstract]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Lokacioni n\u00eb zona t\u00eb ndjeshme ndaj biodiversitetit [abstract]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Lokacije na podru\u010djima osetljivim sa stanovi\u0161ta biodiverziteta [abstract]"
         }
       },
       "nillable": true,
@@ -29443,6 +30793,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Lokacije na obmo\u010djih z ob\u010dutljivo biotsko raznovrstnostjo [line items]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Vendet n\u00eb zona t\u00eb ndjeshme ndaj biodiversitetit [line items]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Lokacije na podru\u010djima osetljivim sa stanovi\u0161ta biodiverziteta [line items]"
         }
       },
       "nillable": true,
@@ -29489,6 +30845,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Lokacije na obmo\u010djih z ob\u010dutljivo biotsko raznovrstnostjo [table]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Vendet n\u00eb zona t\u00eb ndjeshme ndaj biodiversitetit [table]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Lokacije na podru\u010djima osetljivim sa stanovi\u0161ta biodiverziteta [table]"
         }
       },
       "nillable": true,
@@ -29534,6 +30896,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Samostojni podjetnik [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Pron\u00ebsia e vetme [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Preduzetnik [member]"
         }
       },
       "nillable": true,
@@ -29578,6 +30946,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Navedba vseh potrjenih incidentov, v katere so vklju\u010deni delavci v vrednostni verigi, prizadete skupnosti, potro\u0161niki in kon\u010dni uporabniki"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Specifikimi i \u00e7do incidenti t\u00eb konfirmuar q\u00eb p\u00ebrfshin pun\u00ebtor\u00eb n\u00eb zinxhirin e vler\u00ebs, komunitetet e prekura, konsumator\u00ebt dhe p\u00ebrdoruesit p\u00ebrfundimtar\u00eb"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Opis eventualnog potvr\u0111enog incidenta identifikovanog u izve\u0161tajnom periodu u koji su uklju\u010deni radnici u lancu vrednosti, pogo\u0111ene zajednice, potro\u0161a\u010di i krajnji korisnici"
         }
       },
       "nillable": true,
@@ -29622,6 +30996,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Navedba drugih \u010dlovekovih pravic, povezanih s potrjenim incidentom"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Specifikimi i t\u00eb drejtave t\u00eb tjera t\u00eb njeriut t\u00eb lidhura me incidentin e konfirmuar"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Opis drugih ljudskih prava koja se odnose na potvr\u0111eni incident"
         }
       },
       "nillable": true,
@@ -29666,6 +31046,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Navedba drugih vrst vsebin, ki jih zajema kodeks ravnanja ali politika na podro\u010dju \u010dlovekovih pravic"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Specifikimi i llojeve t\u00eb tjera t\u00eb p\u00ebrmbajtjes q\u00eb mbulohen nga kodi i sjelljes ose politika e t\u00eb drejtave t\u00eb njeriut"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Opis drugih vrsta aspekata obuhva\u0107enih kodeksom postupanja ili politikom ljudskih prava"
         }
       },
       "nillable": true,
@@ -29710,6 +31096,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Stanje izvajanja na\u010drta prehoda za bla\u017eitev podnebnih sprememb"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Statusi i zbatimit t\u00eb nj\u00eb plani tranzicioni n\u00eb lidhje me zbutjen e ndryshimeve klimatike"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Status sprovo\u0111enja plana tranzicije koji se odnosi na ubla\u017eavanje klimatskih promena"
         }
       },
       "nillable": true,
@@ -29774,6 +31166,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Strategija: poslovni model in pobude, povezane s trajnostnostjo [abstract]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Strategjia: Modeli i Biznesit dhe Q\u00ebndrueshm\u00ebria \u2013 Nisma t\u00eb Lidhura [abstract]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Strategija: poslovni model i odr\u017eivost - povezane inicijative [abstract]"
         }
       },
       "nillable": true,
@@ -29848,6 +31246,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Skupno \u0161tevilo smrtnih primerov zaradi nezgod pri delu, ki jih je treba evidentirati, in okvar zdravja, povezanih z delom, ki jih je treba evidentirati (ob upo\u0161tevanju zakonskih omejitev)"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Shuma e fataliteteve si rezultat i aksidenteve t\u00eb regjistrueshme t\u00eb lidhura me pun\u00ebn dhe s\u00ebmundjeve t\u00eb sh\u00ebndetit t\u00eb regjistrueshme n\u00eb pun\u00eb (n\u00eb var\u00ebsi t\u00eb kufizimeve ligjore)"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Ukupan broj smrtnih slu\u010dajeva koji su posledica nesre\u0107a na radnom mestu koje podle\u017eu evidenciji i bolesti povezanih sa radom koje podle\u017eu evidenciji"
         }
       },
       "nillable": true,
@@ -29893,6 +31297,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Trajnostnostne zadeve, ki jih obravnava praksa, politika in/ali prihodnja pobuda"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "\u00c7\u00ebshtjet e q\u00ebndrueshm\u00ebris\u00eb t\u00eb trajtuara nga praktika, politika dhe/ose iniciativa e ardhshme"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Pitanja odr\u017eivosti na \u010dije re\u0161avanje su usmerene prakse, politike i/ili budu\u0107e inicijative koje je privredni subjekt usvojio"
         }
       },
       "nillable": true,
@@ -29952,6 +31362,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Obravnavane trajnostnostne zadeve [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "\u00c7\u00ebshtjet e q\u00ebndrueshm\u00ebris\u00eb q\u00eb trajtohen [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Pitanja odr\u017eivosti koja se re\u0161avaju [member]"
         }
       },
       "nillable": true,
@@ -29997,6 +31413,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Ciljno leto [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Viti i synuar(target) [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Ciljna godina [member]"
         }
       },
       "nillable": true,
@@ -30086,6 +31508,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "\u010casovna obdobja vseh opredeljenih s podnebjem povezanih nevarnosti in prehodnih dogodkov"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Horizontet kohore t\u00eb identifikuara t\u00eb \u00e7do rreziku dhe ngjarjeje tranzicioni t\u00eb lidhura me klim\u00ebn"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Vremenski horizont eventualnih identifikovanih klimatskih pretnji i tranzicionih doga\u0111aja"
         }
       },
       "nillable": true,
@@ -30145,6 +31573,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Skupni znesek glob za kr\u0161itev zakonodaje o boju proti korupciji in podkupovanju"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Shuma totale e gjobave p\u00ebr shkeljen e ligjeve kund\u00ebr korrupsionit dhe ryshfetit"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Ukupan iznos nov\u010danih kazni izre\u010denih zbog kr\u0161enja zakona o spre\u010davanju korupcije i podmi\u0107ivanja"
         }
       },
       "nillable": true,
@@ -30191,6 +31625,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Skupna koli\u010dina odvzete vode z vseh lokacij"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Sasia totale e ujit t\u00eb t\u00ebrhequr nga t\u00eb gjitha vendet"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Ukupna koli\u010dina vode zahva\u0107ene sa svih lokacija"
         }
       },
       "nillable": true,
@@ -30237,6 +31677,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Skupna poraba energije"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Konsumi total i energjis\u00eb"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Ukupna potro\u0161nja energije"
         }
       },
       "nillable": true,
@@ -30283,6 +31729,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Skupna poraba energije [abstract]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Konsumi total i energjis\u00eb [abstract]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Ukupna potro\u0161nja energije [abstract]"
         }
       },
       "nillable": true,
@@ -30339,6 +31791,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Izra\u010dun: Emisije toplogrednih plinov obsega 1 + obsega 2 + obsega 3 (na podlagi lokacije)"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Emetimet totale (bruto) t\u00eb emetimit t\u00eb gazrave serr\u00eb t\u00eb bazuara n\u00eb vendndodhje"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Ukupne (bruto) emisije gasova sa efektom staklene ba\u0161te prema lokacijskom pristupu"
         }
       },
       "nillable": true,
@@ -30385,6 +31843,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Skupne (bruto) lokacijske emisije TGP obsega 1 in obsega 2"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Emetimet totale (bruto) t\u00eb bazuara n\u00eb vendndodhje t\u00eb Fush\u00ebs 1 dhe Fush\u00ebs 2 t\u00eb emetimeve t\u00eb gaz\u00ebrave serre (GHG)"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Ukupne (bruto) emisije gasova sa efektom staklene ba\u0161te Scope 1 i Scope 2 prema lokacijskom pristupu"
         }
       },
       "nillable": true,
@@ -30442,6 +31906,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Izra\u010dun: Emisije toplogrednih plinov obsega 1 + obsega 2 + obsega 3 (tr\u017eno utemeljene)"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Emetimet totale (bruto) t\u00eb GHG t\u00eb bazuara n\u00eb treg"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Ukupne (bruto) emisije gasova sa efektom staklene ba\u0161te prema tr\u017ei\u0161nom pristupu"
         }
       },
       "nillable": true,
@@ -30488,6 +31958,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Skupne (bruto) tr\u017ene emisije TGP obsega 1 in obsega 2"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Emetimet totale (bruto) t\u00eb bazuara n\u00eb treg p\u00ebr Fush\u00ebn 1 dhe Fush\u00ebn 2 t\u00eb GHG"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Ukupne (bruto) emisije gasova sa efektom staklene ba\u0161te Scope 1 i Scope 2 prema tr\u017ei\u0161nom pristupu"
         }
       },
       "nillable": true,
@@ -30534,6 +32010,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Skupna koli\u010dina nevarnih in nenevarnih odpadkov [abstract]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Totali i mbetjeve t\u00eb rrezikshme dhe jo t\u00eb rrezikshme [abstract]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Ukupan opasan i neopasan otpad [abstract]"
         }
       },
       "nillable": true,
@@ -30579,6 +32061,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Skupna koli\u010dina nastalih nevarnih odpadkov (masa)"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Totali i mbetjeve t\u00eb rrezikshme t\u00eb gjeneruara (masa)"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Ukupno proizvedeni opasni otpad (masa)"
         }
       },
       "nillable": true,
@@ -30625,6 +32113,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Skupna koli\u010dina nastalih nevarnih odpadkov (prostornina)"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Totali i mbetjeve t\u00eb rrezikshme t\u00eb gjeneruara (v\u00ebllimi)"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Ukupno proizvedeni opasni otpad (zapremina)"
         }
       },
       "nillable": true,
@@ -30671,6 +32165,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Skupna masa uporabljenega materiala"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Pesha totale e materialit t\u00eb p\u00ebrdorur"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Ukupna te\u017eina kori\u0161\u0107enog materijala"
         }
       },
       "nillable": true,
@@ -30732,6 +32232,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Skupna koli\u010dina nastalih nenevarnih odpadkov (masa)"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Totali i mbetjeve jo t\u00eb rrezikshme t\u00eb gjeneruara (mas\u00eb)"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Ukupno proizvedeni neopasni otpad (masa)"
         }
       },
       "nillable": true,
@@ -30778,6 +32284,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Skupna koli\u010dina nastalih nenevarnih odpadkov (prostornina)"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Totali i mbetjeve jo t\u00eb rrezikshme t\u00eb gjeneruara (v\u00ebllimi)"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Ukupno proizvedeni neopasni otpad (zapremina)"
         }
       },
       "nillable": true,
@@ -30823,6 +32335,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Skupno \u0161tevilo obsodb za kr\u0161itev zakonodaje o boju proti korupciji in podkupovanju"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Numri total i d\u00ebnimeve p\u00ebr shkelje t\u00eb ligjeve kund\u00ebr korrupsionit dhe ryshfetit"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Ukupan broj osu\u0111uju\u0107ih presuda zbog kr\u0161enja zakona o spre\u010davanju korupcije i podmi\u0107ivanja"
         }
       },
       "nillable": true,
@@ -30868,6 +32386,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Skupno \u0161tevilo samozaposlenih delavcev brez osebja, ki delajo izklju\u010dno za podjetje"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Numri total i pun\u00ebtor\u00ebve t\u00eb vet\u00ebpun\u00ebsuar pa personel q\u00eb punojn\u00eb ekskluzivisht p\u00ebr k\u00ebt\u00eb nd\u00ebrmarrje"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Ukupan broj samozaposlenih radnika bez zaposlenih koji rade isklju\u010divo za privrednog subjekta"
         }
       },
       "nillable": true,
@@ -30913,6 +32437,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Skupno \u0161tevilo za\u010dasnih delavcev, ki jih zagotovijo podjetja, ki se ukvarjajo predvsem z dejavnostmi zaposlovanja"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Numri total i pun\u00ebtor\u00ebve t\u00eb p\u00ebrkohsh\u00ebm t\u00eb siguruar nga nd\u00ebrmarrjet q\u00eb merren kryesisht me aktivitete pun\u00ebsimi"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Ukupan broj privremenih radnika koje anga\u017euju privredni subjekti \u010dija je primarna delatnost pru\u017eanje usluga zapo\u0161ljavanja"
         }
       },
       "nillable": true,
@@ -30989,6 +32519,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Skupna obnovljiva in neobnovljiva energija [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Energjia totale e rip\u00ebrtishme dhe jo e rip\u00ebrtrishme [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Ukupna energija iz obnovljivih i neobnovljivih izvora [member]"
         }
       },
       "nillable": true,
@@ -31033,6 +32569,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Skupni prihodki iz sektorja fosilnih goriv (gorivo, premog in plin)"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "T\u00eb ardhurat totale t\u00eb realizuara nga sektori i l\u00ebnd\u00ebve djeg\u00ebse fosile (nafta, qymyri dhe gazi)"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Ukupni prihodi ostvareni u sektoru fosilnih goriva (uglja, nafte i gasa)"
         }
       },
       "nillable": true,
@@ -31079,6 +32621,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Skupna prostornina uporabljenega materiala"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "V\u00ebllimi total i materialit t\u00eb p\u00ebrdorur"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Ukupna zapremina kori\u0161\u0107enog materijala"
         }
       },
       "nillable": true,
@@ -31126,6 +32674,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Izra\u010dun: skupna koli\u010dina nastalih nevarnih odpadkov + skupna koli\u010dina nastalih nenevarnih odpadkov (masa)"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Mbetjet totale t\u00eb gjeneruara (masa)"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Ukupno proizvedeni otpad (masa)"
         }
       },
       "nillable": true,
@@ -31173,6 +32727,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "skupno \u0161tevilo nastalih nevarnih odpadkov + skupno \u0161tevilo nastalih nenevarnih odpadkov (prostornina)"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Mbetjet totale t\u00eb gjeneruara (v\u00ebllimi)"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Ukupno proizvedeni otpad (zapremina)"
         }
       },
       "nillable": true,
@@ -31219,6 +32779,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Skupna poraba vode"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Konsumi total i ujit"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Ukupna potro\u0161nja vode"
         }
       },
       "nillable": true,
@@ -31280,6 +32846,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Na\u010drt prehod za podjetja, ki delujejo v sektorjih z velikim podnebnim vplivom [abstract]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Plani i tranzicionit p\u00ebr nd\u00ebrmarrjet q\u00eb operojn\u00eb n\u00eb sektor\u00eb me ndikim t\u00eb lart\u00eb klimatik [abstract]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Plan tranzicije za privredne subjekte koji posluju u sektorima sa visokim klimatskim uticajem [abstract]"
         }
       },
       "nillable": true,
@@ -31429,6 +33001,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Prihodek"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Qarkullimi"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Promet"
         }
       },
       "nillable": true,
@@ -31474,6 +33052,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Vrsta vsebine, ki jo zajema kodeks ravnanja ali politika na podro\u010dju \u010dlovekovih pravic za lastno delovno silo"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Lloji i p\u00ebrmbajtjes q\u00eb mbulohet nga kodi i sjelljes ose politika e t\u00eb drejtave t\u00eb njeriut p\u00ebr stafin e saj"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Vrste aspekata obuhva\u0107ene kodeksom postupanja ili politikom ljudskih prava za sopstvenu radnu snagu privrednog subjekta"
         }
       },
       "nillable": true,
@@ -31529,6 +33113,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Vrsta vsebine, ki jo zajema kodeks ravnanja ali politika na podro\u010dju \u010dlovekovih pravic za lastno delovno silo [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Lloji i p\u00ebrmbajtjes q\u00eb mbulohet nga kodi i sjelljes ose politika e t\u00eb drejtave t\u00eb njeriut p\u00ebr stafin e saj [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Vrste aspekata obuhva\u0107ene kodeksom postupanja ili politikom ljudskih prava za sopstvenu radnu snagu privrednog subjekta [member]"
         }
       },
       "nillable": true,
@@ -31573,6 +33163,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Vrsta \u010dlovekove pravice, povezane s potrjenim incidentom"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Lloji i t\u00eb drejt\u00ebs njer\u00ebzore lidhur me incidentin e konfirmuar"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Vrsta ljudskih prava u vezi sa potvr\u0111enim incidentom"
         }
       },
       "nillable": true,
@@ -31627,6 +33223,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Vrsta \u0161tevila zaposlenih"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Lloji i numrit t\u00eb punonj\u00ebsve"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Na\u010din utvr\u0111ivanja broja zaposlenih"
         }
       },
       "nillable": true,
@@ -31678,6 +33280,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Vrsta \u0161tevila zaposlenih [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Lloji i numrit t\u00eb punonj\u00ebsve [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Na\u010din utvr\u0111ivanja broja zaposlenih [member]"
         }
       },
       "nillable": true,
@@ -31724,6 +33332,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Vrsta onesna\u017eevala [axis]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Lloji i ndot\u00ebsit [axis]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Vrsta zaga\u0111uju\u0107e materije [axis]"
         }
       },
       "nillable": true,
@@ -31769,6 +33383,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Vrsta onesna\u017eevala [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Lloji i ndot\u00ebsit [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Vrsta zaga\u0111uju\u0107e materije [member]"
         }
       },
       "nillable": true,
@@ -31815,6 +33435,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Vrsta odpadkov [axis]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Lloji i mbetjeve [axis]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Vrsta otpada [axis]"
         }
       },
       "nillable": true,
@@ -31859,6 +33485,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "URL ali povezava do javno dostopnega razkritja"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "URL ose lidhje p\u00ebr shpalosjen publike"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Internet adresa javno dostupnih obelodanjenih informacija ili link ka njoj"
         }
       },
       "nillable": true,
@@ -31903,6 +33535,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Podjetje uporablja na\u010dela kro\u017enega gospodarstva"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Nd\u00ebrmarrja zbaton parimet e ekonomis\u00eb qarkore"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Privredni subjekt primenjuje principe cirkularne ekonomije"
         }
       },
       "nillable": true,
@@ -31947,6 +33585,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Podjetje ima kodeks ravnanja ali politiko na podro\u010dju \u010dlovekovih pravic za lastno delovno silo"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Nd\u00ebrmarrja ka nj\u00eb kod sjelljeje ose politik\u00eb t\u00eb t\u00eb drejtave t\u00eb njeriut p\u00ebr stafin e vet"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Privredni subjekt ima usvojen kodeks postupanja ili politiku ljudskih prava za svoju sopstvenu radnu snagu"
         }
       },
       "nillable": true,
@@ -31991,6 +33635,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Podjetje ima mehanizem za obravnavanje prito\u017eb lastne delovne sile"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Nd\u00ebrmarrja ka nj\u00eb mekaniz\u00ebm p\u00ebr trajtimin e ankesave p\u00ebr stafin e vet"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Privredni subjekt ima usvojen mehanizam za re\u0161avanje pritu\u017ebi za svoju sopstvenu radnu snagu"
         }
       },
       "nillable": true,
@@ -32035,6 +33685,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Podjetje ima potrjene incidente na podro\u010dju \u010dlovekovih pravic lastne delovne sile"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Nd\u00ebrmarrja ka konfirmuar incidente t\u00eb t\u00eb drejtave t\u00eb njeriut n\u00eb stafin e saj"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Privredni subjekt je potvrdio incidente vezane za ljudska prava u svojoj sopstvenoj radnoj snazi"
         }
       },
       "nillable": true,
@@ -32079,6 +33735,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Podjetje je dolo\u010dilo cilj, ki je povezan s politiko"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Nd\u00ebrmarrja ka vendosur nj\u00eb objektiv q\u00eb lidhet me nj\u00eb politik\u00eb"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Privredni subjekt je definisano ciljnu vrednost vezanu za politiku"
         }
       },
       "nillable": true,
@@ -32123,6 +33785,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Podjetje je seznanjeno z vsemi potrjenimi incidenti, v katere so vklju\u010deni delavci v vrednostni verigi, prizadete skupnosti, potro\u0161niki in kon\u010dni uporabniki"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "T\u00eb jesh n\u00eb dijeni t\u00eb \u00e7do incidenti t\u00eb konfirmuar q\u00eb p\u00ebrfshin pun\u00ebtor\u00eb n\u00eb zinxhirin e vler\u00ebs, komunitetet e prekura, konsumator\u00ebt dhe p\u00ebrdoruesit p\u00ebrfundimtar\u00eb"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Privredni subjekt je upoznat sa postojanjem drugih potvr\u0111enih incidenata u koje su uklju\u010deni radnici u lancu vrednosti, pogo\u0111ene zajednice, potro\u0161a\u010di i krajnji korisnici identifikovanih u izve\u0161tajnom periodu"
         }
       },
       "nillable": true,
@@ -32167,6 +33835,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Pravna oblika podjetij"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Forma ligjore e angazhimeve"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Pravna forma privrednog subjekta"
         }
       },
       "nillable": true,
@@ -32236,6 +33910,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Prostornina uporabljenega materiala"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "V\u00ebllimi i materialit t\u00eb p\u00ebrdorur"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Zapremina kori\u0161\u0107enog materijala"
         }
       },
       "nillable": true,
@@ -32282,6 +33962,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Nastali odpadki [abstract]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Mbetjet e gjeneruara [abstract]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Proizvedeni otpad [abstract]"
         }
       },
       "nillable": true,
@@ -32327,6 +34013,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Nastali odpadki [line items]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Mbetjet e gjeneruara [line items]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Proizvedeni otpad [line items]"
         }
       },
       "nillable": true,
@@ -32372,6 +34064,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Nastali odpadki (masa)"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Mbetjet e gjeneruara (masa)"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Proizvedeni otpad (masa)"
         }
       },
       "nillable": true,
@@ -32419,6 +34117,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Nastali odpadki [table]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Mbetjet e gjeneruara [table]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Proizvedeni otpad [table]"
         }
       },
       "nillable": true,
@@ -32464,6 +34168,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Nastali odpadki (prostornina)"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Mbetjet e gjeneruara (v\u00ebllimi)"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Proizvedeni otpad (zapremina)"
         }
       },
       "nillable": true,
@@ -32510,6 +34220,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Vodni in morski viri [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Burimet ujore dhe detare [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Vodni i morski resursi [member]"
         }
       },
       "nillable": true,
@@ -32555,6 +34271,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Poraba vode [abstract]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Konsumi i ujit [abstract]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Potro\u0161nja vode [abstract]"
         }
       },
       "nillable": true,
@@ -32600,6 +34322,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Izpust vode iz proizvodnih procesov"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Shkarkimi i ujit nga nd\u00ebrmarrjet e proceseve t\u00eb prodhimit"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Ispu\u0161tanje vode iz proizvodnih procesa privrednog subjekta"
         }
       },
       "nillable": true,
@@ -32646,6 +34374,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Odvzem vode [abstract]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "T\u00ebrheqja e ujit [abstract]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Zahvatanje vode [abstract]"
         }
       },
       "nillable": true,
@@ -32691,6 +34425,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Masa uporabljenega materiala"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Pesha e materialit t\u00eb p\u00ebrdorur"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Te\u017eina kori\u0161\u0107enog materijala"
         }
       },
       "nillable": true,
@@ -32737,6 +34477,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Delavci v vrednostni verigi [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Pun\u00ebtor\u00ebt n\u00eb zinxhirin e vler\u00ebs [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Radnici u lancu vrednosti [member]"
         }
       },
       "nillable": true,
@@ -32782,6 +34528,12 @@
         },
         "sl": {
           "http://www.xbrl.org/2003/role/label": "Delovna sila - Zdravje in varnost [abstract]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Fuqia pun\u00ebtore - Sh\u00ebndeti dhe siguria [abstract]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Radna snaga - Bezbednost i zdravlje na radu [abstract]"
         }
       },
       "nillable": true,
@@ -45792,7 +47544,9 @@
         "lt": "[1000] \u012evadas ir (arba) \u012fmonei b\u016bdinga informacija",
         "pl": "[1000] Wprowadzenie i/lub informacje specyficzne dla jednostki",
         "pt": "[1000] Introdu\u00e7\u00e3o e/ou informa\u00e7\u00e3o espec\u00edfica da entidade",
-        "sl": "[1000] Uvod in/ali informacije, specifi\u010dne za podjetje"
+        "sl": "[1000] Uvod in/ali informacije, specifi\u010dne za podjetje",
+        "sq": "[1000] Hyrje dhe/ose informacion specifik p\u00ebr entitetin",
+        "sr": "[1000] Uvod i/ili informacije koje se konkretno odnose na privrednog subjekta"
       },
       "rows": [
         [
@@ -45818,7 +47572,9 @@
         "nl": "[1010] B1 - Algemene informatie - Grondslagvoor het opstellen van informatie",
         "pl": "[1010] B1 - Informacje og\u00f3lne - Podstawa sporz\u0105dzenia",
         "pt": "[1010] B1 - Informa\u00e7\u00e3o geral - Base para Prepara\u00e7\u00e3o",
-        "sl": "[1010] B1 - Splo\u0161ne informacije - Podlaga za pripravo"
+        "sl": "[1010] B1 - Splo\u0161ne informacije - Podlaga za pripravo",
+        "sq": "[1010] B1 - Informacion i p\u00ebrgjithsh\u00ebm - Baza p\u00ebr P\u00ebrgatitje",
+        "sr": "[1010] B1 - Op\u0161te informacije - Osnova za pripremu izve\u0161taja"
       },
       "rows": [
         [
@@ -45908,7 +47664,9 @@
         "nl": "[1020] B1 - Algemene informatie - Lijst van dochterondernemingen",
         "pl": "[1020] B1 - Informacje og\u00f3lne - Wykaz jednostek zale\u017cnych",
         "pt": "[1020] B1 - Informa\u00e7\u00e3o geral - Lista de subsidi\u00e1rias",
-        "sl": "[1020] B1 - Splo\u0161ne informacije - Seznam odvisnih dru\u017eb"
+        "sl": "[1020] B1 - Splo\u0161ne informacije - Seznam odvisnih dru\u017eb",
+        "sq": "[1020] B1 - Informacion i p\u00ebrgjithsh\u00ebm - Lista e filialeve",
+        "sr": "[1020] B1 - Op\u0161te informacije - Spisak zavisnih dru\u0161tava"
       },
       "rows": [
         [
@@ -45950,7 +47708,9 @@
         "nl": "[1030] B1 - Algemene informatie - Lijst van vestigingen",
         "pl": "[1030] B1 - Informacje og\u00f3lne - Lista lokalizacji",
         "pt": "[1030] B1 - Informa\u00e7\u00f5es gerais - Lista de locais",
-        "sl": "[1030] B1 - Splo\u0161ne informacije - Seznam lokacij"
+        "sl": "[1030] B1 - Splo\u0161ne informacije - Seznam lokacij",
+        "sq": "[1030] B1 - Informacion i p\u00ebrgjithsh\u00ebm - Lista e lokacioneve/objekteve",
+        "sr": "[1030] B1 - Op\u0161te informacije - Spisak lokacija"
       },
       "rows": [
         [
@@ -46004,7 +47764,9 @@
         "nl": "[1040] B2 - Algemene informatie - Praktijken, beleid en/of toekomstige initiatieven voor de overgang naar een duurzamere economie",
         "pl": "[1040] B2 - Informacje og\u00f3lne - Praktyki, polityki i/lub przysz\u0142e inicjatywy na rzecz przej\u015bcia na bardziej zr\u00f3wnowa\u017con\u0105 gospodark\u0119",
         "pt": "[1040] B2 - Informa\u00e7\u00f5es gerais - Pr\u00e1ticas, pol\u00edticas e/ou iniciativas futuras de transi\u00e7\u00e3o para uma economia mais sustent\u00e1vel",
-        "sl": "[1040] B2 - Splo\u0161ne informacije - Prakse, politike in/ali prihodnje pobude za prehod na bolj trajnostno gospodarstvo"
+        "sl": "[1040] B2 - Splo\u0161ne informacije - Prakse, politike in/ali prihodnje pobude za prehod na bolj trajnostno gospodarstvo",
+        "sq": "[1040] B2 - Informacion i p\u00ebrgjithsh\u00ebm - Praktika, politika dhe/ose iniciativa t\u00eb ardhshme p\u00ebr kalimin drejt nj\u00eb ekonomie m\u00eb t\u00eb q\u00ebndrueshme",
+        "sr": "[1040] B2 - Op\u0161te informacije - Prakse, politike i/ili budu\u0107e inicijative za tranziciju ka odr\u017eivijoj ekonomiji"
       },
       "rows": [
         [
@@ -46038,7 +47800,9 @@
         "nl": "[1050] B2 - Algemene informatie - Co\u00f6peratie specifieke toelichtingen",
         "pl": "[1050] B2 - Informacje og\u00f3lne - Szczeg\u00f3lne ujawnienia dotycz\u0105ce sp\u00f3\u0142dzielni",
         "pt": "[1050] B2 - Informa\u00e7\u00f5es gerais - Divulga\u00e7\u00f5es espec\u00edficas para cooperativas",
-        "sl": "[1050] B2 - Splo\u0161ne informacije - Razkritja, specifi\u010dna za zadruge"
+        "sl": "[1050] B2 - Splo\u0161ne informacije - Razkritja, specifi\u010dna za zadruge",
+        "sq": "[1050] B2 - Informacion i p\u00ebrgjithsh\u00ebm - Shpalosje specifike p\u00ebr bashk\u00ebpunim",
+        "sr": "[1050] B2 - Informacije koje posebno obelodanjuju zadruge"
       },
       "rows": [
         [
@@ -46072,7 +47836,9 @@
         "nl": "[1060] C1 - Algemene informatie - Strategie: Businessmodel en duurzaamheid - Gerelateerde initiatieven",
         "pl": "[1060] C1 - Informacje og\u00f3lne - Strategia: model biznesowy i zr\u00f3wnowa\u017cony rozw\u00f3j - powi\u0105zane inicjatywy",
         "pt": "[1060] C1 - Informa\u00e7\u00f5es gerais - Estrat\u00e9gia: Modelo de neg\u00f3cio e Sustentabilidade - Iniciativas conexas",
-        "sl": "[1060] C1 - Splo\u0161ne informacije - Strategija: poslovni model in pobude, povezane s trajnostnostjo"
+        "sl": "[1060] C1 - Splo\u0161ne informacije - Strategija: poslovni model in pobude, povezane s trajnostnostjo",
+        "sq": "[1060] C1 - Informacion i p\u00ebrgjithsh\u00ebm - Strategjia: Modeli i Biznesit dhe Q\u00ebndrueshm\u00ebria \u2013 Nisma t\u00eb lidhura",
+        "sr": "[1060] C1 - Op\u0161te informacije - Strategija: poslovni model i odr\u017eivost - Povezane inicijative"
       },
       "rows": [
         [
@@ -46123,7 +47889,9 @@
         "nl": "[1045] C2 - Algemene informatie: Beschrijving van praktijken, beleid en/of toekomstige initiatieven voor de overgang naar een meer duurzame economie",
         "pl": "[1045] C2 - Informacje og\u00f3lne - Opis praktyk, polityk i/lub przysz\u0142ych inicjatyw na rzecz przej\u015bcia na bardziej zr\u00f3wnowa\u017con\u0105 gospodark\u0119",
         "pt": "[1045] C2 - Informa\u00e7\u00f5es gerais - Descri\u00e7\u00e3o das pr\u00e1ticas, pol\u00edticas e/ou iniciativas futuras de transi\u00e7\u00e3o para uma economia mais sustent\u00e1vel",
-        "sl": "[1045] C2 - Splo\u0161ne informacije - Opis praks, politik in/ali prihodnjih pobud za prehod na bolj trajnostno gospodarstvo"
+        "sl": "[1045] C2 - Splo\u0161ne informacije - Opis praks, politik in/ali prihodnjih pobud za prehod na bolj trajnostno gospodarstvo",
+        "sq": "[1045] C2 - Informacion i p\u00ebrgjithsh\u00ebm - P\u00ebrshkrim i praktikave, politikave dhe/ose nismave t\u00eb ardhshme p\u00ebr kalimin drejt nj\u00eb ekonomie m\u00eb t\u00eb q\u00ebndrueshme",
+        "sr": "[1045] C2 - Op\u0161te informacije - Opis praksi, politika i budu\u0107ih inicijativa za tranziciju ka odr\u017eivijoj ekonomiji"
       },
       "rows": [
         [
@@ -46157,7 +47925,9 @@
         "nl": "[1080] B3 - Milieu - Totale energieverbruik",
         "pl": "[1080] B3 - \u015arodowisko - Ca\u0142kowite zu\u017cycie energii",
         "pt": "[1080] B3 - Ambiente - Consumo Total de Energia",
-        "sl": "[1080] B3 - Okolje - Skupna poraba energije"
+        "sl": "[1080] B3 - Okolje - Skupna poraba energije",
+        "sq": "[1080] B3 - Mjedisi - Konsumi total i energjis\u00eb",
+        "sr": "[1080] B3 - \u017divotna sredina - Ukupna potro\u0161nja energije"
       },
       "rows": [
         [
@@ -46183,7 +47953,9 @@
         "nl": "[1090] B3 - Milieu - Uitsplitsing van energieverbruik",
         "pl": "[1090] B3 - \u015arodowisko - Podzia\u0142 zu\u017cycia energii",
         "pt": "[1090] B3 - Ambiente - Discrimina\u00e7\u00e3o do consumo de energia",
-        "sl": "[1090] B3 - Okolje - Raz\u010dlenitev porabe energije"
+        "sl": "[1090] B3 - Okolje - Raz\u010dlenitev porabe energije",
+        "sq": "[1090] B3 - Mjedisi - Ndarja e konsumit t\u00eb energjis\u00eb",
+        "sr": "[1090] B3 - \u017divotna sredina - Ra\u0161\u010dlanjena potro\u0161nja energije"
       },
       "rows": [
         [
@@ -46241,7 +48013,9 @@
         "nl": "[1100] B3 - Milieu - Geschatte broeikasgasemissies",
         "pl": "[1100] B3 - \u015arodowisko - Szacunkowa bezwgl\u0119dna emisja gaz\u00f3w cieplarnianych",
         "pt": "[1100] B3 - Ambiente - Emiss\u00f5es brutas estimadas de Gases de Efeito de Estufa, em valor absoluto",
-        "sl": "[1100] B3 \u2013 Okolje \u2013 Ocenjene absolutne emisije toplogrednih plinov"
+        "sl": "[1100] B3 \u2013 Okolje \u2013 Ocenjene absolutne emisije toplogrednih plinov",
+        "sq": "[1100] B3 - Mjedisi - Vler\u00ebsimi i emetimeve absolute t\u00eb gazrave serr\u00eb",
+        "sr": "[1100] B3 - \u017divotna sredina - Procenjene emisije gasova sa efektom staklene ba\u0161te u apsolutnom iznosu"
       },
       "rows": [
         [
@@ -46315,7 +48089,9 @@
         "nl": "[1120] B4 - Milieu - Verontreiniging van lucht, water en bodem: beschikbaarheid van publieke rapportage",
         "pl": "[1120] B4 - \u015arodowisko - Zanieczyszczenie powietrza, wody i gleby: dost\u0119pno\u015b\u0107 publicznego ujawnienia informacji",
         "pt": "[1120] B4 - Ambiente - Polui\u00e7\u00e3o do ar, \u00e1gua e solo: disponibilidade de divulga\u00e7\u00f5es p\u00fablicas",
-        "sl": "[1120] B4 - Okolje - Onesna\u017eevanje zraka, vode in prsti: razpolo\u017eljivost javnih razkritij"
+        "sl": "[1120] B4 - Okolje - Onesna\u017eevanje zraka, vode in prsti: razpolo\u017eljivost javnih razkritij",
+        "sq": "[1120] B4 - Mjedisi - Ndotja e ajrit, ujit dhe tok\u00ebs: disponueshm\u00ebria e transparenc\u00ebs publike",
+        "sr": "[1120] B4 - \u017divotna sredina - Zaga\u0111enje vazduha, vode i zemlji\u0161ta: dostupnost javno obelodanjenih informacija"
       },
       "rows": [
         [
@@ -46345,7 +48121,9 @@
         "nl": "[1130] B4 - Milieu -  Verontreiniging van lucht, water en bodem: hoeveelheid emissies",
         "pl": "[1130] B4 - \u015arodowisko - Zanieczyszczenie powietrza, wody i gleby: ilo\u015b\u0107 emisji",
         "pt": "[1130] B4 - Ambiente - Polui\u00e7\u00e3o do ar, \u00e1gua e solo: quantidade de emiss\u00f5es",
-        "sl": "[1130] B4 - Okolje - Onesna\u017eevanje zraka, vode in prsti: koli\u010dina emisij"
+        "sl": "[1130] B4 - Okolje - Onesna\u017eevanje zraka, vode in prsti: koli\u010dina emisij",
+        "sq": "[1130] B4 - Mjedisi - Ndotja e ajrit, ujit dhe tok\u00ebs: sasia e emetimeve",
+        "sr": "[1130] B4 - \u017divotna sredina - Zaga\u0111enje vazduha, vode i zemlji\u0161ta: koli\u010dina emisija"
       },
       "rows": [
         [
@@ -46799,7 +48577,9 @@
         "nl": "[1140] B5 - Milieu - Vestigingen in biodiversiteitsgevoelige gebieden",
         "pl": "[1140] B5 - \u015arodowisko - Lokalizacje na obszarach wra\u017cliwych pod wzgl\u0119dem bior\u00f3\u017cnorodno\u015bci",
         "pt": "[1140] B5 - Ambiente - Locais em \u00e1reas sens\u00edveis \u00e0 biodiversidade",
-        "sl": "[1140] B5 - Okolje - Lokacije na obmo\u010djih z ob\u010dutljivo biotsko raznovrstnostjo"
+        "sl": "[1140] B5 - Okolje - Lokacije na obmo\u010djih z ob\u010dutljivo biotsko raznovrstnostjo",
+        "sq": "[1140] B5 - Mjedisi - Vende n\u00eb zona t\u00eb ndjeshme ndaj biodiversitetit",
+        "sr": "[1140] B5 - \u017divotna sredina - Lokacije na podru\u010djima osetljivim sa stanovi\u0161ta biodiverziteta"
       },
       "rows": [
         [
@@ -46845,7 +48625,9 @@
         "nl": "[1160] B6 - Milieu - Wateronttrekking",
         "pl": "[1160] B6 - \u015arodowisko - Pob\u00f3r wody",
         "pt": "[1160] B6 - Ambiente - Capta\u00e7\u00e3o de \u00c1gua",
-        "sl": "[1160] B6 - Okolje - Odvzem vode"
+        "sl": "[1160] B6 - Okolje - Odvzem vode",
+        "sq": "[1160] B6 - Mjedisi - T\u00ebrheqja e Ujit",
+        "sr": "[1160] B6 - \u017divotna sredina - Zahvatanje vode"
       },
       "rows": [
         [
@@ -46871,7 +48653,9 @@
         "nl": "[1170] B6 - Milieu - Waterverbruik",
         "pl": "[1170] B6 - \u015arodowisko - Zu\u017cycie wody",
         "pt": "[1170] B6 - Ambiente - Consumo de \u00c1gua",
-        "sl": "[1170] B6 - Okolje - Poraba vode"
+        "sl": "[1170] B6 - Okolje - Poraba vode",
+        "sq": "[1170] B6 - Mjedisi - Konsumi i Ujit",
+        "sr": "[1170] B6 - \u017divotna sredina - Potro\u0161nja vode"
       },
       "rows": [
         [
@@ -46905,7 +48689,9 @@
         "nl": "[1180] B7 - Milieu - Beschrijving van de principes van de circulaire economie",
         "pl": "[1180] B7 - \u015arodowisko - Opis zasad gospodarki o obiegu zamkni\u0119tym",
         "pt": "[1180] B7 - Ambiente - Descri\u00e7\u00e3o dos princ\u00edpios da economia circular",
-        "sl": "[1180] B7 - Okolje - Opis na\u010del kro\u017enega gospodarstva"
+        "sl": "[1180] B7 - Okolje - Opis na\u010del kro\u017enega gospodarstva",
+        "sq": "[1180] B7 - Mjedisi - P\u00ebrshkrimi i parimeve t\u00eb ekonomis\u00eb qarkore",
+        "sr": "[1180] B7 - \u017divotna sredina - Opis principa cirkularne ekonomije"
       },
       "rows": [
         [
@@ -46935,7 +48721,9 @@
         "nl": "[1190] B7 - Milieu -  Uitsplitsing van afval naar type",
         "pl": "[1190] B7 - \u015arodowisko - Podzia\u0142 odpad\u00f3w wed\u0142ug rodzaju",
         "pt": "[1190] B7 - Ambiente - Discrimina\u00e7\u00e3o dos res\u00edduos por tipo",
-        "sl": "[1190] B7 - Okolje - Raz\u010dlenitev odpadkov po vrstah"
+        "sl": "[1190] B7 - Okolje - Raz\u010dlenitev odpadkov po vrstah",
+        "sq": "[1190] B7 - Mjedisi - Ndarja e mbetjeve sipas llojit",
+        "sr": "[1190] B7 - \u017divotna sredina - Ra\u0161\u010dlanjenje otpada po vrsti"
       },
       "rows": [
         [
@@ -51049,7 +52837,9 @@
         "nl": "[1200] B7 - Milieu - Totale hoeveelheid gevaarlijk en niet-gevaarlijk afval",
         "pl": "[1200] B7 - \u015arodowisko - Ca\u0142kowita ilo\u015b\u0107 odpad\u00f3w niebezpiecznych i odpad\u00f3w innych ni\u017c niebezpieczne",
         "pt": "[1200] B7 - Ambiente - Total de Res\u00edduos Perigosos e N\u00e3o Perigosos",
-        "sl": "[1200] B7 - Okolje - Skupna koli\u010dina nevarnih in nenevarnih odpadkov"
+        "sl": "[1200] B7 - Okolje - Skupna koli\u010dina nevarnih in nenevarnih odpadkov",
+        "sq": "[1200] B7 - Mjedisi - Mbetjet totale t\u00eb rrezikshme dhe jo t\u00eb rrezikshme",
+        "sr": "[1200] B7 - \u017divotna sredina - Ukupni opasni i neopasni otpad"
       },
       "rows": [
         [
@@ -51095,7 +52885,9 @@
         "nl": "[1210] B7 - Milieu - Uitsplitsing van de jaarlijkse massastroom van relevante materialen gebruikt door de onderneming",
         "pl": "[1210] B7 - \u015arodowisko - Podzia\u0142 rocznego przep\u0142ywu masy istotnych materia\u0142\u00f3w wykorzystywanych przez jednostk\u0119",
         "pt": "[1210] B7 - Ambiente - Desagrega\u00e7\u00e3o do fluxo anual de massa dos materiais relevantes utilizados pela empresa",
-        "sl": "[1210] B7 - Okolje - Raz\u010dlenitev letnega masnega toka zadevnih materialov, ki jih uporablja podjetje"
+        "sl": "[1210] B7 - Okolje - Raz\u010dlenitev letnega masnega toka zadevnih materialov, ki jih uporablja podjetje",
+        "sq": "[1210] B7 - Mjedisi - Ndarja e rrjedh\u00ebs vjetore masive t\u00eb materialeve relevante t\u00eb p\u00ebrdorura nga nd\u00ebrmarrja",
+        "sr": "[1210] B7 - \u017divotna sredina - Ra\u0161\u010dlanjeni godi\u0161nji maseni protok materijala koje koristi privredni subjekt"
       },
       "rows": [
         [
@@ -51141,7 +52933,9 @@
         "nl": "[1220] B7 - Milieu - Totale jaarlijkse massastroom van materialen gebruikt door de onderneming",
         "pl": "[1220] B7 - \u015arodowisko - Ca\u0142kowity roczny przep\u0142yw masowy materia\u0142\u00f3w u\u017cywanych przez jednostk\u0119",
         "pt": "[1220] B7 - Ambiente - Fluxo anual total de massa dos materiais utilizados pela empresa",
-        "sl": "[1220] B7 - Okolje - Skupni letni masni tok materialov, ki jih uporablja podjetje"
+        "sl": "[1220] B7 - Okolje - Skupni letni masni tok materialov, ki jih uporablja podjetje",
+        "sq": "[1220] B7 - Mjedisi - Rrjedha totale vjetore e mas\u00ebs s\u00eb materialeve t\u00eb p\u00ebrdorura nga nd\u00ebrmarrja",
+        "sr": "[1220] Ukupni godi\u0161nji maseni protok materijala koje koristi privredni subjekt"
       },
       "rows": [
         [
@@ -51171,7 +52965,9 @@
         "nl": "[1230] C3 - Milieu - Broeikasgasemissiereductie  basisjaar en doeljaar",
         "pl": "[1230] C3 - \u015arodowisko - Rok bazowy i docelowy redukcji emisji gaz\u00f3w cieplarnianych",
         "pt": "[1230] C3 - Ambiente - Ano base e ano alvo para redu\u00e7\u00e3o das emiss\u00f5es de gases com efeito de estufa",
-        "sl": "[1230] C3 - Okolje - Izhodi\u0161\u010dno in ciljno leto za zmanj\u0161anje emisij toplogrednih plinov"
+        "sl": "[1230] C3 - Okolje - Izhodi\u0161\u010dno in ciljno leto za zmanj\u0161anje emisij toplogrednih plinov",
+        "sq": "[1230] C3 - Mjedisi - Baza dhe Viti i Synuar p\u00ebr Reduktimin e Emetimeve t\u00eb Gazrave Serr\u00eb",
+        "sr": "[1230] C3 - \u017divotna sredina - Bazna i ciljna godina smanjenja emisija gasova sa efektom staklene ba\u0161te"
       },
       "rows": [
         [
@@ -51201,7 +52997,9 @@
         "nl": "[1240] C3 - Milieu - Doelstellingen voor broeikasgasemissiereductie",
         "pl": "[1240] C3 - \u015arodowisko - Cele redukcji emisji gaz\u00f3w cieplarnianych",
         "pt": "[1240] C3 - Ambiente - Metas de redu\u00e7\u00e3o das emiss\u00f5es de gases com efeito de estufa",
-        "sl": "[1240] C3 - Okolje - Cilji zmanj\u0161anja emisij toplogrednih plinov"
+        "sl": "[1240] C3 - Okolje - Cilji zmanj\u0161anja emisij toplogrednih plinov",
+        "sq": "[1240] C3 - Mjedisi - Objektivat p\u00ebr Reduktimin e Emetimeve t\u00eb Gazrave Serr\u00eb",
+        "sr": "[1240] C3 - \u017divotna sredina - Ciljne vrednosti smanjenja emisije gasova sa efektom staklene ba\u0161te"
       },
       "rows": [
         [
@@ -51279,7 +53077,9 @@
         "nl": "[1250] C3 - Milieu - Openbaarmaking van de lijst met belangrijkste acties die de entiteit nastreeft om haar  doelen te bereiken",
         "pl": "[1250] C3 - \u015arodowisko - Ujawnienie wykazu g\u0142\u00f3wnych dzia\u0142a\u0144, kt\u00f3re jednostka zamierza wdro\u017cy\u0107, aby osi\u0105gn\u0105\u0107 swoje cele",
         "pt": "[1250] C3 - Ambiente - Divulga\u00e7\u00e3o da lista das principais a\u00e7\u00f5es que a entidade procura executar para alcan\u00e7ar as suas metas",
-        "sl": "[1250] C3 - Okolje - Razkritje seznama glavnih ukrepov, s katerimi si subjekt prizadeva dose\u010di svoje cilje"
+        "sl": "[1250] C3 - Okolje - Razkritje seznama glavnih ukrepov, s katerimi si subjekt prizadeva dose\u010di svoje cilje",
+        "sq": "[1250] C3 - Mjedisi -Shpalosja e list\u00ebs s\u00eb veprimeve kryesore q\u00eb entiteti synon t\u00eb arrij\u00eb objektivat e tij",
+        "sr": "[1250] C3 - \u017divotna sredina - Obelodanjenje spiska glavnih aktivnosti koje privredni subjekat namerava da sprovede radi ostvarenja svojih ciljnih vrednosti"
       },
       "rows": [
         [
@@ -51305,7 +53105,9 @@
         "nl": "[1260] C3 - Milieu - Transitieplan voor ondernemingen die actief zijn in sectoren met een grote  klimaatimpact",
         "pl": "[1260] C3 - \u015arodowisko - Plan transformacji dla jednostek prowadz\u0105cych dzia\u0142alno\u015b\u0107 w sektorach o znacznym oddzia\u0142ywaniu na klimat",
         "pt": "[1260] C3 - Ambiente - Plano de transi\u00e7\u00e3o para empresas que operam em setores com elevado impacto clim\u00e1tico",
-        "sl": "[1260] C3 - Okolje - Na\u010drt prehoda za podjetja, ki delujejo v sektorjih z velikim vplivom na podnebje"
+        "sl": "[1260] C3 - Okolje - Na\u010drt prehoda za podjetja, ki delujejo v sektorjih z velikim vplivom na podnebje",
+        "sq": "[1260] C3 - Mjedisi - Plani i tranzicionit p\u00ebr nd\u00ebrmarrjet q\u00eb operojn\u00eb n\u00eb sektor\u00eb me ndikim t\u00eb lart\u00eb klimatik",
+        "sr": "[1260] C3 - \u017divotna sredina - Plan tranzicije za privredne subjekte koji posluju u sektorima sa visokim klimatskim uticajem"
       },
       "rows": [
         [
@@ -51339,7 +53141,9 @@
         "nl": "[1270] C4 - Milieu - Klimaatrisico's",
         "pl": "[1270] C4 - \u015arodowisko - Ryzyka klimatyczne",
         "pt": "[1270] C4 - Ambiente - Riscos clim\u00e1ticos",
-        "sl": "[1270] C4 - Okolje - Podnebna tveganja"
+        "sl": "[1270] C4 - Okolje - Podnebna tveganja",
+        "sq": "[1270] C4 - Mjedisi - Rreziqet klimatike",
+        "sr": "[1270] C4 - \u017divotna sredina - klimatski rizici"
       },
       "rows": [
         [
@@ -51381,7 +53185,9 @@
         "nl": "[1275] Milieu - Overige en/of entiteitsspecifieke informatie",
         "pl": "[1275] \u015arodowisko - Inne i/lub informacje specyficzne dla jednostki",
         "pt": "[1275] Ambiente - Outra informa\u00e7\u00e3o e/ou informa\u00e7\u00e3o espec\u00edfica da empresa",
-        "sl": "[1275] Okolje - Druge in/ali za subjekt specifi\u010dne informacije"
+        "sl": "[1275] Okolje - Druge in/ali za subjekt specifi\u010dne informacije",
+        "sq": "[1275] Mjedisi - Informacion tjet\u00ebr dhe/ose specifik p\u00ebr entitete",
+        "sr": "[1275] \u017divotna sredina - Druge informacije i/ili informacije koje se konkretno odnose na privrednog subjekta"
       },
       "rows": [
         [
@@ -51407,7 +53213,9 @@
         "nl": "[1280] B8 - Sociaal - Personeel - Algemene kenmerken: type contract",
         "pl": "[1280] B8 - Kwestie spo\u0142eczne - Zasoby pracownicze - Charakterystyka og\u00f3lna: rodzaj umowy",
         "pt": "[1280] B8 - Social - For\u00e7a de trabalho - Caracter\u00edsticas gerais: tipo de contrato",
-        "sl": "[1280] B8 - Dru\u017eba - Delovna sila - Splo\u0161ne zna\u010dilnosti: vrsta pogodbe"
+        "sl": "[1280] B8 - Dru\u017eba - Delovna sila - Splo\u0161ne zna\u010dilnosti: vrsta pogodbe",
+        "sq": "[1280] B8 - Sociale - Fuqia pun\u00ebtore - Karakteristika t\u00eb p\u00ebrgjithshme: lloji i kontrat\u00ebs",
+        "sr": "[1280] B8 - Socijalna pitanja - Radna snaga - Op\u0161te karakteristike: vrsta ugovora"
       },
       "rows": [
         [
@@ -51437,7 +53245,9 @@
         "nl": "[1290] B8 - Sociaal - Personeel  - Algemene kenmerken: gender",
         "pl": "[1290] B8 - Kwestie spo\u0142eczne - Zasoby pracownicze - og\u00f3lna charakterystyka: p\u0142e\u0107",
         "pt": "[1290] B8 - Social - M\u00e3o-de-obra - Caracter\u00edsticas gerais: g\u00e9nero",
-        "sl": "[1290] B8 - Dru\u017eba - Delovna sila - Splo\u0161ne zna\u010dilnosti: spol"
+        "sl": "[1290] B8 - Dru\u017eba - Delovna sila - Splo\u0161ne zna\u010dilnosti: spol",
+        "sq": "[1290] B8 - Sociale - Fuqia pun\u00ebtore - Karakteristika t\u00eb p\u00ebrgjithshme: gjinia",
+        "sr": "[1290] B8 - Socijalna pitanja - Radna snaga - Op\u0161te karakteristike: rod"
       },
       "rows": [
         [
@@ -51475,7 +53285,9 @@
         "nl": "[1300] B8 - Sociaal - Personeel - Algemene kenmerken: land van tewerkstelling",
         "pl": "[1300] B8 - Kwestie spo\u0142eczne - Zasoby pracownicze - Charakterystyka og\u00f3lna: kraj zatrudnienia",
         "pt": "[1300] B8 - Social - M\u00e3o-de-obra - Caracter\u00edsticas gerais: pa\u00eds do contrato de trabalho\"",
-        "sl": "[1300] B8 - Dru\u017eba - Delovna sila - Splo\u0161ne zna\u010dilnosti: dr\u017eava zaposlitve"
+        "sl": "[1300] B8 - Dru\u017eba - Delovna sila - Splo\u0161ne zna\u010dilnosti: dr\u017eava zaposlitve",
+        "sq": "[1300] B8 - Sociale - Fuqia pun\u00ebtore - Karakteristikat e p\u00ebrgjithshme: vendi i pun\u00ebsimit",
+        "sr": "[1300] B8 - Socijalna pitanja - Radna snaga - Op\u0161te karakteristike: dr\u017eava zaposlenja"
       },
       "rows": [
         [
@@ -51517,7 +53329,9 @@
         "nl": "[1320] B9 - Sociaal - Personeel - Gezondheid en veiligheid",
         "pl": "[1320] B9 - Kwestie spo\u0142eczne - Zasoby pracownicze - Bezpiecze\u0144stwo i higiena pracy",
         "pt": "[1320] B9 - Social - M\u00e3o-de-obra - Sa\u00fade e seguran\u00e7a",
-        "sl": "[1320] B9 - Dru\u017eba - Delovna sila - Zdravje in varnost"
+        "sl": "[1320] B9 - Dru\u017eba - Delovna sila - Zdravje in varnost",
+        "sq": "[1320] B9 - Sociale - Fuqia pun\u00ebtore - Sh\u00ebndeti dhe siguria",
+        "sr": "[1320] B9 - Socijalna pitanja - Radna snaga - Bezbednost i zdravlje na radu"
       },
       "rows": [
         [
@@ -51551,7 +53365,9 @@
         "nl": "[1330] B10 - Sociaal - Personeel - Beloning, collectieve onderhandelingen en opleiding",
         "pl": "[1330] B10 - Kwestie spo\u0142eczne - Zasoby pracownicze - Wynagrodzenie, rokowania zbiorowe i szkolenia",
         "pt": "[1330] B10 - Social - M\u00e3o-de-obra - Remunera\u00e7\u00e3o, negocia\u00e7\u00e3o coletiva e forma\u00e7\u00e3o",
-        "sl": "[1330] B10 - Dru\u017eba - Delovna sila - Prejemki, kolektivna pogajanja in usposabljanje"
+        "sl": "[1330] B10 - Dru\u017eba - Delovna sila - Prejemki, kolektivna pogajanja in usposabljanje",
+        "sq": "[1330] B10 - Sociale - Fuqia Pun\u00ebtore - Kompenzimi, negociatat kolektive dhe trajnimi",
+        "sr": "[1330] B10 - Socijalna pitanja - Radna snaga - Naknade, kolektivno pregovaranje i obuka"
       },
       "rows": [
         [
@@ -51597,7 +53413,9 @@
         "nl": "[1340] C5 - Sociaal - Aanvullende (algemene) kenmerken van het personeel",
         "pl": "[1340] C5 - Kwestie spo\u0142eczne - Dodatkowe (og\u00f3lne) cechy zasob\u00f3w pracowniczych",
         "pt": "[1340] C5 - Social - Caracter\u00edsticas adicionais (gerais) da for\u00e7a de trabalho",
-        "sl": "[1340] C5 - Dru\u017eba - Dodatne (splo\u0161ne) zna\u010dilnosti delovne sile"
+        "sl": "[1340] C5 - Dru\u017eba - Dodatne (splo\u0161ne) zna\u010dilnosti delovne sile",
+        "sq": "[1340] C5 - Sociale - Karakteristika shtes\u00eb (t\u00eb p\u00ebrgjithshme) t\u00eb fuqis\u00eb pun\u00ebtore",
+        "sr": "[1340] C5 - Socijalna pitanja - Dodatne (op\u0161te) karakteristike radne snage"
       },
       "rows": [
         [
@@ -51635,7 +53453,9 @@
         "nl": "[1350] C6 - Sociaal - Aanvullende informatie over het eigen personeel - Mensenrechtenbeleid en -processen",
         "pl": "[1350] C6 - Kwestie spo\u0142eczne - Dodatkowe informacje o w\u0142asnych zasobach pracowniczych - Polityki i procesy dotycz\u0105ce praw cz\u0142owieka",
         "pt": "[1350] C6 - Social - Informa\u00e7\u00f5es adicionais sobre a pr\u00f3pria m\u00e3o-de-obra - Pol\u00edticas e processos em mat\u00e9ria de direitos humanos",
-        "sl": "[1350] C6 - Dru\u017eba - Dodatne informacije o lastni delovni sili - politike in procesi na podro\u010dju \u010dlovekovih pravic"
+        "sl": "[1350] C6 - Dru\u017eba - Dodatne informacije o lastni delovni sili - politike in procesi na podro\u010dju \u010dlovekovih pravic",
+        "sq": "[1350] C6 - Sociale - Informacion shtes\u00eb p\u00ebr fuqin\u00eb pun\u00ebtore - Politikat dhe proceset e t\u00eb drejtave t\u00eb njeriut",
+        "sr": "[1350] C6 - Socijalna pitanja - Dodatne informacije o sopstvenoj radnoj snazi - Politike i procesi u oblasti ljudskih prava"
       },
       "rows": [
         [
@@ -51673,7 +53493,9 @@
         "nl": "[1360] C7 - Sociaal - Ernstige negatieve incidenten met betrekking tot mensenrechten",
         "pl": "[1360] C7 - Kwestie spo\u0142eczne - Incydenty dotycz\u0105ce praw cz\u0142owieka",
         "pt": "[1360] C7 - Social - Incidentes em mat\u00e9ria de direitos humanos",
-        "sl": "[1360] C7 \u2013 Socialno podro\u010dje \u2013 Incidenti v zvezi s \u010dlovekovimi pravicami"
+        "sl": "[1360] C7 \u2013 Socialno podro\u010dje \u2013 Incidenti v zvezi s \u010dlovekovimi pravicami",
+        "sq": "[1360] C7 - Sociale - Incidente t\u00eb t\u00eb drejtave t\u00eb njeriut",
+        "sr": "[1360] C7 - Socijalna pitanja - Incidenti u oblasti ljudskih prava"
       },
       "rows": [
         [
@@ -51719,7 +53541,9 @@
         "nl": "[1365] Sociaal - Overige en/of entiteitsspecifieke informatie",
         "pl": "[1365] Kwestie spo\u0142eczne - Inne i/lub informacje specyficzne dla jednostki",
         "pt": "[1365] Social - Outra informa\u00e7\u00e3o e/ou informa\u00e7\u00e3o espec\u00edfica da empresa",
-        "sl": "[1365] Dru\u017eba - Druge in/ali za subjekt specifi\u010dne informacije"
+        "sl": "[1365] Dru\u017eba - Druge in/ali za subjekt specifi\u010dne informacije",
+        "sq": "[1365] Sociale - Informacione t\u00eb tjera dhe/ose specifike p\u00ebr entitete",
+        "sr": "[1365] Socijalna pitanja - Druge informacije i/ili informacije koje se konkretno odnose na privrednog subjekta"
       },
       "rows": [
         [
@@ -51745,7 +53569,9 @@
         "nl": "[1370] B11 - Governance - Veroordelingen en boetes voor corruptie en omkoping",
         "pl": "[1370] B11 - \u0141ad korporacyjny - Wyroki skazuj\u0105ce i grzywny za naruszenie przepis\u00f3w antykorupcyjnych i przepis\u00f3w w sprawie zwalczania przekupstwa",
         "pt": "[1370] B11 - Governa\u00e7\u00e3o - Condena\u00e7\u00f5es e coimas por corrup\u00e7\u00e3o e suborno",
-        "sl": "[1370] B11 - Upravljanje - Obsodbe in globe za korupcijo in podkupovanje"
+        "sl": "[1370] B11 - Upravljanje - Obsodbe in globe za korupcijo in podkupovanje",
+        "sq": "[1370] B11 - Qeverisja - D\u00ebnime dhe gjoba p\u00ebr korrupsion dhe ryshfet",
+        "sr": "[1370] B11 - Osu\u0111uju\u0107e presude i nov\u010dane kazne za korupciju i podmi\u0107ivanje"
       },
       "rows": [
         [
@@ -51775,7 +53601,9 @@
         "nl": "[1380] C8 - Governance - Ontvangsten uit bepaalde sectoren",
         "pl": "[1380] C8 - \u0141ad korporacyjny - Przychody pochodz\u0105ce z niekt\u00f3rych rodzaj\u00f3w dzia\u0142alno\u015bci",
         "pt": "[1380] C8 - Governa\u00e7\u00e3o - R\u00e9ditos provenientes de determinadas atividades",
-        "sl": "[1380] C8 \u2013 Upravljanje \u2013 Prihodki iz dolo\u010denih dejavnosti"
+        "sl": "[1380] C8 \u2013 Upravljanje \u2013 Prihodki iz dolo\u010denih dejavnosti",
+        "sq": "[1380] C8 - Qeverisja - T\u00eb ardhurat e nxjerra nga aktivitete t\u00eb caktuara",
+        "sr": "[1380] C8 - Upravljanje - Prihodi od odre\u0111enih delatnosti"
       },
       "rows": [
         [
@@ -51825,7 +53653,9 @@
         "nl": "[1400] C9 - Governance - Genderdiversiteitsverhouding in het bestuursorgaan",
         "pl": "[1400] C9 - \u0141ad korporacyjny - Wska\u017anik zr\u00f3\u017cnicowania organu zarz\u0105dzaj\u0105cego pod wzgl\u0119dem p\u0142ci",
         "pt": "[1400] C9 - Governa\u00e7\u00e3o - R\u00e1cio de diversidade de g\u00e9nero no \u00f3rg\u00e3o de governa\u00e7\u00e3o",
-        "sl": "[1400] C9 - Upravljanje - Razmerje med spoloma v organu upravljanja"
+        "sl": "[1400] C9 - Upravljanje - Razmerje med spoloma v organu upravljanja",
+        "sq": "[1400] C9 - Qeverisja - Raporti i diversitetit gjinor n\u00eb organin qeveris\u00ebs",
+        "sr": "[1400] C9 - Upravljanje - Stepen rodne raznolikosti organa upravljanja"
       },
       "rows": [
         [
@@ -51851,7 +53681,9 @@
         "nl": "[1410] Governance - Overige en/of entiteitsspecifieke informatie",
         "pl": "[1410] \u0141ad korporacyjny - Inne i/lub informacje specyficzne dla jednostki",
         "pt": "[1410] Governa\u00e7\u00e3o - Outra informa\u00e7\u00e3o e/ou informa\u00e7\u00e3o espec\u00edfica da empresa",
-        "sl": "[1410] Upravljanje - Druge in/ali za subjekt specifi\u010dne informacije"
+        "sl": "[1410] Upravljanje - Druge in/ali za subjekt specifi\u010dne informacije",
+        "sq": "[1410] Qeverisja - Informacion tjet\u00ebr dhe/ose specifik p\u00ebr entitetet",
+        "sr": "[1410] Upravljanje - Druge informacije i/ili informacije koje se konkretno odnose na privrednog subjekta"
       },
       "rows": [
         [
