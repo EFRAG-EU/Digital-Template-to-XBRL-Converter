@@ -124,6 +124,7 @@ class WorkbookBinder:
                             self._msg.error(
                                 f"Domain member qualification set in named range {dn.name} but no dimension can be found for member.",
                                 MessageType.DevInfo,
+                                ref=b,
                             )
             if dn in concept_map:
                 reader.markUsed(dn)
@@ -160,6 +161,7 @@ class WorkbookBinder:
                 self._msg.error(
                     f"Named range {crm.definedName.name} names table {hypercube.qname.localName} but is not inside its named range.",
                     MessageType.ExcelParsing,
+                    ref=crm,
                 )
 
         bindings = WorkbookBindings(

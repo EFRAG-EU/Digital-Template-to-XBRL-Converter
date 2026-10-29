@@ -261,6 +261,7 @@ class XBRLTableResolver:
             msg.warning(
                 f"Expected Dimensions or Primary Items for hypercube {table_name} have not been found: {conceptsToText(missing)}.",
                 MessageType.DevInfo,
+                ref=table,
             )
 
         candidates: list[XbrlConceptCellRangeMetadata] = []
@@ -276,9 +277,13 @@ class XBRLTableResolver:
                 extras.add(crm)
 
         if extras:
+            listed = ", ".join(
+                sorted(f"{c.definedName.name} ({c.excelRef()})" for c in extras)
+            )
             msg.warning(
-                f"Extra named ranges found within/overlapping bounds of {table_name} named range but not supported by Hypercube {table.concept.qname}: {extras}.",
+                f"Extra named ranges found within/overlapping bounds of {table_name} named range but not supported by Hypercube {table.concept.qname}: {listed}.",
                 MessageType.DevInfo,
+                ref=table,
             )
 
         conflict = next(
@@ -293,6 +298,7 @@ class XBRLTableResolver:
                 f"{c2.definedName.name} that are neither the same nor disjoint. "
                 "Ignoring table.",
                 MessageType.ExcelParsing,
+                ref=table,
             )
             return None
 

@@ -516,3 +516,47 @@ class TestConceptTableNames:
             c.definedName.name for t in bindings.tables for c in t.conceptRanges
         }
         assert self.NOT_INSIDE in _messages(results, Severity.ERROR)
+
+
+def _refs(results, needle):
+    """Excel references of the messages whose text contains needle."""
+    return [m.excelReference for m in results.messages if needle in m.messageText]
+
+
+class TestBindingMessagesSayWhere:
+    def test_extra_ranges_are_listed_by_name_and_cell(self, taxonomy, rich_hypercube):
+        hc, pris, _dims = rich_hypercube
+        permitted = taxonomy.getAllDimensionsForHypercube(hc).union(
+            taxonomy.getAllPrimaryItemsForHypercube(hc)
+        )
+        outsider = next(
+            c
+            for c in sorted(taxonomy.concepts, key=str)
+            if c.isReportable and c not in permitted
+        )
+        _, results = _classify(taxonomy, hc, [(pris[0], "B2"), (outsider, "C3")])
+        [message] = [
+            m for m in results.messages if "Extra named ranges" in m.messageText
+        ]
+        assert message.messageText.endswith(": r1 ('S'!$C$3).")
+        assert message.excelReference == "'S'!$A$1:$F$6"
+
+    def test_missing_concepts_point_at_the_table(self, taxonomy, rich_hypercube):
+        hc, pris, _ = rich_hypercube
+        _, results = _classify(taxonomy, hc, [(pris[0], "B2")])
+        assert _refs(results, "have not been found") == ["'S'!$A$1:$F$6"]
+
+    def test_conflict_points_at_the_table(self, taxonomy, rich_hypercube):
+        hc, pris, _ = rich_hypercube
+        _, results = _classify(taxonomy, hc, [(pris[0], "B2:C2"), (pris[1], "C2:D2")])
+        assert _refs(results, "neither the same nor disjoint") == ["'S'!$A$1:$F$6"]
+
+    def test_concept_table_outside_its_table_points_at_the_range(self, taxonomy):
+        _, results = _bindNames(taxonomy, {BIO_TABLE: "A1:F6", SCOPED: "H2:H6"})
+        assert _refs(results, "but is not inside") == ["'S'!$H$2:$H$6"]
+
+    def test_member_qualification_points_at_the_range(self, taxonomy):
+        _, results = _bindNames(
+            taxonomy, {"BasisForPreparation_BasisForPreparation": "B2"}
+        )
+        assert _refs(results, "Domain member qualification") == ["'S'!$B$2"]
