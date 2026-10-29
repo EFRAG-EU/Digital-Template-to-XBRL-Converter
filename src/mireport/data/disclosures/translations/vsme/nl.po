@@ -54,3 +54,7 @@ msgstr "Rapportageperiode:"
 msgid "Introduction"
 msgstr "Inleiding"
 
+# Ours until the template has template_label_document_information.
+msgid "Document Information"
+msgstr "Documentinformatie"
+

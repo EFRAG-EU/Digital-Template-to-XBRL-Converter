@@ -127,7 +127,8 @@ def test_a_german_xbrl_json_report_is_translated() -> None:
     assert report.language == "de"
     assert "<dt>Bericht erstellt</dt>" in page
     assert "<h2>Inhaltsverzeichnis</h2>" in page
-    assert report.untranslatedStrings == ["Document Information"]
+    assert "<h2>Dokumentinformationen</h2>" in page
+    assert not report.untranslatedStrings
 
 
 def test_translations_are_escaped(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -169,7 +170,7 @@ class TestExcelReport:
             in page
         )
         assert "<p>Dieser Bericht enthält 144 XBRL-Fakten.</p>" in page
-        assert report.untranslatedStrings == ["Document Information"]
+        assert not report.untranslatedStrings
 
     def test_german_with_more_facts_shown_than_distinct(self) -> None:
         page = html(excelReport("de", duplicates=3))

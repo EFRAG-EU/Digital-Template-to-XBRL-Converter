@@ -5,17 +5,24 @@ from __future__ import annotations
 
 import importlib.util
 import json
+from io import BytesIO
 from pathlib import Path
 from types import ModuleType
 from typing import Any
 
 import pytest
+from babel.messages.mofile import write_mo
+from babel.messages.pofile import read_po
+from babel.support import Translations
+
+import mireport
 
 SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "xbrljson-to-ixbrl.py"
 
 VSME = "https://xbrl.efrag.org/taxonomy/vsme/2026-05-01"
 ENTITY = "lei:529900T8BM49AURSDO55"
 DURATION = "2026-01-01T00:00:00/2027-01-01T00:00:00"
+GERMAN = Path(mireport.__file__).parent / "data/disclosures/translations/vsme/de.po"
 
 
 @pytest.fixture(scope="module")
@@ -85,8 +92,18 @@ def test_report_on_a_built_in_taxonomy_converts(
 
 
 def test_a_german_report_is_translated_and_says_what_was_not(
-    script: ModuleType, tmp_path: Path
+    script: ModuleType, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    with GERMAN.open("rb") as f:
+        catalog = read_po(f, locale="de")
+    del catalog["Document Information"]
+    mo = BytesIO()
+    write_mo(mo, catalog)
+    mo.seek(0)
+    monkeypatch.setattr(
+        "mireport.report.inlinereport.getReportTranslations",
+        lambda *_: Translations(mo),
+    )
     document = vsmeReport()
     document["facts"]["f3"] = {
         "value": "Ein Verhaltenskodex für Lieferanten.",
