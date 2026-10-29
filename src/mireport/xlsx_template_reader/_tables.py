@@ -8,6 +8,7 @@ ranges, and units resolved from the table's unit ranges.
 from __future__ import annotations
 
 import logging
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -40,6 +41,15 @@ from mireport.xlsx_template_reader._fact_support import (
 L = logging.getLogger(__name__)
 
 
+@dataclass(slots=True)
+class _RowWithoutDimensions:
+    """A table row's dimensions left unset, and the values that could not be
+    reported for want of them."""
+
+    unset: list[XbrlConceptCellRangeMetadata]
+    values: list[tuple[Concept, object]] = field(default_factory=list)
+
+
 class TableFactCreator:
     """Creates facts from the rows of resolved hypercube tables."""
 
@@ -58,12 +68,8 @@ class TableFactCreator:
         self._config = config
         self._units = units
         self._bindings = bindings
-        # For the table being processed: row -> (unset dimensions, the values
-        # that could not be reported for want of them)
-        self._rowsWithoutDimensions: dict[
-            int,
-            tuple[list[XbrlConceptCellRangeMetadata], list[tuple[Concept, object]]],
-        ] = {}
+        # by row number, for the table being processed
+        self._rowsWithoutDimensions: dict[int, _RowWithoutDimensions] = {}
 
     @property
     def taxonomy(self) -> Taxonomy:
@@ -102,16 +108,16 @@ class TableFactCreator:
         def text(value: object) -> str:
             return str(value).upper() if isinstance(value, bool) else str(value)
 
-        for rnum, (unset, values) in sorted(self._rowsWithoutDimensions.items()):
-            if all(value is False for _, value in values):
+        for rnum, row in sorted(self._rowsWithoutDimensions.items()):
+            if all(value is False for _, value in row.values):
                 continue
             missing = ", ".join(
                 f'"{label(d.concept)}"'
                 + (" selected" if d in table_binding.explicitDimensions else "")
-                for d in unset
+                for d in row.unset
             )
-            dropped = ", ".join(f'"{label(c)}" = {text(v)}' for c, v in values)
-            first = unset[0]
+            dropped = ", ".join(f'"{label(c)}" = {text(v)}' for c, v in row.values)
+            first = row.unset[0]
             keyCell = first.worksheet.cell(row=rnum, column=first.cellRange.min_col)
             self._msg.warning(
                 f'Row {rnum} of "{label(table_binding.table.concept)}" has no {missing}, so its values were not reported: {dropped}.',
@@ -201,8 +207,9 @@ class TableFactCreator:
             table_binding.explicitDimensions, rnum, factBuilder
         )
         if unset:
-            dropped = self._rowsWithoutDimensions.setdefault(rnum, (unset, []))
-            dropped[1].append((concept, value))
+            self._rowsWithoutDimensions.setdefault(
+                rnum, _RowWithoutDimensions(unset)
+            ).values.append((concept, value))
             return True
 
         if concept.isNumeric:
