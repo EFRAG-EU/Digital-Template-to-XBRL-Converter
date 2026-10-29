@@ -84,9 +84,10 @@ def rich_hypercube(taxonomy):
     pytest.skip("no hypercube with >=2 reportable primary items and a dimension")
 
 
-def _classify(taxonomy, hypercube, placements, unit_map=None):
-    """Build a synthetic worksheet with a table range (A1:F6) for the hypercube
-    and one named range per (concept, cell_ref) placement, then resolve it.
+def _classify(taxonomy, hypercube, placements, unit_map=None, table_ref="A1:F6"):
+    """Build a synthetic worksheet with a table range (A1:F6, or comma-separated
+    areas) for the hypercube and one named range per (concept, cell_ref)
+    placement, then resolve it.
 
     Returns (TableBinding | None, results).
     """
@@ -96,15 +97,18 @@ def _classify(taxonomy, hypercube, placements, unit_map=None):
     ws.title = "S"
 
     def crm(name, ref, concept):
-        attr = f"{quote_sheetname('S')}!{absolute_coordinate(ref)}"
+        attr = ",".join(
+            f"{quote_sheetname('S')}!{absolute_coordinate(area)}"
+            for area in ref.split(",")
+        )
         wb.defined_names[name] = DefinedName(name, attr_text=attr)
-        resolved = reader.peekRange(wb.defined_names[name])
+        resolved = reader.peekRange(wb.defined_names[name], severalAreas=True)
         assert resolved is not None
         return XbrlConceptCellRangeMetadata.fromCellRangeMetadata(resolved, concept)
 
     results = _results()
     reader = WorkbookReader(wb, results)
-    table_crm = crm("tbl", "A1:F6", hypercube)
+    table_crm = crm("tbl", table_ref, hypercube)
     candidates = [
         crm(f"r{i}", ref, concept) for i, (concept, ref) in enumerate(placements)
     ]
@@ -195,6 +199,40 @@ class TestXBRLTableResolverClassification:
         _, results = _classify(taxonomy, hc, [(pris[0], "B2")])
         assert any(
             "have not been found" in w for w in _messages(results, Severity.WARNING)
+        )
+
+
+class TestTableWithSeveralAreas:
+    TABLE = "A1:F3,A9:F9"
+
+    def test_binds_ranges_in_every_area(self, taxonomy, rich_hypercube):
+        hc, pris, _ = rich_hypercube
+        binding, _ = _classify(
+            taxonomy, hc, [(pris[0], "B2"), (pris[1], "B9")], table_ref=self.TABLE
+        )
+        assert binding is not None
+        assert {c.concept for c in binding.primaryItems} == {pris[0], pris[1]}
+
+    def test_range_between_areas_is_ignored(self, taxonomy, rich_hypercube):
+        hc, pris, _ = rich_hypercube
+        binding, results = _classify(
+            taxonomy, hc, [(pris[0], "B2"), (pris[1], "B5")], table_ref=self.TABLE
+        )
+        assert binding is not None
+        assert [c.concept for c in binding.primaryItems] == [pris[0]]
+        assert not any(
+            "Extra named ranges" in w for w in _messages(results, Severity.WARNING)
+        )
+
+    def test_range_across_an_area_edge_is_extra(self, taxonomy, rich_hypercube):
+        hc, pris, _ = rich_hypercube
+        binding, results = _classify(
+            taxonomy, hc, [(pris[0], "B2"), (pris[1], "B8:B9")], table_ref=self.TABLE
+        )
+        assert binding is not None
+        assert [c.concept for c in binding.primaryItems] == [pris[0]]
+        assert any(
+            "Extra named ranges" in w for w in _messages(results, Severity.WARNING)
         )
 
 

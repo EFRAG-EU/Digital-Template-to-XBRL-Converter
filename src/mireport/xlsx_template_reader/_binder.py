@@ -69,7 +69,11 @@ class WorkbookBinder:
             )
 
             if concept is not None:
-                if (crh := reader.peekRange(dn)) is not None:
+                if (
+                    crh := reader.peekRange(
+                        dn, severalAreas=concept in taxonomy.hypercubes
+                    )
+                ) is not None:
                     concept_map[dn] = (
                         XbrlConceptCellRangeMetadata.fromCellRangeMetadata(
                             crh, concept=concept

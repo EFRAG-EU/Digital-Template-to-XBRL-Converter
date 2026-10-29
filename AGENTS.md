@@ -197,7 +197,8 @@ internal. The chain, in order:
    `WorkbookBindings`: simple concept ranges, hypercube `TableBinding`s, footnote bindings, and the set
    of concepts flagged as externally-valued. Named-range conventions: a range named for a concept's
    local name binds to that concept; `template_*` ranges are template metadata; `enum_*` ranges are
-   ignored. `_constants.TAXONOMY_NAME_ALIASES` / `UNHANDLED_NAMES_TO_IGNORE` hold the temporary VSME
+   ignored. Only a table (hypercube) range may have several areas, all on one sheet; a range
+   belongs to the table when it lies within one of them. `_constants.TAXONOMY_NAME_ALIASES` / `UNHANDLED_NAMES_TO_IGNORE` hold the temporary VSME
    workarounds.
 3. **`_fact_creator.FactCreator`** — walks the bindings and builds facts, delegating hypercube tables
    to `_tables.TableFactCreator` (one fact per row, dimensions read from the same row), units to
