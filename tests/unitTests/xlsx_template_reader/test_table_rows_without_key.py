@@ -1,6 +1,5 @@
 """A table row with values but an empty dimension cell gives one warning, on
-that cell, listing what was not reported; rows holding only FALSE (unticked
-checkboxes) stay quiet."""
+that cell; rows holding only FALSE (unticked checkboxes) stay quiet."""
 
 from datetime import date
 
@@ -71,9 +70,8 @@ def test_row_without_site_id_gives_one_warning_on_the_id_cell():
     assert _warnings(SITES, [["S1", True, False], [None, True, False]]) == [
         (
             (
-                'Row 3 of "Sites in biodiversity sensitive areas" has no "Identifier of site", '
-                'so its values were not reported: "Site located in a biodiversity sensitive area" = TRUE, '
-                '"Site located near a biodiversity sensitive area" = FALSE.'
+                'A row of "Sites in biodiversity sensitive areas" has no "Identifier of site", '
+                "so its values were not reported."
             ),
             "'S'!$A$3",
         )
@@ -88,8 +86,8 @@ def test_zero_is_data():
     assert _warnings(WASTE, [[None, 0]]) == [
         (
             (
-                'Row 2 of "Waste generated" has no "Type of waste" selected, '
-                'so its values were not reported: "Waste generated (mass)" = 0.'
+                'A row of "Waste generated" has no "Type of waste" selected, '
+                "so its values were not reported."
             ),
             "'S'!$A$2",
         )
