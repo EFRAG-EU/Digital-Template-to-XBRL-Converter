@@ -37,8 +37,21 @@ function showErrorModal(message) {
     document.getElementById("errorModal").classList.replace("hidden", "flex");
 }
 
+// The download being waited for, if any, so that it can be cancelled.
+let pendingDownload = null;
+
+// Cancel a download still waiting for its file, saying why.
+function cancelPendingDownload(reason) {
+    if (pendingDownload) {
+        pendingDownload.abort();
+        pendingDownload = null;
+        showErrorModal(reason);
+    }
+}
+
 async function downloadWhenReady(fileUrl, spinnerText) {
-    const MAX_WAIT_MS      = 60000;
+    // Long enough for the report to be validated, which a download waits for.
+    const MAX_WAIT_MS      = 300000;
     const INITIAL_POLL_MS  = 500;
     const MAX_POLL_MS      = 5000;
     const POLL_BACKOFF     = 1.5;
@@ -51,10 +64,11 @@ async function downloadWhenReady(fileUrl, spinnerText) {
 
     let pollingInterval = INITIAL_POLL_MS;
     const startTime = Date.now();
+    const download = pendingDownload = new AbortController();
 
     try {
         while (Date.now() - startTime < MAX_WAIT_MS) {
-            const response = await fetch(fileUrl, { method: "HEAD" });
+            const response = await fetch(fileUrl, { method: "HEAD", signal: download.signal });
 
             if (response.status === 200 && response.headers.get("X-File-Ready") === "true") {
                 window.location.href = fileUrl;
@@ -62,8 +76,10 @@ async function downloadWhenReady(fileUrl, spinnerText) {
             }
 
             if (response.status >= 400) {
+                // A HEAD response has no body: ask again for the error itself.
+                const errorResponse = await fetch(fileUrl, { signal: download.signal });
                 let errorBody;
-                const rawText = await response.text();
+                const rawText = await errorResponse.text();
                 try {
                     const jsonResponse = JSON.parse(rawText);
                     errorBody = jsonResponse.error ?? JSON.stringify(jsonResponse, null, 2);
@@ -71,21 +87,71 @@ async function downloadWhenReady(fileUrl, spinnerText) {
                     errorBody = `Failed to parse JSON: ${e.message}. Response body: ${rawText}`;
                 }
 
-                throw new Error(`Server error ${response.status}: ${errorBody}`);
+                throw new Error(`Server error ${errorResponse.status}: ${errorBody}`);
             }
 
             await new Promise(resolve => setTimeout(resolve, pollingInterval));
+            if (download.signal.aborted) {
+                return;
+            }
             pollingInterval = Math.min(pollingInterval * POLL_BACKOFF, MAX_POLL_MS);
         }
 
         showErrorModal("The file could not be generated in time.");
 
     } catch (error) {
+        if (download.signal.aborted) {
+            return;
+        }
         console.error("Error waiting for file:", error);
         showErrorModal(`Error: ${error.message}`);
     } finally {
+        if (pendingDownload === download) {
+            pendingDownload = null;
+        }
         clearTimeout(spinnerTimeout);
         hideSpinner();
+    }
+}
+
+// While the steps run on a converted report, swap in the parts of the results
+// page they change (validation banner, downloads, messages) until it settles.
+async function pollConversionStatus(results) {
+    const INITIAL_POLL_MS = 1000;
+    const MAX_POLL_MS     = 5000;
+    const POLL_BACKOFF    = 1.5;
+
+    let pollingInterval = INITIAL_POLL_MS;
+    for (;;) {
+        await new Promise(resolve => setTimeout(resolve, pollingInterval));
+        pollingInterval = Math.min(pollingInterval * POLL_BACKOFF, MAX_POLL_MS);
+
+        let status;
+        try {
+            const response = await fetch(results.dataset.statusUrl);
+            if (!response.ok) {
+                // The conversion has gone (expired or deleted): stop asking.
+                console.warn(`Conversion status unavailable: ${response.status}`);
+                return;
+            }
+            status = await response.json();
+        } catch (error) {
+            console.warn("Couldn't fetch the conversion status, retrying:", error);
+            continue;
+        }
+
+        for (const [id, html] of Object.entries(status.html)) {
+            document.getElementById(id)?.replaceWith(
+                document.createRange().createContextualFragment(html)
+            );
+        }
+        if (status.error) {
+            cancelPendingDownload(status.error);
+        }
+        if (status.complete) {
+            results.dataset.state = "complete";
+            return;
+        }
     }
 }
 
@@ -97,17 +163,21 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    const links = document.querySelectorAll(".download-handler");
-
-    links.forEach(downloadLink => {
-        // Skip disabled links
+    // Delegated, so download buttons swapped in by pollConversionStatus work too.
+    document.addEventListener("click", async (event) => {
+        const downloadLink = event.target.closest(".download-handler");
+        if (!downloadLink) {
+            return;
+        }
+        event.preventDefault();
         if (downloadLink.getAttribute("aria-disabled") === "true") {
             return;
         }
-
-        downloadLink.addEventListener("click", async (event) => {
-            event.preventDefault();
-            await downloadWhenReady(downloadLink.href, downloadLink.dataset.spinnerText);
-        });
+        await downloadWhenReady(downloadLink.href, downloadLink.dataset.spinnerText);
     });
+
+    const results = document.getElementById("conversion-results");
+    if (results?.dataset.statusUrl) {
+        pollConversionStatus(results);
+    }
 });

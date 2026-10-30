@@ -6,6 +6,7 @@ import zipfile
 from importlib.metadata import PackageNotFoundError, metadata, version
 from io import BytesIO
 from pathlib import Path, PurePath
+from time import perf_counter_ns
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -169,6 +170,7 @@ class ArelleReportProcessor:
                     PluginManager.close()
                 except Exception:
                     L.exception("Failed to reset Arelle package and plugin managers")
+                started = perf_counter_ns()
                 with (
                     Session() as session,
                     reportPackage.fileLike() as requestZipStream,
@@ -180,6 +182,7 @@ class ArelleReportProcessor:
                         logFilters=[],
                     )
                     result = ArelleProcessingResult.fromSession(session)
+                result.elapsedNs = perf_counter_ns() - started
                 assert requestZipStream.closed, "Forgot to close the stream."
                 return result
             except Exception as arelle_exception:

@@ -14,7 +14,7 @@ from mireport.arelle.support import (
     ArelleQNameCanonicaliser,
     ArelleRelatedException,
 )
-from mireport.conversionresults import MessageType, Severity
+from mireport.conversionresults import MessageType, Severity, Step, StepState
 from mireport.xml import getBootstrapQNameMaker
 
 
@@ -101,6 +101,31 @@ class TestImportArelleMessages:
     def test_log_lines_are_kept(self) -> None:
         result = ArelleProcessingResult.fromArelleLogs(makeJsonLog(), ["one", "two"])
         assert result.log_lines == ["one", "two"]
+
+
+class TestValidationResults:
+    def test_messages_and_timing_become_the_steps(self) -> None:
+        result = ArelleProcessingResult.fromArelleLogs(
+            makeJsonLog(("xbrl.5.2.5.2:calcInconsistency", "error", "Bad calc")), []
+        )
+        result.elapsedNs = 2_000_000_000
+
+        validation = result.validationResults(Step.PACKAGE, detail="Using Arelle")
+
+        assert validation.step is Step.PACKAGE
+        assert validation.state is StepState.DONE
+        assert validation.durationNs == 2_000_000_000
+        assert not validation.isValid
+        assert [m.messageText for m in validation.userMessages] == [
+            "[xbrl.5.2.5.2:calcInconsistency] Bad calc"
+        ]
+        [finished] = validation.getMessages(wantedMessageTypes={MessageType.Progress})
+        assert finished.messageText.startswith("Finished: [XBRL report validation] in")
+        assert finished.messageText.endswith("Using Arelle")
+
+    def test_clean_run_is_valid(self) -> None:
+        validation = ArelleProcessingResult().validationResults(Step.XBRL_JSON)
+        assert validation.isValid
 
 
 class TestArelleProcessingResultOutputs:

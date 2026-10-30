@@ -12,6 +12,7 @@ import logging
 from datetime import UTC, datetime
 from pathlib import PurePath
 from secrets import token_hex
+from time import monotonic, sleep
 from typing import TYPE_CHECKING, Any
 
 from flask import (
@@ -31,16 +32,17 @@ from flask import (
 
 import mireport
 from mireport.comparatives import PRIOR_REPORT_EXTENSIONS
-from mireport.conversionresults import ConversionResultsBuilder
+from mireport.conversionresults import ConversionResultsBuilder, Step
 from mireport.filesupport import FilelikeAndFileName
 from mireport.report.theme import ColourPalette, ReportTheme
 from mireport.stringutil import truthy
 
 from .app_setup import DEPLOYMENT_DATETIME, getArelle
+from .background import StepStore, reportResults, viewerFiles
 from .blueprints import convert_bp
 from .captcha import generate_captcha, validateCaptchaAndCsrf
-from .conversion import ConversionStore
-from .conversion_service import doConversion, ensureViewer
+from .conversion import Conversion, ConversionStore
+from .conversion_service import doConversion
 from .forms import IMAGE_UPLOAD_FIELDS, MAX_FILE_SIZE, MAX_PDF_COUNT, first_str
 from .migration import MigrationOutcome, checkMigration
 from .template_helpers import getUploadFilename
@@ -253,7 +255,7 @@ def convert(id: str) -> Response:
                 render_template(
                     "conversion-results.html.jinja",
                     expired=True,
-                    conversion_result=None,
+                    results=None,
                 ),
                 404,
             )
@@ -295,7 +297,7 @@ def convert(id: str) -> Response:
         return Response(
             render_template(
                 "conversion-results.html.jinja",
-                conversion_result=conv.results,
+                results=reportResults(conv),
                 offer_migration=offer_migration,
                 conversion_id=id,
                 dev=devInfo,
@@ -310,6 +312,39 @@ def convert(id: str) -> Response:
         else:
             L.exception("Exception during conversion", exc_info=e)
             return make_response({"error": str(e)}, 500)
+
+
+VALIDATION_ERRORS_MESSAGE = (
+    "Validation found errors in the XBRL report, so it can't be downloaded."
+    " Please review the messages on the results page."
+)
+
+
+@convert_bp.route("/conversions/<string:id>/status", methods=["GET"])
+def conversionStatus(id: str) -> Response:
+    """The results page's validation banner, downloads and messages as they
+    now stand, for the page to swap in while the steps run."""
+    if (conv := ConversionStore.fromFlask().get(id)) is None or (
+        results := reportResults(conv)
+    ) is None:
+        return make_response({"error": "No conversion found"}, 404)
+    dev = request.args.get("show_developer_messages") == "true"
+    return make_response(
+        {
+            "complete": results.isComplete,
+            "downloadsAllowed": results.downloadsAllowed,
+            "error": VALIDATION_ERRORS_MESSAGE if results.hasValidationErrors else None,
+            "html": {
+                "validation-status": render_template(
+                    "_validation-status.html.jinja", results=results
+                ),
+                "downloads": render_template("_downloads.html.jinja", results=results),
+                "messages": render_template(
+                    "_messages.html.jinja", results=results, dev=dev
+                ),
+            },
+        }
+    )
 
 
 @convert_bp.route("/conversions/<string:id>/partial-facts", methods=["GET"])
@@ -354,6 +389,34 @@ def partial_facts_submit(id: str) -> Response:
     return make_response(redirect(url_for("basic.convert", id=id), code=303))
 
 
+def _heldBack(conv: Conversion, *, viewer: bool = False) -> Response | None:
+    """Why the report can't be had yet, if it can't: 409 once validation has
+    found errors, 202 (try again) while it is being validated, or its
+    ``viewer`` built. A HEAD, the page's polling, is answered at once; a GET,
+    someone following the link, waits a while for validation first."""
+    # Inside the 60s that gunicorn allows a request in production.
+    waitSeconds = current_app.config.get("DOWNLOAD_WAIT_SECONDS", 50)
+    deadline = monotonic() + (waitSeconds if request.method == "GET" else 0)
+    while (results := reportResults(conv)) is not None:
+        if not results.downloadsAllowed:
+            return make_response({"error": VALIDATION_ERRORS_MESSAGE}, 409)
+        if not (
+            results.validationPending
+            or (viewer and not results.steps[Step.VIEWER].isFinished)
+        ):
+            return None
+        if monotonic() >= deadline:
+            return make_response(
+                {
+                    "status": "The XBRL report is still being validated. Try again shortly."
+                },
+                202,
+                {"X-File-Ready": "false"},
+            )
+        sleep(0.5)
+    return None
+
+
 @convert_bp.route("/downloadFile/<string:id>/<string:ftype>/", methods=["GET", "HEAD"])
 def downloadFile(id: str, ftype: str) -> Response:
     """Download the converted file from the session."""
@@ -365,9 +428,14 @@ def downloadFile(id: str, ftype: str) -> Response:
             {"error": "No report generated. Nothing to download."}, 404
         )
 
+    if ftype in ("viewer", "zip", "json") and (
+        held := _heldBack(conv, viewer=ftype == "viewer")
+    ):
+        return held
+
     match ftype:
         case "viewer":
-            stuff, members = ensureViewer(conv, getArelle())
+            stuff, members = viewerFiles(conv)
             if members and request.method != "HEAD":
                 # A document set viewer fetches its members by name relative to
                 # itself, so it has to be served in place rather than downloaded.
@@ -403,13 +471,19 @@ def conversions() -> Response:
 
 @convert_bp.route("/delete/<string:id>", methods=["POST"])
 def delete(id: str) -> Response:
-    ConversionStore.fromFlask().delete(id)
+    conversions = ConversionStore.fromFlask()
+    if conversions.get(id) is not None:
+        StepStore.fromFlask().forget(id)
+    conversions.delete(id)
     return make_response(redirect(url_for("basic.conversions"), code=303))
 
 
 @convert_bp.route("/delete/_all", methods=["POST"])
 def delete_all() -> Response:
-    ConversionStore.fromFlask().deleteActive()
+    conversions = ConversionStore.fromFlask()
+    for id in conversions.active():
+        StepStore.fromFlask().forget(id)
+    conversions.deleteActive()
     return make_response(redirect(url_for("basic.conversions"), code=303))
 
 
@@ -417,8 +491,10 @@ def delete_all() -> Response:
 def viewer(id: str) -> Response:
     if (conv := ConversionStore.fromFlask().get(id)) is None or not conv.has_zip:
         return make_response({"error": "No file found"}, 404)
+    if held := _heldBack(conv, viewer=True):
+        return held
 
-    stuff, _ = ensureViewer(conv, getArelle())
+    stuff, _ = viewerFiles(conv)
     return serveViewerFile(stuff)
 
 
@@ -431,8 +507,10 @@ def viewerDocumentSetMember(id: str, filename: str) -> Response:
     """
     if (conv := ConversionStore.fromFlask().get(id)) is None or not conv.has_zip:
         return make_response({"error": "No file found"}, 404)
+    if held := _heldBack(conv, viewer=True):
+        return held
 
-    _, members = ensureViewer(conv, getArelle())
+    _, members = viewerFiles(conv)
     if (member := members.get(filename)) is None:
         return make_response({"error": f"File {filename} not found."}, 404)
     response = serveViewerFile(member)
