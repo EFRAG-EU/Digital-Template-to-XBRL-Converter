@@ -105,9 +105,6 @@ class TableFactCreator:
                 fallbackIfMissing=str(concept.qname), removeSuffix=True
             )
 
-        def text(value: object) -> str:
-            return str(value).upper() if isinstance(value, bool) else str(value)
-
         for rnum, row in sorted(self._rowsWithoutDimensions.items()):
             if all(value is False for _, value in row.values):
                 continue
@@ -116,11 +113,10 @@ class TableFactCreator:
                 + (" selected" if d in table_binding.explicitDimensions else "")
                 for d in row.unset
             )
-            dropped = ", ".join(f'"{label(c)}" = {text(v)}' for c, v in row.values)
             first = row.unset[0]
             keyCell = first.worksheet.cell(row=rnum, column=first.cellRange.min_col)
             self._msg.warning(
-                f'Row {rnum} of "{label(table_binding.table.concept)}" has no {missing}, so its values were not reported: {dropped}.',
+                f'A row of "{label(table_binding.table.concept)}" has no {missing}, so its values were not reported.',
                 MessageType.Conversion,
                 ref=first.excelRef(keyCell),
             )
