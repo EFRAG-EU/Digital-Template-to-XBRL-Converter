@@ -50,3 +50,12 @@
     </div>
 </div>
 {% endmacro %}
+
+{# One of a conversion's files, enabled once its results allow it. #}
+{% macro report_download_button(ftype, id, results) %}
+    {{ download_button(
+        ftype,
+        url_for('basic.downloadFile', id=id, ftype=ftype),
+        results.conversionSuccessful if ftype == 'excel' else results.downloadsAllowed
+    ) }}
+{% endmacro %}

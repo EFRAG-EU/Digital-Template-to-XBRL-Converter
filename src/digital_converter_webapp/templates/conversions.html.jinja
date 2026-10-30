@@ -1,5 +1,4 @@
 {% extends "base.html.jinja" %}
-{% from "_macros.html.jinja" import download_button %}
 
 {% block title %}Conversions{% endblock %}
 
@@ -37,34 +36,7 @@
             <tbody>
                 {% for id in conversions %}
                     {% set conversion = conversions[id] %}
-                    <tr class="hover:bg-gray-50">
-                        <td class="border border-gray-300 px-4 py-2 text-sm text-gray-800 max-w-xs overflow-hidden text-ellipsis">
-                            <span class="font-medium text-gray-900 block">{{ getUploadFilename(id) }}</span>
-                            <br>
-                            <span class="text-gray-600 text-xs block">Uploaded on: {{ conversion.date }}</span>
-                        </td>
-                        <td class="border border-gray-300 px-4 py-2">
-                            <a href="{{url_for('basic.convert', id = id, **request.args)}}" class="block text-center px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition">
-                            View results
-                            </a>
-                        </td>
-                        {% for ftype in ("viewer", "json", "zip", "excel") %}
-                        <td class="border border-gray-300 px-4 py-2">
-                            {{ download_button(
-                                ftype,
-                                url_for('basic.downloadFile', id=id, ftype=ftype),
-                                conversion.successful is true,
-                            ) }}
-                        </td>
-                        {% endfor %}
-                        <td class="border border-gray-300 px-4 py-2">
-                            <form method="POST" action="{{ url_for('basic.delete', id = id) }}">
-                                <button type="submit" class="px-6 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition">
-                                Delete conversion
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
+                    {% include "_conversion-row.html.jinja" %}
                 {% endfor %}
             </tbody>
         </table>
