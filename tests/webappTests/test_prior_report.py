@@ -140,6 +140,21 @@ class TestComparatives:
         assert f"taken from {SAMPLE_1_2_0.name}." in body
         assert conversion_of(client).successful
 
+    def test_each_workbook_checked_for_migration_is_parsed_once(
+        self, app, client, conversion_of, thisYear, monkeypatch, workbookParses
+    ):
+        """The workbooks checked for migration are the ones converted."""
+        monkeypatch.setitem(app.config, "ENABLE_MIGRATION", True)
+        # No migration tool to offer last year's older template to.
+        monkeypatch.setattr(
+            "mireport.template_versions.migrationTargetTemplateVersion", lambda: None
+        )
+        prior = SAMPLE_1_2_0.read_bytes()
+        body = _convert(client, _upload(client, thisYear, prior, SAMPLE_1_2_0.name))
+        assert f"taken from {SAMPLE_1_2_0.name}." in body
+        assert conversion_of(client).successful
+        assert workbookParses == [False, False]
+
 
 @pytest.mark.slow
 class TestFailures:

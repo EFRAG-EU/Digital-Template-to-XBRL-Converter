@@ -43,6 +43,7 @@ from mireport.xlsx_template_reader.processor import (
 
 from .blueprints import convert_bp
 from .conversion import ConversionStore
+from .workbooks import Workbooks
 
 if TYPE_CHECKING:
     from .conversion import Conversion
@@ -62,10 +63,18 @@ class MigrationOutcome(StrEnum):
     NO_MIGRATION = "no_migration_available"
 
 
-def doMigrationChecks(conv: Conversion) -> tuple[MigrationOutcome, str]:
+def doMigrationChecks(
+    conv: Conversion, workbooks: Workbooks | None = None
+) -> tuple[MigrationOutcome, str]:
+    """``workbooks`` keeps the workbook parsed, for the conversion to have."""
     upload = conv.migrationSource
     assert upload is not None, "doMigrationChecks needs an uploaded Excel file"
-    check = XlsxProcessor.checkReport(upload.fileLike())
+    if workbooks is None:
+        workbooks = Workbooks()
+    try:
+        check = XlsxProcessor.checkWorkbook(workbooks.load(upload))
+    except Exception:
+        check = None
     if check is None:
         # can't do anything if we can't read the report
         return MigrationOutcome.MISSING, "unknown"
@@ -100,16 +109,19 @@ def doMigrationChecks(conv: Conversion) -> tuple[MigrationOutcome, str]:
     return outcome, report_template_version
 
 
-def checkMigration(conv: Conversion) -> Response | None:
+def checkMigration(
+    conv: Conversion, workbooks: Workbooks | None = None
+) -> Response | None:
     """Run the migration checks, recording the outcome on ``conv``.
 
     Returns a redirect if the conversion must not go ahead, otherwise None.
     Last year's workbook (``conv.prior``) is only offered migration: anything
-    else wrong with it is for the conversion to report.
+    else wrong with it is for the conversion to report. ``workbooks`` keeps the
+    workbook parsed, for the conversion to have.
     """
     if conv.isPrior and not _isWorkbook(conv.migrationSource):
         return None
-    outcome, conv.report_template_version = doMigrationChecks(conv)
+    outcome, conv.report_template_version = doMigrationChecks(conv, workbooks)
     conv.migration_outcome = outcome
     if conv.isPrior and outcome is not MigrationOutcome.MIGRATION_REQUIRED:
         return None
