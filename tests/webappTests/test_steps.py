@@ -164,6 +164,16 @@ def test_flat_layout_lists_the_messages_in_one_table(tmp_path, upload_id, valida
     assert not list(messages.iter("details"))
     assert "Excel Reference" in messages.xpath(".//th/text()")
     assert "Arelle validation was not run (test stub)" in messages.text_content()
+    assert "Starting:" not in messages.text_content()
+
+    dev = client.get(f"/conversions/{conv_id}?show_developer_messages=true")
+    [messages] = lxml.html.fromstring(dev.data).xpath('//*[@id="messages"]')
+    texts = [" ".join(t.split()) for t in messages.xpath(".//td[3]/text()")]
+    package = texts.index("Starting: [XBRL report validation].")
+    assert "Arelle validation was not run (test stub)" in texts[package:]
+    assert any(
+        t.startswith("Finished: [XBRL report validation] in ") for t in texts[package:]
+    )
 
 
 def test_status_of_an_unknown_conversion(client):
