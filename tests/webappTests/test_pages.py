@@ -99,6 +99,7 @@ class TestBranding:
             'VSME-Digital-Template-sample-latest.xlsx"' in body
         )
         assert "provided by EFRAG (or test the" in body
+        assert "convert your VS or VSME Digital Template" in body
 
     def test_configured_product_name_and_no_logo(self, tmp_path):
         app = _brandedApp(
@@ -121,6 +122,8 @@ class TestBranding:
         footer = body.split("<footer", 1)[1].split("</footer>", 1)[0]
         for text in (
             "are provided by EFRAG as guidance material",
+            "implementation of the VSME and VS sustainability reporting standards",
+            "More information about digital VS and VSME reporting",
             (
                 '<button type="button" onclick="openModal()" class="text-blue-600'
                 ' underline">terms and conditions</button>'
@@ -142,6 +145,7 @@ class TestBranding:
         modal = body.split('<div id="termsModal"', 1)[1].split('id="errorModal"')[0]
         for text in (
             '<h2 class="text-lg font-bold text-gray-800 mb-4">Terms and Conditions',
+            "implementation of the VSME and VS sustainability reporting standards",
             "EFRAG is providing the web-converter for personal and non-commercial use",
             (
                 'href="https://www.efrag.org/en/about-us/legal-policies">EFRAG\'s privacy'
