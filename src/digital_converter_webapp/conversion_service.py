@@ -140,7 +140,7 @@ def _loadReport(
 
     with builder.section(Stage.WORKBOOK, source=upload.filename):
         processor = XlsxProcessor(
-            workbooks.load(upload),
+            workbooks.take(upload),
             builder,
             VSME_DEFAULTS,
             outputLocale=requestedOutputLocale,
@@ -254,7 +254,7 @@ def _mergePriorReport(
         return
     with builder.section(Stage.PRIOR, source=prior.filename):
         PriorReport.fromFile(
-            prior, builder, arelle=arelle, loadWorkbook=workbooks.load
+            prior, builder, arelle=arelle, loadWorkbook=workbooks.take
         ).mergeInto(report, builder)
 
 

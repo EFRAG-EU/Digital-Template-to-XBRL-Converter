@@ -1,5 +1,7 @@
 """Workbooks: each uploaded workbook parsed once, however often a request reads it."""
 
+import gc
+import weakref
 from io import BytesIO
 from zipfile import BadZipFile
 
@@ -44,6 +46,35 @@ def test_different_files_with_one_name_are_different_workbooks(workbookParses):
     second = workbooks.load(FilelikeAndFileName(_xlsx("B"), "report.xlsx"))
     assert (first.sheetnames, second.sheetnames) == (["A"], ["B"])
     assert len(workbookParses) == 2
+
+
+def test_a_workbook_taken_is_the_one_loaded(workbookParses):
+    workbooks = Workbooks()
+    upload = FilelikeAndFileName(_xlsx("A"), "report.xlsx")
+    loaded = workbooks.load(upload)
+    assert workbooks.take(upload) is loaded
+    assert len(workbookParses) == 1
+
+
+def test_a_workbook_taken_is_let_go(workbookParses):
+    """Its last reader takes it, so it is freed once read rather than at the end of the request."""
+    workbooks = Workbooks()
+    upload = FilelikeAndFileName(_xlsx("A"), "report.xlsx")
+    workbooks.load(upload)
+    taken = weakref.ref(workbooks.take(upload))
+    gc.collect()
+    assert taken() is None
+
+
+def test_a_workbook_taken_without_being_loaded_is_parsed_and_not_kept(
+    workbookParses,
+):
+    workbooks = Workbooks()
+    upload = FilelikeAndFileName(_xlsx("A"), "report.xlsx")
+    taken = weakref.ref(workbooks.take(upload))
+    gc.collect()
+    assert taken() is None
+    assert len(workbookParses) == 1
 
 
 def test_a_file_that_cant_be_parsed_is_tried_again(workbookParses):

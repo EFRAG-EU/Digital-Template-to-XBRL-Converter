@@ -26,8 +26,20 @@ class Workbooks:
         self._parsed: dict[bytes, Workbook] = {}
 
     def load(self, upload: FilelikeAndFileName) -> Workbook:
-        key = hashlib.sha256(upload.fileContent).digest()
+        """The workbook, kept for whatever reads it next."""
+        key = _key(upload)
         if (workbook := self._parsed.get(key)) is None:
             workbook = loadExcelFromPathOrFileLike(upload.fileLike())
             self._parsed[key] = workbook
         return workbook
+
+    def take(self, upload: FilelikeAndFileName) -> Workbook:
+        """The workbook, no longer kept: for its last reader, so that it is freed
+        once read rather than at the end of the request."""
+        if (workbook := self._parsed.pop(_key(upload), None)) is None:
+            workbook = loadExcelFromPathOrFileLike(upload.fileLike())
+        return workbook
+
+
+def _key(upload: FilelikeAndFileName) -> bytes:
+    return hashlib.sha256(upload.fileContent).digest()
