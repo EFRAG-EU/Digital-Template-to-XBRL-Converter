@@ -36,6 +36,7 @@
             <tbody>
                 {% for id in conversions %}
                     {% set conversion = conversions[id] %}
+                    {% set results = results_by_id[id] %}
                     {% include "_conversion-row.html.jinja" %}
                 {% endfor %}
             </tbody>

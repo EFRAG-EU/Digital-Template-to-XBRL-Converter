@@ -51,11 +51,13 @@
 </div>
 {% endmacro %}
 
-{# One of a conversion's files, enabled once its results allow it. #}
+{# One of a conversion's files, enabled once its results allow it: the upload
+   once converted, the report once validated without errors, and its viewer
+   once built too. #}
 {% macro report_download_button(ftype, id, results) %}
-    {{ download_button(
-        ftype,
-        url_for('basic.downloadFile', id=id, ftype=ftype),
-        results.conversionSuccessful if ftype == 'excel' else results.downloadsAllowed
-    ) }}
+    {% set ready = {
+        'excel': results.conversionSuccessful,
+        'viewer': results.viewerReady,
+    }.get(ftype, results.downloadsReady) if results is not none else false %}
+    {{ download_button(ftype, url_for('basic.downloadFile', id=id, ftype=ftype), ready) }}
 {% endmacro %}

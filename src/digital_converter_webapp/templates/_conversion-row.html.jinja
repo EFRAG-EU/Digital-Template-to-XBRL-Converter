@@ -1,6 +1,13 @@
-{% from "_macros.html.jinja" import download_button %}
-{# One conversion's row on My Conversions. #}
-<tr class="hover:bg-gray-50">
+{% from "_macros.html.jinja" import report_download_button %}
+{# One conversion's row on My Conversions. While its steps run, all.js polls
+   data-status-url and swaps in the row it returns. #}
+<tr id="conversion-{{ id }}" class="hover:bg-gray-50"
+{% if results and not results.isComplete %}
+    data-state="pending"
+    data-status-url="{{ url_for('basic.conversionStatus', id=id, view='row') }}"
+{% else %}
+    data-state="complete"
+{% endif %}>
     <td class="border border-gray-300 px-4 py-2 text-sm text-gray-800 max-w-xs overflow-hidden text-ellipsis">
         <span class="font-medium text-gray-900 block">{{ getUploadFilename(id) }}</span>
         <br>
@@ -13,11 +20,7 @@
     </td>
     {% for ftype in ("viewer", "json", "zip", "excel") %}
     <td class="border border-gray-300 px-4 py-2">
-        {{ download_button(
-            ftype,
-            url_for('basic.downloadFile', id=id, ftype=ftype),
-            conversion.successful is true,
-        ) }}
+        {{ report_download_button(ftype, id, results) }}
     </td>
     {% endfor %}
     <td class="border border-gray-300 px-4 py-2">

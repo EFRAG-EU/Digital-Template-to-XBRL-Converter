@@ -11,7 +11,8 @@
 {% if results.downloadsAllowed %}
     <p>
         Please review the generated XBRL report and the messages below to ensure that all disclosures are complete
-        and accurate. The report can be downloaded in various formats:
+        and accurate. The report can be downloaded in various formats
+        {%- if results.validationPending %} once it has been validated{% endif %}:
     </p>
 {% elif results.conversionSuccessful %}
     <p>
