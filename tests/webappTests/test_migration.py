@@ -24,6 +24,7 @@ from digital_converter_webapp.migration import (
     checkMigration,
     doMigrationChecks,
 )
+from digital_converter_webapp.workbooks import Workbooks
 from mireport.filesupport import FilelikeAndFileName
 from mireport.version import OUR_VERSION_HOLDER, VersionHolder
 from mireport.xlsx_template_reader.util import loadExcelFromPathOrFileLike
@@ -254,6 +255,18 @@ class TestCheckMigration:
             response = checkMigration(conv)
         assert response is not None
         assert response.headers["Location"] == "/"
+
+    def test_the_workbook_checked_is_kept_for_the_conversion(
+        self, migration_app, migration_target, workbookParses
+    ):
+        conv = _conversion(_report("2.0.1", VS_ENTRY_POINT))
+        workbooks = Workbooks()
+        with migration_app.test_request_context():
+            assert checkMigration(conv, workbooks) is None
+        assert conv.migration_outcome == str(MigrationOutcome.VERSION_TOO_NEW)
+        assert conv.excel is not None
+        workbooks.load(conv.excel)
+        assert workbookParses == [False]
 
 
 class TestVersionlessUploadShowsThePreciseError:

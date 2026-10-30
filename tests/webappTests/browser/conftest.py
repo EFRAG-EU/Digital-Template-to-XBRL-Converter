@@ -98,6 +98,9 @@ def _uploadAndConvert(page: Page, workbook: Path | FilePayload = SAMPLE_XLSX) ->
         timeout=CONVERSION_TIMEOUT_MS
     )
     page.get_by_role("heading", name="Conversion Results").wait_for()
+    # all.js binds its download handler on DOMContentLoaded; a click before
+    # then follows the link itself.
+    page.wait_for_load_state("domcontentloaded")
 
 
 @pytest.fixture(scope="session")

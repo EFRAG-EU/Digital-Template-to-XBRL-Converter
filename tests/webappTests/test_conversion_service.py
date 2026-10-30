@@ -11,14 +11,25 @@ degrade to "the PDF still ships, unconverted" on a deployment with no converter
 installed, and that path has to be exercised on machines that are exactly that.
 """
 
+import gc
 import io
+import weakref
 import zipfile
+from pathlib import Path
 
 import lxml.html
 import pytest
 
+from digital_converter_webapp.conversion import Conversion
+from digital_converter_webapp.conversion_service import doConversion
+from digital_converter_webapp.workbooks import Workbooks
 from mireport.conversionresults import Severity, Stage
-from mireport.pdf_converter import PdfConversionError, PdfToolNotFoundError
+from mireport.filesupport import FilelikeAndFileName
+from mireport.pdf_converter import (
+    PdfConversionError,
+    PdfSupplementaryMode,
+    PdfToolNotFoundError,
+)
 
 
 class TestConversionResultsPageExpired:
@@ -292,3 +303,28 @@ class TestPdfConversion:
         upload(client, pdfs=[make_pdf("a.pdf"), make_pdf("b.pdf"), make_pdf("c.pdf")])
         names = _packageNames(_convert(client, conversion_of))
         assert sum("/attachments/" in n for n in names) == 3, names
+
+
+def _sample(name: str) -> FilelikeAndFileName:
+    path = Path(__file__).parents[2] / "digital-templates" / name
+    return FilelikeAndFileName.fromPath(path)
+
+
+@pytest.mark.slow
+def test_the_conversion_lets_go_of_each_workbook_it_has_read(app):
+    """The workbooks the migration checks parsed are freed once converted, not
+    held to the end of the request. (``app`` loads the taxonomies.)"""
+    conv = Conversion({"id": "lets-go"})
+    conv.excel = _sample("VSME-Digital-Template-Sample-1.3.0.xlsx")
+    conv.priorReport = _sample("VSME-Digital-Template-Sample-1.2.0.xlsx")
+    workbooks = Workbooks()
+    checked = [
+        weakref.ref(workbooks.load(conv.excel)),
+        weakref.ref(workbooks.load(conv.priorReport)),
+    ]
+
+    doConversion(conv, None, PdfSupplementaryMode.DOCSET, workbooks=workbooks)
+
+    assert conv.zip is not None
+    gc.collect()
+    assert [ref() for ref in checked] == [None, None]

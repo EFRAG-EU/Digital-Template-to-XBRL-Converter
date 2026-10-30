@@ -8,6 +8,7 @@ hardcoded.
 """
 
 from io import BytesIO
+from pathlib import Path
 
 import pytest
 from openpyxl import Workbook
@@ -19,6 +20,7 @@ from mireport.data.disclosures import VSME_DEFAULTS
 from mireport.template_versions import SupportedVersionSource
 from mireport.version import OUR_VERSION_HOLDER, VersionHolder
 from mireport.xlsx_template_reader.processor import VersionRelation, XlsxProcessor
+from mireport.xlsx_template_reader.util import loadExcelFromPathOrFileLike
 
 _SHEET = "S"
 CONVERTER_VERSION = OUR_VERSION_HOLDER.strip_build_metadata
@@ -32,8 +34,8 @@ def _no_migration_tool(monkeypatch: pytest.MonkeyPatch) -> None:
     )
 
 
-def _check(named_cells: dict[str, object]):
-    """Run checkTemplate over a workbook holding the given named single cells."""
+def _workbook(named_cells: dict[str, object]) -> Workbook:
+    """A workbook holding the given named single cells."""
     wb = Workbook()
     ws = wb.active
     assert ws is not None
@@ -42,8 +44,15 @@ def _check(named_cells: dict[str, object]):
         ws.cell(row=row, column=1).value = value
         attr = f"{quote_sheetname(_SHEET)}!{absolute_coordinate(f'A{row}')}"
         wb.defined_names[name] = DefinedName(name, attr_text=attr)
+    return wb
+
+
+def _check(named_cells: dict[str, object]):
+    """Run checkTemplate over a workbook holding the given named single cells."""
     results = ConversionResultsBuilder(consoleOutput=False)
-    check = XlsxProcessor(wb, results, VSME_DEFAULTS).checkTemplate()
+    check = XlsxProcessor(
+        _workbook(named_cells), results, VSME_DEFAULTS
+    ).checkTemplate()
     return check, results
 
 
@@ -198,3 +207,47 @@ class TestMigrationStatus:
 class TestCheckReport:
     def test_garbage_bytes_returns_none(self):
         assert XlsxProcessor.checkReport(BytesIO(b"this is not an xlsx")) is None
+
+
+def _saved(named_cells: dict[str, object]) -> bytes:
+    saved = BytesIO()
+    _workbook(named_cells).save(saved)
+    return saved.getvalue()
+
+
+_CELLS = {
+    "template_reporting_template_version": str(CONVERTER_VERSION),
+    "template_migration_status": "MIGRATED OK",
+}
+
+
+class TestCheckWorkbook:
+    """checkWorkbook checks a workbook already loaded, leaving it to be converted."""
+
+    def test_same_result_as_check_report(self):
+        data = _saved(_CELLS)
+        wb = loadExcelFromPathOrFileLike(BytesIO(data))
+        assert XlsxProcessor.checkWorkbook(wb) == XlsxProcessor.checkReport(
+            BytesIO(data)
+        )
+
+    def test_leaves_the_workbook_open(self):
+        """A read-only workbook reads its cells from the file until it is closed."""
+        wb = loadExcelFromPathOrFileLike(BytesIO(_saved(_CELLS)), read_only=True)
+        first = XlsxProcessor.checkWorkbook(wb)
+        assert first is not None
+        assert XlsxProcessor.checkWorkbook(wb) == first
+        wb.close()
+
+    def test_not_a_workbook_returns_none(self):
+        assert XlsxProcessor.checkWorkbook(object()) is None  # type: ignore[arg-type]
+
+    def test_checked_workbook_still_converts(self):
+        wb = loadExcelFromPathOrFileLike(
+            Path("digital-templates/VSME-Digital-Template-Sample-1.3.0.xlsx")
+        )
+        assert XlsxProcessor.checkWorkbook(wb) is not None
+        report = XlsxProcessor(
+            wb, ConversionResultsBuilder(consoleOutput=False), VSME_DEFAULTS
+        ).createReport()
+        assert report.hasFacts

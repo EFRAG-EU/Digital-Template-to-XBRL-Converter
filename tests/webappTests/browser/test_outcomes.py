@@ -113,7 +113,7 @@ def test_optional_migration_is_offered(
     monkeypatch.setattr(
         migrationModule,
         "doMigrationChecks",
-        lambda conv: (MigrationOutcome.MIGRATION_OPTIONAL, "1.2.0"),
+        lambda conv, workbooks=None: (MigrationOutcome.MIGRATION_OPTIONAL, "1.2.0"),
     )
     context = browser.new_context(**{**browser_context_args, "base_url": migrationUrl})
     page = context.new_page()
