@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from io import BytesIO
 from pathlib import Path
+from zipfile import BadZipFile
 
 import pytest
 from openpyxl import Workbook
@@ -20,22 +21,61 @@ from mireport.xlsx_template_reader.processor import XlsxProcessor
 SAMPLES = Path("digital-templates")
 
 
-def test_a_migrated_workbook_not_yet_saved_in_excel_is_refused() -> None:
-    """Its formula cells, the migration status among them, have no values until Excel saves it."""
+NOT_SAVED_IN_EXCEL = (
+    r"^last-year\.xlsx has been migrated but not yet saved in "
+    r"Excel\. Open it in Excel, save it, and give it again\.$"
+)
+
+
+def _migratedNotSaved() -> Workbook:
     wb = Workbook()
     wb.defined_names["template_migration_status"] = DefinedName(
         "template_migration_status", attr_text="Sheet!$A$1"
     )
+    return wb
+
+
+def test_a_migrated_workbook_not_yet_saved_in_excel_is_refused() -> None:
+    """Its formula cells, the migration status among them, have no values until Excel saves it."""
     unsaved = BytesIO()
-    wb.save(unsaved)
-    with pytest.raises(
-        EarlyAbortException,
-        match=r"^last-year\.xlsx has been migrated but not yet saved in "
-        r"Excel\. Open it in Excel, save it, and give it again\.$",
-    ):
+    _migratedNotSaved().save(unsaved)
+    with pytest.raises(EarlyAbortException, match=NOT_SAVED_IN_EXCEL):
         PriorReport.fromWorkbook(
             FilelikeAndFileName(unsaved.getvalue(), "last-year.xlsx"),
             ConversionResultsBuilder(),
+        )
+
+
+def test_the_workbook_is_had_from_the_loader_given() -> None:
+    """A workbook already loaded (to check it for migration, say) isn't parsed again."""
+    loaded: list[str] = []
+
+    def loadWorkbook(source: FilelikeAndFileName) -> Workbook:
+        loaded.append(source.filename)
+        return _migratedNotSaved()
+
+    with pytest.raises(EarlyAbortException, match=NOT_SAVED_IN_EXCEL):
+        PriorReport.fromFile(
+            FilelikeAndFileName(b"never parsed", "last-year.xlsx"),
+            ConversionResultsBuilder(),
+            arelle=None,  # type: ignore[arg-type]
+            loadWorkbook=loadWorkbook,
+        )
+    assert loaded == ["last-year.xlsx"]
+
+
+def test_a_loader_that_cant_read_it_says_it_isnt_a_workbook() -> None:
+    def loadWorkbook(source: FilelikeAndFileName) -> Workbook:
+        raise BadZipFile("File is not a zip file")
+
+    with pytest.raises(
+        EarlyAbortException,
+        match=r"^last-year\.xlsx is not an Excel workbook: File is not a zip file$",
+    ):
+        PriorReport.fromWorkbook(
+            FilelikeAndFileName(b"never parsed", "last-year.xlsx"),
+            ConversionResultsBuilder(),
+            loadWorkbook=loadWorkbook,
         )
 
 

@@ -515,16 +515,26 @@ class XlsxProcessor:
         """
         Check the report template for internal validation and version information.
         """
-        wb = None
         try:
             wb = loadExcelFromPathOrFileLike(excelBlob, read_only=True)
-            processor = cls(wb, ConversionResultsBuilder(), VSME_DEFAULTS)
+        except Exception:
+            return None
+        try:
+            return cls.checkWorkbook(wb)
+        finally:
+            wb.close()
+
+    @classmethod
+    def checkWorkbook(cls, workbook: Workbook) -> TemplateCheckResult | None:
+        """
+        checkReport for a workbook already loaded, which is left open to be
+        converted.
+        """
+        try:
+            processor = cls(workbook, ConversionResultsBuilder(), VSME_DEFAULTS)
             return processor.checkTemplate()
         except Exception:
             return None
-        finally:
-            if wb is not None:
-                wb.close()
 
     def checkMigrationStatus(self) -> bool | None:
         """
