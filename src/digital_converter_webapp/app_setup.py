@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 from datetime import UTC, datetime, timedelta
+from enum import StrEnum
 
 from cachelib.file import FileSystemCache
 from flask import Flask, Response, current_app, make_response
@@ -24,6 +25,15 @@ L = logging.getLogger(__name__)
 # When this process started; shown by base.html.jinja and sent as the
 # X-Deployment-Datetime header so you can tell which deployment answered.
 DEPLOYMENT_DATETIME = datetime.now(UTC)
+
+
+class ResultsLayout(StrEnum):
+    """How the results page lays out the messages: one table, or a collapsible
+    section per stage of the conversion."""
+
+    FLAT = "flat"
+    SECTIONS = "sections"
+
 
 # What the templates show as config.BRAND_*; a deployment overrides any of them
 # with FLASK_BRAND_* (an empty value hides that element). BRAND_TEMPLATE_DIR,
@@ -55,7 +65,7 @@ def configure_logging() -> None:
 
 
 def normalise_feature_flags(app: Flask) -> None:
-    """Turn the feature flags into real booleans (and enum) so request-time
+    """Turn the feature flags into real booleans (and enums) so request-time
     checks can rely on them."""
     app.config["ENABLE_CAPTCHA"] = truthy(app.config.get("ENABLE_CAPTCHA", False))
     app.config["ENABLE_MIGRATION"] = (
@@ -77,6 +87,15 @@ def normalise_feature_flags(app: Flask) -> None:
         )
         pdfMode = PdfSupplementaryMode.DOCSET
     app.config["PDF_SUPPLEMENTARY_MODE"] = pdfMode
+    layout = app.config.get("RESULTS_LAYOUT", ResultsLayout.FLAT)
+    try:
+        layout = ResultsLayout(layout)
+    except ValueError:
+        L.warning(
+            f"Ignoring unknown RESULTS_LAYOUT={layout!r}; using {ResultsLayout.FLAT!r}."
+        )
+        layout = ResultsLayout.FLAT
+    app.config["RESULTS_LAYOUT"] = layout
 
 
 def applyBrandingDefaults(app: Flask) -> None:

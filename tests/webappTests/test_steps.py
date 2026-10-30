@@ -4,17 +4,21 @@ import threading
 import time
 from io import BytesIO
 
+import lxml.html
 import pytest
 from cachelib.file import FileSystemCache
 from openpyxl import load_workbook
 from tests.unitTests.arelle_results import cleanValidation
 
 from digital_converter_webapp import create_app
+from digital_converter_webapp.app_setup import ResultsLayout
 from digital_converter_webapp.background import StepStore
 from mireport.arelle.report_info import ArelleReportProcessor
 from mireport.arelle.support import ArelleProcessingResult
 from mireport.conversionresults import Step, StepState
 from mireport.filesupport import FilelikeAndFileName
+
+from .conftest import _test_config
 
 
 @pytest.fixture
@@ -149,14 +153,28 @@ def test_status_of_a_finished_conversion(client, upload_id, validations):
         assert f'id="section-{section}"' in messages
 
 
+def test_flat_layout_lists_the_messages_in_one_table(tmp_path, upload_id, validations):
+    client = create_app(_test_config(tmp_path, RESULTS_LAYOUT="flat")).test_client()
+    conv_id = upload_id(client)
+
+    page = client.get(f"/conversions/{conv_id}").get_data(as_text=True)
+
+    [messages] = lxml.html.fromstring(page).xpath('//*[@id="messages"]')
+    assert messages.tag == "table"
+    assert not list(messages.iter("details"))
+    assert "Excel Reference" in messages.xpath(".//th/text()")
+    assert "Arelle validation was not run (test stub)" in messages.text_content()
+
+
 def test_status_of_an_unknown_conversion(client):
     response = client.get("/conversions/no-such-conversion/status")
     assert response.status_code == 404
 
 
-@pytest.fixture(scope="module")
-def backgroundClient(tmp_path_factory):
-    """A client of an app that runs the steps in the background, as deployed."""
+@pytest.fixture(scope="module", params=list(ResultsLayout))
+def backgroundClient(request, tmp_path_factory):
+    """A client of an app that runs the steps in the background, as deployed, in
+    each results layout."""
     app = create_app(
         {
             "TESTING": True,
@@ -164,6 +182,7 @@ def backgroundClient(tmp_path_factory):
                 str(tmp_path_factory.mktemp("background-sessions"))
             ),
             "SECRET_KEY": "test-secret",
+            "RESULTS_LAYOUT": request.param,
         }
     )
     return app.test_client()
@@ -190,7 +209,7 @@ def test_results_page_is_shown_before_validation_finishes(
     assert 'data-state="pending"' in page
     assert f"/conversions/{conv_id}/status" in page
     assert "Validating the generated XBRL report" in page
-    # The package's validation, in its section's header.
+    # The package's validation, in its section's header or under the banner.
     assert "waiting" in page or "in progress" in page
     status = backgroundClient.get(f"/conversions/{conv_id}/status").get_json()
     assert status["complete"] is False

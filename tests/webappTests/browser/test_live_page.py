@@ -14,6 +14,7 @@ from playwright.sync_api import Page, expect
 from tests.unitTests.arelle_results import cleanValidation
 
 from digital_converter_webapp import create_app
+from digital_converter_webapp.app_setup import ResultsLayout
 from mireport.arelle.report_info import ArelleReportProcessor
 from mireport.arelle.support import ArelleProcessingResult
 from mireport.conversionresults import Message, MessageType, Severity
@@ -77,9 +78,10 @@ def arelle(monkeypatch):
     fake.gate.set()
 
 
-@pytest.fixture(scope="module")
-def backgroundUrl(serve, tmp_path_factory) -> str:
-    """An app that runs the steps in the background, as deployed."""
+@pytest.fixture(scope="module", params=list(ResultsLayout))
+def backgroundUrl(request, serve, tmp_path_factory) -> str:
+    """An app that runs the steps in the background, as deployed, in each
+    results layout."""
     return serve(
         create_app(
             {
@@ -88,6 +90,7 @@ def backgroundUrl(serve, tmp_path_factory) -> str:
                     str(tmp_path_factory.mktemp("live-sessions"))
                 ),
                 "SECRET_KEY": "test-secret",
+                "RESULTS_LAYOUT": request.param,
             }
         )
     )
@@ -186,6 +189,7 @@ def test_viewer_built_in_the_background_downloads_at_once(
     assert arelle.viewersBuilt == 1
 
 
+@pytest.mark.parametrize("backgroundUrl", [ResultsLayout.SECTIONS], indirect=True)
 def test_a_section_the_user_opened_stays_open(page: Page, uploadAndConvert, arelle):
     arelle.gate.clear()
     arelle.packageError = True
@@ -201,6 +205,7 @@ def test_a_section_the_user_opened_stays_open(page: Page, uploadAndConvert, arel
     expect(package).to_have_attribute("open", "")
 
 
+@pytest.mark.parametrize("backgroundUrl", [ResultsLayout.SECTIONS], indirect=True)
 def test_a_section_the_user_closed_stays_closed(page: Page, uploadAndConvert, arelle):
     arelle.gate.clear()
     arelle.packageError = True
@@ -229,7 +234,8 @@ def test_developer_messages_follow_the_updates(page: Page, uploadAndConvert, are
 
     expectSettled(page)
     expect(toggle).to_be_checked()
-    expect(page.locator("#section-package").get_by_title("Duration")).to_be_visible()
+    # A step's developer-only detail, swapped in when the step finished.
+    expect(page.get_by_text(re.compile(r"^Using Arelle")).first).to_be_attached()
 
 
 def test_two_tabs_settle_alike(context, uploadAndConvert, arelle):

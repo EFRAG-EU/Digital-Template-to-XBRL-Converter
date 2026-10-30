@@ -243,7 +243,8 @@ one with `with builder.section(Stage.X, source=filename):`; everything added mea
 goes into it, and anything added outside every section goes into a "Conversion" one. Sections don't
 nest (reopening the open one carries on in it). Messages are not prefixed with their stage or file:
 the section says which, and where one section covers several files (Word documents, PDFs) each
-message names its own in `Message.source`. The results page shows a block per section and the CLI a
+message names its own in `Message.source`. The results page shows a block per section when
+`FLASK_RESULTS_LAYOUT=sections`, and one table of every message by default (`flat`); the CLI prints a
 header per section (`mireport.cli.printSections`). Progress is not stored: sections are timed, and
 "Starting/Finished" lines are only printed live for the CLI (`consoleOutput`).
 

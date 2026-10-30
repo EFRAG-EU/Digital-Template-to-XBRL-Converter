@@ -19,4 +19,13 @@
         The generated XBRL report is valid according to the technical XBRL specifications!
 {% endif %}
     </p>
+{# The sections layout shows each step's progress in its own section. #}
+{% if config.RESULTS_LAYOUT != "sections" and results.conversionSuccessful and not results.isComplete %}
+    {% set state_words = {'pending': 'waiting', 'running': 'in progress', 'done': 'done', 'skipped': 'not run', 'failed': 'failed'} %}
+    <p class="text-center text-sm mt-2">
+    {% for step, stepResults in results.steps.items() %}
+        {{ step.label }}: {{ state_words[stepResults.state.value] }}{% if not loop.last %} · {% endif %}
+    {% endfor %}
+    </p>
+{% endif %}
 </div>

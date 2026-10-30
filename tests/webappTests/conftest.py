@@ -44,6 +44,8 @@ def _test_config(session_dir, **overrides):
         "TAXONOMY_PACKAGE_DIR": taxonomyPackagesDir(),
         # The results page complete when first shown, as these tests expect.
         "RUN_STEPS_INLINE": True,
+        # Most tests look into the sections; a deployment gets the flat table.
+        "RESULTS_LAYOUT": "sections",
         **overrides,
     }
 
