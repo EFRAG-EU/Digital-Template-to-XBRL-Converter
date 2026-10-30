@@ -21,9 +21,10 @@ becomes.
 from __future__ import annotations
 
 from enum import StrEnum
+from functools import partial
 from typing import TYPE_CHECKING, NamedTuple
 
-from mireport.conversionresults import MessageType, Severity
+from mireport.conversionresults import MessageType, Severity, Stage
 from mireport.pdf_converter._convert import convertPdfToHtml, convertPdfToXhtml
 from mireport.pdf_converter._exceptions import PdfConversionError
 from mireport.pdf_converter._merge import MergedAnnex, buildMergedAnnex
@@ -32,7 +33,7 @@ from mireport.pdf_converter._run import findConverter
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from mireport.conversionresults import ConversionResultsBuilder, ProcessingContext
+    from mireport.conversionresults import ConversionResultsBuilder
     from mireport.filesupport import FilelikeAndFileName
 
 
@@ -60,7 +61,6 @@ class PdfBatchResult(NamedTuple):
 def convertSupplementaryPdfs(
     pdfs: Sequence[FilelikeAndFileName],
     results: ConversionResultsBuilder,
-    pc: ProcessingContext,
     *,
     mode: PdfSupplementaryMode = PdfSupplementaryMode.DOCSET,
 ) -> PdfBatchResult:
@@ -74,13 +74,15 @@ def convertSupplementaryPdfs(
     if not attachments:
         return PdfBatchResult([], [], [])
 
-    # Opened before any message is added, so that everything below is reported
-    # inside this section rather than trailing the caller's previous one.
-    pc.mark(
-        "Converting supplementary PDFs",
-        additionalInfo=f"({len(attachments)} to convert)",
-    )
+    with results.section(Stage.PDF):
+        return _convertAll(attachments, results, mode)
 
+
+def _convertAll(
+    attachments: list[FilelikeAndFileName],
+    results: ConversionResultsBuilder,
+    mode: PdfSupplementaryMode,
+) -> PdfBatchResult:
     try:
         converter = findConverter()
     except PdfConversionError as e:
@@ -92,11 +94,17 @@ def convertSupplementaryPdfs(
         )
         return PdfBatchResult(attachments, [], [])
 
-    pc.addDevInfoMessage(f"Converting PDFs using {converter} (mode={mode})")
+    results.addDevInfoMessage(f"Converting PDFs using {converter} (mode={mode})")
     docsetMembers: list[FilelikeAndFileName] = []
     mergedAnnexes: list[MergedAnnex] = []
     for index, attachment in enumerate(attachments, start=1):
-        pc.addDevInfoMessage(f"Converting {attachment.filename}")
+        devInfo = partial(
+            results.addMessage,
+            severity=Severity.INFO,
+            message_type=MessageType.DevInfo,
+            source=attachment.filename,
+        )
+        devInfo("Converting for display")
         try:
             if mode == PdfSupplementaryMode.MERGE:
                 annex = buildMergedAnnex(
@@ -116,16 +124,25 @@ def convertSupplementaryPdfs(
                 )
         except PdfConversionError as e:
             results.addMessage(
-                f"Could not convert {attachment.filename} for display. It is "
-                f"attached to the report package unconverted. {e}",
+                "Could not convert it for display. It is attached to the report "
+                f"package unconverted. {e}",
                 Severity.WARNING,
                 MessageType.Conversion,
+                source=attachment.filename,
             )
             continue
         if mode == PdfSupplementaryMode.MERGE:
-            pc.addDevInfoMessage(f"Converted PDF {attachment} to merged {annex}")
+            devInfo(f"Converted to merged {annex}")
             mergedAnnexes.append(annex)
+            shown = "Converted for display as an annex to the report."
         else:
-            pc.addDevInfoMessage(f"Converted PDF {attachment} to {converted}")
+            devInfo(f"Converted to {converted}")
             docsetMembers.append(converted)
+            shown = "Converted for display alongside the report."
+        results.addMessage(
+            f"{shown} It is also attached to the report package.",
+            Severity.INFO,
+            MessageType.Conversion,
+            source=attachment.filename,
+        )
     return PdfBatchResult(attachments, docsetMembers, mergedAnnexes)

@@ -13,8 +13,9 @@ from mireport.arelle.report_info import (
     ArelleReportProcessor,
 )
 from mireport.cli import (
+    addThemeImages,
     configure_rich_output,
-    console_print_plain,
+    printSections,
     validateTaxonomyPackages,
 )
 from mireport.cli import (
@@ -24,11 +25,15 @@ from mireport.comparatives import PriorReport
 from mireport.conversionresults import (
     ConversionResults,
     ConversionResultsBuilder,
+    MessageType,
+    Severity,
+    Stage,
 )
 from mireport.data.disclosures import VSME_DEFAULTS
-from mireport.docx_converter import convertDocxToHtml
+from mireport.docx_converter import DocxConversionError, convertDocxToHtml
 from mireport.entrypoints import describeEntryPointSet
-from mireport.filesupport import FilelikeAndFileName, ImageFileLikeAndFileName
+from mireport.exceptions import EarlyAbortException
+from mireport.filesupport import FilelikeAndFileName
 from mireport.localise import EU_LOCALES, argparse_locale
 from mireport.pdf_converter import (
     PdfSupplementaryMode,
@@ -45,11 +50,18 @@ def _convert_docx_to_markup(
     docx_path: Path, resultsBuilder: ConversionResultsBuilder, idPrefix: str
 ) -> Markup:
     """Convert a .docx file to HTML and return it as Markup, reporting anything
-    that could not be converted. Its ids start @idPrefix, unique to it."""
-    conversion = convertDocxToHtml(
-        FilelikeAndFileName(docx_path.read_bytes(), docx_path.name),
-        idPrefix=idPrefix,
-    )
+    that could not be converted. Its ids start @idPrefix, unique to it. One
+    that can't be converted at all stops the conversion."""
+    try:
+        conversion = convertDocxToHtml(
+            FilelikeAndFileName(docx_path.read_bytes(), docx_path.name),
+            idPrefix=idPrefix,
+        )
+    except DocxConversionError as e:
+        resultsBuilder.addMessage(
+            str(e), Severity.ERROR, MessageType.Conversion, source=e.filename
+        )
+        raise EarlyAbortException(str(e)) from e
     conversion.addTo(resultsBuilder)
     return conversion.html
 
@@ -243,47 +255,48 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, list[str]
     with resultsBuilder.processingContext(
         "mireport Excel to validated Inline Report"
     ) as pc:
-        pc.mark("Loading taxonomy metadata")
-        mireport.loadBuiltInTaxonomyJSON()
-        allTaxonomies = mireport.taxonomy.listTaxonomies()
-        pc.addDevInfoMessage(
-            f"Taxonomies entry points ({len(allTaxonomies)}) available: "
-            + ", ".join(describeEntryPointSet(eps) for eps in allTaxonomies)
-        )
-        pc.mark(
-            "Extracting data from Excel workbook",
-            additionalInfo=f"Using file: {args.xlsx_file}",
-        )
-        xl_processor = XlsxProcessor.from_file(
-            args.xlsx_file,
-            resultsBuilder,
-            VSME_DEFAULTS,
-            outputLocale=args.output_locale,
-        )
-        report = xl_processor.createReport()
+        with resultsBuilder.section(Stage.TAXONOMY):
+            mireport.loadBuiltInTaxonomyJSON()
+            allTaxonomies = mireport.taxonomy.listTaxonomies()
+            pc.addDevInfoMessage(
+                f"Taxonomies entry points ({len(allTaxonomies)}) available: "
+                + ", ".join(describeEntryPointSet(eps) for eps in allTaxonomies)
+            )
+            resultsBuilder.addMessage(
+                f"{len(allTaxonomies)} taxonomy entry points loaded.",
+                Severity.INFO,
+                MessageType.Conversion,
+            )
+        with resultsBuilder.section(Stage.WORKBOOK, source=args.xlsx_file.name):
+            xl_processor = XlsxProcessor.from_file(
+                args.xlsx_file,
+                resultsBuilder,
+                VSME_DEFAULTS,
+                outputLocale=args.output_locale,
+            )
+            report = xl_processor.createReport()
         if args.prior:
-            pc.mark(
-                "Reading last year's report", additionalInfo=f"Using file: {args.prior}"
-            )
             prior = FilelikeAndFileName(args.prior.read_bytes(), args.prior.name)
-            PriorReport.fromFile(prior, resultsBuilder, arelle=arp).mergeInto(
-                report, resultsBuilder
-            )
+            with resultsBuilder.section(Stage.PRIOR, source=prior.filename):
+                PriorReport.fromFile(prior, resultsBuilder, arelle=arp).mergeInto(
+                    report, resultsBuilder
+                )
 
         colour = ColourPalette.parse(args.style_custom or args.style_preset)
         report.theme.setDisplayMode(args.style_mode).setColour(colour)
 
-        for arg_name, imageSetter in [
-            ("image_logo", report.theme.setLogoImage),
-            ("image_cover", report.theme.setCoverImage),
-            ("image_background", report.theme.setBackgroundImage),
-        ]:
-            if image_path := getattr(args, arg_name):
-                image, err = ImageFileLikeAndFileName.prepare(image_path)
-                if err:
-                    pc.addDevInfoMessage(err)
-                elif image:
-                    imageSetter(image)
+        images = [
+            (arg_name, image_path, imageSetter)
+            for arg_name, imageSetter in [
+                ("image_logo", report.theme.setLogoImage),
+                ("image_cover", report.theme.setCoverImage),
+                ("image_background", report.theme.setBackgroundImage),
+            ]
+            if (image_path := getattr(args, arg_name))
+        ]
+        if images:
+            with resultsBuilder.section(Stage.IMAGES):
+                addThemeImages(images, resultsBuilder)
 
         supplementary_pdfs: list[FilelikeAndFileName] = []
         if (extra_file := args.extra_data) and extra_file.is_file():
@@ -317,46 +330,44 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, list[str]
                 "introduction": report.setIntroduction,
                 "backCoverMatter": report.setBackCoverMatter,
             }
-            for section in extra.get("optionalSections", []):
-                section_id = section.get("id")
-                sectionSetter = optional_section_setters.get(section_id)
-                if sectionSetter is None:
-                    pc.addDevInfoMessage(f"Unknown optionalSections id: {section_id!r}")
-                    continue
-                if "path" in section:
-                    pc.mark(
-                        "Converting Word document",
-                        additionalInfo=f"Creating {section_id} from {section['path']}",
-                    )
-                    docx_path = _resolve_extra_path(extra_file, section["path"])
-                    sectionSetter(
-                        _convert_docx_to_markup(
-                            docx_path, resultsBuilder, idPrefix=f"{section_id}-"
+            # Every Word document, in one section.
+            with resultsBuilder.section(Stage.WORD):
+                for section in extra.get("optionalSections", []):
+                    section_id = section.get("id")
+                    sectionSetter = optional_section_setters.get(section_id)
+                    if sectionSetter is None:
+                        pc.addDevInfoMessage(
+                            f"Unknown optionalSections id: {section_id!r}"
                         )
-                    )
-                elif "content" in section:
-                    sectionSetter(Markup(section["content"]))
-                else:
-                    pc.addDevInfoMessage(
-                        f"optionalSections entry {section_id!r} has neither 'path' nor 'content'"
-                    )
+                        continue
+                    if "path" in section:
+                        docx_path = _resolve_extra_path(extra_file, section["path"])
+                        sectionSetter(
+                            _convert_docx_to_markup(
+                                docx_path, resultsBuilder, idPrefix=f"{section_id}-"
+                            )
+                        )
+                    elif "content" in section:
+                        sectionSetter(Markup(section["content"]))
+                    else:
+                        pc.addDevInfoMessage(
+                            f"optionalSections entry {section_id!r} has neither 'path' nor 'content'"
+                        )
 
-            for rtv in extra.get("replacementTextblockValues", []):
-                pc.mark(
-                    "Converting Word document",
-                    additionalInfo=f"Replacing {rtv['concept']} from {rtv['path']}",
-                )
-                docx_path = _resolve_extra_path(extra_file, rtv["path"])
-                concept = report.taxonomy.getConcept(rtv["concept"])
-                markup = _convert_docx_to_markup(
-                    docx_path, resultsBuilder, idPrefix=f"{concept.qname.localName}-"
-                )
-                # A text block the template marks as external has no fact to
-                # replace yet, only a partial one waiting for this value.
-                if concept in report.partialFactsByConcept:
-                    report.completePartialFact(concept, markup)
-                else:
-                    report.replaceFactValue(concept, markup)
+                for rtv in extra.get("replacementTextblockValues", []):
+                    docx_path = _resolve_extra_path(extra_file, rtv["path"])
+                    concept = report.taxonomy.getConcept(rtv["concept"])
+                    markup = _convert_docx_to_markup(
+                        docx_path,
+                        resultsBuilder,
+                        idPrefix=f"{concept.qname.localName}-",
+                    )
+                    # A text block the template marks as external has no fact to
+                    # replace yet, only a partial one waiting for this value.
+                    if concept in report.partialFactsByConcept:
+                        report.completePartialFact(concept, markup)
+                    else:
+                        report.replaceFactValue(concept, markup)
 
             for entry in extra.get("pdfAttachments", []):
                 pdf_path = _resolve_extra_path(extra_file, entry["path"])
@@ -367,33 +378,41 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, list[str]
                 )
 
         pdfs = convertSupplementaryPdfs(
-            supplementary_pdfs, resultsBuilder, pc, mode=args.pdf_mode
+            supplementary_pdfs, resultsBuilder, mode=args.pdf_mode
         )
 
-        pc.mark("Generating Inline Report")
-        reportFile = report.getInlineReport()
-        report.reportUntranslatedStrings(pc)
-        if pdfs.mergedAnnexes:
-            reportFile = mergeAnnexesIntoReport(reportFile, pdfs.mergedAnnexes)
-        reportPackage = buildReportPackage(
-            reportFile,
-            topLevel=report.packageTopLevelName,
-            docsetMembers=pdfs.docsetMembers,
-            attachments=pdfs.attachments,
-        )
+        with resultsBuilder.section(Stage.REPORT):
+            reportFile = report.getInlineReport()
+            report.reportUntranslatedStrings(resultsBuilder)
+            if pdfs.mergedAnnexes:
+                reportFile = mergeAnnexesIntoReport(reportFile, pdfs.mergedAnnexes)
+            reportPackage = buildReportPackage(
+                reportFile,
+                topLevel=report.packageTopLevelName,
+                docsetMembers=pdfs.docsetMembers,
+                attachments=pdfs.attachments,
+            )
 
-        output_path, dir_specified = prepare_output_path(args.output_path, args.force)
-        if dir_specified:
-            pc.addDevInfoMessage(
-                f"Writing various files to {output_path} ({report.factCount} facts to include)"
+            output_path, dir_specified = prepare_output_path(
+                args.output_path, args.force
             )
-            reportFile.saveToDirectory(output_path)
-            reportPackage.saveToDirectory(output_path)
-        else:
-            pc.addDevInfoMessage(
-                f"Writing {reportFile} to {output_path} ({report.factCount} facts to include)"
+            if dir_specified:
+                pc.addDevInfoMessage(
+                    f"Writing various files to {output_path} ({report.factCount} facts to include)"
+                )
+                reportFile.saveToDirectory(output_path)
+                reportPackage.saveToDirectory(output_path)
+            else:
+                pc.addDevInfoMessage(
+                    f"Writing {reportFile} to {output_path} ({report.factCount} facts to include)"
+                )
+                reportFile.saveToFilepath(output_path)
+            resultsBuilder.addMessage(
+                f"Inline XBRL report {reportPackage} written to {output_path} "
+                f"(containing {report.factCount} facts).",
+                Severity.INFO,
+                MessageType.Conversion,
             )
-            reportFile.saveToFilepath(output_path)
 
         xbrlJson: FilelikeAndFileName | None = None
         if args.json:
@@ -403,40 +422,63 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, list[str]
                 if dir_specified
                 else output_path.with_suffix(".json")
             )
-            xbrlJson = FilelikeAndFileName(
-                fileContent=toXbrlJson(report).toJson().encode("utf-8"),
-                filename=jsonPath.name,
-            )
-            pc.mark("Writing xBRL-JSON", additionalInfo=f"To {jsonPath}")
-            xbrlJson.saveToFilepath(jsonPath)
+            with resultsBuilder.section(Stage.XBRL_JSON_OUTPUT, source=jsonPath.name):
+                xbrlJson = FilelikeAndFileName(
+                    fileContent=toXbrlJson(report).toJson().encode("utf-8"),
+                    filename=jsonPath.name,
+                )
+                xbrlJson.saveToFilepath(jsonPath)
+                resultsBuilder.addMessage(
+                    f"Written to {jsonPath} (containing {report.factCount} facts).",
+                    Severity.INFO,
+                    MessageType.Conversion,
+                )
 
-        if not args.skip_validation:
-            pc.mark(
-                "Validating using Arelle",
-                additionalInfo=f"({ARELLE_VERSION_INFORMATION})",
-            )
-            pc.addDevInfoMessage(f"Using Inline Report package: {reportPackage}")
+        if args.skip_validation:
+            resultsBuilder.skip(Stage.PACKAGE, "--skip-validation was given.")
+            if xbrlJson is not None:
+                resultsBuilder.skip(Stage.XBRL_JSON, "--skip-validation was given.")
+        else:
+            with resultsBuilder.section(Stage.PACKAGE):
+                pc.addDevInfoMessage(
+                    f"Validating using Arelle ({ARELLE_VERSION_INFORMATION})"
+                )
+                pc.addDevInfoMessage(f"Using Inline Report package: {reportPackage}")
 
-            if not args.viewer:
-                arelleResults = arp.validateReportPackage(reportPackage)
-                resultsBuilder.addMessages(arelleResults.messages)
+                if not args.viewer:
+                    arelleResults = arp.validateReportPackage(reportPackage)
+                    resultsBuilder.addMessages(arelleResults.messages)
 
-            if args.viewer:
-                arelleResults = arp.generateInlineViewer(reportPackage)
-                resultsBuilder.addMessages(arelleResults.messages)
+                if args.viewer:
+                    arelleResults = arp.generateInlineViewer(reportPackage)
+                    resultsBuilder.addMessages(arelleResults.messages)
 
-                if arelleResults.has_viewer:
-                    viewer = arelleResults.viewer
-                    if not dir_specified:
-                        viewer.saveToFilepath(output_path)
+                    if arelleResults.has_viewer:
+                        viewer = arelleResults.viewer
+                        if not dir_specified:
+                            viewer.saveToFilepath(output_path)
+                        else:
+                            viewer.saveToDirectory(output_path)
+                        resultsBuilder.addMessage(
+                            f"Viewer {viewer} written to {output_path}.",
+                            Severity.INFO,
+                            MessageType.Conversion,
+                        )
                     else:
-                        viewer.saveToDirectory(output_path)
-                else:
-                    pc.addDevInfoMessage("Failed to create viewer.")
+                        pc.addDevInfoMessage("Failed to create viewer.")
+                resultsBuilder.addMessages(
+                    [arelleResults.summary(reportPackage.filename)]
+                )
 
             if xbrlJson is not None:
-                pc.mark("Validating xBRL-JSON using Arelle")
-                resultsBuilder.addMessages(arp.validateXbrlJson(xbrlJson).messages)
+                with resultsBuilder.section(Stage.XBRL_JSON):
+                    arelleResults = arp.validateXbrlJson(xbrlJson)
+                    resultsBuilder.addMessages(
+                        [
+                            *arelleResults.messages,
+                            arelleResults.summary(xbrlJson.filename),
+                        ]
+                    )
         unused = xl_processor.unusedNames
     return resultsBuilder.build(), unused
 
@@ -455,7 +497,7 @@ def outputMessages(
         print(
             f"Information and issues encountered ({len(messages)} message{('s' if len(messages) != 1 else '')}):"
         )
-        console_print_plain(messages)
+        printSections(result.sections, developer=bool(args.devinfo))
 
     if args.devinfo and unused:
         max_output = 40

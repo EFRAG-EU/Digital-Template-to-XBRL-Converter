@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import re
 import uuid
+from collections import Counter
+from contextlib import contextmanager
 from enum import StrEnum
 from functools import lru_cache
 from time import perf_counter_ns
@@ -9,7 +11,7 @@ from types import MappingProxyType
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Mapping
+    from collections.abc import Iterable, Iterator, Mapping
     from collections.abc import Set as AbstractSet
     from types import TracebackType
     from typing import Self
@@ -121,17 +123,22 @@ class Message:
         messageType: MessageType,
         conceptQName: str | None = None,
         excelReference: str | None = None,
+        source: str | None = None,
     ):
         self.messageText: MessageText = MessageText(messageText)
         self.severity: Severity = severity
         self.messageType: MessageType = messageType
         self.conceptQName: str | None = conceptQName
         self.excelReference: str | None = excelReference
+        # The file it is about, where its section covers several.
+        self.source: str | None = source
 
     def __str__(self) -> str:
         bits = [
             f"{self.severity.value:{Severity.maxValueWidth()}s} : {self.messageType.value:{MessageType.maxValueWidth()}s} :"
         ]
+        if self.source is not None:
+            bits.append(f"{self.source}:")
         bits.append(self.messageText)
         if self.excelReference is not None:
             bits.append(f"(Excel: {self.excelReference})")
@@ -147,7 +154,8 @@ class Message:
         mt = MessageType[stuff["mt"]]
         c = stuff["c"]
         e = stuff["e"]
-        return cls(m, s, mt, c, e)
+        f = stuff.get("f")
+        return cls(m, s, mt, c, e, f)
 
     def toDict(self) -> dict:
         d = {
@@ -156,6 +164,7 @@ class Message:
             "mt": self.messageType.name,
             "c": self.conceptQName,
             "e": self.excelReference,
+            "f": self.source,
         }
         return d
 
@@ -165,7 +174,11 @@ class Results:
     user and developer views of them."""
 
     def __init__(self, messages: list[Message]) -> None:
-        self.messages: list[Message] = messages
+        self._messages: list[Message] = messages
+
+    @property
+    def messages(self) -> list[Message]:
+        return self._messages
 
     def __len__(self) -> int:
         return len(self.messages)
@@ -251,35 +264,181 @@ class Results:
             ),
         )
 
+    def shownMessages(self, developer: bool = False) -> list[Message]:
+        """The developer's view, or the user's."""
+        return self.developerMessages if developer else self.userMessages
+
+    def severityCounts(self, developer: bool = False) -> str:
+        """How many messages of each severity, worst first ("1 error,
+        2 warnings"), or "no messages"."""
+        counts = Counter(m.severity for m in self.shownMessages(developer))
+        return (
+            ", ".join(
+                _counted(counts[severity], severity.value.lower())
+                for severity in sorted(counts, key=Severity.key, reverse=True)
+            )
+            or "no messages"
+        )
+
+    def messagesBySource(
+        self, developer: bool = False
+    ) -> list[tuple[str | None, list[Message]]]:
+        """The messages grouped by the file they are about, in the order each
+        file first comes; those about no file in particular go first."""
+        groups: dict[str | None, list[Message]] = {None: []}
+        for m in self.shownMessages(developer):
+            groups.setdefault(m.source, []).append(m)
+        return [(source, group) for source, group in groups.items() if group]
+
+
+def _counted(count: int, noun: str) -> str:
+    plural = "" if count == 1 or noun == "info" else "s"
+    return f"{count} {noun}{plural}"
+
+
+class Stage(StrEnum):
+    """What a section of the results is about: a stage of the conversion, or
+    the input files it reads, in the order they come."""
+
+    CONVERSION = "conversion"
+    TAXONOMY = "taxonomy"
+    WORKBOOK = "workbook"
+    XBRL_JSON_INPUT = "xbrlJsonInput"
+    PRIOR = "prior"
+    WORD = "word"
+    PDF = "pdf"
+    IMAGES = "images"
+    REPORT = "report"
+    XBRL_JSON_OUTPUT = "xbrlJsonOutput"
+    PACKAGE = "package"
+    XBRL_JSON = "xbrlJson"
+    VIEWER = "viewer"
+
+    @property
+    def label(self) -> str:
+        return _STAGE_LABELS[self]
+
+
+_STAGE_LABELS: Mapping[Stage, str] = MappingProxyType(
+    {
+        Stage.CONVERSION: "Conversion",
+        Stage.TAXONOMY: "Taxonomy",
+        Stage.WORKBOOK: "Digital Template",
+        Stage.XBRL_JSON_INPUT: "xBRL-JSON",
+        Stage.PRIOR: "Last year's report",
+        Stage.WORD: "Word documents",
+        Stage.PDF: "Supplementary PDFs",
+        Stage.IMAGES: "Images",
+        Stage.REPORT: "Inline XBRL report",
+        Stage.XBRL_JSON_OUTPUT: "xBRL-JSON report",
+        Stage.PACKAGE: "XBRL report validation",
+        Stage.XBRL_JSON: "xBRL-JSON validation",
+        Stage.VIEWER: "Viewer",
+    }
+)
+
+
+class Section(Results):
+    """The messages of one stage of a conversion, or of one input file, and
+    how long it took."""
+
+    def __init__(
+        self,
+        stage: Stage,
+        messages: list[Message] | None = None,
+        *,
+        label: str | None = None,
+        source: str | None = None,
+        durationNs: int | None = None,
+        skipped: bool = False,
+    ) -> None:
+        super().__init__(messages if messages is not None else [])
+        self.stage = stage
+        self.label: str = label if label is not None else stage.label
+        self.source = source
+        self.durationNs = durationNs
+        self._skipped = skipped
+
+    @classmethod
+    def notRun(cls, stage: Stage, reason: str) -> Section:
+        """A stage that was not run, because of ``reason``."""
+        return cls(stage, [_notRunMessage(reason)], skipped=True)
+
+    @property
+    def isSkipped(self) -> bool:
+        return self._skipped
+
+    @property
+    def title(self) -> str:
+        """Its label, with the file it is about if there is one."""
+        return self.label if self.source is None else f"{self.label} ({self.source})"
+
+    def toDict(self) -> dict:
+        return {
+            "k": self.stage.value,
+            "l": self.label,
+            "f": self.source,
+            "t": self.durationNs,
+            "m": [m.toDict() for m in self.messages],
+            "s": self._skipped,
+        }
+
+    @classmethod
+    def fromDict(cls, stuff: dict) -> Section:
+        return cls(
+            Stage(stuff["k"]),
+            [Message.fromDict(m) for m in stuff["m"]],
+            label=stuff["l"],
+            source=stuff["f"],
+            durationNs=stuff["t"],
+            skipped=stuff.get("s", False),
+        )
+
+
+def _notRunMessage(reason: str) -> Message:
+    return Message(f"Not run: {reason}", Severity.INFO, MessageType.Conversion)
+
 
 class ConversionResults(Results):
+    """A conversion's results, in sections; its messages are all theirs, in
+    order."""
+
     def __init__(
         self,
         conversionId: str,
-        messages: list[Message],
+        sections: list[Section],
         cellsQueried: int,
         cellsPopulated: int,
         conversionSuccessful: bool,
     ) -> None:
-        super().__init__(messages)
         self.conversionId = conversionId
+        self.sections: list[Section] = sections
         self.cellsQueried: int = cellsQueried
         self.cellsPopulated: int = cellsPopulated
         self._conversionSuccessful: bool = conversionSuccessful
 
+    @property
+    def messages(self) -> list[Message]:
+        return [m for section in self.sections for m in section.messages]
+
     @classmethod
     def fromDict(cls, stuff: dict) -> Self:
         id = stuff["id"]
-        m = [Message.fromDict(m) for m in stuff["m"]]
+        if "sections" in stuff:
+            sections = [Section.fromDict(s) for s in stuff["sections"]]
+        else:
+            # Stored before there were sections: its messages are one.
+            m = [Message.fromDict(m) for m in stuff["m"]]
+            sections = [Section(Stage.CONVERSION, m)]
         q = stuff["q"]
         p = stuff["p"]
         success = stuff["success"]
-        return cls(id, m, q, p, success)
+        return cls(id, sections, q, p, success)
 
     def toDict(self) -> dict:
         d = {
             "id": self.conversionId,
-            "m": [m.toDict() for m in self.messages],
+            "sections": [s.toDict() for s in self.sections],
             "q": self.cellsQueried,
             "p": self.cellsPopulated,
             "success": self._conversionSuccessful,
@@ -321,7 +480,8 @@ class ConversionResultsBuilder(ConversionResults):
             self.conversionId = conversionId
         else:
             self.conversionId = str(uuid.uuid4())
-        self.messages: list[Message] = []
+        self.sections: list[Section] = []
+        self._openSection: Section | None = None
         self.cellsQueriedBuilder: set[tuple[str, int, int]] = set()
         self.cellsPopulatedBuilder: set[tuple[str, int, int]] = set()
         self.consoleOutput = consoleOutput
@@ -353,34 +513,46 @@ class ConversionResultsBuilder(ConversionResults):
         *,
         taxonomy_concept: QName | Concept | None = None,
         excel_reference: str | None = None,
+        source: str | None = None,
     ) -> Self:
         concept_str_or_none: str | None
         if taxonomy_concept is None:
             concept_str_or_none = taxonomy_concept
         else:
             concept_str_or_none = str(taxonomy_concept)
-        self.messages.append(
+        self._currentSection().messages.append(
             Message(
                 message_text,
                 severity,
                 self._reclassify(severity, message_type),
                 concept_str_or_none,
                 excel_reference,
+                source,
             )
         )
         return self
+
+    def addDevInfoMessage(self, message: str) -> Self:
+        """Say something only a developer needs to know."""
+        return self.addMessage(message, Severity.INFO, MessageType.DevInfo)
 
     def processingContext(self, name: str) -> ProcessingContext:
         return ProcessingContext(self, name)
 
     def addMessages(self, messages: Iterable[Message]) -> Self:
+        section = self._currentSection()
         for m in messages:
             mtype = self._reclassify(m.severity, m.messageType)
             if mtype is not m.messageType:
                 m = Message(
-                    m.messageText, m.severity, mtype, m.conceptQName, m.excelReference
+                    m.messageText,
+                    m.severity,
+                    mtype,
+                    m.conceptQName,
+                    m.excelReference,
+                    m.source,
                 )
-            self.messages.append(m)
+            section.messages.append(m)
         return self
 
     def _reclassify(self, severity: Severity, messageType: MessageType) -> MessageType:
@@ -392,6 +564,52 @@ class ConversionResultsBuilder(ConversionResults):
             return MessageType.DevInfo
         return messageType
 
+    @contextmanager
+    def section(self, stage: Stage, *, source: str | None = None) -> Iterator[Section]:
+        """Put the messages added until it closes in a section of their own,
+        and record how long it took. Sections don't nest: opening the one
+        already open carries on in it, and opening any other is a mistake."""
+        if (current := self._openSection) is not None:
+            if (current.stage, current.source) != (stage, source):
+                raise ValueError(
+                    f"{stage.label} opened inside {current.title}: sections don't nest."
+                )
+            yield current
+            return
+        section = Section(stage, source=source)
+        self.sections.append(section)
+        self._openSection = section
+        self.printProgress(f"Starting: [{section.title}].")
+        start = perf_counter_ns()
+        try:
+            yield section
+        finally:
+            section.durationNs = perf_counter_ns() - start
+            self._openSection = None
+            self.printProgress(
+                f"Finished: [{section.title}] in {format_time_ns(section.durationNs)}."
+            )
+
+    def skip(self, stage: Stage, reason: str) -> Self:
+        """Record that ``stage`` was not run, because of ``reason``."""
+        self.sections.append(Section.notRun(stage, reason))
+        self.printProgress(f"Not run: [{stage.label}]: {reason}")
+        return self
+
+    def printProgress(self, message: str) -> None:
+        """Say how the run is going, live, when the results are for the
+        console; it isn't kept."""
+        if self.consoleOutput:
+            print(message)
+
+    def _currentSection(self) -> Section:
+        """The open section, else a "Conversion" one for messages outside any."""
+        if self._openSection is not None:
+            return self._openSection
+        if not self.sections or self.sections[-1].stage is not Stage.CONVERSION:
+            self.sections.append(Section(Stage.CONVERSION))
+        return self.sections[-1]
+
     @property
     def conversionSuccessful(self) -> bool:
         return self.getOverallSeverity(withoutXBRLValidation=True) is not Severity.ERROR
@@ -399,7 +617,7 @@ class ConversionResultsBuilder(ConversionResults):
     def build(self) -> ConversionResults:
         return ConversionResults(
             self.conversionId,
-            self.messages,
+            list(self.sections),
             len(self.cellsPopulatedBuilder),
             len(self.cellsPopulatedBuilder),
             self.conversionSuccessful,
@@ -408,7 +626,7 @@ class ConversionResultsBuilder(ConversionResults):
 
 class Step(StrEnum):
     """The work done on a converted report after conversion, in the order it is
-    done."""
+    done: the stages scheduled in the background, each its own section."""
 
     PACKAGE = "package"
     XBRL_JSON = "xbrlJson"
@@ -419,32 +637,29 @@ class Step(StrEnum):
         return self is not Step.VIEWER
 
     @property
+    def stage(self) -> Stage:
+        return Stage(self.value)
+
+    @property
     def label(self) -> str:
-        return _STEP_LABELS[self]
+        return self.stage.label
 
     @property
     def resultsClass(self) -> type[StepResults]:
         return ValidationResults if self.isValidation else StepResults
 
 
-_STEP_LABELS: Mapping[Step, str] = MappingProxyType(
-    {
-        Step.PACKAGE: "XBRL report validation",
-        Step.XBRL_JSON: "xBRL-JSON validation",
-        Step.VIEWER: "Viewer",
-    }
-)
-
-
 class StepState(StrEnum):
     PENDING = "pending"
     RUNNING = "running"
     DONE = "done"
+    SKIPPED = "skipped"
     FAILED = "failed"
 
 
-class StepResults(Results):
-    """One step's progress and, once it is finished, its messages."""
+class StepResults(Section):
+    """One step's section: its progress and, once it is finished, its
+    messages."""
 
     def __init__(
         self,
@@ -453,10 +668,9 @@ class StepResults(Results):
         messages: list[Message] | None = None,
         durationNs: int | None = None,
     ) -> None:
-        super().__init__(messages if messages is not None else [])
+        super().__init__(step.stage, messages, durationNs=durationNs)
         self.step = step
         self.state = state
-        self.durationNs = durationNs
 
     @classmethod
     def pending(cls, step: Step) -> Self:
@@ -475,32 +689,30 @@ class StepResults(Results):
         *,
         detail: str = "",
     ) -> Self:
-        finished = Message(
-            f"Finished: [{step.label}] in {format_time_ns(durationNs)}. {detail}".rstrip(),
-            Severity.INFO,
-            MessageType.Progress,
-        )
-        return cls(step, StepState.DONE, [*messages, finished], durationNs)
+        """Finished, with ``detail`` (what did it, say) for developers."""
+        about = [Message(detail, Severity.INFO, MessageType.DevInfo)] if detail else []
+        return cls(step, StepState.DONE, [*messages, *about], durationNs)
 
     @classmethod
     def skipped(cls, step: Step, reason: str) -> Self:
-        """Done without doing anything, because of ``reason``."""
-        message = Message(
-            f"Skipped: [{step.label}]. {reason}", Severity.INFO, MessageType.Progress
-        )
-        return cls(step, StepState.DONE, [message])
+        """Not run, because of ``reason``."""
+        return cls(step, StepState.SKIPPED, [_notRunMessage(reason)])
 
     @classmethod
     def failed(cls, step: Step, error: Exception) -> Self:
         messageType = (
             MessageType.XbrlValidation if step.isValidation else MessageType.Conversion
         )
-        message = Message(f"{step.label} failed: {error}", Severity.ERROR, messageType)
+        message = Message(f"Failed: {error}", Severity.ERROR, messageType)
         return cls(step, StepState.FAILED, [message])
 
     @property
     def isFinished(self) -> bool:
-        return self.state in (StepState.DONE, StepState.FAILED)
+        return self.state in (StepState.DONE, StepState.SKIPPED, StepState.FAILED)
+
+    @property
+    def isSkipped(self) -> bool:
+        return self.state is StepState.SKIPPED
 
     def toDict(self) -> dict:
         return {
@@ -533,7 +745,8 @@ class ValidationResults(StepResults):
 class ReportResults(Results):
     """A conversion and the steps run on its report afterwards, as one: what
     the results page shows and what decides whether the report is offered for
-    download. Its messages are the conversion's, then each step's in order."""
+    download. Its sections are the conversion's, then each step's in order, and
+    so are its messages."""
 
     def __init__(
         self,
@@ -542,7 +755,7 @@ class ReportResults(Results):
     ) -> None:
         self.conversion = conversion
         self.steps: dict[Step, StepResults] = {
-            step: steps[step] if step in steps else step.resultsClass.pending(step)
+            step: steps[step] if step in steps else self._notYetRun(step)
             for step in Step
         }
         super().__init__(
@@ -551,6 +764,16 @@ class ReportResults(Results):
                 *(m for results in self.steps.values() for m in results.messages),
             ]
         )
+
+    def _notYetRun(self, step: Step) -> StepResults:
+        """Pending, or never to run: a failed conversion has no report."""
+        if self.conversion.conversionSuccessful:
+            return step.resultsClass.pending(step)
+        return step.resultsClass.skipped(step, "the conversion failed.")
+
+    @property
+    def sections(self) -> list[Section]:
+        return [*self.conversion.sections, *self.steps.values()]
 
     @property
     def conversionId(self) -> str:
@@ -601,18 +824,19 @@ class ReportResults(Results):
 
 
 class ProcessingContext:
+    """A whole run: how long it took goes on the results, and an
+    EarlyAbortException ends it quietly. Its progress is printed when the
+    results are for the console, not kept."""
+
     def __init__(self, resultsBuilder: ConversionResultsBuilder, name: str) -> None:
         self._resultsBuilder: ConversionResultsBuilder = resultsBuilder
         self.name: str = name
         self.succeeded: bool = False
         self.start_time: int
-        self.current_section_start_time: int
-        self.current_section_name: str | None = None
-        self.console = self._resultsBuilder.consoleOutput
 
     def __enter__(self) -> Self:
-        self.start_time = self.current_section_start_time = perf_counter_ns()
-        self._logProgress(f'Starting: "{self.name}".')
+        self.start_time = perf_counter_ns()
+        self._resultsBuilder.printProgress(f'Starting: "{self.name}".')
         return self
 
     def __exit__(
@@ -621,13 +845,12 @@ class ProcessingContext:
         exc_value: BaseException | None,
         traceback: TracebackType | None,
     ) -> bool:
-        self.mark()
         execution_time_ns = perf_counter_ns() - self.start_time
 
         swallow_exception: bool = False
         if exc_type is None:
             self.succeeded = True
-            self._logProgress(
+            self._resultsBuilder.printProgress(
                 f'Finished: "{self.name}" in {format_time_ns(execution_time_ns)}.'
             )
         elif exc_type is not None and issubclass(exc_type, EarlyAbortException):
@@ -647,23 +870,7 @@ class ProcessingContext:
 
     def _logProgress(self, message: str, severity: Severity = Severity.INFO) -> None:
         self._resultsBuilder.addMessage(message, severity, MessageType.Progress)
-        if self.console:
-            print(message)
+        self._resultsBuilder.printProgress(message)
 
     def addDevInfoMessage(self, message: str) -> None:
-        self._resultsBuilder.addMessage(message, Severity.INFO, MessageType.DevInfo)
-
-    def mark(self, newSectionName: str | None = None, additionalInfo: str = "") -> None:
-        now = perf_counter_ns()
-        if self.current_section_name is not None:
-            execution_time_ns = now - self.current_section_start_time
-            self._logProgress(
-                f"Finished: [{self.current_section_name}] in {format_time_ns(execution_time_ns)}."
-            )
-
-        if newSectionName is not None:
-            self.current_section_name = newSectionName
-            self.current_section_start_time = now
-            self._logProgress(
-                f"Starting: [{self.current_section_name}]. {additionalInfo}"
-            )
+        self._resultsBuilder.addDevInfoMessage(message)

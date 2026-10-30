@@ -14,9 +14,10 @@ installed, and that path has to be exercised on machines that are exactly that.
 import io
 import zipfile
 
+import lxml.html
 import pytest
 
-from mireport.conversionresults import Severity
+from mireport.conversionresults import Severity, Stage
 from mireport.pdf_converter import PdfConversionError, PdfToolNotFoundError
 
 
@@ -132,12 +133,64 @@ class TestConversionResultsPage:
         conv_id, c = converted_id
         resp = c.get(f"/conversions/{conv_id}?show_developer_messages=true")
         assert resp.status_code == 200
-        # Developer messages include Progress-type entries
-        assert (
-            b"DevInfo" in resp.data
-            or b"Progress" in resp.data
-            or b"Extracting" in resp.data
-        )
+        # The steps say what ran them, for developers only.
+        assert b"Using Arelle" in resp.data
+        assert b"Using Arelle" not in c.get(f"/conversions/{conv_id}").data
+
+
+def _sections(html: str) -> dict[str, bool]:
+    """Each section of the messages, by id, and whether it starts open."""
+    tree = lxml.html.fromstring(html)
+    [messages] = tree.xpath('//*[@id="messages"]')
+    return {d.get("id"): d.get("open") is not None for d in messages.iter("details")}
+
+
+class TestResultsSections:
+    def test_results_page_has_a_section_per_stage(self, converted_id):
+        conv_id, c = converted_id
+        page = c.get(f"/conversions/{conv_id}").get_data(as_text=True)
+
+        assert list(_sections(page)) == [
+            "section-workbook",
+            "section-report",
+            "section-package",
+            "section-xbrlJson",
+            "section-viewer",
+        ]
+        assert "Digital Template" in page
+        assert "XBRL report validation" in page
+
+    def test_only_tables_with_excel_references_have_the_column(self, converted_id):
+        conv_id, c = converted_id
+        tree = lxml.html.fromstring(c.get(f"/conversions/{conv_id}").data)
+
+        def headers(sectionId: str) -> list[str]:
+            return tree.xpath(f'//*[@id="{sectionId}"]//th/text()')
+
+        assert "Excel Reference" in headers("section-workbook")
+        assert headers("section-report") == ["Message Type", "Severity", "Message"]
+
+    def test_only_developers_see_how_long_each_took(self, converted_id):
+        conv_id, c = converted_id
+        user = c.get(f"/conversions/{conv_id}").get_data(as_text=True)
+        dev = c.get(f"/conversions/{conv_id}?show_developer_messages=true")
+
+        assert 'title="Duration"' not in user
+        assert 'title="Duration"' in dev.get_data(as_text=True)
+
+    @pytest.mark.slow
+    @pytest.mark.usefixtures("skipArelle")
+    def test_info_only_sections_are_closed_and_one_with_a_warning_open(
+        self, client, upload, make_pdf, conversion_of, noBinary
+    ):
+        upload(client, pdfs=[make_pdf("annex1.pdf")])
+        conv_id = _convert(client, conversion_of).id
+        page = client.get(f"/conversions/{conv_id}").get_data(as_text=True)
+
+        sections = _sections(page)
+        assert sections["section-pdf"] is True
+        assert sections["section-report"] is False
+        assert "1 warning" in page
 
 
 def _convert(client, conversion_of):
@@ -207,15 +260,13 @@ class TestPdfConversion:
             lambda: ResolvedConverter(BACKENDS_IN_PREFERENCE_ORDER[0], "/usr/bin/x"),
         )
         upload(client, pdfs=[make_pdf("annex1.pdf")])
-        results = _convert(client, conversion_of).raw["results"]
-        # "success" is ConversionResults.toDict()'s abbreviated key.
-        assert results["success"] is True
-        # Scoped to PDF warnings: the sample template raises its own unrelated
-        # ones, so a bare count would pass for the wrong reason.
-        pdfWarnings = [
-            m for m in results["m"] if m["s"] == "WARNING" and "annex1.pdf" in m["m"]
-        ]
-        assert len(pdfWarnings) == 1, results["m"]
+        results = _convert(client, conversion_of).results
+        assert results.conversionSuccessful
+        # Scoped to the PDFs' section: the sample template raises its own
+        # unrelated warnings, so a bare count would pass for the wrong reason.
+        [pdfs] = [s for s in results.sections if s.stage is Stage.PDF]
+        pdfWarnings = [m for m in pdfs.messages if m.severity is Severity.WARNING]
+        assert [m.source for m in pdfWarnings] == ["annex1.pdf"]
 
     @pytest.mark.xdist_group("webapp-unconverted-pdf")
     def test_the_pdf_still_ships_when_conversion_fails(

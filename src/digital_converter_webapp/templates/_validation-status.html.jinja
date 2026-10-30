@@ -1,6 +1,5 @@
 {# The XBRL validation banner, replaced in place as the steps finish. #}
 {% set val_rag = results.validationRAG %}
-{% set state_words = {'pending': 'waiting', 'running': 'in progress', 'done': 'done', 'failed': 'failed'} %}
 <div id="validation-status" class="p-4 rounded-lg shadow-md
     {% if not results.conversionSuccessful or val_rag.red %}bg-red-100 border border-red-400 text-red-800
     {% elif results.validationPending %}bg-blue-50 border border-blue-300 text-blue-800
@@ -20,10 +19,12 @@
         The generated XBRL report is valid according to the technical XBRL specifications!
 {% endif %}
     </p>
-{% if results.conversionSuccessful and not results.isComplete %}
+{# The sections layout shows each step's progress in its own section. #}
+{% if config.RESULTS_LAYOUT != "sections" and results.conversionSuccessful and not results.isComplete %}
+    {% set state_words = {'pending': 'waiting', 'running': 'in progress', 'done': 'done', 'skipped': 'not run', 'failed': 'failed'} %}
     <p class="text-center text-sm mt-2">
     {% for step, stepResults in results.steps.items() %}
-        {{ step.label }}: {{ state_words[stepResults.state] }}{% if not loop.last %} · {% endif %}
+        {{ step.label }}: {{ state_words[stepResults.state.value] }}{% if not loop.last %} · {% endif %}
     {% endfor %}
     </p>
 {% endif %}

@@ -11,8 +11,10 @@ import threading
 import pytest
 from cachelib.file import FileSystemCache
 from playwright.sync_api import Page, expect
+from tests.unitTests.arelle_results import cleanValidation
 
 from digital_converter_webapp import create_app
+from digital_converter_webapp.app_setup import ResultsLayout
 from mireport.arelle.report_info import ArelleReportProcessor
 from mireport.arelle.support import ArelleProcessingResult
 from mireport.conversionresults import Message, MessageType, Severity
@@ -39,7 +41,7 @@ class FakeArelle:
 
     def validateReportPackage(self, processor, source, **kwargs):
         assert self.gate.wait(timeout=60), "The test never let validation go ahead"
-        result = ArelleProcessingResult()
+        result = cleanValidation()
         if self.packageError:
             result._validationMessages.append(
                 Message(FAKE_ERROR, Severity.ERROR, MessageType.XbrlValidation)
@@ -47,7 +49,7 @@ class FakeArelle:
         return result
 
     def validateXbrlJson(self, processor, document):
-        return ArelleProcessingResult()
+        return cleanValidation()
 
     def generateInlineViewer(self, processor, source):
         self.viewersBuilt += 1
@@ -76,9 +78,10 @@ def arelle(monkeypatch):
     fake.gate.set()
 
 
-@pytest.fixture(scope="module")
-def backgroundUrl(serve, tmp_path_factory) -> str:
-    """An app that runs the steps in the background, as deployed."""
+@pytest.fixture(scope="module", params=list(ResultsLayout))
+def backgroundUrl(request, serve, tmp_path_factory) -> str:
+    """An app that runs the steps in the background, as deployed, in each
+    results layout."""
     return serve(
         create_app(
             {
@@ -87,6 +90,7 @@ def backgroundUrl(serve, tmp_path_factory) -> str:
                     str(tmp_path_factory.mktemp("live-sessions"))
                 ),
                 "SECRET_KEY": "test-secret",
+                "RESULTS_LAYOUT": request.param,
             }
         )
     )
@@ -185,6 +189,39 @@ def test_viewer_built_in_the_background_downloads_at_once(
     assert arelle.viewersBuilt == 1
 
 
+@pytest.mark.parametrize("backgroundUrl", [ResultsLayout.SECTIONS], indirect=True)
+def test_a_section_the_user_opened_stays_open(page: Page, uploadAndConvert, arelle):
+    arelle.gate.clear()
+    arelle.packageError = True
+    uploadAndConvert(page)
+    report, package = page.locator("#section-report"), page.locator("#section-package")
+
+    report.locator("summary").click()
+    arelle.gate.set()
+
+    expectSettled(page)
+    expect(report).to_have_attribute("open", "")
+    # Untouched, it opens itself for the error it now has.
+    expect(package).to_have_attribute("open", "")
+
+
+@pytest.mark.parametrize("backgroundUrl", [ResultsLayout.SECTIONS], indirect=True)
+def test_a_section_the_user_closed_stays_closed(page: Page, uploadAndConvert, arelle):
+    arelle.gate.clear()
+    arelle.packageError = True
+    uploadAndConvert(page)
+    package = page.locator("#section-package")
+
+    package.locator("summary").click()
+    expect(package).to_have_attribute("open", "")
+    package.locator("summary").click()
+    arelle.gate.set()
+
+    expectSettled(page)
+    expect(package.get_by_text(FAKE_ERROR)).to_be_attached()
+    expect(package).not_to_have_attribute("open", "")
+
+
 def test_developer_messages_follow_the_updates(page: Page, uploadAndConvert, arelle):
     arelle.gate.clear()
     uploadAndConvert(page)
@@ -197,11 +234,8 @@ def test_developer_messages_follow_the_updates(page: Page, uploadAndConvert, are
 
     expectSettled(page)
     expect(toggle).to_be_checked()
-    expect(
-        page.get_by_role(
-            "cell", name=re.compile(r"Finished: \[XBRL report validation\]")
-        )
-    ).to_be_visible()
+    # A step's developer-only detail, swapped in when the step finished.
+    expect(page.get_by_text(re.compile(r"^Using Arelle")).first).to_be_attached()
 
 
 def test_two_tabs_settle_alike(context, uploadAndConvert, arelle):

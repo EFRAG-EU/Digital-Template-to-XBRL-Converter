@@ -10,7 +10,7 @@ from openpyxl import Workbook
 from openpyxl.workbook.defined_name import DefinedName
 
 from mireport.comparatives import PriorReport
-from mireport.conversionresults import ConversionResultsBuilder, Severity
+from mireport.conversionresults import ConversionResultsBuilder, Stage
 from mireport.data.disclosures import VSME_DEFAULTS
 from mireport.exceptions import EarlyAbortException
 from mireport.filesupport import FilelikeAndFileName
@@ -30,7 +30,7 @@ def test_a_migrated_workbook_not_yet_saved_in_excel_is_refused() -> None:
     wb.save(unsaved)
     with pytest.raises(
         EarlyAbortException,
-        match=r"^Prior-year report: last-year\.xlsx has been migrated but not yet saved in "
+        match=r"^last-year\.xlsx has been migrated but not yet saved in "
         r"Excel\. Open it in Excel, save it, and give it again\.$",
     ):
         PriorReport.fromWorkbook(
@@ -63,10 +63,9 @@ def test_last_years_workbook_on_an_older_template_gives_the_comparatives() -> No
     }
     assert str(current.priorPeriod) == "2025-01-01T00:00:00/2026-01-01T00:00:00"
     # Only reading last year's workbook warns (it is an older template), not the merge.
-    assert all(
-        str(m.messageText).startswith("Prior-year report: ")
-        for m in results.messages
-        if m.severity is Severity.WARNING
-    )
+    reading, merging = results.sections
+    assert reading.stage is merging.stage is Stage.PRIOR
+    assert reading.hasWarnings()
+    assert not merging.hasWarnings()
     current.requireAllFactsRendered = True
     assert current.getInlineReport().fileContent

@@ -18,6 +18,7 @@ from mireport.conversionresults import (
     ConversionResultsBuilder,
     MessageType,
     Severity,
+    Stage,
 )
 from mireport.data.disclosures import VSME_DEFAULTS
 from mireport.docx_converter import DEFAULT_TIMEOUT_SECONDS as DOCX_TIMEOUT_SECONDS
@@ -35,7 +36,6 @@ from mireport.xbrljson_writer import toXbrlJson
 from mireport.xlsx_template_reader.processor import XlsxProcessor
 
 if TYPE_CHECKING:
-    from mireport.conversionresults import ProcessingContext
     from mireport.report.inlinereport import InlineReport
 
     from .conversion import Conversion
@@ -71,24 +71,26 @@ def doConversion(
         excelParsingWarningsAsDevInfo=excelParsingWarningsAsDevInfo,
     )
     try:
-        with builder.processingContext(f"Conversion {conv.id}") as pc:
-            report = _loadReport(conv, builder, pc)
+        with builder.processingContext(f"Conversion {conv.id}"):
+            report = _loadReport(conv, builder)
+            if not builder.conversionSuccessful:
+                return _stopped(builder)
 
             if _pauseForPartialFacts(report, conv, builder):
                 return builder.build()
             if _completePartialFacts(report, conv, builder):
-                return builder.build()
-            _mergePriorReport(report, conv, builder, pc, arelle)
+                return _stopped(builder)
+            _mergePriorReport(report, conv, builder, arelle)
             if not report.hasFacts:
                 builder.addMessage(
                     "No facts found in InlineReport (likely due to earlier errors). Stopping here.",
                     Severity.ERROR,
                     MessageType.Conversion,
                 )
-                return builder.build()
+                return _stopped(builder)
 
-            _applyTheme(report, conv, builder, pc)
-            reportPackage = _buildReportPackage(report, conv, builder, pc, pdfMode)
+            _applyTheme(report, conv, builder)
+            reportPackage = _buildReportPackage(report, conv, builder, pdfMode)
             if not builder.conversionSuccessful:
                 return builder.build()
             conv.json = _writeXbrlJson(report, reportPackage)
@@ -102,32 +104,39 @@ def doConversion(
         )
         L.exception("Exception encountered", exc_info=e)
 
+    return _stopped(builder)
+
+
+def _stopped(builder: ConversionResultsBuilder) -> ConversionResults:
+    """The results of a conversion that has stopped: if it failed before
+    making its report, saying so in the report's section, naming the section
+    whose errors stopped it."""
+    made = any(s.stage is Stage.REPORT for s in builder.sections)
+    if not (made or builder.conversionSuccessful):
+        failed = next(s for s in builder.sections if s.hasErrors())
+        builder.skip(Stage.REPORT, f"{failed.title} has errors.")
     return builder.build()
 
 
 def _loadReport(
     conv: Conversion,
     builder: ConversionResultsBuilder,
-    pc: ProcessingContext,
 ) -> InlineReport:
     upload = conv.excel
     assert upload is not None, "Conversion has no uploaded Excel file"
-    pc.mark(
-        "Extracting data from Excel",
-        additionalInfo=f"Using file: {upload.filename}",
-    )
     if locale_str := conv.locale_str:
         requestedOutputLocale = get_locale_from_str(locale_str)
     else:
         requestedOutputLocale = None
 
-    processor = XlsxProcessor.from_file(
-        upload.fileLike(),
-        builder,
-        VSME_DEFAULTS,
-        outputLocale=requestedOutputLocale,
-    )
-    return processor.createReport()
+    with builder.section(Stage.WORKBOOK, source=upload.filename):
+        processor = XlsxProcessor.from_file(
+            upload.fileLike(),
+            builder,
+            VSME_DEFAULTS,
+            outputLocale=requestedOutputLocale,
+        )
+        return processor.createReport()
 
 
 def _pauseForPartialFacts(
@@ -155,11 +164,12 @@ def _pauseForPartialFacts(
     ]
     conv.partial_fact_concepts = concept_infos
     labels = ", ".join(info["label"] for info in concept_infos)
-    builder.addMessage(
-        f"Conversion paused: {len(concept_infos)} disclosure field(s) require supplementary Word documents ({labels}).",
-        Severity.INFO,
-        MessageType.Conversion,
-    )
+    with builder.section(Stage.WORD):
+        builder.addMessage(
+            f"{len(concept_infos)} disclosure field(s) require supplementary Word documents ({labels}).",
+            Severity.INFO,
+            MessageType.Conversion,
+        )
     return True
 
 
@@ -174,6 +184,15 @@ def _completePartialFacts(
     if not (report.hasPartialFacts and conv.has_external_values):
         return False
 
+    with builder.section(Stage.WORD):
+        return _convertWordDocuments(report, conv, builder)
+
+
+def _convertWordDocuments(
+    report: InlineReport,
+    conv: Conversion,
+    builder: ConversionResultsBuilder,
+) -> bool:
     external = conv.external_values
     unconverted = False
     for concept in list(report.partialFactsByConcept):
@@ -187,10 +206,11 @@ def _completePartialFacts(
             )
         except DocxConversionError as e:
             builder.addMessage(
-                f"Conversion failed: {e}",
+                str(e),
                 Severity.ERROR,
                 MessageType.Conversion,
                 taxonomy_concept=concept,
+                source=e.filename,
             )
             unconverted = True
             continue
@@ -204,7 +224,7 @@ def _completePartialFacts(
 
     missing = ", ".join(str(c.qname) for c in report.partialFactsByConcept)
     builder.addMessage(
-        f"Conversion failed: no Word document was provided for the following disclosure field(s): {missing}.",
+        f"No Word document was provided for the following disclosure field(s): {missing}.",
         Severity.ERROR,
         MessageType.Conversion,
     )
@@ -215,7 +235,6 @@ def _mergePriorReport(
     report: InlineReport,
     conv: Conversion,
     builder: ConversionResultsBuilder,
-    pc: ProcessingContext,
     arelle: ArelleReportProcessor,
 ) -> None:
     """Take the comparatives from last year's report, if one was uploaded. One
@@ -223,17 +242,14 @@ def _mergePriorReport(
     the EarlyAbortException ends the processing context."""
     if (prior := conv.priorReport) is None:
         return
-    pc.mark(
-        "Reading last year's report", additionalInfo=f"Using file: {prior.filename}"
-    )
-    PriorReport.fromFile(prior, builder, arelle=arelle).mergeInto(report, builder)
+    with builder.section(Stage.PRIOR, source=prior.filename):
+        PriorReport.fromFile(prior, builder, arelle=arelle).mergeInto(report, builder)
 
 
 def _applyTheme(
     report: InlineReport,
     conv: Conversion,
     builder: ConversionResultsBuilder,
-    pc: ProcessingContext,
 ) -> None:
     colour = ColourPalette.parse(
         conv.style_palette or ReportTheme.DEFAULT_COLOUR.label,
@@ -242,45 +258,53 @@ def _applyTheme(
     mode = DisplayMode.parse(conv.style_mode)
     report.theme.setColour(colour).setDisplayMode(mode)
 
-    for key, setterName in _IMAGE_THEME_SETTERS:
-        if (stored := conv.image(key)) is None:
-            continue
-        image, err = ImageFileLikeAndFileName.prepare(stored)
-        if err:
-            builder.addMessage(err, Severity.WARNING, MessageType.Conversion)
-        elif image:
-            pc.addDevInfoMessage(f"Adding {key} to report {image}")
-            getattr(report.theme, setterName)(image)
+    images = [
+        (key, setterName, stored)
+        for key, setterName in _IMAGE_THEME_SETTERS
+        if (stored := conv.image(key)) is not None
+    ]
+    if not images:
+        return
+    with builder.section(Stage.IMAGES):
+        for key, setterName, stored in images:
+            image, err = ImageFileLikeAndFileName.prepare(stored)
+            if err:
+                builder.addMessage(err, Severity.WARNING, MessageType.Conversion)
+            elif image:
+                builder.addDevInfoMessage(f"Adding {key} to report {image}")
+                getattr(report.theme, setterName)(image)
+                builder.addMessage(
+                    f"Added as the report's {key.removeprefix('image_')} image.",
+                    Severity.INFO,
+                    MessageType.Conversion,
+                    source=image.filename,
+                )
 
 
 def _buildReportPackage(
     report: InlineReport,
     conv: Conversion,
     builder: ConversionResultsBuilder,
-    pc: ProcessingContext,
     pdfMode: PdfSupplementaryMode,
 ) -> FilelikeAndFileName:
-    pdfs = convertSupplementaryPdfs(conv.pdfs, builder, pc, mode=pdfMode)
+    pdfs = convertSupplementaryPdfs(conv.pdfs, builder, mode=pdfMode)
 
-    pc.mark(
-        "Generating Inline Report",
-        additionalInfo=f"({report.factCount} facts to include)",
-    )
-    reportFile = report.getInlineReport()
-    report.reportUntranslatedStrings(pc)
-    if pdfs.mergedAnnexes:
-        reportFile = mergeAnnexesIntoReport(reportFile, pdfs.mergedAnnexes)
-    reportPackage = buildReportPackage(
-        reportFile,
-        topLevel=report.packageTopLevelName,
-        docsetMembers=pdfs.docsetMembers,
-        attachments=pdfs.attachments,
-    )
-    builder.addMessage(
-        f"Inline XBRL report {reportPackage} created (containing {report.factCount} facts)",
-        Severity.INFO,
-        MessageType.Conversion,
-    )
+    with builder.section(Stage.REPORT):
+        reportFile = report.getInlineReport()
+        report.reportUntranslatedStrings(builder)
+        if pdfs.mergedAnnexes:
+            reportFile = mergeAnnexesIntoReport(reportFile, pdfs.mergedAnnexes)
+        reportPackage = buildReportPackage(
+            reportFile,
+            topLevel=report.packageTopLevelName,
+            docsetMembers=pdfs.docsetMembers,
+            attachments=pdfs.attachments,
+        )
+        builder.addMessage(
+            f"Inline XBRL report {reportPackage} created (containing {report.factCount} facts)",
+            Severity.INFO,
+            MessageType.Conversion,
+        )
     return reportPackage
 
 

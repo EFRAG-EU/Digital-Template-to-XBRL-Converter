@@ -12,7 +12,7 @@ from tests.offline_arelle import offlineArelle
 
 from mireport.arelle.report_info import ArelleReportProcessor
 from mireport.comparatives import PriorReport
-from mireport.conversionresults import ConversionResultsBuilder, Severity
+from mireport.conversionresults import ConversionResultsBuilder, Severity, Stage
 from mireport.data.disclosures import VSME_DEFAULTS
 from mireport.exceptions import EarlyAbortException
 from mireport.filesupport import FilelikeAndFileName
@@ -88,18 +88,16 @@ def test_a_bad_inline_xbrl_report_stops_the_conversion(
     results = ConversionResultsBuilder(consoleOutput=False)
     with pytest.raises(
         EarlyAbortException,
-        match=r"^Prior-year report: Arelle could not read last-year\.xhtml as an XBRL report\.$",
+        match=r"^Arelle could not read last-year\.xhtml as an XBRL report\.$",
     ) as raised:
         PriorReport.fromInlineXbrl(
             FilelikeAndFileName(b"<html>not XBRL</html>", "last-year.xhtml"),
             results,
             arelle=arelle,
         )
-    *read, error = results.messages
+    [section] = results.sections
+    assert (section.stage, section.source) == (Stage.PRIOR, "last-year.xhtml")
+    *read, error = section.messages
     assert read
-    assert all(
-        str(m.messageText).startswith("Prior-year report: ")
-        and m.severity is not Severity.ERROR
-        for m in read
-    )
+    assert all(m.severity is not Severity.ERROR for m in read)
     assert (error.severity, error.messageText) == (Severity.ERROR, str(raised.value))

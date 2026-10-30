@@ -8,7 +8,9 @@ from mireport.conversionresults import (
     Message,
     MessageType,
     ReportResults,
+    Section,
     Severity,
+    Stage,
     Step,
     StepResults,
     StepState,
@@ -22,7 +24,9 @@ def message(severity: Severity, messageType=MessageType.XbrlValidation) -> Messa
 
 def converted(*messages: Message) -> ConversionResults:
     successful = all(m.severity is not Severity.ERROR for m in messages)
-    return ConversionResults("id", list(messages), 0, 0, successful)
+    return ConversionResults(
+        "id", [Section(Stage.CONVERSION, list(messages))], 0, 0, successful
+    )
 
 
 def validated(step: Step, *messages: Message) -> ValidationResults:
@@ -45,6 +49,7 @@ class TestStepResults:
             validated(Step.PACKAGE, message(Severity.WARNING)),
             ValidationResults.failed(Step.XBRL_JSON, ValueError("boom")),
             StepResults.done(Step.VIEWER, [], 5),
+            StepResults.skipped(Step.VIEWER, "no reason."),
         ],
         ids=lambda r: f"{r.step}-{r.state}",
     )
@@ -67,8 +72,17 @@ class TestStepResults:
         assert failed.isFinished
         assert not failed.isValid
         [error] = failed.userMessages
-        assert error.messageText == "XBRL report validation failed: boom"
+        assert error.messageText == "Failed: boom"
         assert error.messageType is MessageType.XbrlValidation
+
+    def test_skipped_is_finished_and_says_why(self):
+        skipped = StepResults.skipped(Step.VIEWER, "validation found errors.")
+
+        assert skipped.isFinished
+        assert skipped.isSkipped
+        [why] = skipped.userMessages
+        assert why.messageText == "Not run: validation found errors."
+        assert why.severity is Severity.INFO
 
     def test_true_without_messages(self):
         assert ValidationResults.running(Step.PACKAGE)
@@ -142,6 +156,17 @@ class TestReportResults:
         assert not results.downloadsAllowed
         assert results.isComplete
 
+    def test_failed_conversion_runs_no_steps(self):
+        results = ReportResults(
+            converted(message(Severity.ERROR, MessageType.Conversion))
+        )
+
+        assert all(s.isSkipped for s in results.steps.values())
+        assert isinstance(results.steps[Step.PACKAGE], ValidationResults)
+        assert results.steps[Step.VIEWER].userMessages[0].messageText == (
+            "Not run: the conversion failed."
+        )
+
     def test_complete_once_every_step_finishes(self):
         steps = bothValidated() | {Step.VIEWER: StepResults.done(Step.VIEWER, [], 1)}
         assert ReportResults(converted(), steps).isComplete
@@ -163,3 +188,37 @@ class TestReportResults:
         )
 
         assert results.userMessages == [conversionMessage, packageMessage, jsonMessage]
+
+    def test_steps_are_sections_after_the_conversions(self):
+        conversion = converted(message(Severity.WARNING, MessageType.Conversion))
+        package = validated(Step.PACKAGE, message(Severity.ERROR))
+        results = ReportResults(conversion, {Step.PACKAGE: package})
+
+        assert [s.stage for s in results.sections] == [
+            Stage.CONVERSION,
+            Stage.PACKAGE,
+            Stage.XBRL_JSON,
+            Stage.VIEWER,
+        ]
+        assert results.sections[1] is package
+        assert results.sections[1].label == "XBRL report validation"
+        assert results.sections[1].durationNs == 1_000_000
+
+    def test_a_pending_step_is_an_empty_section(self):
+        [*_, viewer] = ReportResults(converted()).sections
+
+        assert isinstance(viewer, Section)
+        assert viewer.stage is Stage.VIEWER
+        assert viewer.state is StepState.PENDING
+        assert viewer.messages == []
+        assert viewer.durationNs is None
+
+    def test_done_keeps_its_detail_for_developers_only(self):
+        done = ValidationResults.done(Step.PACKAGE, [], 5, detail="Using Arelle")
+
+        assert done.userMessages == []
+        [detail] = done.developerMessages
+        assert (detail.messageText, detail.messageType) == (
+            "Using Arelle",
+            MessageType.DevInfo,
+        )

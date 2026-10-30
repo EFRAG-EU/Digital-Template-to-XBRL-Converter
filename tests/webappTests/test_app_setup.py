@@ -5,7 +5,11 @@ import logging
 from flask import Flask
 
 from digital_converter_webapp import create_app, routes
-from digital_converter_webapp.app_setup import BRANDING_DEFAULTS, applyBrandingDefaults
+from digital_converter_webapp.app_setup import (
+    BRANDING_DEFAULTS,
+    ResultsLayout,
+    applyBrandingDefaults,
+)
 from mireport.conversionresults import ConversionResultsBuilder
 
 from .conftest import _test_config
@@ -54,6 +58,23 @@ class TestExcelParsingWarningsAsDevInfo:
         client = app.test_client()
         client.get(f"/conversions/{upload_id(client)}")
         assert seen == {"excelParsingWarningsAsDevInfo": True}
+
+
+class TestResultsLayout:
+    def test_flat_by_default(self, tmp_path):
+        config = _test_config(tmp_path)
+        del config["RESULTS_LAYOUT"]
+        assert create_app(config).config["RESULTS_LAYOUT"] is ResultsLayout.FLAT
+
+    def test_string_from_environment(self, tmp_path):
+        app = create_app(_test_config(tmp_path, RESULTS_LAYOUT="sections"))
+        assert app.config["RESULTS_LAYOUT"] is ResultsLayout.SECTIONS
+
+    def test_unknown_value_warns_and_is_flat(self, caplog, tmp_path):
+        with caplog.at_level(logging.WARNING, logger="digital_converter_webapp"):
+            app = create_app(_test_config(tmp_path, RESULTS_LAYOUT="accordion"))
+        assert app.config["RESULTS_LAYOUT"] is ResultsLayout.FLAT
+        assert any("RESULTS_LAYOUT" in r.message for r in caplog.records)
 
 
 class TestBrandingDefaults:

@@ -114,6 +114,10 @@ async function downloadWhenReady(fileUrl, spinnerText) {
     }
 }
 
+// Sections of the messages the user has opened or closed, by id, so that
+// swapping in new ones keeps their choice.
+const toggledSections = new Map();
+
 // While the steps run on a converted report, swap in the parts of the results
 // page they change (validation banner, downloads, messages) until it settles.
 async function pollConversionStatus(results) {
@@ -145,6 +149,12 @@ async function pollConversionStatus(results) {
                 document.createRange().createContextualFragment(html)
             );
         }
+        for (const [id, open] of toggledSections) {
+            const section = document.getElementById(id);
+            if (section) {
+                section.open = open;
+            }
+        }
         if (status.error) {
             cancelPendingDownload(status.error);
         }
@@ -162,6 +172,14 @@ document.addEventListener("DOMContentLoaded", () => {
             document.getElementById("errorModal").classList.replace("flex", "hidden");
         });
     }
+
+    // A click on a section's heading runs before it opens or closes.
+    document.addEventListener("click", (event) => {
+        const section = event.target.closest("#messages summary")?.parentElement;
+        if (section) {
+            toggledSections.set(section.id, !section.open);
+        }
+    });
 
     // Delegated, so download buttons swapped in by pollConversionStatus work too.
     document.addEventListener("click", async (event) => {

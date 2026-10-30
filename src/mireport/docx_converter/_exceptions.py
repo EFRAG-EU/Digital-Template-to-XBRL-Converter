@@ -12,4 +12,8 @@ from mireport.exceptions import MIReportException
 
 class DocxConversionError(MIReportException):
     """Raised when a Word document could not be converted. The message is for
-    the user."""
+    the user, and is about the document named @filename."""
+
+    def __init__(self, message: str, *, filename: str) -> None:
+        super().__init__(message)
+        self.filename = filename

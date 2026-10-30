@@ -3,6 +3,7 @@ process serving the app can see them."""
 
 import pytest
 from cachelib.file import FileSystemCache
+from tests.unitTests.arelle_results import cleanValidation
 
 from digital_converter_webapp.background import StepStore, runSteps
 from mireport.arelle.support import ArelleProcessingResult
@@ -43,7 +44,7 @@ class FakeArelle:
         self.calls.append(name)
         if name in self.failing:
             raise RuntimeError(f"{name} broke")
-        return ArelleProcessingResult()
+        return cleanValidation()
 
     def validateReportPackage(self, source):
         assert source is PACKAGE
@@ -105,6 +106,9 @@ class TestRunSteps:
         steps = store.load("c1")
         assert [s.state for s in steps.values()] == [StepState.DONE] * len(Step)
         assert steps[Step.PACKAGE].isValid
+        assert [m.messageText for m in steps[Step.VIEWER].userMessages] == [
+            "Viewer built."
+        ]
         assert store.loadViewer("c1") == (VIEWER, {})
         assert store.claim("c1")
 
@@ -132,10 +136,8 @@ class TestRunSteps:
         steps = store.load("c1")
         assert steps[Step.PACKAGE].state is StepState.FAILED
         [error] = steps[Step.PACKAGE].userMessages
-        assert (
-            error.messageText
-            == "XBRL report validation failed: validateReportPackage broke"
-        )
+        assert error.messageText == "Failed: validateReportPackage broke"
+        assert steps[Step.PACKAGE].label == "XBRL report validation"
         assert steps[Step.XBRL_JSON].state is StepState.DONE
         assert arelle.calls == ["validateReportPackage", "validateXbrlJson"]
 
@@ -144,7 +146,10 @@ class TestRunSteps:
         runSteps(store, "c1", PACKAGE, XBRL_JSON, FakeArelle("validateXbrlJson"))
 
         viewer = store.load("c1")[Step.VIEWER]
-        assert viewer.state is StepState.DONE
+        assert viewer.state is StepState.SKIPPED
+        assert [m.messageText for m in viewer.userMessages] == [
+            "Not run: validation found errors."
+        ]
         assert store.loadViewer("c1") is None
 
     def test_forget_drops_the_viewer_too(self, store):

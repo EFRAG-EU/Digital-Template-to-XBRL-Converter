@@ -7,7 +7,9 @@ from mireport.conversionresults import (
     ConversionResultsBuilder,
     Message,
     MessageType,
+    Section,
     Severity,
+    Stage,
 )
 from mireport.exceptions import EarlyAbortException
 
@@ -26,11 +28,10 @@ def test_add_message(builder):
     assert msg.messageType == MessageType.Conversion
 
 
-def test_processing_context_success(builder):
+def test_processing_context_success_adds_no_message(builder):
     with builder.processingContext("Success Test"):
         pass
-    msgs = [m.messageText for m in builder.messages]
-    assert any('Finished: "Success Test"' in m for m in msgs)
+    assert builder.messages == []
 
 
 def test_processing_context_early_abort_is_swallowed(builder):
@@ -224,9 +225,161 @@ def test_empty_message_list_serialization():
     builder = ConversionResultsBuilder(conversionId="empty")
     result = builder.build()
     serialized = result.toDict()
-    assert serialized["m"] == []
+    assert serialized["sections"] == []
     rebuilt = ConversionResults.fromDict(serialized)
     assert rebuilt.messages == []
+
+
+def test_sections_collect_the_messages_added_while_open(builder):
+    with builder.section(Stage.WORKBOOK):
+        builder.addMessage("In the workbook", Severity.WARNING, MessageType.Conversion)
+    with builder.section(Stage.PRIOR, source="2025.json"):
+        builder.addMessages(
+            [Message("Last year's", Severity.INFO, MessageType.Conversion)]
+        )
+
+    workbook, prior = builder.build().sections
+    assert (workbook.stage, workbook.label, workbook.source) == (
+        Stage.WORKBOOK,
+        "Digital Template",
+        None,
+    )
+    assert [m.messageText for m in workbook.messages] == ["In the workbook"]
+    assert prior.title == "Last year's report (2025.json)"
+    assert [m.messageText for m in prior.messages] == ["Last year's"]
+
+
+def test_a_message_outside_any_section_goes_to_conversion(builder):
+    builder.addMessage("Before", Severity.INFO, MessageType.Conversion)
+    with builder.section(Stage.WORKBOOK):
+        pass
+    builder.addMessage("After", Severity.INFO, MessageType.Conversion)
+    builder.addMessage("And after", Severity.INFO, MessageType.Conversion)
+
+    sections = builder.build().sections
+    assert [(s.stage, len(s.messages)) for s in sections] == [
+        (Stage.CONVERSION, 1),
+        (Stage.WORKBOOK, 0),
+        (Stage.CONVERSION, 2),
+    ]
+    assert sections[0].label == "Conversion"
+
+
+def test_a_section_records_its_duration_even_when_it_raises(builder):
+    with pytest.raises(EarlyAbortException), builder.section(Stage.WORKBOOK):
+        sleep(0.001)
+        raise EarlyAbortException("Stopped")
+    [section] = builder.sections
+    assert section.durationNs is not None and section.durationNs >= 1_000_000
+
+
+def test_sections_dont_nest(builder):
+    with builder.section(Stage.PRIOR, source="a.json") as outer:
+        with builder.section(Stage.PRIOR, source="a.json") as same:
+            builder.addMessage("Inner", Severity.INFO, MessageType.Conversion)
+        assert same is outer
+        with (
+            pytest.raises(ValueError, match="sections don't nest"),
+            builder.section(Stage.WORD),
+        ):
+            pass
+    assert [s.stage for s in builder.sections] == [Stage.PRIOR]
+    assert [m.messageText for m in outer.messages] == ["Inner"]
+
+
+def test_round_trip_keeps_the_sections(builder):
+    with builder.section(Stage.WORD):
+        builder.addMessage(
+            "Could not be read.",
+            Severity.ERROR,
+            MessageType.Conversion,
+            source="policy.docx",
+        )
+    built = builder.build()
+
+    rebuilt = ConversionResults.fromDict(built.toDict())
+
+    [section] = rebuilt.sections
+    assert (section.stage, section.durationNs) == (
+        Stage.WORD,
+        built.sections[0].durationNs,
+    )
+    assert section.messages[0].source == "policy.docx"
+    assert rebuilt.toDict() == built.toDict()
+
+
+def test_a_stage_not_run_is_a_skipped_section_saying_why(builder):
+    builder.skip(Stage.REPORT, "Digital Template has errors.")
+
+    rebuilt = ConversionResults.fromDict(builder.build().toDict())
+
+    [section] = rebuilt.sections
+    assert (section.stage, section.isSkipped) == (Stage.REPORT, True)
+    assert [m.messageText for m in section.userMessages] == [
+        "Not run: Digital Template has errors."
+    ]
+
+
+def test_a_section_stored_before_skipping_was_not_skipped():
+    stored = Section(Stage.PDF).toDict()
+    del stored["s"]
+    assert not Section.fromDict(stored).isSkipped
+
+
+def test_results_stored_before_sections_are_one_conversion_section():
+    old = {
+        "id": "old",
+        "m": [{"m": "Old", "s": "WARNING", "mt": "Conversion", "c": None, "e": None}],
+        "q": 0,
+        "p": 0,
+        "success": True,
+    }
+
+    results = ConversionResults.fromDict(old)
+
+    [section] = results.sections
+    assert section.stage is Stage.CONVERSION
+    assert [m.messageText for m in results.messages] == ["Old"]
+    assert results.messages[0].source is None
+
+
+def test_messages_and_rag_are_the_same_across_sections(builder):
+    flat = ConversionResultsBuilder()
+    for b, stage in ((builder, Stage.WORKBOOK), (flat, None)):
+        if stage is None:
+            b.addMessage("Warn", Severity.WARNING, MessageType.Conversion)
+            b.addMessage("Bad", Severity.ERROR, MessageType.XbrlValidation)
+        else:
+            with b.section(stage):
+                b.addMessage("Warn", Severity.WARNING, MessageType.Conversion)
+            with b.section(Stage.PACKAGE):
+                b.addMessage("Bad", Severity.ERROR, MessageType.XbrlValidation)
+    sectioned, unsectioned = builder.build(), flat.build()
+
+    assert [m.messageText for m in sectioned.messages] == ["Warn", "Bad"]
+    assert sectioned.getRAG() == unsectioned.getRAG()
+    assert sectioned.getRAG(withoutXBRLValidation=True)["amber"]
+    assert sectioned.conversionSuccessful
+
+
+def test_a_section_counts_its_messages_and_groups_them_by_file():
+    section = Section(
+        Stage.PDF,
+        [
+            Message("General", Severity.WARNING, MessageType.Conversion),
+            Message("One", Severity.WARNING, MessageType.Conversion, source="b.pdf"),
+            Message("Dev", Severity.INFO, MessageType.DevInfo, source="a.pdf"),
+            Message("Two", Severity.ERROR, MessageType.Conversion, source="b.pdf"),
+        ],
+    )
+
+    assert section.severityCounts() == "1 error, 2 warnings"
+    assert section.severityCounts(developer=True) == "1 error, 2 warnings, 1 info"
+    assert Section(Stage.PDF).severityCounts() == "no messages"
+    assert [
+        (source, [m.messageText for m in group])
+        for source, group in section.messagesBySource(developer=True)
+    ] == [(None, ["General"]), ("b.pdf", ["One", "Two"]), ("a.pdf", ["Dev"])]
 
 
 def test_message_from_dict_invalid_enum():
@@ -262,17 +415,27 @@ def builder_with_console():
     return ConversionResultsBuilder(conversionId="ctx-test", consoleOutput=False)
 
 
-def test_console_processing_context_success(builder_with_console):
-    with builder_with_console.processingContext("Simple Task") as ctx:
+def test_console_progress_is_printed_not_kept(capsys):
+    builder = ConversionResultsBuilder(consoleOutput=True)
+    with (
+        builder.processingContext("Simple Task") as ctx,
+        builder.section(Stage.PRIOR, source="2025.json"),
+    ):
         sleep(0.001)  # simulate work
-        ctx.mark("Step 2")
 
     assert ctx.succeeded
-    messages = builder_with_console.getMessages(
-        wantedMessageTypes={MessageType.Progress}
-    )
-    assert any('Finished: "Simple Task"' in m.messageText for m in messages)
-    assert any("Starting: [Step 2]" in m.messageText for m in messages)
+    assert builder.getMessages(wantedMessageTypes={MessageType.Progress}) == []
+    printed = capsys.readouterr().out
+    assert 'Starting: "Simple Task".' in printed
+    assert "Starting: [Last year's report (2025.json)]." in printed
+    assert "Finished: [Last year's report (2025.json)] in " in printed
+    assert 'Finished: "Simple Task" in ' in printed
+
+
+def test_nothing_is_printed_without_console_output(builder, capsys):
+    with builder.processingContext("Quiet"), builder.section(Stage.WORKBOOK):
+        pass
+    assert capsys.readouterr().out == ""
 
 
 def test_console_processing_context_early_abort_is_swallowed(builder_with_console):

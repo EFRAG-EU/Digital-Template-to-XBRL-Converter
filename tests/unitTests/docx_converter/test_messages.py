@@ -16,22 +16,23 @@ ELEMENT = "An unrecognised element was ignored: w:foo"
 def added(*messages: str) -> list[tuple[str, Severity, MessageType]]:
     builder = ConversionResultsBuilder()
     DocxConversion("policy.docx", Markup(""), list(messages)).addTo(builder)
+    assert all(m.source == "policy.docx" for m in builder.messages)
     return [(m.messageText, m.severity, m.messageType) for m in builder.messages]
 
 
+def test_says_it_was_converted():
+    assert added() == [("Converted.", Severity.INFO, MessageType.Conversion)]
+
+
 def test_style_messages_are_developer_information_counted_once_each():
-    assert added(STYLE, UNDEFINED, STYLE) == [
-        (
-            f"Word document policy.docx: {STYLE} (2 times)",
-            Severity.INFO,
-            MessageType.DevInfo,
-        ),
-        (f"Word document policy.docx: {UNDEFINED}", Severity.INFO, MessageType.DevInfo),
+    assert added(STYLE, UNDEFINED, STYLE)[1:] == [
+        (f"{STYLE} (2 times)", Severity.INFO, MessageType.DevInfo),
+        (UNDEFINED, Severity.INFO, MessageType.DevInfo),
     ]
 
 
 def test_other_messages_are_one_warning_in_order_and_counted():
-    prefix = "Word document policy.docx: some content may not appear as it does in Word"
+    prefix = "Some content may not appear as it does in Word"
     assert added(ELEMENT, STYLE, BREAK, ELEMENT, ELEMENT)[-1] == (
         f"{prefix}: {ELEMENT} (3 times); {BREAK}",
         Severity.WARNING,

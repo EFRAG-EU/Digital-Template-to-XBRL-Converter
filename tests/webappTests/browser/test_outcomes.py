@@ -11,12 +11,12 @@ import pytest
 from cachelib.file import FileSystemCache
 from openpyxl import Workbook
 from playwright.sync_api import Page, expect
+from tests.unitTests.arelle_results import cleanValidation
 
 from digital_converter_webapp import create_app
 from digital_converter_webapp import migration as migrationModule
 from digital_converter_webapp.migration import MigrationOutcome
 from mireport.arelle.report_info import ArelleReportProcessor
-from mireport.arelle.support import ArelleProcessingResult
 
 DOWNLOAD_BUTTONS = ("Download viewer", "Download XBRL Report", "Download xBRL-JSON")
 
@@ -27,7 +27,7 @@ def noJsonValidation(monkeypatch):
     monkeypatch.setattr(
         ArelleReportProcessor,
         "validateXbrlJson",
-        lambda self, document: ArelleProcessingResult(),
+        lambda self, document: cleanValidation(),
     )
 
 

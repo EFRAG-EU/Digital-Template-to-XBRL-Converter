@@ -33,7 +33,7 @@ from tests.unitTests.synthetic_taxonomy import (
 from mireport.arelle.report_info import ArelleReportProcessor
 from mireport.arelle.support import ArelleProcessingResult
 from mireport.comparatives import PriorReport
-from mireport.conversionresults import ConversionResultsBuilder, Severity
+from mireport.conversionresults import ConversionResultsBuilder, Severity, Stage
 from mireport.data import disclosures
 from mireport.entrypoints import entryPointSetOf
 from mireport.exceptions import EarlyAbortException, InlineReportException
@@ -456,7 +456,9 @@ def test_last_years_report_is_read_from_xbrl_json(taxonomy: Taxonomy) -> None:
     prior.mergeInto(current, results)
     assert _priorFacts(current) == {"Revenue": [(90, PeriodPart.Whole)]}
     (warning,) = _messages(results, Severity.WARNING)
-    assert warning.startswith("Prior-year report: Fact x0 not added")
+    assert warning.startswith("Fact x0 not added")
+    # Read, then merged: each in last year's report's section.
+    assert [(s.stage, s.source) for s in results.sections] == [(Stage.PRIOR, FILE)] * 2
     current.requireAllFactsRendered = True
     assert current.getInlineReport().fileContent
 
@@ -473,15 +475,15 @@ def test_a_prior_report_that_cannot_be_read_stops_the_conversion(
     content: bytes, filename: str, match: str
 ) -> None:
     results = ConversionResultsBuilder()
-    with pytest.raises(
-        EarlyAbortException, match=f"^Prior-year report: .*{match}"
-    ) as raised:
+    with pytest.raises(EarlyAbortException, match=match) as raised:
         PriorReport.fromFile(
             FilelikeAndFileName(content, filename),
             results,
             arelle=ArelleReportProcessor(),
         )
     assert _messages(results, Severity.ERROR) == [str(raised.value)]
+    [section] = results.sections
+    assert (section.stage, section.source) == (Stage.PRIOR, filename)
 
 
 @pytest.mark.parametrize(
@@ -503,7 +505,7 @@ def test_inline_xbrl_whose_taxonomy_arelle_cannot_load_stops_the_conversion(
     monkeypatch.setattr(arelle, "generateXbrlJson", lambda source: written)
     with pytest.raises(
         EarlyAbortException,
-        match=rf"^Prior-year report: Arelle could not load the taxonomy of last-year\.zip\.{match}",
+        match=rf"^Arelle could not load the taxonomy of last-year\.zip\.{match}",
     ):
         PriorReport.fromInlineXbrl(
             FilelikeAndFileName(b"", "last-year.zip"),

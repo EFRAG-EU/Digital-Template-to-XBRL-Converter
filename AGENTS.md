@@ -237,12 +237,23 @@ used inside the xlsx reader. Errors accumulate; `abortEarlyIfErrors()` raises `E
 defined checkpoints rather than failing at the first problem. Dev-info messages are hidden from users
 (`--devinfo` on the CLI reveals them).
 
+Results come in **sections**, one per `Stage` (the workbook, last year's report, the Word documents,
+the PDFs, the report, each validation...), each with its own messages and duration. A front end opens
+one with `with builder.section(Stage.X, source=filename):`; everything added meanwhile, however deep,
+goes into it, and anything added outside every section goes into a "Conversion" one. Sections don't
+nest (reopening the open one carries on in it). Messages are not prefixed with their stage or file:
+the section says which, and where one section covers several files (Word documents, PDFs) each
+message names its own in `Message.source`. The results page shows a block per section when
+`FLASK_RESULTS_LAYOUT=sections`, and one table of every message by default (`flat`); the CLI prints a
+header per section (`mireport.cli.printSections`). Progress is not stored: sections are timed, and
+"Starting/Finished" lines are only printed live for the CLI (`consoleOutput`).
+
 `ConversionResults` and the builder share a `Results` base: the messages and what they add up to
-(severities, RAG, user and developer views). The web app validates after converting, as `Step`s
-(package, xBRL-JSON, viewer), each with its own `StepResults` (`ValidationResults` for a validation,
-which Arelle hands back through `ArelleProcessingResult.validationResults`). `ReportResults` puts a
-conversion and its steps together: the banners, the messages and whether downloads are allowed all
-come from it.
+(severities, RAG, user and developer views); `ConversionResults.messages` is every section's, in
+order. The web app validates after converting, as `Step`s (package, xBRL-JSON, viewer), each a
+section of its own, a `StepResults` (`ValidationResults` for a validation, which Arelle hands back
+through `ArelleProcessingResult.validationResults`). `ReportResults` puts a conversion and its steps
+together: the banners, the sections and whether downloads are allowed all come from it.
 
 ### The fact model (`mireport/report/model.py`, `fact.py`, `factbuilder.py`, `aoix.py`)
 
