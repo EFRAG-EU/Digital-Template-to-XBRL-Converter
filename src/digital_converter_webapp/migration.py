@@ -84,6 +84,9 @@ def doMigrationChecks(conv: Conversion) -> tuple[MigrationOutcome, str]:
             outcome = MigrationOutcome.VERSION_TOO_NEW
         case VersionRelation.SAME:
             outcome = MigrationOutcome.SUCCESS
+        case VersionRelation.UNKNOWN:
+            # no latest version to migrate to
+            outcome = MigrationOutcome.NO_MIGRATION
         case _ if not check.migration_enabled:
             # an older report, but migrating it wouldn't reach the supported version
             outcome = MigrationOutcome.NO_MIGRATION

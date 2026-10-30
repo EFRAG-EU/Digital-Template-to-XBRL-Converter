@@ -68,11 +68,12 @@ class VersionRelation(StrEnum):
     NEWER = "newer"
     PATCH_BEHIND = "patch_behind"  # older, but the same major.minor
     OLDER = "older"  # a different (earlier) major.minor
+    UNKNOWN = "unknown"  # a version, but no latest one to judge it by
 
 
 class TemplateCheckResult(NamedTuple):
     report_template_version: VersionHolder
-    supported_template_version: VersionHolder
+    supported_template_version: VersionHolder | None
     supported_template_version_source: SupportedVersionSource
     migration_enabled: bool
     validation_is_incomplete: bool
@@ -90,6 +91,8 @@ class TemplateCheckResult(NamedTuple):
                 if str(report).strip()
                 else VersionRelation.MISSING
             )
+        if supported is None:
+            return VersionRelation.UNKNOWN
         if report == supported:
             return VersionRelation.SAME
         if report > supported:
@@ -457,6 +460,11 @@ class XlsxProcessor:
             f"{supported_template_version} "
             f"(from {supported.supported_template_version_source})"
         )
+        useSupported = (
+            "Please use a supported template."
+            if supported_template_version is None
+            else f"Please use a supported template; the latest version is {latest}."
+        )
         result = TemplateCheckResult(
             report_template_version=report_template_version,
             supported_template_version=supported_template_version,
@@ -472,13 +480,13 @@ class XlsxProcessor:
         match relation:
             case VersionRelation.MISSING:
                 self._msg.error(
-                    f"The Digital Template has no version recorded. Please use a supported template; the latest version is {latest}.",
+                    f"The Digital Template has no version recorded. {useSupported}",
                     MessageType.ExcelParsing,
                     ref=versionRef,
                 )
             case VersionRelation.INVALID:
                 self._msg.error(
-                    f"The Digital Template does not have a valid version identifier: '{report_template_version}'. Please use a supported template; the latest version is {latest}.",
+                    f"The Digital Template does not have a valid version identifier: '{report_template_version}'. {useSupported}",
                     MessageType.ExcelParsing,
                     ref=versionRef,
                 )
@@ -498,6 +506,12 @@ class XlsxProcessor:
                 self._msg.info(
                     f"The Digital Template is based on version {report_template_version}. The latest version available is {latest}, consider updating the template to the latest version.",
                     MessageType.ExcelParsing,
+                    ref=versionRef,
+                )
+            case VersionRelation.UNKNOWN:
+                self._msg.info(
+                    f"The Digital Template is based on version {report_template_version}. The latest version is not known without {supported.supported_template_version_source}, so it is not checked.",
+                    MessageType.DevInfo,
                     ref=versionRef,
                 )
             case VersionRelation.OLDER:
