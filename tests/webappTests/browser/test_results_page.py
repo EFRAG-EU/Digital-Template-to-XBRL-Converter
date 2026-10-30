@@ -11,7 +11,7 @@ import re
 import pytest
 from playwright.sync_api import Page, expect
 
-pytestmark = [pytest.mark.slow, pytest.mark.xdist_group("browser-converted")]
+pytestmark = pytest.mark.slow
 
 # The viewer is generated on its first download, another Arelle run.
 DOWNLOAD_TIMEOUT_MS = 120_000

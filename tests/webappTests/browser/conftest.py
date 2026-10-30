@@ -43,6 +43,18 @@ SAMPLE_XLSX = (
 CONVERSION_TIMEOUT_MS = 60_000
 
 
+@pytest.hookimpl(tryfirst=True)
+def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
+    """All the browser tests on one xdist worker: one Chromium, one server and
+    Arelle loaded once. Spread across workers, each pays for all three and the
+    conversions fight for the CPU, which more than doubles them. First, so the
+    marks are there when xdist reads them."""
+    browserDir = Path(__file__).parent
+    for item in items:
+        if browserDir in item.path.parents:
+            item.add_marker(pytest.mark.xdist_group("browser"))
+
+
 @pytest.fixture(scope="session")
 def serve() -> Iterator[Callable[[Flask], str]]:
     """``serve(app)`` -> the base URL of ``app`` served on a free local port."""
