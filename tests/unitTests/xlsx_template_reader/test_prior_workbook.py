@@ -89,9 +89,7 @@ def test_last_years_workbook_on_an_older_template_gives_the_comparatives() -> No
     ).createReport()
     results = ConversionResultsBuilder(consoleOutput=False)
     path = SAMPLES / "VSME-Digital-Template-Sample-1.2.0.xlsx"
-    prior = PriorReport.fromWorkbook(
-        FilelikeAndFileName(path.read_bytes(), path.name), results
-    )
+    prior = PriorReport.fromWorkbook(FilelikeAndFileName.fromPath(path), results)
     assert prior.report.taxonomy is not current.taxonomy
 
     merged = prior.mergeInto(current, results)

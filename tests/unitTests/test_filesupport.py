@@ -128,6 +128,17 @@ class TestFilelikeAndFileName:
         assert file_obj.fileContent == b"Hello, World!"
         assert file_obj.filename == "test.txt"
 
+    def test_fromPath_reads_the_file_under_its_own_name(self, tmp_path: Path) -> None:
+        path = tmp_path / "report.xlsx"
+        path.write_bytes(b"workbook bytes")
+        assert FilelikeAndFileName.fromPath(path) == FilelikeAndFileName(
+            b"workbook bytes", "report.xlsx"
+        )
+
+    def test_fromPath_of_a_missing_file_raises(self, tmp_path: Path) -> None:
+        with pytest.raises(FileNotFoundError):
+            FilelikeAndFileName.fromPath(tmp_path / "missing.xlsx")
+
     @pytest.mark.parametrize(
         "content, filename, expected",
         [

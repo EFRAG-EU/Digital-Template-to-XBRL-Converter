@@ -307,7 +307,7 @@ class TestPdfConversion:
 
 def _sample(name: str) -> FilelikeAndFileName:
     path = Path(__file__).parents[2] / "digital-templates" / name
-    return FilelikeAndFileName(path.read_bytes(), path.name)
+    return FilelikeAndFileName.fromPath(path)
 
 
 @pytest.mark.slow
