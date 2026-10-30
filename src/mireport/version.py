@@ -15,6 +15,10 @@ from urllib.request import url2pathname
 _BUILD_METADATA_SAFE_RE = re.compile(r"[^0-9A-Za-z.-]")
 _PACKAGE_NAME = "EFRAG-DigitalTemplateToXBRL-Converter"
 _VERSION_PARSE_RE = re.compile(r"^(\d+)\.(\d+)\.(\d+)(.*)$")
+# A normalised PEP 440 release, with at most a pre-release segment.
+_PEP440_RE = re.compile(r"^(\d+\.\d+\.\d+)(?:(a|b|rc)(\d+))?$")
+# Semver orders these as PEP 440 orders a, b and rc.
+_PEP440_PRE_RELEASES = {"a": "alpha", "b": "beta", "rc": "rc"}
 L = logging.getLogger(__name__)
 
 
@@ -158,6 +162,18 @@ class VersionHolder:
         return cls(int(major), int(minor), int(patch), suffix or "")
 
     @classmethod
+    def from_pep440(cls, version_str: str) -> Self:
+        """A Python package's version, "2.0.0rc1", as semver, "2.0.0-rc.1".
+        Dev, post and local versions have no semver form that keeps their
+        order, so they are refused."""
+        match = _PEP440_RE.match(version_str.strip())
+        if not match:
+            raise ValueError(f"Unsupported PEP 440 version: {version_str}")
+        release, pre, number = match.groups()
+        suffix = f"-{_PEP440_PRE_RELEASES[pre]}.{number}" if pre else ""
+        return cls.parse(release + suffix)
+
+    @classmethod
     def parse_safe(cls, version_str: str) -> Self | None:
         try:
             return cls.parse(version_str)
@@ -237,7 +253,9 @@ def _editable_suffix() -> str:
 
 
 try:
-    OUR_VERSION = version(_PACKAGE_NAME) + _editable_suffix()
+    OUR_VERSION = (
+        str(VersionHolder.from_pep440(version(_PACKAGE_NAME))) + _editable_suffix()
+    )
     OUR_VERSION_HOLDER = VersionHolder.parse(OUR_VERSION)
 except (PackageNotFoundError, ValueError):
     OUR_VERSION = "(unknown version)"
