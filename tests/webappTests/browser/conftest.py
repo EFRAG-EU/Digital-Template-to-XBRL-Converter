@@ -40,7 +40,7 @@ SAMPLE_XLSX = (
 )
 
 # Conversion runs inside the results page request, Arelle and all.
-CONVERSION_TIMEOUT_MS = 180_000
+CONVERSION_TIMEOUT_MS = 60_000
 
 
 @pytest.fixture(scope="session")

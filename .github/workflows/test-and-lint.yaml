@@ -68,6 +68,19 @@ jobs:
           python -m pip install --upgrade pip
           pip install .[dev] pytest-github-actions-annotate-failures
 
+      # Arelle runs offline in the tests, from these packages (as the taxonomy
+      # repositories validate theirs), so no suite waits on xbrl.org.
+      - name: Restore taxonomy packages
+        id: packages
+        uses: actions/cache@v6
+        with:
+          path: tests/taxonomy-packages/*/
+          key: external-taxonomy-packages-${{ hashFiles('tests/taxonomy-packages/*.txt') }}
+
+      - name: Download taxonomy packages
+        if: steps.packages.outputs.cache-hit != 'true'
+        run: python tests/taxonomy-packages/fetch-external-packages.py
+
       - name: Install Chromium for the browser tests
         if: matrix.suite == 'browserTests'
         run: python -m playwright install --with-deps chromium

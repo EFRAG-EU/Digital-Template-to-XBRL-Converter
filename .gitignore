@@ -126,3 +126,6 @@ node_modules/
 jspm_packages/
 
 # End of https://www.toptal.com/developers/gitignore/api/node
+
+# Taxonomy packages for offline tests (tests/taxonomy-packages/fetch-external-packages.py)
+/tests/taxonomy-packages/*/

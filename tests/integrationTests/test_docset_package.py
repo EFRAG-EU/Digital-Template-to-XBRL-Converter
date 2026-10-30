@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
+from tests.offline_arelle import offlineArelle
 
 from mireport.arelle.report_info import ArelleReportProcessor
 from mireport.arelle.support import ArelleProcessingResult
@@ -119,7 +120,7 @@ def marker(memberAndMarker: tuple[FilelikeAndFileName, bytes]) -> bytes:
 
 @pytest.fixture(scope="module")
 def arelle() -> ArelleReportProcessor:
-    return ArelleReportProcessor(workOffline=False)
+    return offlineArelle()
 
 
 @pytest.fixture(scope="module")

@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pytest
 from cachelib.file import FileSystemCache
+from tests.offline_arelle import taxonomyPackagesDir
 
 from digital_converter_webapp import create_app
 from digital_converter_webapp.conversion import Conversion, ConversionStore
@@ -39,6 +40,7 @@ def _test_config(session_dir, **overrides):
         "TESTING": True,
         "SESSION_CACHELIB": FileSystemCache(str(session_dir)),
         "SECRET_KEY": "test-secret",
+        "TAXONOMY_PACKAGE_DIR": taxonomyPackagesDir(),
         **overrides,
     }
 
