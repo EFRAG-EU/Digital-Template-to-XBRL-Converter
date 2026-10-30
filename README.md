@@ -1,8 +1,8 @@
-# VSME Digital Template to XBRL Converter
+# VS and VSME Digital Template to XBRL Converter
 
 This Excel-to-XBRL converter has been developed by EFRAG to support the SME ecosystem in preparing reports aligned with the [Voluntary Sustainability Reporting Standard for non-listed SMEs (VSME)](https://www.efrag.org/en/projects/voluntary-reporting-standard-for-smes-vsme/concluded).
 
-The tool enables users to convert data from structured Excel templates into XBRL (eXtensible Business Reporting Language) format by leveraging Excel named ranges. Each named range in the Excel file must correspond exactly to the local name of the relevant element in the VSME XBRL taxonomy. This ensures accurate and standards-compliant digital tagging of sustainability disclosures.
+The tool enables users to convert data from structured Excel templates into XBRL (eXtensible Business Reporting Language) format by leveraging Excel named ranges. Each named range in the Excel file must correspond exactly to the local name of the relevant element in the VS or VSME XBRL taxonomy. This ensures accurate and standards-compliant digital tagging of sustainability disclosures.
 
 > [!WARNING]  
 > The Digital Template has been developed and tested with the Microsoft Excel 365 desktop application. It might not work fully correct in other applications or older versions of MS Excel. When reporting issues, please indicate which application has been used to fill the Digital Template.
@@ -17,7 +17,7 @@ Please see the [Frequently Asked Questions (FAQ)](/digital-templates/FAQ.md) for
 
 - Streamlines digital sustainability reporting.
 - Maps Excel data to an XBRL instance using named ranges.
-- Compatible with the VSME Digital Template and XBRL Taxonomy developed by EFRAG.
+- Compatible with the VS and VSME Digital Templates and XBRL Taxonomies developed by EFRAG.
 - Produces a human-readable Inline XBRL file (including viewer) based on the Presentation Linkbase of the XBRL taxonomy.
 - Converts the Inline XBRL report to an XBRL Report Package and XBRL-JSON report.
 - Comes with full certified XBRL validation powered by [Arelle](https://arelle.org/arelle/).
@@ -26,7 +26,7 @@ Please see the [Frequently Asked Questions (FAQ)](/digital-templates/FAQ.md) for
 ## Requirements
 
 - Python enviroment and dependencies (see below).
-- Excel template with named ranges matching VSME taxonomy element names (see [digital templates](https://github.com/EFRAG-EU/Digital-Template-to-XBRL-Converter/tree/main/digital-templates)).
+- Excel template with named ranges matching VS or VSME taxonomy element names (see [digital templates](https://github.com/EFRAG-EU/Digital-Template-to-XBRL-Converter/tree/main/digital-templates)).
 - XBRL taxonomy files for validation and mapping.
 
 More information can be found on the [EFRAG webpage](https://www.efrag.org/en/sustainability-reporting/esrs-workstreams/digital-tagging-with-xbrl-taxonomies)

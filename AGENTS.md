@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-EFRAG's converter that turns a filled-in VSME Excel "Digital Template" into a validated Inline XBRL
+EFRAG's converter that turns a filled-in VS or VSME Excel "Digital Template" into a validated Inline XBRL
 report (plus report package, viewer and xBRL-JSON). Mapping is driven by Excel **named ranges** whose
 names match the local name of the corresponding taxonomy concept. Ships as both a CLI (`scripts/`) and
 a Flask web app.
