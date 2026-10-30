@@ -99,7 +99,7 @@ class TestBranding:
             'VSME-Digital-Template-sample-latest.xlsx"' in body
         )
         assert "provided by EFRAG (or test the" in body
-        assert "convert your VS or VSME Digital Template" in body
+        assert "convert your Digital Template" in body
 
     def test_configured_product_name_and_no_logo(self, tmp_path):
         app = _brandedApp(
