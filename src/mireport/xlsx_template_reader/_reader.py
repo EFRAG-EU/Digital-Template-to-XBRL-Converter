@@ -120,6 +120,11 @@ class WorkbookReader:
     def unused_defined_names(self) -> frozenset[DefinedName]:
         return frozenset(self._unused)
 
+    @property
+    def damaged_defined_names(self) -> frozenset[DefinedName]:
+        """Defined names already warned about as unreadable or broken."""
+        return frozenset(self._damaged)
+
     def markUsed(self, dn: DefinedName) -> None:
         """Record that this defined name has been consumed by the conversion."""
         self._unused.discard(dn)
@@ -154,11 +159,14 @@ class WorkbookReader:
             message += f": {', '.join(names)}"
         self._msg.warning(f"{message}.", MessageType.ExcelParsing)
 
-    def peekRange(self, dn: DefinedName) -> CellRangeMetadata | None:
+    def peekRange(
+        self, dn: DefinedName, *, severalAreas: bool = False
+    ) -> CellRangeMetadata | None:
         """Resolve a defined name to its cell range without marking it used.
 
-        Emits a warning and returns None when the defined name is
-        damaged (unreadable, zero or multiple destinations, broken reference).
+        Emits a warning and returns None when the defined name is damaged
+        (unreadable, no destination, several areas unless severalAreas allows
+        them on one sheet, broken reference).
         """
         try:
             all_destinations = list(dn.destinations)
@@ -175,16 +183,24 @@ class WorkbookReader:
                 return None
             case 1:
                 pass
-            case _:
-                self._warnDamaged(dn, f"has several destinations: {dn.attr_text}")
+            case _ if not severalAreas:
+                self._warnDamaged(
+                    dn,
+                    f"has several areas, which only a table (hypercube) range may have: {dn.attr_text}",
+                )
+                return None
+            case _ if len({sheet for sheet, _ in all_destinations}) > 1:
+                self._warnDamaged(
+                    dn, f"has areas on more than one sheet: {dn.attr_text}"
+                )
                 return None
         sheetName, cell_range = all_destinations[0]
-        if not sheetName or not cell_range:
+        if not sheetName or not all(area for _, area in all_destinations):
             self._warnDamaged(dn, f"has a damaged cell reference: {dn.attr_text}")
             return None
         try:
             ws = self._workbook[sheetName]
-            cr = CellRange(cell_range)
+            cr, *moreAreas = (CellRange(area) for _, area in all_destinations)
         except Exception as e:
             L.debug(
                 f"OpenPyXL error processing cell range. {dn.name=} {sheetName=} {cell_range=}",
@@ -198,7 +214,7 @@ class WorkbookReader:
                 problem = f"has an invalid cell range: {cell_range}"
             self._warnDamaged(dn, problem)
             return None
-        dims = getEffectiveCellRangeDimensions(ws, cr)
+        dims = getEffectiveCellRangeDimensions(ws, cr, *moreAreas)
         self._results.addCellQueries(dims.cellsAccessed)
         self._results.addCellsWithData(dims.cellsPopulated)
         return CellRangeMetadata(
@@ -209,6 +225,7 @@ class WorkbookReader:
             populated_width=dims.populated_width,
             populated_min_col=dims.populated_min_col,
             populated_min_row=dims.populated_min_row,
+            moreAreas=tuple(moreAreas),
         )
 
     def resolveRange(

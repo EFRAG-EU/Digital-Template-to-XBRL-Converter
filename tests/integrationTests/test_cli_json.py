@@ -8,8 +8,8 @@ import sys
 from pathlib import Path
 
 import pytest
+from tests.offline_arelle import offlineArelle
 
-from mireport.arelle.report_info import ArelleReportProcessor
 from mireport.conversionresults import ConversionResultsBuilder, Severity
 from mireport.filesupport import FilelikeAndFileName
 from mireport.taxonomy import listTaxonomies, loadBuiltInTaxonomyJSON
@@ -58,7 +58,7 @@ def test_the_report_is_written_as_xbrl_json_the_reader_takes(tmp_path: Path) -> 
 def test_arelle_finds_nothing_wrong_with_it(tmp_path: Path) -> None:
     """1.3.0 has footnotes, so this covers the link types and note facts too."""
     path = _convert(SAMPLE_1_3_0, tmp_path)
-    result = ArelleReportProcessor(workOffline=False).validateXbrlJson(
+    result = offlineArelle().validateXbrlJson(
         FilelikeAndFileName(fileContent=path.read_bytes(), filename=path.name)
     )
     assert not result.has_exceptions, result.log_lines

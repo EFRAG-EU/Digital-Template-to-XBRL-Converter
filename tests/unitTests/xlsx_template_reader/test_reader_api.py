@@ -261,6 +261,7 @@ class TestWorkbookBinder:
 
 MODIFIED = "The template has been modified from the one EFRAG published."
 OURS = "BasisForPreparation"
+TABLE = "ListOfSitesTable"
 
 
 def _bindNames(taxonomy, names: dict[str, str]) -> ConversionResultsBuilder:
@@ -290,7 +291,7 @@ class TestDamagedNamedRanges:
         [
             ("#REF!", "has no destination"),
             ("Sheet!#REF!", "has a damaged cell reference"),
-            ("Sheet!$A$1,Sheet!$B$2", "has several destinations"),
+            ("Sheet!$A$1,Sheet!$B$2", "has several areas"),
             ("Missing!$A$1", "points at a sheet that doesn't exist"),
             ("'[1]Other'!$E$150", "points at a cell in another workbook"),
         ],
@@ -302,6 +303,17 @@ class TestDamagedNamedRanges:
         assert warnings[1].startswith(f"Named range {OURS} {problem}")
         assert len(warnings) == 2
         assert not results.hasErrors()
+
+    def test_table_may_have_several_areas(self, taxonomy):
+        results = _bindNames(taxonomy, {TABLE: "Sheet!$A$1:$C$3,Sheet!$A$9:$C$9"})
+        assert not any("Named range" in w for w in _warnings(results))
+
+    def test_table_areas_must_share_a_sheet(self, taxonomy):
+        results = _bindNames(taxonomy, {TABLE: "Sheet!$A$1:$C$3,Other!$A$9:$C$9"})
+        assert _warnings(results)[1] == (
+            f"Named range {TABLE} has areas on more than one sheet: "
+            "Sheet!$A$1:$C$3,Other!$A$9:$C$9."
+        )
 
     def test_broken_third_party_name_is_not_damaged(self, taxonomy):
         results = _bindNames(taxonomy, {"My_Range": "#REF!"})

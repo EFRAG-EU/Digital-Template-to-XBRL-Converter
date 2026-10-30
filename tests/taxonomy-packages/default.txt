@@ -1,0 +1,16 @@
+# The taxonomy packages the tests run Arelle offline with, unless they need the
+# VSME 2024-12-17 set. Fetched into default/ beside this file by
+# fetch-external-packages.py; a set's packages must not overlap, as
+# Arelle warns about overlapping packages (tpe:packageRewriteOverlap).
+# This repository is public, so every URL here must be public too.
+# Format:
+#   <package-url> [<sha256-url>]
+# If sha256-url is provided, checksum verification is enforced.
+# Blank lines and lines starting with '#' are ignored.
+# Changing this file invalidates the CI cache and triggers a re-download.
+https://www.xbrl.org/packages/xbrl-specification-2024-02-28.zip
+https://www.xbrl.org/taxonomy/int/country/country-current-REC-2024-06-14.zip
+https://www.xbrl.org/taxonomy/int/codelist-common/codelist-common-REC-2024-06-14.zip
+https://xbrl.efrag.org/downloads/vsme/VSME-XBRL-Taxonomy-November-2025-v1.1.1.zip
+https://xbrl.efrag.org/downloads/vsme/VSME-XBRL-Taxonomy-February-2026.zip
+https://xbrl.efrag.org/downloads/vsme/VSME-XBRL-Taxonomy-May-2026.zip

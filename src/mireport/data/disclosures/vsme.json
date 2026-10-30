@@ -1,7 +1,7 @@
 {
     "taxonomyEntryPoints": {
         "oldEntryPoints": [
-            "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/vsme-entry-point.xsd",
+            "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/vsme-all.xsd",
             "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/vsme-all.xsd",
             "https://xbrl.efrag.org/taxonomy/vsme/2026-02-01/vsme-all.xsd",
             "https://xbrl.efrag.org/taxonomy/vsme/2026-05-01/vsme-all.xsd"
@@ -11,14 +11,14 @@
     "layoutStrategy": {
         "default": "vsme",
         "entryPoints": {
-            "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/vsme-entry-point.xsd": "old_vsme",
+            "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/vsme-all.xsd": "old_vsme",
             "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/vsme-all.xsd": "old_vsme",
             "https://xbrl.efrag.org/taxonomy/vsme/2026-02-01/vsme-all.xsd": "old_vsme"
         }
     },
     "reportTranslations": "translations/vsme",
     "templateVersions": {
-        "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/vsme-entry-point.xsd": "auto",
+        "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/vsme-all.xsd": "auto",
         "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/vsme-all.xsd": "auto",
         "https://xbrl.efrag.org/taxonomy/vsme/2026-02-01/vsme-all.xsd": "auto",
         "https://xbrl.efrag.org/taxonomy/vsme/2026-05-01/vsme-all.xsd": "auto",

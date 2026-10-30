@@ -1,0 +1,13 @@
+# The taxonomy packages for reports against VSME 2024-12-17 (1.0.x templates),
+# a set of their own: the package bundles NACE 2025-01-01, as the 2025-07-30 one
+# in default.txt does, and Arelle warns about overlapping packages.
+# This repository is public, so every URL here must be public too.
+# Format:
+#   <package-url> [<sha256-url>]
+# If sha256-url is provided, checksum verification is enforced.
+# Blank lines and lines starting with '#' are ignored.
+# Changing this file invalidates the CI cache and triggers a re-download.
+https://www.xbrl.org/packages/xbrl-specification-2024-02-28.zip
+https://www.xbrl.org/taxonomy/int/country/country-current-REC-2024-06-14.zip
+https://www.xbrl.org/taxonomy/int/codelist-common/codelist-common-REC-2024-06-14.zip
+https://xbrl.efrag.org/downloads/vsme/VSME-XBRL-Taxonomy-May-2025.zip

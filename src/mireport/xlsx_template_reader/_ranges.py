@@ -1,14 +1,16 @@
 """Cell ranges: named-range metadata plus geometry and iteration helpers.
 
 CellRangeMetadata is the package's core value object — a defined name resolved
-to a worksheet and cell range, with its populated extent precomputed.
+to a worksheet and cell range, with its populated extent precomputed. Only a
+table (hypercube) range may have several areas, all on one worksheet.
 XbrlConceptCellRangeMetadata additionally ties the range to a taxonomy concept.
 """
 
 from __future__ import annotations
 
 from collections.abc import Iterator
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from itertools import chain
 from typing import TYPE_CHECKING, NamedTuple
 
 if TYPE_CHECKING:
@@ -34,9 +36,15 @@ class CellRangeMetadata:
     populated_height: int
     populated_min_col: int
     populated_min_row: int
+    moreAreas: tuple[CellRange, ...] = ()
 
     def __str__(self) -> str:
-        return excelCellRangeRef(self.worksheet, self.cellRange)
+        return ",".join(excelCellRangeRef(self.worksheet, a) for a in self.areas)
+
+    @property
+    def areas(self) -> tuple[CellRange, ...]:
+        """Every area of the range: cellRange, then any further areas."""
+        return (self.cellRange, *self.moreAreas)
 
     @property
     def maximum_width(self) -> int:
@@ -47,16 +55,24 @@ class CellRangeMetadata:
         return self.cellRange.max_row - self.cellRange.min_row + 1
 
     def contains(self, other: CellRangeMetadata) -> bool:
-        """True if other is on the same worksheet and fully within this range."""
-        return self.worksheet is other.worksheet and self.cellRange.issuperset(
-            other.cellRange
+        """True if other is on the same worksheet and each of its areas is
+        fully within one of this range's areas."""
+        return self.worksheet is other.worksheet and all(
+            any(mine.issuperset(theirs) for mine in self.areas)
+            for theirs in other.areas
         )
 
     def overlaps(self, other: CellRangeMetadata) -> bool:
         """True if other is on the same worksheet and shares any cells with this range."""
-        return self.worksheet is other.worksheet and not self.cellRange.isdisjoint(
-            other.cellRange
+        return self.worksheet is other.worksheet and any(
+            not mine.isdisjoint(theirs) for mine in self.areas for theirs in other.areas
         )
+
+    def coversSameCells(self, other: CellRangeMetadata) -> bool:
+        """True if other is on the same worksheet and covers exactly these cells."""
+        return self.worksheet is other.worksheet and [a.bounds for a in self.areas] == [
+            a.bounds for a in other.areas
+        ]
 
     def excelRef(self, cell: CellType | None = None) -> str:
         """Excel reference for this range, or for a specific cell within it.
@@ -66,7 +82,7 @@ class CellRangeMetadata:
         """
         if cell is not None:
             return excelCellRef(self.worksheet, cell)
-        return excelCellRangeRef(self.worksheet, self.cellRange)
+        return str(self)
 
     def rows(self) -> Iterator[tuple[int, tuple[CellType, ...]]]:
         """Yield (row_number, cells) for each row of the range."""
@@ -83,7 +99,7 @@ class CellRangeMetadata:
 
 @dataclass(slots=True, eq=True, frozen=True)
 class XbrlConceptCellRangeMetadata(CellRangeMetadata):
-    concept: Concept
+    concept: Concept = field(kw_only=True)
 
     @classmethod
     def fromCellRangeMetadata(cls, holder: CellRangeMetadata, concept: Concept) -> Self:
@@ -95,6 +111,7 @@ class XbrlConceptCellRangeMetadata(CellRangeMetadata):
             populated_height=holder.populated_height,
             populated_min_col=holder.populated_min_col,
             populated_min_row=holder.populated_min_row,
+            moreAreas=holder.moreAreas,
             concept=concept,
         )
 
@@ -110,7 +127,7 @@ class XbrlConceptCellRangeMetadata(CellRangeMetadata):
         shares_reportable_range = (
             self.concept.isReportable
             and other.concept.isReportable
-            and self.cellRange.bounds == other.cellRange.bounds
+            and self.coversSameCells(other)
         )
         return not shares_reportable_range
 
@@ -163,7 +180,7 @@ class _CellRangeDimensions(NamedTuple):
 
 
 def getEffectiveCellRangeDimensions(
-    ws: Worksheet, cell_range: CellRange
+    ws: Worksheet, cell_range: CellRange, *moreAreas: CellRange
 ) -> _CellRangeDimensions:
     cols_not_empty: set[int] = set()
     cols_with_none: set[int] = set()
@@ -174,7 +191,9 @@ def getEffectiveCellRangeDimensions(
     last_rnum = None
     empty_row = True
     sheetName = ws.title
-    for rnum, cnum, cell in iterCellsWithCoords(ws, cell_range):
+    for rnum, cnum, cell in chain.from_iterable(
+        iterCellsWithCoords(ws, cr) for cr in (cell_range, *moreAreas)
+    ):
         cellCount.add((sheetName, rnum, cnum))
         if last_rnum is None:
             last_rnum = rnum

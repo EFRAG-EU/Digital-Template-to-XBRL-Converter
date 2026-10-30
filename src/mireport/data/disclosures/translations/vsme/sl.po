@@ -68,3 +68,7 @@ msgstr "To poročilo vsebuje %(factCount)s elementov XBRL."
 msgid "Introduction"
 msgstr "Uvod"
 
+# Ours until the template has template_label_document_information.
+msgid "Document Information"
+msgstr "Podatki o dokumentu"
+

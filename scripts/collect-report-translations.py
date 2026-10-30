@@ -42,6 +42,7 @@ LABEL_MSGIDS = {
     "template_label_reporting_period": "Reporting period:",
     "template_label_XBRL_facts_in_report": TWO_COUNTS,
     "template_label_introduction": "Introduction",
+    "template_label_document_information": "Document Information",
 }
 
 # (language, label, reason): entries that pass every check but are not translations.

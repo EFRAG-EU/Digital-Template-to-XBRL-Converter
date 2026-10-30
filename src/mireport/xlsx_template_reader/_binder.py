@@ -58,6 +58,8 @@ class WorkbookBinder:
         preset_dims: defaultdict[
             XbrlConceptCellRangeMetadata, dict[Concept, Concept]
         ] = defaultdict(dict)
+        # Concept_Table ranges: the hypercube each must lie inside.
+        table_scope: dict[XbrlConceptCellRangeMetadata, Concept] = {}
 
         # unused_defined_names is a set of identity-hashed DefinedNames; sort so
         # binding (and hence fact/message) order is stable across runs.
@@ -69,7 +71,11 @@ class WorkbookBinder:
             )
 
             if concept is not None:
-                if (crh := reader.peekRange(dn)) is not None:
+                if (
+                    crh := reader.peekRange(
+                        dn, severalAreas=concept in taxonomy.hypercubes
+                    )
+                ) is not None:
                     concept_map[dn] = (
                         XbrlConceptCellRangeMetadata.fromCellRangeMetadata(
                             crh, concept=concept
@@ -104,7 +110,10 @@ class WorkbookBinder:
                         b = XbrlConceptCellRangeMetadata.fromCellRangeMetadata(
                             crh, concept=concept
                         )
-                        if (
+                        if dimValue in taxonomy.hypercubes:
+                            concept_map[dn] = b
+                            table_scope[b] = dimValue
+                        elif (
                             dim := taxonomy.getExplicitDimensionForDomainMember(
                                 concept, dimValue
                             )
@@ -115,6 +124,7 @@ class WorkbookBinder:
                             self._msg.error(
                                 f"Domain member qualification set in named range {dn.name} but no dimension can be found for member.",
                                 MessageType.DevInfo,
+                                ref=b,
                             )
             if dn in concept_map:
                 reader.markUsed(dn)
@@ -137,8 +147,20 @@ class WorkbookBinder:
 
         ctx = ExcelCellBindingContext(reader, self._msg, taxonomy)
 
+        # A dimension set by Concept_Member names needs no range of its own, and
+        # a range named for the member holds the year of the member's period.
+        preset_members = {m for dims in preset_dims.values() for m in dims.values()}
         table_resolver = XBRLTableResolver(
-            ctx, unit_map, candidates_by_ws, concepts_in_excel
+            ctx,
+            unit_map,
+            candidates_by_ws,
+            concepts_in_excel.union(*(dims.keys() for dims in preset_dims.values())),
+            table_scope,
+            [
+                crm
+                for crm in concept_map.values()
+                if crm.concept.isAbstract and crm.concept in preset_members
+            ],
         )
         tables: list[TableBinding] = [
             binding
@@ -146,6 +168,13 @@ class WorkbookBinder:
             if (binding := table_resolver.resolve(table_range)) is not None
         ]
         self._consumeTableBindings(concept_map, unit_map, tables)
+        for crm, hypercube in table_scope.items():
+            if crm.definedName in concept_map:
+                self._msg.error(
+                    f"Named range {crm.definedName.name} names table {hypercube.qname.localName} but is not inside its named range.",
+                    MessageType.ExcelParsing,
+                    ref=crm,
+                )
 
         bindings = WorkbookBindings(
             concept_map=concept_map,

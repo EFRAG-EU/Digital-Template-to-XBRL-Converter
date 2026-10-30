@@ -21,6 +21,7 @@ from pathlib import Path
 import pytest
 from lxml import etree
 from PIL import Image, ImageDraw
+from tests.offline_arelle import offlineArelle
 
 from mireport.filesupport import FilelikeAndFileName
 from mireport.pdf_converter import (
@@ -232,10 +233,9 @@ class TestRealConversionInAPackage:
     ) -> None:
         """The whole design rests on a converted PDF being a clean document set
         member. This is the only test that proves it for real output."""
-        from mireport.arelle.report_info import ArelleReportProcessor
         from mireport.conversionresults import Severity
 
-        result = ArelleReportProcessor(workOffline=False).validateReportPackage(package)
+        result = offlineArelle().validateReportPackage(package)
         assert not result.has_exceptions, result.log_lines
         problems = [
             m.messageText
@@ -248,17 +248,15 @@ class TestRealConversionInAPackage:
     def test_no_schema_validation_errors_at_all(
         self, package: FilelikeAndFileName
     ) -> None:
-        from mireport.arelle.report_info import ArelleReportProcessor
 
-        result = ArelleReportProcessor(workOffline=False).validateReportPackage(package)
+        result = offlineArelle().validateReportPackage(package)
         text = "\n".join(result.log_lines)
         for marker in ("SCHEMAV", "nonIxdsDocument", "XML file syntax error"):
             assert marker not in text, text
 
     def test_viewer_includes_the_annex(self, package: FilelikeAndFileName) -> None:
-        from mireport.arelle.report_info import ArelleReportProcessor
 
-        result = ArelleReportProcessor(workOffline=False).generateInlineViewer(package)
+        result = offlineArelle().generateInlineViewer(package)
         assert result.has_viewer, result.log_lines
         assert [m.filename for m in result.viewer_document_set_members] == [
             "annex1.xhtml",
@@ -305,10 +303,9 @@ class TestRealConversionMergedInAPackage:
     def test_arelle_reports_no_errors_or_warnings(
         self, package: FilelikeAndFileName
     ) -> None:
-        from mireport.arelle.report_info import ArelleReportProcessor
         from mireport.conversionresults import Severity
 
-        result = ArelleReportProcessor(workOffline=False).validateReportPackage(package)
+        result = offlineArelle().validateReportPackage(package)
         assert not result.has_exceptions, result.log_lines
         problems = [
             m.messageText
@@ -320,9 +317,8 @@ class TestRealConversionMergedInAPackage:
     def test_no_schema_validation_errors_at_all(
         self, package: FilelikeAndFileName
     ) -> None:
-        from mireport.arelle.report_info import ArelleReportProcessor
 
-        result = ArelleReportProcessor(workOffline=False).validateReportPackage(package)
+        result = offlineArelle().validateReportPackage(package)
         text = "\n".join(result.log_lines)
         for marker in ("SCHEMAV", "nonIxdsDocument", "XML file syntax error"):
             assert marker not in text, text

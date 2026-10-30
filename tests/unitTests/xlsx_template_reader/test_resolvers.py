@@ -84,9 +84,10 @@ def rich_hypercube(taxonomy):
     pytest.skip("no hypercube with >=2 reportable primary items and a dimension")
 
 
-def _classify(taxonomy, hypercube, placements, unit_map=None):
-    """Build a synthetic worksheet with a table range (A1:F6) for the hypercube
-    and one named range per (concept, cell_ref) placement, then resolve it.
+def _classify(taxonomy, hypercube, placements, unit_map=None, table_ref="A1:F6"):
+    """Build a synthetic worksheet with a table range (A1:F6, or comma-separated
+    areas) for the hypercube and one named range per (concept, cell_ref)
+    placement, then resolve it.
 
     Returns (TableBinding | None, results).
     """
@@ -96,15 +97,18 @@ def _classify(taxonomy, hypercube, placements, unit_map=None):
     ws.title = "S"
 
     def crm(name, ref, concept):
-        attr = f"{quote_sheetname('S')}!{absolute_coordinate(ref)}"
+        attr = ",".join(
+            f"{quote_sheetname('S')}!{absolute_coordinate(area)}"
+            for area in ref.split(",")
+        )
         wb.defined_names[name] = DefinedName(name, attr_text=attr)
-        resolved = reader.peekRange(wb.defined_names[name])
+        resolved = reader.peekRange(wb.defined_names[name], severalAreas=True)
         assert resolved is not None
         return XbrlConceptCellRangeMetadata.fromCellRangeMetadata(resolved, concept)
 
     results = _results()
     reader = WorkbookReader(wb, results)
-    table_crm = crm("tbl", "A1:F6", hypercube)
+    table_crm = crm("tbl", table_ref, hypercube)
     candidates = [
         crm(f"r{i}", ref, concept) for i, (concept, ref) in enumerate(placements)
     ]
@@ -195,6 +199,40 @@ class TestXBRLTableResolverClassification:
         _, results = _classify(taxonomy, hc, [(pris[0], "B2")])
         assert any(
             "have not been found" in w for w in _messages(results, Severity.WARNING)
+        )
+
+
+class TestTableWithSeveralAreas:
+    TABLE = "A1:F3,A9:F9"
+
+    def test_binds_ranges_in_every_area(self, taxonomy, rich_hypercube):
+        hc, pris, _ = rich_hypercube
+        binding, _ = _classify(
+            taxonomy, hc, [(pris[0], "B2"), (pris[1], "B9")], table_ref=self.TABLE
+        )
+        assert binding is not None
+        assert {c.concept for c in binding.primaryItems} == {pris[0], pris[1]}
+
+    def test_range_between_areas_is_ignored(self, taxonomy, rich_hypercube):
+        hc, pris, _ = rich_hypercube
+        binding, results = _classify(
+            taxonomy, hc, [(pris[0], "B2"), (pris[1], "B5")], table_ref=self.TABLE
+        )
+        assert binding is not None
+        assert [c.concept for c in binding.primaryItems] == [pris[0]]
+        assert not any(
+            "Extra named ranges" in w for w in _messages(results, Severity.WARNING)
+        )
+
+    def test_range_across_an_area_edge_is_extra(self, taxonomy, rich_hypercube):
+        hc, pris, _ = rich_hypercube
+        binding, results = _classify(
+            taxonomy, hc, [(pris[0], "B2"), (pris[1], "B8:B9")], table_ref=self.TABLE
+        )
+        assert binding is not None
+        assert [c.concept for c in binding.primaryItems] == [pris[0]]
+        assert any(
+            "Extra named ranges" in w for w in _messages(results, Severity.WARNING)
         )
 
 
@@ -430,3 +468,146 @@ def test_other_pollutants_template_name_binds_to_vs_typed_axis():
     )
     assert concept is not None
     assert concept.qname.localName == "NameOfOtherPollutantTypedAxis"
+
+
+SITE_AXIS = "IdentifierOfSiteTypedAxis"
+BIO_TABLE = "SitesInBiodiversitySensitiveAreasTable"
+SCOPED = f"{SITE_AXIS}_{BIO_TABLE}"
+
+
+def _bindNames(taxonomy, names):
+    """Bind an in-memory workbook holding just the given named ranges."""
+    wb = Workbook()
+    ws = wb.active
+    assert ws is not None
+    ws.title = "S"
+    for name, ref in names.items():
+        attr = f"{quote_sheetname('S')}!{absolute_coordinate(ref)}"
+        wb.defined_names[name] = DefinedName(name, attr_text=attr)
+    results = _results()
+    bindings = WorkbookBinder(WorkbookReader(wb, results), taxonomy, results).bind()
+    return bindings, results
+
+
+class TestConceptTableNames:
+    """Concept_Table names a concept's range in that table, so a concept can
+    have a range in each of several tables."""
+
+    NOT_INSIDE = f"Named range {SCOPED} names table {BIO_TABLE} but is not inside its named range."
+
+    def test_binds_the_concept_inside_its_table(self, taxonomy):
+        bindings, results = _bindNames(taxonomy, {BIO_TABLE: "A1:F6", SCOPED: "A2:A6"})
+        [table] = bindings.tables
+        assert [
+            (c.definedName.name, c.concept.qname.localName)
+            for c in table.typedDimensions
+        ] == [(SCOPED, SITE_AXIS)]
+        assert not _messages(results, Severity.ERROR)
+
+    def test_outside_its_table_is_an_error(self, taxonomy):
+        _, results = _bindNames(taxonomy, {BIO_TABLE: "A1:F6", SCOPED: "H2:H6"})
+        assert self.NOT_INSIDE in _messages(results, Severity.ERROR)
+
+    def test_inside_another_table_is_an_error(self, taxonomy):
+        bindings, results = _bindNames(
+            taxonomy, {"ListOfSitesTable": "A1:F6", SCOPED: "A2:A6"}
+        )
+        assert SCOPED not in {
+            c.definedName.name for t in bindings.tables for c in t.conceptRanges
+        }
+        assert self.NOT_INSIDE in _messages(results, Severity.ERROR)
+
+
+def _refs(results, needle):
+    """Excel references of the messages whose text contains needle."""
+    return [m.excelReference for m in results.messages if needle in m.messageText]
+
+
+class TestBindingMessagesSayWhere:
+    def test_extra_ranges_are_listed_by_name_and_cell(self, taxonomy, rich_hypercube):
+        hc, pris, _dims = rich_hypercube
+        permitted = taxonomy.getAllDimensionsForHypercube(hc).union(
+            taxonomy.getAllPrimaryItemsForHypercube(hc)
+        )
+        outsider = next(
+            c
+            for c in sorted(taxonomy.concepts, key=str)
+            if c.isReportable and c not in permitted
+        )
+        _, results = _classify(taxonomy, hc, [(pris[0], "B2"), (outsider, "C3")])
+        [message] = [
+            m for m in results.messages if "Extra named ranges" in m.messageText
+        ]
+        assert message.messageText.endswith(": r1 ('S'!$C$3).")
+        assert message.excelReference == "'S'!$A$1:$F$6"
+
+    def test_missing_concepts_point_at_the_table(self, taxonomy, rich_hypercube):
+        hc, pris, _ = rich_hypercube
+        _, results = _classify(taxonomy, hc, [(pris[0], "B2")])
+        assert _refs(results, "have not been found") == ["'S'!$A$1:$F$6"]
+
+    def test_conflict_points_at_the_table(self, taxonomy, rich_hypercube):
+        hc, pris, _ = rich_hypercube
+        _, results = _classify(taxonomy, hc, [(pris[0], "B2:C2"), (pris[1], "C2:D2")])
+        assert _refs(results, "neither the same nor disjoint") == ["'S'!$A$1:$F$6"]
+
+    def test_concept_table_outside_its_table_points_at_the_range(self, taxonomy):
+        _, results = _bindNames(taxonomy, {BIO_TABLE: "A1:F6", SCOPED: "H2:H6"})
+        assert _refs(results, "but is not inside") == ["'S'!$H$2:$H$6"]
+
+    def test_member_qualification_points_at_the_range(self, taxonomy):
+        _, results = _bindNames(
+            taxonomy, {"BasisForPreparation_BasisForPreparation": "B2"}
+        )
+        assert _refs(results, "Domain member qualification") == ["'S'!$B$2"]
+
+
+def test_member_presets_count_as_their_dimension_being_found():
+    """A table whose cells all set its axis with Concept_Member names has no
+    axis range, and doesn't need one."""
+    vs = getTaxonomy(VS_DRAFT_ENTRY_POINT)
+    _, results = _bindNames(
+        vs,
+        {
+            "EstimatedAbsoluteGreenhouseGasEmissionsTable": "A1:F6",
+            "GrossScope1GreenhouseGasEmissions_BaselineYearMember": "B2",
+        },
+    )
+    [missing] = [
+        m.messageText
+        for m in results.messages
+        if "have not been found" in m.messageText
+    ]
+    assert "ReportingScopesAxis" not in missing
+
+
+class TestPeriodYearCells:
+    """A member's period-year cell (BaselineYearMember) may also be a fact of its
+    own, such as the base year, inside the table that uses the period."""
+
+    TABLE = "EstimatedAbsoluteGreenhouseGasEmissionsTable"
+    BASE_YEAR = "GreenhouseGasEmissionReductionTargetBaseYear"
+
+    def _extras(self, baseYearCell):
+        vs = getTaxonomy(VS_DRAFT_ENTRY_POINT)
+        _, results = _bindNames(
+            vs,
+            {
+                self.TABLE: "A1:F6",
+                "BaselineYearMember": "B2",
+                self.BASE_YEAR: baseYearCell,
+                "GrossScope1GreenhouseGasEmissions_BaselineYearMember": "B3",
+            },
+        )
+        return [
+            m.messageText
+            for m in results.messages
+            if "Extra named ranges" in m.messageText
+        ]
+
+    def test_fact_on_a_period_year_cell_is_not_extra(self):
+        assert self._extras("B2") == []
+
+    def test_fact_elsewhere_in_the_table_is_still_extra(self):
+        [message] = self._extras("C2")
+        assert self.BASE_YEAR in message

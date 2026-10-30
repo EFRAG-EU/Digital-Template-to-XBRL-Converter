@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-EFRAG's converter that turns a filled-in VSME Excel "Digital Template" into a validated Inline XBRL
+EFRAG's converter that turns a filled-in VS or VSME Excel "Digital Template" into a validated Inline XBRL
 report (plus report package, viewer and xBRL-JSON). Mapping is driven by Excel **named ranges** whose
 names match the local name of the corresponding taxonomy concept. Ships as both a CLI (`scripts/`) and
 a Flask web app.
@@ -36,6 +36,11 @@ quicker for a single test and needed for a debugger.
 .venv-py314/Scripts/python -m pytest tests/unitTests/xlsx_template_reader/test_ranges.py::test_name -n0
 ```
 
+- Tests that call Arelle run it offline, from the public taxonomy packages listed in
+  `tests/taxonomy-packages/*.txt`, one non-overlapping set per list (`tests/offline_arelle.py` picks
+  one). Fetch them once, each into a directory beside its list, with
+  `.venv-py314/Scripts/python tests/taxonomy-packages/fetch-external-packages.py` (CI caches them); without them those
+  tests, and every web app test, fail saying so.
 - Tests marked `@pytest.mark.slow` (notably full Arelle validation in
   `tests/integrationTests/test_expectedFactCounts.py`) are **skipped by default**. Enable with
   `--run-slow` or `FORCE_RUN=1`. They run automatically on `main` and PRs to `main`.
@@ -73,6 +78,10 @@ CI runs ruff only, but mypy config is strict-ish for `src/` (`disallow_untyped_d
 
 # dump named ranges from a workbook (debugging what the reader sees)
 .venv-py314/Scripts/python scripts/parse-and-dump.py example.xlsx
+
+# audit a template against its taxonomy and disclosure system (--reference: diff against another
+# template; --markdown: output to paste into a GitHub issue)
+.venv-py314/Scripts/python scripts/check-template.py template.xlsx
 
 # validate an existing report / build a viewer for it
 .venv-py314/Scripts/python scripts/check-report.py report.html
@@ -196,8 +205,11 @@ internal. The chain, in order:
 2. **`_binder.WorkbookBinder`** — scrapes defined names against the taxonomy and produces
    `WorkbookBindings`: simple concept ranges, hypercube `TableBinding`s, footnote bindings, and the set
    of concepts flagged as externally-valued. Named-range conventions: a range named for a concept's
-   local name binds to that concept; `template_*` ranges are template metadata; `enum_*` ranges are
-   ignored. `_constants.TAXONOMY_NAME_ALIASES` / `UNHANDLED_NAMES_TO_IGNORE` hold the temporary VSME
+   local name binds to that concept; `Concept_Member` presets an explicit dimension's member;
+   `Concept_unit` holds the concept's units; `Concept_Table` is the concept's range in that table (so
+   a concept can have one in each of several tables), and must lie inside the table's range;
+   `template_*` ranges are template metadata; `enum_*` ranges are ignored. Only a table (hypercube) range may have several areas, all on one sheet; a range
+   belongs to the table when it lies within one of them. `_constants.TAXONOMY_NAME_ALIASES` / `UNHANDLED_NAMES_TO_IGNORE` hold the temporary VSME
    workarounds.
 3. **`_fact_creator.FactCreator`** — walks the bindings and builds facts, delegating hypercube tables
    to `_tables.TableFactCreator` (one fact per row, dimensions read from the same row), units to
