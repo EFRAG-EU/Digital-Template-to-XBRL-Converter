@@ -155,22 +155,20 @@ def _packageNames(conv):
 
 @pytest.mark.slow
 class TestPdfConversion:
-    """Marked slow: each runs a full Excel -> Inline XBRL -> Arelle conversion."""
+    """Marked slow: each runs a full Excel -> Inline XBRL conversion, Arelle
+    stubbed out as only the package and messages are looked at."""
 
+    @pytest.mark.xdist_group("webapp-converted-pdf")
     def test_pdf_becomes_a_docset_member_and_an_attachment(
-        self, client, upload, make_pdf, conversion_of, convertedOk
+        self, convertedPdfPackage
     ) -> None:
-        upload(client, pdfs=[make_pdf("annex1.pdf")])
-        names = _packageNames(_convert(client, conversion_of))
+        names = convertedPdfPackage
         assert any(n.endswith("/annex1.xhtml") for n in names), names
         assert any(n.endswith("/attachments/annex1.pdf") for n in names), names
 
-    @pytest.mark.usefixtures("skipArelle")
-    def test_report_moves_into_the_docset_directory(
-        self, client, upload, make_pdf, conversion_of, convertedOk
-    ) -> None:
-        upload(client, pdfs=[make_pdf("annex1.pdf")])
-        names = _packageNames(_convert(client, conversion_of))
+    @pytest.mark.xdist_group("webapp-converted-pdf")
+    def test_report_moves_into_the_docset_directory(self, convertedPdfPackage) -> None:
+        names = convertedPdfPackage
         directlyInReports = [n for n in names if "/reports/" in n and n.count("/") == 2]
         assert directlyInReports == [], names
 
@@ -219,23 +217,21 @@ class TestPdfConversion:
         ]
         assert len(pdfWarnings) == 1, results["m"]
 
-    @pytest.mark.usefixtures("skipArelle")
+    @pytest.mark.xdist_group("webapp-unconverted-pdf")
     def test_the_pdf_still_ships_when_conversion_fails(
-        self, client, upload, make_pdf, conversion_of, noBinary
+        self, unconvertedPdfPackage
     ) -> None:
         """The whole point of attaching the original as well."""
-        upload(client, pdfs=[make_pdf("annex1.pdf")])
-        names = _packageNames(_convert(client, conversion_of))
+        names = unconvertedPdfPackage
         assert any(n.endswith("/attachments/annex1.pdf") for n in names), names
         assert not any(n.endswith(".xhtml") for n in names), names
 
-    @pytest.mark.usefixtures("skipArelle")
+    @pytest.mark.xdist_group("webapp-unconverted-pdf")
     def test_report_layout_unchanged_when_conversion_fails(
-        self, client, upload, make_pdf, conversion_of, noBinary
+        self, unconvertedPdfPackage
     ) -> None:
         """No document set members means the report stays where it always was."""
-        upload(client, pdfs=[make_pdf("annex1.pdf")])
-        names = _packageNames(_convert(client, conversion_of))
+        names = unconvertedPdfPackage
         assert any(n.count("/") == 2 and "/reports/" in n for n in names), names
 
     @pytest.mark.usefixtures("skipArelle")

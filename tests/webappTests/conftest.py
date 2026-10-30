@@ -1,8 +1,10 @@
 import io
+import zipfile
 from pathlib import Path
 
 import pytest
 from cachelib.file import FileSystemCache
+from tests.offline_arelle import taxonomyPackagesDir
 
 from digital_converter_webapp import create_app
 from digital_converter_webapp.conversion import Conversion, ConversionStore
@@ -39,6 +41,7 @@ def _test_config(session_dir, **overrides):
         "TESTING": True,
         "SESSION_CACHELIB": FileSystemCache(str(session_dir)),
         "SECRET_KEY": "test-secret",
+        "TAXONOMY_PACKAGE_DIR": taxonomyPackagesDir(),
         **overrides,
     }
 
@@ -196,14 +199,19 @@ def convertedOk(monkeypatch):
     patchConverterPresent(monkeypatch)
 
 
-@pytest.fixture
-def noBinary(monkeypatch):
+def patchNoBinary(monkeypatch):
+    """No PDF converter installed."""
     from mireport.pdf_converter import _batch
 
     def raiser():
         raise PdfToolNotFoundError("pdf2htmlEX was not found")
 
     monkeypatch.setattr(_batch, "findConverter", raiser)
+
+
+@pytest.fixture
+def noBinary(monkeypatch):
+    patchNoBinary(monkeypatch)
 
 
 @pytest.fixture(scope="module")
@@ -226,6 +234,43 @@ def viewed_docset(app):
     return client, conversion.id
 
 
+def _packageNamesOfOneConversion(app, pdfs, *patches) -> list[str]:
+    """The report package's member names after converting the sample workbook
+    with ``pdfs``, Arelle skipped and ``patches`` applied. For module scoped
+    fixtures, so ``MonkeyPatch.context()`` stands in for ``monkeypatch``."""
+    client = app.test_client()
+    with pytest.MonkeyPatch.context() as monkeypatch:
+        patchArelleOut(monkeypatch)
+        for patch in patches:
+            patch(monkeypatch)
+        postWorkbook(client, pdfs=pdfs)
+        with client.session_transaction() as sess:
+            (conversion,) = ConversionStore(sess).active().values()
+        client.get(f"/conversions/{conversion.id}")
+        with client.session_transaction() as sess:
+            conversion = ConversionStore(sess).active()[conversion.id]
+    assert conversion.zip is not None
+    with zipfile.ZipFile(io.BytesIO(conversion.zip.fileContent)) as zf:
+        return zf.namelist()
+
+
+@pytest.fixture(scope="module")
+def convertedPdfPackage(app) -> list[str]:
+    """Package member names of one conversion with a PDF that converts, shared by
+    the tests that only read the package layout."""
+    return _packageNamesOfOneConversion(
+        app, [(io.BytesIO(PDF_BYTES), "annex1.pdf")], patchConverterPresent
+    )
+
+
+@pytest.fixture(scope="module")
+def unconvertedPdfPackage(app) -> list[str]:
+    """As ``convertedPdfPackage``, with no PDF converter installed."""
+    return _packageNamesOfOneConversion(
+        app, [(io.BytesIO(PDF_BYTES), "annex1.pdf")], patchNoBinary
+    )
+
+
 class FakeArelleProcessingResult(ArelleProcessingResult):
     """Stands in for a real Arelle validation in tests that never look at it.
 
@@ -246,12 +291,19 @@ class FakeArelleProcessingResult(ArelleProcessingResult):
         )
 
 
+def patchArelleOut(monkeypatch):
+    """Both of a conversion's Arelle validations, of the report package and of
+    the xBRL-JSON, stubbed out."""
+    for validation in ("validateReportPackage", "validateXbrlJson"):
+        monkeypatch.setattr(
+            ArelleReportProcessor,
+            validation,
+            lambda self, source, **kwargs: FakeArelleProcessingResult(),
+        )
+
+
 @pytest.fixture
 def skipArelle(monkeypatch):
-    """Skip the several-second Arelle validation in a conversion the test only
+    """Skip the several-second Arelle validations in a conversion the test only
     inspects for package layout, attachments or PDF warnings."""
-    monkeypatch.setattr(
-        ArelleReportProcessor,
-        "validateReportPackage",
-        lambda self, source, **kwargs: FakeArelleProcessingResult(),
-    )
+    patchArelleOut(monkeypatch)

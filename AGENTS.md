@@ -36,6 +36,11 @@ quicker for a single test and needed for a debugger.
 .venv-py314/Scripts/python -m pytest tests/unitTests/xlsx_template_reader/test_ranges.py::test_name -n0
 ```
 
+- Tests that call Arelle run it offline, from the public taxonomy packages listed in
+  `tests/taxonomy-packages/*.txt`, one non-overlapping set per list (`tests/offline_arelle.py` picks
+  one). Fetch them once, each into a directory beside its list, with
+  `.venv-py314/Scripts/python tests/taxonomy-packages/fetch-external-packages.py` (CI caches them); without them those
+  tests, and every web app test, fail saying so.
 - Tests marked `@pytest.mark.slow` (notably full Arelle validation in
   `tests/integrationTests/test_expectedFactCounts.py`) are **skipped by default**. Enable with
   `--run-slow` or `FORCE_RUN=1`. They run automatically on `main` and PRs to `main`.

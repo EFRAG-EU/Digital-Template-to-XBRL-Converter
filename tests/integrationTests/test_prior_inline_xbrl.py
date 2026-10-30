@@ -8,6 +8,7 @@ from io import BytesIO
 from pathlib import Path
 
 import pytest
+from tests.offline_arelle import offlineArelle
 
 from mireport.arelle.report_info import ArelleReportProcessor
 from mireport.comparatives import PriorReport
@@ -37,7 +38,7 @@ def _sample(version: str) -> Report:
 
 @pytest.fixture(scope="module")
 def arelle() -> ArelleReportProcessor:
-    return ArelleReportProcessor(workOffline=False)
+    return offlineArelle()
 
 
 def _package(document: bytes, name: str, kind: str) -> FilelikeAndFileName:
