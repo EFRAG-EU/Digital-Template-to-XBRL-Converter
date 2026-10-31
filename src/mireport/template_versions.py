@@ -5,7 +5,8 @@ version, which is configured per taxonomy entry point (``templateVersions`` in
 the disclosure config) as one of:
 
 * a version number: that is the latest template for the taxonomy;
-* ``"auto"``: whatever the installed migration tool migrates into;
+* ``"auto"``: whatever the installed migration tool migrates into. With no
+  tool, the latest version isn't known, so a report's version isn't judged;
 * ``"none"``: the taxonomy has no migration, so only the converter's own
   version is known.
 
@@ -39,7 +40,8 @@ class SupportedVersionSource(StrEnum):
 
 @dataclass(frozen=True, slots=True)
 class SupportedTemplate:
-    supported_template_version: VersionHolder
+    # None when it isn't known: "auto" with no migration tool installed.
+    supported_template_version: VersionHolder | None
     supported_template_version_source: SupportedVersionSource
     # Whether migrating a report would produce this supported version.
     migration_enabled: bool
@@ -75,15 +77,13 @@ def resolveSupportedTemplate(entryPoint: str) -> SupportedTemplate:
         setting = getTemplateVersionSetting(entryPointSetOf(entryPoint))
     migration_target_template_version = migrationTargetTemplateVersion()
 
+    version: VersionHolder | None
     match setting:
         case None | "none":
             version, source = converter_version, SupportedVersionSource.CONVERTER
         case "auto":
-            if migration_target_template_version is None:
-                version, source = converter_version, SupportedVersionSource.CONVERTER
-            else:
-                version = migration_target_template_version
-                source = SupportedVersionSource.MIGRATION_TOOL
+            version = migration_target_template_version
+            source = SupportedVersionSource.MIGRATION_TOOL
         case _:
             version = VersionHolder.parse(setting).strip_build_metadata
             source = SupportedVersionSource.TAXONOMY_CONFIG
@@ -92,6 +92,8 @@ def resolveSupportedTemplate(entryPoint: str) -> SupportedTemplate:
         supported_template_version=version,
         supported_template_version_source=source,
         migration_enabled=(
-            setting != "none" and migration_target_template_version == version
+            setting != "none"
+            and version is not None
+            and migration_target_template_version == version
         ),
     )

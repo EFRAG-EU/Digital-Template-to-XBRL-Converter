@@ -161,8 +161,11 @@ class TestResultsSections:
         assert "XBRL report validation" in page
 
     def test_only_tables_with_excel_references_have_the_column(self, converted_id):
+        """Developers see the workbook's messages that name a cell."""
         conv_id, c = converted_id
-        tree = lxml.html.fromstring(c.get(f"/conversions/{conv_id}").data)
+        tree = lxml.html.fromstring(
+            c.get(f"/conversions/{conv_id}?show_developer_messages=true").data
+        )
 
         def headers(sectionId: str) -> list[str]:
             return tree.xpath(f'//*[@id="{sectionId}"]//th/text()')

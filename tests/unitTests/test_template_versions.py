@@ -83,13 +83,14 @@ class TestResolveSupportedTemplate:
         )
         assert supported.migration_enabled is True
 
-    def test_auto_without_a_tool_falls_back_to_the_converter(self, migration_target):
+    def test_auto_without_a_tool_knows_no_version(self, migration_target):
+        """Not the converter's: its version says nothing about the templates'."""
         migration_target(None)
         supported = resolveSupportedTemplate(VSME_ENTRY_POINT)
-        assert supported.supported_template_version == CONVERTER_VERSION
+        assert supported.supported_template_version is None
         assert (
             supported.supported_template_version_source
-            is SupportedVersionSource.CONVERTER
+            is SupportedVersionSource.MIGRATION_TOOL
         )
         assert supported.migration_enabled is False
 
@@ -213,6 +214,26 @@ class TestVersionRelation:
             report_template_version=VersionHolder.parse_or_invalid(report),
             supported_template_version=self.SUPPORTED,
             supported_template_version_source=SupportedVersionSource.CONVERTER,
+            migration_enabled=False,
+            validation_is_incomplete=False,
+            migration_status=None,
+        )
+        assert check.report_template_version_relation is expected
+
+    @pytest.mark.parametrize(
+        "report,expected",
+        [
+            ("", VersionRelation.MISSING),
+            ("not-a-version", VersionRelation.INVALID),
+            ("1.0.0", VersionRelation.UNKNOWN),
+            ("99.0.0", VersionRelation.UNKNOWN),
+        ],
+    )
+    def test_relation_to_no_known_version(self, report, expected):
+        check = TemplateCheckResult(
+            report_template_version=VersionHolder.parse_or_invalid(report),
+            supported_template_version=None,
+            supported_template_version_source=SupportedVersionSource.MIGRATION_TOOL,
             migration_enabled=False,
             validation_is_incomplete=False,
             migration_status=None,
