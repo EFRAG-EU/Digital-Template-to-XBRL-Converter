@@ -16647,6 +16647,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Timpist\u00ed a chosc [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Balesetmegel\u0151z\u00e9s [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Prevenzione degli infortuni [member]"
         },
@@ -16698,6 +16701,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Sl\u00e1inte agus s\u00e1bh\u00e1ilteacht bhreise don lucht saothair [abstract]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A munkaer\u0151 tov\u00e1bbi (\u00e1ltal\u00e1nos) jellemz\u0151i [abstract]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Ulteriori (generale) caratteristiche della forza lavoro [abstract]"
         },
@@ -16733,6 +16739,9 @@
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Additional own workforce information human rights policies and processes [abstract]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A saj\u00e1t munkaer\u0151re vonatkoz\u00f3 tov\u00e1bbi inform\u00e1ci\u00f3k \u2013 emberi jogi politik\u00e1k \u00e9s elj\u00e1r\u00e1sok [abstract]"
         },
         "sq": {
           "http://www.xbrl.org/2003/role/label": "Informacion shtes\u00eb p\u00ebr fuqin\u00eb pun\u00ebtore, politikat dhe proceset e t\u00eb drejtave t\u00eb njeriut [abstract]"
@@ -16771,6 +16780,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/documentation": "Ainm, sr\u00e1id, uimhir t\u00ed, uimhir foirgnimh",
           "http://www.xbrl.org/2003/role/label": "Seoladh an l\u00e1ithre\u00e1in"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Telephely c\u00edme"
         },
         "it": {
           "http://www.xbrl.org/2003/role/documentation": "Nome, via, numero civico, numero edificio",
@@ -16839,6 +16851,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Pobail d\u00e1 nd\u00e9antar difear [member]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "\u00c9rintett k\u00f6z\u00f6ss\u00e9gek [member]"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Comunit\u00e0 interessate [member]"
@@ -16936,6 +16951,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "M\u00e9id na n-asta\u00edochta\u00ed [abstract]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Kibocs\u00e1t\u00e1s mennyis\u00e9ge [abstract]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Quantit\u00e0 di emissione [abstract]"
         },
@@ -16987,6 +17005,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "M\u00e9id na n-asta\u00edochta\u00ed [line items]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Kibocs\u00e1t\u00e1s mennyis\u00e9ge [line items]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Quantit\u00e0 di emissione [line items]"
         },
@@ -17037,6 +17058,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "M\u00e9id na n-asta\u00edochta\u00ed amach san aer"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Leveg\u0151be t\u00f6rt\u00e9n\u0151 kibocs\u00e1t\u00e1s mennyis\u00e9ge"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Quantit\u00e0 di emissioni nell'aria"
@@ -17090,6 +17114,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "M\u00e9id na n-asta\u00edochta\u00ed go hithir"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Talajba t\u00f6rt\u00e9n\u0151 kibocs\u00e1t\u00e1s mennyis\u00e9ge"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Quantit\u00e0 di emissioni nel suolo"
         },
@@ -17141,6 +17168,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "M\u00e9id na n-asta\u00edochta\u00ed isteach san uisece"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "V\u00edzbe t\u00f6rt\u00e9n\u0151 kibocs\u00e1t\u00e1s mennyis\u00e9ge"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Quantit\u00e0 di emissioni nell'acqua"
@@ -17195,6 +17225,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "M\u00e9id na n-asta\u00edochta\u00ed [table]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Kibocs\u00e1t\u00e1sok mennyis\u00e9ge [table]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Quantit\u00e0 di emissioni [table]"
         },
@@ -17237,6 +17270,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Quantit\u00e9 d'\u00e9missions d'autres polluants [abstract]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Egy\u00e9b szennyez\u0151 anyag kibocs\u00e1t\u00e1s\u00e1nak mennyis\u00e9ge [abstract]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Quantit\u00e0 delle altre emissioni inquinanti [abstract]"
         },
@@ -17275,6 +17311,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Quantit\u00e9 d'\u00e9missions d'autres polluants [line items]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Egy\u00e9b szennyez\u0151 anyag kibocs\u00e1t\u00e1sainak mennyis\u00e9ge [line items]"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Quantit\u00e0 delle altre emissioni inquinanti [line items]"
@@ -17316,6 +17355,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Quantit\u00e9 d'\u00e9missions d'autres polluants [table]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Egy\u00e9b szennyez\u0151 anyag kibocs\u00e1t\u00e1s\u00e1nak mennyis\u00e9ge [table]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Quantit\u00e0 delle altre emissioni inquinanti [table]"
         },
@@ -17353,6 +17395,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Quantit\u00e9 d'\u00e9missions d'autres polluants dans l'air"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Egy\u00e9b szennyez\u0151 anyag leveg\u0151be t\u00f6rt\u00e9n\u0151 kibocs\u00e1t\u00e1s\u00e1nak mennyis\u00e9ge"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Quantit\u00e0 delle altre emissioni inquinanti nell'aria"
@@ -17393,6 +17438,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Quantit\u00e9 d'\u00e9missions d'autres polluants dans le sol"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Egy\u00e9b szennyez\u0151 anyag talajba t\u00f6rt\u00e9n\u0151 kibocs\u00e1t\u00e1s\u00e1nak mennyis\u00e9ge"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Quantit\u00e0 delle altre emissioni inquinanti nel suolo"
         },
@@ -17431,6 +17479,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Quantit\u00e9 d'\u00e9missions d'autres polluants dans l'eau"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Egy\u00e9b szennyez\u0151 anyag v\u00edzbe t\u00f6rt\u00e9n\u0151 kibocs\u00e1t\u00e1s\u00e1nak mennyis\u00e9ge"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Quantit\u00e0 delle altre emissioni inquinanti nell'acqua"
@@ -17480,6 +17531,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "An m\u00e9id uisce arna aistarraingt ag l\u00e1ithre\u00e1in at\u00e1 suite i limist\u00e9ir ina bhfuil ardstrus maidir le huisce"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A v\u00edzhi\u00e1nyos ter\u00fcleteken tal\u00e1lhat\u00f3 telephelyeken fogyasztott v\u00edz mennyis\u00e9ge (k\u00f6bm\u00e9ter, m\u00b3)"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Quantit\u00e0 di acqua consumata presso siti ubicati in aree a stress idrico (metri cubi m\u00b3)"
@@ -17532,6 +17586,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Mais-sreabhadh bliant\u00fail d\u2019\u00e1bhair \u00e1bhartha a \u00fas\u00e1idtear ag an gn\u00f3thas [abstract]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A v\u00e1llalkoz\u00e1s \u00e1ltal felhaszn\u00e1lt anyagok \u00e9ves t\u00f6meg\u00e1rama [abstract]"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Flusso di massa annuo dei materiali utilizzati dall'impresa [abstract]"
@@ -17640,6 +17697,9 @@
           "http://www.xbrl.org/2003/role/totalLabel": "Ioml\u00e1n na s\u00f3cmhainn\u00ed",
           "http://www.xbrl.org/2003/role/verboseLabel": "M\u00e9id an chl\u00e1ir chomhardaithe (s\u00f3cmhainn\u00ed ioml\u00e1na)"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Eszk\u00f6z\u00f6k"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Attivit\u00e0",
           "http://www.xbrl.org/2003/role/totalLabel": "Totale attivo",
@@ -17701,6 +17761,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Ag deireadh na tr\u00e9imhse tuairiscithe [member]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A besz\u00e1mol\u00e1si id\u0151szak v\u00e9g\u00e9n [member]"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Alla fine del periodo di rendicontazione [member]"
@@ -17768,6 +17831,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Me\u00e1n le linn na tr\u00e9imhse tuairiscithe [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A besz\u00e1mol\u00e1si id\u0151szak \u00e1tlag\u00e1ban [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Media durante il periodo di riferimento [member]"
         },
@@ -17817,6 +17883,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "An me\u00e1nl\u00edon uaireanta oili\u00fana bliant\u00fala in aghaidh an fhosta\u00ed fireann"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Az egy alkalmazottra jut\u00f3 \u00e9ves k\u00e9pz\u00e9si \u00f3r\u00e1k \u00e1tlagos sz\u00e1ma"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Numero medio di ore di formazione annuali per dipendente"
@@ -17870,6 +17939,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "B10 \u2013 Lucht saothair \u2013L\u00edon na n-uaireanta oili\u00fana bliant\u00fala in aghaidh an fhosta\u00ed le linn na tr\u00e9imhse tuairiscithe [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "B10 \u2013 Munkaer\u0151 \u2013 Az egy alkalmazottra jut\u00f3 \u00e9ves k\u00e9pz\u00e9si \u00f3r\u00e1k sz\u00e1ma a besz\u00e1mol\u00e1si id\u0151szakban [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "B10 \u2013 Forza lavoro \u2013 Numero annuo di ore di formazione per dipendente durante il periodo di riferimento [member]"
         },
@@ -17920,6 +17992,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "B10 \u2013 Lucht saothair \u2013 Luach saothair agus c\u00f3mharg\u00e1il [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "B10 \u2013 Munkaer\u0151 \u2013 Javadalmaz\u00e1s \u00e9s kollekt\u00edv t\u00e1rgyal\u00e1s [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "B10 \u2013 Forza lavoro \u2013 Retribuzione e contrattazione collettiva [member]"
         },
@@ -17969,6 +18044,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "B10 - Lucht saothair \u2013 Luach saothair, c\u00f3mharg\u00e1il agus oili\u00faint [member]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "B10 \u2013 Munkaer\u0151 \u2013 Javadalmaz\u00e1s, kollekt\u00edv t\u00e1rgyal\u00e1s \u00e9s k\u00e9pz\u00e9s [member]"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "B10 \u2013 Forza lavoro \u2013 Retribuzione, contrattazione collettiva e formazione [member]"
@@ -18021,6 +18099,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "B11 - Ciontuithe agus f\u00edne\u00e1lacha mar gheall ar \u00e9illi\u00fa agus breabaireacht [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "B11 \u2013 Korrupci\u00f3 \u00e9s megveszteget\u00e9s miatti \u00edt\u00e9letek \u00e9s b\u00fcntet\u00e9sek [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "B11 - Condanne e ammende per corruzione attiva e passiva [member]"
         },
@@ -18072,6 +18153,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "B1 - Faisn\u00e9is ghinear\u00e1lta gn\u00f3thais eile [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "B1 \u2013 A v\u00e1llalkoz\u00e1sra vonatkoz\u00f3 egy\u00e9b \u00e1ltal\u00e1nos inform\u00e1ci\u00f3k [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "B1 - Informazioni generali dell'impresa [member]"
         },
@@ -18121,6 +18205,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "B1 - Bun\u00fas le haghaidh Ullmh\u00fach\u00e1in [member]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "B1 \u2013 Az elk\u00e9sz\u00edt\u00e9s alapja [member]"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "B1 \u2013 Criteri per la redazione [member]"
@@ -18173,6 +18260,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Aon deimhni\u00fa n\u00f3 lip\u00e9ad i nd\u00e1il le hinbhuanaitheacht a nochtadh [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "B1 \u2013 Fenntarthat\u00f3s\u00e1ggal kapcsolatos tan\u00fas\u00edtv\u00e1ny(ok) vagy c\u00edmke(\u00e9k) k\u00f6zz\u00e9t\u00e9tele [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "B1 - Informativa delle certificazioni o marchi di sostenibilit\u00e0 [member]"
         },
@@ -18222,6 +18312,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "B1 - Liosta l\u00e1ithre\u00e1in/l\u00e1ithre\u00e1n [member]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "B1 \u2013 Telephely(ek) list\u00e1ja [member]"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Elenco del/i sito(i) B1 [member]"
@@ -18273,6 +18366,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "B1 - Liosta na bhfochuideachta\u00ed [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "B1 \u2013 Le\u00e1nyv\u00e1llalatok list\u00e1ja [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "B1 - Elenco delle imprese figlie [member]"
         },
@@ -18323,6 +18419,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "B2 - Nochtadh sonrach do chomharchumann [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "B2 \u2013 Sz\u00f6vetkezetekre vonatkoz\u00f3 k\u00fcl\u00f6n\u00f6s k\u00f6zz\u00e9t\u00e9telek [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "B2 - Informative specifiche per cooperative [member]"
         },
@@ -18372,6 +18471,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "B2 - Cleachtais, beartais agus tionscnaimh amach anseo chun aistri\u00fa i dtreo geilleagar n\u00edos inbhuanaithe [member]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "B2 \u2013 A fenntarthat\u00f3bb gazdas\u00e1gra val\u00f3 \u00e1t\u00e1ll\u00e1ssal kapcsolatos gyakorlatok, szakpolitik\u00e1k \u00e9s j\u00f6v\u0151beli kezdem\u00e9nyez\u00e9sek [member]"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "B2 - Pratiche, politiche e iniziative future per la transizione verso un'economia pi\u00f9 sostenibile [member]"
@@ -18424,6 +18526,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "B3 - Miondeal\u00fa ar \u00eddi\u00fa fuinnimh (i MWh) [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "B3 \u2013 Az energiafogyaszt\u00e1s bont\u00e1sa (MWh-ban) [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "B3 - Ripartizione del consumo di energia (in MWh) [member]"
         },
@@ -18473,6 +18578,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "B3 - Fuinneamh agus asta\u00edochta\u00ed g\u00e1s ceaptha teasa [member]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "B3 \u2013 Energia \u00e9s \u00fcvegh\u00e1zhat\u00e1s\u00fag\u00e1z-kibocs\u00e1t\u00e1s [member]"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "B3 - Energia ed emissioni di gas a effetto serra [member]"
@@ -18525,6 +18633,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "B3 - Asta\u00edochta\u00ed Measta G\u00e1s Ceaptha Teasa ag smaoineamh ar Phr\u00f3tacal GCT Leagan 2004 (i tCO2eq) [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "B3 \u2013 Becs\u00fclt abszol\u00fat \u00fcvegh\u00e1zhat\u00e1s\u00fag\u00e1z-kibocs\u00e1t\u00e1s a GHG Protocol 2004. \u00e9vi v\u00e1ltozata szerint (tCO2eq-ben) [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "B3 - Emissioni assolute stimate di gas a effetto serra considerando il Greenhouse Gas Protocol versione 2004 (in tonnellate di CO2eq) [member]"
         },
@@ -18575,6 +18686,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "B3 - Tomhaltas Ioml\u00e1n Fuinnimh (i MWh) [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "B3 \u2013 Teljes energiafogyaszt\u00e1s (MWh-ban) [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "B3 - Consumo totale di energia (in MWh) [member]"
         },
@@ -18624,6 +18738,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "B4 - Truailli\u00fa aeir, uisce agus ithreach [member]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "B4 \u2013 Leveg\u0151-, v\u00edz- \u00e9s talajszennyez\u00e9s [member]"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "B4 \u2013 Inquinamento di aria, acqua e suolo [member]"
@@ -18676,6 +18793,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "B5 - Bith\u00e9ags\u00falacht [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "B5 \u2013 Biol\u00f3giai sokf\u00e9les\u00e9g [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "B5 \u2013 Biodiversit\u00e0 [member]"
         },
@@ -18727,6 +18847,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "B5 - L\u00e1ithre\u00e1in at\u00e1 suite i limist\u00e9ir at\u00e1 \u00edogair \u00f3 thaobh na bith\u00e9ags\u00falachta de [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "B5 \u2013 A biol\u00f3giai sokf\u00e9les\u00e9g szempontj\u00e1b\u00f3l \u00e9rz\u00e9keny ter\u00fcleteken tal\u00e1lhat\u00f3 telephelyek [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "B5 \u2013 Siti all'interno di aree sensibili sotto il profilo della biodiversit\u00e0 [member]"
         },
@@ -18777,6 +18900,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "B6 - Tomhaltas Uisce [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "B6 \u2013 V\u00edzfogyaszt\u00e1s [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "B6 - Consumo Idrico [member]"
         },
@@ -18826,6 +18952,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "B6 - Uisce [member]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "B6 \u2013 V\u00edz [member]"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "B6 \u2013\u00a0\u00a0\u00a0Acque [member]"
@@ -18878,6 +19007,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "B6 - Aistarraingt Uisce [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "B6 \u2013 V\u00edzkiv\u00e9tel [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "B6 - Prelievo Idrico [member]"
         },
@@ -18927,6 +19059,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "B7 \u2013 Mais-sreabhadh bliant\u00fail na n-\u00e1bhar \u00e1bhartha a \u00fas\u00e1ideadh [member]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "B7 \u2013 A felhaszn\u00e1lt relev\u00e1ns anyagok \u00e9ves t\u00f6meg\u00e1rama [member]"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "B7 \u2013 Flusso di massa annuo dei materiali pertinenti utilizzati [member]"
@@ -18978,6 +19113,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "B7 - Cur s\u00edos ar phrionsabail an gheilleagair chiorclaigh [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "B7 \u2013 A k\u00f6rforg\u00e1sos gazdas\u00e1g elveinek le\u00edr\u00e1sa [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "B7 \u2013 Descrizione dei principi dell'economia circolare [member]"
         },
@@ -19027,6 +19165,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "B7 - \u00das\u00e1id acmhainn\u00ed, geilleagar ciorclach agus bainisti\u00fa dramha\u00edola [member]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "B7 \u2013 Er\u0151forr\u00e1s-felhaszn\u00e1l\u00e1s, k\u00f6rforg\u00e1sos gazdas\u00e1g \u00e9s hullad\u00e9kgazd\u00e1lkod\u00e1s [member]"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "B7 \u2013 Uso delle risorse, economia circolare e gestione dei rifiuti [member]"
@@ -19079,6 +19220,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "B7 - Dramha\u00edl a ghintear [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "B7 \u2013 Keletkezett hullad\u00e9k [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "B7 - Rifiuti generati [member]"
         },
@@ -19128,6 +19272,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "B8 \u2013 Lucht saothair \u2013 Saintr\u00e9ithe ginear\u00e1lta \u2013 T\u00edr na fosta\u00edochta [member]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Munkaer\u0151 \u2013 \u00c1ltal\u00e1nos jellemz\u0151k \u2013 Foglalkoztat\u00e1s orsz\u00e1ga [member]"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "B8 \u2013 Forza lavoro \u2013 Caratteristiche generali - Paese del contratto di lavoro [member]"
@@ -19179,6 +19326,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "B8 \u2013 Lucht saothair \u2013 Saintr\u00e9ithe ginear\u00e1lta \u2013 Inscne [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Munkaer\u0151 \u2013 \u00c1ltal\u00e1nos jellemz\u0151k \u2013 Nem [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "B8 \u2013 Forza lavoro \u2013 Caratteristiche generali - Genere [member]"
         },
@@ -19229,6 +19379,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "B8 \u2013 Lucht saothair \u2013 Saintr\u00e9ithe ginear\u00e1lta \u2013 Cine\u00e1l an chonartha [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Munkaer\u0151 \u2013 \u00c1ltal\u00e1nos jellemz\u0151k \u2013 Szerz\u0151d\u00e9s t\u00edpusa [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "B8 \u2013 Forza lavoro \u2013 Caratteristiche generali - Tipo di contratto [member]"
         },
@@ -19278,6 +19431,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "B8 - Lucht saothair - Saintr\u00e9ithe ginear\u00e1lta [member]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "B8 \u2013 Munkaer\u0151 \u2013 \u00c1ltal\u00e1nos jellemz\u0151k [member]"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "B8 - Forza lavoro - Caratteristiche generali [member]"
@@ -19330,6 +19486,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "B9 - Lucht saothair \u2013 Sl\u00e1inte agus s\u00e1bh\u00e1ilteacht [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "B9 \u2013 Munkaer\u0151 \u2013 Eg\u00e9szs\u00e9gv\u00e9delem \u00e9s biztons\u00e1g [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "B9 \u2013 Forza lavoro \u2013 Salute e sicurezza [member]"
         },
@@ -19381,6 +19540,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Bonnbhliain [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "B\u00e1zis\u00e9v [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Anno base [member]"
         },
@@ -19430,6 +19592,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "An Bun\u00fas leis an ullmh\u00fa (Bunmhod\u00fal Bun\u00fasach Amh\u00e1in n\u00f3 Bunmhod\u00fal Bun\u00fasach agus Cuimsitheach)"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Az elk\u00e9sz\u00edt\u00e9s alapja (csak alapmodul vagy alapmodul \u00e9s \u00e1tfog\u00f3 modul)"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Criteri per la redazione (solo modulo base o modulo base e modulo onnicomprensivo)"
@@ -19488,6 +19653,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "An Bun\u00fas leis an ullmh\u00fa [abstract]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Az elk\u00e9sz\u00edt\u00e9s alapja [abstract]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Criteri per la redazione [abstract]"
         },
@@ -19539,6 +19707,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "An Bun\u00fas leis an Ullmh\u00fa [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Az elk\u00e9sz\u00edt\u00e9s alapja [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Criteri per la redazione [member]"
         },
@@ -19588,6 +19759,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Bun\u00fas don tuairisci\u00fa (bonn comhth\u00e1ite n\u00f3 aonair)"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A besz\u00e1mol\u00e1s alapja (\u00f6sszevont (konszolid\u00e1lt) vagy egyedi alapon)"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Base per la redazione (su base consolidata o individuale)"
@@ -19645,6 +19819,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "An bun\u00fas leis an ullmh\u00fa [member]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A besz\u00e1mol\u00e1s alapja [member]"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Base per la redazione [member]"
@@ -19727,6 +19904,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Bith\u00e9ags\u00falacht agus \u00e9iceach\u00f3rais [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Biol\u00f3giai sokf\u00e9les\u00e9g \u00e9s \u00f6kosziszt\u00e9m\u00e1k [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Biodiversit\u00e0 ed ecosistemi [member]"
         },
@@ -19779,6 +19959,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Miondeal\u00fa ar shreabhadh bliant\u00fail mais na n-\u00e1bhar a \u00fas\u00e1ideann an gn\u00f3thas [table]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A v\u00e1llalkoz\u00e1s \u00e1ltal felhaszn\u00e1lt anyagok \u00e9ves t\u00f6meg\u00e1ram\u00e1nak bont\u00e1sa [table]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Ripartizione del flusso di massa annuo dei materiali utilizzati dall'impresa [table]"
         },
@@ -19830,6 +20013,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Miondeal\u00fa ar shreabhadh bliant\u00fail mais na n-\u00e1bhar a \u00fas\u00e1ideann an gn\u00f3thas [line items]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A v\u00e1llalkoz\u00e1s \u00e1ltal felhaszn\u00e1lt anyagok \u00e9ves t\u00f6meg\u00e1ram\u00e1nak bont\u00e1sa [line items]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Ripartizione del flusso di massa annuo dei materiali utilizzati dall'impresa [line items]"
         },
@@ -19880,6 +20066,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Miondeal\u00fa ar thomhaltas fuinnimh [abstract]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Az energiafogyaszt\u00e1s bont\u00e1sa [abstract]"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Ripartizione del consumo di energia [abstract]"
@@ -19933,6 +20122,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Miondeal\u00fa ar thomhaltas fuinnimh [axis]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Az energiafogyaszt\u00e1s bont\u00e1sa [axis]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Ripartizione del consumo di energia [axis]"
         },
@@ -19983,6 +20175,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Miondeal\u00fa ar thomhaltas fuinnimh [line items]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Az energiafogyaszt\u00e1s bont\u00e1sa [line items]"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Ripartizione del consumo di energia [line items]"
@@ -20035,6 +20230,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Miondeal\u00fa ar thomhaltas fuinnimh [table]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Az energiafogyaszt\u00e1s bont\u00e1sa [table]"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Ripartizione del consumo di energia [table]"
@@ -20102,6 +20300,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Iompar gn\u00f3 [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "\u00dczleti magatart\u00e1s [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Condotta delle imprese [member]"
         },
@@ -20152,6 +20353,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "C1 - Strait\u00e9is: M\u00fanla Gn\u00f3 agus Inbhuanaitheacht \u2013 Tionscnaimh Gaolmhara [member]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "C1 \u2013 Strat\u00e9gia: \u00fczleti modell \u00e9s fenntarthat\u00f3s\u00e1ggal kapcsolatos kezdem\u00e9nyez\u00e9sek [member]"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "C1 - Strategia: modello aziendale e iniziative connesse alla sostenibilit\u00e0 [member]"
@@ -20204,6 +20408,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "C2 - Cur s\u00edos ar chleachtais, ar bheartais agus ar thionscnaimh amach anseo chun aistri\u00fa i dtreo geilleagar n\u00edos inbhuanaithe [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "C2 \u2013 A fenntarthat\u00f3bb gazdas\u00e1gra val\u00f3 \u00e1t\u00e1ll\u00e1ssal kapcsolatos gyakorlatok, szakpolitik\u00e1k \u00e9s j\u00f6v\u0151beli kezdem\u00e9nyez\u00e9sek le\u00edr\u00e1sa [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "C2 \u2013 Descrizione delle pratiche, delle politiche e delle iniziative future per la transizione verso un'economia pi\u00f9 sostenibile [member]"
         },
@@ -20255,6 +20462,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "C3 - Nochtadh liosta de na pr\u00edomhghn\u00edomhartha a fh\u00e9achann an gn\u00f3thas lena gcur chun feidhme chun a spriocanna a bhaint amach [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "C3 \u2013 A c\u00e9ljai el\u00e9r\u00e9s\u00e9hez a v\u00e1llalkoz\u00e1s \u00e1ltal tervezett f\u0151 int\u00e9zked\u00e9sek list\u00e1j\u00e1nak k\u00f6zz\u00e9t\u00e9tele [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "C3 - Comunicazione dell'elenco delle principali azioni che l'impresa intende attuare per raggiungere i propri obiettivi [member]"
         },
@@ -20305,6 +20515,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "C3 - Spriocanna laghdaithe g\u00e1s ceaptha teasa (i tCO2eq) [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "C3 \u2013 \u00dcHG-kibocs\u00e1t\u00e1s-cs\u00f6kkent\u00e9si c\u00e9lok (tCO2eq-ben) [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "C3 - Obiettivi di riduzione delle emissioni di gas a effetto serra (in tCO2eq) [member]"
         },
@@ -20354,6 +20567,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "C3 - Spriocanna laghdaithe g\u00e1s ceaptha teasa agus aistri\u00fa aer\u00e1ide [member]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "C3 \u2013 Az \u00dcHG-kibocs\u00e1t\u00e1s cs\u00f6kkent\u00e9s\u00e9re vonatkoz\u00f3 c\u00e9lok \u00e9s az \u00e9ghajlatv\u00e9delmi \u00e1t\u00e1ll\u00e1s [member]"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "C3 \u2013 Obiettivi di riduzione delle emissioni di gas a effetto serra e transizione climatica [member]"
@@ -20406,6 +20622,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "C3 - Plean aistrithe do ghn\u00f3thais at\u00e1 ag feidhmi\u00fa in earn\u00e1lacha ardtionchair aer\u00e1ide [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "C3 \u2013 \u00c1t\u00e1ll\u00e1si terv a nagy \u00e9ghajlati hat\u00e1s\u00fa \u00e1gazatokban m\u0171k\u00f6d\u0151 v\u00e1llalkoz\u00e1sok sz\u00e1m\u00e1ra [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "C3 - Piano di transizione per le imprese che operano in settori ad alto impatto climatico [member]"
         },
@@ -20455,6 +20674,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "C4 - Riosca\u00ed aer\u00e1ide [member]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "C4 \u2013 \u00c9ghajlati kock\u00e1zatok [member]"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "C4 - Rischi climatici [member]"
@@ -20507,6 +20729,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "C5 - Saintr\u00e9ithe breise (ginear\u00e1lta) den lucht saothair [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "C5 \u2013 A munkaer\u0151 tov\u00e1bbi (\u00e1ltal\u00e1nos) jellemz\u0151i [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "C5 \u2013 Altre caratteristiche (generali) della forza lavoro [member]"
         },
@@ -20557,6 +20782,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "C6 - Faisn\u00e9is bhreise faoin lucht saothair f\u00e9in - Beartais agus pr\u00f3isis chearta an duine [member]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "C6 \u2013 A saj\u00e1t munkaer\u0151re vonatkoz\u00f3 tov\u00e1bbi inform\u00e1ci\u00f3k \u2013 emberi jogi politik\u00e1k \u00e9s elj\u00e1r\u00e1sok [member]"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "C6 - Altre informazioni sulla forza lavoro propria \u2013 Politiche e procedure in materia di diritti umani [member]"
@@ -20609,6 +20837,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "C7 \u2013 Teagmhais dhi\u00faltacha thromch\u00faiseacha a bhaineann le cearta an duine [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "C7 \u2013 Emberi jogi incidensek [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "C7 - Incidenti in materia di diritti umani [member]"
         },
@@ -20660,6 +20891,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "C8 \u2013 Ioncam \u00f3 ghn\u00edomha\u00edochta\u00ed \u00e1irithe [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "C8 \u2013 Bizonyos tev\u00e9kenys\u00e9gekb\u0151l sz\u00e1rmaz\u00f3 bev\u00e9telek [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "C8 \u2013 Ricavi da determinate attivit\u00e0 [member]"
         },
@@ -20710,6 +20944,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "C9 - C\u00f3imheas \u00e9ags\u00falachta inscne sa chomhlacht rialachais [member]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "C9 \u2013 Nemek szerinti megoszl\u00e1s az ir\u00e1ny\u00edt\u00f3 szervben [member]"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "C9 - Diversit\u00e0 di genere nell'organo di governance [member]"
@@ -20806,6 +21043,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Saothar leana\u00ed [member]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Gyermekmunka [member]"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Lavoro minorile [member]"
@@ -20993,6 +21233,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Geilleagar ciorclach [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "K\u00f6rforg\u00e1sos gazdas\u00e1g \u00e9s er\u0151forr\u00e1s-felhaszn\u00e1l\u00e1s [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Economia circolare e uso delle risorse [member]"
         },
@@ -21042,6 +21285,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Cathair an tsu\u00edmh"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Telephely telep\u00fcl\u00e9se"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Citt\u00e0 del sito"
@@ -21094,6 +21340,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Athr\u00fa aer\u00e1ide [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "\u00c9ghajlatv\u00e1ltoz\u00e1s [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Cambiamenti climatici [member]"
         },
@@ -21144,6 +21393,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Riosca\u00ed aer\u00e1ide [abstract]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "\u00c9ghajlati kock\u00e1zatok [abstract]"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Rischi climatici [abstract]"
@@ -21196,6 +21448,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Comhdhl\u00faite [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "\u00d6sszevont (konszolid\u00e1lt) [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Consolidato [member]"
         },
@@ -21246,6 +21501,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Tomhalt\u00f3ir\u00ed agus \u00fas\u00e1ideoir\u00ed deiridh [member]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Fogyaszt\u00f3k \u00e9s v\u00e9gfelhaszn\u00e1l\u00f3k [member]"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Consumatori e utilizzatori finali [member]"
@@ -21298,6 +21556,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Ciontuithe agus f\u00edne\u00e1lacha mar gheall ar \u00e9illi\u00fa agus breabaireacht [abstract]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Korrupci\u00f3 \u00e9s megveszteget\u00e9s miatti \u00edt\u00e9letek \u00e9s b\u00fcntet\u00e9sek [abstract]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Condanne e ammende per corruzione attiva e passiva [abstract]"
         },
@@ -21349,6 +21610,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Comharchumann [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Sz\u00f6vetkezet [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Cooperativa [member]"
         },
@@ -21399,6 +21663,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Nochta\u00ed sonracha do chomharchumann [abstract]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Sz\u00f6vetkezetekre vonatkoz\u00f3 k\u00fcl\u00f6n\u00f6s k\u00f6zz\u00e9t\u00e9telek [abstract]"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "\"Comunicazioni specifiche delle cooperative\" [abstract]"
@@ -21467,6 +21734,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "T\u00edr an chonartha fosta\u00edochta [axis]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A munkaszerz\u0151d\u00e9s szerinti foglalkoztat\u00e1s orsz\u00e1ga [axis]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Paese del contratto di lavoro [axis]"
         },
@@ -21516,6 +21786,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "T\u00edr na pr\u00edomhghn\u00edomha\u00edochta\u00ed agus su\u00edomh na bhf\u00f3ntais shuntasacha"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Az els\u0151dleges tev\u00e9kenys\u00e9gek v\u00e9gz\u00e9s\u00e9nek orsz\u00e1ga \u00e9s a jelent\u0151s eszk\u00f6z\u00f6k helye"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Paese delle operazioni primarie e ubicazione degli attivi significativi"
@@ -21826,6 +22099,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "T\u00edr an tsu\u00edmh"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Telephely orsz\u00e1ga"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Paese del sito"
@@ -22138,6 +22414,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Luaite faoi l\u00e1thair [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Jelenleg k\u00f6z\u00f6lt [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Attualmente dichiarato [member]"
         },
@@ -22218,6 +22497,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "D\u00e1ta a ghlacfaidh le plean aistrithe do ghn\u00f3thas nach bhfuil plean aistrithe i bhfeidhm f\u00f3s aige"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Az \u00e1t\u00e1ll\u00e1si terv elfogad\u00e1s\u00e1nak id\u0151pontja olyan v\u00e1llalkoz\u00e1s eset\u00e9ben, amely m\u00e9g nem fogadott el \u00e1t\u00e1ll\u00e1si tervet"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Data di adozione del piano di transizione per l\u2019impresa che non ha ancora adottato un piano di transizione"
         },
@@ -22267,6 +22549,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Tuairisc ar sprioc na gcleachtas, na mbeartas n\u00f3 na dtionscnamh amach anseo"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A gyakorlatok, szakpolitik\u00e1k vagy j\u00f6v\u0151beli kezdem\u00e9nyez\u00e9sek c\u00e9lj\u00e1nak le\u00edr\u00e1sa"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Descrizione dell'obiettivo delle pratiche, politiche o iniziative future"
@@ -22318,6 +22603,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Tuairisc ar phlean aistrithe maidir le maol\u00fa ar an athr\u00fa aer\u00e1ide, lena n-\u00e1ir\u00edtear m\u00edni\u00fa ar an gcaoi a bhfuil s\u00e9 ag rannchuidi\u00fa chun a chuid asta\u00edochta\u00ed GCT a laghd\u00fa"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Az \u00e9ghajlatv\u00e1ltoz\u00e1s m\u00e9rs\u00e9kl\u00e9s\u00e9re ir\u00e1nyul\u00f3 \u00e1t\u00e1ll\u00e1si terv le\u00edr\u00e1sa, bele\u00e9rtve annak kifejt\u00e9s\u00e9t, hogy az hogyan j\u00e1rul hozz\u00e1 az \u00dcHG-kibocs\u00e1t\u00e1s cs\u00f6kkent\u00e9s\u00e9hez"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Descrizione di un piano di transizione per la mitigazione dei cambiamenti climatici, compresa una spiegazione del modo in cui il piano sta contribuendo a ridurre le emissioni di gas a effetto serra"
         },
@@ -22367,6 +22655,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Tuairisc a thabhairt ar na gn\u00edomhartha a bhfuiltear \u00e1 nd\u00e9anamh chun aghaidh a thabhairt ar na teagmhais deimhnithe"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A meger\u0151s\u00edtett incidensek kezel\u00e9se \u00e9rdek\u00e9ben tett int\u00e9zked\u00e9sek le\u00edr\u00e1sa"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Descrizione delle azioni intraprese in risposta agli incidenti confermati"
@@ -22419,6 +22710,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Cur s\u00edos ar phrionsabal an gheilleagair chiorclaigh [abstract]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A k\u00f6rforg\u00e1sos gazdas\u00e1g elv\u00e9nek le\u00edr\u00e1sa [abstract]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Descrizione del principio di economia circolare [abstract]"
         },
@@ -22468,6 +22762,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Tuairisc ar na guaiseacha a bhaineann leis an aer\u00e1id agus ar na teagmhais aistrithe a bhaineann leis an aer\u00e1id"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Az \u00e9ghajlattal kapcsolatos vesz\u00e9lyek \u00e9s az \u00e9ghajlattal kapcsolatos \u00e1t\u00e1ll\u00e1si esem\u00e9nyek le\u00edr\u00e1sa"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Descrizione dei pericoli ed eventi di transizione legati al clima"
@@ -22519,6 +22816,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Cur s\u00edos ar chonas a gcuirtear prionsabail an gheilleagair chiorclaigh i bhfeidhm"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Annak le\u00edr\u00e1sa, hogy a v\u00e1llalkoz\u00e1s hogyan alkalmazza a k\u00f6rforg\u00e1sos gazdas\u00e1g elveit"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Descrizione di come sono applicati i principi dell'economia circolare"
         },
@@ -22569,6 +22869,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Tuairisc ar na pr\u00edomheilimint\u00ed strait\u00e9ise a bhaineann le le saincheisteanna inbhuanaitheachta n\u00f3 a dh\u00e9anann difear d\u00f3ibh"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A strat\u00e9gia fenntarthat\u00f3s\u00e1gi k\u00e9rd\u00e9sekhez kapcsol\u00f3d\u00f3 vagy azokat befoly\u00e1sol\u00f3 kulcselemeinek le\u00edr\u00e1sa"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Descrizione degli elementi chiave della strategia che riguardano o hanno ripercussioni su questioni attinenti alla sostenibilit\u00e0"
         },
@@ -22618,6 +22921,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Cur s\u00edos ar theorainneacha maidir le d\u00e1ileadh brab\u00fas a bhaineann leis an n\u00e1d\u00far frithph\u00e1irteach n\u00f3 le cine\u00e1l na ngn\u00edomha\u00edochta\u00ed arb \u00e9 at\u00e1 iontu seirbh\u00eds\u00ed leasa eacnama\u00edoch ghinear\u00e1lta (SLEI)"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A nyeres\u00e9gfeloszt\u00e1s azon korl\u00e1toz\u00e1sainak le\u00edr\u00e1sa, amelyek a k\u00f6lcs\u00f6n\u00f6ss\u00e9gi jelleghez vagy az \u00e1ltal\u00e1nos gazdas\u00e1gi \u00e9rdek\u0171 szolg\u00e1ltat\u00e1sokb\u00f3l (\u00c1G\u00c9SZ) \u00e1ll\u00f3 tev\u00e9kenys\u00e9gek jelleg\u00e9hez kapcsol\u00f3dnak"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Descrizione dei limiti alla distribuzione degli utili connessi alla natura mutualistica o alla natura delle attivit\u00e0 che consistono in servizi di interesse economico generale (SIEG)"
@@ -22670,6 +22976,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Tuairisc ar na pr\u00edomhghaolmhaireachta\u00ed gn\u00f3 (amhail pr\u00edomhshol\u00e1thr\u00f3ir\u00ed, custaim\u00e9ir\u00ed, beala\u00ed d\u00e1ileach\u00e1in)"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A f\u0151 \u00fczleti kapcsolatok le\u00edr\u00e1sa (pl. kulcsfontoss\u00e1g\u00fa besz\u00e1ll\u00edt\u00f3k, \u00fcgyfelek, \u00e9rt\u00e9kes\u00edt\u00e9si csatorn\u00e1k)"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Descrizione dei principali rapporti commerciali (ad esempio fornitori, clienti, canali di distribuzione chiave)"
         },
@@ -22721,6 +23030,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Tuairisc ar chleachtais, beartais agus tionscnaimh amach anseo chun aistri\u00fa i dtreo geilleagar n\u00edos inbhuanaithe [abstract]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A fenntarthat\u00f3bb gazdas\u00e1gra val\u00f3 \u00e1t\u00e1ll\u00e1ssal kapcsolatos gyakorlatok, szakpolitik\u00e1k \u00e9s j\u00f6v\u0151beli kezdem\u00e9nyez\u00e9sek le\u00edr\u00e1sa [abstract]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Descrizione delle pratiche, delle politiche e delle iniziative future per la transizione verso un'economia pi\u00f9 sostenibile [abstract]"
         },
@@ -22771,6 +23083,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Tuairisc ar chleachtais, beartais agus tionscnaimh amach anseo"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A gyakorlatok, szakpolitik\u00e1k \u00e9s/vagy j\u00f6v\u0151beli kezdem\u00e9nyez\u00e9sek le\u00edr\u00e1sa"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Descrizione di pratiche, politiche e/o iniziative future"
         },
@@ -22820,6 +23135,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Tuairisc ar ghr\u00fapa\u00ed suntasacha t\u00e1irg\u00ed agus/n\u00f3 seirbh\u00eds\u00ed arna dtairiscint"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A k\u00edn\u00e1lt jelent\u0151s term\u00e9k- \u00e9s/vagy szolg\u00e1ltat\u00e1scsoportok le\u00edr\u00e1sa"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Descrizione dei gruppi significativi di prodotti e/o servizi offerti"
@@ -22872,6 +23190,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Tuairisc ar mharga\u00ed suntasacha ina n-oibr\u00edonn an gn\u00f3thas"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A v\u00e1llalkoz\u00e1s m\u0171k\u00f6d\u00e9se szerinti jelent\u0151s piac(ok) le\u00edr\u00e1sa"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Descrizione del/i mercato/i significativo/i in cui l'impresa opera"
         },
@@ -22923,6 +23244,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Cur s\u00edos ar dheimhnithe n\u00f3 lip\u00e9id a bhaineann le hinbhuanaitheacht"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A fenntarthat\u00f3s\u00e1ggal kapcsolatos tan\u00fas\u00edtv\u00e1ny(ok) vagy c\u00edmke(\u00e9k) le\u00edr\u00e1sa"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Descrizione della/e certificazione/i o marchio/i di sostenibilit\u00e0"
         },
@@ -22972,6 +23296,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Tuairisc ar an rannph\u00e1irt\u00edocht \u00e9ifeachtach oibrithe, \u00fas\u00e1ideoir\u00ed n\u00f3 p\u00e1irtithe n\u00f3 pobail leasmhara eile maidir le rialachas"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A munkav\u00e1llal\u00f3k, felhaszn\u00e1l\u00f3k vagy m\u00e1s \u00e9rdekelt felek vagy k\u00f6z\u00f6ss\u00e9gek ir\u00e1ny\u00edt\u00e1sban val\u00f3 t\u00e9nyleges r\u00e9szv\u00e9tel\u00e9nek le\u00edr\u00e1sa"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Descrizione della partecipazione effettiva alla governancedei lavoratori, degli utilizzatori e altre parti o comunit\u00e0 interessate"
@@ -23083,6 +23410,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Nochtadh aon nochtadh comhshaoil eile a bhaineann go sonrach leis an gcomhshaol agus/n\u00f3 a bhaineann go sonrach le comhshaol"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "B\u00e1rmely egy\u00e9b k\u00f6rnyezeti \u00e9s/vagy v\u00e1llalkoz\u00e1sspecifikus k\u00f6rnyezeti k\u00f6zz\u00e9t\u00e9tel"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Comunicazione di qualsiasi altra informativa ambientale e/o specifica per soggetto"
         },
@@ -23132,6 +23462,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Nochtadh aon fhaisn\u00e9is ghinear\u00e1lta eile agus/n\u00f3 a bhaineann go sonrach leis an ngn\u00f3thas"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "B\u00e1rmely egy\u00e9b \u00e1ltal\u00e1nos \u00e9s/vagy v\u00e1llalkoz\u00e1sspecifikus inform\u00e1ci\u00f3 k\u00f6zz\u00e9t\u00e9tele a besz\u00e1mol\u00e1si id\u0151szakra vonatkoz\u00f3an"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Comunicazione di qualsiasi altra informazione generale e/o specifica per soggetto"
@@ -23183,6 +23516,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Nochtadh aon nochta\u00ed rialachas agus/n\u00f3 rialachais sonrach don ghn\u00f3thas"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "B\u00e1rmely egy\u00e9b ir\u00e1ny\u00edt\u00e1si \u00e9s/vagy v\u00e1llalkoz\u00e1sspecifikus ir\u00e1ny\u00edt\u00e1si k\u00f6zz\u00e9t\u00e9tel"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Comunicazione di qualsiasi altra informativa sulla governance e/o specifica per soggetto"
         },
@@ -23232,6 +23568,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Nochtadh aon nochta\u00ed s\u00f3isialta eile agus/n\u00f3 s\u00f3isialta sonrach don ghn\u00f3thas"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "B\u00e1rmely egy\u00e9b t\u00e1rsadalmi \u00e9s/vagy v\u00e1llalkoz\u00e1sspecifikus t\u00e1rsadalmi k\u00f6zz\u00e9t\u00e9tel"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Comunicazione di qualsiasi altra informativa sociale e/o specifica per soggetto"
@@ -23283,6 +23622,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Nochtadh ar an gcaoi a ndearna s\u00e9 meas\u00fan\u00fa ar neamhchosaint agus \u00edogaireacht a chuid s\u00f3cmhainn\u00ed, gn\u00edomha\u00edochta\u00ed agus"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Annak k\u00f6zz\u00e9t\u00e9tele, hogy a v\u00e1llalkoz\u00e1s hogyan \u00e9rt\u00e9kelte eszk\u00f6zeinek, tev\u00e9kenys\u00e9geinek \u00e9s \u00e9rt\u00e9kl\u00e1nc\u00e1nak e vesz\u00e9lyeknek \u00e9s \u00e1t\u00e1ll\u00e1si esem\u00e9nyeknek val\u00f3 kitetts\u00e9g\u00e9t \u00e9s \u00e9rz\u00e9kenys\u00e9g\u00e9t"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Comunicazione del modo in cui ha valutato l'esposizione e la sensibilit\u00e0 dei suoi attivi, delle sue attivit\u00e0 e della sua catena del valore a tali pericoli ed eventi di transizione"
         },
@@ -23332,6 +23674,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Nochtadh de liosta pr\u00edomhghn\u00edomhartha a fh\u00e9achann an gn\u00f3thas lena gcur chun feidhme chun a spriocanna a bhaint amach"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A c\u00e9ljai el\u00e9r\u00e9s\u00e9hez a v\u00e1llalkoz\u00e1s \u00e1ltal tervezett f\u0151 int\u00e9zked\u00e9sek list\u00e1j\u00e1nak k\u00f6zz\u00e9t\u00e9tele"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Elenco delle principali azioni che l'impresa intende attuare per conseguire i propri obiettivi"
@@ -23384,6 +23729,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Nochtadh de liosta pr\u00edomhghn\u00edomhartha a fh\u00e9achann an gn\u00f3thas lena gcur chun feidhme chun a spriocanna a bhaint amach [abstract]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A c\u00e9ljai el\u00e9r\u00e9s\u00e9hez a v\u00e1llalkoz\u00e1s \u00e1ltal tervezett f\u0151 int\u00e9zked\u00e9sek list\u00e1j\u00e1nak k\u00f6zz\u00e9t\u00e9tele [abstract]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Elenco delle principali azioni che l'impresa intende attuare per conseguire i propri obiettivi [abstract]"
         },
@@ -23433,6 +23781,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Nochtadh c\u00e9 acu at\u00e1 n\u00f3 nach bhfuil gn\u00edomhartha oiri\u00fanaithe don athr\u00fa aer\u00e1ide d\u00e9anta aige le haghaidh aon ghuaise a bhaineann leis an aer\u00e1id agus teagmhais aistrithe"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Annak k\u00f6zz\u00e9t\u00e9tele, hogy a v\u00e1llalkoz\u00e1s tett-e az \u00e9ghajlatv\u00e1ltoz\u00e1shoz val\u00f3 alkalmazkod\u00e1st c\u00e9lz\u00f3 int\u00e9zked\u00e9seket b\u00e1rmely \u00e9ghajlattal kapcsolatos vesz\u00e9ly vagy \u00e1t\u00e1ll\u00e1si esem\u00e9ny tekintet\u00e9ben"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Comunicazione se ha intrapreso azioni di adattamento ai cambiamenti climatici per eventuali pericoli ed eventi di transizione legati al clima"
@@ -23484,6 +23835,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Idirdheal\u00fa [member]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "H\u00e1tr\u00e1nyos megk\u00fcl\u00f6nb\u00f6ztet\u00e9s [member]"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Discriminazione [member]"
@@ -23565,6 +23919,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Modheola\u00edocht chomhaireamh fostaithe"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Az alkalmazottak sz\u00e1m\u00edt\u00e1s\u00e1nak m\u00f3dszere"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Metodologia di conteggio dei dipendenti"
         },
@@ -23622,6 +23979,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Modheola\u00edocht comhairimh fostaithe [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Az alkalmazottak sz\u00e1m\u00edt\u00e1s\u00e1nak m\u00f3dszere [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Metodologia di conteggio dei dipendenti [member]"
         },
@@ -23673,6 +24033,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "R\u00e1ta l\u00e1mhdeachais fostaithe"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Fluktu\u00e1ci\u00f3s r\u00e1ta"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Tasso di avvicendamento dei dipendenti"
         },
@@ -23723,6 +24086,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Faigheann fostaithe p\u00e1 at\u00e1 cothrom le n\u00f3 os cionn an \u00edosph\u00e1 a chinntear de r\u00e9ir an dl\u00ed n\u00e1isi\u00fanta n\u00f3 comhaont\u00fa c\u00f3mharg\u00e1la"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Az alkalmazottak a nemzeti jogszab\u00e1ly vagy kollekt\u00edv szerz\u0151d\u00e9s \u00e1ltal meghat\u00e1rozott minim\u00e1lb\u00e9rrel egyenl\u0151 vagy azt meghalad\u00f3 b\u00e9rben r\u00e9szes\u00fclnek"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "I dipendenti percepiscono una retribuzione pari o superiore al salario minimo determinato dal diritto nazionale o mediante contrattazione collettiva"
@@ -23811,6 +24177,9 @@
           "http://www.xbrl.org/2003/role/documentation": "Mar a l\u00e9ir\u00edtear i mbill\u00ed f\u00f3ntais",
           "http://www.xbrl.org/2003/role/label": "Tomhaltas fuinnimh \u00f3 leictreachas"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Villamos energi\u00e1b\u00f3l sz\u00e1rmaz\u00f3 energiafogyaszt\u00e1s"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/documentation": "Energia elettrica (secondo quanto risulta dalle bollette)",
           "http://www.xbrl.org/2003/role/label": "Consumo di energia elettrica"
@@ -23867,6 +24236,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Tomhaltas fuinnimh \u00f3 bhreosla\u00ed"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "\u00dczemanyagokb\u00f3l sz\u00e1rmaz\u00f3 energiafogyaszt\u00e1s"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Consumo di energia da combustibili"
         },
@@ -23917,6 +24289,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Tomhaltas fuinnimh \u00f3 leictreachas f\u00e9inghinte"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Saj\u00e1t termel\u00e9s\u0171 villamos energi\u00e1b\u00f3l sz\u00e1rmaz\u00f3 energiafogyaszt\u00e1s"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Consumo di energia da energia elettrica autoprodotta"
@@ -23970,6 +24345,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Asta\u00edochta\u00ed g\u00e1s ceaptha teasa measta [abstract]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Becs\u00fclt abszol\u00fat \u00fcvegh\u00e1zhat\u00e1s\u00fag\u00e1z-kibocs\u00e1t\u00e1s [abstract]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Emissioni assolute stimate di gas a effetto serra [abstract]"
         },
@@ -24020,6 +24398,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Asta\u00edochta\u00ed g\u00e1s ceaptha teasa measta [line items]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Becs\u00fclt abszol\u00fat \u00fcvegh\u00e1zhat\u00e1s\u00fag\u00e1z-kibocs\u00e1t\u00e1s [line items]"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Emissioni assolute stimate di gas a effetto serra [line items]"
@@ -24072,6 +24453,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Asta\u00edochta\u00ed g\u00e1s ceaptha teasa measta [table]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Becs\u00fclt abszol\u00fat \u00fcvegh\u00e1zhat\u00e1s\u00fag\u00e1z-kibocs\u00e1t\u00e1s [table]"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Emissioni assolute stimate di gas a effetto serra [table]"
@@ -24144,6 +24528,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "D\u00e9claration explicite de conformit\u00e9"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Kifejezett megfelel\u0151s\u00e9gi nyilatkozat"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Dichiarazione esplicita di conformit\u00e0"
         },
@@ -24191,6 +24578,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "C\u00f3imheas idir mn\u00e1 agus fir a nochtadh ar leibh\u00e9al bainist\u00edochta don tr\u00e9imhse tuairiscithe"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A n\u0151k \u00e9s f\u00e9rfiak ar\u00e1nya vezet\u0151i szinten a besz\u00e1mol\u00e1si id\u0151szakban"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Rapporto tra donne e uomini a livello dirigenziale per il periodo di riferimento"
@@ -24243,6 +24633,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Infheist\u00edocht airgeadais i gcaipiteal n\u00f3 i s\u00f3cmhainn\u00ed ghn\u00f3thas geilleagair sh\u00f3isialta"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Szoci\u00e1lis gazdas\u00e1gi szervezetek t\u0151k\u00e9j\u00e9be vagy eszk\u00f6zeibe t\u00f6rt\u00e9n\u0151 p\u00e9nz\u00fcgyi befektet\u00e9s"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "L'investimento finanziario nel capitale o negli attivi dei soggetti dell'economia sociale"
@@ -24341,6 +24734,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Saothar \u00e9ignithe [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "K\u00e9nyszermunka [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Lavoro forzato [member]"
         },
@@ -24392,6 +24788,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Coibh\u00e9is l\u00e1naimseartha [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Teljes munkaid\u0151s egyen\u00e9rt\u00e9k (FTE) [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Equivalenti a tempo pieno (ETP) [member]"
         },
@@ -24441,6 +24840,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Su\u00edomh GPS an l\u00e1ithre\u00e1in"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Telephely GPS-koordin\u00e1t\u00e1i"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Coordinate (geolocalizzazione) del sito"
@@ -24492,6 +24894,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "C\u00f3imheas \u00e9ags\u00falachta inscne sa chomhlacht rialachais"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Nemek szerinti megoszl\u00e1s az ir\u00e1ny\u00edt\u00f3 szervben"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Diversit\u00e0 di genere nell'organo di governance"
@@ -24545,6 +24950,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "C\u00f3imheas \u00e9ags\u00falachta inscne sa chomhlacht rialachais [abstract]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Nemek szerinti megoszl\u00e1s az ir\u00e1ny\u00edt\u00f3 szervben [abstract]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Diversit\u00e0 di genere nell'organo di governance [abstract]"
         },
@@ -24595,6 +25003,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Bonnbhliain sprioc laghdaithe asta\u00edochta\u00ed g\u00e1s ceaptha teasa"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Az \u00fcvegh\u00e1zhat\u00e1s\u00fag\u00e1z-kibocs\u00e1t\u00e1scs\u00f6kkent\u00e9si c\u00e9l b\u00e1zis\u00e9ve"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Anno base per l'obiettivo di riduzione delle emissioni di gas a effetto serra"
         },
@@ -24644,6 +25055,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Spriocbhliain laghdaithe asta\u00edochta\u00ed g\u00e1s ceaptha teasa"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Az \u00fcvegh\u00e1zhat\u00e1s\u00fag\u00e1z-kibocs\u00e1t\u00e1scs\u00f6kkent\u00e9s c\u00e9l\u00e9ve"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Anno-obiettivo di riduzione delle emissioni di gas a effetto serra"
@@ -24696,6 +25110,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Spriocanna laghdaithe asta\u00edochta\u00ed g\u00e1s ceaptha teasa [abstract]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "\u00dcvegh\u00e1zhat\u00e1s\u00fag\u00e1z-kibocs\u00e1t\u00e1scs\u00f6kkent\u00e9si c\u00e9lok [abstract]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Obiettivi di riduzione delle emissioni di gas a effetto serra [abstract]"
         },
@@ -24746,6 +25163,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Asta\u00edochta\u00ed g\u00e1s ceaptha teasa comhl\u00e1na Raon Feidhme 2 bunaithe ar shu\u00edomh"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Brutt\u00f3, 2. alkalmaz\u00e1si k\u00f6rbe tartoz\u00f3 (Scope 2), helyalap\u00fa \u00fcvegh\u00e1zhat\u00e1s\u00fag\u00e1z-kibocs\u00e1t\u00e1s"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Emissioni lorde di gas a effetto serra di ambito 2 (basate sulla posizione)"
@@ -24799,6 +25219,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Asta\u00edochta\u00ed g\u00e1s ceaptha teasa comhl\u00e1na Raon Feidhme 2 bunaithe ar an margadh"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Brutt\u00f3, 2. alkalmaz\u00e1si k\u00f6rbe tartoz\u00f3 (Scope 2), piaci alap\u00fa \u00fcvegh\u00e1zhat\u00e1s\u00fag\u00e1z-kibocs\u00e1t\u00e1s"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Emissioni lorde di gas a effetto serra di ambito 2 (basate sul mercato)"
         },
@@ -24851,6 +25274,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Asta\u00edochta\u00ed comhl\u00e1na g\u00e1s ceaptha teasa Raon Feidhme 1"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Brutt\u00f3, 1. alkalmaz\u00e1si k\u00f6rbe tartoz\u00f3 (Scope 1) \u00fcvegh\u00e1zhat\u00e1s\u00fag\u00e1z-kibocs\u00e1t\u00e1s"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Emissioni lorde di gas a effetto serra di ambito 1"
         },
@@ -24902,6 +25328,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Asta\u00edochta\u00ed comhl\u00e1na g\u00e1s ceaptha teasa Raon Feidhme 3"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Brutt\u00f3, 3. alkalmaz\u00e1si k\u00f6rbe tartoz\u00f3 (Scope 3) \u00fcvegh\u00e1zhat\u00e1s\u00fag\u00e1z-kibocs\u00e1t\u00e1s"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Emissioni lorde di gas a effetto serra di ambito 3"
@@ -24999,6 +25428,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "An l\u00edon daoine [member]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "L\u00e9tsz\u00e1m [member]"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Effettivi [member]"
@@ -25111,6 +25543,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Teagmhais dhi\u00faltacha thromch\u00faiseacha a bhaineann le cearta an duine [abstract]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Emberi jogi incidensek [abstract]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Incidenti in materia di diritti umani [abstract]"
         },
@@ -25161,6 +25596,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "G\u00e1inne\u00e1il ar dhaoine [member]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Emberkereskedelem [member]"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Tratta di esseri umani [member]"
@@ -25259,6 +25697,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Aitheant\u00f3ir \u00e1bhair [typed axis]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Anyag azonos\u00edt\u00f3ja [typed axis]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Identificatore del materiale [typed axis]"
         },
@@ -25313,6 +25754,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Aitheant\u00f3ir su\u00edomh [typed axis]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Telephely azonos\u00edt\u00f3ja [typed axis]"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Identificatore del sito [typed axis]"
@@ -25369,6 +25813,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Aitheant\u00f3ir an fhochuideachta [typed axis]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Le\u00e1nyv\u00e1llalat azonos\u00edt\u00f3ja [typed axis]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Identificatore della impresa figlia [typed axis]"
         },
@@ -25423,6 +25870,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Aonair [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Egy\u00e9ni [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Individuale [member]"
         },
@@ -25464,6 +25914,9 @@
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Introduction et informations g\u00e9n\u00e9rales et/ou sp\u00e9cifiques \u00e0 l\u2019entit\u00e9"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Bevezet\u00e9s \u00e9s/vagy v\u00e1llalkoz\u00e1sspecifikus inform\u00e1ci\u00f3k"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Introduzione e informazione generale e/o specifica per soggetto"
         },
@@ -25496,6 +25949,9 @@
       "labels": {
         "en": {
           "http://www.xbrl.org/2003/role/label": "Introduction and/or entity specific information [abstract]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Bevezet\u00e9s \u00e9s/vagy v\u00e1llalkoz\u00e1sspecifikus inform\u00e1ci\u00f3k [abstract]"
         },
         "sq": {
           "http://www.xbrl.org/2003/role/label": "Hyrje dhe/ose informacion specifik p\u00ebr entitetin [abstract]"
@@ -25589,6 +26045,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Nasc chuig an tuarasc\u00e1il roimhe seo ina bhfuil nochta\u00ed at\u00e1 f\u00f3s gan athr\u00fa"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Hivatkoz\u00e1s a v\u00e1ltozatlan k\u00f6zz\u00e9t\u00e9teleket tartalmaz\u00f3 el\u0151z\u0151 besz\u00e1mol\u00f3ra"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Collegamento alla relazione precedente contenente le informative che rimangono invariate"
         },
@@ -25638,6 +26097,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Liosta de na nochta\u00ed n\u00e1r tuairisc\u00edodh aon athruithe orthu i gcompar\u00e1id leis an tr\u00e9imhse thuairiscithe roimhe seo"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Azon k\u00f6zz\u00e9t\u00e9telek list\u00e1ja, amelyek eset\u00e9ben az el\u0151z\u0151 besz\u00e1mol\u00e1si id\u0151szakhoz k\u00e9pest nem t\u00f6rt\u00e9nt v\u00e1ltoz\u00e1s"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Elenco delle informative per le quali non sono segnalate modifiche rispetto al periodo di riferimento precedente"
@@ -25740,6 +26202,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Liosta nochta\u00ed [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "K\u00f6zz\u00e9t\u00e9telek list\u00e1ja [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Elenco delle informative [member]"
         },
@@ -25789,6 +26254,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Liosta de nochta\u00ed f\u00e1gtha ar l\u00e1r a mheastar a bheith faoi r\u00fan n\u00f3 ina bhfaisn\u00e9is \u00edogair"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A mell\u0151z\u00f6tt k\u00f6zz\u00e9t\u00e9telek list\u00e1ja"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Elenco delle informative omesse"
@@ -25891,6 +26359,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Liosta su\u00edomhanna [abstract]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Telephelyek list\u00e1ja [abstract]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Elenco dei siti [abstract]"
         },
@@ -25941,6 +26412,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Liosta su\u00edomhanna [line items]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Telephelyek list\u00e1ja [line items]"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Elenco dei siti [line items]"
@@ -25994,6 +26468,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Liosta su\u00edomhanna [table]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Telephelyek list\u00e1ja [table]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Elenco dei siti [table]"
         },
@@ -26045,6 +26522,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Liosta fochuideachta\u00ed [abstract]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Le\u00e1nyv\u00e1llalatok list\u00e1ja [abstract]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Elenco delle imprese figlie [abstract]"
         },
@@ -26095,6 +26575,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Liosta de fochuideachta\u00ed [line items]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Le\u00e1nyv\u00e1llalatok list\u00e1ja [line items]"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Elenco delle imprese figlie [line items]"
@@ -26148,6 +26631,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Liosta fochuideachta\u00ed [table]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Le\u00e1nyv\u00e1llalatok list\u00e1ja [table]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Elenco della impresa figlia [table]"
         },
@@ -26198,6 +26684,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Liosta de fhoirmeacha dl\u00edthi\u00fala an ghn\u00f3thais [member]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A v\u00e1llalkoz\u00e1sok jogi form\u00e1inak list\u00e1ja [member]"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Elenco delle forme giuridiche delle imprese [member]"
@@ -26294,6 +26783,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "An leibh\u00e9al is sinseara\u00ed i measc a chuid fostaithe at\u00e1 freagrach as na beartais a chur chun feidhme"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A v\u00e1llalkoz\u00e1s legmagasabb szintje, amely a gyakorlatok, szakpolitik\u00e1k \u00e9s j\u00f6v\u0151beli kezdem\u00e9nyez\u00e9sek v\u00e9grehajt\u00e1s\u00e1\u00e9rt felel\u0151s"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Il livello gerarchico pi\u00f9 elevato nell'impresa cui spetta la responsabilit\u00e0 dell'attuazione elle prassi, politiche e iniziative future"
         },
@@ -26343,6 +26835,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "C\u00f3id aicmi\u00fach\u00e1in earn\u00e1la NACE"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "NACE \u00e1gazati besorol\u00e1si k\u00f3dok"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Codici di classificazione settoriale NACE"
@@ -27445,6 +27940,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Achar an l\u00e1ithre\u00e1in at\u00e1 suite i limist\u00e9ir at\u00e1 \u00edogair \u00f3 thaobh na bith\u00e9ags\u00falachta de"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A biol\u00f3giai sokf\u00e9les\u00e9g szempontj\u00e1b\u00f3l \u00e9rz\u00e9keny ter\u00fclet neve"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Nome dell'area sensibile sotto il profilo della biodiversit\u00e0"
         },
@@ -27495,6 +27993,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Ainm an \u00e1bhair a \u00fas\u00e1ideadh"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A felhaszn\u00e1lt anyag neve"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Nome del materiale utilizzato"
         },
@@ -27537,6 +28038,9 @@
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "Nom du ou des autres polluants [typed axis]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Egy\u00e9b szennyez\u0151 anyag neve [typed axis]"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Nome dell'altro inquinante (inquinanti) [typed axis]"
@@ -27587,6 +28091,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Ainm an fhochuideachta"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Le\u00e1nyv\u00e1llalat neve"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Nome della impresa figlia"
@@ -27714,6 +28221,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Fuinneamh neamh-inathnuaite [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Nem meg\u00fajul\u00f3 energia [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Energia non rinnovabile [member]"
         },
@@ -27780,6 +28290,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "An l\u00edon uaireanta oili\u00fana bliant\u00fala in aghaidh an fhosta\u00ed [abstract]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Az egy alkalmazottra jut\u00f3 \u00e9ves k\u00e9pz\u00e9si \u00f3r\u00e1k sz\u00e1ma [abstract]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Numero medio annuo di ore di formazione per dipendente [abstract]"
         },
@@ -27829,6 +28342,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "L\u00edon na bhfostaithe"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Alkalmazottak sz\u00e1ma"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Numero di dipendenti"
@@ -27882,6 +28398,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "L\u00edon na bhfostaithe de r\u00e9ir inscne [abstract]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Alkalmazottak sz\u00e1ma nemek szerint [abstract]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Numero di dipendenti per genere [abstract]"
         },
@@ -27931,6 +28450,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "L\u00edon na bhfostaithe do th\u00edr an chonartha fosta\u00edochta"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Alkalmazottak sz\u00e1ma a munkaszerz\u0151d\u00e9s szerinti foglalkoztat\u00e1s orsz\u00e1ga szerint"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Numero di dipendenti per paese del contratto di lavoro"
@@ -27984,6 +28506,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "L\u00edon na bhfostaithe de r\u00e9ir t\u00edre an chonartha fosta\u00edochta [abstract]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Alkalmazottak sz\u00e1ma a munkaszerz\u0151d\u00e9s szerinti foglalkoztat\u00e1s orsz\u00e1ga szerint [abstract]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Numero di dipendenti per paese del contratto di lavoro [abstract]"
         },
@@ -28034,6 +28559,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "L\u00edon na bhfostaithe do th\u00edr an chonartha fosta\u00edochta [line items]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Alkalmazottak sz\u00e1ma a munkaszerz\u0151d\u00e9s szerinti foglalkoztat\u00e1s orsz\u00e1ga szerint [line items]"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Numero di dipendenti per paese del contratto di lavoro [line items]"
@@ -28087,6 +28615,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "L\u00edon na bhfostaithe don t\u00edr ina bhfuil an conradh fosta\u00edochta [table]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Alkalmazottak sz\u00e1ma a munkaszerz\u0151d\u00e9s szerinti foglalkoztat\u00e1s orsz\u00e1ga szerint [table]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Numero di dipendenti per paese del contratto di lavoro [table]"
         },
@@ -28138,6 +28669,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "L\u00edon na bhfostaithe de r\u00e9ir cine\u00e1l conartha [abstract]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Alkalmazottak sz\u00e1ma a szerz\u0151d\u00e9s t\u00edpusa szerint [abstract]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Numero di dipendenti per tipo di contratto [abstract]"
         },
@@ -28187,6 +28721,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "L\u00edon na bhfostaithe baineann"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "N\u0151i alkalmazottak sz\u00e1ma"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Numero di dipendenti donne"
@@ -28239,6 +28776,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "L\u00edon na bhfostaithe fireann"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "F\u00e9rfi alkalmazottak sz\u00e1ma"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Numero di dipendenti uomini"
         },
@@ -28289,6 +28829,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "L\u00edon na bhfostaithe n\u00e1r tuairisc\u00edodh a gcuid inscne"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Nem k\u00f6z\u00f6lt nem\u0171 alkalmazottak sz\u00e1ma"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Numero di dipendenti di genere non comunicato"
@@ -28341,6 +28884,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "L\u00edon na bhfostaithe de chuid inscne eile"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Egy\u00e9b nem\u0171 alkalmazottak sz\u00e1ma"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Numero di dipendenti altro genere"
         },
@@ -28391,6 +28937,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "L\u00edon na bhfostaithe ar chonradh buan"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Hat\u00e1rozatlan idej\u0171 szerz\u0151d\u00e9ssel foglalkoztatott alkalmazottak sz\u00e1ma"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Numero di dipendenti con contratto permanente"
@@ -28443,6 +28992,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "L\u00edon na dtimpist\u00ed oibre intaifeadta a tharla sa sa thr\u00e9imhse thuairiscithe"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A munk\u00e1val \u00f6sszef\u00fcgg\u0151, nyilv\u00e1ntart\u00e1sba veend\u0151 balesetek sz\u00e1ma a besz\u00e1mol\u00e1si id\u0151szakban"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Numero di infortuni registrabili connessi al lavoro nel periodo di riferimento"
         },
@@ -28493,6 +29045,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "L\u00edon na bhfostaithe ar chonradh sealadach"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Hat\u00e1rozott idej\u0171 szerz\u0151d\u00e9ssel foglalkoztatott alkalmazottak sz\u00e1ma"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Numero di dipendenti con contratto temporaneo"
@@ -28561,6 +29116,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Rogha A Bunmhod\u00fal (amh\u00e1in) [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A. opci\u00f3 (csak alapmodul) [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Opzione A (modulo base unicamente) [member]"
         },
@@ -28611,6 +29169,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Rogha B (Bunmhod\u00fal agus Mod\u00fal Cuimsitheach) [member]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "B. opci\u00f3 (alapmodul \u00e9s \u00e1tfog\u00f3 modul) [member]"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Opzione B (Modulo Base e Modulo Onnicomprensivo) [member]"
@@ -28678,6 +29239,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Faisn\u00e9is eile agus/n\u00f3 sonrach don ghn\u00f3thas [abstract]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Egy\u00e9b \u00e9s/vagy v\u00e1llalkoz\u00e1sspecifikus inform\u00e1ci\u00f3k [abstract]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Altre informazioni e/o informazioni specifiche per soggetto [abstract]"
         },
@@ -28729,6 +29293,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "\u00c1bhar eile [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Egy\u00e9b tartalom [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Altro contenuto [member]"
         },
@@ -28778,6 +29345,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Foirm dhl\u00edthi\u00fail gn\u00f3thais eile"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A v\u00e1llalkoz\u00e1s egy\u00e9b jogi form\u00e1ja"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Altra forma giuridica dell'impresa"
@@ -28830,6 +29400,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Foirm dhl\u00edthi\u00fail ghn\u00f3thas eile [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A v\u00e1llalkoz\u00e1s egy\u00e9b jogi form\u00e1ja [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Altra forma giuridica dell\u2019impresa [member]"
         },
@@ -28880,6 +29453,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Lucht saothair d\u00edlis [member]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Saj\u00e1t munkaer\u0151 [member]"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Forza lavoro propria [member]"
@@ -28962,6 +29538,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Comhph\u00e1irt\u00edocht [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Bet\u00e9ti t\u00e1rsas\u00e1g [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Societ\u00e0 di persone [member]"
         },
@@ -29043,6 +29622,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Bearna ph\u00e1 ch\u00e9atad\u00e1nach idir fostaithe fireanna agus baineanna"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A n\u0151i \u00e9s f\u00e9rfi alkalmazottak k\u00f6z\u00f6tti sz\u00e1zal\u00e9kos b\u00e9rk\u00fcl\u00f6nbs\u00e9g"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Percentuale del divario retributivo tra dipendenti di sesso femminile e dipendenti di sesso maschile"
         },
@@ -29095,6 +29677,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "C\u00e9atad\u00e1n na bhfostaithe a chumhda\u00edtear le comhaontuithe c\u00f3mharg\u00e1la"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A kollekt\u00edv szerz\u0151d\u00e9sek hat\u00e1lya al\u00e1 tartoz\u00f3 alkalmazottak sz\u00e1zal\u00e9kos ar\u00e1nya"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Percentuale di dipendenti coperti da contratti collettivi"
         },
@@ -29145,6 +29730,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Ioml\u00e1n na dramha\u00edola at\u00e1 athch\u00fars\u00e1ilte, ath\u00fas\u00e1idte agus treoraithe chun di\u00fascartha (toirt)"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Az \u00fajrafelhaszn\u00e1l\u00e1sra el\u0151k\u00e9sz\u00edt\u00e9s c\u00e9lj\u00e1b\u00f3l ir\u00e1ny\u00edtott hullad\u00e9k sz\u00e1zal\u00e9kos ar\u00e1nya (t\u00f6meg)"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Percentuale di rifiuti destinati alla preparazione per il riutilizzo (massa)"
@@ -29197,6 +29785,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Ioml\u00e1n na dramha\u00edola at\u00e1 athch\u00fars\u00e1ilte, ath\u00fas\u00e1idte agus treoraithe chun di\u00fascartha (toirt)"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Az \u00fajrafelhaszn\u00e1l\u00e1sra el\u0151k\u00e9sz\u00edt\u00e9s c\u00e9lj\u00e1b\u00f3l ir\u00e1ny\u00edtott hullad\u00e9k sz\u00e1zal\u00e9kos ar\u00e1nya (t\u00e9rfogat)"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Percentuale di rifiuti destinati alla preparazione per il riutilizzo (volume)"
         },
@@ -29248,6 +29839,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Ioml\u00e1n na dramha\u00edola at\u00e1 athch\u00fars\u00e1ilte, ath\u00fas\u00e1idte agus treoraithe chun di\u00fascartha (mais)"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Az \u00fajrahasznos\u00edt\u00e1sra ir\u00e1ny\u00edtott hullad\u00e9k sz\u00e1zal\u00e9kos ar\u00e1nya (t\u00f6meg)"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Percentuale di rifiuti destinati al riciclo (massa)"
         },
@@ -29298,6 +29892,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Ioml\u00e1n na dramha\u00edola at\u00e1 athch\u00fars\u00e1ilte, ath\u00fas\u00e1idte agus treoraithe chun di\u00fascartha (mais)"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Az \u00fajrahasznos\u00edt\u00e1sra ir\u00e1ny\u00edtott hullad\u00e9k sz\u00e1zal\u00e9kos ar\u00e1nya (t\u00e9rfogat)"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Percentuale di rifiuti destinati al riciclo (volume)"
@@ -29411,6 +30008,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Truailli\u00fa [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Szennyez\u00e9s [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Inquinamento [member]"
         },
@@ -29461,6 +30061,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Truaill\u00edocht aeir, uisce agus ithreach [abstract]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Leveg\u0151-, v\u00edz- \u00e9s talajszennyez\u00e9s [abstract]"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Inquinamento di aria, acqua e suolo [abstract]"
@@ -29542,6 +30145,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "C\u00f3d poist n\u00f3 \u00e9irch\u00f3d na l\u00e1ithre\u00e1in"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Telephely ir\u00e1ny\u00edt\u00f3sz\u00e1ma"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Codice postale del sito"
         },
@@ -29592,6 +30198,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Tionchair dhi\u00faltacha fh\u00e9ideartha na riosca\u00ed aer\u00e1ide a d\u2019fh\u00e9adfadh difear a dh\u00e9anamh d\u00e1 fheidhm\u00edocht airgeadais n\u00f3 d\u00e1 oibr\u00edochta\u00ed gn\u00f3 sa ghearrth\u00e9arma, sa mhe\u00e1nt\u00e9arma agus san fhadt\u00e9arma a nochtadh, agus a thabhairt le fios an measann s\u00e9 na riosca\u00ed a bheith ina riosca\u00ed arda, me\u00e1nacha n\u00f3 \u00edsle"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Az \u00e9ghajlati kock\u00e1zatok lehets\u00e9ges kedvez\u0151tlen hat\u00e1sai, amelyek r\u00f6vid, k\u00f6z\u00e9p- vagy hossz\u00fa t\u00e1von befoly\u00e1solhatj\u00e1k a v\u00e1llalkoz\u00e1s p\u00e9nz\u00fcgyi teljes\u00edtm\u00e9ny\u00e9t vagy \u00fczleti m\u0171k\u00f6d\u00e9s\u00e9t, annak megjel\u00f6l\u00e9s\u00e9vel, hogy a v\u00e1llalkoz\u00e1s a kock\u00e1zatokat magasnak, k\u00f6zepesnek vagy alacsonynak \u00e9rt\u00e9keli-e"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "L'impresa pu\u00f2 segnalare i potenziali effetti negativi dei rischi climatici che potrebbero incidere sui suoi risultati finanziari o sulle sue operazioni aziendali a breve, medio o lungo termine, precisando se reputa che i rischi siano elevati, medi o bassi."
         },
@@ -29641,6 +30250,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "T\u00e1 cleachtas, beartas agus/n\u00f3 tionscnamh le haghaidh amach anseo ar f\u00e1il go poibl\u00ed"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Gyakorlat, szakpolitika \u00e9s/vagy j\u00f6v\u0151beli kezdem\u00e9nyez\u00e9s nyilv\u00e1nosan el\u00e9rhet\u0151"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "La pratica, la politica e/o l'iniziativa futura sono disponibili al pubblico"
@@ -29693,6 +30305,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Cleachtais, beartais agus/n\u00f3 tionscnaimh amach anseo chun aistri\u00fa i dtreo geilleagair n\u00edos inbhuanaithe [abstract]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A fenntarthat\u00f3bb gazdas\u00e1gra val\u00f3 \u00e1t\u00e1ll\u00e1ssal kapcsolatos gyakorlatok, szakpolitik\u00e1k \u00e9s/vagy j\u00f6v\u0151beli kezdem\u00e9nyez\u00e9sek [abstract]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Pratiche, politiche e/o iniziative future per la transizione verso un'economia pi\u00f9 sostenibile [abstract]"
         },
@@ -29744,6 +30359,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Gn\u00f3thas pr\u00edobh\u00e1ideach teoranta dliteanais [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Korl\u00e1tolt felel\u0151ss\u00e9g\u0171 t\u00e1rsas\u00e1g [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Societ\u00e0 privata a responsabilit\u00e0 limitata [member]"
         },
@@ -29793,6 +30411,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Nochtadh at\u00e1 ar f\u00e1il go poibl\u00ed"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Nyilv\u00e1nosan el\u00e9rhet\u0151 k\u00f6zz\u00e9t\u00e9tel"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Informativa disponibile al pubblico"
@@ -29845,6 +30466,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "R\u00e1ta timpist\u00ed intaifeadta a bhaineann leis an obair sa thr\u00e9imhse thuairiscithe"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A munk\u00e1val \u00f6sszef\u00fcgg\u0151, nyilv\u00e1ntart\u00e1sba veend\u0151 balesetek ar\u00e1nya a besz\u00e1mol\u00e1si id\u0151szakban"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Tasso di infortuni registrabili connessi al lavoro nel periodo di riferimento"
         },
@@ -29895,6 +30519,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Seoladh cl\u00e1raithe na fochuideachta"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Le\u00e1nyv\u00e1llalat sz\u00e9khelye"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Sede legale della impresa figlia"
@@ -29947,6 +30574,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Luach saothair, c\u00f3mharg\u00e1il agus traen\u00e1il [abstract]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Javadalmaz\u00e1s \u00e9s kollekt\u00edv t\u00e1rgyal\u00e1s [abstract]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Retribuzione, contrattazione collettiva e formazione [abstract]"
         },
@@ -29997,6 +30627,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Luach saothair, c\u00f3mharg\u00e1il agus traen\u00e1il [abstract]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Javadalmaz\u00e1s, kollekt\u00edv t\u00e1rgyal\u00e1s \u00e9s k\u00e9pz\u00e9s [abstract]"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Retribuzione, contrattazione collettiva e formazione [abstract]"
@@ -30049,6 +30682,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Fuinneamh in-athnuaite [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Meg\u00fajul\u00f3 energia [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Energia rinnovabile [member]"
         },
@@ -30098,6 +30734,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "T\u00e1 nochta\u00ed \u00f3n tr\u00e9imhse tuairiscithe roimhe sin sa tuarasc\u00e1il at\u00e1 f\u00f3s gan athr\u00fa"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A besz\u00e1mol\u00f3 az el\u0151z\u0151 besz\u00e1mol\u00e1si id\u0151szakb\u00f3l sz\u00e1rmaz\u00f3, v\u00e1ltozatlan k\u00f6zz\u00e9t\u00e9teleket tartalmaz"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "La Relazione contiene le informative del periodo di riferimento precedente che rimangono invariate"
@@ -30149,6 +30788,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Raon feidhme tuairiscithe [domain]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Besz\u00e1mol\u00e1si k\u00f6r [domain]"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Ambito di rendicontazione [domain]"
@@ -30202,6 +30844,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Raoin feidhme tuairiscithe [axis]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Besz\u00e1mol\u00e1si k\u00f6r\u00f6k [axis]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Ambiti di rendicontazione [axis]"
         },
@@ -30251,6 +30896,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Ioncam a dh\u00edortha\u00edtear \u00f3 th\u00e1irgeadh ceimice\u00e1n"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Vegyi anyagok gy\u00e1rt\u00e1s\u00e1b\u00f3l sz\u00e1rmaz\u00f3 bev\u00e9tel"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Ricavi derivanti dalla produzione di sostanze chimiche"
@@ -30303,6 +30951,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Ioncam a dh\u00edortha\u00edtear \u00f3 ghual"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Sz\u00e9nb\u0151l sz\u00e1rmaz\u00f3 bev\u00e9tel"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Ricavi derivanti dal carbone"
         },
@@ -30353,6 +31004,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Ioncam a dh\u00edortha\u00edtear as saothr\u00fa agus t\u00e1irgeadh tobac"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Doh\u00e1nytermeszt\u00e9sb\u0151l \u00e9s doh\u00e1nyterm\u00e9kek gy\u00e1rt\u00e1s\u00e1b\u00f3l sz\u00e1rmaz\u00f3 bev\u00e9tel"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Ricavi derivanti dalla coltivazione e produzione del tabacco"
@@ -30405,6 +31059,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Ioncam a dh\u00edortha\u00edtear \u00f3 gh\u00e1s"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "F\u00f6ldg\u00e1zb\u00f3l sz\u00e1rmaz\u00f3 bev\u00e9tel"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Ricavi derivanti dal gas"
         },
@@ -30455,6 +31112,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Ioncam a dh\u00edortha\u00edtear \u00f3 ola"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "K\u0151olajb\u00f3l sz\u00e1rmaz\u00f3 bev\u00e9tel"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Ricavi derivanti dal petrolio"
@@ -30507,6 +31167,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Ioncam a dh\u00edortha\u00edtear as airm chonsp\u00f3ideacha (mianaigh frithphearsanra, cnuas-mhuinisin, airm cheimiceacha agus airm \nbhitheola\u00edocha)"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A tiltott fegyverek ipar\u00e1g\u00e1b\u00f3l sz\u00e1rmaz\u00f3 bev\u00e9tel (gyalogs\u00e1gi akn\u00e1k, kazett\u00e1s l\u0151szerek, vegyi fegyverek \u00e9s biol\u00f3giai fegyverek)"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Ricavi derivanti dal settore delle armi proibite (mine antiuomo, munizioni a grappolo, armi chimiche e armi biologiche)"
         },
@@ -30558,6 +31221,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Ioncaim ghaolmhara a dh\u00edortha\u00edtear as gn\u00edomha\u00edochta\u00ed [abstract]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Bizonyos tev\u00e9kenys\u00e9gekb\u0151l sz\u00e1rmaz\u00f3 bev\u00e9telek [abstract]"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Ricavi da determinate attivit\u00e0 [abstract]"
@@ -30624,6 +31290,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "L\u00e1ithre\u00e1n at\u00e1 suite i limist\u00e9ar at\u00e1 \u00edogair \u00f3 thaobh na bith\u00e9ags\u00falachta de"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A telephely a biol\u00f3giai sokf\u00e9les\u00e9g szempontj\u00e1b\u00f3l \u00e9rz\u00e9keny ter\u00fcleten tal\u00e1lhat\u00f3"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Sito ubicato all'interno di un'area sensibile sotto il profilo della biodiversit\u00e0"
         },
@@ -30673,6 +31342,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "L\u00e1ithre\u00e1n at\u00e1 suite in aice le limist\u00e9ar at\u00e1 \u00edogair \u00f3 thaobh na bith\u00e9ags\u00falachta de"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A telephely a biol\u00f3giai sokf\u00e9les\u00e9g szempontj\u00e1b\u00f3l \u00e9rz\u00e9keny ter\u00fclet k\u00f6zel\u00e9ben tal\u00e1lhat\u00f3"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Sito ubicato in prossimit\u00e0 di un'area sensibile sotto il profilo della biodiversit\u00e0"
@@ -30725,6 +31397,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "L\u00e1ithre\u00e1in at\u00e1 suite i limist\u00e9ir at\u00e1 \u00edogair \u00f3 thaobh na bith\u00e9ags\u00falachta de [abstract]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A biol\u00f3giai sokf\u00e9les\u00e9g szempontj\u00e1b\u00f3l \u00e9rz\u00e9keny ter\u00fcleteken tal\u00e1lhat\u00f3 telephelyek [abstract]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Siti all'interno di aree sensibili sotto il profilo della biodiversit\u00e0 [abstract]"
         },
@@ -30775,6 +31450,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "L\u00e1ithre\u00e1in i gceantair \u00edogaire bitheola\u00edochta [line items]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A biol\u00f3giai sokf\u00e9les\u00e9g szempontj\u00e1b\u00f3l \u00e9rz\u00e9keny ter\u00fcleteken tal\u00e1lhat\u00f3 telephelyek [line items]"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Siti all'interno di aree sensibili sotto il profilo della biodiversit\u00e0 [line items]"
@@ -30828,6 +31506,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "L\u00e1ithre\u00e1in at\u00e1 suite i limist\u00e9ir at\u00e1 \u00edogair \u00f3 thaobh na bith\u00e9ags\u00falachta de [table]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A biol\u00f3giai sokf\u00e9les\u00e9g szempontj\u00e1b\u00f3l \u00e9rz\u00e9keny ter\u00fcleteken tal\u00e1lhat\u00f3 telephelyek [table]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Siti all'interno di aree sensibili sotto il profilo della biodiversit\u00e0 [table]"
         },
@@ -30879,6 +31560,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "D\u00edlse\u00e1nacht aonair [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Egy\u00e9ni v\u00e1llalkoz\u00e1s [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Impresa individuale [member]"
         },
@@ -30928,6 +31612,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Sonra\u00edocht ar aon teagmhas deimhnithe lena mbaineann oibrithe sa slabhra luacha, pobail d\u00e1 nd\u00e9antar difear, tomhalt\u00f3ir\u00ed agus \u00fas\u00e1ideoir\u00ed deiridh"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Az \u00e9rt\u00e9kl\u00e1ncban dolgoz\u00f3kat, az \u00e9rintett k\u00f6z\u00f6ss\u00e9geket, a fogyaszt\u00f3kat \u00e9s a v\u00e9gfelhaszn\u00e1l\u00f3kat \u00e9rint\u0151, meger\u0151s\u00edtett incidensek r\u00e9szletez\u00e9se"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Specificazione di qualsiasi incidente confermato che coinvolge i lavoratori nella catena del valore, le comunit\u00e0 interessate, i consumatori e gli utilizzatori finali."
@@ -30979,6 +31666,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Sonra\u00edocht ar chearta eile an duine a bhaineann leis an teagmhas"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Meger\u0151s\u00edtett incidensekhez kapcsol\u00f3d\u00f3 egy\u00e9b emberi jogok r\u00e9szletez\u00e9se"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Specificazione di altri diritti umani relativi all'incidente confermato"
         },
@@ -31029,6 +31719,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Sonra\u00edocht cine\u00e1lacha eile \u00e1bhar at\u00e1 cl\u00fadaithe ag an gc\u00f3d iompair n\u00f3 beartas um chearta an duine"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A magatart\u00e1si k\u00f3dex vagy az emberi jogi politika \u00e1ltal lefedett egy\u00e9b tartalmi elemek r\u00e9szletez\u00e9se"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Specifica altri tipi di contenuto coperti dal codice di condotta o dalla politica in materia di diritti umani"
         },
@@ -31078,6 +31771,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "St\u00e1das cur chun feidhme plean aistrithe i nd\u00e1il le maol\u00fa ar an athr\u00fa aer\u00e1ide"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Az \u00e9ghajlatv\u00e1ltoz\u00e1s m\u00e9rs\u00e9kl\u00e9s\u00e9re ir\u00e1nyul\u00f3 \u00e1t\u00e1ll\u00e1si terv v\u00e9grehajt\u00e1s\u00e1nak \u00e1llapota"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Stato di attuazione di un piano di transizione per la mitigazione dei cambiamenti climatici"
@@ -31148,6 +31844,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Strait\u00e9is: Samhail Ghn\u00f3 agus Inbhuanaitheacht \u2013 Tionscnaimh Ghaolmhara [abstract]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Strat\u00e9gia: \u00fczleti modell \u00e9s fenntarthat\u00f3s\u00e1ggal kapcsolatos kezdem\u00e9nyez\u00e9sek [abstract]"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Strategia: modello aziendale e iniziative connesse alla sostenibilit\u00e0 [abstract]"
@@ -31229,6 +31928,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "L\u00edon na mb\u00e1sanna de thoradh gortuithe at\u00e1 bainteach leis an obair agus drochshl\u00e1inte at\u00e1 bainteach leis an obair."
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A munk\u00e1val \u00f6sszef\u00fcgg\u0151, nyilv\u00e1ntart\u00e1sba veend\u0151 balesetek \u00e9s a munk\u00e1val \u00f6sszef\u00fcgg\u0151, nyilv\u00e1ntart\u00e1sba veend\u0151 megbeteged\u00e9sek k\u00f6vetkezt\u00e9ben bek\u00f6vetkezett hal\u00e1lesetek sz\u00e1ma \u00f6sszesen (a jogi korl\u00e1toz\u00e1sokra figyelemmel)"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Somma dei decessi dovuti a incidenti sul lavoro registrabili e malattie connesse al lavoro registrabili (soggetto a restrizioni legali)"
         },
@@ -31279,6 +31981,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Saincheisteanna inbhuanaitheachta a chl\u00fada\u00edtear tr\u00ed chleachtas, beartas agus/n\u00f3 tionscnamh amach anseo"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A gyakorlat, szakpolitika \u00e9s/vagy j\u00f6v\u0151beli kezdem\u00e9nyez\u00e9s \u00e1ltal kezelt fenntarthat\u00f3s\u00e1gi k\u00e9rd\u00e9sek"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Questioni attinenti alla sostenibilit\u00e0 affrontate da pratiche, politiche e/o iniziative future"
@@ -31345,6 +32050,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Saincheisteanna inbhuanaitheachta at\u00e1 os a gcomhair [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Kezelt fenntarthat\u00f3s\u00e1gi k\u00e9rd\u00e9sek [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Questioni attinenti alla sostenibilit\u00e0 affrontate [member]"
         },
@@ -31395,6 +32103,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Spriocbhliain [member]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "C\u00e9l\u00e9v [member]"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Anno-obiettivo [member]"
@@ -31491,6 +32202,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Na tr\u00e9imhs\u00ed ama d\u2019aon ghuais a bhaineann leis an aer\u00e1id agus d\u2019aon teagmhas aistrithe arna sainaithint a nochtadh"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Az azonos\u00edtott \u00e9ghajlattal kapcsolatos vesz\u00e9lyek \u00e9s \u00e1t\u00e1ll\u00e1si esem\u00e9nyek id\u0151horizontja"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Indica gli orizzonti temporali di eventuali pericoli ed eventi di transizione legati al clima individuati"
         },
@@ -31556,6 +32270,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "An m\u00e9id ioml\u00e1n f\u00edne\u00e1lacha as s\u00e1r\u00fa ar dhl\u00edthe frith-\u00e9illithe agus frithbhreabaireachta"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A korrupci\u00f3 \u00e9s megveszteget\u00e9s elleni jogszab\u00e1lyok megs\u00e9rt\u00e9se miatt kiszabott p\u00e9nzb\u00edrs\u00e1gok teljes \u00f6sszege"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Importo complessivo delle ammende per violazione delle leggi in materia di lotta alla corruzione passiva e attiva"
         },
@@ -31607,6 +32324,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Aistarraingt uisce ioml\u00e1n \u00f3 ioml\u00e1n na l\u00e1ithre\u00e1n"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Az \u00f6sszes telephelyen kivett v\u00edz teljes mennyis\u00e9ge"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Quantit\u00e0 totale di acqua prelevata da tutti i siti"
@@ -31660,6 +32380,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Tomhaltas ioml\u00e1n fuinnimh"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Teljes energiafogyaszt\u00e1s"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Totale consumo di energia"
         },
@@ -31711,6 +32434,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Tomhaltas ioml\u00e1n fuinnimh [abstract]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Teljes energiafogyaszt\u00e1s [abstract]"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Totale consumo di energia [abstract]"
@@ -31769,6 +32495,9 @@
           "http://www.xbrl.org/2003/role/documentation": "R\u00edomh: Raon feidhme 1 + Raon feidhme 2 + Raon feidhme 3 asta\u00edochta\u00ed CGT (bunaithe ar shu\u00edomh)",
           "http://www.xbrl.org/2003/role/label": "Asta\u00edochta\u00ed comhl\u00e1na GCT bunaithe ar shu\u00edomh"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Teljes (brutt\u00f3) helyalap\u00fa \u00dcHG-kibocs\u00e1t\u00e1s"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/documentation": "Calcolo: emissioni di gas a effetto serra di ambito 1 + ambito 2 + ambito 3 (basate sulla posizione)",
           "http://www.xbrl.org/2003/role/label": "Emissioni totali (lorde) di gas a effetto serra basate sulla posizione"
@@ -31825,6 +32554,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Asta\u00edochta\u00ed ioml\u00e1na (comhl\u00e1nacha) g\u00e1s ceaptha teasa Raon feidhme 1 agus Raon feidhme 2 at\u00e1 bunaithe ar shu\u00edomh"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Az 1. \u00e9s 2. alkalmaz\u00e1si k\u00f6rbe tartoz\u00f3 (Scope 1-2) teljes (brutt\u00f3) helyalap\u00fa \u00dcHG-kibocs\u00e1t\u00e1s"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Emissioni totali (lorde) di gas a effetto serra di ambito 1 e ambito 2 (basate sulla posizione)"
@@ -31884,6 +32616,9 @@
           "http://www.xbrl.org/2003/role/documentation": "R\u00edomh: Raon feidhme 1 + Raon feidhme 2 + Raon feidhme 3 asta\u00edochta\u00ed CGT (margadh-bhunaithe)",
           "http://www.xbrl.org/2003/role/label": "Asta\u00edochta\u00ed comhl\u00e1na GCT bunaithe ar an margadh"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Teljes (brutt\u00f3) piaci alap\u00fa \u00dcHG-kibocs\u00e1t\u00e1s"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/documentation": "Calcolo: emissioni di gas a effetto serra di ambito 1 + ambito 2 + ambito 3 (basate sul mercato)",
           "http://www.xbrl.org/2003/role/label": "Emissioni totali (lorde) di gas a effetto serra basate sul mercato"
@@ -31941,6 +32676,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Asta\u00edochta\u00ed ioml\u00e1na (comhl\u00e1nacha) g\u00e1s ceaptha teasa Raon feidhme 1 agus Raon feidhme 2 at\u00e1 bunaithe ar an margadh"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Az 1. \u00e9s 2. alkalmaz\u00e1si k\u00f6rbe tartoz\u00f3 (Scope 1-2) teljes (brutt\u00f3) piaci alap\u00fa \u00dcHG-kibocs\u00e1t\u00e1s"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Emissioni totali (lorde) di gas a effetto serra di ambito 1 e ambito 2 (basate sul mercato)"
         },
@@ -31993,6 +32731,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Dramha\u00edl Ghuaiseach agus Neamhghuaiseach Ioml\u00e1n [abstract]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Vesz\u00e9lyes \u00e9s nem vesz\u00e9lyes hullad\u00e9k \u00f6sszesen [abstract]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Totale rifiuti pericolosi e non pericolosi [abstract]"
         },
@@ -32043,6 +32784,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Ioml\u00e1n na dramha\u00edola guais\u00ed a ghintear (mais)"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Keletkezett vesz\u00e9lyes hullad\u00e9k \u00f6sszesen (t\u00f6meg)"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Totale rifiuti pericolosi generati (massa)"
@@ -32096,6 +32840,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Ioml\u00e1n na dramha\u00edola guais\u00ed a ghintear (toirt)"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Keletkezett vesz\u00e9lyes hullad\u00e9k \u00f6sszesen (t\u00e9rfogat)"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Totale rifiuti pericolosi generati (volume)"
         },
@@ -32147,6 +32894,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Me\u00e1chan ioml\u00e1n an \u00e1bhair a \u00fas\u00e1ideadh"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A felhaszn\u00e1lt anyag teljes t\u00f6mege"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Peso totale del materiale utilizzato"
@@ -32215,6 +32965,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Dramha\u00edl neamhghuaiseach ioml\u00e1n a ghintear (mais)"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Keletkezett nem vesz\u00e9lyes hullad\u00e9k \u00f6sszesen (t\u00f6meg)"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Totale rifiuti non pericolosi generati (massa)"
         },
@@ -32267,6 +33020,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Dramha\u00edl Neamhghuaiseach Ioml\u00e1n a gineadh (toirt)"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Keletkezett nem vesz\u00e9lyes hullad\u00e9k \u00f6sszesen (t\u00e9rfogat)"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Totale rifiuti non pericolosi generati (volume)"
         },
@@ -32317,6 +33073,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "L\u00edon ioml\u00e1n na gciontuithe as s\u00e1r\u00fa ar dhl\u00edthe frith-\u00e9illithe agus frithbhreabaireachta"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A korrupci\u00f3 \u00e9s megveszteget\u00e9s elleni jogszab\u00e1lyok megs\u00e9rt\u00e9se miatti \u00edt\u00e9letek teljes sz\u00e1ma"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Numero totale di condanne per violazione delle leggi in materia di lotta alla corruzione passiva e attiva"
@@ -32369,6 +33128,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "An l\u00edon daoine f\u00e9infhostaithe seachas daoine at\u00e1 ag obair don ghn\u00f3thas ar bhonn eisiach"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A kiz\u00e1r\u00f3lag a v\u00e1llalkoz\u00e1s sz\u00e1m\u00e1ra dolgoz\u00f3, alkalmazott n\u00e9lk\u00fcli \u00f6nfoglalkoztat\u00f3 munkav\u00e1llal\u00f3k teljes sz\u00e1ma"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Numero totale di lavoratori autonomi senza personale che lavorano esclusivamente per l'impresa"
         },
@@ -32419,6 +33181,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "An l\u00edon oibrithe sealadacha arna gcur ar f\u00e1il ag gn\u00f3thais a bh\u00edonn gafa den chuid is m\u00f3 le \u2018gn\u00edomha\u00edochta\u00ed fosta\u00edochta\u2019"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Az els\u0151sorban munkaer\u0151-k\u00f6zvet\u00edt\u00e9ssel foglalkoz\u00f3 v\u00e1llalkoz\u00e1sok \u00e1ltal biztos\u00edtott ideiglenes munkav\u00e1llal\u00f3k teljes sz\u00e1ma"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Numero totale di lavoratori temporanei messi a disposizione da imprese che esercitano principalmente attivit\u00e0 di ricerca, selezione e fornitura di personale"
@@ -32502,6 +33267,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Fuinneamh in-athnuaite agus neamh-inathnuaite ioml\u00e1n [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Meg\u00fajul\u00f3 \u00e9s nem meg\u00fajul\u00f3 energia \u00f6sszesen [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Totale energia rinnovabile e non rinnovabile [member]"
         },
@@ -32551,6 +33319,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Ioncam ioml\u00e1n a dh\u00edortha\u00edtear \u00f3 earn\u00e1il an bhreosla iontaise (gual, ola agus g\u00e1s)"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A fosszilis (t\u00fczel\u0151anyag, sz\u00e9n \u00e9s g\u00e1z) \u00e1gazatb\u00f3l sz\u00e1rmaz\u00f3 bev\u00e9telek \u00f6sszesen"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Ricavi totali derivanti dal settore dei combustibili fossili (carbone, petrolio e gas)"
@@ -32603,6 +33374,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Toirt ioml\u00e1n an \u00e1bhair a \u00fas\u00e1ideadh"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A felhaszn\u00e1lt anyag teljes t\u00e9rfogata"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Volume totale del materiale utilizzato"
@@ -32657,6 +33431,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Ioml\u00e1n na dramha\u00edola a ghintear (mais)"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Keletkezett hullad\u00e9k \u00f6sszesen (t\u00f6meg)"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Totale rifiuti generati (massa)"
         },
@@ -32710,6 +33487,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Ioml\u00e1n na dramha\u00edola a ghintear (toirt)"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Keletkezett hullad\u00e9k \u00f6sszesen (t\u00e9rfogat)"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Totale rifiuti generati (volume)"
         },
@@ -32761,6 +33541,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Tomhaltas ioml\u00e1n uisce"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Teljes v\u00edzfogyaszt\u00e1s"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Consumo idrico totale"
@@ -32828,6 +33611,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Plean aistrithe do ghn\u00f3thais at\u00e1 ag feidhmi\u00fa in earn\u00e1lacha ag a bhfuil tionchar m\u00f3r ar an aer\u00e1id [abstract]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "\u00c1t\u00e1ll\u00e1si terv a nagy \u00e9ghajlati hat\u00e1s\u00fa \u00e1gazatokban m\u0171k\u00f6d\u0151 v\u00e1llalkoz\u00e1sok sz\u00e1m\u00e1ra [abstract]"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Piano di transizione per le imprese che operano in settori ad alto impatto climatico [abstract]"
@@ -32984,6 +33770,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "L\u00e1mhdeachas"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "\u00c1rbev\u00e9tel"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Ricavi delle vendite e delle prestazioni"
         },
@@ -33034,6 +33823,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Cine\u00e1l \u00e1bhair a chl\u00fada\u00edtear faoin gc\u00f3d iompair n\u00f3 beartas um chearta an duine ag an ngn\u00f3thas d\u00e1 lucht saothair f\u00e9in"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A saj\u00e1t munkaer\u0151re vonatkoz\u00f3 magatart\u00e1si k\u00f3dex vagy emberi jogi politika \u00e1ltal lefedett tartalom t\u00edpusa"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Tipologia di contenuti coperti dal codice di condotta o dalla politica in materia di diritti umani per la forza lavoro propria"
@@ -33096,6 +33888,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Cine\u00e1l \u00e1bhair at\u00e1 cl\u00fadaithe ag c\u00f3d iompair n\u00f3 beartas um chearta an duine d\u00e1 lucht saothair f\u00e9in [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A saj\u00e1t munkaer\u0151re vonatkoz\u00f3 magatart\u00e1si k\u00f3dex vagy emberi jogi politika \u00e1ltal lefedett tartalom t\u00edpusa [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Tipo di contenuto coperto dal codice di condotta o dalla politica in materia di diritti umani per la forza lavoro propria [member]"
         },
@@ -33145,6 +33940,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Cine\u00e1l cearta daonna a bhaineann leis an eachtra deimhnithe"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A meger\u0151s\u00edtett incidenshez kapcsol\u00f3d\u00f3 emberi jog t\u00edpusa"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Tipo di diritto umano relativo all\u2019incidente confermato"
@@ -33206,6 +34004,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Cine\u00e1l l\u00edon na bhfostaithe"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Az alkalmazotti l\u00e9tsz\u00e1m t\u00edpusa"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Tipo di numero di dipendenti"
         },
@@ -33263,6 +34064,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "\u03a4\u03cd\u03c0\u03bf\u03c2 \u03b1\u03c1\u03b9\u03b8\u03bc\u03bf\u03cd \u03b5\u03c1\u03b3\u03b1\u03b6\u03bf\u03bc\u03ad\u03bd\u03c9\u03bd [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Az alkalmazotti l\u00e9tsz\u00e1m t\u00edpusa [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Tipo di numero di dipendenti [member]"
         },
@@ -33315,6 +34119,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Cine\u00e1l truaille\u00e1in [axis]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Szennyez\u0151 anyag t\u00edpusa [axis]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Tipo di inquinante [axis]"
         },
@@ -33365,6 +34172,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Cine\u00e1l truaille\u00e1in [member]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Szennyez\u0151 anyag t\u00edpusa [member]"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Tipo di inquinante [member]"
@@ -33418,6 +34228,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Cine\u00e1l dramha\u00edola [axis]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Hullad\u00e9k t\u00edpusa [axis]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Tipo di rifiutio [axis]"
         },
@@ -33467,6 +34280,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "URL n\u00f3 nasc chuig an nochtadh at\u00e1 ar f\u00e1il go poibl\u00ed"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A nyilv\u00e1nosan el\u00e9rhet\u0151 k\u00f6zz\u00e9t\u00e9tel URL-c\u00edme vagy hivatkoz\u00e1sa"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "URL o collegamento all'informativa disponibile al pubblico"
@@ -33518,6 +34334,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Cuireann an gn\u00f3thas prionsabail an gheilleagair chiorclaigh i bhfeidhm"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A v\u00e1llalkoz\u00e1s alkalmazza a k\u00f6rforg\u00e1sos gazdas\u00e1g elveit"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "L'impresa applica i principi dell'economia circolare"
         },
@@ -33567,6 +34386,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "C\u00f3d iompair n\u00f3 beartas um chearta an duine ag an ngn\u00f3thas d\u00e1 lucht saothair f\u00e9in"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A v\u00e1llalkoz\u00e1s a saj\u00e1t munkaerej\u00e9re vonatkoz\u00f3 magatart\u00e1si k\u00f3dexszel vagy emberi jogi politik\u00e1val rendelkezik"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "L'impresa dispone di un codice di condotta o di una politica in materia di diritti umani per la forza lavoro propria?"
@@ -33618,6 +34440,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "T\u00e1 s\u00e1sra l\u00e1imhsithe gear\u00e1n ag an ngn\u00f3thas d\u00e1 lucht saothair f\u00e9in"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A v\u00e1llalkoz\u00e1s a saj\u00e1t munkaerej\u00e9re vonatkoz\u00f3 panaszkezel\u00e9si mechanizmussal rendelkezik"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "L'impresa dispone di un meccanismo di trattamento delle denunce per la forza lavoro propria?"
         },
@@ -33667,6 +34492,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Teagmhais dheimhnithe ag an ngn\u00f3thas d\u00e1 lucht saothair f\u00e9in"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A v\u00e1llalkoz\u00e1s saj\u00e1t munkaerej\u00e9t \u00e9rint\u0151, meger\u0151s\u00edtett emberi jogi incidensek fordultak el\u0151"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "L'impresa ha confermato incidenti in seno alla forza lavoro propria relativi a violazioni dei diritti umani."
@@ -33718,6 +34546,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "T\u00e1 sprioc socraithe ag an ngn\u00f3thas a bhaineann le beartas"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A v\u00e1llalkoz\u00e1s szakpolitik\u00e1hoz kapcsol\u00f3d\u00f3 c\u00e9lt t\u0171z\u00f6tt ki"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "L'impresa ha fissato un obiettivo correlato a una politica."
         },
@@ -33768,6 +34599,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "An feasach don ghn\u00f3thas aon teagmhas deimhnithe lena mbaineann oibrithe sa slabhra luacha, pobail d\u00e1 nd\u00e9antar difear, tomhalt\u00f3ir\u00ed agus \u00fas\u00e1ideoir\u00ed deiridh?"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A v\u00e1llalkoz\u00e1snak tudom\u00e1sa van az \u00e9rt\u00e9kl\u00e1ncban dolgoz\u00f3kat, az \u00e9rintett k\u00f6z\u00f6ss\u00e9geket, a fogyaszt\u00f3kat \u00e9s a v\u00e9gfelhaszn\u00e1l\u00f3kat \u00e9rint\u0151, meger\u0151s\u00edtett incidensekr\u0151l"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "L'impresa \u00e8 a conoscenza di incidenti confermati che coinvolgono lavoratori nella catena del valore, comunit\u00e0 interessate, consumatori e utilizzatori finali"
         },
@@ -33817,6 +34651,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Foirm dhl\u00edthi\u00fail an ghn\u00f3thais"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A v\u00e1llalkoz\u00e1s jogi form\u00e1ja"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Forma giuridica dell'impresa"
@@ -33893,6 +34730,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Toirt an \u00e1bhair a \u00fas\u00e1ideadh"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A felhaszn\u00e1lt anyag t\u00e9rfogata"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Volume del materiale utilizzato"
         },
@@ -33945,6 +34785,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Dr\u00e1mha\u00edl a ghintear [abstract]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Keletkezett hullad\u00e9k [abstract]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Rifiuti prodotti [abstract]"
         },
@@ -33996,6 +34839,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Dr\u00e1mha\u00edl a ghintear [line items]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Keletkezett hullad\u00e9k [line items]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Rifiuti prodotti [line items]"
         },
@@ -34046,6 +34892,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Dramha\u00edl arna treor\u00fa chuig di\u00fascairt (mais)"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Keletkezett hullad\u00e9k (t\u00f6meg)"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Rifiuti prodotti (massa)"
@@ -34100,6 +34949,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Dr\u00e1mha\u00edl a ghintear [table]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Keletkezett hullad\u00e9k [table]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Rifiuti prodotti [table]"
         },
@@ -34150,6 +35002,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Dramha\u00edl arna treor\u00fa chuig di\u00fascairt (toirt)"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Keletkezett hullad\u00e9k (t\u00e9rfogat)"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Rifiuti prodotti (volume)"
@@ -34203,6 +35058,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Uisce agus acmhainn\u00ed mara [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "V\u00edz \u00e9s tengeri er\u0151forr\u00e1sok [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Acqua e risorse marine [member]"
         },
@@ -34254,6 +35112,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Tomhaltas Uisce [abstract]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "V\u00edzfogyaszt\u00e1s [abstract]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Consumo idrico [abstract]"
         },
@@ -34304,6 +35165,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Scaoileadh uisce \u00f3 phr\u00f3isis t\u00e1irgthe"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A v\u00e1llalkoz\u00e1s termel\u00e9si folyamataib\u00f3l sz\u00e1rmaz\u00f3 v\u00edzkibocs\u00e1t\u00e1s"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Scarico di acque risultante dai processi di produzione dell'impresa"
@@ -34357,6 +35221,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Aistarraingt uisce [abstract]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "V\u00edzkiv\u00e9tel [abstract]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Prelievo idrico [abstract]"
         },
@@ -34407,6 +35274,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Me\u00e1chan an \u00e1bhair a \u00fas\u00e1ideadh"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A felhaszn\u00e1lt anyag t\u00f6mege"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Peso del materiale utilizzato"
@@ -34460,6 +35330,9 @@
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Oibrithe sa slabhra luacha [member]"
         },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Az \u00e9rt\u00e9kl\u00e1ncban dolgoz\u00f3k [member]"
+        },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Lavoratori nella catena del valore [member]"
         },
@@ -34510,6 +35383,9 @@
         },
         "ga": {
           "http://www.xbrl.org/2003/role/label": "Lucht saothair \u2013 Sl\u00e1inte agus s\u00e1bh\u00e1ilteacht [abstract]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Munkaer\u0151 \u2013 Eg\u00e9szs\u00e9gv\u00e9delem \u00e9s biztons\u00e1g [abstract]"
         },
         "it": {
           "http://www.xbrl.org/2003/role/label": "Forza lavoro \u2013 Salute e sicurezza [abstract]"
@@ -47540,6 +48416,7 @@
       "labels": {
         "es": "[1000] Introducci\u00f3n y/u otra informaci\u00f3n espec\u00edfica de la entidad",
         "fr": "[1000] Introduction et/ou informations sp\u00e9cifiques \u00e0 l\u2019entit\u00e9",
+        "hu": "[1000] Bevezet\u00e9s \u00e9s/vagy v\u00e1llalkoz\u00e1sspecifikus inform\u00e1ci\u00f3k",
         "it": "[1000] Introduzione e/o informazione specifica per soggetto",
         "lt": "[1000] \u012evadas ir (arba) \u012fmonei b\u016bdinga informacija",
         "pl": "[1000] Wprowadzenie i/lub informacje specyficzne dla jednostki",
@@ -47567,6 +48444,7 @@
         "es": "[1010] B1 - Informaci\u00f3n general - Base para la elaboraci\u00f3n",
         "fr": "[1010] B1 - Informations g\u00e9n\u00e9rales - Base de pr\u00e9paration",
         "ga": "[1010] B1 - Faisn\u00e9is ghinear\u00e1lta - An Bun\u00fas leis an ullmh\u00fa",
+        "hu": "[1010] B1 \u2013 \u00c1ltal\u00e1nos inform\u00e1ci\u00f3k \u2013 Az elk\u00e9sz\u00edt\u00e9s alapja",
         "it": "[1010] B1 - Informazioni generali - Criteri per la redazione",
         "lt": "[1010] B1 - Bendroji informacija - Parengimo pagrindas",
         "nl": "[1010] B1 - Algemene informatie - Grondslagvoor het opstellen van informatie",
@@ -47659,6 +48537,7 @@
         "es": "[1020] B1 - Informaci\u00f3n general - Lista de filiales",
         "fr": "[1020] B1 - Informations g\u00e9n\u00e9rales - Liste des filiales",
         "ga": "[1020] B1 - Faisn\u00e9is ghinear\u00e1lta - Liosta fochuideachta\u00ed",
+        "hu": "[1020] B1 \u2013 \u00c1ltal\u00e1nos inform\u00e1ci\u00f3k \u2013 Le\u00e1nyv\u00e1llalatok list\u00e1ja",
         "it": "[1020] B1 - Informazioni generali - Elenco delle imprese figlie",
         "lt": "[1020] B1 - Bendroji informacija - Dukterini\u0173 \u012fmoni\u0173 s\u0105ra\u0161as",
         "nl": "[1020] B1 - Algemene informatie - Lijst van dochterondernemingen",
@@ -47703,6 +48582,7 @@
         "es": "[1030] B1 - Informaci\u00f3n general - Lista de emplazamientos",
         "fr": "[1030] B1 - Informations g\u00e9n\u00e9rales - Liste des sites",
         "ga": "[1030] B1 - Faisn\u00e9is ghinear\u00e1lta - Liosta su\u00edomhanna",
+        "hu": "[1030] B1 \u2013 \u00c1ltal\u00e1nos inform\u00e1ci\u00f3k \u2013 Telephelyek list\u00e1ja",
         "it": "[1030] B1 - Informazioni generali - Elenco dei siti",
         "lt": "[1030] B1 - Bendroji informacija - Objekt\u0173 s\u0105ra\u0161as",
         "nl": "[1030] B1 - Algemene informatie - Lijst van vestigingen",
@@ -47759,6 +48639,7 @@
         "es": "[1040] B2 - Informaci\u00f3n general - Pr\u00e1cticas, pol\u00edticas o iniciativas futuras para la transici\u00f3n hacia una econom\u00eda m\u00e1s sostenible",
         "fr": "[1040] B2 - Informations g\u00e9n\u00e9rales - Pratiques, politiques et/ou initiatives futures en vue de la transition vers une \u00e9conomie plus durable",
         "ga": "[1040] B2 - Faisn\u00e9is ghinear\u00e1lta - Cleachtais, beartais agus tionscnaimh amach anseo chun aistri\u00fa i dtreo geilleagar n\u00edos inbhuanaithe",
+        "hu": "[1040] B2 \u2013 \u00c1ltal\u00e1nos inform\u00e1ci\u00f3k \u2013 A fenntarthat\u00f3bb gazdas\u00e1gra val\u00f3 \u00e1t\u00e1ll\u00e1ssal kapcsolatos gyakorlatok, szakpolitik\u00e1k \u00e9s/vagy j\u00f6v\u0151beli kezdem\u00e9nyez\u00e9sek",
         "it": "[1040] B2 - Informazioni generali - Pratiche, politiche e/o iniziative future per la transizione verso un'economia pi\u00f9 sostenibile",
         "lt": "[1040] B2 - Bendroji informacija - Praktikos, politikos ir (arba) b\u016bsimos iniciatyvos, skirtos pereiti prie tvaresn\u0117s ekonomikos",
         "nl": "[1040] B2 - Algemene informatie - Praktijken, beleid en/of toekomstige initiatieven voor de overgang naar een duurzamere economie",
@@ -47795,6 +48676,7 @@
         "es": "[1050] B2 - Informaci\u00f3n general - Divulgaciones espec\u00edficas de cooperativas",
         "fr": "[1050] B2 - Informations g\u00e9n\u00e9rales - Informations sp\u00e9cifiques aux coop\u00e9ratives",
         "ga": "[1050] B2 - Faisn\u00e9is ghinear\u00e1lta - Nochta\u00ed sonrach do chomharchumann",
+        "hu": "[1050] B2 \u2013 \u00c1ltal\u00e1nos inform\u00e1ci\u00f3k \u2013 Sz\u00f6vetkezetekre vonatkoz\u00f3 k\u00fcl\u00f6n\u00f6s k\u00f6zz\u00e9t\u00e9telek",
         "it": "[1050] B2 - Informazioni generali - Informative specifiche per le cooperative",
         "lt": "[1050] B2 - Bendroji informacija - Kooperatyvams b\u016bdingi atskleidimai",
         "nl": "[1050] B2 - Algemene informatie - Co\u00f6peratie specifieke toelichtingen",
@@ -47831,6 +48713,7 @@
         "es": "[1060] C1 - Informaci\u00f3n general - Estrategia: Modelo de negocio y sostenibilidad - Iniciativas relacionadas",
         "fr": "[1060] C1 - C1 - Strat\u00e9gie : mod\u00e8le \u00e9conomique et durabilit\u00e9 - initiatives associ\u00e9es",
         "ga": "[1060] C1 - Faisn\u00e9is Ghinear\u00e1lta - Strait\u00e9is: Samhail Ghn\u00f3 agus Inbhuanaitheacht - Tionscnaimh Ghaolmhara",
+        "hu": "[1060] C1 \u2013 \u00c1ltal\u00e1nos inform\u00e1ci\u00f3k \u2013 Strat\u00e9gia: \u00fczleti modell \u00e9s fenntarthat\u00f3s\u00e1ggal kapcsolatos kezdem\u00e9nyez\u00e9sek",
         "it": "[1060] C1 - Informazioni generali - Strategia: Modello aziendale e iniziative connesse alla sostenibilit\u00e0",
         "lt": "[1060] C1 - Bendroji informacija - Strategija: Verslo modelis ir su tvarumu susijusios iniciatyvos",
         "nl": "[1060] C1 - Algemene informatie - Strategie: Businessmodel en duurzaamheid - Gerelateerde initiatieven",
@@ -47884,6 +48767,7 @@
         "es": "[1045] C2 - Informaci\u00f3n general - Descripci\u00f3n de pr\u00e1cticas, pol\u00edticas y/o iniciativas futuras para la transici\u00f3n hacia una econom\u00eda m\u00e1s sostenible",
         "fr": "[1045] C2 - Informations g\u00e9n\u00e9rales - Description des pratiques, politiques et/ou initiatives futures pour la transition vers une \u00e9conomie plus durable",
         "ga": "[1045] C2 - Faisn\u00e9is ghinear\u00e1lta - Strait\u00e9is: Tuairisc ar chleachtais, beartais agus tionscnaimh amach anseo chun aistri\u00fa i dtreo geilleagar n\u00edos inbhuanaithe",
+        "hu": "[1045] C2 \u2013 \u00c1ltal\u00e1nos inform\u00e1ci\u00f3k \u2013 A fenntarthat\u00f3bb gazdas\u00e1gra val\u00f3 \u00e1t\u00e1ll\u00e1ssal kapcsolatos gyakorlatok, szakpolitik\u00e1k \u00e9s/vagy j\u00f6v\u0151beli kezdem\u00e9nyez\u00e9sek le\u00edr\u00e1sa",
         "it": "[1045] C2 - Informazioni generali - Descrizione delle pratiche, delle politiche e/o delle iniziative future per la transizione verso un'economia pi\u00f9 sostenibile",
         "lt": "[1045] C2 - Bendroji informacija - Praktik\u0173, politik\u0173 ir (arba) b\u016bsim\u0173 iniciatyv\u0173, skirt\u0173 pereiti prie tvaresn\u0117s ekonomikos, apra\u0161ymas",
         "nl": "[1045] C2 - Algemene informatie: Beschrijving van praktijken, beleid en/of toekomstige initiatieven voor de overgang naar een meer duurzame economie",
@@ -47920,6 +48804,7 @@
         "es": "[1080] B3 - Medio ambiente - Consumo total de energ\u00eda",
         "fr": "[1080] B3 - Environnement - Consommation d'\u00e9nergie totale",
         "ga": "[1080] B3 - Comhshaol - Tomhaltas fuinnimh ioml\u00e1n",
+        "hu": "[1080] B3 \u2013 K\u00f6rnyezet \u2013 Teljes energiafogyaszt\u00e1s",
         "it": "[1080] B3 - Ambiente - Totale Consumo di Energia",
         "lt": "[1080] B3 - Aplinkos sritis - Bendras energijos suvartojimas",
         "nl": "[1080] B3 - Milieu - Totale energieverbruik",
@@ -47948,6 +48833,7 @@
         "es": "[1090] B3 - Medio ambiente - Desglose del consumo de energ\u00eda",
         "fr": "[1090] B3 - Environnement - Ventilation de la consommation d'\u00e9nergie",
         "ga": "[1090] B3 - Comhshaol - Miondeal\u00fa ar thomhaltas fuinnimh ioml\u00e1n",
+        "hu": "[1090] B3 \u2013 K\u00f6rnyezet \u2013 Az energiafogyaszt\u00e1s bont\u00e1sa",
         "it": "[1090] B3 - Ambiente - Ripartizione del consumo di energia",
         "lt": "[1090] B3 - Aplinkos sritis - Energijos suvartojimo suskirstymas",
         "nl": "[1090] B3 - Milieu - Uitsplitsing van energieverbruik",
@@ -48008,6 +48894,7 @@
         "es": "[1100] B3 \u2013 Emisiones absolutas estimadas de gases de efecto invernadero",
         "fr": "[1100] B3 - Environnement - Estimations des \u00e9missions absolues de gaz \u00e0 effet de serre",
         "ga": "[1100] B3 - Comhshaol - Meastach\u00e1in ar asta\u00edochta\u00ed g\u00e1s ceaptha teasa",
+        "hu": "[1100] B3 \u2013 K\u00f6rnyezet \u2013 Becs\u00fclt abszol\u00fat \u00fcvegh\u00e1zhat\u00e1s\u00fag\u00e1z-kibocs\u00e1t\u00e1s",
         "it": "[1100] B3 - Ambiente - Emissioni assolute stimate di gas a effetto serra",
         "lt": "[1100] B3 \u2013 Aplinkos sritis \u2013 Apskai\u010diuotas absoliutus i\u0161metam\u0173 \u0161iltnamio efekt\u0105 sukelian\u010di\u0173 duj\u0173 kiekis",
         "nl": "[1100] B3 - Milieu - Geschatte broeikasgasemissies",
@@ -48084,6 +48971,7 @@
         "es": "[1120] B4 - Medio ambiente - Contaminaci\u00f3n del aire, agua y suelo: disponibilidad de divulgaci\u00f3n p\u00fablica",
         "fr": "[1120] B4 - Environnement - Pollution de l\u2019air, de l\u2019eau et des sols : disponibilit\u00e9 de la divulgation publique",
         "ga": "[1120] B4 - Comhshaol - Truailli\u00fa an aeir, an uisce agus na hithreach: f\u00e1il ar nochtadh poibl\u00ed",
+        "hu": "[1120] B4 \u2013 K\u00f6rnyezet \u2013 Leveg\u0151-, v\u00edz- \u00e9s talajszennyez\u00e9s: a nyilv\u00e1nos k\u00f6zz\u00e9t\u00e9tel el\u00e9rhet\u0151s\u00e9ge",
         "it": "[1120] B4 - Ambiente - Inquinamento di aria, acqua e suolo: informativa disponibile al pubblico",
         "lt": "[1120] B4 - Aplinkos sritis - Oro, vandens ir dirvo\u017eemio tar\u0161a: vie\u0161o atskleidimo prieinamumas",
         "nl": "[1120] B4 - Milieu - Verontreiniging van lucht, water en bodem: beschikbaarheid van publieke rapportage",
@@ -48116,6 +49004,7 @@
         "es": "[1130] B4 - Medio ambiente - Contaminaci\u00f3n del aire, agua y suelo: cantidad de emisiones",
         "fr": "[1130] B4 - Environnement - Pollution de l\u2019air, de l\u2019eau et des sols : quantit\u00e9 des \u00e9missions",
         "ga": "[1130] B4 - Timpeallacht - Truailli\u00fa an aeir, an uisce agus na hithreach: m\u00e9id na n-asta\u00edochta\u00ed",
+        "hu": "[1130] B4 \u2013 K\u00f6rnyezet \u2013 Leveg\u0151-, v\u00edz- \u00e9s talajszennyez\u00e9s: kibocs\u00e1t\u00e1sok mennyis\u00e9ge",
         "it": "[1130] B4 - Ambiente - Inquinamento di aria, acqua e suolo: quantit\u00e0 delle emissioni",
         "lt": "[1130] B4 - Aplinkos sritis - Oro, vandens ir dirvo\u017eemio tar\u0161a: i\u0161metam\u0173 ter\u0161al\u0173 kiekis",
         "nl": "[1130] B4 - Milieu -  Verontreiniging van lucht, water en bodem: hoeveelheid emissies",
@@ -48572,6 +49461,7 @@
         "es": "[1140] B5 - Medio ambiente - Emplazamientos en \u00e1reas sensibles para la biodiversidad",
         "fr": "[1140] B5 - Environnement - Sites situ\u00e9s dans des zones sensibles sur le plan de la biodiversit\u00e9",
         "ga": "[1140] B5 - Comhshaol - L\u00e1ithre\u00e1in i gceantair at\u00e1 \u00edogair \u00f3 thaobh na bith\u00e9ags\u00falachta de",
+        "hu": "[1140] B5 \u2013 K\u00f6rnyezet \u2013 A biol\u00f3giai sokf\u00e9les\u00e9g szempontj\u00e1b\u00f3l \u00e9rz\u00e9keny ter\u00fcleteken tal\u00e1lhat\u00f3 telephelyek",
         "it": "[1140] B5 - Ambiente - Siti ubicati all'interno di un'area sensibile sotto il profilo della biodiversit\u00e0",
         "lt": "[1140] B5 - Aplinkos sritis - objektai biologinei \u012fvairovei jautriose teritorijose",
         "nl": "[1140] B5 - Milieu - Vestigingen in biodiversiteitsgevoelige gebieden",
@@ -48620,6 +49510,7 @@
         "es": "[1160] B6 - Medio Ambiente - Extracci\u00f3n de Agua",
         "fr": "[1160] B6 - Environnement - Pr\u00e9l\u00e8vements d'eau",
         "ga": "[1160] B6 - Comhshaol - Aistarraingt Uisce",
+        "hu": "[1160] B6 \u2013 K\u00f6rnyezet \u2013 V\u00edzkiv\u00e9tel",
         "it": "[1160] B6 - Ambiente - Prelievo idrico",
         "lt": "[1160] B6 -  Aplinkos sritis - Vandens i\u0161gavimas",
         "nl": "[1160] B6 - Milieu - Wateronttrekking",
@@ -48648,6 +49539,7 @@
         "es": "[1170] B6 - Medio ambiente - Consumo de agua",
         "fr": "[1170] B6 - Environnement - Consommation d\u2019eau",
         "ga": "[1170] B6 - Comhshaol - Tomhaltas Uisce",
+        "hu": "[1170] B6 \u2013 K\u00f6rnyezet \u2013 V\u00edzfogyaszt\u00e1s",
         "it": "[1170] B6 - Ambiente - Consumo idrico",
         "lt": "[1170] B6 - Aplinkos sritis - Vandens suvartojimas",
         "nl": "[1170] B6 - Milieu - Waterverbruik",
@@ -48684,6 +49576,7 @@
         "es": "[1180] B7 - Medio ambiente - Descripci\u00f3n de los principios de la econom\u00eda circular",
         "fr": "[1180] B7 - Environnement - Description des principes de l'\u00e9conomie circulaire",
         "ga": "[1180] B7 - Comhshaol - Tuairisc i nd\u00e1il le prionsabail an gheilleagair chiorclaigh",
+        "hu": "[1180] B7 \u2013 K\u00f6rnyezet \u2013 A k\u00f6rforg\u00e1sos gazdas\u00e1g elveinek le\u00edr\u00e1sa",
         "it": "[1180] B7 - Ambiente - Descrizione dei principi dell'economia circolare",
         "lt": "[1180] B7 - Aplinkos sritis - Apra\u0161ymas apie \u017eiedin\u0117s ekonomikos principus",
         "nl": "[1180] B7 - Milieu - Beschrijving van de principes van de circulaire economie",
@@ -48716,6 +49609,7 @@
         "es": "[1190] B7 - Medio ambiente - Desglose de residuos por tipo",
         "fr": "[1190] B7 - Environnement - Ventilation des d\u00e9chets par type",
         "ga": "[1190] B7 - Comhshaol - Miondeal\u00fa ar chine\u00e1l dramha\u00edola",
+        "hu": "[1190] B7 \u2013 K\u00f6rnyezet \u2013 A hullad\u00e9k t\u00edpus szerinti bont\u00e1sa",
         "it": "[1190] B7 - Ambiente - Ripartizione dei rifiuti per tipo",
         "lt": "[1190] B7 - Aplinkos sritis - Atliek\u0173 suskirstymas pagal tip\u0105",
         "nl": "[1190] B7 - Milieu -  Uitsplitsing van afval naar type",
@@ -52832,6 +53726,7 @@
         "es": "[1200] B7-  Medio ambiente - Residuos totales peligrosos y no peligrosos",
         "fr": "[1200] B7 - Environnement - Total des d\u00e9chets dangereux et non dangereux",
         "ga": "[1200] B7 - Comhshaol - Ioml\u00e1n dramha\u00edola at\u00e1 guaiseach agus neamhghuaiseach",
+        "hu": "[1200] B7 \u2013 K\u00f6rnyezet \u2013 Vesz\u00e9lyes \u00e9s nem vesz\u00e9lyes hullad\u00e9k \u00f6sszesen",
         "it": "[1200] B7 - Ambiente - Totale rifiuti pericolosi e non pericolosi",
         "lt": "[1200] B7 - Aplinkos sritis - Bendras pavojing\u0173 ir nepavojing\u0173 atliek\u0173 kiekis",
         "nl": "[1200] B7 - Milieu - Totale hoeveelheid gevaarlijk en niet-gevaarlijk afval",
@@ -52880,6 +53775,7 @@
         "es": "[1210] B7 - Medio Ambiente - Desglose del flujo de masa anual de materiales relevantes utilizados por la empresa",
         "fr": "[1210] B7 - Environnement - Ventilation annuelle du flux massique des mati\u00e8res pertinentes utilis\u00e9es par l\u2019entreprise",
         "ga": "[1210] B7 -  Comhshaol - Miondeal\u00fa ar mhais-sreabhadh bliant\u00fail d\u2019\u00e1bhair \u00e1bhartha a \u00fas\u00e1idtear ag an ngn\u00f3thas",
+        "hu": "[1210] B7 \u2013 K\u00f6rnyezet \u2013 A v\u00e1llalkoz\u00e1s \u00e1ltal felhaszn\u00e1lt relev\u00e1ns anyagok \u00e9ves t\u00f6meg\u00e1ram\u00e1nak bont\u00e1sa",
         "it": "[1210] B7 - Ambiente - Ripartizione del flusso di massa annuo dei materiali pertinenti utilizzati dall'impresa",
         "lt": "[1210] B7 - Aplinkos sritis - Metinio reik\u0161ming\u0173 med\u017eiag\u0173, kurias naudoja \u012fmon\u0117, mas\u0117s srauto pasiskirstymas",
         "nl": "[1210] B7 - Milieu - Uitsplitsing van de jaarlijkse massastroom van relevante materialen gebruikt door de onderneming",
@@ -52928,6 +53824,7 @@
         "es": "[1220] B7 - Medio ambiente - Flujo de masa anual total de materiales usados por la empresa",
         "fr": "[1220] B7 - Environnement - Flux massique annuel total des mati\u00e8res utilis\u00e9es par l'entreprise",
         "ga": "[1220] B7 - Comhshaol - Mais-sreabhadh ioml\u00e1n bliant\u00fail d'\u00e1bhair a \u00fas\u00e1idtear ag an ng\u00f3thas",
+        "hu": "[1220] B7 \u2013 K\u00f6rnyezet \u2013 A v\u00e1llalkoz\u00e1s \u00e1ltal felhaszn\u00e1lt anyagok teljes \u00e9ves t\u00f6meg\u00e1rama",
         "it": "[1220] B7 - Ambiente - Totale flusso di massa annuo dei materiali utilizzati dall'impresa",
         "lt": "[1220] B7 - Aplinkos sritis - Metinis visos \u012fmon\u0117s naudojam\u0173 med\u017eiag\u0173 mas\u0117s srautas",
         "nl": "[1220] B7 - Milieu - Totale jaarlijkse massastroom van materialen gebruikt door de onderneming",
@@ -52960,6 +53857,7 @@
         "es": "[1230] C3 - Medio ambiente - A\u00f1o base y a\u00f1o objetivo de reducci\u00f3n de emisiones de gases de efecto invernadero",
         "fr": "[1230] C3 - Environnement - Ann\u00e9e de r\u00e9f\u00e9rence et ann\u00e9e cible pour la r\u00e9duction des \u00e9missions de gaz \u00e0 effet de serre",
         "ga": "[1230] C3 - Comhshaol - Bonnbhliain laghdaithe asta\u00edochta\u00ed g\u00e1s ceaptha teasa agus spriocbhliain",
+        "hu": "[1230] C3 \u2013 K\u00f6rnyezet \u2013 Az \u00fcvegh\u00e1zhat\u00e1s\u00fag\u00e1z-kibocs\u00e1t\u00e1s cs\u00f6kkent\u00e9s\u00e9nek b\u00e1zis\u00e9ve \u00e9s c\u00e9l\u00e9ve",
         "it": "[1230] C3 - Ambiente - Base e anno-obiettivo per la riduzione delle emissioni di gas a effetto serra",
         "lt": "[1230] C3 - Aplinkos sritis - \u0161iltnamio efekt\u0105 sukelian\u010di\u0173 duj\u0173 emisij\u0173 ma\u017einimo baziniai ir tiksliniai metai",
         "nl": "[1230] C3 - Milieu - Broeikasgasemissiereductie  basisjaar en doeljaar",
@@ -52992,6 +53890,7 @@
         "es": "[1240] C3 - Medio ambiente - Objetivos de reducci\u00f3n de emisiones de gases de efecto invernadero",
         "fr": "[1240] C3 - Environnement - Cibles de r\u00e9duction des \u00e9missions de gaz \u00e0 effet de serre",
         "ga": "[1240] C3 - Comhshaol - Spriocanna Laghdaithe Asta\u00edochta\u00ed G\u00e1s Ceaptha Teasa",
+        "hu": "[1240] C3 \u2013 K\u00f6rnyezet \u2013 \u00dcvegh\u00e1zhat\u00e1s\u00fag\u00e1z-kibocs\u00e1t\u00e1scs\u00f6kkent\u00e9si c\u00e9lok",
         "it": "[1240] C3 - Ambiente - Obiettivi di riduzione delle emissioni di gas a effetto serra",
         "lt": "[1240] C3 - Aplinkos sritis - \u0160iltnamio efekt\u0105 sukelian\u010di\u0173 duj\u0173 emisij\u0173 ma\u017einimo tikslai",
         "nl": "[1240] C3 - Milieu - Doelstellingen voor broeikasgasemissiereductie",
@@ -53072,6 +53971,7 @@
         "es": "[1250] C3 - Medio ambiente - Divulgaci\u00f3n de la lista de las acciones principales que la entidad busca llevar a cabo para alcanzar sus objetivos",
         "fr": "[1250] C3 - Environnement - Publication de la liste des principales actions que l'entreprise entend mettre en \u0153uvre pour atteindre ses cibles",
         "ga": "[1250] C3 - Comhshaol - Nochtadh ar liosta pr\u00edomhghn\u00edomhartha a fh\u00e9achann an gn\u00f3thas lena gcur chun feidhme lena spriocanna a bhaint amach.",
+        "hu": "[1250] C3 \u2013 K\u00f6rnyezet \u2013 A c\u00e9ljai el\u00e9r\u00e9s\u00e9hez a v\u00e1llalkoz\u00e1s \u00e1ltal tervezett f\u0151 int\u00e9zked\u00e9sek list\u00e1j\u00e1nak k\u00f6zz\u00e9t\u00e9tele",
         "it": "[1250] C3 - Ambiente - Comunicazione dell'elenco delle principali azioni che l'impresa intende attuare per conseguire i propri obiettivi",
         "lt": "[1250] C3 - Aplinkos sritis - Ataskaitoje atskleid\u017eiamas pagrindini\u0173 veiksm\u0173, kuri\u0173 organizacija siekia pasiekti savo tikslus, s\u0105ra\u0161as",
         "nl": "[1250] C3 - Milieu - Openbaarmaking van de lijst met belangrijkste acties die de entiteit nastreeft om haar  doelen te bereiken",
@@ -53100,6 +54000,7 @@
         "es": "[1260] C3 - Medio ambiente - Plan de transici\u00f3n para empresas que operan en sectores de alto impacto clim\u00e1tico",
         "fr": "[1260] C3 - Environnement - Plan de transition pour les entreprises op\u00e9rant dans des secteurs \u00e0 fort impact climatique",
         "ga": "[1260] C3 - Comhshaol - Plean aistrithe do ghn\u00f3thais a n-oibr\u00edonn in earn\u00e1lacha a bhfuil tionchar m\u00f3r ar an aer\u00e1id",
+        "hu": "[1260] C3 \u2013 K\u00f6rnyezet \u2013 \u00c1t\u00e1ll\u00e1si terv a nagy \u00e9ghajlati hat\u00e1s\u00fa \u00e1gazatokban m\u0171k\u00f6d\u0151 v\u00e1llalkoz\u00e1sok sz\u00e1m\u00e1ra",
         "it": "[1260] C3 - Ambiente - Piano di transizione per le imprese che operano in settori ad alto impatto climatico",
         "lt": "[1260] C3 - Aplinkos sritis - Per\u0117jimo planas \u012fmon\u0117ms, veikian\u010dioms sektoriuose, kuri\u0173 poveikis klimatui yra didelis",
         "nl": "[1260] C3 - Milieu - Transitieplan voor ondernemingen die actief zijn in sectoren met een grote  klimaatimpact",
@@ -53136,6 +54037,7 @@
         "es": "[1270] C4 - Medio ambiente - Riesgos clim\u00e1ticos",
         "fr": "[1270] C4 - Environnement - Risques climatiques",
         "ga": "[1270] C4 - Comhshaol - Riosca\u00ed Aer\u00e1ide",
+        "hu": "[1270] C4 \u2013 K\u00f6rnyezet \u2013 \u00c9ghajlati kock\u00e1zatok",
         "it": "[1270] C4 - Ambiente - Rischi climatici",
         "lt": "[1270] C4 - Aplinkos sritis - Klimato rizikos",
         "nl": "[1270] C4 - Milieu - Klimaatrisico's",
@@ -53180,6 +54082,7 @@
         "es": "[1275] Medio ambiente - Otra y/o informaci\u00f3n espec\u00edfica de la entidad",
         "fr": "[1275] Environnement - Autres informations et/ou informations sp\u00e9cifiques \u00e0 l\u2019entit\u00e9",
         "ga": "[1275] Comhshaol - Faisn\u00e9is eile/agus n\u00f3 sonrach don ghn\u00f3thas",
+        "hu": "[1275] K\u00f6rnyezet \u2013 Egy\u00e9b \u00e9s/vagy v\u00e1llalkoz\u00e1sspecifikus inform\u00e1ci\u00f3k",
         "it": "[1275] Ambiente - Altre informazioni e/o specifiche per soggetto",
         "lt": "[1275] Aplinkos sritis - Kita ir (arba) \u012fmonei specifin\u0117 informacija",
         "nl": "[1275] Milieu - Overige en/of entiteitsspecifieke informatie",
@@ -53208,6 +54111,7 @@
         "es": "[1280] B8 - Social - Trabajadores - Caracter\u00edsticas generales: tipo de contrato",
         "fr": "[1280] B8 - Social - Personnel - Caract\u00e9ristiques g\u00e9n\u00e9rales : type de contrat",
         "ga": "[1280] B8 - S\u00f3isialta - Lucht saothair - Tr\u00e9ithe ginear\u00e1lta: cine\u00e1l conartha",
+        "hu": "[1280] B8 \u2013 T\u00e1rsadalom \u2013 Munkaer\u0151 \u2013 \u00c1ltal\u00e1nos jellemz\u0151k: szerz\u0151d\u00e9s t\u00edpusa",
         "it": "[1280] B8 - Sociale - Forza lavoro - Caratteristiche generali: tipo di contratto",
         "lt": "[1280] B8 - Socialin\u0117 sritis - Darbuotojai - Bendrieji rodikliai: sutarties r\u016b\u0161is",
         "nl": "[1280] B8 - Sociaal - Personeel - Algemene kenmerken: type contract",
@@ -53240,6 +54144,7 @@
         "es": "[1290] B8 - Social - Trabajadores - Caracter\u00edsticas generales: g\u00e9nero",
         "fr": "[1290] B8 - Social - Personnel - Caract\u00e9ristiques g\u00e9n\u00e9rales : genre",
         "ga": "[1290] B8 - S\u00f3isialta - Lucht saothair - Tr\u00e9ithe ginear\u00e1lta: inscne",
+        "hu": "[1290] B8 \u2013 T\u00e1rsadalom \u2013 Munkaer\u0151 \u2013 \u00c1ltal\u00e1nos jellemz\u0151k: nem",
         "it": "[1290] B8 - Sociale - Forza lavoro - Caratteristiche generali: genere",
         "lt": "[1290] B8 - Socialin\u0117 sritis - Darbuotojai - Bendrieji rodikliai: lytis",
         "nl": "[1290] B8 - Sociaal - Personeel  - Algemene kenmerken: gender",
@@ -53280,6 +54185,7 @@
         "es": "[1300] B8 - Social - Trabajadores- Caracter\u00edsticas generales: pa\u00eds de empleo",
         "fr": "[1300] B8 - Social - Personnel - Caract\u00e9ristiques g\u00e9n\u00e9rales : pays du contrat de travail",
         "ga": "[1300] B8 - S\u00f3isialta - Lucht saothair - Tr\u00e9ithe ginear\u00e1lta: t\u00edr na fosta\u00edochta",
+        "hu": "[1300] B8 \u2013 T\u00e1rsadalom \u2013 Munkaer\u0151 \u2013 \u00c1ltal\u00e1nos jellemz\u0151k: foglalkoztat\u00e1s orsz\u00e1ga",
         "it": "[1300] B8 - Sociale - Forza lavoro - Caratteristiche generali: paese del contratto di lavoro",
         "lt": "[1300] B8 - Socialin\u0117 sritis - Darbuotojai - Bendrieji rodikliai: darbo sutarties \u0161alis",
         "nl": "[1300] B8 - Sociaal - Personeel - Algemene kenmerken: land van tewerkstelling",
@@ -53324,6 +54230,7 @@
         "es": "[1320] B9 - Social - Trabajadores- Salud y seguridad",
         "fr": "[1320] B9 - Social - Personnel - Sant\u00e9 et s\u00e9curit\u00e9",
         "ga": "[1320] B9 - S\u00f3isialta - Lucht saothair - Sl\u00e1inte agus s\u00e1bh\u00e1ilteacht",
+        "hu": "[1320] B9 \u2013 T\u00e1rsadalom \u2013 Munkaer\u0151 \u2013 Eg\u00e9szs\u00e9gv\u00e9delem \u00e9s biztons\u00e1g",
         "it": "[1320] B9 - Sociale - Forza lavoro - Salute e sicurezza",
         "lt": "[1320] B9 - Socialin\u0117 sritis - Darbuotojai - Sveikata ir sauga",
         "nl": "[1320] B9 - Sociaal - Personeel - Gezondheid en veiligheid",
@@ -53360,6 +54267,7 @@
         "es": "[1330] B10 - Social - Trabajadores - Retribuci\u00f3n, negociaci\u00f3n colectiva y formaci\u00f3n",
         "fr": "[1330] B10 - Social - Personnel - R\u00e9mun\u00e9ration, n\u00e9gociation collective et formation",
         "ga": "[1330] B10 - S\u00f3isialta - Lucht saothair - Luach saothair, c\u00f3mharg\u00e1il agus oili\u00faint",
+        "hu": "[1330] B10 \u2013 T\u00e1rsadalom \u2013 Munkaer\u0151 \u2013 Javadalmaz\u00e1s, kollekt\u00edv t\u00e1rgyal\u00e1s \u00e9s k\u00e9pz\u00e9s",
         "it": "[1330] B10 - Sociale - Forza lavoro - Retribuzione, contrattazione collettiva e formazione",
         "lt": "[1330] B10 - Socialin\u0117 sritis - Darbuotojai - Atlyginimas, kolektyvin\u0117s derybos ir mokymai",
         "nl": "[1330] B10 - Sociaal - Personeel - Beloning, collectieve onderhandelingen en opleiding",
@@ -53408,6 +54316,7 @@
         "es": "[1340] C5 - Social - Caracter\u00edsticas adicionales (generales) de los trabajadores",
         "fr": "[1340] C5 - Social - Caract\u00e9ristiques suppl\u00e9mentaires (g\u00e9n\u00e9rales) du personnel",
         "ga": "[1340] C5 - S\u00f3isialta - Tr\u00e9ithe breise (ginear\u00e1lta) an lucht saothair",
+        "hu": "[1340] C5 \u2013 T\u00e1rsadalom \u2013 A munkaer\u0151 tov\u00e1bbi (\u00e1ltal\u00e1nos) jellemz\u0151i",
         "it": "[1340] C5 - Sociale - Altre caratteristiche (generali) della forza lavoro",
         "lt": "[1340] C5 - Socialin\u0117 sritis - Papildomi (bendrieji) darbuotoj\u0173 rodikliai",
         "nl": "[1340] C5 - Sociaal - Aanvullende (algemene) kenmerken van het personeel",
@@ -53448,6 +54357,7 @@
         "es": "[1350] C6 - Social - Informaci\u00f3n adicional sobre el personal propio - Pol\u00edticas y procesos en materia de derechos humanos",
         "fr": "[1350] C6 - Social - Informations suppl\u00e9mentaires sur le personnel - Politiques et proc\u00e9dures en mati\u00e8re de droits de l\u2019homme",
         "ga": "[1350] C6 - S\u00f3isialta - Faisn\u00e9is bhreise maidir lena lucht saothair f\u00e9in - Beartais agus pr\u00f3isis um chearta an duine",
+        "hu": "[1350] C6 \u2013 T\u00e1rsadalom \u2013 A saj\u00e1t munkaer\u0151re vonatkoz\u00f3 tov\u00e1bbi inform\u00e1ci\u00f3k \u2013 emberi jogi politik\u00e1k \u00e9s elj\u00e1r\u00e1sok",
         "it": "[1350] C6 - Sociale - Altre informazioni sulla forza lavoro propria - Politiche e procedure in materia di diritti umani",
         "lt": "[1350] C6 - Socialin\u0117 sritis - Papildoma darbuotoj\u0173 informacija - \u017dmogaus teisi\u0173 politika ir procesai",
         "nl": "[1350] C6 - Sociaal - Aanvullende informatie over het eigen personeel - Mensenrechtenbeleid en -processen",
@@ -53488,6 +54398,7 @@
         "es": "[1360] C7 - Social- Incidentes relacionados con los derechos humanos",
         "fr": "[1360] C7 - Social - Incidents en mati\u00e8re de droits de l\u2019homme",
         "ga": "[1360] C7 - S\u00f3isialta - Teagmhais gh\u00e9ara do chearta an duine",
+        "hu": "[1360] C7 \u2013 T\u00e1rsadalom \u2013 Emberi jogi incidensek",
         "it": "[1360] C7 - Sociale - Incidenti in materia di diritti umani",
         "lt": "[1360] C7 \u2013 Socialin\u0117 sritis \u2013 Incidentai \u017emogaus teisi\u0173 srityje",
         "nl": "[1360] C7 - Sociaal - Ernstige negatieve incidenten met betrekking tot mensenrechten",
@@ -53536,6 +54447,7 @@
         "es": "[1365] Social - Otra y/o informaci\u00f3n espec\u00edfica de la entidad",
         "fr": "[1365] Social - Autres informations et/ou informations sp\u00e9cifiques \u00e0 l\u2019entit\u00e9",
         "ga": "[1365] S\u00f3isialta - Faisn\u00e9is eile/agus n\u00f3 sonrach don ghn\u00f3thas",
+        "hu": "[1365] T\u00e1rsadalom \u2013 Egy\u00e9b \u00e9s/vagy v\u00e1llalkoz\u00e1sspecifikus inform\u00e1ci\u00f3k",
         "it": "[1365] Sociale - Altre informazioni e/o specifiche per soggetto",
         "lt": "[1365] Socialin\u0117 sritis - Kita ir (arba) \u012fmonei specifin\u0117 informacija",
         "nl": "[1365] Sociaal - Overige en/of entiteitsspecifieke informatie",
@@ -53564,6 +54476,7 @@
         "es": "[1370] B11 Gobernanza - Condenas y multas por corrupci\u00f3n y soborno",
         "fr": "[1370] B11 - Gouvernance - Condamnations et amendes pour corruption et versement de pots-de-vin",
         "ga": "[1370] B11 - Ciontuithe agus f\u00edne\u00e1lacha mar gheall ar \u00e9illi\u00fa agus breabaireacht",
+        "hu": "[1370] B11 \u2013 Ir\u00e1ny\u00edt\u00e1s \u2013 Korrupci\u00f3 \u00e9s megveszteget\u00e9s miatti \u00edt\u00e9letek \u00e9s b\u00fcntet\u00e9sek",
         "it": "[1370] B11 - Condanne e ammende per corruzione attiva e passiva",
         "lt": "[1370] B11 - Valdymo sritis - Nuteisimai ir baudos u\u017e korupcij\u0105 ir ky\u0161ininkavim\u0105",
         "nl": "[1370] B11 - Governance - Veroordelingen en boetes voor corruptie en omkoping",
@@ -53596,6 +54509,7 @@
         "es": "[1380] C8 - Gobernanza - Ingresos derivados de determinadas actividades",
         "fr": "[1380] C8 - Gouvernance - Chiffre d\u2019affaires provenant de certaines activit\u00e9s",
         "ga": "[1380] C8 - Rialachas - Ioncaim \u00f3 earn\u00e1lacha \u00e1irithe",
+        "hu": "[1380] C8 \u2013 Ir\u00e1ny\u00edt\u00e1s \u2013 Bizonyos tev\u00e9kenys\u00e9gekb\u0151l sz\u00e1rmaz\u00f3 bev\u00e9telek",
         "it": "[1380] C8 - Governance - Ricavi derivanti da determinate attivit\u00e0",
         "lt": "[1380] C8 \u2013 Valdymo sritis \u2013 Pajamos, gautos i\u0161 tam tikros veiklos",
         "nl": "[1380] C8 - Governance - Ontvangsten uit bepaalde sectoren",
@@ -53648,6 +54562,7 @@
         "es": "[1400] C9 - Gobernanza - Ratio de diversidad de g\u00e9nero en el \u00f3rgano de gobernanza",
         "fr": "[1400] C9 - Gouvernance - Ratio de mixit\u00e9 au sein de l\u2019organe de gouvernance",
         "ga": "[1400] C9 - Rialachas - C\u00f3imheas \u00e9ags\u00falachta inscne sa chomhlacht rialachais",
+        "hu": "[1400] C9 \u2013 Ir\u00e1ny\u00edt\u00e1s \u2013 Nemek szerinti megoszl\u00e1s az ir\u00e1ny\u00edt\u00f3 szervben",
         "it": "[1400] C9 - Governance - Diversit\u00e0 di genere nell'organo di governance",
         "lt": "[1400] C9 - Valdymo sritis - Ly\u010di\u0173 \u012fvairov\u0117s rodiklis valdymo organe",
         "nl": "[1400] C9 - Governance - Genderdiversiteitsverhouding in het bestuursorgaan",
@@ -53676,6 +54591,7 @@
         "es": "[1410] Gobernanza - Otra y/o informaci\u00f3n espec\u00edfica de la entidad",
         "fr": "[1410] Gouvernance - Autres informations et/ou informations sp\u00e9cifiques \u00e0 l\u2019entit\u00e9",
         "ga": "[1410] Rialachas - Faisn\u00e9is eile/agus n\u00f3 sonrach don ghn\u00f3thas",
+        "hu": "[1410] Ir\u00e1ny\u00edt\u00e1s \u2013 Egy\u00e9b \u00e9s/vagy v\u00e1llalkoz\u00e1sspecifikus inform\u00e1ci\u00f3k",
         "it": "[1410] Governance - Altre informazioni e/o specifiche per soggetto",
         "lt": "[1410] Valdymo sritis - Kita ir (arba) \u012fmonei specifin\u0117 informacija",
         "nl": "[1410] Governance - Overige en/of entiteitsspecifieke informatie",
