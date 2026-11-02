@@ -15,6 +15,7 @@ from mireport.data.disclosures import VSME_DEFAULTS
 from mireport.exceptions import EarlyAbortException
 from mireport.filesupport import FilelikeAndFileName
 from mireport.report.comparatives import SkipReason
+from mireport.version import VersionHolder
 from mireport.xlsx_template_reader.processor import XlsxProcessor
 
 SAMPLES = Path("digital-templates")
@@ -40,8 +41,15 @@ def test_a_migrated_workbook_not_yet_saved_in_excel_is_refused() -> None:
 
 
 @pytest.mark.slow
-def test_last_years_workbook_on_an_older_template_gives_the_comparatives() -> None:
+def test_last_years_workbook_on_an_older_template_gives_the_comparatives(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """The 1.2.0 sample, on the taxonomy before ours, is for the year before the 1.3.0 one's."""
+    # A migration tool that migrates into 1.3.0, installed or not.
+    monkeypatch.setattr(
+        "mireport.template_versions.migrationTargetTemplateVersion",
+        lambda: VersionHolder.parse("1.3.0"),
+    )
     current = XlsxProcessor.from_file(
         SAMPLES / "VSME-Digital-Template-Sample-1.3.0.xlsx",
         ConversionResultsBuilder(consoleOutput=False),

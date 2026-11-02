@@ -177,14 +177,11 @@ class TestVsmeTemplatesFollowTheMigrationTool:
         outcome, _ = doMigrationChecks(_conversion(_report("1.3.0", VSME_ENTRY_POINT)))
         assert outcome is MigrationOutcome.MIGRATION_REQUIRED
 
-    def test_without_a_tool_old_reports_are_judged_against_the_converter(
-        self, migration_target
-    ):
+    @pytest.mark.parametrize("version", ["1.0.0", "1.3.0", "99.0.0"])
+    def test_without_a_tool_no_version_is_judged(self, version, migration_target):
+        """The converter's version says nothing about VSME templates'."""
         migration_target(None)
-        older = VersionHolder(max(CONVERTER_VERSION.major - 1, 0), 0, 0, "")
-        outcome, _ = doMigrationChecks(
-            _conversion(_report(str(older), VSME_ENTRY_POINT))
-        )
+        outcome, _ = doMigrationChecks(_conversion(_report(version, VSME_ENTRY_POINT)))
         assert outcome is MigrationOutcome.NO_MIGRATION
 
 

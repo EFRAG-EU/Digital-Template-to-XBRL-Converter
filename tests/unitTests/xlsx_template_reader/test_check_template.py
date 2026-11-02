@@ -156,6 +156,42 @@ class TestVersionComparison:
         assert any(m.severity is Severity.ERROR for m in results.messages)
 
 
+class TestNoKnownLatestVersion:
+    """VSME follows the migration tool: with none installed, the latest template
+    version isn't known, and the converter's own version doesn't stand in."""
+
+    VSME_ENTRY_POINT = "https://xbrl.efrag.org/taxonomy/vsme/2026-05-01/vsme-all.xsd"
+
+    def _vsmeCheck(self, version: object):
+        return _check(
+            {
+                "template_reporting_template_version": version,
+                VSME_DEFAULTS["entryPoint"]: self.VSME_ENTRY_POINT,
+            }
+        )
+
+    @pytest.mark.parametrize("version", ["1.0.0", "1.3.0", "99.0.0"])
+    def test_a_version_is_not_judged(self, version):
+        check, results = self._vsmeCheck(version)
+
+        assert check.report_template_version_relation is VersionRelation.UNKNOWN
+        assert check.supported_template_version is None
+        assert [m.severity for m in results.messages] == [Severity.INFO]
+        assert "latest version is not known" in str(results.messages[0].messageText)
+
+    @pytest.mark.parametrize(
+        "version,relation",
+        [(None, VersionRelation.MISSING), ("not-a-version", VersionRelation.INVALID)],
+    )
+    def test_no_valid_version_is_still_an_error(self, version, relation):
+        check, results = self._vsmeCheck(version)
+
+        assert check.report_template_version_relation is relation
+        [error] = [m for m in results.messages if m.severity is Severity.ERROR]
+        assert "Please use a supported template." in str(error.messageText)
+        assert "latest version" not in str(error.messageText)
+
+
 class TestValidationStatus:
     def test_incomplete_when_status_matches_incomplete_label(self):
         check, _ = _check(

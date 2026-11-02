@@ -3,6 +3,7 @@ import operator
 import re
 import subprocess
 from importlib.metadata import PackageNotFoundError
+from itertools import pairwise
 
 import pytest
 
@@ -82,6 +83,53 @@ class TestVersionHolderParse:
     )
     def test_str(self, holder, expected_str):
         assert str(holder) == expected_str
+
+
+class TestVersionHolderFromPep440:
+    """Python packaging's (PEP 440) version, as installed metadata gives it, in
+    semver form."""
+
+    @pytest.mark.parametrize(
+        "version_str,expected",
+        [
+            ("1.3.0", "1.3.0"),
+            ("2.0.0rc1", "2.0.0-rc.1"),
+            ("2.0.0a2", "2.0.0-alpha.2"),
+            ("2.0.0b3", "2.0.0-beta.3"),
+            ("2.0.0rc10", "2.0.0-rc.10"),
+            ("  2.0.0rc1  ", "2.0.0-rc.1"),
+        ],
+    )
+    def test_from_pep440(self, version_str, expected):
+        holder = VersionHolder.from_pep440(version_str)
+
+        assert str(holder) == expected
+        assert holder == VersionHolder.parse(expected)
+        assert _SEMVER_RE.match(str(holder)) is not None
+
+    def test_pre_releases_keep_their_order(self):
+        ordered = ["2.0.0a1", "2.0.0b1", "2.0.0rc1", "2.0.0rc2", "2.0.0rc10", "2.0.0"]
+
+        holders = [VersionHolder.from_pep440(v) for v in ordered]
+
+        assert holders == sorted(holders)
+        assert all(a < b for a, b in pairwise(holders))
+
+    def test_a_pre_release_is_not_the_release(self):
+        holder = VersionHolder.from_pep440("2.0.0rc1")
+
+        assert holder.is_prerelease
+        assert holder.strip_build_metadata == holder
+        assert holder < VersionHolder.parse("2.0.0")
+
+    @pytest.mark.parametrize(
+        "version_str",
+        # No semver form keeps their order, so none is guessed.
+        ["2.0.0.dev1", "2.0.0.post1", "2.0.0+local", "2.0", "2.0.0-rc.1", "", "bad"],
+    )
+    def test_from_pep440_invalid(self, version_str):
+        with pytest.raises(ValueError):
+            VersionHolder.from_pep440(version_str)
 
 
 class TestInvalidVersionHolder:

@@ -20,8 +20,8 @@
     ]
   },
   "mireport:messageSeverities": {
-    "INFO": 4,
-    "WARNING": 14
+    "INFO": 5,
+    "WARNING": 13
   },
   "facts": {
     "f1": {
