@@ -18622,10 +18622,10 @@
           "http://www.xbrl.org/2003/role/label": "B3 - Gesch\u00e4tzte Treibhausgasemissionen gem\u00e4\u00df des THG-Protokolls Version 2004 (in tCO2eq) [member]"
         },
         "en": {
-          "http://www.xbrl.org/2003/role/label": "B3 - Estimated Absolute Greenhouse Gas Emissions considering the GHG Protocol Version 2004 (in tCO2eq) [member]"
+          "http://www.xbrl.org/2003/role/label": "B3 - Estimated Absolute Greenhouse Gas Emissions considering the GHG Protocol Corporate Accounting and Reporting Standard 2004 (in tCO2eq) [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "B3 \u2013 Emisiones absolutas estimadas de gases de efecto invernadero considerando el Protocolo GEI versi\u00f3n 2004 (en tCO2eq) [member]"
+          "http://www.xbrl.org/2003/role/label": "B3 - Emisiones absolutas estimadas de gases de efecto invernadero seg\u00fan el Est\u00e1ndar corporativo de contabilidad y reporte del Protocolo de GEI de 2004 (en tCO2eq) [member]"
         },
         "fr": {
           "http://www.xbrl.org/2003/role/label": "B3 - Estimation des \u00e9missions absolues de gaz \u00e0 effet de serre en tenant compte du contenu de la norme de comptabilisation et de d\u00e9claration du protocole des GES relative aux entreprises (version 2004) (en tCO2eq) [member]"
@@ -18634,31 +18634,31 @@
           "http://www.xbrl.org/2003/role/label": "B3 - Asta\u00edochta\u00ed Measta G\u00e1s Ceaptha Teasa ag smaoineamh ar Phr\u00f3tacal GCT Leagan 2004 (i tCO2eq) [member]"
         },
         "hu": {
-          "http://www.xbrl.org/2003/role/label": "B3 \u2013 Becs\u00fclt abszol\u00fat \u00fcvegh\u00e1zhat\u00e1s\u00fag\u00e1z-kibocs\u00e1t\u00e1s a GHG Protocol 2004. \u00e9vi v\u00e1ltozata szerint (tCO2eq-ben) [member]"
+          "http://www.xbrl.org/2003/role/label": "B3 \u2013 Becs\u00fclt abszol\u00fat \u00fcvegh\u00e1zhat\u00e1s\u00fag\u00e1z-kibocs\u00e1t\u00e1s a GHG Protocol v\u00e1llalati elsz\u00e1mol\u00e1si \u00e9s besz\u00e1mol\u00e1si standardja (2004) szerint (tCO2eq-ben) [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "B3 - Emissioni assolute stimate di gas a effetto serra considerando il Greenhouse Gas Protocol versione 2004 (in tonnellate di CO2eq) [member]"
+          "http://www.xbrl.org/2003/role/label": "B3 - Emissioni assolute stimate di gas a effetto serra considerando il Greenhouse Gas Protocol Corporate Accounting and Reporting Standard 2004 (in tonnellate di CO2eq) [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "B3 \u2013 Apskai\u010diuotas absoliutus \u0161iltnamio efekt\u0105 sukelian\u010di\u0173 duj\u0173 kiekis, atsi\u017evelgiant \u012f 2004 m. \u0160ESD protokolo versij\u0105 (tCO2eq) [member]"
+          "http://www.xbrl.org/2003/role/label": "B3 \u2013 Apskai\u010diuotas absoliutus \u0161iltnamio efekt\u0105 sukelian\u010di\u0173 duj\u0173 (\u0160ESD) kiekis, atsi\u017evelgiant \u012f 2004 m. \u0160ESD protokolo \u012fmoni\u0173 apskaitos ir atskaitomyb\u0117s standart\u0105 (tCO2eq) [member]"
         },
         "nl": {
           "http://www.xbrl.org/2003/role/label": "B3 - Geraamde broeikasgasemissies rekening houdend met het GHG Protocol versie 2004 (in tCO2eq) [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "B3 \u2013 Szacunkowa bezwzgl\u0119dna emisja gaz\u00f3w cieplarnianych z uwzgl\u0119dnieniem wymog\u00f3w GHG Protocol w wersji z 2004 r. (w tCO2eq) [member]"
+          "http://www.xbrl.org/2003/role/label": "B3 \u2013 Szacunkowa bezwzgl\u0119dna emisja gaz\u00f3w cieplarnianych z uwzgl\u0119dnieniem wymog\u00f3w GHG Protocol Corporate Accounting and Reporting Standard z 2004 r. (w tCO2eq) [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "B3 \u2013 Emiss\u00f5es brutas estimadas de gases com efeito de estufa, em valor absoluto, considerando o Protocolo GEE Vers\u00e3o 2004 (em tCO2eq) [member]"
+          "http://www.xbrl.org/2003/role/label": "B3 - Estimativa das emiss\u00f5es brutas de gases com efeito de estufa, em valor absoluto, considerando o Protocolo GEE 2004 (em tCO2eq) [member]"
         },
         "sl": {
-          "http://www.xbrl.org/2003/role/label": "B3 \u2013 Ocenjene absolutne emisije toplogrednih plinov ob upo\u0161tevanju razli\u010dice Protokola o toplogrednih plinih (GHG Protocol) iz leta 2004 (v tCO2eq) [member]"
+          "http://www.xbrl.org/2003/role/label": "B3 \u2013 Ocenjene absolutne emisije toplogrednih plinov ob upo\u0161tevanju standarda GHG Protocol Corporate Accounting and Reporting Standard iz leta 2004 (v tCO2eq) [member]"
         },
         "sq": {
-          "http://www.xbrl.org/2003/role/label": "B3 - Emetimet Absolute t\u00eb Gazrave Serr\u00eb t\u00eb Vler\u00ebsuara duke marr\u00eb parasysh Protokollin GHG Versioni 2004 (n\u00eb tCO2eq) [member]"
+          "http://www.xbrl.org/2003/role/label": "B3 - Emetimet Absolute t\u00eb Gazrave Serr\u00eb t\u00eb Vler\u00ebsuara duke marr\u00eb parasysh Standardin e Kontabilitetit dhe Raportimit t\u00eb korporatave t\u00eb Protokollit GHG 2004 (n\u00eb tCO2eq) [member]"
         },
         "sr": {
-          "http://www.xbrl.org/2003/role/label": "B3 - Procenjene emisije gasova sa efektom staklene ba\u0161te u apsolutnom iznosu u skladu sa verzijom Protokola o gasovima sa efektom staklene ba\u0161te iz 2004. (u tCO2eq) [member]"
+          "http://www.xbrl.org/2003/role/label": "B3 - Procenjene emisije gasova sa efektom staklene ba\u0161te u apsolutnom iznosu u skladu sa Standardom za korporativno ra\u010dunovodstvo i izve\u0161tavanje iz 2004. Protokola o gasovima sa efektom staklene ba\u0161te (u tCO2eq) [member]"
         }
       },
       "periodType": "duration"
