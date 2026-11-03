@@ -1,6 +1,6 @@
 [project]
 name = "EFRAG-DigitalTemplateToXBRL-Converter"
-version = "2.0.0rc1"
+version = "2.0.0"
 description = "Converts a filled-in Excel template into an Inline XBRL Report"
 authors = [
     {name = "Stuart Rowan", email = "stuart.rowan@efrag.org"},
@@ -82,7 +82,7 @@ redis = [
 ]
 
 migration = [
-    "migration_tool@git+https://github.com/EFRAG-EU/Digital-Template-Data-Migration-Tool.git@63133b1",
+    "migration_tool@git+https://github.com/EFRAG-EU/Digital-Template-Data-Migration-Tool.git@d5e9f71",
 ]
 
 
