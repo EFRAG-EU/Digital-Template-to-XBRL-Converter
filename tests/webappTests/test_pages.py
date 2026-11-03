@@ -91,12 +91,12 @@ class TestBranding:
         )
         assert f">{PRODUCT_NAME}</h1>" in body
         assert (
-            'href="https://xbrl.efrag.org/downloads/vsme/'
+            'href="https://xbrl.efrag.org/downloads/vs/'
             'VS-Digital-Template-latest.xlsx"' in body
         )
         assert (
-            'href="https://xbrl.efrag.org/downloads/vsme/'
-            'VS-Digital-Template-sample-latest.xlsx"' in body
+            'href="https://xbrl.efrag.org/downloads/vs/'
+            'VS-Digital-Template-Sample-latest.xlsx"' in body
         )
         assert "provided by EFRAG (or test the" in body
         assert "convert your Digital Template" in body
