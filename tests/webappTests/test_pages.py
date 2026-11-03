@@ -58,7 +58,7 @@ class TestDebugSession:
         assert resp.is_json
 
 
-PRODUCT_NAME = "VS and VSME Digital Template to XBRL Converter"
+PRODUCT_NAME = "VS Digital Template to XBRL Converter"
 
 
 def _brandedApp(tmp_path, **config):
@@ -92,11 +92,11 @@ class TestBranding:
         assert f">{PRODUCT_NAME}</h1>" in body
         assert (
             'href="https://xbrl.efrag.org/downloads/vsme/'
-            'VSME-Digital-Template-latest.xlsx"' in body
+            'VS-Digital-Template-latest.xlsx"' in body
         )
         assert (
             'href="https://xbrl.efrag.org/downloads/vsme/'
-            'VSME-Digital-Template-sample-latest.xlsx"' in body
+            'VS-Digital-Template-sample-latest.xlsx"' in body
         )
         assert "provided by EFRAG (or test the" in body
         assert "convert your Digital Template" in body

@@ -40,16 +40,16 @@ class ResultsLayout(StrEnum):
 # unset by default, names a directory holding a replacement
 # _brand-content.html.jinja.
 BRANDING_DEFAULTS: dict[str, str] = {
-    "BRAND_PRODUCT_NAME": "VS and VSME Digital Template to XBRL Converter",
+    "BRAND_PRODUCT_NAME": "VS Digital Template to XBRL Converter",
     "BRAND_ORGANISATION_NAME": "EFRAG",
     "BRAND_LOGO_URL": "https://www.efrag.org/themes/custom/dms_theme/logo.svg",
     "BRAND_FAVICON_URL": "https://www.efrag.org/themes/custom/dms_theme/favicon.ico",
     "BRAND_CONTACT_EMAIL": "vsme@efrag.org",
     "BRAND_TEMPLATE_URL": (
-        "https://xbrl.efrag.org/downloads/vsme/VSME-Digital-Template-latest.xlsx"
+        "https://xbrl.efrag.org/downloads/vsme/VS-Digital-Template-latest.xlsx"
     ),
     "BRAND_SAMPLE_URL": (
-        "https://xbrl.efrag.org/downloads/vsme/VSME-Digital-Template-sample-latest.xlsx"
+        "https://xbrl.efrag.org/downloads/vsme/VS-Digital-Template-sample-latest.xlsx"
     ),
 }
 
