@@ -27,6 +27,29 @@ jobs:
         with:
           args: format --check .
 
+  eslint:
+    name: ESLint
+    # Skip draft PRs; pushes to main have no pull_request, so they always run
+    if: github.event.pull_request.draft != true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 'lts/*'
+          cache: npm
+
+      # eslint needs no install scripts; skipping them also skips building
+      # Tailwind's native watcher, which linting never uses.
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Run ESLint
+        run: npx eslint .
+
   test:
     name: Tests (${{ matrix.suite }})
     # Skip draft PRs; pushes to main have no pull_request, so they always run
