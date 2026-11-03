@@ -46,10 +46,10 @@ BRANDING_DEFAULTS: dict[str, str] = {
     "BRAND_FAVICON_URL": "https://www.efrag.org/themes/custom/dms_theme/favicon.ico",
     "BRAND_CONTACT_EMAIL": "vsme@efrag.org",
     "BRAND_TEMPLATE_URL": (
-        "https://xbrl.efrag.org/downloads/vsme/VS-Digital-Template-latest.xlsx"
+        "https://xbrl.efrag.org/downloads/vs/VS-Digital-Template-latest.xlsx"
     ),
     "BRAND_SAMPLE_URL": (
-        "https://xbrl.efrag.org/downloads/vsme/VS-Digital-Template-sample-latest.xlsx"
+        "https://xbrl.efrag.org/downloads/vs/VS-Digital-Template-Sample-latest.xlsx"
     ),
 }
 
