@@ -22,10 +22,8 @@ that for every backend afterwards, from the working directory.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, NamedTuple
-
-if TYPE_CHECKING:
-    from pathlib import Path
+from pathlib import Path
+from typing import NamedTuple
 
 # Every backend writes here, inside its private working directory. Fixed rather
 # than derived from the upload's name because the two tools disagree about what
@@ -58,11 +56,11 @@ class Pdf2HtmlExBackend(PdfConverterBackend):
     executable = "pdf2htmlEX"
     description = "pdf2htmlEX (high fidelity, retains selectable text)"
 
-    # One self-contained file: fonts, CSS, images and script all inlined, pages
-    # not split into separate documents. --embed-javascript stays 1 even though
-    # the normaliser strips every script afterwards: setting it to 0 makes the
-    # script an *external* file rather than removing it, which is worse for
-    # something that ships alone.
+    # One self-contained file: fonts, CSS and images inlined, pages not split
+    # into separate documents. --embed-javascript stays 1 even though our
+    # template (DATA_DIR) includes no script: setting it to 0 makes any script
+    # an *external* file rather than removing it, which is worse for something
+    # that ships alone.
     #
     # Deliberately no --quiet: pdf2htmlEX 0.14.8 has no such option and exits
     # non-zero on an unknown one, which would fail every single conversion. Its
@@ -88,10 +86,16 @@ class Pdf2HtmlExBackend(PdfConverterBackend):
         "1",
     )
 
+    # Our own template in place of the stock one, which wraps the pages in a
+    # full-window viewer. See the manifest there for why.
+    DATA_DIR = Path(__file__).with_name("pdf2htmlEX-data")
+
     def argv(self, binary: str, *, inputPath: Path, workingDir: Path) -> list[str]:
         return [
             binary,
             *self.FLAGS,
+            "--data-dir",
+            str(self.DATA_DIR),
             "--dest-dir",
             str(workingDir),
             str(inputPath),
