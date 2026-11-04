@@ -1,0 +1,33 @@
+# pdf2htmlEX's template for its output, passed to it with --data-dir.
+#
+# The stock template wraps the pages in a full-window document viewer: an
+# outline sidebar, a page container that is an absolutely positioned scroller
+# filling the viewport, a loading indicator and the script that drives them.
+# All of that assumes the document owns the browser window, which no PDF
+# converted here ever does: it becomes a document set member, shown in a
+# viewer's frame, or is merged into the back of the report, where a viewport
+# scroller draws over the top of the report. So this template is the page
+# content alone, styled by base.css.
+#
+# Syntax, as for the stock manifest: lines starting with # are comments; text
+# between lines of """ is copied verbatim; @file embeds a file from this
+# directory; $css and $pages are the converted document's own CSS and pages.
+"""
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta charset="utf-8"/>
+<meta name="generator" content="pdf2htmlEX"/>
+"""
+@base.css
+$css
+"""
+<title></title>
+</head>
+<body>
+"""
+$pages
+"""
+</body>
+</html>
+"""
