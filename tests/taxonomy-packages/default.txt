@@ -7,10 +7,14 @@
 #   <package-url> [<sha256-url>]
 # If sha256-url is provided, checksum verification is enforced.
 # Blank lines and lines starting with '#' are ignored.
-# Changing this file invalidates the CI cache and triggers a re-download.
-https://www.xbrl.org/packages/xbrl-specification-2024-02-28.zip
+# The fetch script downloads only what its directory lacks, and deletes what
+# is no longer listed.
 https://www.xbrl.org/taxonomy/int/country/country-current-REC-2024-06-14.zip
 https://www.xbrl.org/taxonomy/int/codelist-common/codelist-common-REC-2024-06-14.zip
 https://xbrl.efrag.org/downloads/vsme/VSME-XBRL-Taxonomy-November-2025-v1.1.1.zip
 https://xbrl.efrag.org/downloads/vsme/VSME-XBRL-Taxonomy-February-2026.zip
 https://xbrl.efrag.org/downloads/vsme/VSME-XBRL-Taxonomy-May-2026.zip
+# VS takes NACE 2026-05-01 from the May 2026 package above; the standalone
+# nace-2026-05-01.zip would overlap it.
+https://xbrl.efrag.org/downloads/vs/VS-XBRL-Taxonomy-November-2026-v2.0.0_gha-31.zip
+https://xbrl.efrag.org/downloads/vs/waste-2026-09-01.zip
