@@ -35,6 +35,8 @@ from mireport.report.theme import ColourPalette, DisplayMode, ReportTheme
 from mireport.xbrljson_writer import toXbrlJson
 from mireport.xlsx_template_reader.processor import XlsxProcessor
 
+from .workbooks import Workbooks
+
 if TYPE_CHECKING:
     from mireport.report.inlinereport import InlineReport
 
@@ -56,6 +58,7 @@ def doConversion(
     pdfMode: PdfSupplementaryMode,
     *,
     excelParsingWarningsAsDevInfo: bool = False,
+    workbooks: Workbooks | None = None,
 ) -> ConversionResults:
     """Drive the Excel → Inline XBRL report pipeline.
 
@@ -65,14 +68,19 @@ def doConversion(
     the generated report package as ``conv.zip`` and the report as xBRL-JSON,
     written from the report itself, as ``conv.json``. Validating them is left
     to the steps :mod:`.background` runs afterwards.
+
+    ``workbooks`` has any workbook already parsed (checked for migration, say),
+    so that it isn't parsed again.
     """
+    if workbooks is None:
+        workbooks = Workbooks()
     builder = ConversionResultsBuilder(
         conversionId=conv.id,
         excelParsingWarningsAsDevInfo=excelParsingWarningsAsDevInfo,
     )
     try:
         with builder.processingContext(f"Conversion {conv.id}"):
-            report = _loadReport(conv, builder)
+            report = _loadReport(conv, builder, workbooks)
             if not builder.conversionSuccessful:
                 return _stopped(builder)
 
@@ -80,7 +88,7 @@ def doConversion(
                 return builder.build()
             if _completePartialFacts(report, conv, builder):
                 return _stopped(builder)
-            _mergePriorReport(report, conv, builder, arelle)
+            _mergePriorReport(report, conv, builder, arelle, workbooks)
             if not report.hasFacts:
                 builder.addMessage(
                     "No facts found in InlineReport (likely due to earlier errors). Stopping here.",
@@ -121,6 +129,7 @@ def _stopped(builder: ConversionResultsBuilder) -> ConversionResults:
 def _loadReport(
     conv: Conversion,
     builder: ConversionResultsBuilder,
+    workbooks: Workbooks,
 ) -> InlineReport:
     upload = conv.excel
     assert upload is not None, "Conversion has no uploaded Excel file"
@@ -130,8 +139,8 @@ def _loadReport(
         requestedOutputLocale = None
 
     with builder.section(Stage.WORKBOOK, source=upload.filename):
-        processor = XlsxProcessor.from_file(
-            upload.fileLike(),
+        processor = XlsxProcessor(
+            workbooks.take(upload),
             builder,
             VSME_DEFAULTS,
             outputLocale=requestedOutputLocale,
@@ -236,6 +245,7 @@ def _mergePriorReport(
     conv: Conversion,
     builder: ConversionResultsBuilder,
     arelle: ArelleReportProcessor,
+    workbooks: Workbooks,
 ) -> None:
     """Take the comparatives from last year's report, if one was uploaded. One
     that can't be read or merged stops the conversion, as a bad workbook does:
@@ -243,7 +253,9 @@ def _mergePriorReport(
     if (prior := conv.priorReport) is None:
         return
     with builder.section(Stage.PRIOR, source=prior.filename):
-        PriorReport.fromFile(prior, builder, arelle=arelle).mergeInto(report, builder)
+        PriorReport.fromFile(
+            prior, builder, arelle=arelle, loadWorkbook=workbooks.take
+        ).mergeInto(report, builder)
 
 
 def _applyTheme(

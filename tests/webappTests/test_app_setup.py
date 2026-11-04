@@ -57,7 +57,7 @@ class TestExcelParsingWarningsAsDevInfo:
         app = create_app(_test_config(tmp_path, EXCEL_PARSING_WARNINGS_AS_DEVINFO=True))
         client = app.test_client()
         client.get(f"/conversions/{upload_id(client)}")
-        assert seen == {"excelParsingWarningsAsDevInfo": True}
+        assert seen["excelParsingWarningsAsDevInfo"] is True
 
 
 class TestResultsLayout:

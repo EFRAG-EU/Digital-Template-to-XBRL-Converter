@@ -14,6 +14,7 @@ from pathlib import PurePath
 from typing import TYPE_CHECKING, NoReturn
 from zipfile import BadZipFile
 
+from openpyxl import Workbook
 from openpyxl.utils.exceptions import InvalidFileException
 
 from mireport.arelle.report_info import ArelleReportProcessor, packageReportDocument
@@ -36,6 +37,7 @@ from mireport.xbrljson_reader import (
     XbrlJsonProcessor,
 )
 from mireport.xlsx_template_reader.processor import XlsxProcessor
+from mireport.xlsx_template_reader.util import loadExcelFromPathOrFileLike
 
 if TYPE_CHECKING:
     from typing import Self
@@ -52,6 +54,15 @@ PRIOR_REPORT_EXTENSIONS = (
 )
 
 
+# Parses a workbook: one already parsed may be handed back rather than parsed again.
+WorkbookLoader = Callable[[FilelikeAndFileName], Workbook]
+
+
+def loadWorkbook(source: FilelikeAndFileName) -> Workbook:
+    """``source`` parsed as a workbook."""
+    return loadExcelFromPathOrFileLike(source.fileLike())
+
+
 @dataclass(frozen=True, slots=True)
 class PriorReport:
     """Last year's report, read on its own, to take this year's comparatives from."""
@@ -66,6 +77,7 @@ class PriorReport:
         results: ConversionResultsBuilder,
         *,
         arelle: ArelleReportProcessor,
+        loadWorkbook: WorkbookLoader = loadWorkbook,
     ) -> Self:
         """Last year's report in ``source``, read as its extension says."""
         with results.section(Stage.PRIOR, source=source.filename):
@@ -73,7 +85,7 @@ class PriorReport:
                 case ".json":
                     return cls.fromXbrlJson(source, results)
                 case ".xlsx":
-                    return cls.fromWorkbook(source, results)
+                    return cls.fromWorkbook(source, results, loadWorkbook=loadWorkbook)
                 case ".xhtml" | ".html" | ".xbri" | ".xbr" | ".zip":
                     return cls.fromInlineXbrl(source, results, arelle=arelle)
                 case other:
@@ -91,11 +103,18 @@ class PriorReport:
 
     @classmethod
     def fromWorkbook(
-        cls, source: FilelikeAndFileName, results: ConversionResultsBuilder
+        cls,
+        source: FilelikeAndFileName,
+        results: ConversionResultsBuilder,
+        *,
+        loadWorkbook: WorkbookLoader = loadWorkbook,
     ) -> Self:
-        """A filled-in Digital Template, in its own template version and taxonomy. Its partial
-        facts (Word text blocks) are left unfinished: only numbers are taken."""
-        return cls._read(source, results, _readWorkbook)
+        """A filled-in Digital Template, in its own template version and taxonomy, loaded by
+        ``loadWorkbook``. Its partial facts (Word text blocks) are left unfinished: only numbers
+        are taken."""
+        return cls._read(
+            source, results, partial(_readWorkbook, loadWorkbook=loadWorkbook)
+        )
 
     @classmethod
     def fromInlineXbrl(
@@ -150,10 +169,13 @@ def _readXbrlJson(
 
 
 def _readWorkbook(
-    source: FilelikeAndFileName, read: ConversionResultsBuilder
+    source: FilelikeAndFileName,
+    read: ConversionResultsBuilder,
+    *,
+    loadWorkbook: WorkbookLoader,
 ) -> Report:
     try:
-        processor = XlsxProcessor.from_file(source.fileLike(), read, VSME_DEFAULTS)
+        processor = XlsxProcessor(loadWorkbook(source), read, VSME_DEFAULTS)
     except (BadZipFile, InvalidFileException) as e:
         raise InlineReportException(
             f"{source.filename} is not an Excel workbook: {e}"

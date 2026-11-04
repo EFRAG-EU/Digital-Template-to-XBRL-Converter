@@ -47,6 +47,7 @@ from .forms import IMAGE_UPLOAD_FIELDS, MAX_FILE_SIZE, MAX_PDF_COUNT, first_str
 from .migration import MigrationOutcome, checkMigration
 from .template_helpers import getUploadFilename
 from .viewer import MEMBER_CSP, serveViewerFile
+from .workbooks import Workbooks
 
 if TYPE_CHECKING:
     from flask import Flask
@@ -261,6 +262,8 @@ def convert(id: str) -> Response:
             )
 
         if not conv.has_results:
+            # Each workbook is parsed once, to be checked and then converted.
+            workbooks = Workbooks()
             # This year's workbook, then last year's: each may be kept as it is.
             for workbook, skip in (
                 (conv, "skip_migration"),
@@ -269,7 +272,8 @@ def convert(id: str) -> Response:
                 if (
                     not truthy(request.args.get(skip, ""))
                     and current_app.config["ENABLE_MIGRATION"]
-                    and (migrationResponse := checkMigration(workbook)) is not None
+                    and (migrationResponse := checkMigration(workbook, workbooks))
+                    is not None
                 ):
                     # Migration deemed to be required so no conversion done at this stage.
                     return migrationResponse
@@ -281,6 +285,7 @@ def convert(id: str) -> Response:
                 excelParsingWarningsAsDevInfo=current_app.config[
                     "EXCEL_PARSING_WARNINGS_AS_DEVINFO"
                 ],
+                workbooks=workbooks,
             )
             if conv.has_partial_fact_concepts and not conv.has_external_values:
                 return make_response(

@@ -331,15 +331,9 @@ def getOrCreateReportPackage(reportPackage: Path) -> FilelikeAndFileName:
         )
 
     if zipfile.is_zipfile(reportPackage):
-        return FilelikeAndFileName(
-            fileContent=reportPackage.read_bytes(), filename=reportPackage.name
-        )
+        return FilelikeAndFileName.fromPath(reportPackage)
     if reportPackage.suffix in {".xhtml", ".html", ".htm", ".json"}:
-        return packageReportDocument(
-            FilelikeAndFileName(
-                fileContent=reportPackage.read_bytes(), filename=reportPackage.name
-            )
-        )
+        return packageReportDocument(FilelikeAndFileName.fromPath(reportPackage))
     raise ArelleRelatedException(
         f"Passed a {reportPackage=} that has an unrecognised file type."
     )
