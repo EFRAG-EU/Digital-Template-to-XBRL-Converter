@@ -118,9 +118,10 @@ async function downloadWhenReady(fileUrl, spinnerText) {
 // swapping in new ones keeps their choice.
 const toggledSections = new Map();
 
-// While the steps run on a converted report, swap in the parts of the results
-// page they change (validation banner, downloads, messages) until it settles.
-async function pollConversionStatus(results) {
+// While the steps run on a converted report, swap in the parts of the page
+// they change (the results page's validation banner, downloads and messages, or
+// a row of My Conversions) until it settles.
+async function pollConversionStatus(pending) {
     const INITIAL_POLL_MS = 1000;
     const MAX_POLL_MS     = 5000;
     const POLL_BACKOFF    = 1.5;
@@ -132,7 +133,7 @@ async function pollConversionStatus(results) {
 
         let status;
         try {
-            const response = await fetch(results.dataset.statusUrl);
+            const response = await fetch(pending.dataset.statusUrl);
             if (!response.ok) {
                 // The conversion has gone (expired or deleted): stop asking.
                 console.warn(`Conversion status unavailable: ${response.status}`);
@@ -145,9 +146,13 @@ async function pollConversionStatus(results) {
         }
 
         for (const [id, html] of Object.entries(status.html)) {
-            document.getElementById(id)?.replaceWith(
-                document.createRange().createContextualFragment(html)
-            );
+            const old = document.getElementById(id);
+            if (old) {
+                // Parsed where it goes, so that a table row stays one.
+                const range = document.createRange();
+                range.selectNode(old);
+                old.replaceWith(range.createContextualFragment(html));
+            }
         }
         for (const [id, open] of toggledSections) {
             const section = document.getElementById(id);
@@ -159,7 +164,7 @@ async function pollConversionStatus(results) {
             cancelPendingDownload(status.error);
         }
         if (status.complete) {
-            results.dataset.state = "complete";
+            pending.dataset.state = "complete";
             return;
         }
     }
@@ -194,8 +199,7 @@ document.addEventListener("DOMContentLoaded", () => {
         await downloadWhenReady(downloadLink.href, downloadLink.dataset.spinnerText);
     });
 
-    const results = document.getElementById("conversion-results");
-    if (results?.dataset.statusUrl) {
-        pollConversionStatus(results);
+    for (const pending of document.querySelectorAll("[data-status-url]")) {
+        pollConversionStatus(pending);
     }
 });

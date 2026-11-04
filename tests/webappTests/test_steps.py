@@ -234,6 +234,62 @@ def test_results_page_is_shown_before_validation_finishes(
     assert validations == ["package", "xbrlJson"]
 
 
+REPORT_BUTTONS = {"Download viewer", "Download xBRL-JSON", "Download XBRL Report"}
+
+
+def enabledButtons(html: str, elementId: str) -> set[str]:
+    """The download buttons in the element that can be clicked."""
+    [element] = lxml.html.fromstring(html).xpath(f'//*[@id="{elementId}"]')
+    return {
+        " ".join(link.text_content().split())
+        for link in element.xpath('.//a[contains(@class, "download-handler")]')
+        if link.get("aria-disabled") != "true"
+    }
+
+
+def test_downloads_wait_for_validation_on_both_pages(
+    backgroundClient, upload_id, validations, gate
+):
+    """Only the upload can be had until validation has finished; then the
+    report can't either, for it has errors."""
+    gate.clear()
+    conv_id = upload_id(backgroundClient)
+    page = backgroundClient.get(f"/conversions/{conv_id}").get_data(as_text=True)
+    listing = backgroundClient.get("/conversions/").get_data(as_text=True)
+
+    assert enabledButtons(page, "downloads") == set()
+    assert "once it has been validated" in page
+    assert enabledButtons(listing, f"conversion-{conv_id}") == {"Download Excel"}
+    [row] = lxml.html.fromstring(listing).xpath(f'//*[@id="conversion-{conv_id}"]')
+    assert row.get("data-state") == "pending"
+    rowStatus = backgroundClient.get(row.get("data-status-url")).get_json()
+    assert rowStatus["complete"] is False
+    assert list(rowStatus["html"]) == [f"conversion-{conv_id}"]
+
+    gate.set()
+    waitUntilComplete(backgroundClient, conv_id)
+
+    rowStatus = backgroundClient.get(row.get("data-status-url")).get_json()
+    [rowHtml] = rowStatus["html"].values()
+    assert enabledButtons(rowHtml, f"conversion-{conv_id}") == {"Download Excel"}
+    assert 'data-state="complete"' in rowHtml
+    assert "data-status-url" not in rowHtml
+
+
+def test_validated_report_can_be_downloaded_from_both_pages(
+    client, upload_id, cleanValidations
+):
+    conv_id = upload_id(client)
+    page = client.get(f"/conversions/{conv_id}").get_data(as_text=True)
+    listing = client.get("/conversions/").get_data(as_text=True)
+
+    assert enabledButtons(page, "downloads") == REPORT_BUTTONS
+    assert enabledButtons(listing, f"conversion-{conv_id}") == REPORT_BUTTONS | {
+        "Download Excel"
+    }
+    assert "data-status-url" not in listing
+
+
 VIEWER = FilelikeAndFileName(fileContent=b"<html/>", filename="report_viewer.html")
 
 
