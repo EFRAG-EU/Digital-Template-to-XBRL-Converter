@@ -80,6 +80,13 @@ _ID_REF_ATTRIBUTES = (
 )
 
 
+# The XHTML Strict elements an HTML parser knows have no end tag, and so the
+# only ones it reads correctly when self-closed.
+_VOID_ELEMENTS = frozenset(
+    {"area", "base", "br", "col", "hr", "img", "input", "link", "meta", "param"}
+)
+
+
 def _tag(localName: str, namespace: str = XHTML_NAMESPACE) -> str:
     return f"{{{namespace}}}{localName}"
 
@@ -247,6 +254,25 @@ def _extractBody(root: etree._Element, *, anchorId: str) -> etree._Element:
     return wrapper
 
 
+def _keepEmptyElementsOpen(root: etree._Element) -> None:
+    """Give every empty, non-void XHTML element in @root empty text, so that
+    lxml writes ``<div></div>`` rather than ``<div/>``.
+
+    The merged report is an ``.html`` file with an HTML doctype, so a browser
+    opening it parses it as HTML, where ``<div/>`` is only a start tag: every
+    sibling after it ends up inside it. pdf2htmlEX ends each page with an empty
+    ``<div class="pi">``, so each page would be nested inside the one before
+    it.
+    """
+    for element in root.iter(f"{{{XHTML_NAMESPACE}}}*"):
+        if (
+            element.text is None
+            and len(element) == 0
+            and etree.QName(element).localname not in _VOID_ELEMENTS
+        ):
+            element.text = ""
+
+
 def mergeAnnexesIntoReport(
     report: FilelikeAndFileName,
     annexes: Sequence[MergedAnnex],
@@ -322,6 +348,7 @@ def mergeAnnexesIntoReport(
         link.set("href", f"#{annex.anchor_id}")
         link.text = annex.label
 
+    _keepEmptyElementsOpen(root)
     merged = etree.tostring(tree, encoding="unicode", doctype=tree.docinfo.doctype)
     return FilelikeAndFileName(
         fileContent=merged.encode("UTF-8"), filename=report.filename
