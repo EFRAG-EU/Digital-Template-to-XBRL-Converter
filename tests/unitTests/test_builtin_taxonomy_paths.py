@@ -33,7 +33,7 @@ def test_builtin_files_and_entry_points() -> None:
 
     assert [(path.name, entryPointSet) for path, entryPointSet in found] == [
         (
-            "vs-draft-2026-10-16.json",
+            "vs-2026-10-16.json",
             frozenset({"https://xbrl.efrag.org/taxonomy/vs/2026-10-16/vs-all.xsd"}),
         ),
         (
