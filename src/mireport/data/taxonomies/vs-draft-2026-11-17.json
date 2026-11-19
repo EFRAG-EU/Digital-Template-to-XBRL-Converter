@@ -34058,10 +34058,63 @@
           "vs:ForcedLabourMember",
           "vs:HumanTraffickingMember",
           "vs:DiscriminationMember",
-          "vs:AccidentPreventionMember",
           "vs:OtherContentMember"
         ]
       },
+      "periodType": "duration"
+    },
+    "vs:TypeOfHumanRightRelatedToTheConfirmedIncidentMember": {
+      "abstract": true,
+      "baseDataType": "xbrli:stringItemType",
+      "dataType": "dtr-types:domainItemType",
+      "labels": {
+        "da": {
+          "http://www.xbrl.org/2003/role/label": "Type af menneskerettighed relateret til den bekr\u00e6ftede h\u00e6ndelse [member]"
+        },
+        "de": {
+          "http://www.xbrl.org/2003/role/label": "Art des Menschenrechts im Zusammenhang mit dem best\u00e4tigten Vorfall [member]"
+        },
+        "en": {
+          "http://www.xbrl.org/2003/role/label": "Type of human right related to the confirmed incident [member]"
+        },
+        "es": {
+          "http://www.xbrl.org/2003/role/label": "Tipo de derecho humano relacionado con el incidente confirmado [member]"
+        },
+        "fr": {
+          "http://www.xbrl.org/2003/role/label": "Type de droit de l'homme auquel se rattache l'incident confirm\u00e9 [member]"
+        },
+        "ga": {
+          "http://www.xbrl.org/2003/role/label": "Cine\u00e1l cearta daonna a bhaineann leis an eachtra deimhnithe [member]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "A meger\u0151s\u00edtett incidenshez kapcsol\u00f3d\u00f3 emberi jog t\u00edpusa [member]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Tipo di diritto umano relativo all\u2019incidente confermato [member]"
+        },
+        "lt": {
+          "http://www.xbrl.org/2003/role/label": "\u017dmogaus teisi\u0173 sritis, kuriai priskiriamas patvirtintas incidentas [member]"
+        },
+        "nl": {
+          "http://www.xbrl.org/2003/role/label": "Soort mensenrecht gerelateerd aan het bevestigde incident [member]"
+        },
+        "pl": {
+          "http://www.xbrl.org/2003/role/label": "Rodzaj prawa cz\u0142owieka zwi\u0105zany z potwierdzonym incydentem [member]"
+        },
+        "pt": {
+          "http://www.xbrl.org/2003/role/label": "Tipo de direito humano relacionado ao incidente confirmado [member]"
+        },
+        "sl": {
+          "http://www.xbrl.org/2003/role/label": "Vrsta \u010dlovekove pravice, povezane s potrjenim incidentom [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Lloji i t\u00eb drejt\u00ebs njer\u00ebzore lidhur me incidentin e konfirmuar [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Vrsta ljudskih prava u vezi sa potvr\u0111enim incidentom [member]"
+        }
+      },
+      "nillable": true,
       "periodType": "duration"
     },
     "vs:TypeOfNumberOfEmployees": {
@@ -57669,6 +57722,7 @@
       "concepts": [
         "vs:SpecificationOfOtherHumanRightsRelatedToTheConfirmedIncident",
         "vs:TypeOfHumanRightRelatedToTheConfirmedIncident",
+        "vs:TypeOfHumanRightRelatedToTheConfirmedIncidentMember",
         "vs:UndertakingHasConfirmedHumanRightsIncidentsInItsOwnWorkforce"
       ],
       "parts": [
