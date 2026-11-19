@@ -20,7 +20,8 @@ from mireport.xlsx_template_reader.processor import (
 
 CONVERTER_VERSION = OUR_VERSION_HOLDER.strip_build_metadata
 VSME_ENTRY_POINT = "https://xbrl.efrag.org/taxonomy/vsme/2026-05-01/vsme-all.xsd"
-VS_ENTRY_POINT = "https://xbrl.efrag.org/taxonomy/vs/2026-10-16/vs-all.xsd"
+VS_ENTRY_POINT = "https://xbrl.efrag.org/taxonomy/vs/draft-2026-11-17/vs-all.xsd"
+OLD_VS_ENTRY_POINT = "https://xbrl.efrag.org/taxonomy/vs/2026-10-16/vs-all.xsd"
 UNLISTED_ENTRY_POINT = "https://example.org/taxonomy/other/all.xsd"
 
 
@@ -41,7 +42,10 @@ def migration_target(monkeypatch: pytest.MonkeyPatch):
 
 class TestConfiguredSettings:
     def test_vs_has_an_explicit_version(self):
-        assert getTemplateVersionSetting(entryPointSetOf(VS_ENTRY_POINT)) == "2.0.0"
+        assert getTemplateVersionSetting(entryPointSetOf(VS_ENTRY_POINT)) == "2.0.1"
+
+    def test_older_vs_follows_the_migration_tool(self):
+        assert getTemplateVersionSetting(entryPointSetOf(OLD_VS_ENTRY_POINT)) == "auto"
 
     def test_vsme_follows_the_migration_tool(self):
         assert getTemplateVersionSetting(entryPointSetOf(VSME_ENTRY_POINT)) == "auto"
@@ -54,7 +58,7 @@ class TestResolveSupportedTemplate:
     def test_explicit_version(self, migration_target):
         migration_target(None)
         supported = resolveSupportedTemplate(VS_ENTRY_POINT)
-        assert supported.supported_template_version == VersionHolder.parse("2.0.0")
+        assert supported.supported_template_version == VersionHolder.parse("2.0.1")
         assert (
             supported.supported_template_version_source
             is SupportedVersionSource.TAXONOMY_CONFIG
@@ -64,7 +68,7 @@ class TestResolveSupportedTemplate:
     def test_explicit_version_can_migrate_when_the_tool_produces_it(
         self, migration_target
     ):
-        migration_target("2.0.0")
+        migration_target("2.0.1")
         assert resolveSupportedTemplate(VS_ENTRY_POINT).migration_enabled is True
 
     def test_explicit_version_cannot_migrate_to_a_different_target(
