@@ -29513,55 +29513,43 @@
       "nillable": true,
       "periodType": "duration"
     },
-    "vs:OwnWorkforceMember": {
+    "vs:OwnWorkforceAndWorkersInTheValueChainMember": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
       "dataType": "dtr-types:domainItemType",
       "labels": {
-        "da": {
-          "http://www.xbrl.org/2003/role/label": "Egen arbejdsstyrke [member]"
-        },
-        "de": {
-          "http://www.xbrl.org/2003/role/label": "Eigene Arbeitskr\u00e4fte/Arbeitskr\u00e4fte des Unternehmens [member]"
-        },
         "en": {
-          "http://www.xbrl.org/2003/role/label": "Own workforce [member]"
+          "http://www.xbrl.org/2003/role/label": "Own workforce and Workers in the value chain [member]"
         },
         "es": {
-          "http://www.xbrl.org/2003/role/label": "Personal propio [member]"
+          "http://www.xbrl.org/2003/role/label": "Personal propio y Trabajadores en la cadena de valor [member]"
         },
         "fr": {
-          "http://www.xbrl.org/2003/role/label": "Personnel de l'entreprise [member]"
-        },
-        "ga": {
-          "http://www.xbrl.org/2003/role/label": "Lucht saothair d\u00edlis [member]"
+          "http://www.xbrl.org/2003/role/label": "Personnel de l'entreprise et Travailleurs de la cha\u00eene de valeur [member]"
         },
         "hu": {
-          "http://www.xbrl.org/2003/role/label": "Saj\u00e1t munkaer\u0151 [member]"
+          "http://www.xbrl.org/2003/role/label": "Saj\u00e1t munkaer\u0151 \u00e9s Az \u00e9rt\u00e9kl\u00e1ncban dolgoz\u00f3k [member]"
         },
         "it": {
-          "http://www.xbrl.org/2003/role/label": "Forza lavoro propria [member]"
+          "http://www.xbrl.org/2003/role/label": "Forza lavoro propria e Lavoratori nella catena del valore [member]"
         },
         "lt": {
-          "http://www.xbrl.org/2003/role/label": "Sava darbo j\u0117ga [member]"
-        },
-        "nl": {
-          "http://www.xbrl.org/2003/role/label": "Eigen personeel [member]"
+          "http://www.xbrl.org/2003/role/label": "Sava darbo j\u0117ga ir Vert\u0117s grandin\u0117s darbuotojai [member]"
         },
         "pl": {
-          "http://www.xbrl.org/2003/role/label": "W\u0142asne zasoby pracownicze [member]"
+          "http://www.xbrl.org/2003/role/label": "W\u0142asne zasoby pracownicze i Osoby wykonuj\u0105ce prac\u0119 w \u0142a\u0144cuchu warto\u015bci [member]"
         },
         "pt": {
-          "http://www.xbrl.org/2003/role/label": "Pr\u00f3pria m\u00e3o-de-obra [member]"
+          "http://www.xbrl.org/2003/role/label": "M\u00e3o de obra pr\u00f3pria e Trabalhadores na cadeia de valor [member]"
         },
         "sl": {
-          "http://www.xbrl.org/2003/role/label": "Lastna delovna sila [member]"
+          "http://www.xbrl.org/2003/role/label": "Lastna delovna sila in Delavci v vrednostni verigi [member]"
         },
         "sq": {
-          "http://www.xbrl.org/2003/role/label": "Fuqia pun\u00ebtore vetanake [member]"
+          "http://www.xbrl.org/2003/role/label": "Fuqia pun\u00ebtore vetanake dhe Pun\u00ebtor\u00ebt n\u00eb zinxhirin e vler\u00ebs [member]"
         },
         "sr": {
-          "http://www.xbrl.org/2003/role/label": "Sopstvena radna snaga [member]"
+          "http://www.xbrl.org/2003/role/label": "Sopstvena radna snaga i Radnici u lancu vrednosti [member]"
         }
       },
       "nillable": true,
@@ -32097,11 +32085,10 @@
         "ee20DomainMembers": [
           "vs:ClimateChangeMember",
           "vs:PollutionMember",
-          "vs:WaterAndMarineResourcesMember",
+          "vs:WaterMember",
           "vs:BiodiversityAndEcosystemsMember",
           "vs:CircularEconomyAndResourceUseMember",
-          "vs:OwnWorkforceMember",
-          "vs:WorkersInTheValueChainMember",
+          "vs:OwnWorkforceAndWorkersInTheValueChainMember",
           "vs:AffectedCommunitiesMember",
           "vs:ConsumersAndEndUsersMember",
           "vs:BusinessConductMember"
@@ -35170,60 +35157,6 @@
       "numeric": true,
       "periodType": "duration"
     },
-    "vs:WaterAndMarineResourcesMember": {
-      "abstract": true,
-      "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
-      "labels": {
-        "da": {
-          "http://www.xbrl.org/2003/role/label": "Vand- og havressourcer [member]"
-        },
-        "de": {
-          "http://www.xbrl.org/2003/role/label": "Wasser- und Meeresressourcen [member]"
-        },
-        "en": {
-          "http://www.xbrl.org/2003/role/label": "Water and marine resources [member]"
-        },
-        "es": {
-          "http://www.xbrl.org/2003/role/label": "Agua y recursos marinos [member]"
-        },
-        "fr": {
-          "http://www.xbrl.org/2003/role/label": "Ressources hydriques et marines [member]"
-        },
-        "ga": {
-          "http://www.xbrl.org/2003/role/label": "Uisce agus acmhainn\u00ed mara [member]"
-        },
-        "hu": {
-          "http://www.xbrl.org/2003/role/label": "V\u00edz \u00e9s tengeri er\u0151forr\u00e1sok [member]"
-        },
-        "it": {
-          "http://www.xbrl.org/2003/role/label": "Acqua e risorse marine [member]"
-        },
-        "lt": {
-          "http://www.xbrl.org/2003/role/label": "Vandens ir j\u016br\u0173 i\u0161tekliai [member]"
-        },
-        "nl": {
-          "http://www.xbrl.org/2003/role/label": "Water en mariene hulpbronnen [member]"
-        },
-        "pl": {
-          "http://www.xbrl.org/2003/role/label": "Woda i zasoby morskie [member]"
-        },
-        "pt": {
-          "http://www.xbrl.org/2003/role/label": "\u00c1gua e recursos marinhos [member]"
-        },
-        "sl": {
-          "http://www.xbrl.org/2003/role/label": "Vodni in morski viri [member]"
-        },
-        "sq": {
-          "http://www.xbrl.org/2003/role/label": "Burimet ujore dhe detare [member]"
-        },
-        "sr": {
-          "http://www.xbrl.org/2003/role/label": "Vodni i morski resursi [member]"
-        }
-      },
-      "nillable": true,
-      "periodType": "duration"
-    },
     "vs:WaterConsumptionAbstract": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
@@ -35333,6 +35266,48 @@
       "numeric": true,
       "periodType": "duration"
     },
+    "vs:WaterMember": {
+      "abstract": true,
+      "baseDataType": "xbrli:stringItemType",
+      "dataType": "dtr-types:domainItemType",
+      "labels": {
+        "en": {
+          "http://www.xbrl.org/2003/role/label": "Water [member]"
+        },
+        "es": {
+          "http://www.xbrl.org/2003/role/label": "Agua [member]"
+        },
+        "fr": {
+          "http://www.xbrl.org/2003/role/label": "Eau [member]"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "V\u00edz [member]"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Acqua [member]"
+        },
+        "lt": {
+          "http://www.xbrl.org/2003/role/label": "Vandens [member]"
+        },
+        "pl": {
+          "http://www.xbrl.org/2003/role/label": "Woda [member]"
+        },
+        "pt": {
+          "http://www.xbrl.org/2003/role/label": "\u00c1gua [member]"
+        },
+        "sl": {
+          "http://www.xbrl.org/2003/role/label": "Vodni [member]"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "Uj\u00eb [member]"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Vodni [member]"
+        }
+      },
+      "nillable": true,
+      "periodType": "duration"
+    },
     "vs:WaterWithdrawalAbstract": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
@@ -35440,60 +35415,6 @@
       },
       "nillable": true,
       "numeric": true,
-      "periodType": "duration"
-    },
-    "vs:WorkersInTheValueChainMember": {
-      "abstract": true,
-      "baseDataType": "xbrli:stringItemType",
-      "dataType": "dtr-types:domainItemType",
-      "labels": {
-        "da": {
-          "http://www.xbrl.org/2003/role/label": "Arbejdstagere i v\u00e6rdik\u00e6den [member]"
-        },
-        "de": {
-          "http://www.xbrl.org/2003/role/label": "Arbeitskr\u00e4fte in der Wertsch\u00f6pfungskette [member]"
-        },
-        "en": {
-          "http://www.xbrl.org/2003/role/label": "Workers in the value chain [member]"
-        },
-        "es": {
-          "http://www.xbrl.org/2003/role/label": "Trabajadores en la cadena de valor [member]"
-        },
-        "fr": {
-          "http://www.xbrl.org/2003/role/label": "Travailleurs de la cha\u00eene de valeur [member]"
-        },
-        "ga": {
-          "http://www.xbrl.org/2003/role/label": "Oibrithe sa slabhra luacha [member]"
-        },
-        "hu": {
-          "http://www.xbrl.org/2003/role/label": "Az \u00e9rt\u00e9kl\u00e1ncban dolgoz\u00f3k [member]"
-        },
-        "it": {
-          "http://www.xbrl.org/2003/role/label": "Lavoratori nella catena del valore [member]"
-        },
-        "lt": {
-          "http://www.xbrl.org/2003/role/label": "Vert\u0117s grandin\u0117s darbuotojai [member]"
-        },
-        "nl": {
-          "http://www.xbrl.org/2003/role/label": "Werknemers in de waardeketen [member]"
-        },
-        "pl": {
-          "http://www.xbrl.org/2003/role/label": "Osoby wykonuj\u0105ce prac\u0119 w \u0142a\u0144cuchu warto\u015bci [member]"
-        },
-        "pt": {
-          "http://www.xbrl.org/2003/role/label": "Trabalhadores na cadeia de valor [member]"
-        },
-        "sl": {
-          "http://www.xbrl.org/2003/role/label": "Delavci v vrednostni verigi [member]"
-        },
-        "sq": {
-          "http://www.xbrl.org/2003/role/label": "Pun\u00ebtor\u00ebt n\u00eb zinxhirin e vler\u00ebs [member]"
-        },
-        "sr": {
-          "http://www.xbrl.org/2003/role/label": "Radnici u lancu vrednosti [member]"
-        }
-      },
-      "nillable": true,
       "periodType": "duration"
     },
     "vs:WorkforceHealthAndSafetyAbstract": {
