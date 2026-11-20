@@ -31,7 +31,8 @@ from mireport.xlsx_template_reader.util import loadExcelFromPathOrFileLike
 _SHEET = "S"
 CONVERTER_VERSION = OUR_VERSION_HOLDER.strip_build_metadata
 VSME_ENTRY_POINT = "https://xbrl.efrag.org/taxonomy/vsme/2026-05-01/vsme-all.xsd"
-VS_ENTRY_POINT = "https://xbrl.efrag.org/taxonomy/vs/2026-10-16/vs-all.xsd"
+VS_ENTRY_POINT = "https://xbrl.efrag.org/taxonomy/vs/draft-2026-11-17/vs-all.xsd"
+OLD_VS_ENTRY_POINT = "https://xbrl.efrag.org/taxonomy/vs/2026-10-16/vs-all.xsd"
 SAMPLE_1_3_0 = (
     Path(__file__).parents[2]
     / "digital-templates"
@@ -121,11 +122,11 @@ class TestVersionAgainstTaxonomySupportedVersion:
     def test_vs_template_at_its_configured_version_is_fine(self, migration_target):
         # the migration tool would produce VSME 1.3.0; it must not matter to VS
         migration_target("1.3.0")
-        outcome, _ = doMigrationChecks(_conversion(_report("2.0.0", VS_ENTRY_POINT)))
+        outcome, _ = doMigrationChecks(_conversion(_report("2.0.1", VS_ENTRY_POINT)))
         assert outcome is MigrationOutcome.SUCCESS
 
     def test_vs_template_newer_than_configured_is_too_new(self, migration_target):
-        outcome, _ = doMigrationChecks(_conversion(_report("2.0.1", VS_ENTRY_POINT)))
+        outcome, _ = doMigrationChecks(_conversion(_report("2.0.2", VS_ENTRY_POINT)))
         assert outcome is MigrationOutcome.VERSION_TOO_NEW
 
     def test_older_vs_template_without_a_matching_tool_cannot_migrate(
@@ -138,9 +139,16 @@ class TestVersionAgainstTaxonomySupportedVersion:
     def test_older_vs_template_with_a_matching_tool_must_migrate(
         self, migration_target
     ):
-        migration_target("2.0.0")
+        migration_target("2.0.1")
         outcome, _ = doMigrationChecks(_conversion(_report("1.0.0", VS_ENTRY_POINT)))
         assert outcome is MigrationOutcome.MIGRATION_REQUIRED
+
+    def test_vs_2_0_0_can_migrate_once_the_tool_targets_2_0_1(self, migration_target):
+        migration_target("2.0.1")
+        outcome, _ = doMigrationChecks(
+            _conversion(_report("2.0.0", OLD_VS_ENTRY_POINT))
+        )
+        assert outcome is MigrationOutcome.MIGRATION_OPTIONAL
 
 
 class TestVsmeTemplatesFollowTheMigrationTool:
@@ -227,7 +235,7 @@ class TestCheckMigration:
     def test_too_new_version_continues_to_conversion(
         self, migration_app, migration_target
     ):
-        conv = _conversion(_report("2.0.1", VS_ENTRY_POINT))
+        conv = _conversion(_report("2.0.2", VS_ENTRY_POINT))
         with migration_app.test_request_context():
             assert checkMigration(conv) is None
         assert conv.migration_outcome == str(MigrationOutcome.VERSION_TOO_NEW)
