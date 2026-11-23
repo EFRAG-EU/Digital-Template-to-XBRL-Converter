@@ -29513,6 +29513,174 @@
       "nillable": true,
       "periodType": "duration"
     },
+    "vs:OverallPercentageOfWasteDivertedToPreparationForReuseMass": {
+      "baseDataType": "xbrli:pureItemType",
+      "dataType": "dtr-types:percentItemType",
+      "labels": {
+        "en": {
+          "http://www.xbrl.org/2003/role/label": "Overall percentage of waste diverted to preparation for reuse (mass)"
+        },
+        "es": {
+          "http://www.xbrl.org/2003/role/label": "Porcentaje total de residuos desviados hacia la preparaci\u00f3n para su reutilizaci\u00f3n (masa)"
+        },
+        "fr": {
+          "http://www.xbrl.org/2003/role/label": "Pourcentage global des d\u00e9chets redirig\u00e9s vers la pr\u00e9paration en vue du r\u00e9emploi (masse)"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Az \u00fajrafelhaszn\u00e1l\u00e1sra el\u0151k\u00e9sz\u00edt\u00e9s c\u00e9lj\u00e1b\u00f3l ir\u00e1ny\u00edtott hullad\u00e9kok \u00f6sszes\u00edtett sz\u00e1zal\u00e9kos ar\u00e1nya (t\u00f6meg)"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Percentuale complessiva di rifiuti destinati alla preparazione per il riutilizzo (massa)"
+        },
+        "lt": {
+          "http://www.xbrl.org/2003/role/label": "Bendra atliek\u0173, nukreipt\u0173 parengti pakartotinai naudoti, procentin\u0117 dalis (pagal mas\u0119)"
+        },
+        "pl": {
+          "http://www.xbrl.org/2003/role/label": "Ca\u0142kowity procent odpad\u00f3w kierowanych do przygotowania do ponownego u\u017cycia (masa)"
+        },
+        "pt": {
+          "http://www.xbrl.org/2003/role/label": "Percentagem global dos res\u00edduos desviados para prepara\u00e7\u00e3o para reutiliza\u00e7\u00e3o (massa)"
+        },
+        "sl": {
+          "http://www.xbrl.org/2003/role/label": "Skupni dele\u017e odpadkov, preusmerjenih v pripravo za ponovno uporabo (masa)"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "P\u00ebrqindja totale e mbetjeve t\u00eb devijuara p\u00ebr p\u00ebrgatitje p\u00ebr rip\u00ebrdorim (masa)"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Ukupan procenat otpada usmeren na pripremu za ponovno iskori\u0161\u0107enje (masa)"
+        }
+      },
+      "nillable": true,
+      "numeric": true,
+      "periodType": "duration"
+    },
+    "vs:OverallPercentageOfWasteDivertedToPreparationForReuseVolume": {
+      "baseDataType": "xbrli:pureItemType",
+      "dataType": "dtr-types:percentItemType",
+      "labels": {
+        "en": {
+          "http://www.xbrl.org/2003/role/label": "Overall percentage of waste diverted to preparation for reuse (volume)"
+        },
+        "es": {
+          "http://www.xbrl.org/2003/role/label": "Porcentaje total de residuos desviados hacia la preparaci\u00f3n para su reutilizaci\u00f3n (volumen)"
+        },
+        "fr": {
+          "http://www.xbrl.org/2003/role/label": "Pourcentage global des d\u00e9chets redirig\u00e9s vers la pr\u00e9paration en vue du r\u00e9emploi (volume)"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Az \u00fajrafelhaszn\u00e1l\u00e1sra el\u0151k\u00e9sz\u00edt\u00e9s c\u00e9lj\u00e1b\u00f3l ir\u00e1ny\u00edtott hullad\u00e9kok \u00f6sszes\u00edtett sz\u00e1zal\u00e9kos ar\u00e1nya (t\u00e9rfogat)"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Percentuale complessiva di rifiuti destinati alla preparazione per il riutilizzo (volume)"
+        },
+        "lt": {
+          "http://www.xbrl.org/2003/role/label": "Bendra atliek\u0173, nukreipt\u0173 parengti pakartotinai naudoti, procentin\u0117 dalis (pagal t\u016br\u012f)"
+        },
+        "pl": {
+          "http://www.xbrl.org/2003/role/label": "Ca\u0142kowity procent odpad\u00f3w kierowanych do przygotowania do ponownego u\u017cycia (obj\u0119to\u015b\u0107)"
+        },
+        "pt": {
+          "http://www.xbrl.org/2003/role/label": "Percentagem global dos res\u00edduos desviados para prepara\u00e7\u00e3o para reutiliza\u00e7\u00e3o (volume)"
+        },
+        "sl": {
+          "http://www.xbrl.org/2003/role/label": "Skupni dele\u017e odpadkov, preusmerjenih v pripravo za ponovno uporabo (prostornina)"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "P\u00ebrqindja totale e mbetjeve t\u00eb devijuara p\u00ebr p\u00ebrgatitje p\u00ebr rip\u00ebrdorim (v\u00ebllimi)"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Ukupan procenat otpada usmeren na pripremu za ponovno iskori\u0161\u0107enje (zapremina)"
+        }
+      },
+      "nillable": true,
+      "numeric": true,
+      "periodType": "duration"
+    },
+    "vs:OverallPercentageOfWasteDivertedToRecyclingMass": {
+      "baseDataType": "xbrli:pureItemType",
+      "dataType": "dtr-types:percentItemType",
+      "labels": {
+        "en": {
+          "http://www.xbrl.org/2003/role/label": "Overall percentage of waste diverted to recycling (mass)"
+        },
+        "es": {
+          "http://www.xbrl.org/2003/role/label": "Porcentaje total de residuos desviados al reciclaje (masa)"
+        },
+        "fr": {
+          "http://www.xbrl.org/2003/role/label": "Pourcentage global des d\u00e9chets redirig\u00e9s vers le recyclage (masse)"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Az \u00fajrahasznos\u00edt\u00e1sra ir\u00e1ny\u00edtott hullad\u00e9kok \u00f6sszes\u00edtett ar\u00e1nya (t\u00f6meg)"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Percentuale complessiva di rifiuti destinati al riciclo (massa)"
+        },
+        "lt": {
+          "http://www.xbrl.org/2003/role/label": "Bendra atliek\u0173, nukreipt\u0173 perdirbti, procentin\u0117 dalis (pagal mas\u0119)"
+        },
+        "pl": {
+          "http://www.xbrl.org/2003/role/label": "Ca\u0142kowity procent odpad\u00f3w kierowanych do recyklingu (masa)"
+        },
+        "pt": {
+          "http://www.xbrl.org/2003/role/label": "Percentagem global dos res\u00edduos desviados para reciclagem (massa)"
+        },
+        "sl": {
+          "http://www.xbrl.org/2003/role/label": "Skupni dele\u017e odpadkov, preusmerjenih v recikliranje (masa)"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "P\u00ebrqindja totale e mbetjeve t\u00eb devijuara p\u00ebr riciklim (masa)"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Ukupan procenat otpada usmeren na recikla\u017eu (masa)"
+        }
+      },
+      "nillable": true,
+      "numeric": true,
+      "periodType": "duration"
+    },
+    "vs:OverallPercentageOfWasteDivertedToRecyclingVolume": {
+      "baseDataType": "xbrli:pureItemType",
+      "dataType": "dtr-types:percentItemType",
+      "labels": {
+        "en": {
+          "http://www.xbrl.org/2003/role/label": "Overall percentage of waste diverted to recycling (volume)"
+        },
+        "es": {
+          "http://www.xbrl.org/2003/role/label": "Porcentaje total de residuos desviados al reciclaje (volumen)"
+        },
+        "fr": {
+          "http://www.xbrl.org/2003/role/label": "Pourcentage global des d\u00e9chets redirig\u00e9s vers le recyclage (volume)"
+        },
+        "hu": {
+          "http://www.xbrl.org/2003/role/label": "Az \u00fajrahasznos\u00edt\u00e1sra ir\u00e1ny\u00edtott hullad\u00e9kok \u00f6sszes\u00edtett ar\u00e1nya (t\u00e9rfogat)"
+        },
+        "it": {
+          "http://www.xbrl.org/2003/role/label": "Percentuale complessiva di rifiuti destinati al riciclo (volume)"
+        },
+        "lt": {
+          "http://www.xbrl.org/2003/role/label": "Bendra atliek\u0173, nukreipt\u0173 perdirbti, procentin\u0117 dalis (pagal t\u016br\u012f)"
+        },
+        "pl": {
+          "http://www.xbrl.org/2003/role/label": "Ca\u0142kowity procent odpad\u00f3w kierowanych do recyklingu (obj\u0119to\u015b\u0107)"
+        },
+        "pt": {
+          "http://www.xbrl.org/2003/role/label": "Percentagem global dos res\u00edduos desviados para reciclagem (volume)"
+        },
+        "sl": {
+          "http://www.xbrl.org/2003/role/label": "Skupni dele\u017e odpadkov, preusmerjenih v recikliranje (prostornina)"
+        },
+        "sq": {
+          "http://www.xbrl.org/2003/role/label": "P\u00ebrqindja totale e mbetjeve t\u00eb devijuara p\u00ebr riciklim (v\u00ebllimi)"
+        },
+        "sr": {
+          "http://www.xbrl.org/2003/role/label": "Ukupan procenat otpada usmeren na recikla\u017eu (zapremina)"
+        }
+      },
+      "nillable": true,
+      "numeric": true,
+      "periodType": "duration"
+    },
     "vs:OwnWorkforceAndWorkersInTheValueChainMember": {
       "abstract": true,
       "baseDataType": "xbrli:stringItemType",
@@ -53811,6 +53979,14 @@
         ],
         [
           1,
+          "vs:OverallPercentageOfWasteDivertedToRecyclingMass"
+        ],
+        [
+          1,
+          "vs:OverallPercentageOfWasteDivertedToPreparationForReuseMass"
+        ],
+        [
+          1,
           "vs:TotalHazardousWasteGeneratedVolume"
         ],
         [
@@ -53820,6 +53996,14 @@
         [
           1,
           "vs:TotalWasteGeneratedVolume"
+        ],
+        [
+          1,
+          "vs:OverallPercentageOfWasteDivertedToRecyclingVolume"
+        ],
+        [
+          1,
+          "vs:OverallPercentageOfWasteDivertedToPreparationForReuseVolume"
         ]
       ]
     },
