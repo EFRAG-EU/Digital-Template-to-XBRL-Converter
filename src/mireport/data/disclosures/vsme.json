@@ -70,6 +70,8 @@
         "TotalWasteGeneratedMass": "utr:t",
         "TotalHazardousWasteGeneratedMass": "utr:t",
         "TotalNonHazardousWasteGeneratedMass": "utr:t",
+        "EnergyConsumptionFromFuels": "utr:MWh",
+        "EnergyConsumptionFromSelfGeneratedElectricity": "utr:MWh",
         "TotalWasteGeneratedVolume": "utr:m3",
         "TotalHazardousWasteGeneratedVolume": "utr:m3",
         "TotalNonHazardousWasteGeneratedVolume": "utr:m3",
