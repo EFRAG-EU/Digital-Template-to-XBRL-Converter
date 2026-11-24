@@ -55,7 +55,7 @@ def usedMsgids() -> set[str]:
 
 def test_every_catalog_msgid_is_in_the_report() -> None:
     used = usedMsgids()
-    assert len(list(CATALOGS.glob("*.po"))) == 11
+    assert len(list(CATALOGS.glob("*.po"))) == 7
     for po in CATALOGS.glob("*.po"):
         with po.open("rb") as f:
             msgids = {m.id for m in read_po(f) if m.id}
@@ -63,13 +63,13 @@ def test_every_catalog_msgid_is_in_the_report() -> None:
 
 
 def test_a_language_has_its_catalog() -> None:
-    translations = getReportTranslations(VSME_ENTRY_POINTS, Locale.parse("de"))
-    assert translations.gettext("Report generated") == "Bericht erstellt"
+    translations = getReportTranslations(VSME_ENTRY_POINTS, Locale.parse("es"))
+    assert translations.gettext("Report generated") == "Informe generado"
 
 
 def test_a_territory_falls_back_to_its_language() -> None:
-    translations = getReportTranslations(VSME_ENTRY_POINTS, Locale.parse("de_AT"))
-    assert translations.gettext("Report generated") == "Bericht erstellt"
+    translations = getReportTranslations(VSME_ENTRY_POINTS, Locale.parse("es_MX"))
+    assert translations.gettext("Report generated") == "Informe generado"
 
 
 def test_a_language_with_no_catalog_is_untranslated() -> None:
@@ -77,8 +77,8 @@ def test_a_language_with_no_catalog_is_untranslated() -> None:
     assert type(translations) is NullTranslations
 
 
-def germanJson() -> dict[str, Any]:
-    """A small VSME report whose one text fact is in German."""
+def spanishJson() -> dict[str, Any]:
+    """A small VSME report whose one text fact is in Spanish."""
     return {
         "documentInfo": {
             "documentType": "https://xbrl.org/2021/xbrl-json",
@@ -101,12 +101,12 @@ def germanJson() -> dict[str, Any]:
                 },
             },
             "f2": {
-                "value": "Ein Verhaltenskodex für Lieferanten.",
+                "value": "Un código de conducta para proveedores.",
                 "dimensions": {
                     "concept": "vsme:SpecificationOfOtherTypesOfContentCoveredByTheCodeOfConductOrHumanRightsPolicy",
                     "entity": ENTITY,
                     "period": DURATION,
-                    "language": "de",
+                    "language": "es",
                 },
             },
         },
@@ -114,26 +114,26 @@ def germanJson() -> dict[str, Any]:
 
 
 def jsonReport() -> InlineReport:
-    return XbrlJsonProcessor(germanJson(), ConversionResultsBuilder()).createReport()
+    return XbrlJsonProcessor(spanishJson(), ConversionResultsBuilder()).createReport()
 
 
 def html(report: InlineReport) -> str:
     return report.getInlineReport().fileContent.decode("utf-8")
 
 
-def test_a_german_xbrl_json_report_is_translated() -> None:
+def test_a_spanish_xbrl_json_report_is_translated() -> None:
     report = jsonReport()
     page = html(report)
-    assert report.language == "de"
-    assert "<dt>Bericht erstellt</dt>" in page
-    assert "<h2>Inhaltsverzeichnis</h2>" in page
-    assert "<h2>Dokumentinformationen</h2>" in page
+    assert report.language == "es"
+    assert "<dt>Informe generado</dt>" in page
+    assert "<h2>Tabla de contenido</h2>" in page
+    assert "<h2>Información del documento</h2>" in page
     assert not report.untranslatedStrings
 
 
 def test_translations_are_escaped(monkeypatch: pytest.MonkeyPatch) -> None:
-    catalog = Catalog(locale="de")
-    catalog.add("Report generated", "Bericht <erstellt> & gedruckt")
+    catalog = Catalog(locale="es")
+    catalog.add("Report generated", "Informe <generado> & impreso")
     mo = BytesIO()
     write_mo(mo, catalog)
     mo.seek(0)
@@ -141,7 +141,7 @@ def test_translations_are_escaped(monkeypatch: pytest.MonkeyPatch) -> None:
         "mireport.report.inlinereport.getReportTranslations",
         lambda *_: Translations(mo),
     )
-    assert "<dt>Bericht &lt;erstellt&gt; &amp; gedruckt</dt>" in html(jsonReport())
+    assert "<dt>Informe &lt;generado&gt; &amp; impreso</dt>" in html(jsonReport())
 
 
 def excelReport(language: str, *, duplicates: int = 0) -> InlineReport:
@@ -161,21 +161,21 @@ def excelReport(language: str, *, duplicates: int = 0) -> InlineReport:
 @pytest.mark.slow
 @pytest.mark.xdist_group("report-translations-excel")
 class TestExcelReport:
-    def test_german(self) -> None:
-        report = excelReport("de")
+    def test_spanish(self) -> None:
+        report = excelReport("es")
         page = html(report)
-        assert "<dt>Unternehmensname</dt>" in page
+        assert "<dt>Nombre de la entidad</dt>" in page
         assert (
-            "<p>Alle Angaben beziehen sich auf den oben genannten Berichtszeitraum"
+            "<p>Todas las divulgaciones se refieren al período de reporte indicado arriba"
             in page
         )
-        assert "<p>Dieser Bericht enthält 144 XBRL-Fakten.</p>" in page
+        assert "<p>Este informe contiene 144 elementos XBRL.</p>" in page
         assert not report.untranslatedStrings
 
-    def test_german_with_more_facts_shown_than_distinct(self) -> None:
-        page = html(excelReport("de", duplicates=3))
+    def test_spanish_with_more_facts_shown_than_distinct(self) -> None:
+        page = html(excelReport("es", duplicates=3))
         assert (
-            "<p>Dieser Bericht enthält 147 XBRL-Fakten (144 eindeutige Fakten).</p>"
+            "<p>Este informe contiene 147 elementos XBRL (144 elementos únicos).</p>"
             in page
         )
 

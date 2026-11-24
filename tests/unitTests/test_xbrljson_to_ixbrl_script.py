@@ -22,7 +22,7 @@ SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "xbrljson-to-ixbrl.py
 VSME = "https://xbrl.efrag.org/taxonomy/vsme/2026-05-01"
 ENTITY = "lei:529900T8BM49AURSDO55"
 DURATION = "2026-01-01T00:00:00/2027-01-01T00:00:00"
-GERMAN = Path(mireport.__file__).parent / "data/disclosures/translations/vsme/de.po"
+SPANISH = Path(mireport.__file__).parent / "data/disclosures/translations/vsme/es.po"
 
 
 @pytest.fixture(scope="module")
@@ -91,11 +91,11 @@ def test_report_on_a_built_in_taxonomy_converts(
     assert list(output.glob("*.html"))
 
 
-def test_a_german_report_is_translated_and_says_what_was_not(
+def test_a_spanish_report_is_translated_and_says_what_was_not(
     script: ModuleType, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    with GERMAN.open("rb") as f:
-        catalog = read_po(f, locale="de")
+    with SPANISH.open("rb") as f:
+        catalog = read_po(f, locale="es")
     del catalog["Document Information"]
     mo = BytesIO()
     write_mo(mo, catalog)
@@ -106,12 +106,12 @@ def test_a_german_report_is_translated_and_says_what_was_not(
     )
     document = vsmeReport()
     document["facts"]["f3"] = {
-        "value": "Ein Verhaltenskodex für Lieferanten.",
+        "value": "Un código de conducta para proveedores.",
         "dimensions": {
             "concept": "vsme:SpecificationOfOtherTypesOfContentCoveredByTheCodeOfConductOrHumanRightsPolicy",
             "entity": ENTITY,
             "period": DURATION,
-            "language": "de",
+            "language": "es",
         },
     }
     report = tmp_path / "report.json"
@@ -122,7 +122,7 @@ def test_a_german_report_is_translated_and_says_what_was_not(
     )
     results = script.doConversion(args)
     (html,) = output.glob("*.html")
-    assert "<dt>Bericht erstellt</dt>" in html.read_text(encoding="utf-8")
-    assert "Report strings with no de translation: Document Information" in [
+    assert "<dt>Informe generado</dt>" in html.read_text(encoding="utf-8")
+    assert "Report strings with no es translation: Document Information" in [
         str(m.messageText) for m in results.developerMessages
     ]
