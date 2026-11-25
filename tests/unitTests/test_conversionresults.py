@@ -234,9 +234,7 @@ def test_sections_collect_the_messages_added_while_open(builder):
     with builder.section(Stage.WORKBOOK):
         builder.addMessage("In the workbook", Severity.WARNING, MessageType.Conversion)
     with builder.section(Stage.PRIOR, source="2025.json"):
-        builder.addMessages(
-            [Message("Last year's", Severity.INFO, MessageType.Conversion)]
-        )
+        builder.addMessages([Message("Prior", Severity.INFO, MessageType.Conversion)])
 
     workbook, prior = builder.build().sections
     assert (workbook.stage, workbook.label, workbook.source) == (
@@ -245,8 +243,8 @@ def test_sections_collect_the_messages_added_while_open(builder):
         None,
     )
     assert [m.messageText for m in workbook.messages] == ["In the workbook"]
-    assert prior.title == "Last year's report (2025.json)"
-    assert [m.messageText for m in prior.messages] == ["Last year's"]
+    assert prior.title == "Prior report (2025.json)"
+    assert [m.messageText for m in prior.messages] == ["Prior"]
 
 
 def test_a_message_outside_any_section_goes_to_conversion(builder):
@@ -427,8 +425,8 @@ def test_console_progress_is_printed_not_kept(capsys):
     assert builder.getMessages(wantedMessageTypes={MessageType.Progress}) == []
     printed = capsys.readouterr().out
     assert 'Starting: "Simple Task".' in printed
-    assert "Starting: [Last year's report (2025.json)]." in printed
-    assert "Finished: [Last year's report (2025.json)] in " in printed
+    assert "Starting: [Prior report (2025.json)]." in printed
+    assert "Finished: [Prior report (2025.json)] in " in printed
     assert 'Finished: "Simple Task" in ' in printed
 
 

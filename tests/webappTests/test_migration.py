@@ -285,8 +285,8 @@ class TestVersionlessUploadShowsThePreciseError:
 SAMPLE_1_2_0 = SAMPLE_1_3_0.with_name("VSME-Digital-Template-Sample-1.2.0.xlsx")
 
 
-def _withPrior(prior: dict[str, object] | bytes, filename: str = "last-year.xlsx"):
-    """A conversion of an up-to-date workbook, with last year's report beside it."""
+def _withPrior(prior: dict[str, object] | bytes, filename: str = "prior.xlsx"):
+    """A conversion of an up-to-date workbook, with the prior report beside it."""
     conv = _conversion(_report("1.3.0", VSME_ENTRY_POINT))
     data = prior if isinstance(prior, bytes) else _workbook_bytes(prior)
     conv.priorReport = FilelikeAndFileName(fileContent=data, filename=filename)
@@ -294,7 +294,7 @@ def _withPrior(prior: dict[str, object] | bytes, filename: str = "last-year.xlsx
 
 
 class TestCheckPriorMigration:
-    """Last year's workbook is only offered migration; the conversion reports
+    """The prior workbook is only offered migration; the conversion reports
     anything else wrong with it, and other kinds of report have nothing to
     migrate."""
 
@@ -340,7 +340,7 @@ class TestCheckPriorMigration:
         with migration_app.test_request_context():
             assert checkMigration(_withPrior(prior).prior) is None
 
-    @pytest.mark.parametrize("filename", ["last-year.json", "last-year.xhtml"])
+    @pytest.mark.parametrize("filename", ["prior.json", "prior.xhtml"])
     def test_other_kinds_of_report_are_not_checked(
         self, filename, migration_app, migration_target
     ):
@@ -360,7 +360,7 @@ def _seed(client, conv: Conversion) -> None:
 
 
 class TestPriorMigrationPage:
-    def test_offers_migrating_last_years_workbook_or_using_it_as_it_is(
+    def test_offers_migrating_the_prior_workbook_or_using_it_as_it_is(
         self, migration_app
     ):
         client = migration_app.test_client()
@@ -368,13 +368,13 @@ class TestPriorMigrationPage:
         page = client.get("/migrationPage/test?prior=True")
         assert page.status_code == 200
         body = unescape(page.get_data(as_text=True))
-        assert "Last year's report is a VSME Template of an older version" in body
-        assert "last-year.xlsx" in body
+        assert "The prior report is a VSME Template of an older version" in body
+        assert "prior.xlsx" in body
         assert 'action="/migrationButton/test?prior=True"' in body
         assert "/conversions/test?skip_migration=True&skip_prior_migration=True" in body
-        assert "Use last year's workbook as it is" in body
+        assert "Use the prior workbook as it is" in body
 
-    def test_this_years_page_is_unchanged(self, migration_app):
+    def test_this_reports_page_is_unchanged(self, migration_app):
         client = migration_app.test_client()
         _seed(client, _withPrior(b"old"))
         body = client.get("/migrationPage/test").get_data(as_text=True)
@@ -387,7 +387,7 @@ class TestPriorMigrationPage:
 @pytest.mark.slow
 @pytest.mark.skipif(not MIGRATION_WORKING, reason="needs the migration tool")
 class TestMigratingLastYearsWorkbook:
-    """The 1.2.0 sample is last year's report for the 1.3.0 one."""
+    """The 1.2.0 sample is the prior report for the 1.3.0 one."""
 
     def _upload(self, client, prior: bytes, priorName: str) -> str:
         upload = client.post(
@@ -435,7 +435,7 @@ class TestMigratingLastYearsWorkbook:
         assert page.status_code == 200
         body = unescape(page.get_data(as_text=True))
         assert f"taken from {SAMPLE_1_2_0.name}." in body
-        assert f"Last year's report:</span> {SAMPLE_1_2_0.name}" in body
+        assert f"Prior report:</span> {SAMPLE_1_2_0.name}" in body
         # Converted as it is, it is listed with the others.
         assert f"/conversions/{id}" in client.get("/conversions/").get_data(
             as_text=True

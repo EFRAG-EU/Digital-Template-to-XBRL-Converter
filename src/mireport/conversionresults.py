@@ -325,7 +325,7 @@ _STAGE_LABELS: Mapping[Stage, str] = MappingProxyType(
         Stage.TAXONOMY: "Taxonomy",
         Stage.WORKBOOK: "Digital Template",
         Stage.XBRL_JSON_INPUT: "xBRL-JSON",
-        Stage.PRIOR: "Last year's report",
+        Stage.PRIOR: "Prior report",
         Stage.WORD: "Word documents",
         Stage.PDF: "Supplementary PDFs",
         Stage.IMAGES: "Images",

@@ -106,7 +106,7 @@ def console_print_plain(lines: Iterable[object], indent: str = "\t") -> None:
 
 def printSections(sections: Iterable[Section], *, developer: bool = False) -> None:
     """Each section with messages to show, under a header saying what it is
-    about and what it found ("Last year's report (2025.json): 2 warnings")."""
+    about and what it found ("Prior report (2025.json): 2 warnings")."""
     for section in sections:
         if messages := section.shownMessages(developer):
             found = (

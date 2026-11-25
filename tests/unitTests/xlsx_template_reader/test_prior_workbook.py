@@ -1,4 +1,4 @@
-"""Last year's report as a filled-in Digital Template, read by PriorReport for its comparatives."""
+"""The prior report as a filled-in Digital Template, read by PriorReport for its comparatives."""
 
 from __future__ import annotations
 
@@ -31,20 +31,20 @@ def test_a_migrated_workbook_not_yet_saved_in_excel_is_refused() -> None:
     wb.save(unsaved)
     with pytest.raises(
         EarlyAbortException,
-        match=r"^last-year\.xlsx has been migrated but not yet saved in "
+        match=r"^prior\.xlsx has been migrated but not yet saved in "
         r"Excel\. Open it in Excel, save it, and give it again\.$",
     ):
         PriorReport.fromWorkbook(
-            FilelikeAndFileName(unsaved.getvalue(), "last-year.xlsx"),
+            FilelikeAndFileName(unsaved.getvalue(), "prior.xlsx"),
             ConversionResultsBuilder(),
         )
 
 
 @pytest.mark.slow
-def test_last_years_workbook_on_an_older_template_gives_the_comparatives(
+def test_the_prior_workbook_on_an_older_template_gives_the_comparatives(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """The 1.2.0 sample, on the taxonomy before ours, is for the year before the 1.3.0 one's."""
+    """The 1.2.0 sample, on the taxonomy before ours, is for the period before the 1.3.0 one's."""
     # A migration tool that migrates into 1.3.0, installed or not.
     monkeypatch.setattr(
         "mireport.template_versions.migrationTargetTemplateVersion",
@@ -67,10 +67,10 @@ def test_last_years_workbook_on_an_older_template_gives_the_comparatives(
     assert set(merged.skipped) == {
         SkipReason.NOT_COMPARABLE,
         SkipReason.OTHER_PERIOD,
-        SkipReason.NOTHING_THIS_YEAR,
+        SkipReason.NOTHING_CURRENT,
     }
     assert str(current.priorPeriod) == "2025-01-01T00:00:00/2026-01-01T00:00:00"
-    # Only reading last year's workbook warns (it is an older template), not the merge.
+    # Only reading the prior workbook warns (it is an older template), not the merge.
     reading, merging = results.sections
     assert reading.stage is merging.stage is Stage.PRIOR
     assert reading.hasWarnings()

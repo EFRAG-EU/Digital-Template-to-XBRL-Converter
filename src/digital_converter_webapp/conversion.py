@@ -63,9 +63,9 @@ class Conversion:
 
     @property
     def prior(self) -> Conversion:
-        """This conversion as last year's workbook sees it, for the migration
+        """This conversion as the prior workbook sees it, for the migration
         flow: its ``migrationSource`` is ``priorReport``, and its migration
-        state is kept apart from this year's."""
+        state is kept apart from this report's."""
         return Conversion(self._data, self._onChange, prior=True)
 
     @property
@@ -218,7 +218,7 @@ class Conversion:
 
     @property
     def priorReport(self) -> FilelikeAndFileName | None:
-        """Last year's report, whose figures become the comparatives."""
+        """The prior report, whose figures become the comparatives."""
         return self._getFilelike("priorReport")
 
     @priorReport.setter
@@ -235,7 +235,7 @@ class Conversion:
 
     @property
     def migrationSource(self) -> FilelikeAndFileName | None:
-        """The workbook the migration flow is about: this year's, or last year's."""
+        """The workbook the migration flow is about: this report's, or the prior report's."""
         return self.priorReport if self._prior else self.excel
 
     @property

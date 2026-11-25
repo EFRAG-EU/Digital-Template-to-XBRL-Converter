@@ -199,7 +199,7 @@ def createArgParser() -> argparse.ArgumentParser:
         "--prior",
         type=Path,
         default=None,
-        help="Last year's report (xBRL-JSON, a Digital Template workbook, Inline XBRL or a report package), whose figures become the comparatives.",
+        help="The prior report (xBRL-JSON, a Digital Template workbook, Inline XBRL or a report package), whose figures become the comparatives.",
     )
     parser.add_argument(
         "--debug",

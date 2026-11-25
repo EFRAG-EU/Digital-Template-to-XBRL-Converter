@@ -1,6 +1,6 @@
-"""Last year's report, read from a file for its comparatives (see mireport.report.comparatives).
+"""The prior report, read from a file for its comparatives (see mireport.report.comparatives).
 
-The file is read as a whole report on its own. Its messages are about last year's report, so they
+The file is read as a whole report on its own. Its messages are about the prior report, so they
 go in a section of their own. One that can't be read or merged is an error, and stops the conversion
 (EarlyAbortException).
 """
@@ -54,7 +54,7 @@ PRIOR_REPORT_EXTENSIONS = (
 
 @dataclass(frozen=True, slots=True)
 class PriorReport:
-    """Last year's report, read on its own, to take this year's comparatives from."""
+    """The prior report, read on its own, to take this report's comparatives from."""
 
     report: Report
     fileName: str
@@ -67,7 +67,7 @@ class PriorReport:
         *,
         arelle: ArelleReportProcessor,
     ) -> Self:
-        """Last year's report in ``source``, read as its extension says."""
+        """The prior report in ``source``, read as its extension says."""
         with results.section(Stage.PRIOR, source=source.filename):
             match PurePath(source.filename).suffix.lower():
                 case ".json":
@@ -106,7 +106,7 @@ class PriorReport:
         arelle: ArelleReportProcessor,
     ) -> Self:
         """Inline XBRL, or any report package, which ``arelle`` writes as xBRL-JSON. What Arelle
-        finds wrong with last year's report is a warning here, not an error."""
+        finds wrong with the prior report is a warning here, not an error."""
         return cls._read(source, results, partial(_readInlineXbrl, arelle=arelle))
 
     @classmethod
@@ -117,7 +117,7 @@ class PriorReport:
         reader: Callable[[FilelikeAndFileName, ConversionResultsBuilder], Report],
     ) -> Self:
         """``reader``'s report, with its messages passed on to ``results``, in the
-        section for last year's."""
+        section for the prior report."""
         read = ConversionResultsBuilder(conversionId=results.conversionId)
         with results.section(Stage.PRIOR, source=source.filename):
             try:
@@ -131,7 +131,7 @@ class PriorReport:
     def mergeInto(
         self, report: Report, results: ConversionResultsBuilder
     ) -> PriorMerge:
-        """Add this report's numbers and booleans for the year before ``report``'s as its
+        """Add this report's numbers and booleans for a period before ``report``'s as its
         prior period (mergePriorReport)."""
         with results.section(Stage.PRIOR, source=self.fileName):
             try:
@@ -196,7 +196,7 @@ def _readInlineXbrl(
         raise InlineReportException(
             f"Arelle could not load the taxonomy of {name}."
             + (
-                " Working offline, it needs last year's taxonomy package too."
+                " Working offline, it needs the prior report's taxonomy package too."
                 if arelle.workOffline
                 else ""
             )

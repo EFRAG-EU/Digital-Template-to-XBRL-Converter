@@ -107,7 +107,7 @@ def checkMigration(conv: Conversion) -> Response | None:
     """Run the migration checks, recording the outcome on ``conv``.
 
     Returns a redirect if the conversion must not go ahead, otherwise None.
-    Last year's workbook (``conv.prior``) is only offered migration: anything
+    The prior workbook (``conv.prior``) is only offered migration: anything
     else wrong with it is for the conversion to report.
     """
     if conv.isPrior and not _isWorkbook(conv.migrationSource):
@@ -149,7 +149,7 @@ def _isWorkbook(upload: FilelikeAndFileName | None) -> bool:
 
 
 def _getConversion(id: str) -> Conversion | None:
-    """Conversion ``id``, as last year's workbook sees it if the request says
+    """Conversion ``id``, as the prior workbook sees it if the request says
     ``prior``."""
     conv = ConversionStore.fromFlask().get(id)
     if conv is not None and truthy(request.args.get("prior", "")):

@@ -1,9 +1,9 @@
-"""Comparatives from last year's report: its own period's numbers and booleans, and what sits beside
+"""Comparatives from the prior report: its own period's numbers and booleans, and what sits beside
 them in a table, become this report's prior period.
 
-Last year's report is read as a whole report on its own (see mireport.comparatives), so nothing has
+The prior report is read as a whole report on its own (see mireport.comparatives), so nothing has
 to guess which of a file's periods is the prior one: it is the duration that ends where this
-report's own period starts. Only the Report model is used here, so where last year's report came
+report's own period starts. Only the Report model is used here, so where the prior report came
 from does not matter; the facts taken from one on another version of this report's taxonomy
 are matched to it by name (alignToTaxonomy).
 """
@@ -31,12 +31,12 @@ PRIOR_PERIOD_NAME = "prior"
 
 
 class SkipReason(StrEnum):
-    """Why a fact in last year's report was not taken."""
+    """Why a fact in the prior report was not taken."""
 
     OTHER_PERIOD = "not in the prior period"
     NOT_COMPARABLE = "neither a number nor a boolean, nor in a table row with one"
     NIL = "nil"
-    NOTHING_THIS_YEAR = "nothing in this report's own period to compare it with"
+    NOTHING_CURRENT = "nothing in this report's own period to compare it with"
     ALREADY_REPORTED = "already in this report"
     CONFLICT = "different from this report"
     INVALID = "could not be added"
@@ -63,10 +63,10 @@ _SKIP_MESSAGES: Mapping[SkipReason, tuple[Severity, str]] = {
         ),
     ),
     SkipReason.NIL: (Severity.INFO, "{count} nil facts in {fileName} left out."),
-    SkipReason.NOTHING_THIS_YEAR: (
+    SkipReason.NOTHING_CURRENT: (
         Severity.INFO,
         (
-            "{count} facts in {fileName} left out: this report has nothing for this year to "
+            "{count} facts in {fileName} left out: this report has nothing in its own period to "
             "compare them with."
         ),
     ),
@@ -93,7 +93,7 @@ _SKIP_MESSAGES: Mapping[SkipReason, tuple[Severity, str]] = {
 def mergePriorReport(
     report: Report, prior: Report, results: ConversionResultsBuilder, *, fileName: str
 ) -> PriorMerge:
-    """Add ``prior``'s numbers and booleans for the year before ``report``'s as its prior period.
+    """Add ``prior``'s numbers and booleans for a period before ``report``'s as its prior period.
 
     ``report``'s own period is its default duration; it must not have comparatives already.
     From ``prior`` the one duration that ends where that starts is taken, at any length, with the
@@ -121,7 +121,7 @@ def mergePriorReport(
     existing: dict[tuple, list[Fact]] = defaultdict(list)
     for fact in report.facts:
         existing[fact.duplicateKey].append(fact)
-    # What this report says for its own year: a comparative is shown beside one of these, or not at all.
+    # What this report says for its own period: a comparative is shown beside one of these, or not at all.
     thisYears = {
         _subject(f)
         for f in report.facts
@@ -163,7 +163,7 @@ def mergePriorReport(
             _devInfo(results, f"Comparative {fact} from {fileName} not added: {e}")
             continue
         if _subject(built) not in thisYears:
-            skipped[SkipReason.NOTHING_THIS_YEAR] += 1
+            skipped[SkipReason.NOTHING_CURRENT] += 1
             continue
         if same := existing.get(built.duplicateKey):
             inconsistent = any(
@@ -222,7 +222,7 @@ def alignToTaxonomy(theirs: Taxonomy, ours: Taxonomy) -> Mapping[QName, Concept]
         return {c.qname: c for c in ours.concepts}
     if not areVersionsOfOneTaxonomy(theirs.entryPointSet, ours.entryPointSet):
         raise InlineReportException(
-            f"Last year's report is on taxonomy {sorted(theirs.entryPointSet)}, not this "
+            f"The prior report is on taxonomy {sorted(theirs.entryPointSet)}, not this "
             f"report's {sorted(ours.entryPointSet)} or another version of it."
         )
     names = Counter(c.qname.localName for c in ours.concepts)
@@ -285,13 +285,13 @@ def _checkSameReporter(report: Report, prior: Report) -> None:
     theirs = (prior.entityScheme, prior.entityIdentifier)
     if ours != theirs:
         raise InlineReportException(
-            f"Last year's report is for entity {theirs[1]} ({theirs[0]}), "
+            f"The prior report is for entity {theirs[1]} ({theirs[0]}), "
             f"not this report's {ours[1]} ({ours[0]})."
         )
 
 
 def _checkNoComparatives(report: Report) -> None:
-    """Comparatives come from last year's report, so this one must not have any already: a prior
+    """Comparatives come from the prior report, so this one must not have any already: a prior
     period, or a duration that overlaps its own or ends where it starts. Other durations, such as
     baseline and target years, are left alone."""
     current = report.defaultPeriod
@@ -301,8 +301,8 @@ def _checkNoComparatives(report: Report) -> None:
         if p.duration != current
     ):
         raise InlineReportException(
-            f"This report already has comparatives for {_days(current)}, so last year's "
-            f"report cannot add them. Its periods: {_listPeriods(report.reportingPeriods)}."
+            f"This report already has comparatives for {_days(current)}, so the prior report "
+            f"cannot add them. Its periods: {_listPeriods(report.reportingPeriods)}."
         )
 
 
@@ -327,17 +327,17 @@ def _linedUpDuration(report: Report, prior: Report) -> DurationPeriodHolder:
     theirs = prior.defaultPeriod
     if not candidates and theirs == current:
         raise InlineReportException(
-            f"Last year's report is for {_days(theirs)}, the same period as this report: is it "
-            f"this year's report given twice?"
+            f"The prior report is for {_days(theirs)}, the same period as this report: is it "
+            f"this report given twice?"
         )
     if not candidates and theirs.start >= current.end:
         raise InlineReportException(
-            f"Last year's report is for {_days(theirs)}, after this report's {_days(current)}: "
+            f"The prior report is for {_days(theirs)}, after this report's {_days(current)}: "
             f"are the two the wrong way round?"
         )
     found = "no" if not candidates else "more than one"
     raise InlineReportException(
-        f"Last year's report has {found} period ending where this report's {_days(current)} "
+        f"The prior report has {found} period ending where this report's {_days(current)} "
         f"starts. Its periods: {_listPeriods(prior.reportingPeriods)}; "
         f"this report's: {_listPeriods(report.reportingPeriods)}."
     )

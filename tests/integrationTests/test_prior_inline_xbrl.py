@@ -1,5 +1,5 @@
-"""Last year's report as Inline XBRL or a report package, read through Arelle by PriorReport for
-its comparatives: the 1.2.0 sample is for the year before the 1.3.0 one's."""
+"""The prior report as Inline XBRL or a report package, read through Arelle by PriorReport for
+its comparatives: the 1.2.0 sample is for the period before the 1.3.0 one's."""
 
 from __future__ import annotations
 
@@ -46,12 +46,12 @@ def _package(document: bytes, name: str, kind: str) -> FilelikeAndFileName:
     content = BytesIO()
     with zipfile.ZipFile(content, "w") as zf:
         zf.writestr(
-            "last-year/META-INF/reportPackage.json",
+            "prior/META-INF/reportPackage.json",
             '{"documentInfo": {"documentType": '
             f'"https://xbrl.org/report-package/2023/{kind}"}}}}',
         )
-        zf.writestr(f"last-year/reports/{name}", document)
-    return FilelikeAndFileName(content.getvalue(), f"last-year.{kind}")
+        zf.writestr(f"prior/reports/{name}", document)
+    return FilelikeAndFileName(content.getvalue(), f"prior.{kind}")
 
 
 def _lastYear(form: str) -> FilelikeAndFileName:
@@ -65,7 +65,7 @@ def _lastYear(form: str) -> FilelikeAndFileName:
 
 
 @pytest.mark.parametrize("form", ["html", "xbri", "xbr"])
-def test_last_years_report_through_arelle_gives_the_comparatives(
+def test_the_prior_report_through_arelle_gives_the_comparatives(
     arelle: ArelleReportProcessor, form: str
 ) -> None:
     lastYear = _lastYear(form)
@@ -88,15 +88,15 @@ def test_a_bad_inline_xbrl_report_stops_the_conversion(
     results = ConversionResultsBuilder(consoleOutput=False)
     with pytest.raises(
         EarlyAbortException,
-        match=r"^Arelle could not read last-year\.xhtml as an XBRL report\.$",
+        match=r"^Arelle could not read prior\.xhtml as an XBRL report\.$",
     ) as raised:
         PriorReport.fromInlineXbrl(
-            FilelikeAndFileName(b"<html>not XBRL</html>", "last-year.xhtml"),
+            FilelikeAndFileName(b"<html>not XBRL</html>", "prior.xhtml"),
             results,
             arelle=arelle,
         )
     [section] = results.sections
-    assert (section.stage, section.source) == (Stage.PRIOR, "last-year.xhtml")
+    assert (section.stage, section.source) == (Stage.PRIOR, "prior.xhtml")
     *read, error = section.messages
     assert read
     assert all(m.severity is not Severity.ERROR for m in read)

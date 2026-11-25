@@ -60,7 +60,7 @@ def test_each_section_has_a_header_then_its_messages(script, capsys):
         "",
         "Information and issues encountered (4 messages):",
         "Digital Template (vsme.xlsx): 1 warning",
-        "Last year's report (2025.json): 2 warnings",
+        "Prior report (2025.json): 2 warnings",
         "Word documents: 1 error",
     ]
     assert lines[-1].endswith(": policy.docx: Could not be read.")

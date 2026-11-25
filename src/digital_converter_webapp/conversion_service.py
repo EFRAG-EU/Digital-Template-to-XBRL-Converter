@@ -60,7 +60,7 @@ def doConversion(
     """Drive the Excel → Inline XBRL report pipeline.
 
     Side effects on ``conv``: may populate ``partial_fact_concepts`` (which
-    tells the caller to ask the user for Word documents; last year's report,
+    tells the caller to ask the user for Word documents; the prior report,
     ``priorReport``, is read only once they are in), and on success stores
     the generated report package as ``conv.zip`` and the report as xBRL-JSON,
     written from the report itself, as ``conv.json``. Validating them is left
@@ -237,7 +237,7 @@ def _mergePriorReport(
     builder: ConversionResultsBuilder,
     arelle: ArelleReportProcessor,
 ) -> None:
-    """Take the comparatives from last year's report, if one was uploaded. One
+    """Take the comparatives from the prior report, if one was uploaded. One
     that can't be read or merged stops the conversion, as a bad workbook does:
     the EarlyAbortException ends the processing context."""
     if (prior := conv.priorReport) is None:
