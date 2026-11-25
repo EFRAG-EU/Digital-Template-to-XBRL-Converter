@@ -183,7 +183,7 @@
             {% set _grp_fn = footnotes_by_group.get(section.presentation.roleUri) %}
             {{ macros.create_h2_title(section, loop, footnote_manager, _grp_fn) }}
 
-            <table class="thematic-table">
+            <table class="thematic-table{% if section.table.column_count > 8 %} wide-table{% endif %}">
                 <thead>
                 {% for row in section.table.header_rows %}
                     {% set rowloop = loop %}
