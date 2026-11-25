@@ -11,7 +11,7 @@ from PIL.Image import Resampling
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
-    from typing import BinaryIO
+    from typing import BinaryIO, Self
 
     from typing_extensions import Buffer
 
@@ -137,6 +137,11 @@ class FilelikeAndFileName(NamedTuple):
         if not isinstance(filename, str):
             raise TypeError(f"filename must be str, got {type(filename).__name__}")
         return cls(fileContent=content, filename=filename)
+
+    @classmethod
+    def fromPath(cls, path: Path) -> Self:
+        """The file at ``path``, under its own name."""
+        return cls(fileContent=path.read_bytes(), filename=path.name)
 
     def __str__(self) -> str:
         return f'"{self.filename}" [{format_bytes(len(self.fileContent))}]'

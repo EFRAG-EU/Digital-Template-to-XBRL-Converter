@@ -54,7 +54,7 @@ def _convert_docx_to_markup(
     that can't be converted at all stops the conversion."""
     try:
         conversion = convertDocxToHtml(
-            FilelikeAndFileName(docx_path.read_bytes(), docx_path.name),
+            FilelikeAndFileName.fromPath(docx_path),
             idPrefix=idPrefix,
         )
     except DocxConversionError as e:
@@ -276,7 +276,7 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, list[str]
             )
             report = xl_processor.createReport()
         if args.prior:
-            prior = FilelikeAndFileName(args.prior.read_bytes(), args.prior.name)
+            prior = FilelikeAndFileName.fromPath(args.prior)
             with resultsBuilder.section(Stage.PRIOR, source=prior.filename):
                 PriorReport.fromFile(prior, resultsBuilder, arelle=arp).mergeInto(
                     report, resultsBuilder
@@ -371,11 +371,7 @@ def doConversion(args: argparse.Namespace) -> tuple[ConversionResults, list[str]
 
             for entry in extra.get("pdfAttachments", []):
                 pdf_path = _resolve_extra_path(extra_file, entry["path"])
-                supplementary_pdfs.append(
-                    FilelikeAndFileName(
-                        fileContent=pdf_path.read_bytes(), filename=pdf_path.name
-                    )
-                )
+                supplementary_pdfs.append(FilelikeAndFileName.fromPath(pdf_path))
 
         pdfs = convertSupplementaryPdfs(
             supplementary_pdfs, resultsBuilder, mode=args.pdf_mode

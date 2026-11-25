@@ -176,7 +176,7 @@ def doConversion(args: argparse.Namespace) -> ConversionResults:
                 MessageType.Conversion,
             )
         if args.prior:
-            prior = FilelikeAndFileName(args.prior.read_bytes(), args.prior.name)
+            prior = FilelikeAndFileName.fromPath(args.prior)
             with resultsBuilder.section(Stage.PRIOR, source=prior.filename):
                 PriorReport.fromFile(prior, resultsBuilder, arelle=arp).mergeInto(
                     report, resultsBuilder

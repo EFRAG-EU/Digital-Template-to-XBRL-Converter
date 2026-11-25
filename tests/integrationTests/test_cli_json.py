@@ -58,9 +58,7 @@ def test_the_report_is_written_as_xbrl_json_the_reader_takes(tmp_path: Path) -> 
 def test_arelle_finds_nothing_wrong_with_it(tmp_path: Path) -> None:
     """1.3.0 has footnotes, so this covers the link types and note facts too."""
     path = _convert(SAMPLE_1_3_0, tmp_path)
-    result = offlineArelle().validateXbrlJson(
-        FilelikeAndFileName(fileContent=path.read_bytes(), filename=path.name)
-    )
+    result = offlineArelle().validateXbrlJson(FilelikeAndFileName.fromPath(path))
     assert not result.has_exceptions, result.log_lines
     problems = [
         m.messageText

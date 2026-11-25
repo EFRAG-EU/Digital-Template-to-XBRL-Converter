@@ -153,6 +153,22 @@ def conversion_of():
     return _conversionOf
 
 
+@pytest.fixture()
+def workbookParses(monkeypatch) -> list[bool]:
+    """Every workbook parse from here on, each recorded as whether it was read-only."""
+    from mireport.xlsx_template_reader import util
+
+    parses: list[bool] = []
+    parse = util.load_workbook
+
+    def _counting(*args, **kwargs):
+        parses.append(kwargs.get("read_only", False))
+        return parse(*args, **kwargs)
+
+    monkeypatch.setattr(util, "load_workbook", _counting)
+    return parses
+
+
 @pytest.fixture(scope="session")
 def converted_id(app):
     """Run the full pipeline once and return ``(conversion id, client)``.
