@@ -344,7 +344,8 @@ prior report's taxonomy package too), and its
 duration; its other durations (baseline and target years) are left alone, but a prior period, or a
 duration overlapping its own or ending where it starts, means it already has comparatives, and the merge
 raises. From the prior report the one duration that ends where ours starts (at any length) is taken,
-with the instants at its ends; facts in its other periods are left out with one info message. Only
+or else its own period if that ends on the same day of an earlier year (VSME need not be reported
+every year, but the periods must line up; the gap gets an info message), with the instants at its ends; facts in its other periods are left out with one info message. Only
 non-nil numbers and booleans are copied, and any other fact in a table row with one (the same
 presentation group and dimensions), each rebuilt with a `FactBuilder` so every check re-runs,
 without footnotes, and each keeps its unit. A comparative is taken only beside this report's fact for
