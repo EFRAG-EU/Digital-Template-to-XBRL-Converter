@@ -175,11 +175,37 @@ def test_a_prior_duration_of_any_length_lines_up_by_its_end() -> None:
     assert str(current.priorPeriod) == eighteenMonths
 
 
+def test_a_prior_report_from_an_earlier_year_lines_up_across_the_gap() -> None:
+    current = _report(_revenue("100"))
+    results, merged = _merge(current, _report(_revenue("80", OLDER)))
+    assert merged.taken == 1 and str(current.priorPeriod) == OLDER
+    assert _messages(results, Severity.INFO) == [
+        f"Comparative figures for 2023-01-01 – 2023-12-31: 1 taken from {FILE}.",
+        (
+            "The prior period, 2023-01-01 – 2023-12-31, ends before this report's "
+            "2025-01-01 – 2025-12-31 starts: 2024-01-01 – 2024-12-31 lies between them."
+        ),
+    ]
+
+
+def test_only_the_prior_reports_own_period_lines_up_across_a_gap() -> None:
+    """Its baseline year ends on the day this report starts, but years before: not taken."""
+    prior = _report(
+        _revenue("90", "2024-04-01T00:00:00/2025-04-01T00:00:00"),
+        _revenue("70", BASELINE),
+    )
+    with pytest.raises(InlineReportException, match="does not line up"):
+        _merge(_report(_revenue("100")), prior)
+
+
 @pytest.mark.parametrize(
     "period",
     [
         pytest.param("2023-01-01T00:00:00/2024-07-01T00:00:00", id="gap"),
         pytest.param("2024-07-01T00:00:00/2025-07-01T00:00:00", id="overlap"),
+        pytest.param(
+            "2023-04-01T00:00:00/2024-04-01T00:00:00", id="earlier year, another day"
+        ),
     ],
 )
 def test_a_prior_report_that_does_not_line_up_raises_listing_periods(
@@ -190,8 +216,8 @@ def test_a_prior_report_that_does_not_line_up_raises_listing_periods(
     with pytest.raises(InlineReportException) as raised:
         _merge(current, prior)
     message = str(raised.value)
-    assert "has no period ending where" in message
-    assert "2025-01-01 – 2025-12-31" in message
+    assert "does not line up with this report's 2025-01-01 – 2025-12-31" in message
+    assert "it must end on 31 December" in message
     assert prior.defaultPeriod.firstDay.isoformat() in message
     assert current.priorPeriod is None and len(current.reportingPeriods) == 1
 
