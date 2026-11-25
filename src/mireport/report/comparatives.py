@@ -39,6 +39,7 @@ class SkipReason(StrEnum):
     NOT_COMPARABLE = "neither a number nor a boolean, nor in a table row with one"
     NIL = "nil"
     NOTHING_THIS_YEAR = "nothing in this report's own period to compare it with"
+    UNCHANGED = "a boolean outside a table, the same as this report's"
     ALREADY_REPORTED = "already in this report"
     CONFLICT = "different from this report"
     INVALID = "could not be added"
@@ -70,6 +71,13 @@ _SKIP_MESSAGES: Mapping[SkipReason, tuple[Severity, str]] = {
         (
             "{count} facts in {fileName} left out: this report has nothing for this year to "
             "compare them with."
+        ),
+    ),
+    SkipReason.UNCHANGED: (
+        Severity.INFO,
+        (
+            "{count} booleans in {fileName} left out: not in a table, and the same as this "
+            "report's."
         ),
     ),
     SkipReason.CONFLICT: (
@@ -104,7 +112,8 @@ def mergePriorReport(
     and booleans are taken, and any other fact in a table row with one taken (the same
     presentation group and dimensions, so the row is drawn for the prior period anyway), without
     footnotes, and only where ``report`` has its own period's fact for the same concept and
-    dimensions to compare them with; a fact ``report`` already has is skipped: this report wins.
+    dimensions to compare them with; a boolean outside a table only where it differs from that
+    one. A fact ``report`` already has is skipped: this report wins.
     From ``prior`` on another version of ``report``'s taxonomy, those facts are matched to it by
     name (alignToTaxonomy). Raises InlineReportException, before changing ``report``, when the two
     cannot be merged.
@@ -129,6 +138,14 @@ def mergePriorReport(
         _subject(f)
         for f in report.facts
         if f.period.reportPeriod == report.defaultReportPeriod
+    }
+    # Its own booleans outside tables: a prior one with the same value is no news.
+    unchanged = {
+        (f.concept, f.value)
+        for f in report.facts
+        if f.concept.isBoolean
+        and not _dimensions(f)
+        and f.period.reportPeriod == report.defaultReportPeriod
     }
     dropped: Counter[ReportPeriod] = Counter()
     skipped: Counter[SkipReason] = Counter()
@@ -167,6 +184,9 @@ def mergePriorReport(
             continue
         if _subject(built) not in thisYears:
             skipped[SkipReason.NOTHING_THIS_YEAR] += 1
+            continue
+        if not _dimensions(built) and (built.concept, built.value) in unchanged:
+            skipped[SkipReason.UNCHANGED] += 1
             continue
         if same := existing.get(built.duplicateKey):
             inconsistent = any(
