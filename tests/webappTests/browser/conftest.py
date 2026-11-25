@@ -44,15 +44,22 @@ CONVERSION_TIMEOUT_MS = 60_000
 
 
 @pytest.hookimpl(tryfirst=True)
-def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
-    """All the browser tests on one xdist worker: one Chromium, one server and
-    Arelle loaded once. Spread across workers, each pays for all three and the
-    conversions fight for the CPU, which more than doubles them. First, so the
-    marks are there when xdist reads them."""
+def pytest_collection_modifyitems(
+    config: pytest.Config, items: list[pytest.Item]
+) -> None:
+    """The browser tests run only on their own (``pytest tests/webappTests/browser``,
+    a CI job of its own): beside other tests, whose conversions fight for the CPU,
+    their clicks time out, so they are deselected. On their own, all on one xdist
+    worker: one Chromium, one server and Arelle loaded once. First, so the marks
+    are there when xdist reads them."""
     browserDir = Path(__file__).parent
-    for item in items:
-        if browserDir in item.path.parents:
-            item.add_marker(pytest.mark.xdist_group("browser"))
+    browser = [item for item in items if browserDir in item.path.parents]
+    if len(browser) < len(items):
+        config.hook.pytest_deselected(items=browser)
+        items[:] = [item for item in items if browserDir not in item.path.parents]
+        return
+    for item in browser:
+        item.add_marker(pytest.mark.xdist_group("browser"))
 
 
 @pytest.fixture(scope="session")

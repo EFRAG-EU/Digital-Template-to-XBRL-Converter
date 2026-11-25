@@ -57,7 +57,9 @@ quicker for a single test and needed for a debugger.
 - `tests/webappTests/browser/` drives the served web app through Chromium with Playwright, so the
   pages' JavaScript runs. The server is a thread in the test process, so `monkeypatch` reaches it.
   It is skipped until the browser is installed (`.venv-py314/Scripts/python -m playwright install chromium`)
-  and, as in CI, best run on its own: `--ignore=tests/webappTests/browser` for the rest of the web app tests.
+  and runs only on its own, as in CI: collected beside any other test (a bare `pytest`, say), its conftest
+  deselects it, since the other suites' conversions starve its clicks into timeouts. Run
+  `pytest tests/webappTests/browser` separately.
 
 ### Lint and types
 
