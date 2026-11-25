@@ -308,6 +308,29 @@ def test_the_fact_keeps_its_value_whatever_the_row_shows(costs: Taxonomy) -> Non
     assert 'sign="-"' in staff.group(0)
 
 
+def test_a_table_of_many_columns_is_compact_on_a_landscape_page(
+    costs: Taxonomy,
+) -> None:
+    report = InlineReport(costs)
+    report.setEntity("http://standards.iso.org/iso/17442", "529900T8BM49AURSDO55")
+    for year in range(2017, 2026):
+        report.addDurationPeriod(f"y{year}", date(year, 1, 1), date(year, 12, 31))
+        fb = FactBuilder(report).setConcept(costs.getConcept(qname("Rent")))
+        fb.setValue(year - 2000).setDecimals(0).setNamedPeriod(f"y{year}")
+        report.addFact(fb.setSimpleUnit(_Q.fromString("utr:kg")).buildFact())
+    report.setDefaultPeriodName("y2025")
+    html = _html(report)
+    page = re.search(r'<div class="(page [a-z-]+)">\s*<h2[^>]*>\s*Costs', html)
+    assert page is not None and page.group(1) == "page landscape-page"
+    assert html.count('<table class="thematic-table wide-table">') == 1
+    assert problems(html) == []
+
+
+def test_a_table_of_few_columns_is_not_compact(costs: Taxonomy) -> None:
+    html = _html(_costs_report(costs, {"Staff": 30, "Rent": 20, "Total": 50}))
+    assert html.count('<table class="thematic-table">') == 1
+
+
 def _only_ends(taxonomy: Taxonomy, repeat: bool = False) -> InlineReport:
     """Cash only at the end of each period, as a producer that tags the opening balance of a year
     as the closing balance of the year before does; optionally with every fact given twice."""
