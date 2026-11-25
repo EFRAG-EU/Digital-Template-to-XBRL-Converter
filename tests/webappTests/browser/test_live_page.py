@@ -10,7 +10,7 @@ import threading
 
 import pytest
 from cachelib.file import FileSystemCache
-from playwright.sync_api import Page, expect
+from playwright.sync_api import Locator, Page, expect
 from tests.unitTests.arelle_results import cleanValidation
 
 from digital_converter_webapp import create_app
@@ -136,20 +136,32 @@ def test_page_is_shown_while_validating_then_updates_itself(
         )
 
 
-def test_download_waits_for_validation(page: Page, uploadAndConvert, arelle):
+def expectDisabled(where: Page | Locator, names, disabled: bool = True) -> None:
+    for name in names:
+        button = expect(where.get_by_role("link", name=name))
+        if disabled:
+            button.to_have_attribute("aria-disabled", "true")
+        else:
+            button.not_to_have_attribute("aria-disabled", "true")
+
+
+def test_downloads_are_disabled_until_validated(page: Page, uploadAndConvert, arelle):
     arelle.gate.clear()
     uploadAndConvert(page)
 
-    with page.expect_download(timeout=SETTLE_TIMEOUT_MS) as info:
+    expect(page.get_by_text("once it has been validated")).to_be_visible()
+    expectDisabled(page, DOWNLOAD_BUTTONS)
+    arelle.gate.set()
+
+    expectSettled(page)
+    expect(page.get_by_text("once it has been validated")).to_be_hidden()
+    expectDisabled(page, DOWNLOAD_BUTTONS, disabled=False)
+    with page.expect_download(timeout=5_000) as info:
         page.get_by_role("link", name="Download xBRL-JSON").click()
-        expect(page.locator("#loadingSpinner")).to_be_visible()
-        arelle.gate.set()
-
     assert info.value.suggested_filename.endswith(".json")
-    expect(page.locator("#loadingSpinner")).to_be_hidden()
 
 
-def test_validation_errors_cancel_a_waiting_download(
+def test_downloads_stay_disabled_when_validation_fails(
     page: Page, uploadAndConvert, arelle
 ):
     arelle.gate.clear()
@@ -158,21 +170,38 @@ def test_validation_errors_cancel_a_waiting_download(
     page.on("download", lambda download: downloads.append(download))
     uploadAndConvert(page)
 
-    page.get_by_role("link", name="Download xBRL-JSON").click()
-    expect(page.locator("#loadingSpinner")).to_be_visible()
+    expectDisabled(page, DOWNLOAD_BUTTONS)
+    page.get_by_role("link", name="Download xBRL-JSON").click(force=True)
     arelle.gate.set()
 
-    expect(page.locator("#errorModal")).to_be_visible(timeout=SETTLE_TIMEOUT_MS)
-    expect(page.locator("#errorMessage")).to_contain_text("Validation found errors")
-    expect(page.locator("#loadingSpinner")).to_be_hidden()
     expectSettled(page)
     expect(page.get_by_text(INVALID)).to_be_visible()
     expect(page.get_by_text(FAKE_ERROR)).to_be_visible()
-    for name in DOWNLOAD_BUTTONS:
-        expect(page.get_by_role("link", name=name)).to_have_attribute(
-            "aria-disabled", "true"
-        )
+    expectDisabled(page, DOWNLOAD_BUTTONS)
+    expect(page.locator("#errorModal")).to_be_hidden()
     assert downloads == []
+
+
+@pytest.mark.parametrize("packageError", [False, True])
+def test_my_conversions_updates_its_downloads(
+    page: Page, uploadAndConvert, arelle, packageError: bool
+):
+    """Only the upload can be had until validation has finished; then the
+    report too, unless validation found errors."""
+    arelle.gate.clear()
+    arelle.packageError = packageError
+    uploadAndConvert(page)
+    page.get_by_role("link", name="My Conversions").click()
+    row = page.locator("tbody tr")
+
+    expect(row).to_have_attribute("data-state", "pending")
+    expectDisabled(row, DOWNLOAD_BUTTONS)
+    expectDisabled(row, ["Download Excel"], disabled=False)
+    arelle.gate.set()
+
+    expect(row).to_have_attribute("data-state", "complete", timeout=SETTLE_TIMEOUT_MS)
+    expectDisabled(row, DOWNLOAD_BUTTONS, disabled=packageError)
+    expectDisabled(row, ["Download Excel"], disabled=False)
 
 
 def test_viewer_built_in_the_background_downloads_at_once(

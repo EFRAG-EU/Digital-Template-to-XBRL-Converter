@@ -110,13 +110,36 @@ class TestReportResults:
         results = ReportResults(converted(), {Step.PACKAGE: running})
         assert results.steps[Step.PACKAGE] is running
 
-    def test_pending_validation_has_no_rag_yet_but_allows_downloads(self):
+    def test_pending_validation_has_no_rag_yet_and_downloads_wait(self):
+        """A download asked for now waits, but the page doesn't offer one yet."""
         results = ReportResults(converted(), {Step.PACKAGE: validated(Step.PACKAGE)})
 
         assert results.validationPending
         assert results.validationRAG is None
         assert results.downloadsAllowed
+        assert not results.downloadsReady
+        assert not results.viewerReady
         assert not results.isComplete
+
+    @pytest.mark.parametrize(
+        ("severity", "ready"),
+        [(Severity.INFO, True), (Severity.WARNING, True), (Severity.ERROR, False)],
+    )
+    def test_downloads_are_ready_once_validated_without_errors(
+        self, severity: Severity, ready: bool
+    ):
+        steps = bothValidated(message(severity))
+        steps[Step.VIEWER] = StepResults.done(Step.VIEWER, [], 5)
+        results = ReportResults(converted(), steps)
+
+        assert results.downloadsReady is ready
+        assert results.viewerReady is ready
+
+    def test_viewer_is_ready_once_built(self):
+        results = ReportResults(converted(), bothValidated())
+
+        assert results.downloadsReady
+        assert not results.viewerReady
 
     @pytest.mark.parametrize(
         ("severity", "colour", "allowed"),
@@ -154,6 +177,8 @@ class TestReportResults:
         assert results.conversionRAG["red"]
         assert not results.validationPending
         assert not results.downloadsAllowed
+        assert not results.downloadsReady
+        assert not results.viewerReady
         assert results.isComplete
 
     def test_failed_conversion_runs_no_steps(self):

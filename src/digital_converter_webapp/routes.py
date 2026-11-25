@@ -323,26 +323,35 @@ VALIDATION_ERRORS_MESSAGE = (
 @convert_bp.route("/conversions/<string:id>/status", methods=["GET"])
 def conversionStatus(id: str) -> Response:
     """The results page's validation banner, downloads and messages as they
-    now stand, for the page to swap in while the steps run."""
+    now stand, for the page to swap in while the steps run; with
+    ``view=row``, its row on My Conversions instead."""
     if (conv := ConversionStore.fromFlask().get(id)) is None or (
         results := reportResults(conv)
     ) is None:
         return make_response({"error": "No conversion found"}, 404)
-    dev = request.args.get("show_developer_messages") == "true"
+    if request.args.get("view") == "row":
+        html = {
+            f"conversion-{id}": render_template(
+                "_conversion-row.html.jinja", id=id, conversion=conv, results=results
+            )
+        }
+    else:
+        dev = request.args.get("show_developer_messages") == "true"
+        html = {
+            "validation-status": render_template(
+                "_validation-status.html.jinja", results=results
+            ),
+            "downloads": render_template("_downloads.html.jinja", results=results),
+            "messages": render_template(
+                "_messages.html.jinja", results=results, dev=dev
+            ),
+        }
     return make_response(
         {
             "complete": results.isComplete,
             "downloadsAllowed": results.downloadsAllowed,
             "error": VALIDATION_ERRORS_MESSAGE if results.hasValidationErrors else None,
-            "html": {
-                "validation-status": render_template(
-                    "_validation-status.html.jinja", results=results
-                ),
-                "downloads": render_template("_downloads.html.jinja", results=results),
-                "messages": render_template(
-                    "_messages.html.jinja", results=results, dev=dev
-                ),
-            },
+            "html": html,
         }
     )
 
@@ -460,10 +469,12 @@ def downloadFile(id: str, ftype: str) -> Response:
 
 @convert_bp.route("/conversions/")
 def conversions() -> Response:
+    active = ConversionStore.fromFlask().active()
     return Response(
         render_template(
             "conversions.html.jinja",
-            conversions=ConversionStore.fromFlask().active(),
+            conversions=active,
+            results_by_id={id: reportResults(conv) for id, conv in active.items()},
             lifetime=current_app.config["PERMANENT_SESSION_LIFETIME"],
         )
     )

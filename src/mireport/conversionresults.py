@@ -815,6 +815,16 @@ class ReportResults(Results):
         return self.conversionSuccessful and not self.hasValidationErrors
 
     @property
+    def downloadsReady(self) -> bool:
+        """Validated without errors: the pages offer the report."""
+        return self.downloadsAllowed and not self.validationPending
+
+    @property
+    def viewerReady(self) -> bool:
+        """Validated without errors and its viewer built: the pages offer it."""
+        return self.downloadsReady and self.steps[Step.VIEWER].isFinished
+
+    @property
     def isComplete(self) -> bool:
         """Nothing more will change: every step has finished, or the conversion
         failed and so has none."""

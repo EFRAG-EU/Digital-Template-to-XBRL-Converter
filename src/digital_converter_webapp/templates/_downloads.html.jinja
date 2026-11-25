@@ -1,4 +1,4 @@
-{% from "_macros.html.jinja" import download_button %}
+{% from "_macros.html.jinja" import report_download_button %}
 {# The download buttons, replaced in place as the steps finish. #}
 <div id="downloads" class="space-y-4">
     <h3 class="text-xl font-semibold text-gray-800">
@@ -11,7 +11,8 @@
 {% if results.downloadsAllowed %}
     <p>
         Please review the generated XBRL report and the messages below to ensure that all disclosures are complete
-        and accurate. The report can be downloaded in various formats:
+        and accurate. The report can be downloaded in various formats
+        {%- if results.validationPending %} once it has been validated{% endif %}:
     </p>
 {% elif results.conversionSuccessful %}
     <p>
@@ -20,22 +21,8 @@
     </p>
 {% endif %}
     <div class="flex gap-4 justify-between items-center download-buttons">
-        {{ download_button(
-            'viewer',
-            url_for('basic.downloadFile', id=results.conversionId, ftype='viewer'),
-            results.downloadsAllowed
-        ) }}
-
-        {{ download_button(
-            'zip',
-            url_for('basic.downloadFile', id=results.conversionId, ftype='zip'),
-            results.downloadsAllowed
-        ) }}
-
-        {{ download_button(
-            'json',
-            url_for('basic.downloadFile', id=results.conversionId, ftype='json'),
-            results.downloadsAllowed
-        ) }}
+        {{ report_download_button('viewer', results.conversionId, results) }}
+        {{ report_download_button('zip', results.conversionId, results) }}
+        {{ report_download_button('json', results.conversionId, results) }}
     </div>
 </div>
