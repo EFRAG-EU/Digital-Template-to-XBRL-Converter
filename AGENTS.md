@@ -220,7 +220,9 @@ internal. The chain, in order:
    monetary unit, takes a divide unit built from `UTR.complexUnitFor`: a numerator unit typed in the unit
    cell, else for each side the report's currency for a monetary side, the `dataTypesToUnits` entry
    (`ConverterConfig.unitForDataType`, by local name) or the UTR's only unit, and no fact, with a warning
-   naming the missing side, otherwise; `UTR.valid` is false for any single unit on such a type; a `False`
+   naming the missing side, otherwise; `UTR.valid` is false for any single unit on such a type; with no
+   usable unit cell a simple concept takes its `conceptsToUnits` entry, then its data type's, then a UTR
+   pick, and either of the last two warns (once per name) when the type allows several units; a `False`
    from the resolver means no fact), member-label resolution to
    `_enumerations.resolveMemberByLabel` (exact standard label → configured alias → closest EE-domain
    match, scoped to the relevant domain), and footnotes to `_footnotes.FootnoteFactCreator`.

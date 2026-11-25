@@ -3,8 +3,8 @@
 Checks the workbook's schemaRef and template version against the disclosure
 system config, binds the workbook exactly as conversion does, then reports where
 the template and taxonomy disagree: names that bind to nothing, reportable
-concepts and hypercubes with no named range, and (given a reference template)
-names added, removed or moved.
+concepts and hypercubes with no named range, numeric concepts whose unit conversion
+would have to guess, and (given a reference template) names added, removed or moved.
 """
 
 from __future__ import annotations
@@ -24,6 +24,7 @@ from mireport.exceptions import TaxonomyException
 from mireport.taxonomy import getTaxonomy
 from mireport.version import VersionHolder
 from mireport.xlsx_template_reader._binder import WorkbookBinder
+from mireport.xlsx_template_reader._config import ConverterConfig
 from mireport.xlsx_template_reader._constants import (
     IGNORED_DEFINED_NAME_PREFIXES,
     TAXONOMY_NAME_ALIASES,
@@ -46,6 +47,9 @@ class FindingKind(StrEnum):
     damagedName = "Damaged named ranges"
     conceptWithoutName = "Reportable concepts with no named range"
     hypercubeWithoutName = "Hypercubes with no table named range"
+    unitChoiceWithoutName = (
+        "Numeric concepts with a choice of units but no _unit named range"
+    )
     bindingMessage = "Problems binding named ranges"
     onlyInWorkbook = "Named ranges only in this workbook"
     onlyInReference = "Named ranges only in the reference template"
@@ -110,6 +114,11 @@ def auditTemplate(
         if dn.name not in UNHANDLED_NAMES_TO_IGNORE
     )
     findings.extend(_unnamedConcepts(taxonomy, bindings))
+    findings.extend(
+        _unitChoicesWithoutName(
+            taxonomy, bindings, ConverterConfig.fromDefaults(VSME_DEFAULTS, taxonomy)
+        )
+    )
     findings.extend(
         TemplateFinding(
             FindingKind.bindingMessage, m.excelReference or "", m.messageText
@@ -201,6 +210,38 @@ def _unnamedConcepts(
                 f"dimensions: {', '.join(dimensions)}",
             )
         )
+    return findings
+
+
+def _unitChoicesWithoutName(
+    taxonomy: Taxonomy, bindings: WorkbookBindings, config: ConverterConfig
+) -> list[TemplateFinding]:
+    """Bound numeric concepts whose data type allows several units, with no unit range
+    and nothing in the taxonomy or config to pin one: conversion guesses their unit."""
+    named = set(bindings.unit_map)
+    bound = {crm.concept for crm in bindings.concept_map.values()}
+    for table in bindings.tables:
+        named.update(u.concept for u in table.units)
+        bound.update(crm.concept for crm in table.primaryItems)
+    utr = taxonomy.UTR
+    findings = []
+    for concept in bound - named:
+        if (
+            not concept.isNumeric
+            or concept.isMonetary
+            or utr.requiresComplexUnit(concept.dataType)
+            or concept in config.conceptsToUnits
+            or len(concept.getRequiredUnitQNames() or ()) == 1
+        ):
+            continue
+        if len(units := utr.getUnitsForDataType(concept.dataType)) > 1:
+            findings.append(
+                TemplateFinding(
+                    FindingKind.unitChoiceWithoutName,
+                    concept.qname.localName,
+                    f"{concept.dataType.localName} allows {len(units)} units",
+                )
+            )
     return findings
 
 

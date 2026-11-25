@@ -5,7 +5,8 @@ The resolution chain, in order: the unit named range next to the concept
 config override when that text names no unit, the taxonomy's required units,
 and finally the fallbacks: a divide unit for a type that requires a complex UTR
 unit, the report's currency for a monetary concept, the configured unit for the
-data type, the UTR's units for it, xbrli:pure.
+concept, then for its data type, the UTR's units for it, xbrli:pure. Guessing among
+several units (data type or UTR) warns, so a missing unit choice is not silent.
 """
 
 from __future__ import annotations
@@ -57,6 +58,7 @@ class UnitResolver:
         self._msg = msg
         self._reader = reader
         self._unit_map = unit_map
+        self._assumedUnitNames: set[str] = set()
 
     @property
     def taxonomy(self) -> Taxonomy:
@@ -263,6 +265,21 @@ class UnitResolver:
         factBuilder.setComplexUnit([numerator], [denominator])
         return True
 
+    def _warnUnitAssumed(
+        self, dn: DefinedName, concept: Concept, unit: QName, units: frozenset[QName]
+    ) -> None:
+        """Warn, once per named range, that ``unit`` was guessed although the data type
+        allows others: the workbook offered no choice and nothing pinned the concept's unit."""
+        if len(units) < 2 or dn.name in self._assumedUnitNames:
+            return
+        self._assumedUnitNames.add(dn.name)
+        self._msg.warning(
+            f"No unit was selected for {dn.name}, so its facts are reported in "
+            f"{unit.localName}; {concept.dataType.localName} allows {len(units)} units.",
+            MessageType.Conversion,
+            concept=concept,
+        )
+
     def setFallbackUnitForName(
         self, dn: DefinedName, concept: Concept, factBuilder: FactBuilder
     ) -> bool:
@@ -283,17 +300,22 @@ class UnitResolver:
             return True
 
         if (
-            unit := self._config.unitForDataType(concept.dataType)
+            unit := self._config.conceptsToUnits.get(concept)
         ) is not None and self.utr.valid(concept.dataType, unit):
             factBuilder.setSimpleUnit(unit)
             return True
 
-        if units := self.utr.getUnitsForDataType(concept.dataType):
+        units = self.utr.getUnitsForDataType(concept.dataType)
+        if (
+            unit := self._config.unitForDataType(concept.dataType)
+        ) is not None and self.utr.valid(concept.dataType, unit):
+            self._warnUnitAssumed(dn, concept, unit, units)
+            factBuilder.setSimpleUnit(unit)
+            return True
+
+        if units:
             chosen = min(units)
-            self._msg.warning(
-                f"Picked fallback unit (from UTR) {chosen} for {dn.name}",
-                MessageType.DevInfo,
-            )
+            self._warnUnitAssumed(dn, concept, chosen, units)
             factBuilder.setSimpleUnit(chosen)
         else:
             pure = self.taxonomy.QNameMaker.fromNamespaceAndLocalName(XBRLI_NS, "pure")

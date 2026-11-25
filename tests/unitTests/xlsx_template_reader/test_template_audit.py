@@ -76,6 +76,30 @@ def test_names_binding_to_nothing():
     assert names(result, FindingKind.nameWithoutConcept) == {"Bogus", "Bogus_unit"}
 
 
+def test_unit_choice_without_unit_name():
+    """Without a _unit range a mass concept leaves conversion to guess (no guidance) or
+    to drop its facts (guidance naming kg and t); a single guided unit, a configured
+    concept unit and a currency need no range."""
+    pollutant = "AmountOfOtherPollutantEmissionToAir"
+    bare = audit(
+        workbookWith(
+            **{pollutant: "Data!$B$2"},
+            AmountOfEmissionToAir="Data!$B$3",
+            EnergyConsumptionFromFuels="Data!$B$4",
+            TotalEnergyConsumption="Data!$B$5",
+            Turnover="Data!$B$6",
+        )
+    )
+    assert names(bare, FindingKind.unitChoiceWithoutName) == {
+        pollutant,
+        "AmountOfEmissionToAir",
+    }
+    named = audit(
+        workbookWith(**{pollutant: "Data!$B$2", f"{pollutant}_unit": "Data!$C$2"})
+    )
+    assert names(named, FindingKind.unitChoiceWithoutName) == set()
+
+
 def test_damaged_name_is_not_also_unbound():
     result = audit(workbookWith(Turnover="Missing!$B$2"))
     assert names(result, FindingKind.damagedName) == {"Turnover"}

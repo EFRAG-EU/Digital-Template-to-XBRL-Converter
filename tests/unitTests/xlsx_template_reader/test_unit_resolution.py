@@ -308,3 +308,59 @@ class TestNoUnitRange:
             and "currency" not in w
             for w in env.warnings()
         )
+
+
+class TestAssumedUnit:
+    """No unit range and no taxonomy guidance: a guess among several units warns."""
+
+    @pytest.fixture(scope="class")
+    def vsTaxonomy(self):
+        entryPoint = next(
+            (ep for ep in listTaxonomies() if any("/vs/" in d for d in ep)), None
+        )
+        if entryPoint is None:
+            pytest.skip("no VS taxonomy built in")
+        return getTaxonomy(entryPoint)
+
+    @pytest.fixture(scope="class")
+    def vsConfig(self, vsTaxonomy):
+        return ConverterConfig.fromDefaults(VSME_DEFAULTS, vsTaxonomy)
+
+    @pytest.fixture(scope="class")
+    def massConcept(self, vsTaxonomy):
+        concept = vsTaxonomy.resolveConcept(
+            "AmountOfOtherPollutantEmissionToAir", by_name=True
+        )
+        if concept is None or concept.getRequiredUnitQNames() is not None:
+            pytest.skip("no unguided AmountOfOtherPollutantEmissionToAir")
+        return concept
+
+    def test_data_type_unit_is_assumed_with_one_warning(
+        self, vsTaxonomy, vsConfig, massConcept
+    ):
+        env = _Env(vsTaxonomy, vsConfig, massConcept, None, with_unit_map=False)
+        for _ in range(2):
+            fb = env.report.getFactBuilder().setConcept(massConcept)
+            assert env.resolver.setUnitForName(env.holder, fb) is True
+            assert fb._unit == Unit.simple(vsTaxonomy.QNameMaker.fromString("utr:t"))
+        count = len(vsTaxonomy.UTR.getUnitsForDataType(massConcept.dataType))
+        assert env.warnings() == [
+            f"No unit was selected for c, so its facts are reported in t; massItemType allows {count} units."
+        ]
+
+    def test_utr_pick_warns(self, vsTaxonomy, massConcept):
+        env = _Env(
+            vsTaxonomy, ConverterConfig(), massConcept, None, with_unit_map=False
+        )
+        assert env.resolver.setUnitForName(env.holder, env.fb) is True
+        assert len(env.warnings()) == 1
+        assert env.warnings()[0].startswith("No unit was selected for c")
+
+    def test_configured_concept_unit_is_used_silently(self, vsTaxonomy, vsConfig):
+        concept = vsTaxonomy.resolveConcept("EnergyConsumptionFromFuels", by_name=True)
+        if concept is None or concept.getRequiredUnitQNames() is not None:
+            pytest.skip("no unguided EnergyConsumptionFromFuels")
+        env = _Env(vsTaxonomy, vsConfig, concept, None, with_unit_map=False)
+        assert env.resolver.setUnitForName(env.holder, env.fb) is True
+        assert env.fb._unit == Unit.simple(vsTaxonomy.QNameMaker.fromString("utr:MWh"))
+        assert env.warnings() == []
