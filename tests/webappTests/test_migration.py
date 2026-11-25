@@ -392,6 +392,48 @@ class TestPriorMigrationPage:
         assert "Convert with old version" in body
 
 
+class TestNewFunctionalitiesBox:
+    """What VS brings is shown only when a VSME template is migrated to VS."""
+
+    BOX = "New Functionalities"
+
+    def _page(self, migration_app, monkeypatch, report: str, target: str, prior=False):
+        monkeypatch.setattr(
+            "digital_converter_webapp.migration.migrationTargetTemplateVersion",
+            lambda: VersionHolder.parse(target),
+        )
+        conv = _withPrior(b"old")
+        (conv.prior if prior else conv).report_template_version = report
+        client = migration_app.test_client()
+        _seed(client, conv)
+        url = "/migrationPage/test?prior=True" if prior else "/migrationPage/test"
+        return client.get(url).get_data(as_text=True)
+
+    def test_vsme_to_vs_lists_what_vs_brings(self, migration_app, monkeypatch):
+        body = self._page(migration_app, monkeypatch, "1.3.0", "2.0.0")
+        assert self.BOX in body
+        assert "Template and Taxonomy updated" in body
+        assert "the Voluntary Standard" in body
+        assert "New customisation features" in body
+        assert "footnotes" not in body
+
+    @pytest.mark.parametrize(
+        "report,target",
+        [
+            pytest.param("2.0.0", "2.1.0", id="VS to VS"),
+            pytest.param("unknown", "2.0.0", id="unknown version"),
+        ],
+    )
+    def test_not_shown_for_other_migrations(
+        self, report, target, migration_app, monkeypatch
+    ):
+        assert self.BOX not in self._page(migration_app, monkeypatch, report, target)
+
+    def test_not_shown_for_last_years_workbook(self, migration_app, monkeypatch):
+        body = self._page(migration_app, monkeypatch, "1.3.0", "2.0.0", prior=True)
+        assert self.BOX not in body
+
+
 @pytest.mark.slow
 @pytest.mark.skipif(not MIGRATION_WORKING, reason="needs the migration tool")
 class TestMigratingLastYearsWorkbook:
