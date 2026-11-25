@@ -20,7 +20,7 @@ from mireport.xlsx_template_reader.templateaudit import (
 )
 
 SCRIPT = Path(__file__).resolve().parents[3] / "scripts" / "check-template.py"
-VS_ENTRY_POINT = "https://xbrl.efrag.org/taxonomy/vs/2026-10-16/vs-all.xsd"
+VS_ENTRY_POINT = "https://xbrl.efrag.org/taxonomy/vs/draft-2026-11-17/vs-all.xsd"
 OLD_VSME_ENTRY_POINT = "https://xbrl.efrag.org/taxonomy/vsme/2026-05-01/vsme-all.xsd"
 
 
@@ -114,7 +114,7 @@ def test_layout_against_reference_ignores_labels():
 
 
 def test_taxonomy_from_schemaref():
-    result = auditTemplate(stamped(VS_ENTRY_POINT, "2.0.0"))
+    result = auditTemplate(stamped(VS_ENTRY_POINT, "2.0.1"))
     assert result.taxonomy is getTaxonomy(VS_ENTRY_POINT)
     assert not names(result, FindingKind.templateVersionMismatch)
     assert not names(result, FindingKind.oldEntryPoint)
@@ -146,14 +146,14 @@ def test_unusable_schemaref():
 
 def test_script_exit_codes(script, tmp_path):
     path = tmp_path / "template.xlsx"
-    stamped(VS_ENTRY_POINT, "2.0.0", Bogus="Data!$B$2").save(path)
+    stamped(VS_ENTRY_POINT, "2.0.1", Bogus="Data!$B$2").save(path)
     assert script.main([str(path)]) == 1
     assert script.main([str(tmp_path / "missing.xlsx")]) == 2
 
 
 def test_script_markdown(script, tmp_path, capsys):
     path = tmp_path / "template.xlsx"
-    stamped(VS_ENTRY_POINT, "2.0.0", Bogus="Data!$B$2").save(path)
+    stamped(VS_ENTRY_POINT, "2.0.1", Bogus="Data!$B$2").save(path)
     assert script.main([str(path), "--markdown"]) == 1
     out = capsys.readouterr().out
     assert "| Item | Value | Check |" in out
@@ -172,7 +172,7 @@ def test_script_taxonomy_json_may_share_a_built_in_entry_point(script, tmp_path)
     """A fresh build of a built-in taxonomy has the same entry point."""
     [vsJson] = [p for p, eps in builtInTaxonomyJsonPaths() if VS_ENTRY_POINT in eps]
     path = tmp_path / "template.xlsx"
-    stamped(VS_ENTRY_POINT, "2.0.0", Bogus="Data!$B$2").save(path)
+    stamped(VS_ENTRY_POINT, "2.0.1", Bogus="Data!$B$2").save(path)
     assert script.main([str(path), "--taxonomy-json", str(vsJson)]) == 1
 
 

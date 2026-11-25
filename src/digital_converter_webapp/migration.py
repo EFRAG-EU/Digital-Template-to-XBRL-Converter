@@ -35,7 +35,7 @@ except ImportError:
 from mireport.filesupport import FilelikeAndFileName
 from mireport.stringutil import truthy
 from mireport.template_versions import migrationTargetTemplateVersion
-from mireport.version import OUR_VERSION_HOLDER
+from mireport.version import OUR_VERSION_HOLDER, VersionHolder
 from mireport.xlsx_template_reader.processor import (
     VersionRelation,
     XlsxProcessor,
@@ -48,6 +48,9 @@ if TYPE_CHECKING:
     from .conversion import Conversion
 
 L = logging.getLogger(__name__)
+
+# VSME Digital Templates are all 1.x; the VS one starts here.
+FIRST_VS_TEMPLATE = VersionHolder.parse("2.0.0")
 
 
 class MigrationOutcome(StrEnum):
@@ -173,6 +176,10 @@ def migrationPage(id: str) -> Response:
         )
         excel = conv.migrationSource
         assert excel is not None
+        target = (
+            migrationTargetTemplateVersion() or OUR_VERSION_HOLDER.strip_build_metadata
+        )
+        report = VersionHolder.parse_safe(report_template_version)
 
         return Response(
             render_template(
@@ -181,9 +188,9 @@ def migrationPage(id: str) -> Response:
                 prior=conv.isPrior,
                 filename=excel.filename,
                 report_template_version=report_template_version,
-                migration_target_template_version=(
-                    migrationTargetTemplateVersion()
-                    or OUR_VERSION_HOLDER.strip_build_metadata
+                migration_target_template_version=target,
+                vsme_to_vs=(
+                    report is not None and report < FIRST_VS_TEMPLATE <= target
                 ),
                 has_migration_results=conv.has_migration_results,
                 elapsed=conv.migration_elapsed,

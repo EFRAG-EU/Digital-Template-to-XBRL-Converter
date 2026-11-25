@@ -3,9 +3,10 @@ them in a table, become this report's prior period.
 
 Last year's report is read as a whole report on its own (see mireport.comparatives), so nothing has
 to guess which of a file's periods is the prior one: it is the duration that ends where this
-report's own period starts. Only the Report model is used here, so where last year's report came
-from does not matter; the facts taken from one on another version of this report's taxonomy
-are matched to it by name (alignToTaxonomy).
+report's own period starts, or else its own period if that ends on the same day of an earlier
+year (a report need not be made every period, but the two must line up). Only the Report model is
+used here, so where last year's report came from does not matter; the facts taken from one on
+another version of this report's taxonomy are matched to it by name (alignToTaxonomy).
 """
 
 from __future__ import annotations
@@ -13,6 +14,7 @@ from __future__ import annotations
 from collections import Counter, defaultdict
 from collections.abc import Iterable, Iterator, Mapping
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from enum import StrEnum
 
 from mireport.conversionresults import ConversionResultsBuilder, MessageType, Severity
@@ -96,7 +98,8 @@ def mergePriorReport(
     """Add ``prior``'s numbers and booleans for the year before ``report``'s as its prior period.
 
     ``report``'s own period is its default duration; it must not have comparatives already.
-    From ``prior`` the one duration that ends where that starts is taken, at any length, with the
+    From ``prior`` the one duration that ends where that starts is taken, at any length, or else
+    ``prior``'s own period if it ends on that day of an earlier year (a gap is noted), with the
     instants at its start and end; facts in its other periods are left out. Only non-nil numbers
     and booleans are taken, and any other fact in a table row with one taken (the same
     presentation group and dimensions, so the row is drawn for the prior period anyway), without
@@ -191,6 +194,13 @@ def mergePriorReport(
         Severity.INFO,
         MessageType.Conversion,
     )
+    if lined.end != current.start:
+        results.addMessage(
+            f"The prior period, {_days(lined)}, ends before this report's {_days(current)} "
+            f"starts: {_days(DurationPeriodHolder(lined.end, current.start))} lies between them.",
+            Severity.INFO,
+            MessageType.Conversion,
+        )
     if dropped:
         periods = ", ".join(
             f"{_days(p.duration)} ({count} facts)" for p, count in dropped.items()
@@ -315,9 +325,11 @@ def _overlapsOrPrecedes(
 
 
 def _linedUpDuration(report: Report, prior: Report) -> DurationPeriodHolder:
-    """The one duration of ``prior`` that ends exactly where ``report``'s own period starts. When
-    there is none, and ``prior``'s own period is ``report``'s or comes after it, the two reports
-    were most likely given the wrong way round, or one twice, and the error says so."""
+    """The one duration of ``prior`` that ends exactly where ``report``'s own period starts, or
+    else ``prior``'s own period if it ends on that day of an earlier year: a report need not be
+    made every period, but the two must still line up. When there is neither, and ``prior``'s own
+    period is ``report``'s or comes after it, the two reports were most likely given the wrong way
+    round, or one twice, and the error says so."""
     current = report.defaultPeriod
     candidates = {
         p.duration for p in prior.reportingPeriods if p.duration.end == current.start
@@ -325,6 +337,8 @@ def _linedUpDuration(report: Report, prior: Report) -> DurationPeriodHolder:
     if len(candidates) == 1:
         return next(iter(candidates))
     theirs = prior.defaultPeriod
+    if not candidates and _sameDayEarlier(theirs.end, current.start):
+        return theirs
     if not candidates and theirs == current:
         raise InlineReportException(
             f"Last year's report is for {_days(theirs)}, the same period as this report: is it "
@@ -335,11 +349,28 @@ def _linedUpDuration(report: Report, prior: Report) -> DurationPeriodHolder:
             f"Last year's report is for {_days(theirs)}, after this report's {_days(current)}: "
             f"are the two the wrong way round?"
         )
-    found = "no" if not candidates else "more than one"
+    if candidates:
+        raise InlineReportException(
+            f"The prior report has more than one period ending where this report's "
+            f"{_days(current)} starts. Its periods: {_listPeriods(prior.reportingPeriods)}; "
+            f"this report's: {_listPeriods(report.reportingPeriods)}."
+        )
+    dayBefore = current.firstDay - timedelta(days=1)
     raise InlineReportException(
-        f"Last year's report has {found} period ending where this report's {_days(current)} "
-        f"starts. Its periods: {_listPeriods(prior.reportingPeriods)}; "
-        f"this report's: {_listPeriods(report.reportingPeriods)}."
+        f"The prior report is for {_days(theirs)}, which does not line up with this report's "
+        f"{_days(current)}: it must end on {dayBefore.day} {dayBefore:%B}, the day before this report "
+        f"starts, in that year or an earlier one. Its periods: "
+        f"{_listPeriods(prior.reportingPeriods)}; this report's: "
+        f"{_listPeriods(report.reportingPeriods)}."
+    )
+
+
+def _sameDayEarlier(end: datetime, start: datetime) -> bool:
+    """Whether ``end`` is ``start``'s day and time of the year, in an earlier year."""
+    return end.year < start.year and (end.month, end.day, end.time()) == (
+        start.month,
+        start.day,
+        start.time(),
     )
 
 

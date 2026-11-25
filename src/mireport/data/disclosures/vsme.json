@@ -4,9 +4,10 @@
             "https://xbrl.efrag.org/taxonomy/vsme/2024-12-17/vsme-all.xsd",
             "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/vsme-all.xsd",
             "https://xbrl.efrag.org/taxonomy/vsme/2026-02-01/vsme-all.xsd",
-            "https://xbrl.efrag.org/taxonomy/vsme/2026-05-01/vsme-all.xsd"
+            "https://xbrl.efrag.org/taxonomy/vsme/2026-05-01/vsme-all.xsd",
+            "https://xbrl.efrag.org/taxonomy/vs/2026-10-16/vs-all.xsd"
         ],
-        "supportedEntryPoint": "https://xbrl.efrag.org/taxonomy/vs/2026-10-16/vs-all.xsd"
+        "supportedEntryPoint": "https://xbrl.efrag.org/taxonomy/vs/draft-2026-11-17/vs-all.xsd"
     },
     "layoutStrategy": {
         "default": "vsme",
@@ -22,7 +23,8 @@
         "https://xbrl.efrag.org/taxonomy/vsme/2025-07-30/vsme-all.xsd": "auto",
         "https://xbrl.efrag.org/taxonomy/vsme/2026-02-01/vsme-all.xsd": "auto",
         "https://xbrl.efrag.org/taxonomy/vsme/2026-05-01/vsme-all.xsd": "auto",
-        "https://xbrl.efrag.org/taxonomy/vs/2026-10-16/vs-all.xsd": "2.0.0"
+        "https://xbrl.efrag.org/taxonomy/vs/2026-10-16/vs-all.xsd": "auto",
+        "https://xbrl.efrag.org/taxonomy/vs/draft-2026-11-17/vs-all.xsd": "2.0.1"
     },
     "aoix": {
         "monetary-units": "template_currency",

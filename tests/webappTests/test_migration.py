@@ -31,7 +31,8 @@ from mireport.xlsx_template_reader.util import loadExcelFromPathOrFileLike
 _SHEET = "S"
 CONVERTER_VERSION = OUR_VERSION_HOLDER.strip_build_metadata
 VSME_ENTRY_POINT = "https://xbrl.efrag.org/taxonomy/vsme/2026-05-01/vsme-all.xsd"
-VS_ENTRY_POINT = "https://xbrl.efrag.org/taxonomy/vs/2026-10-16/vs-all.xsd"
+VS_ENTRY_POINT = "https://xbrl.efrag.org/taxonomy/vs/draft-2026-11-17/vs-all.xsd"
+OLD_VS_ENTRY_POINT = "https://xbrl.efrag.org/taxonomy/vs/2026-10-16/vs-all.xsd"
 SAMPLE_1_3_0 = (
     Path(__file__).parents[2]
     / "digital-templates"
@@ -121,11 +122,11 @@ class TestVersionAgainstTaxonomySupportedVersion:
     def test_vs_template_at_its_configured_version_is_fine(self, migration_target):
         # the migration tool would produce VSME 1.3.0; it must not matter to VS
         migration_target("1.3.0")
-        outcome, _ = doMigrationChecks(_conversion(_report("2.0.0", VS_ENTRY_POINT)))
+        outcome, _ = doMigrationChecks(_conversion(_report("2.0.1", VS_ENTRY_POINT)))
         assert outcome is MigrationOutcome.SUCCESS
 
     def test_vs_template_newer_than_configured_is_too_new(self, migration_target):
-        outcome, _ = doMigrationChecks(_conversion(_report("2.0.1", VS_ENTRY_POINT)))
+        outcome, _ = doMigrationChecks(_conversion(_report("2.0.2", VS_ENTRY_POINT)))
         assert outcome is MigrationOutcome.VERSION_TOO_NEW
 
     def test_older_vs_template_without_a_matching_tool_cannot_migrate(
@@ -138,9 +139,16 @@ class TestVersionAgainstTaxonomySupportedVersion:
     def test_older_vs_template_with_a_matching_tool_must_migrate(
         self, migration_target
     ):
-        migration_target("2.0.0")
+        migration_target("2.0.1")
         outcome, _ = doMigrationChecks(_conversion(_report("1.0.0", VS_ENTRY_POINT)))
         assert outcome is MigrationOutcome.MIGRATION_REQUIRED
+
+    def test_vs_2_0_0_can_migrate_once_the_tool_targets_2_0_1(self, migration_target):
+        migration_target("2.0.1")
+        outcome, _ = doMigrationChecks(
+            _conversion(_report("2.0.0", OLD_VS_ENTRY_POINT))
+        )
+        assert outcome is MigrationOutcome.MIGRATION_OPTIONAL
 
 
 class TestVsmeTemplatesFollowTheMigrationTool:
@@ -227,7 +235,7 @@ class TestCheckMigration:
     def test_too_new_version_continues_to_conversion(
         self, migration_app, migration_target
     ):
-        conv = _conversion(_report("2.0.1", VS_ENTRY_POINT))
+        conv = _conversion(_report("2.0.2", VS_ENTRY_POINT))
         with migration_app.test_request_context():
             assert checkMigration(conv) is None
         assert conv.migration_outcome == str(MigrationOutcome.VERSION_TOO_NEW)
@@ -382,6 +390,48 @@ class TestPriorMigrationPage:
         assert 'action="/migrationButton/test"' in body
         assert "skip_prior_migration" not in body
         assert "Convert with old version" in body
+
+
+class TestNewFunctionalitiesBox:
+    """What VS brings is shown only when a VSME template is migrated to VS."""
+
+    BOX = "New Functionalities"
+
+    def _page(self, migration_app, monkeypatch, report: str, target: str, prior=False):
+        monkeypatch.setattr(
+            "digital_converter_webapp.migration.migrationTargetTemplateVersion",
+            lambda: VersionHolder.parse(target),
+        )
+        conv = _withPrior(b"old")
+        (conv.prior if prior else conv).report_template_version = report
+        client = migration_app.test_client()
+        _seed(client, conv)
+        url = "/migrationPage/test?prior=True" if prior else "/migrationPage/test"
+        return client.get(url).get_data(as_text=True)
+
+    def test_vsme_to_vs_lists_what_vs_brings(self, migration_app, monkeypatch):
+        body = self._page(migration_app, monkeypatch, "1.3.0", "2.0.0")
+        assert self.BOX in body
+        assert "Template and Taxonomy updated" in body
+        assert "the Voluntary Standard" in body
+        assert "New customisation features" in body
+        assert "footnotes" not in body
+
+    @pytest.mark.parametrize(
+        "report,target",
+        [
+            pytest.param("2.0.0", "2.1.0", id="VS to VS"),
+            pytest.param("unknown", "2.0.0", id="unknown version"),
+        ],
+    )
+    def test_not_shown_for_other_migrations(
+        self, report, target, migration_app, monkeypatch
+    ):
+        assert self.BOX not in self._page(migration_app, monkeypatch, report, target)
+
+    def test_not_shown_for_last_years_workbook(self, migration_app, monkeypatch):
+        body = self._page(migration_app, monkeypatch, "1.3.0", "2.0.0", prior=True)
+        assert self.BOX not in body
 
 
 @pytest.mark.slow

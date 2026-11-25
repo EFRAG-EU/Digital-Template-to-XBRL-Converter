@@ -23,7 +23,8 @@ TEST_CASES = [
     "vsme-2025-07-30.json",
     "vsme-2026-02-01.json",
     "vsme-2026-05-01.json",
-    "vs-draft-2026-10-16.json",
+    "vs-2026-10-16.json",
+    "vs-draft-2026-11-17.json",
 ]
 
 
