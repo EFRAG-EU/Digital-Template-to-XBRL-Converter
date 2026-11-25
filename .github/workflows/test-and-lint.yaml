@@ -70,15 +70,15 @@ jobs:
 
       # Arelle runs offline in the tests, from these packages (as the taxonomy
       # repositories validate theirs), so no suite waits on xbrl.org.
+      # A changed list starts from the last cache, and the fetch tops it up.
       - name: Restore taxonomy packages
-        id: packages
         uses: actions/cache@v6
         with:
           path: tests/taxonomy-packages/*/
           key: external-taxonomy-packages-${{ hashFiles('tests/taxonomy-packages/*.txt') }}
+          restore-keys: external-taxonomy-packages-
 
-      - name: Download taxonomy packages
-        if: steps.packages.outputs.cache-hit != 'true'
+      - name: Download missing taxonomy packages
         run: python tests/taxonomy-packages/fetch-external-packages.py
 
       - name: Install Chromium for the browser tests

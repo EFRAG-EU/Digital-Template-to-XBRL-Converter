@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Download the external taxonomy packages listed in the *.txt files beside this script,
 each list into a directory of its own here, named after it, so the tests can run
-Arelle offline (tests/offline_arelle.py).
+Arelle offline (tests/offline_arelle.py). A package already there is kept, unless
+its checksum is listed (then it is fetched again and verified), and a package no
+longer listed is deleted, so a directory restored from a cache is brought up to date.
 
 File format per non-comment line:
   <package-url> [<sha256-url>]
@@ -147,9 +149,19 @@ def main() -> int:
     for packages_list in packages_lists:
         output_dir = packages_root / packages_list.stem
         output_dir.mkdir(parents=True, exist_ok=True)
+        packages = read_packages_list(packages_list)
 
-        for package_url, checksum_url in read_packages_list(packages_list):
+        # Top up a directory restored from a cache, rather than start again.
+        listed = {Path(urlparse(url).path).name for url, _ in packages}
+        for stale in sorted(output_dir.glob("*.zip")):
+            if stale.name not in listed:
+                print(f"Deleting {stale}, no longer in {packages_list.name}")
+                stale.unlink()
+
+        for package_url, checksum_url in packages:
             package_path = output_dir / Path(urlparse(package_url).path).name
+            if package_path.exists() and not checksum_url:
+                continue
             print(f"Fetching {package_url}")
             download_file(package_url, package_path, token)
 

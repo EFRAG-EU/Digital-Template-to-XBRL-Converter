@@ -17,6 +17,7 @@ TEST_CASES = [
     ("tests/data/VSME-Digital-Template-Sample-1.1.0.xlsx", 142, "default"),
     ("tests/data/VSME-Digital-Template-Sample-1.1.1.xlsx", 141, "default"),
     ("tests/data/VSME-Digital-Template-Sample-1.2.0.xlsx", 145, "default"),
+    ("digital-templates/VS-Digital-Template-Sample-2.0.0.xlsx", 153, "default"),
 ]
 
 
