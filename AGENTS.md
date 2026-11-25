@@ -237,7 +237,7 @@ used inside the xlsx reader. Errors accumulate; `abortEarlyIfErrors()` raises `E
 defined checkpoints rather than failing at the first problem. Dev-info messages are hidden from users
 (`--devinfo` on the CLI reveals them).
 
-Results come in **sections**, one per `Stage` (the workbook, last year's report, the Word documents,
+Results come in **sections**, one per `Stage` (the workbook, the prior report, the Word documents,
 the PDFs, the report, each validation...), each with its own messages and duration. A front end opens
 one with `with builder.section(Stage.X, source=filename):`; everything added meanwhile, however deep,
 goes into it, and anything added outside every section goes into a "Conversion" one. Sections don't
@@ -334,23 +334,23 @@ of `cur` and the end of `prior` are one OIM instant, but each is its own cell an
 per period, each period said once over its columns; a list shows a concept's prior value, and an
 opening balance, beside the closing one that leads the line. When every column is in a single period (one period, or baseline and target years each in
 their own column) nothing changes. **The VSME Excel template reports one period** (FAQ item 7), so
-comparatives come from last year's report, always a separate file, and no template contract is needed:
+comparatives come from the prior report, always a separate file, and no template contract is needed:
 `mireport.comparatives.PriorReport.fromFile` reads it as a whole report (xBRL-JSON, a
 workbook in its own template version, one migrated but not yet saved in Excel being refused, or
-Inline XBRL or a report package (`.xbri`, `.xbr`, `.zip`) through Arelle, whose errors about it are warnings here; offline, Arelle needs last
-year's taxonomy package too), and its
+Inline XBRL or a report package (`.xbri`, `.xbr`, `.zip`) through Arelle, whose errors about it are warnings here; offline, Arelle needs the
+prior report's taxonomy package too), and its
 `mergeInto` (`mireport.report.comparatives.mergePriorReport`) makes its period this report's prior one (`--prior PATH` on
 `parse-and-ixbrl.py` and `xbrljson-to-ixbrl.py`). The current report's own period is its default
 duration; its other durations (baseline and target years) are left alone, but a prior period, or a
 duration overlapping its own or ending where it starts, means it already has comparatives, and the merge
-raises. From last year's report the one duration that ends where ours starts (at any length) is taken,
+raises. From the prior report the one duration that ends where ours starts (at any length) is taken,
 with the instants at its ends; facts in its other periods are left out with one info message. Only
 non-nil numbers and booleans are copied, and any other fact in a table row with one (the same
 presentation group and dimensions), each rebuilt with a `FactBuilder` so every check re-runs,
-without footnotes, and each keeps its unit. A comparative is taken only beside this year's fact for
+without footnotes, and each keeps its unit. A comparative is taken only beside this report's fact for
 the same concept and dimensions; with nothing to compare it with it is left out. The current report wins: a comparative with a `duplicateKey` already present (the
 shared closing and opening instant, say) is skipped, quietly if consistent, with a warning if not.
-Another entity raises. Last year's report on another version of our taxonomy (one the same disclosure
+Another entity raises. The prior report on another version of our taxonomy (one the same disclosure
 config names, `areVersionsOfOneTaxonomy`; VS is a version of VSME) has the facts it would give matched to ours by `alignToTaxonomy`: concepts,
 dimensions and members by local name. One naming something we lack, or whose concept's period type
 or data type differs, is left out and counted with the merge's other skips, one warning for each reason.
@@ -527,10 +527,10 @@ write would not do on its own, and they keep stored values to what the session b
 (it hands `NamedTuple`s back as lists, hence `FilelikeAndFileName.from_tuple` on every read). Only the
 CSRF token and captcha answers are read from `session` directly.
 
-Last year's report, the upload's optional `prior` file, is `Conversion.priorReport`. `doConversion`
-merges it (`PriorReport.fromFile(...).mergeInto(...)`) once this year's Word documents are in, and one that can't be
+The prior report, the upload's optional `prior` file, is `Conversion.priorReport`. `doConversion`
+merges it (`PriorReport.fromFile(...).mergeInto(...)`) once this report's Word documents are in, and one that can't be
 merged stops the conversion. With migration on, an older prior workbook is offered the migration page
-too, after this year's: `conv.prior` is the same conversion seen from last year's workbook, with its
+too, after this report's: `conv.prior` is the same conversion seen from the prior workbook, with its
 own migration state (`prior_` keys), which the migration routes use when given `?prior=True`;
 `skip_prior_migration` uses the workbook as it is.
 

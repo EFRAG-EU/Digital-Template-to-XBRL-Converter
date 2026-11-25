@@ -1,7 +1,7 @@
-"""Last year's report, uploaded beside this year's workbook, gives the comparatives.
+"""The prior report, uploaded beside this report's workbook, gives the comparatives.
 
-This year's workbook is the 1.3.0 sample, and last year's report is either its
-own xBRL-JSON a year earlier or the 1.2.0 sample, which is for the year before.
+This report's workbook is the 1.3.0 sample, and the prior report is either its
+own xBRL-JSON a year earlier or the 1.2.0 sample, which is for the period before.
 """
 
 import io
@@ -91,14 +91,14 @@ def _convert(client, upload) -> str:
 
 
 class TestUpload:
-    def test_last_years_report_is_kept_with_the_conversion(
+    def test_the_prior_report_is_kept_with_the_conversion(
         self, client, upload, conversion_of
     ):
-        resp = upload(client, prior=(io.BytesIO(b"{}"), "last-year.JSON"))
+        resp = upload(client, prior=(io.BytesIO(b"{}"), "prior.JSON"))
         assert resp.status_code == 303
         prior = conversion_of(client).priorReport
         assert prior is not None
-        assert (prior.filename, prior.fileContent) == ("last-year.JSON", b"{}")
+        assert (prior.filename, prior.fileContent) == ("prior.JSON", b"{}")
 
     def test_an_empty_prior_input_is_ignored(self, client, upload, conversion_of):
         resp = upload(client, prior=(io.BytesIO(b""), ""))
@@ -106,10 +106,10 @@ class TestUpload:
         assert conversion_of(client).priorReport is None
 
     def test_a_bad_extension_is_refused(self, client, upload):
-        resp = upload(client, prior=(io.BytesIO(b"%PDF"), "last-year.pdf"))
+        resp = upload(client, prior=(io.BytesIO(b"%PDF"), "prior.pdf"))
         assert resp.status_code == 400
         body = json.loads(resp.data)
-        assert body["file"] == "last-year.pdf"
+        assert body["file"] == "prior.pdf"
         assert ".json, .xlsx, .xhtml, .html, .xbri, .xbr, .zip" in body["error"]
         with client.session_transaction() as sess:
             assert not ConversionStore(sess).active()
@@ -119,19 +119,19 @@ class TestUpload:
 class TestComparatives:
     """Each runs a full conversion, Arelle validation included."""
 
-    def test_last_years_xbrl_json_gives_the_comparatives(
+    def test_a_prior_xbrl_json_gives_the_comparatives(
         self, client, conversion_of, thisYear, lastYearJson
     ):
         body = _convert(client, _upload(client, thisYear, lastYearJson, "prior.json"))
         assert f"{COMPARATIVES}: " in body
         assert "taken from prior.json." in body
-        assert "Last year's report:</span> prior.json" in body
+        assert "Prior report:</span> prior.json" in body
         conv = conversion_of(client)
         assert conv.successful
         assert conv.json is not None
         assert PRIOR_PERIOD in conv.json.fileContent.decode("utf-8")
 
-    def test_last_years_workbook_on_an_older_template_is_used_as_it_is(
+    def test_the_prior_workbook_on_an_older_template_is_used_as_it_is(
         self, client, conversion_of, thisYear
     ):
         """No migration on this app: its figures are matched to ours by name."""
@@ -143,14 +143,14 @@ class TestComparatives:
 
 @pytest.mark.slow
 class TestFailures:
-    def test_this_years_report_given_as_last_years_too_stops_the_conversion(
+    def test_this_report_given_as_its_own_prior_report_stops_the_conversion(
         self, client, conversion_of, thisYear
     ):
-        """This year's own report, as last year's, is for the same period, and is named so."""
+        """This report, given as its own prior report, is for the same period, and is named so."""
         body = _convert(
             client, _upload(client, thisYear, _xbrlJson(thisYear), "prior.json")
         )
-        assert "is it this year's report given twice?" in body
+        assert "is it this report given twice?" in body
         conv = conversion_of(client)
         assert not conv.successful
         assert not conv.has_zip
@@ -170,7 +170,7 @@ class TestFailures:
     def test_the_word_documents_are_still_asked_for(
         self, client, conversion_of, thisYear, lastYearJson
     ):
-        """This year's workbook pauses for its Word text blocks, last year's report
+        """This report's workbook pauses for its Word text blocks, the prior report
         or not, and keeps it for when the conversion goes on."""
         withTextBlock = _withNamedCell(
             thisYear, "template_external_values", TEXT_BLOCK_CONCEPT

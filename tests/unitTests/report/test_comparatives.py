@@ -1,7 +1,7 @@
-"""mergePriorReport: last year's report supplies this one's comparatives; PriorReport reads it.
+"""mergePriorReport: the prior report supplies this one's comparatives; PriorReport reads it.
 
 Both reports are read in memory from xBRL-JSON over a synthetic taxonomy, so each test says only
-the facts it is about; last year's may be on an older version of it (alignToTaxonomy).
+the facts it is about; the prior report's may be on an older version of it (alignToTaxonomy).
 """
 
 from __future__ import annotations
@@ -55,7 +55,7 @@ TARGET = "2030-01-01T00:00:00/2031-01-01T00:00:00"
 OPENING = "2024-01-01T00:00:00"
 SHARED = "2025-01-01T00:00:00"
 CLOSING = "2026-01-01T00:00:00"
-FILE = "last-year.json"
+FILE = "prior.json"
 ADDRESS_ROLE = f"{NAMESPACE}/role/Addresses"
 # Two versions of one taxonomy (one disclosure config names both), each in its own namespace.
 OURS = "test://synthetic/2026-01-01/comparatives.xsd"
@@ -148,7 +148,7 @@ def _priorFacts(report: InlineReport) -> dict[str, list[tuple[Any, PeriodPart]]]
     return found
 
 
-def test_the_year_before_becomes_the_prior_period_and_renders() -> None:
+def test_the_period_before_becomes_the_prior_period_and_renders() -> None:
     current = _report(_revenue("100"), fact(qname("Staff"), "10"))
     prior = _report(_revenue("90", PRIOR), fact(qname("Staff"), "9", period=PRIOR))
     prior.addFootnoteToFacts("Restated", prior.facts)
@@ -248,7 +248,7 @@ def test_a_current_report_with_baseline_and_target_years_merges() -> None:
 
 
 def test_only_the_lined_up_duration_is_taken_and_the_rest_named() -> None:
-    """Last year's own comparatives, baseline and target years are all left out."""
+    """The prior report's own comparatives, baseline and target years are all left out."""
     current = _report(_revenue("100"))
     prior = _report(
         _revenue("90", PRIOR),
@@ -294,13 +294,13 @@ def test_only_numbers_and_booleans_are_taken_and_nil_is_not() -> None:
     current = _report(
         _revenue("100"),
         fact(qname("Flag"), "false", decimals=None),
-        fact(qname("Note"), "This year", decimals=None),
+        fact(qname("Note"), "Current", decimals=None),
         fact(qname("Waste"), "3"),
     )
     prior = _report(
         _revenue("90", PRIOR),
         fact(qname("Flag"), "true", period=PRIOR, decimals=None),
-        fact(qname("Note"), "Last year", period=PRIOR, decimals=None),
+        fact(qname("Note"), "Prior", period=PRIOR, decimals=None),
         nil,
     )
     results, merged = _merge(current, prior)
@@ -316,7 +316,7 @@ def test_only_numbers_and_booleans_are_taken_and_nil_is_not() -> None:
 def test_other_facts_come_only_into_a_table_row_a_comparative_is_drawn_in(
     register_taxonomy: Callable[[dict[str, Any]], Taxonomy],
 ) -> None:
-    """Last year's note for target T1 is in the row its intensity is drawn in, so it comes too; a
+    """The prior report's note for target T1 is in the row its intensity is drawn in, so it comes too; a
     note for a target with no number, text for T1 in another group's table (a list of sites beside
     their areas), and text with no dimensions, stay out."""
     target = qname("TargetAxis")
@@ -339,7 +339,7 @@ def test_other_facts_come_only_into_a_table_row_a_comparative_is_drawn_in(
 
     current = _report(
         fact(qname("Intensity"), "6", dimensions={target: "T1"}),
-        fact(qname("Note"), "this year", decimals=None, dimensions={target: "T1"}),
+        fact(qname("Note"), "current", decimals=None, dimensions={target: "T1"}),
         entryPoint=GROUP_ENTRY_POINT,
     )
     prior = _report(
@@ -358,16 +358,18 @@ def test_other_facts_come_only_into_a_table_row_a_comparative_is_drawn_in(
     assert merged.skipped == {SkipReason.NOT_COMPARABLE: 3}
 
 
-def test_a_comparative_with_nothing_this_year_to_compare_with_is_left_out() -> None:
-    """Staff this report has only for its baseline year, not its own: last year's is not shown."""
+def test_a_comparative_with_nothing_in_this_period_to_compare_with_is_left_out() -> (
+    None
+):
+    """Staff this report has only for its baseline year, not its own: the prior report's is not shown."""
     current = _report(_revenue("100"), fact(qname("Staff"), "5", period=BASELINE))
     prior = _report(_revenue("90", PRIOR), fact(qname("Staff"), "9", period=PRIOR))
     results, merged = _merge(current, prior)
     assert _priorFacts(current) == {"Revenue": [(90, PeriodPart.Whole)]}
-    assert merged.skipped == {SkipReason.NOTHING_THIS_YEAR: 1}
+    assert merged.skipped == {SkipReason.NOTHING_CURRENT: 1}
     assert (
-        f"1 facts in {FILE} left out: this report has nothing for this year to compare them "
-        "with."
+        f"1 facts in {FILE} left out: this report has nothing in its own period to compare "
+        "them with."
     ) in _messages(results, Severity.INFO)
 
 
@@ -428,7 +430,7 @@ def test_the_entity_scheme_is_compared_too() -> None:
 
 
 def _lastYearsFile(taxonomy: Taxonomy, *extraFacts: dict[str, Any]) -> bytes:
-    """Last year's report, built with FactBuilder and written as xBRL-JSON."""
+    """The prior report, built with FactBuilder and written as xBRL-JSON."""
     report = Report(taxonomy)
     report.setEntity(ENTITY_SCHEME, ENTITY.partition(":")[2])
     report.addDurationPeriod("fy", date(2024, 1, 1), date(2024, 12, 31))
@@ -446,7 +448,7 @@ def _lastYearsFile(taxonomy: Taxonomy, *extraFacts: dict[str, Any]) -> bytes:
     return json.dumps(document).encode("utf-8")
 
 
-def test_last_years_report_is_read_from_xbrl_json(taxonomy: Taxonomy) -> None:
+def test_the_prior_report_is_read_from_xbrl_json(taxonomy: Taxonomy) -> None:
     unknown = fact(qname("Missing"), "1", period=PRIOR)
     results = ConversionResultsBuilder()
     prior = PriorReport.fromXbrlJson(
@@ -457,7 +459,7 @@ def test_last_years_report_is_read_from_xbrl_json(taxonomy: Taxonomy) -> None:
     assert _priorFacts(current) == {"Revenue": [(90, PeriodPart.Whole)]}
     (warning,) = _messages(results, Severity.WARNING)
     assert warning.startswith("Fact x0 not added")
-    # Read, then merged: each in last year's report's section.
+    # Read, then merged: each in the prior report's section.
     assert [(s.stage, s.source) for s in results.sections] == [(Stage.PRIOR, FILE)] * 2
     current.requireAllFactsRendered = True
     assert current.getInlineReport().fileContent
@@ -466,8 +468,8 @@ def test_last_years_report_is_read_from_xbrl_json(taxonomy: Taxonomy) -> None:
 @pytest.mark.parametrize(
     ("content", "filename", "match"),
     [
-        pytest.param(b"{}", "last-year.csv", "can't be read", id="extension"),
-        pytest.param(b"{}", "last-year.xlsx", "not an Excel workbook", id="workbook"),
+        pytest.param(b"{}", "prior.csv", "can't be read", id="extension"),
+        pytest.param(b"{}", "prior.xlsx", "not an Excel workbook", id="workbook"),
         pytest.param(b"not json", FILE, "not JSON", id="not JSON"),
     ],
 )
@@ -489,7 +491,9 @@ def test_a_prior_report_that_cannot_be_read_stops_the_conversion(
 @pytest.mark.parametrize(
     ("workOffline", "match"),
     [
-        pytest.param(True, " Working offline, it needs last year's", id="offline"),
+        pytest.param(
+            True, " Working offline, it needs the prior report's", id="offline"
+        ),
         pytest.param(False, "$", id="online"),
     ],
 )
@@ -505,10 +509,10 @@ def test_inline_xbrl_whose_taxonomy_arelle_cannot_load_stops_the_conversion(
     monkeypatch.setattr(arelle, "generateXbrlJson", lambda source: written)
     with pytest.raises(
         EarlyAbortException,
-        match=rf"^Arelle could not load the taxonomy of last-year\.zip\.{match}",
+        match=rf"^Arelle could not load the taxonomy of prior\.zip\.{match}",
     ):
         PriorReport.fromInlineXbrl(
-            FilelikeAndFileName(b"", "last-year.zip"),
+            FilelikeAndFileName(b"", "prior.zip"),
             ConversionResultsBuilder(),
             arelle=arelle,
         )
@@ -528,7 +532,7 @@ def versions(
     register_taxonomy: Callable[[dict[str, Any]], Taxonomy],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Our version of the taxonomy and last year's, in which Staff was Employees, Waste a whole
+    """Our version of the taxonomy and the prior report's, in which Staff was Employees, Waste a whole
     number and Cash a duration."""
     _oneDisclosureSystem(monkeypatch, OURS, LAST_VERSION)
     register_taxonomy(_taxonomy(OURS))
@@ -552,11 +556,11 @@ def _lastVersion(*facts: dict[str, Any]) -> InlineReport:
 
 
 @pytest.mark.usefixtures("versions")
-def test_last_years_report_on_an_older_version_is_matched_by_name() -> None:
+def test_the_prior_report_on_an_older_version_is_matched_by_name() -> None:
     current = _report(_revenue("100"), entryPoint=OURS)
     prior = _lastVersion(
         _revenue("90", PRIOR),
-        fact(qname("Note"), "Last year", period=PRIOR, decimals=None),
+        fact(qname("Note"), "Prior", period=PRIOR, decimals=None),
         fact(
             qname("Employees"), "20", period=BASELINE
         ),  # renamed, but not taken anyway
@@ -645,7 +649,7 @@ def test_dimensions_and_members_are_matched_by_name_too(
     doc["documentInfo"]["namespaces"][PREFIX] = LAST_VERSION_NAMESPACE
     prior = XbrlJsonProcessor(doc, ConversionResultsBuilder()).createReport()
 
-    # This year's report has the same facts for its own year, but none for Scope B.
+    # This report has the same facts for its own year, but none for Scope B.
     thisYear = group_document()
     thisYear["documentInfo"]["taxonomy"] = ["test://synthetic/2026-01-01/group.xsd"]
     del thisYear["facts"]["f2"]

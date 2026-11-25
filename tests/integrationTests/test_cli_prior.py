@@ -1,5 +1,5 @@
 """--prior on both scripts, end to end: the 1.3.0 sample, which has baseline and target years, gets
-comparatives from last year's report, which is its own xBRL-JSON a year earlier."""
+comparatives from the prior report, which is its own xBRL-JSON a year earlier."""
 
 from __future__ import annotations
 
@@ -32,7 +32,7 @@ def _run(*args: str | Path) -> str:
 
 
 def _yearEarlier(current: Path, prior: Path) -> None:
-    """``current`` with every period a year earlier, as last year's report."""
+    """``current`` with every period a year earlier, as the prior report."""
     document = json.loads(current.read_text(encoding="utf-8"))
     for fact in document["facts"].values():
         if period := fact["dimensions"].get("period"):
@@ -44,7 +44,7 @@ def _yearEarlier(current: Path, prior: Path) -> None:
 
 @pytest.fixture(scope="module")
 def reports(tmp_path_factory: pytest.TempPathFactory) -> tuple[Path, Path]:
-    """This year's xBRL-JSON, as the script writes it, and last year's."""
+    """This report's xBRL-JSON, as the script writes it, and the prior report's."""
     out = tmp_path_factory.mktemp("current")
     _run(
         "scripts/parse-and-ixbrl.py",
@@ -65,7 +65,7 @@ def _priorFacts(path: Path) -> int:
     )
 
 
-def test_parse_and_ixbrl_takes_comparatives_from_last_years_report(
+def test_parse_and_ixbrl_takes_comparatives_from_the_prior_report(
     reports: tuple[Path, Path], tmp_path: Path
 ) -> None:
     _, prior = reports
@@ -79,7 +79,9 @@ def test_parse_and_ixbrl_takes_comparatives_from_last_years_report(
         tmp_path / "report.html",
     )
     assert COMPARATIVES in stdout
-    assert "2019-01-01 – 2019-12-31" in stdout  # last year's baseline year, left out
+    assert (
+        "2019-01-01 – 2019-12-31" in stdout
+    )  # the prior report's baseline year, left out
     assert _priorFacts(tmp_path / "report.json") > 0
 
 
@@ -101,7 +103,7 @@ def test_xbrljson_to_ixbrl_takes_comparatives_and_renders_them_all(
     assert list(tmp_path.glob("*.html"))
 
 
-def test_this_years_report_given_as_last_years_too_stops_the_conversion(
+def test_this_report_given_as_its_own_prior_report_stops_the_conversion(
     reports: tuple[Path, Path], tmp_path: Path
 ) -> None:
     current, _ = reports
@@ -113,5 +115,5 @@ def test_this_years_report_given_as_last_years_too_stops_the_conversion(
         current,
         tmp_path,
     )
-    assert "is it this year's report given twice?" in stdout
+    assert "is it this report given twice?" in stdout
     assert not list(tmp_path.glob("*.html"))

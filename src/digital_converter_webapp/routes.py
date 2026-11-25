@@ -174,13 +174,13 @@ def upload() -> Response:
             },
             400,
         )
-    # Last year's report is optional; an untouched file input submits an empty name.
+    # The prior report is optional; an untouched file input submits an empty name.
     prior = request.files.get("prior")
     priorName = prior.filename if prior is not None else None
     if priorName and PurePath(priorName).suffix.lower() not in PRIOR_REPORT_EXTENSIONS:
         return make_response(
             {
-                "error": "Invalid file format for last year's report (only "
+                "error": "Invalid file format for the prior report (only "
                 f"{', '.join(PRIOR_REPORT_EXTENSIONS)} files supported)",
                 "file": priorName,
             },
@@ -261,7 +261,7 @@ def convert(id: str) -> Response:
             )
 
         if not conv.has_results:
-            # This year's workbook, then last year's: each may be kept as it is.
+            # This report's workbook, then the prior report's: each may be kept as it is.
             for workbook, skip in (
                 (conv, "skip_migration"),
                 (conv.prior, "skip_prior_migration"),

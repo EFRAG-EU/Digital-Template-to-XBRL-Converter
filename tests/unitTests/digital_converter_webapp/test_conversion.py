@@ -53,10 +53,10 @@ class TestConversion:
         conv.migrated_excel = None
         assert "migrated_excel" not in conv
 
-    def test_last_years_workbook_has_its_own_migration_state(self) -> None:
+    def test_the_prior_workbook_has_its_own_migration_state(self) -> None:
         conv = _make()
         conv.excel = _file(name="this-year.xlsx")
-        conv.priorReport = _file(name="last-year.xlsx")
+        conv.priorReport = _file(name="prior.xlsx")
         prior = conv.prior
         assert prior.isPrior and not conv.isPrior
         assert prior.migrationSource == conv.priorReport
@@ -267,7 +267,7 @@ class TestConversionStore:
         skipped.results = ConversionResultsBuilder().build()
         assert list(store.active()) == ["skipped"]
 
-    def test_last_years_workbook_awaiting_migration_is_hidden_too(self) -> None:
+    def test_the_prior_workbook_awaiting_migration_is_hidden_too(self) -> None:
         store = ConversionStore({})
         store.create("ok")
         prior = store.create("old").prior
