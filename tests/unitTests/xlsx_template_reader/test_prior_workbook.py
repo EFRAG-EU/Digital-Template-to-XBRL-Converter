@@ -68,6 +68,7 @@ def test_last_years_workbook_on_an_older_template_gives_the_comparatives(
         SkipReason.NOT_COMPARABLE,
         SkipReason.OTHER_PERIOD,
         SkipReason.NOTHING_THIS_YEAR,
+        SkipReason.UNCHANGED,
     }
     assert str(current.priorPeriod) == "2025-01-01T00:00:00/2026-01-01T00:00:00"
     # Only reading last year's workbook warns (it is an older template), not the merge.

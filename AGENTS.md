@@ -348,7 +348,8 @@ with the instants at its ends; facts in its other periods are left out with one 
 non-nil numbers and booleans are copied, and any other fact in a table row with one (the same
 presentation group and dimensions), each rebuilt with a `FactBuilder` so every check re-runs,
 without footnotes, and each keeps its unit. A comparative is taken only beside this year's fact for
-the same concept and dimensions; with nothing to compare it with it is left out. The current report wins: a comparative with a `duplicateKey` already present (the
+the same concept and dimensions; with nothing to compare it with it is left out. A boolean outside a table (no dimensions) is
+taken only where it differs from this report's; one in a table row always is. The current report wins: a comparative with a `duplicateKey` already present (the
 shared closing and opening instant, say) is skipped, quietly if consistent, with a warning if not.
 Another entity raises. Last year's report on another version of our taxonomy (one the same disclosure
 config names, `areVersionsOfOneTaxonomy`; VS is a version of VSME) has the facts it would give matched to ours by `alignToTaxonomy`: concepts,

@@ -313,6 +313,48 @@ def test_only_numbers_and_booleans_are_taken_and_nil_is_not() -> None:
     assert not _messages(results, Severity.WARNING)
 
 
+def test_a_boolean_outside_a_table_is_taken_only_when_it_changed() -> None:
+    current = _report(_revenue("100"), fact(qname("Flag"), "true", decimals=None))
+    prior = _report(
+        _revenue("90", PRIOR), fact(qname("Flag"), "true", period=PRIOR, decimals=None)
+    )
+    results, merged = _merge(current, prior)
+    assert merged.taken == 1 and merged.skipped == {SkipReason.UNCHANGED: 1}
+    assert _priorFacts(current) == {"Revenue": [(90, PeriodPart.Whole)]}
+    assert (
+        f"1 booleans in {FILE} left out: not in a table, and the same as this report's."
+    ) in _messages(results, Severity.INFO)
+
+
+def test_a_boolean_in_a_table_is_taken_even_when_unchanged(
+    register_taxonomy: Callable[[dict[str, Any]], Taxonomy],
+) -> None:
+    target = qname("TargetAxis")
+    taxonomy = group_taxonomy_json()
+    taxonomy["concepts"][qname("Met")] = {
+        **concept("Met"),
+        "dataType": "xbrli:booleanItemType",
+        "baseDataType": "xbrli:booleanItemType",
+    }
+    taxonomy["presentation"][GROUP_ROLE]["rows"].append([1, qname("Met")])
+    taxonomy["dimensions"][GROUP_ROLE][qname("TargetCube")] = cube(
+        [qname("Intensity"), qname("Note"), qname("Met")], {}, [target]
+    )
+    register_taxonomy(taxonomy)
+
+    def met(value: str, **period: str) -> dict[str, Any]:
+        return fact(
+            qname("Met"), value, decimals=None, dimensions={target: "T1"}, **period
+        )
+
+    current = _report(met("true"), entryPoint=GROUP_ENTRY_POINT)
+    _, merged = _merge(
+        current, _report(met("true", period=PRIOR), entryPoint=GROUP_ENTRY_POINT)
+    )
+    assert merged.taken == 1 and not merged.skipped
+    assert _priorFacts(current) == {"Met": [(True, PeriodPart.Whole)]}
+
+
 def test_other_facts_come_only_into_a_table_row_a_comparative_is_drawn_in(
     register_taxonomy: Callable[[dict[str, Any]], Taxonomy],
 ) -> None:
