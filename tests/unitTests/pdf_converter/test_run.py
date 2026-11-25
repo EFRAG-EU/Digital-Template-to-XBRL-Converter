@@ -400,9 +400,10 @@ class TestArgvCommonToAllBackends:
         self, capturedArgv: list[list[str]], stubBinary: Path
     ) -> None:
         """The converter always writes a fixed name inside a private temp dir,
-        so an uploaded filename is never an argument at all."""
+        so an uploaded filename is never an argument at all. Only names are
+        checked: where this checkout lives is no business of the test's."""
         _runCapturing(str(stubBinary))
-        assert not any("annex" in arg for arg in capturedArgv[0])
+        assert not any("annex" in Path(arg).name for arg in capturedArgv[0])
 
     def test_input_pdf_is_passed(
         self, capturedArgv: list[list[str]], stubBinary: Path
@@ -455,9 +456,17 @@ class TestPdf2HtmlExArgv:
             "--split-pages",
             "--process-outline",
             "--printing",
+            "--data-dir",
             "--dest-dir",
         }
         assert {a for a in run if a.startswith("--")} <= known
+
+    def test_uses_our_own_template(self, run: list[str]) -> None:
+        """The stock one wraps the pages in a full-window viewer, which draws
+        a merged annex over the top of the report."""
+        dataDir = Path(run[run.index("--data-dir") + 1])
+        assert (dataDir / "manifest").is_file()
+        assert (dataDir / "base.css").is_file()
 
 
 class TestPdfToHtmlArgv:

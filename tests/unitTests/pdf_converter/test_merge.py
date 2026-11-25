@@ -288,3 +288,35 @@ class TestMergeAnnexesIntoReport:
         )
         with pytest.raises(PdfConversionError):
             mergeAnnexesIntoReport(report, [_annex()])
+
+
+class TestReadAsHtml:
+    """The merged report is an .html file, so a browser parses it as HTML,
+    where a self-closed ``<div/>`` is only a start tag."""
+
+    def _pages(self) -> MergedAnnex:
+        return MergedAnnex(
+            anchor_id="pdf-annex-1",
+            label="annex1.pdf",
+            body=etree.fromstring(
+                f'<div xmlns="{XHTML}" id="pdf-annex-1" class="{ANNEX_CLASS}">'
+                '<div class="pf"><div class="pi"/></div>'
+                '<div class="pf"><br/><img src="p.png" alt=""/></div></div>'
+            ),
+            head_css="",
+        )
+
+    def test_empty_elements_get_an_end_tag(self) -> None:
+        """Self-closed, pdf2htmlEX's empty end-of-page div would swallow every
+        page after it. (lxml's own HTML parser honours ``<div/>``, unlike a
+        browser's, so this checks the bytes rather than a parse.)"""
+        import re
+
+        content = mergeAnnexesIntoReport(_report(), [self._pages()]).fileContent
+        assert b'<div class="pi"></div>' in content
+        assert not re.search(rb"<div\b[^>]*/>", content)
+
+    def test_void_elements_stay_self_closed(self) -> None:
+        content = mergeAnnexesIntoReport(_report(), [self._pages()]).fileContent
+        assert b"<br/>" in content
+        assert b"</img>" not in content

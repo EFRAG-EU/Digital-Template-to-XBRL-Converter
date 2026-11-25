@@ -185,6 +185,13 @@ class TestRealConversion:
             converted.fileContent
         )
 
+    def test_has_no_full_window_viewer(self, root: etree._Element) -> None:
+        """pdf2htmlEX's stock template positions its pages against the browser
+        window, which draws a merged annex over the top of the report."""
+        ids = {e.get("id") for e in root.iter() if e.get("id")}
+        assert not {"page-container", "sidebar", "outline"} & ids
+        assert not root.xpath("//*[contains(@class, 'loading-indicator')]")
+
     def test_a_link_annotation_leaves_no_block_inside_an_anchor(
         self, convertedLink: FilelikeAndFileName
     ) -> None:
